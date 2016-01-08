@@ -1,0 +1,12 @@
+{
+	"manifest_version": 2,
+	"name": "CryptUp MVP",
+	"description": "Easy Gmail encryption",
+	"version": "1.0",
+	"browser_action": {"default_icon": "icon.png", "default_popup": "popup.html"},
+	"permissions": ["activeTab", "https://ajax.googleapis.com/"],
+	"content_scripts": [
+		{"matches": ["http://mail.google.com/*", "https://mail.google.com/*"], "js": ["jquery.min.js", "openpgp.min.js", "pubkeys.js", "gmail.js"]}
+	],
+	"web_accessible_resources": ["gmail.css", "compose-window.htm", "compose-window.js", "legacy-message-window.js", "openpgp.min.js"]
+}
