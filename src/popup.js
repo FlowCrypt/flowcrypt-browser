@@ -5,7 +5,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 /*
 function getCurrentTabUrl(callback) {
   // Query filter to be passed to chrome.tabs.query - see
