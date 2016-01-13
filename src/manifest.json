@@ -2,15 +2,28 @@
     "manifest_version": 2,
     "name": "CryptUp MVP",
     "description": "Easy Gmail encryption",
-    "version": "1.0",
-    "browser_action": {"default_icon": "icon.png", "default_popup": "popup.html"},
-    "permissions": ["activeTab", "https://ajax.googleapis.com/", "https://apis.google.com/"],
-    "content_scripts": [
-        {
-            "matches": ["http://mail.google.com/*", "https://mail.google.com/*"], 
-            "js": ["jquery.min.js", "openpgp.min.js", "pubkeys.js", "gmail.js"]
-        }
+    "version": "0.1",
+    "browser_action": {
+      "default_icon": "img/plugin-button.png",
+      "default_popup": "elements/settings/settings-main.html"
+    },
+    "permissions": [
+      "activeTab",
+      "https://apis.google.com/",
+      "https://accounts.google.com/",
+      "identity",
+      "storage"
     ],
-    "web_accessible_resources": ["gmail.css", "compose-window.htm", "compose-window.js", "legacy-message-window.js", "openpgp.min.js"],
-    "content_security_policy": "script-src 'self' https://apis.google.com/; object-src 'self'"
-}
+    "content_scripts": [
+      {
+        "matches": ["http://mail.google.com/*", "https://mail.google.com/*"],
+        "js": ["lib/jquery.min.js", "lib/openpgp.min.js", "lib/pubkeys.js", "elements/gmail/gmail-main.js"]
+      }
+    ],
+    "web_accessible_resources": [
+      "css/gmail-main.css",
+      "elements/gmail/compose-window.htm",
+      "elements/gmail/color-addresses.js",
+      "lib/openpgp.min.js"
+    ]
+  }

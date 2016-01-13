@@ -561,66 +561,64 @@
 		<div tabindex="1" style="position: absolute;">
 		</div>
 	</div>
-	<script> 
-		
-		console.log("load compose-window.js");
-		
-		function is_email_valid(email){ 
-			return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email); 
-		}
-		
-		var pubkeys = {}; 
-		
-		function render_pubkey_result(email) { 
-			if (typeof pubkeys[email] !== "undefined" && pubkeys[email] !== null) { 
-				$("#input_to").removeClass("email_plain"); 
-				$("#input_to").addClass("email_secure"); 
-				$("#button_send i").removeClass("fa-unlock"); 
-				$("#button_send i").addClass("fa-lock"); 
-				$("#button_send").addClass("button_secure"); 
-				$("#button_send span").text("Send PGP Encrypted"); 
-			} else {
-				$("#input_to").removeClass("email_secure"); 
-				$("#input_to").addClass("email_plain"); 
-				$("#button_send i").removeClass("fa-lock"); 
-				$("#button_send i").addClass("fa-unlock"); 
-				$("#button_send").removeClass("button_secure"); 
-				$("#button_send span").text("Send"); 
-			} 
+	<script>
+				
+		function is_email_valid(email){
+			return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
 		}
 
-		$("#input_to").blur(function(){ 
-			var email = $(this).val(); 
+		var pubkeys = {};
+
+		function render_pubkey_result(email) {
+			if (typeof pubkeys[email] !== "undefined" && pubkeys[email] !== null) {
+				$("#input_to").removeClass("email_plain");
+				$("#input_to").addClass("email_secure");
+				$("#button_send i").removeClass("fa-unlock");
+				$("#button_send i").addClass("fa-lock");
+				$("#button_send").addClass("button_secure");
+				$("#button_send span").text("Send PGP Encrypted");
+			} else {
+				$("#input_to").removeClass("email_secure");
+				$("#input_to").addClass("email_plain");
+				$("#button_send i").removeClass("fa-lock");
+				$("#button_send i").addClass("fa-unlock");
+				$("#button_send").removeClass("button_secure");
+				$("#button_send span").text("Send");
+			}
+		}
+
+		$("#input_to").blur(function(){
+			var email = $(this).val();
 			console.log("blured " + email);
-			if (is_email_valid(email)) { 
-				console.log('valid format: ' + email); 
-				console.log(pubkeys); 
-				if (!(email in pubkeys)) { 
-					getPubkey(email, function(pubkey_data) { 
-						pubkeys[email] = pubkey_data; 
-						render_pubkey_result(email); 
-					}); 
-				} else { 
-					render_pubkey_result(email); 
-				} 
-			} else { 
-				console.log(email + "is invalid email"); 
-				$("#input_to").removeClass("email_secure"); 
-				$("#input_to").removeClass("email_plain"); 
-				$("#button_send").removeClass("button_secure"); 
-				$("#button_send i").removeClass("fa-lock"); 
-				$("#button_send i").addClass("fa-unlock"); 
-				$("#button_send span").text("Send"); 
-			} 
+			if (is_email_valid(email)) {
+				console.log('valid format: ' + email);
+				console.log(pubkeys);
+				if (!(email in pubkeys)) {
+					getPubkey(email, function(pubkey_data) {
+						pubkeys[email] = pubkey_data;
+						render_pubkey_result(email);
+					});
+				} else {
+					render_pubkey_result(email);
+				}
+			} else {
+				console.log(email + "is invalid email");
+				$("#input_to").removeClass("email_secure");
+				$("#input_to").removeClass("email_plain");
+				$("#button_send").removeClass("button_secure");
+				$("#button_send i").removeClass("fa-lock");
+				$("#button_send i").addClass("fa-unlock");
+				$("#button_send span").text("Send");
+			}
 		});
 
-		$("#input_to").focus(function(){ 
-			$("#input_to").removeClass("email_secure"); 
-			$("#input_to").removeClass("email_plain"); 
-			$("#button_send").removeClass("button_secure"); 
-			$("#button_send i").removeClass("fa-lock"); 
-			$("#button_send i").addClass("fa-unlock"); 
-			$("#button_send span").text("Send"); 
+		$("#input_to").focus(function(){
+			$("#input_to").removeClass("email_secure");
+			$("#input_to").removeClass("email_plain");
+			$("#button_send").removeClass("button_secure");
+			$("#button_send i").removeClass("fa-lock");
+			$("#button_send i").addClass("fa-unlock");
+			$("#button_send span").text("Send");
 		});
 
 		function encrypt(pgp_pubkey_text, text, callback) {
@@ -643,7 +641,7 @@
 					alert('error: key is undefined although should exist');
 					return;
 				}
-			}			
+			}
 			if (to == ''){
 				alert('Please add receiving email address.');
 				return;
@@ -658,7 +656,7 @@
 					}
 				} catch(err) {
 					alert(err);
-				}			
+				}
 			}
 		});
 

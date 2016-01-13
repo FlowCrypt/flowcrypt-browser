@@ -1,5 +1,21 @@
-//tom - will be used for tests later
 
+alert('a');
+console.log('test');
+
+function authorize_gmail(email) {
+  console.log('authorize_gmail start: ' + email);
+  var redirect_uri = 'https://nmelpmhpelannghfpkbmmpfggmildcmj.chromiumapp.org/google-auth-cb';
+  var scope = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send';
+  var client_id = '717284730244-1ko46mlo9u0h9r16mlr6paine5u1qn7p.apps.googleusercontent.com';
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + client_id + '&redirect_uri=' + redirect_uri + '&scope=' + scope + '&login_hint=' + email;
+  console.log('chrome.identity.launchWebAuthFlow start: ' + url);
+  chrome.identity.launchWebAuthFlow({'url': url, 'interactive': false}, function(redirect_uri) {
+    console.log('chrome.identity.launchWebAuthFlow inside: ' + redirect_uri);
+  });
+  console.log('authorize_gmail end');
+}
+
+authorize_gmail('');
 
 // Copyright (c) 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
