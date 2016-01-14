@@ -8,11 +8,9 @@ if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -
     $('body').append('<div class="cryptup"></div>');
     $('body').append('<div class="T-I-KE T-I J-J5-Ji compose">@</div>');
     $('body').append('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />');
-    $('body').append('<script type="text/javascript" href="' + chrome.extension.getURL('lib/jquery.min.js') + '" />');
-    $('body').append('<script type="text/javascript" href="' + chrome.extension.getURL('lib/pubkeys.js') + '" />');
-    $('body').append('<script type="text/javascript" href="' + chrome.extension.getURL('elements/gmail/color-addresses.js') + '" />');
-    $('body').append('<script type="text/javascript" href="' + chrome.extension.getURL('lib/openpgp.min.js') + '" />');
     $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail-main.css') + '" />');
+    $('body').append('<script src="' + chrome.extension.getURL('lib/emailjs-mime-builder/node_modules/requirejs/require.js') + '"></script>');
+    $('body').append('<script src="' + chrome.extension.getURL('lib/gmail-api.js') + '"></script>');
 
     $.get(chrome.extension.getURL('elements/gmail/compose-window.htm'), function(data) {
         $('div.compose').click(function(){

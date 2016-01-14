@@ -25,7 +25,7 @@
 										<td class="Hm">
 											<!-- <img class="Hl" src="images/cleardot.gif" alt="Minimize" data-tooltip="Minimize" aria-label="Minimize" data-tooltip-delay="800"> -->
 											<!-- <img class="Hq aUG" src="images/cleardot.gif" alt="Pop-out" aria-label="Full-screen (Shift for Pop-out)" data-tooltip-delay="800" data-tooltip="Full-screen (Shift for Pop-out)"> -->
-											<img class="Ha close_window" onclick="document.getElementById('compose_window').remove();" src="images/cleardot.gif" alt="Close" aria-label="Discard &amp; Close" data-tooltip-delay="800" data-tooltip="Discard &amp; Close">
+											<img class="Ha close_window" src="images/cleardot.gif" alt="Close" aria-label="Discard &amp; Close" data-tooltip-delay="800" data-tooltip="Discard &amp; Close">
 										</td>
 									</tr>
 									</tbody>
@@ -526,7 +526,7 @@
 															<div class="oh J-Z-I J-J5-Ji T-I-ax7" tabindex="1" role="button" data-tooltip="Discard draft" aria-label="Discard draft" style="-webkit-user-select: none;">
 																<div class="J-J5-Ji J-Z-I-Kv-H" style="-webkit-user-select: none;">
 																	<div class="J-J5-Ji J-Z-I-J6-H" style="-webkit-user-select: none;">
-																		<div class="og T-I-J3 close_window" onclick="document.getElementById('compose_window').remove();" style="-webkit-user-select: none;">
+																		<div class="og T-I-J3 close_window" style="-webkit-user-select: none;">
 																		</div>
 																	</div>
 																</div>
@@ -562,103 +562,6 @@
 		</div>
 	</div>
 	<script>
-				
-		function is_email_valid(email){
-			return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
-		}
-
-		var pubkeys = {};
-
-		function render_pubkey_result(email) {
-			if (typeof pubkeys[email] !== "undefined" && pubkeys[email] !== null) {
-				$("#input_to").removeClass("email_plain");
-				$("#input_to").addClass("email_secure");
-				$("#button_send i").removeClass("fa-unlock");
-				$("#button_send i").addClass("fa-lock");
-				$("#button_send").addClass("button_secure");
-				$("#button_send span").text("Send PGP Encrypted");
-			} else {
-				$("#input_to").removeClass("email_secure");
-				$("#input_to").addClass("email_plain");
-				$("#button_send i").removeClass("fa-lock");
-				$("#button_send i").addClass("fa-unlock");
-				$("#button_send").removeClass("button_secure");
-				$("#button_send span").text("Send");
-			}
-		}
-
-		$("#input_to").blur(function(){
-			var email = $(this).val();
-			console.log("blured " + email);
-			if (is_email_valid(email)) {
-				console.log('valid format: ' + email);
-				console.log(pubkeys);
-				if (!(email in pubkeys)) {
-					getPubkey(email, function(pubkey_data) {
-						pubkeys[email] = pubkey_data;
-						render_pubkey_result(email);
-					});
-				} else {
-					render_pubkey_result(email);
-				}
-			} else {
-				console.log(email + "is invalid email");
-				$("#input_to").removeClass("email_secure");
-				$("#input_to").removeClass("email_plain");
-				$("#button_send").removeClass("button_secure");
-				$("#button_send i").removeClass("fa-lock");
-				$("#button_send i").addClass("fa-unlock");
-				$("#button_send span").text("Send");
-			}
-		});
-
-		$("#input_to").focus(function(){
-			$("#input_to").removeClass("email_secure");
-			$("#input_to").removeClass("email_plain");
-			$("#button_send").removeClass("button_secure");
-			$("#button_send i").removeClass("fa-lock");
-			$("#button_send i").addClass("fa-unlock");
-			$("#button_send span").text("Send");
-		});
-
-		function encrypt(pgp_pubkey_text, text, callback) {
-			if (window.crypto.getRandomValues) {
-				var pub_key = openpgp.key.readArmored(pgp_pubkey_text); // read public key
-				openpgp.encryptMessage(pub_key.keys, text).then(callback, callback);
-			} else {
-				throw "Error: Browser not supported\nReason: We need a cryptographically secure PRNG to be implemented (i.e. the window.crypto method)\nSolution: Use Chrome >= 11, Safari >= 3.1 or Firefox >= 21";
-			}
-		}
-
-		$('#button_send').click(function(){
-			var to = $('#input_to').val();
-			var subject = $('#input_subject').val();
-			var plaintext = $('#input_text').text();
-			var key = null;
-			if($('#button_send.button_secure').length > 0) {
-				key = pubkeys[to].key;
-				if(!key){
-					alert('error: key is undefined although should exist');
-					return;
-				}
-			}
-			if (to == ''){
-				alert('Please add receiving email address.');
-				return;
-			} else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
-				try {
-					if (key) {
-						encrypt(key, plaintext, function(encrypted) {
-							alert(to + '|' + subject + '|' + encrypted);
-						});
-					} else {
-						alert(to + '|' + subject + '|' + plaintext);
-					}
-				} catch(err) {
-					alert(err);
-				}
-			}
-		});
-
+		on_compose_window_render();
 	</script>
 </div>
