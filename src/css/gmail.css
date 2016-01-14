@@ -1,0 +1,16 @@
+
+/* header and logo */
+.gb_Jb .gb_Lb, .gb_Mb { visibility: hidden !important; }
+div.cryptup_logo { background-image: url('https://cryptup.org/img/cryptup-logo-146-30.png'); display: block; position: absolute; top: 17px; left: 20px; width: 144px; height: 30px; z-index: 101; }
+#gb#gb span.gb_P { color: #f1f1f1 !important; }
+.gb_Jd, .gb_Sd { background: #555 !important; }
+
+/* buttons */
+div.T-I.T-I-KE { padding:0px; }
+div.new_message_button { width: 0px; padding-right: 0px; padding-left: 0px; min-width: 30px; position: absolute; top: 117px; left: 146px; z-index: 1; }
+
+/* elements */
+div.new_message { position: absolute; bottom: 0px; width: 541px; right: 30px; padding: 0px; }
+div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0px; margin: 0px; overflow: hidden;}
+
+/* 36D185 088447 */
