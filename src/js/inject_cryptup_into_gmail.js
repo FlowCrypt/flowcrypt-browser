@@ -23,4 +23,11 @@ if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -
   //     $('body').append('<div class="reply_message" id="reply_message"><iframe src="' + chrome.extension.getURL('elements/reply_message.htm') + '"></iframe></div>');
   //   }
   // });
+
+  set_signal_listener('gmail_tab', {
+    close_new_message: function(data, sender) {
+      $('div.new_message').remove();
+    }
+  });
+
 }

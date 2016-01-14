@@ -65,15 +65,13 @@ function new_message_render_email_neutral(){
 }
 
 function new_message_close(){
-  $('#new_message').remove();
+	send_signal('close_new_message', 'new_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer});
 }
 
 function new_message_send_through_gmail_api(to, subject, text){
 	console.log(4);
   gmail_api_message_send('info@nvimp.com', to, subject, text, function(success, response){
     if (success) {
-			console.log(5);
-			console.log(response);
       new_message_close();
     }
     else {
