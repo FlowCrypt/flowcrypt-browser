@@ -47,22 +47,16 @@ function set_signal_listener(receiver, callbacks) {
 }
 
 function send_signal(name, sender, receiver, data){
-  console.log('about to write message ' + name);
-  console.log('trying ' + name);
   if (!lock) {
-    console.log('locking and writing ' + name);
     lock = true;
     chrome.storage.local.get([q_storage_key(receiver)], function(storage) {
-      console.log('retrieved queue to write ' + name);
       storage[q_storage_key(receiver)].push({name: name, sender: sender, data: data});
       chrome.storage.local.set(storage, function(){
-        console.log('wrote and releasing lock for: ' + name);
         lock = false;
       })
     });
   }
   else {
-    console.log('already locked, delaying for: ' + name);
     setTimeout(function(){
       write_when_lock_open(name, sender, receiver, data);
     }, write_retry_ms);

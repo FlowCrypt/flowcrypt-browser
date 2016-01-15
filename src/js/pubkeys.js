@@ -1,27 +1,56 @@
+function fake_db_get_primary_email(email) {
+  email_mask = {
+    'tom@cryptup.org': 'tom@bitoasis.net',
+    'tom@nvimp.com': 'tom@bitoasis.net',
+    'info@nvimp.com': 'tom@bitoasis.net',
+    'tomas.holub@gmail.com': 'tom@bitoasis.net',
+    'tom@holub.me': 'tom@bitoasis.net',
+    'tom@coinbaseorders.com': 'tom@bitoasis.net',
+    'tom@treatyvisa.com': 'tom@bitoasis.net',
+  };
+  if(email in email_mask) {
+    return email_mask[email];
+  }
+  return email;
+}
 
+function pubkey_cache_add(email, pubkey){
+  if(typeof localStorage.pubkey_cache === 'undefined') {
+    var storage = {};
+  }
+  else {
+    var storage = JSON.parse(localStorage.pubkey_cache);
+  }
+  storage[email] = pubkey;
+  localStorage.pubkey_cache = JSON.stringify(storage);
+}
 
-function getPubkey(email, callback) { //add a callback here to do something when I have the info
+function pubkey_cache_get(email){
+  if(typeof localStorage.pubkey_cache === 'undefined') {
+    localStorage.pubkey_cache = JSON.stringify({});
+    return null;
+  }
+  var storage = JSON.parse(localStorage.pubkey_cache);
+  if(typeof storage[email] !== 'undefined') {
+    return storage[email];
+  }
+  return null;
+}
+
+function get_pubkey(email, callback) { //add a callback here to do something when I have the info
     var mit_db_url = 'https://pgp.mit.edu/pks/lookup';
     email = email.trim();
-    var pubkeyEmailMask = {'tom@cryptup.org': 'tom@bitoasis.net', 'cryptup.org@gmail.com': 'tom@bitoasis.net'};
-    if (email in pubkeyEmailMask) {
-        search_email = pubkeyEmailMask[email];
-    } else {
-        search_email = email;
-    }
-    console.log('searching for ' + search_email);
+    search_email = fake_db_get_primary_email(email);
     $.ajax({
         url: mit_db_url,
         data: {search: search_email, op: 'index', exact: 'on'},
         type: 'GET',
         error: function(XMLHttpRequest, textStatus, errorThrown) {
-            console.log(mit_db_url + ' search resulted in 404 for ' + email);
             callback(null);
         },
         success: function(text) {
             var m = new RegExp(/pub[^<]+<\a href="([^"]+)">[A-Z0-9]+<\/\a>[^>]+>([^<]+)<\/\a>/g).exec(text);
             if (m === null) {
-                console.log('No match found for ' + email);
                 callback(null);
             } else {
                 search_query = m[1].split("search=");
@@ -51,4 +80,3 @@ function getPubkey(email, callback) { //add a callback here to do something when
         }
     });
 }
-
