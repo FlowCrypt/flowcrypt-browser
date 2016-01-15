@@ -7,10 +7,7 @@ if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -
 
   $('body').append('<div class="cryptup_logo"></div>');
   $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button">@</div>');
-  // $('body').append('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail.css') + '" />');
-  // $('body').append('<script src="' + chrome.extension.getURL('lib/emailjs-mime-builder/node_modules/requirejs/require.js') + '"></script>');
-  // $('body').append('<script src="' + chrome.extension.getURL('lib/gmail-api.js') + '"></script>');
 
   $('div.new_message_button').click(function(){
     if($('div.new_message').length == 0) {

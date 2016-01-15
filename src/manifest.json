@@ -11,8 +11,8 @@
     "content_scripts": [
       {
         "matches": ["http://mail.google.com/*", "https://mail.google.com/*"],
-        "js": ["js/jquery.min.js", "js/openpgp.min.js", "js/signal.js", "js/inject_cryptup_into_gmail.js"]
+        "js": ["js/jquery.min.js", "js/signal.js", "js/replace_pgp_text.js", "js/inject_cryptup_into_gmail.js"]
       }
     ],
-    "web_accessible_resources": ["css/gmail.css", "chrome/gmail_elements/new_message.htm"]
+    "web_accessible_resources": ["css/gmail.css", "chrome/gmail_elements/new_message.htm", "chrome/gmail_elements/pgp_block.htm"]
   }

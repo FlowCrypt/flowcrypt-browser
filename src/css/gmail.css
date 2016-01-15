@@ -13,4 +13,8 @@ div.new_message_button { width: 0px; padding-right: 0px; padding-left: 0px; min-
 div.new_message { position: absolute; bottom: 0px; width: 541px; right: 30px; padding: 0px; }
 div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0px; margin: 0px; overflow: hidden;}
 
+/* pgp decrypted message */
+/*div.has_known_pgp_blocks { border: 1px solid red; }*/
+div.pgp_block { border: 1px solid green; }
+
 /* 36D185 088447 */

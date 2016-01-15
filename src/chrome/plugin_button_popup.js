@@ -13,7 +13,7 @@ function gmail_api_login(account, callback) {
 var account = 'info@nvimp.com';
 gmail_api_login(account, function(token){
   chrome.storage.local.set({'token': token}, function(){
-    alert('logged in with token: ' + token);
+    console.log('logged in with token: ' + token);
   });
 });
 
@@ -22,3 +22,17 @@ get_pubkey(account, function(result){
     pubkey_cache_add(account, result.key);
   }
 })
+
+$('#private_key_form button').click(function(){
+  localStorage.master_private_key = $('#private_key_form textarea').val();
+  $('#private_key_form textarea').val('');
+  $(this).text('Saved');
+  return false;
+});
+
+$('#passphrase_form button').click(function(){
+  localStorage.master_passphrase = $('#passphrase_form input').val();
+  $('#passphrase_form input').val('');
+  $(this).text('Saved');
+  return false;
+});
