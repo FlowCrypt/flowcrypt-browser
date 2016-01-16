@@ -7,58 +7,60 @@
 // todo - receiver-level locking instead of a global lock
 // todo - separate receivers by tabs when needed, or replicate message for all receivers
 
-var write_retry_ms = 99;
 var signal_listener_frequency_ms = 300;
+var signal_slots_per_listener = 10000;
+var key_list_by_receiver = {};
 
-var test_v = '1';
+var test_v = '2';
 
-function q_storage_key(name){
-  return '!_' + test_v + '_singal.queue.' + name + '!';
+function q_storage_key(name, i){
+  return '!v' + test_v + '.singal.' + name + '.' + i + '!';
 }
 
-var lock = false;
+function q_storage_key_list(name){
+  var key_list = [];
+  for(var i=0;i<signal_slots_per_listener;i++){
+    key_list.push(q_storage_key(name, i));
+  }
+  return key_list;
+}
+
+function collect_signals_from_storage_and_flush(receiver, storage){
+  var signals = [];
+  var keys_to_flush = [];
+  for (var key in storage) {
+    if (storage.hasOwnProperty(key)) {
+      keys_to_flush.push(key);
+      signals.push(storage[key]);
+    }
+  }
+  chrome.storage.local.remove(keys_to_flush); //async
+  return signals;
+}
+
+function random_int(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 function set_signal_listener(receiver, callbacks) {
+  key_list_by_receiver[receiver] = q_storage_key_list(receiver);
   setInterval(function(){
-    if (!lock){
-      lock = true;
-      chrome.storage.local.get([q_storage_key(receiver)], function(storage) {
-        var my_queue = storage[q_storage_key(receiver)];
-        if(typeof my_queue === 'undefined' || my_queue.length > 0) {
-          var clear_my_queue = {};
-          clear_my_queue[q_storage_key(receiver)] = [];
-          chrome.storage.local.set(clear_my_queue, function(){
-            lock = false;
-          });
-        }
-        else {
-          lock = false;
-        }
-        for (var i = 0; i < my_queue.length; i++) {
-          var msg = my_queue[i];
-          callbacks[msg.name](msg.data, msg.sender);
-        }
-      });
-    }
-    else {
-      console.log('notice: signal_listener skipped a beat because someone is currently listening')
-    }
+    chrome.storage.local.get(key_list_by_receiver[receiver], function(storage) {
+      var new_signals = collect_signals_from_storage_and_flush(receiver, storage);
+      for (var i = 0; i < new_signals.length; i++) {
+        var signal = new_signals[i];
+        console.log('signal in [' + signal.sender + ' -> ' + receiver + '] ' + signal.name + ' ' + JSON.stringify(signal.data));
+        callbacks[signal.name](signal.data, signal.sender);
+      }
+    });
   }, signal_listener_frequency_ms);
 }
 
 function send_signal(name, sender, receiver, data){
-  if (!lock) {
-    lock = true;
-    chrome.storage.local.get([q_storage_key(receiver)], function(storage) {
-      storage[q_storage_key(receiver)].push({name: name, sender: sender, data: data});
-      chrome.storage.local.set(storage, function(){
-        lock = false;
-      })
-    });
-  }
-  else {
-    setTimeout(function(){
-      write_when_lock_open(name, sender, receiver, data);
-    }, write_retry_ms);
-  }
+  var random_signal_slot = random_int(0, signal_slots_per_listener);
+  var random_signal_slot_storage_key = q_storage_key(receiver, random_signal_slot);
+  var storage_with_random_signal_slot_filled = {};
+  storage_with_random_signal_slot_filled[random_signal_slot_storage_key] = {name: name, sender: sender, data: data};
+  console.log('signal out [' + sender + ' -> ' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + JSON.stringify(data));
+  chrome.storage.local.set(storage_with_random_signal_slot_filled); //async
 }
