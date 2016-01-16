@@ -84,7 +84,7 @@ function new_message_send_through_gmail_api(to, subject, text){
 function new_message_encrypt_and_send(){
   var to = $('#input_to').val();
   var subject = $('#input_subject').val();
-  var plaintext = $('#input_text').text();
+  var plaintext = $('#input_text').html();
   var keys = [];
   if($('#send_new_message.button_secure').length > 0) {
     var key_to = pubkey_cache_get(to);
