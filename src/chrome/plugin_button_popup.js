@@ -1,3 +1,4 @@
+'use strict';
 
 function gmail_api_login(account, callback) {
   var redirect_uri = 'https://nmelpmhpelannghfpkbmmpfggmildcmj.chromiumapp.org/google-auth-cb';
@@ -10,18 +11,24 @@ function gmail_api_login(account, callback) {
     callback(access_token);
   });
 }
-var account = 'info@nvimp.com';
-gmail_api_login(account, function(token){
-  chrome.storage.local.set({'token': token}, function(){
-    console.log('logged in with token: ' + token);
-  });
-});
 
-get_pubkey(account, function(result){
-  if (result !== null){
-    pubkey_cache_add(account, result.key);
-  }
-})
+chrome.storage.local.get(['primary_email'], function(storage){
+
+	var account = storage['primary_email'];
+
+  gmail_api_login(account, function(token){
+    chrome.storage.local.set({'token': token}, function(){
+      console.log('logged in with token: ' + token);
+    });
+  });
+
+  get_pubkey(account, function(result){
+    if (result !== null){
+      pubkey_cache_add(account, result.key);
+    }
+  });
+
+});
 
 $('#private_key_form button').click(function(){
   localStorage.master_private_key = $('#private_key_form textarea').val();

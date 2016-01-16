@@ -1,4 +1,9 @@
 
+var account = null;
+chrome.storage.local.get(['primary_email'], function(storage){
+	account = storage['primary_email'];
+});
+
 function is_email_valid(email){
 	return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
 }
@@ -71,7 +76,7 @@ function new_message_close(){
 }
 
 function new_message_send_through_gmail_api(to, subject, text){
-  gmail_api_message_send('info@nvimp.com', to, subject, text, function(success, response){
+  gmail_api_message_send(account, to, subject, text, function(success, response){
     if (success) {
       new_message_close();
     }
@@ -100,7 +105,7 @@ function new_message_encrypt_and_send(){
   } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
     try {
       if (keys.length > 0) {
-				var my_key = pubkey_cache_get('info@nvimp.com'); //fixme
+				var my_key = pubkey_cache_get(account);
 				if (my_key !== null) {
 					keys.push(my_key);
 				}

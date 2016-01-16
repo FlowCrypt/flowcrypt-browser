@@ -1,10 +1,13 @@
-
+'use strict';
 
 if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
 
   // console.log(window.navigator.appVersion);
   // console.log(window.navigator.platform);
 
+  var account = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
+  chrome.storage.local.set({primary_email: account});
+  
   $('body').append('<div class="cryptup_logo"></div>');
   $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button">@</div>');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail.css') + '" />');

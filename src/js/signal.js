@@ -1,11 +1,7 @@
 
-// This library uses very vague locking mechanism
 // It's intended to send messages about human interactions (fairly infrequent messages)
 // If you send many messages programmatically, some will be dropped
-// It's possible messages will get dropped under light use, but unlikely
-
-// todo - receiver-level locking instead of a global lock
-// todo - separate receivers by tabs when needed, or replicate message for all receivers
+// todo - separate listeners by tabs when needed, or replicate message for all listeners
 
 var signal_listener_frequency_ms = 300;
 var signal_slots_per_listener = 10000;

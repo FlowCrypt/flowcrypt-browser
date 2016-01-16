@@ -7,7 +7,7 @@ for(var i=0;i<raw_url_data.length;i++){
 }
 
 function format_plaintext(text){
-  console.log(text);
+  // console.log(text);
   if(/<((br)|(div)|p) ?\/?>/.test(text)) {
     return text;
   }
