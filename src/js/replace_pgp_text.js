@@ -1,6 +1,7 @@
 
 function find_and_replace_pgp_messages(){
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
+  var conversation_has_pgp_message = false;
   $("div.nH.hx.aHo div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function(){
     var text = $(this).html();
     var text_with_iframes = text;
@@ -13,11 +14,15 @@ function find_and_replace_pgp_messages(){
       text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(this, valid_pgp_block));
     }
     $(this).html(text_with_iframes);
+    conversation_has_pgp_message = true;
   });
-}
-
-function match_frame_size_to_content() {
-
+  if (conversation_has_pgp_message) {
+    var my_email = $('span.g2').last().text();
+    var their_email = $('h3.iw').last().text();
+    var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')";
+    console.log([my_email, their_email, reply_container_selector]);
+    $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email));
+  }
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
@@ -51,6 +56,17 @@ function pgp_block_iframe(parent_container, pgp_block_text) {
   var width = $(parent_container).width() - 15;
   var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') + '?frame_id=frame_' + id + '&width=' + width.toString() + '&message=' + encodeURIComponent(pgp_block_text);
   return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
+}
+
+function reply_message_iframe(parent_container_selector, my_email, their_email){
+  var id = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  for( var i=0; i < 5; i++ ){
+    id += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  $(parent_container_selector).addClass('remove_borders');
+  var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + their_email + '&from=' + my_email;
+  return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
 setInterval(find_and_replace_pgp_messages, 1000);

@@ -44,10 +44,10 @@ function new_message_render_email_secure_or_insecure(){
 		var pubkey = pubkey_cache_get(email);
     if (pubkey === null) {
       get_pubkey(email, function(pubkey_data) {
-        if(pubkey_data !== null){
-					pubkey_cache_add(email, pubkey_data.key);
+        if(pubkey_data !== null) {
+					pubkey_cache_add(email, pubkey_data);
 				}
-        new_message_render_pubkey_result(email, pubkey_data.key);
+        new_message_render_pubkey_result(email, pubkey_data);
       });
     } else {
       new_message_render_pubkey_result(email, pubkey);

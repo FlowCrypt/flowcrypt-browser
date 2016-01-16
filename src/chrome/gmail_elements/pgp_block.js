@@ -1,4 +1,6 @@
 
+// don't do url because of length limit
+
 var raw_url_data = window.location.search.replace('?', '').split('&');
 var url_data = {};
 for(var i=0;i<raw_url_data.length;i++){
