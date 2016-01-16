@@ -1,62 +1,11 @@
 <html>
 	<head>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
-		<style>
-			body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; }
-			html {  padding:0px; margin: 0px; }
-			table { height: 100%; border-spacing: 0px; border-collapse: collapse; }
-			table th { width: 538px; height: 36px; background-color: #404040; text-align: left; margin: 0px;}
-			table td.input { height: 42px; }
-			table th h1 { display: inline-block; margin: none; padding: none; font-size: 12.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
-			table th span.close_new_message { display: inline-block; position: absolute; right: 0px; margin-right:18px; margin-top: 7px; color: white; font-weight: bold; opacity: .6;}
-			table td { border: 1px solid #cfcfcf; border-top: none;  margin: 0px;}
-			table td input { border: none; width: 100%; height: 100%; margin: 0px; padding: 6px; padding-left: 9px; background: none; outline: none;}
-			table td.bottom { background-color: #f5f5f5; padding: 0px; height: 42px; padding-left:9px;}
-			table td.bottom div#send_new_message {
-				text-transform: uppercase;
-				display: inline-block;
-				-webkit-box-shadow: none;
-				box-shadow: none;
-				background-color: #4d90fe;
-				background-image: -webkit-linear-gradient(top,#4d90fe,#4787ed);
-    		background-image: linear-gradient(top,#4d90fe,#4787ed);
-    		border: 1px solid #3079ed;
-    		color: #fff;
-				border-radius: 2px;
-		    cursor: default;
-		    font-size: 11px;
-		    font-weight: bold;
-		    text-align: center;
-		    white-space: nowrap;
-		    margin-right: 16px;
-				min-width: 56px;
-		    height: 27px;
-		    line-height: 27px;
-		    outline: 0;
-		    padding: 0 8px;
-				margin: 6px 2px;
-				vertical-align: middle;
-			}
-			table td div#input_text {
-				border: none;
-				overflow: none;
-				padding-top:8px;
-				padding-left:8px;
-				outline: none;
-				border: none !important;
-				-webkit-box-shadow: none !important;
-				-moz-box-shadow: none !important;
-				box-shadow: none !important;
-				height:100%;
-			}
-			.email_plain { color: #d14836 !important; }
-			.email_secure { color: #088447 !important; }
-			table td.bottom div#send_new_message.button_secure { background-color: #088447 !important; min-width: 180px !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447)}
-		</style>
+		<link rel="stylesheet" href="compose_common.css" />
 	</head>
 	<body>
 
-		<table>
+		<table id="compose">
 			<tr>
 				<th> <!-- header -->
 					<span class="close_new_message">x</span>
@@ -80,7 +29,7 @@
 			</tr>
 			<tr>
 				<td class="bottom"> <!-- bottom -->
-					<div id="send_new_message">
+					<div id="send_btn">
 						<i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
 					</div>
 				</td>
@@ -93,7 +42,7 @@
 		<script src="/js/pubkeys.js"></script>
 		<script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
 		<script src="/js/gmail_api.js"></script>
+		<script src="compose_common.js"></script>
 		<script src="new_message.js"></script>
-
 	</body>
 </html>

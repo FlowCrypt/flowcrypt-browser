@@ -1,0 +1,63 @@
+
+/* body */
+body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; }
+html {  padding:0px; margin: 0px; }
+
+/* compose table */
+table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
+table#compose th { width: 538px; height: 36px; background-color: #404040; text-align: left; margin: 0px;}
+table#compose td.input { height: 42px; }
+table#compose th h1 { display: inline-block; margin: none; padding: none; font-size: 12.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
+table#compose th span.close_new_message { display: inline-block; position: absolute; right: 0px; margin-right:18px; margin-top: 7px; color: white; font-weight: bold; opacity: .6;}
+table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0px;}
+table#compose td input { border: none; width: 100%; height: 100%; margin: 0px; padding: 6px; padding-left: 9px; background: none; outline: none;}
+table#compose td.bottom { background-color: #f5f5f5; padding: 0px; height: 42px; padding-left:9px;}
+table#compose td.bottom div#send_btn {
+  text-transform: uppercase;
+  display: inline-block;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  background-color: #4d90fe;
+  background-image: -webkit-linear-gradient(top,#4d90fe,#4787ed);
+  background-image: linear-gradient(top,#4d90fe,#4787ed);
+  border: 1px solid #3079ed;
+  color: #fff;
+  border-radius: 2px;
+  cursor: default;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+  margin-right: 16px;
+  min-width: 56px;
+  height: 27px;
+  line-height: 27px;
+  outline: 0;
+  padding: 0 8px;
+  margin: 6px 2px;
+  vertical-align: middle;
+}
+table#compose td div#input_text {
+  border: none;
+  overflow: none;
+  padding-top:8px;
+  padding-left:8px;
+  outline: none;
+  border: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+  box-shadow: none !important;
+  height:100%;
+}
+
+/* secure or insecure */
+.email_plain { color: #d14836 !important; }
+.email_secure { color: #088447 !important; }
+table#compose td.bottom div#send_btn.button_secure { background-color: #088447 !important; min-width: 180px !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447)}
+
+/* reply elements */
+div#reply_message_table_container { display: none; }
+div#reply_message_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
+a#a_reply, a#a_reply_all, a#a_forward {}
+p#reply_links { margin: 0px; }
+div#reply_message_table_container table#compose { border-top: 1px solid #cfcfcf; width: 100%; }
