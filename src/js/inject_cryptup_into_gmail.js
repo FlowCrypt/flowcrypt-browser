@@ -7,7 +7,7 @@ if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -
 
   var account = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
   chrome.storage.local.set({primary_email: account});
-  
+
   $('body').append('<div class="cryptup_logo"></div>');
   $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button">@</div>');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail.css') + '" />');
@@ -27,6 +27,9 @@ if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -
   set_signal_listener('gmail_tab', {
     close_new_message: function(data, sender) {
       $('div.new_message').remove();
+    },
+    close_reply_message: function(data, sender) {
+      $('iframe#' + data.frame_id).remove();
     },
     pgp_block_iframe_set_css: function(data, sender) {
       $('iframe#' + sender).css(data);

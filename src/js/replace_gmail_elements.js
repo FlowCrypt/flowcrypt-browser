@@ -25,8 +25,12 @@ function find_and_replace_pgp_messages(){
     var my_email = $('span.g2').last().attr('email').trim();
     var their_email = $('h3.iw').last().text().trim();
     var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')";
-    console.log([my_email, their_email, reply_container_selector]);
-    $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email));
+    var subject = $('h2.hP').text();
+    // if(/^Re:/.test(subject) === false) {
+    //   subject = 'Re:' + subject;
+    // }
+    console.log([my_email, their_email, subject, reply_container_selector]);
+    $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email, subject));
   }
 }
 
@@ -70,7 +74,7 @@ function resolve_from_to(my_email, their_email) { //when replaying to email I've
   return {from: their_email, to: my_email}
 }
 
-function reply_message_iframe(parent_container_selector, my_email, their_email){
+function reply_message_iframe(parent_container_selector, my_email, their_email, subject){
   var id = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   for( var i=0; i < 5; i++ ){
@@ -78,7 +82,8 @@ function reply_message_iframe(parent_container_selector, my_email, their_email){
   }
   $(parent_container_selector).addClass('remove_borders');
   var emails = resolve_from_to(my_email, their_email);
-  var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + emails['to'] + '&from=' + emails['from'];
+  var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + encodeURIComponent(emails['to']) +
+    '&from=' + encodeURIComponent(emails['from']) + '&subject=' +  encodeURIComponent(subject);
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 

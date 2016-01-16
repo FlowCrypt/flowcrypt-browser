@@ -1,5 +1,5 @@
 
-var url_params = get_url_params(['from', 'to', 'frame_id']);
+var url_params = get_url_params(['from', 'to', 'subject', 'frame_id']);
 
 $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function(){
   $('div#reply_message_prompt').css('display', 'none');
@@ -7,15 +7,14 @@ $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forwar
   on_reply_message_render();
 });
 
-
-function new_message_close(){
-	send_signal('close_new_message', 'new_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer});
+function reply_message_close(){
+	send_signal('close_reply_message', 'reply_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer, 'frame_id': url_params['frame_id']});
 }
 
 function new_message_send_through_gmail_api(to, subject, text){
   gmail_api_message_send(account, to, subject, text, function(success, response){
     if (success) {
-      new_message_close();
+      reply_message_close();
     }
     else {
       alert('error sending message, check log');
@@ -25,7 +24,7 @@ function new_message_send_through_gmail_api(to, subject, text){
 
 function new_message_encrypt_and_send(){
   var to = $('#input_to').val();
-  var subject = $('#input_subject').val();
+  var subject = url_params['subject'];
   var plaintext = $('#input_text').html();
   var keys = [];
   if($('#send_btn.button_secure').length > 0) {
@@ -64,5 +63,5 @@ function on_reply_message_render(){
 	$('#send_btn').click(new_message_encrypt_and_send);
   $("#input_to").focus();
   $("#input_to").val(url_params['to']);
-  document.getElementById("input_text").focus();
+  document.getElementById ("input_text").focus();
 }
