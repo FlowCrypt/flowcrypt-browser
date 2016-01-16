@@ -1,12 +1,7 @@
 
 // don't do url because of length limit
 
-var raw_url_data = window.location.search.replace('?', '').split('&');
-var url_data = {};
-for(var i=0;i<raw_url_data.length;i++){
-  var pair = raw_url_data[i].split('=');
-  url_data[pair[0]] = decodeURIComponent(pair[1]);
-}
+var url_data = get_url_params(['frame_id', 'message', 'width']);
 
 function format_plaintext(text){
   // console.log(text);

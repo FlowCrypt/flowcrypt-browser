@@ -1,8 +1,10 @@
 
+var url_params = get_url_params(['from', 'to', 'frame_id']);
 
 $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function(){
   $('div#reply_message_prompt').css('display', 'none');
   $('div#reply_message_table_container').css('display', 'block');
+  on_reply_message_render();
 });
 
 
@@ -56,10 +58,11 @@ function new_message_encrypt_and_send(){
   }
 }
 
-function on_new_message_render(){
+function on_reply_message_render(){
 	$("#input_to").blur(compose_render_email_secure_or_insecure);
 	$("#input_to").focus(compose_render_email_neutral);
 	$('#send_btn').click(new_message_encrypt_and_send);
-  $('.close_new_message').click(new_message_close);
+  $("#input_to").focus();
+  $("#input_to").val(url_params['to']);
+  document.getElementById("input_text").focus();
 }
-on_new_message_render();

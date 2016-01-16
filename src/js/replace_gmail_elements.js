@@ -1,4 +1,9 @@
 
+var account = null;
+chrome.storage.local.get(['primary_email'], function(storage){
+	account = storage['primary_email'];
+});
+
 function find_and_replace_pgp_messages(){
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var conversation_has_pgp_message = false;
@@ -17,8 +22,8 @@ function find_and_replace_pgp_messages(){
     conversation_has_pgp_message = true;
   });
   if (conversation_has_pgp_message) {
-    var my_email = $('span.g2').last().text();
-    var their_email = $('h3.iw').last().text();
+    var my_email = $('span.g2').last().attr('email').trim();
+    var their_email = $('h3.iw').last().text().trim();
     var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')";
     console.log([my_email, their_email, reply_container_selector]);
     $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email));
@@ -58,6 +63,13 @@ function pgp_block_iframe(parent_container, pgp_block_text) {
   return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
+function resolve_from_to(my_email, their_email) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
+  if (their_email !== account) {
+    return {to: their_email, from: my_email}
+  }
+  return {from: their_email, to: my_email}
+}
+
 function reply_message_iframe(parent_container_selector, my_email, their_email){
   var id = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -65,7 +77,8 @@ function reply_message_iframe(parent_container_selector, my_email, their_email){
     id += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   $(parent_container_selector).addClass('remove_borders');
-  var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + their_email + '&from=' + my_email;
+  var emails = resolve_from_to(my_email, their_email);
+  var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + emails['to'] + '&from=' + emails['from'];
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
