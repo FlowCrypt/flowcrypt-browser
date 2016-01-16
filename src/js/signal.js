@@ -46,7 +46,12 @@ function set_signal_listener(receiver, callbacks) {
       for (var i = 0; i < new_signals.length; i++) {
         var signal = new_signals[i];
         console.log('signal in [' + signal.sender + ' -> ' + receiver + '] ' + signal.name + ' ' + JSON.stringify(signal.data));
-        callbacks[signal.name](signal.data, signal.sender);
+        if(typeof callbacks[signal.name] !== 'undefined') {
+          callbacks[signal.name](signal.data, signal.sender);
+        }
+        else {
+          console.log('no listener for ' + signal.name + ' in ' + receiver);
+        }
       }
     });
   }, signal_listener_frequency_ms);

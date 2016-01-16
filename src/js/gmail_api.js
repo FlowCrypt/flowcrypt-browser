@@ -47,7 +47,7 @@ function process_postponed_request(signal_data){
   gmail_api_call(parameters.account, parameters.resource, parameters.parameters, parameters.callback, true);
 }
 
-set_signal_listener('background_process', {
+set_signal_listener('gmail_api', {
   gmail_auth_response: process_postponed_request
 });
 
