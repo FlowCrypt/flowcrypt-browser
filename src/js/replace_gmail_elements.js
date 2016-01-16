@@ -87,4 +87,20 @@ function reply_message_iframe(parent_container_selector, my_email, their_email, 
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
-setInterval(find_and_replace_pgp_messages, 1000);
+function load_if_primary_account(){
+	setTimeout(function(){
+		if(do_load_libraries === true) {
+			console.log('replace_gmail_elements.js: setting up');
+			find_and_replace_pgp_messages();
+			setInterval(find_and_replace_pgp_messages, 1000);
+		}
+		else if (do_load_libraries === false) {
+			console.log('replace_gmail_elements.js: not setting up bacause this is not primary account');
+		}
+		else {
+			console.log('replace_gmail_elements.js: waiting to resolve primary account');
+			wait_to_determine_if_setup();
+		}
+	}, 200);
+}
+load_if_primary_account();

@@ -1,15 +1,24 @@
 'use strict';
 
+var do_load_libraries = null;
+
 if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
   console.log(1);
   var current_account = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
   console.log(current_account);;
   chrome.storage.local.get(['primary_email'], function(storage){
     if (typeof storage['primary_email'] === 'undefined'){
-      chrome.storage.local.set({primary_email: current_account}, inject_cryptup);
+      chrome.storage.local.set({primary_email: current_account}, function(){
+        inject_cryptup();
+        do_load_libraries = true;
+      });
     }
     else if (storage['primary_email'] === current_account) {
       inject_cryptup();
+      do_load_libraries = true;
+    }
+    else {
+      do_load_libraries = false;
     }
   });
 }
