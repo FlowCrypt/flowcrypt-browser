@@ -11,7 +11,6 @@ function find_and_replace_pgp_messages(){
     while ((matches = re_pgp_blocks.exec(text)) != null) {
       var valid_pgp_block = strip_tags_from_pgp_message(matches[0]);
       text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(this, valid_pgp_block));
-      console.log(matches[0]);
     }
     $(this).html(text_with_iframes);
   });
@@ -22,7 +21,8 @@ function match_frame_size_to_content() {
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
-  var newline = [/<\/div><div>/g, /<br ?\/?>/g, /<div ?\/?>/g];
+  // console.log(pgp_block_text);
+  var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<br ?\/?>/g, /<div ?\/?>/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
   for (var i=0; i < newline.length; i++){
     pgp_block_text = pgp_block_text.replace(newline[i], '\n');
@@ -32,7 +32,14 @@ function strip_tags_from_pgp_message(pgp_block_text){
   }
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
-  return pgp_block_text.replace(/\n\n/g, '\n');
+  var temp = "This is a string.";
+  // console.log(pgp_block_text);
+  if(pgp_block_text.match(/\n\n/g).length > 2){ //a lot of newlines are doubled
+    // console.log('removing doubles');
+    pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
+    // console.log(pgp_block_text);
+  }
+  return pgp_block_text;
 }
 
 function pgp_block_iframe(parent_container, pgp_block_text) {
