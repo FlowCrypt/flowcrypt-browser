@@ -1,5 +1,4 @@
 
-
 function find_and_replace_pgp_messages(){
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   $("div.nH.hx.aHo div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function(){
@@ -11,11 +10,15 @@ function find_and_replace_pgp_messages(){
     var matches;
     while ((matches = re_pgp_blocks.exec(text)) != null) {
       var valid_pgp_block = strip_tags_from_pgp_message(matches[0]);
-      text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block));
+      text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(this, valid_pgp_block));
       console.log(matches[0]);
     }
     $(this).html(text_with_iframes);
   });
+}
+
+function match_frame_size_to_content() {
+
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
@@ -32,8 +35,15 @@ function strip_tags_from_pgp_message(pgp_block_text){
   return pgp_block_text.replace(/\n\n/g, '\n');
 }
 
-function pgp_block_iframe(pgp_block_text) {
-  return '<iframe src="' + chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') + '?message=' + encodeURIComponent(pgp_block_text) + '"></iframe>'
+function pgp_block_iframe(parent_container, pgp_block_text) {
+  var id = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  for( var i=0; i < 5; i++ ){
+    id += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  var width = $(parent_container).width() - 15;
+  var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') + '?frame_id=frame_' + id + '&width=' + width.toString() + '&message=' + encodeURIComponent(pgp_block_text);
+  return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
 setInterval(find_and_replace_pgp_messages, 1000);

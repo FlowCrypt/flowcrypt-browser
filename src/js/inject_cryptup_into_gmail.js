@@ -24,6 +24,9 @@ if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -
   set_signal_listener('gmail_tab', {
     close_new_message: function(data, sender) {
       $('div.new_message').remove();
+    },
+    pgp_block_iframe_set_css: function(data, sender) {
+      $('iframe#' + sender).css(data);
     }
   });
 

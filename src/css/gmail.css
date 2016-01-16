@@ -15,6 +15,7 @@ div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0px; 
 
 /* pgp decrypted message */
 /*div.has_known_pgp_blocks { border: 1px solid red; }*/
-div.pgp_block { border: 1px solid green; }
+iframe.pgp_block { border:none; border-left: 3px dashed green; width: 99%; padding-left:10px;}
+
 
 /* 36D185 088447 */

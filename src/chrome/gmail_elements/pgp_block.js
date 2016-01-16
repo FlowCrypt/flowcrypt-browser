@@ -1,18 +1,30 @@
 
-var pgp_armored_message = decodeURIComponent(window.location.search.replace('?message=', ''));
+var raw_url_data = window.location.search.replace('?', '').split('&');
+var url_data = {};
+for(var i=0;i<raw_url_data.length;i++){
+  var pair = raw_url_data[i].split('=');
+  url_data[pair[0]] = decodeURIComponent(pair[1]);
+}
+
+function set_frame_content_and_resize(content){
+  $('#pgp_block').html(content);
+  $('#pgp_block').css({width: url_data['width'], height: 'auto'});
+  var new_css = {height: $('#pgp_block').height() + 10};
+  send_signal('pgp_block_iframe_set_css', url_data['frame_id'], 'gmail_tab', new_css);
+}
 
 if (typeof localStorage.master_private_key !== 'undefined') {
   var private_key = openpgp.key.readArmored(localStorage.master_private_key).keys[0];
   if (typeof localStorage.master_passphrase !== 'undefined' && sessionStorage.master_passphrase !== ''){
     private_key.decrypt(localStorage.master_passphrase);
   }
-  var pgp_message = openpgp.message.readArmored(pgp_armored_message);
+  var pgp_message = openpgp.message.readArmored(url_data['message']);
   openpgp.decryptMessage(private_key, pgp_message).then(function(plaintext) {
-    $('#pgp_block').html(plaintext);
+    set_frame_content_and_resize(plaintext);
   }).catch(function(error) {
-    $('#pgp_block').html('<div style="color:red">error decrypting message</div><br>');
+    set_frame_content_and_resize('<div style="color:red">[error decrypting message]</div><br>' + url_data['message']);
   });
 }
 else {
-  $('#pgp_block').html('<div style="color:red">no private key set yet to decrypt this message</div><br>');
+  set_frame_content_and_resize('<div style="color:red">[no private key set yet to decrypt this message]</div><br>' + url_data['message']);
 }
