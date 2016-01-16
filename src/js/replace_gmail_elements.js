@@ -23,7 +23,7 @@ function find_and_replace_pgp_messages(){
   });
   if (conversation_has_pgp_message) {
     var my_email = $('span.g2').last().attr('email').trim();
-    var their_email = $('h3.iw').last().text().trim();
+    var their_email = $('h3.iw span').last().attr('email').trim();
     var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')";
     var subject = $('h2.hP').text();
     // if(/^Re:/.test(subject) === false) {
@@ -35,8 +35,9 @@ function find_and_replace_pgp_messages(){
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
-  // console.log(pgp_block_text);
-  var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<br ?\/?>/g, /<div ?\/?>/g];
+  console.log(pgp_block_text);
+  var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
+	var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
   for (var i=0; i < newline.length; i++){
     pgp_block_text = pgp_block_text.replace(newline[i], '\n');
@@ -44,14 +45,18 @@ function strip_tags_from_pgp_message(pgp_block_text){
   for (var i=0; i < remove.length; i++){
     pgp_block_text = pgp_block_text.replace(remove[i], '');
   }
+	for (var i=0; i < space.length; i++){
+    pgp_block_text = pgp_block_text.replace(space[i], ' ');
+  }
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
   var temp = "This is a string.";
-  // console.log(pgp_block_text);
-  if(pgp_block_text.match(/\n\n/g).length > 2){ //a lot of newlines are doubled
-    // console.log('removing doubles');
+  console.log(pgp_block_text);
+	var double_newlines = pgp_block_text.match(/\n\n/g);
+  if(double_newlines !== null && double_newlines.length > 2){ //a lot of newlines are doubled
+    console.log('removing doubles');
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    // console.log(pgp_block_text);
+    console.log(pgp_block_text);
   }
   return pgp_block_text;
 }
