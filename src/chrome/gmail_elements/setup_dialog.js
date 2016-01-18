@@ -53,6 +53,9 @@ $('div.setup_btn.manual').click(function(){
 
 $('div#btn_save_private').click(function(){
   localStorage.master_private_key = $('#input_private_key').val();
+  localStorage.master_public_key = openpgp.key.readArmored($('#input_private_key').val()).keys[0].toPublic().armor();
   localStorage.master_passphrase = $('#input_passphrase').val();
-  send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
+  chrome.storage.local.set({cryptup_setup_done: true}, function(){
+    send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
+  });
 });
