@@ -1,0 +1,23 @@
+{
+    "name": "mimetypes",
+    "version": "0.1.1",
+    "description": "`mimetypes` allows you to detect file extensions for content types and vice-versa.",
+    "main": "src/mimetypes.js",
+    "homepage": "https://github.com/whiteout-io/mimetypes",
+    "authors": [
+        "Andris Reinman <andris@kreata.ee>"
+    ],
+    "license": "MIT",
+    "ignore": [
+        "node_modules",
+        "bower_components",
+        "test",
+        ".gitignore",
+        ".jshintrc",
+        ".travis.yml",
+        "Gruntfile.js",
+        "LICENSE",
+        "package.json",
+        "README.md"
+    ]
+}

@@ -1,0 +1,36 @@
+{
+    "indent": 4,
+    "strict": true,
+    "globalstrict": true,
+    "node": true,
+    "browser": true,
+    "nonew": true,
+    "curly": true,
+    "eqeqeq": true,
+    "indent": false,
+    "immed": true,
+    "newcap": true,
+    "regexp": true,
+    "evil": true,
+    "eqnull": true,
+    "expr": true,
+    "trailing": true,
+    "undef": true,
+    "unused": true,
+
+    "globals": {
+        "console": true,
+        "define": true,
+        "describe": true,
+        "it": true,
+        "beforeEach": true,
+        "afterEach": true,
+        "window": true,
+        "mocha": true,
+        "mochaPhantomJS": true,
+        "importScripts": true,
+        "postMessage": true,
+        "before": true,
+        "self": true
+    }
+}
