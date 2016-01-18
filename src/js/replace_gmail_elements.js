@@ -29,13 +29,13 @@ function find_and_replace_pgp_messages(){
     // if(/^Re:/.test(subject) === false) {
     //   subject = 'Re:' + subject;
     // }
-    console.log([my_email, their_email, subject, reply_container_selector]);
+    // console.log([my_email, their_email, subject, reply_container_selector]);
     $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email, subject));
   }
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
-  console.log(pgp_block_text);
+  // console.log(pgp_block_text);
   var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
 	var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
@@ -51,12 +51,12 @@ function strip_tags_from_pgp_message(pgp_block_text){
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
   var temp = "This is a string.";
-  console.log(pgp_block_text);
+  // console.log(pgp_block_text);
 	var double_newlines = pgp_block_text.match(/\n\n/g);
   if(double_newlines !== null && double_newlines.length > 2){ //a lot of newlines are doubled
-    console.log('removing doubles');
+    // console.log('removing doubles');
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    console.log(pgp_block_text);
+    // console.log(pgp_block_text);
   }
   return pgp_block_text;
 }
@@ -95,16 +95,16 @@ function reply_message_iframe(parent_container_selector, my_email, their_email, 
 function load_if_primary_account(){
 	setTimeout(function(){
 		if(do_load_libraries === true) {
-			console.log('replace_gmail_elements.js: setting up');
+			// console.log('replace_gmail_elements.js: setting up');
 			find_and_replace_pgp_messages();
 			setInterval(find_and_replace_pgp_messages, 1000);
 		}
 		else if (do_load_libraries === false) {
-			console.log('replace_gmail_elements.js: not setting up bacause this is not primary account');
+			// console.log('replace_gmail_elements.js: not setting up bacause this is not primary account');
 		}
 		else {
-			console.log('replace_gmail_elements.js: waiting to resolve primary account');
-			wait_to_determine_if_setup();
+			// console.log('replace_gmail_elements.js: waiting to resolve primary account');
+			load_if_primary_account();
 		}
 	}, 200);
 }

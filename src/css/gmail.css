@@ -1,7 +1,7 @@
 
 /* header and logo */
 .gb_Jb .gb_Lb, .gb_Mb { visibility: hidden !important; }
-div.cryptup_logo { background-image: url('https://cryptup.org/img/cryptup-logo-146-30.png'); display: block; position: absolute; top: 17px; left: 20px; width: 144px; height: 30px; z-index: 101; }
+div.cryptup_logo { background-image: url('https://cryptup.org/img/cryptup-logo-146-30.png'); display: block; position: absolute; top: 17px; left: 20px; width: 144px; height: 30px; z-index: 9; }
 #gb#gb span.gb_P { color: #f1f1f1 !important; }
 .gb_Jd, .gb_Sd { background: #555 !important; }
 
@@ -20,5 +20,10 @@ iframe.pgp_block { border:none; border-left: 3px dashed green; width: 99%; paddi
 /* pgp reply box */
 iframe.reply_message { height: 500px; width: 100%; border: none; }
 div.remove_borders { border: none !important; padding:0px !important; margin:0px !important; }
+
+/* setup dialog */
+div#cryptup_dialog { position: absolute; top:0px; width: 100%; height: 100%; margin: 0px auto; z-index: 10; background-color:rgba(255, 255, 255, 0.85); }
+div#cryptup_dialog iframe { position: absolute; width: 600px; height: 320px; top: 50%; left: 50%; margin-left: -300px; margin-top: -200px; border: none; box-shadow: 10px 10px 5px #888888;
+  box-shadow: 0px 0px 25px #AAA; }
 
 /* 36D185 088447 */

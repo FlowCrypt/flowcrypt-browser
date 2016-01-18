@@ -42,11 +42,14 @@ function compose_render_pubkey_result(email, pubkey_data) {
 }
 
 function encrypt(pubkey_texts, text, callback) {
+  console.log(1);
 	var pubkeys = [];
 	for (var i=0; i<pubkey_texts.length; i++) {
 		pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_texts[i]).keys); // read public key
 	}
+  console.log(2);
 	openpgp.encryptMessage(pubkeys, text).then(callback, callback);
+  console.log(3);
 }
 
 

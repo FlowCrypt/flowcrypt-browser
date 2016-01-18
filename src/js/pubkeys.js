@@ -37,28 +37,21 @@ function pubkey_cache_get(email){
   return null;
 }
 
-function get_pubkey(email, callback) { //add a callback here to do something when I have the info
+function get_pubkey(email, callback) {
   email = email.trim();
   search_email = fake_db_get_primary_email(email);
-  $.ajax({
-    url: 'https://cryptup-keyserver.herokuapp.com/keys/find',
-    method: 'POST',
-    data: JSON.stringify({'email': search_email}),
-    dataType: 'json',
-    crossDomain: true,
-    contentType: 'application/json; charset=UTF-8',
-    async: true,
-    success: function(response) {
+  keyserver_keys_find(search_email, function(success, response){
+    if(success) {
       if(response.pubkey === null){
         callback(null);
       }
       else{
         callback({'name': null, 'key': response.pubkey, 'email': email});
       }
-    },
-    error: function(XMLHttpRequest, textStatus, errorThrown){
-        console.log(['keyserver error', textStatus, errorThrown]);
-        callback(null);
-    },
+    }
+    else {
+      console.log(['keyserver error', response]);
+      callback(null);
+    }
   });
 }

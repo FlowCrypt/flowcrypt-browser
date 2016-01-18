@@ -34,9 +34,8 @@ function new_message_encrypt_and_send(){
   } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
     try {
       if (keys.length > 0) {
-				var my_key = pubkey_cache_get(account);
-				if (my_key !== null) {
-					keys.push(my_key);
+				if (localStorage.master_public_key) {
+					keys.push(localStorage.master_public_key);
 				}
         encrypt(keys, plaintext, function(encrypted) {
           new_message_send_through_gmail_api(to, subject, encrypted);
