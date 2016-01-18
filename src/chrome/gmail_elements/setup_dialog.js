@@ -31,9 +31,6 @@ function create_save_submit_key_pair(email, email_name, passphrase){
   });
 }
 
-// Google Account: Tom James Holub
-// (tomas.holub@gmail.com)
-
 $('a.close').click(function(){
   send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
 });
