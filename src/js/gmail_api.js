@@ -3,13 +3,12 @@
 var requests_waiting_for_auth = {};
 
 function gmail_api_call(account, resource, parameters, callback, fail_on_auth) {
-  chrome.storage.local.get(['token'], function(storage){
-    var token = storage['token'];
+  chrome.storage.local.get(['token'], function(storage) {
     $.ajax({
         url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
         method: 'POST',
         data: JSON.stringify(parameters),
-        headers: {'Authorization': 'Bearer ' + token},
+        headers: {'Authorization': 'Bearer ' + storage['token']},
         crossDomain: true,
         contentType: 'application/json; charset=UTF-8',
         async: true,
