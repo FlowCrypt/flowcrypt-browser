@@ -48,7 +48,6 @@ function save_primary_email_name() {
   // will cycle until page loads and name is accessible
   // todo - create general event on_gmail_finished_loading for similar actions
   setTimeout(function(){
-    $("div.gb_hb div.gb_lb").css('border', '1px solid red');
     var primary_email_name = $("div.gb_hb div.gb_lb").text();
     if(primary_email_name){
       chrome.storage.local.set({primary_email_name: primary_email_name});
