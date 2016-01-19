@@ -30,9 +30,10 @@ function inject_cryptup() {
 }
 
 function inject_essential_elements() {
-  $('body').append('<div class="cryptup_logo"></div>');
-  $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button">@</div>');
+  // $('body').append('<div class="cryptup_logo"></div>');
+  $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button"><i class="fa fa-lock"></i></div>');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail.css') + '" />');
+  $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/font-awesome.min.css') + '" />');
   $('div.new_message_button').click(function(){
     if($('div.new_message').length == 0) {
       $('body').append('<div class="new_message" id="new_message"><iframe scrolling="no" src="' + chrome.extension.getURL('chrome/gmail_elements/new_message.htm') + '"></iframe></div>');

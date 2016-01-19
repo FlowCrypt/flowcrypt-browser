@@ -24,6 +24,10 @@
   },
   "web_accessible_resources": [
     "css/gmail.css",
+    "css/font-awesome.min.css",
+    "fonts/fontawesome-webfont.ttf",
+    "fonts/fontawesome-webfont.woff",
+    "fonts/fontawesome-webfont.woff2",
     "chrome/gmail_elements/new_message.htm",
     "chrome/gmail_elements/reply_message.htm",
     "chrome/gmail_elements/pgp_block.htm",

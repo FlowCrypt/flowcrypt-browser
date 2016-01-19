@@ -17,10 +17,7 @@ function create_save_submit_key_pair(email, email_name, passphrase){
         console.log(respponse);
       }
       chrome.storage.local.set({cryptup_setup_done: true}, function(){
-        $('#step_2_easy_generating').text('Done!');
-        setTimeout(function() {
-          send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
-        }, 2000);
+        send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
       });
     });
   }).catch(function(error) {
