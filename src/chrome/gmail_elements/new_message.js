@@ -5,7 +5,7 @@ function new_message_close(){
 }
 
 function new_message_send_through_gmail_api(to, subject, text){
-  gmail_api_message_send(account, to, subject, text, function(success, response){
+  gmail_api_message_send(account, to, subject, null, text, function(success, response){
     if (success) {
       new_message_close();
     }

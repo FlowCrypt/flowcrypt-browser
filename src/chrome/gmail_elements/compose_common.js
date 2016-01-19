@@ -45,6 +45,8 @@ function encrypt(pubkey_texts, text, callback) {
   console.log(1);
 	var pubkeys = [];
 	for (var i=0; i<pubkey_texts.length; i++) {
+    console.log('armored key follows');
+    console.log(pubkey_texts[i]);
 		pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_texts[i]).keys); // read public key
 	}
   console.log(2);

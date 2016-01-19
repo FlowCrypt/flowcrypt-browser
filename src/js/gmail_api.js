@@ -17,15 +17,15 @@ function gmail_api_call(account, resource, parameters, callback, fail_on_auth) {
         },
         error: function(response) {
           var error_obj = JSON.parse(response.responseText);
-          console.log('gmail api error: ' + response.responseText);
+          // console.log('gmail api error: ' + response.responseText);
           if(typeof error_obj['error'] !== 'undefined' && error_obj['error']['message'] === "Invalid Credentials" && fail_on_auth !== true) {
             var message_id = Math.floor(Math.random() * 100000);
-            console.log('signaling to auth user with message id: ' + message_id);
+            // console.log('signaling to auth user with message id: ' + message_id);
             requests_waiting_for_auth[message_id] = {account: account, resource: resource, parameters: parameters, callback: callback};
             send_signal('gmail_auth_request', 'gmail_api', 'background_process', {message_id: message_id, account: account}); //todo - later check they signed up on the right account
           }
           else{
-            console.log('gmail_api_call: response error evaluated as not fixable, will show alert');
+            // console.log('gmail_api_call: response error evaluated as not fixable, will show alert');
             callback(false, response);
           }
         },
@@ -35,9 +35,6 @@ function gmail_api_call(account, resource, parameters, callback, fail_on_auth) {
 
 function process_postponed_request(signal_data){
   var parameters = requests_waiting_for_auth[signal_data.message_id];
-  // console.log('process_postponed_request');
-  // console.log(signal_data);
-  // console.log(parameters);
   gmail_api_call(parameters.account, parameters.resource, parameters.parameters, parameters.callback, true);
 }
 
@@ -49,7 +46,7 @@ function base64url(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function gmail_api_message_send(account, to, subject, message, send_email_callback) {
+function gmail_api_message_send(account, to, subject, thread_id, message, send_email_callback) {
   require.config({
       baseUrl: '../../js',
       paths: {
@@ -73,6 +70,11 @@ function gmail_api_message_send(account, to, subject, message, send_email_callba
       {key: 'From', value: account},
       {key: 'Subject', value: subject}
     ]).setContent(message).build();
-    gmail_api_call(account, 'messages/send', {'raw': base64url(raw_message)}, send_email_callback);
+    if(thread_id !== null) {
+      gmail_api_call(account, 'messages/send', {raw: base64url(raw_message), threadId: thread_id}, send_email_callback);
+    }
+    else {
+      gmail_api_call(account, 'messages/send', {raw: base64url(raw_message)}, send_email_callback);
+    }
   });
 };

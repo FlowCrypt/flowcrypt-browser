@@ -4,6 +4,15 @@ chrome.storage.local.get(['primary_email'], function(storage){
 	account = storage['primary_email'];
 });
 
+function random_string(length) {
+	var id = "";
+	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	for( var i=0; i < (length || 5); i++ ){
+		id += possible.charAt(Math.floor(Math.random() * possible.length));
+	}
+	return id;
+}
+
 function find_and_replace_pgp_messages(){
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var conversation_has_pgp_message = false;
@@ -80,20 +89,19 @@ function resolve_from_to(my_email, their_email) { //when replaying to email I've
 }
 
 function reply_message_iframe(parent_container_selector, my_email, their_email, subject){
-  var id = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  for( var i=0; i < 5; i++ ){
-    id += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
+	console.log(111);
+	var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
+	console.log(['reply_message_iframe', thread_id]);
   $(parent_container_selector).addClass('remove_borders');
   var emails = resolve_from_to(my_email, their_email);
+	var id = random_string();
   var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + encodeURIComponent(emails['to']) +
-    '&from=' + encodeURIComponent(emails['from']) + '&subject=' +  encodeURIComponent(subject);
+    '&from=' + encodeURIComponent(emails['from']) + '&subject=' +  encodeURIComponent(subject) + '&thread_id=' + encodeURIComponent(thread_id);
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
-function load_if_primary_account(){
-	setTimeout(function(){
+function load_if_primary_account() {
+	setTimeout(function() {
 		if(do_load_libraries === true) {
 			// console.log('replace_gmail_elements.js: setting up');
 			find_and_replace_pgp_messages();
