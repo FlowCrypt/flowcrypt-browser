@@ -1,49 +1,49 @@
 <html>
-	<head>
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="compose_common.css" />
-	</head>
-	<body>
+  <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="compose_common.css" />
+  </head>
+  <body>
 
-		<table id="compose">
-			<tr>
-				<th> <!-- header -->
-					<span class="close_new_message">x</span>
-					<h1>New Message</h1>
-				</th>
-			</tr>
-			<tr>
-				<td class="input"> <!-- to -->
-					<input id="input_to" id=""class="aoT" spellcheck="false" tabindex="1" placeholder="Recipient">
-				</td>
-			</tr>
-			<tr>
-				<td class="input"> <!-- subject -->
-					<input id="input_subject" class="aoT" spellcheck="true" tabindex="1" placeholder="Subject">
-				</td>
-			</tr>
-			<tr>
-				<td> <!-- body -->
-					<div contenteditable id="input_text"></div>
-				</td>
-			</tr>
-			<tr>
-				<td class="bottom"> <!-- bottom -->
-					<div id="send_btn">
-						<i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
-					</div>
-				</td>
-			</tr>
-		</table>
+    <table id="compose">
+      <tr>
+        <th> <!-- header -->
+          <span class="close_new_message">x</span>
+          <h1>New Message</h1>
+        </th>
+      </tr>
+      <tr>
+        <td class="input"> <!-- to -->
+          <input id="input_to" id=""class="aoT" spellcheck="false" tabindex="1" placeholder="Recipient">
+        </td>
+      </tr>
+      <tr>
+        <td class="input"> <!-- subject -->
+          <input id="input_subject" class="aoT" spellcheck="true" tabindex="1" placeholder="Subject">
+        </td>
+      </tr>
+      <tr>
+        <td> <!-- body -->
+          <div contenteditable id="input_text"></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="bottom"> <!-- bottom -->
+          <div id="send_btn">
+            <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
+          </div>
+        </td>
+      </tr>
+    </table>
 
-		<script src="/js/signal.js"></script>
-		<script src="/js/jquery.min.js"></script>
-		<script src="/js/openpgp.min.js"></script>
-		<script src="/js/keyserver.js"></script>
-		<script src="/js/pubkeys.js"></script>
-		<script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
-		<script src="/js/gmail_api.js"></script>
-		<script src="compose_common.js"></script>
-		<script src="new_message.js"></script>
-	</body>
+    <script src="/js/signal.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/openpgp.min.js"></script>
+    <script src="/js/keyserver.js"></script>
+    <script src="/js/pubkeys.js"></script>
+    <script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
+    <script src="/js/gmail_api.js"></script>
+    <script src="compose_common.js"></script>
+    <script src="new_message.js"></script>
+  </body>
 </html>

@@ -1,7 +1,7 @@
 
 
 function new_message_close(){
-	send_signal('close_new_message', 'new_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer});
+  send_signal('close_new_message', 'new_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer});
 }
 
 function new_message_send_through_gmail_api(to, subject, text){
@@ -26,7 +26,7 @@ function new_message_encrypt_and_send(){
       alert('error: key is undefined although should exist');
       return;
     }
-		keys.push(key_to);
+    keys.push(key_to);
   }
   if (to == ''){
     alert('Please add receiving email address.');
@@ -34,9 +34,9 @@ function new_message_encrypt_and_send(){
   } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
     try {
       if (keys.length > 0) {
-				if (localStorage.master_public_key) {
-					keys.push(localStorage.master_public_key);
-				}
+        if (localStorage.master_public_key) {
+          keys.push(localStorage.master_public_key);
+        }
         encrypt(keys, plaintext, function(encrypted) {
           new_message_send_through_gmail_api(to, subject, encrypted);
         });
@@ -50,9 +50,9 @@ function new_message_encrypt_and_send(){
 }
 
 function on_new_message_render(){
-	$("#input_to").blur(compose_render_email_secure_or_insecure);
-	$("#input_to").focus(compose_render_email_neutral);
-	$('#send_btn').click(new_message_encrypt_and_send);
+  $("#input_to").blur(compose_render_email_secure_or_insecure);
+  $("#input_to").focus(compose_render_email_neutral);
+  $('#send_btn').click(new_message_encrypt_and_send);
   $('.close_new_message').click(new_message_close);
 }
 on_new_message_render();

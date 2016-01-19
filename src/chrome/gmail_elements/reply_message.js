@@ -8,7 +8,7 @@ $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forwar
 });
 
 function reply_message_close() {
-	send_signal('close_reply_message', 'reply_message_frame', 'gmail_tab', {gmail_tab_url: document.referrer, frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
+  send_signal('close_reply_message', 'reply_message_frame', 'gmail_tab', {gmail_tab_url: document.referrer, frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
 }
 
 function reply_message_send_through_gmail_api(to, subject, text, thread_id) {
@@ -33,7 +33,7 @@ function new_message_encrypt_and_send(){
       alert('error: key is undefined although should exist');
       return;
     }
-		keys.push(key_to.key);
+    keys.push(key_to.key);
   }
   if (to == ''){
     alert('Please add receiving email address.');
@@ -42,10 +42,10 @@ function new_message_encrypt_and_send(){
     try {
       console.log(['reply', url_params['thread_id']]);
       if (keys.length > 0) {
-				var my_key = pubkey_cache_get(account);
-				if (my_key !== null) {
-					keys.push(my_key.key);
-				}
+        var my_key = pubkey_cache_get(account);
+        if (my_key !== null) {
+          keys.push(my_key.key);
+        }
         encrypt(keys, plaintext, function(encrypted) {
           reply_message_send_through_gmail_api(to, subject, encrypted, url_params['thread_id']);
         });
@@ -59,9 +59,9 @@ function new_message_encrypt_and_send(){
 }
 
 function on_reply_message_render(){
-	$("#input_to").blur(compose_render_email_secure_or_insecure);
-	$("#input_to").focus(compose_render_email_neutral);
-	$('#send_btn').click(new_message_encrypt_and_send);
+  $("#input_to").blur(compose_render_email_secure_or_insecure);
+  $("#input_to").focus(compose_render_email_neutral);
+  $('#send_btn').click(new_message_encrypt_and_send);
   $("#input_to").focus();
   $("#input_to").val(url_params['to']);
   document.getElementById ("input_text").focus();

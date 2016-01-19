@@ -1,16 +1,16 @@
 
 var account = null;
 chrome.storage.local.get(['primary_email'], function(storage){
-	account = storage['primary_email'];
+  account = storage['primary_email'];
 });
 
 function random_string(length) {
-	var id = "";
-	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-	for( var i=0; i < (length || 5); i++ ){
-		id += possible.charAt(Math.floor(Math.random() * possible.length));
-	}
-	return id;
+  var id = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  for( var i=0; i < (length || 5); i++ ){
+    id += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return id;
 }
 
 function find_and_replace_pgp_messages(){
@@ -46,7 +46,7 @@ function find_and_replace_pgp_messages(){
 function strip_tags_from_pgp_message(pgp_block_text){
   // console.log(pgp_block_text);
   var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
-	var space = [/&nbsp;/g];
+  var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
   for (var i=0; i < newline.length; i++){
     pgp_block_text = pgp_block_text.replace(newline[i], '\n');
@@ -54,14 +54,14 @@ function strip_tags_from_pgp_message(pgp_block_text){
   for (var i=0; i < remove.length; i++){
     pgp_block_text = pgp_block_text.replace(remove[i], '');
   }
-	for (var i=0; i < space.length; i++){
+  for (var i=0; i < space.length; i++){
     pgp_block_text = pgp_block_text.replace(space[i], ' ');
   }
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
   var temp = "This is a string.";
   // console.log(pgp_block_text);
-	var double_newlines = pgp_block_text.match(/\n\n/g);
+  var double_newlines = pgp_block_text.match(/\n\n/g);
   if(double_newlines !== null && double_newlines.length > 2){ //a lot of newlines are doubled
     // console.log('removing doubles');
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
@@ -89,31 +89,31 @@ function resolve_from_to(my_email, their_email) { //when replaying to email I've
 }
 
 function reply_message_iframe(parent_container_selector, my_email, their_email, subject){
-	console.log(111);
-	var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
-	console.log(['reply_message_iframe', thread_id]);
+  console.log(111);
+  var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
+  console.log(['reply_message_iframe', thread_id]);
   $(parent_container_selector).addClass('remove_borders');
   var emails = resolve_from_to(my_email, their_email);
-	var id = random_string();
+  var id = random_string();
   var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + encodeURIComponent(emails['to']) +
     '&from=' + encodeURIComponent(emails['from']) + '&subject=' +  encodeURIComponent(subject) + '&thread_id=' + encodeURIComponent(thread_id);
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
 function load_if_primary_account() {
-	setTimeout(function() {
-		if(do_load_libraries === true) {
-			// console.log('replace_gmail_elements.js: setting up');
-			find_and_replace_pgp_messages();
-			setInterval(find_and_replace_pgp_messages, 1000);
-		}
-		else if (do_load_libraries === false) {
-			// console.log('replace_gmail_elements.js: not setting up bacause this is not primary account');
-		}
-		else {
-			// console.log('replace_gmail_elements.js: waiting to resolve primary account');
-			load_if_primary_account();
-		}
-	}, 200);
+  setTimeout(function() {
+    if(do_load_libraries === true) {
+      // console.log('replace_gmail_elements.js: setting up');
+      find_and_replace_pgp_messages();
+      setInterval(find_and_replace_pgp_messages, 1000);
+    }
+    else if (do_load_libraries === false) {
+      // console.log('replace_gmail_elements.js: not setting up bacause this is not primary account');
+    }
+    else {
+      // console.log('replace_gmail_elements.js: waiting to resolve primary account');
+      load_if_primary_account();
+    }
+  }, 200);
 }
 load_if_primary_account();

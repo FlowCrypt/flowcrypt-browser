@@ -1,45 +1,45 @@
 <html>
-	<head>
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="compose_common.css" />
-	</head>
-	<body>
+  <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="compose_common.css" />
+  </head>
+  <body>
 
     <div id="reply_message_prompt">
-			<p id="reply_links">Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#" id="a_forward">Forward</a></p>
-		</div>
+      <p id="reply_links">Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#" id="a_forward">Forward</a></p>
+    </div>
 
-		<div id="reply_message_table_container">
-			<table id="compose">
-				<tr>
-					<td class="input"> <!-- to -->
-						<input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient" style="border-top: ">
-					</td>
-				</tr>
-				<tr>
-					<td> <!-- body -->
-						<div contenteditable id="input_text"></div>
-					</td>
-				</tr>
-				<tr>
-					<td class="bottom"> <!-- bottom -->
-						<div id="send_btn">
-							<i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
-						</div>
-					</td>
-				</tr>
-			</table>
-		</div>
+    <div id="reply_message_table_container">
+      <table id="compose">
+        <tr>
+          <td class="input"> <!-- to -->
+            <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient" style="border-top: ">
+          </td>
+        </tr>
+        <tr>
+          <td> <!-- body -->
+            <div contenteditable id="input_text"></div>
+          </td>
+        </tr>
+        <tr>
+          <td class="bottom"> <!-- bottom -->
+            <div id="send_btn">
+              <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
 
-		<script src="/js/signal.js"></script>
-		<script src="/js/jquery.min.js"></script>
-		<script src="/js/openpgp.min.js"></script>
-		<script src="/js/keyserver.js"></script>
-		<script src="/js/pubkeys.js"></script>
-		<script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
-		<script src="/js/gmail_api.js"></script>
-		<script src="compose_common.js"></script>
-		<script src="reply_message.js"></script>
+    <script src="/js/signal.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/openpgp.min.js"></script>
+    <script src="/js/keyserver.js"></script>
+    <script src="/js/pubkeys.js"></script>
+    <script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
+    <script src="/js/gmail_api.js"></script>
+    <script src="compose_common.js"></script>
+    <script src="reply_message.js"></script>
 
-	</body>
+  </body>
 </html>
