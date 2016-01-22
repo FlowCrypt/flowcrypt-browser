@@ -35,12 +35,12 @@ function find_and_replace_pgp_messages(){
     var their_email = $('h3.iw span').last().attr('email').trim();
     var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')";
     var subject = $('h2.hP').text();
-    // if(/^Re:/.test(subject) === false) {
-    //   subject = 'Re:' + subject;
-    // }
-    // console.log([my_email, their_email, subject, reply_container_selector]);
     $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email, subject));
   }
+}
+
+function reinsert_reply_box() {
+  console.log('inside reinsert_reply_box');
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){

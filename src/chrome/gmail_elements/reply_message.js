@@ -8,13 +8,29 @@ $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forwar
 });
 
 function reply_message_close() {
-  send_signal('close_reply_message', 'reply_message_frame', 'gmail_tab', {gmail_tab_url: document.referrer, frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
+  send_signal('close_reply_message', 'reply_message_frame', 'gmail_tab', {frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
+}
+
+function reply_message_reinsert_reply_box() {
+  send_signal('reinsert_reply_box', 'reply_message_frame', 'gmail_tab', {});
+}
+
+function reply_message_render_success() {
+  $('#reply_message_table_container').css('display', 'none');
+  $('#reply_message_successful_container div.replied_from').text(url_params['from']);
+  $('#reply_message_successful_container div.replied_to span').text(url_params['to']);
+  $('#reply_message_successful_container div.replied_body').html($('#input_text').html());
+  var t = new Date();
+  var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
+  $('#reply_message_successful_container div.replied_time').text(time);
+  $('#reply_message_successful_container').css('display', 'block');
 }
 
 function reply_message_send_through_gmail_api(to, subject, text, thread_id) {
   gmail_api_message_send(account, to, subject, thread_id, text, function(success, response){
     if (success) {
-      reply_message_close();
+      reply_message_render_success();
+      reply_message_reinsert_reply_box();
     }
     else {
       alert('error sending message, check log');

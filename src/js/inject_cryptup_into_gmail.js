@@ -12,10 +12,10 @@ function inject_cryptup() {
     },
     close_reply_message: function(data, sender) {
       $('iframe#' + data.frame_id).remove();
-      // setTimeout(function(){
-      //   window.location = window.location.href.replace('#i', '').replace(data.thread_id, '');
-      //   window.location = window.location.href + '/' + data.thread_id;
-      // }, 500);
+    },
+    reinsert_reply_box: function(data, sender) {
+      console.log('about to reinsert_reply_box');
+      reinsert_reply_box();
     },
     pgp_block_iframe_set_css: function(data, sender) {
       $('iframe#' + sender).css(data);

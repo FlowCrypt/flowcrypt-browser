@@ -2,11 +2,15 @@
 /* body */
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; }
 html {  padding:0px; margin: 0px; }
+table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0px;
+  -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
+
+.pgp_secure { border:none; border-left: 3px dashed green; padding-left:10px; min-height: 25px; }
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; background-color: #404040; text-align: left; margin: 0px;}
-table#compose td.input { height: 42px; }
+table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose th h1 { display: inline-block; margin: none; padding: none; font-size: 12.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
 table#compose th span.close_new_message { display: inline-block; position: absolute; right: 0px; margin-right: 6px; margin-top: 2px; color: white; font-weight: bold;
   opacity: .6; height: 16px; width: 16px; text-align: center; padding: 5px; }
@@ -34,6 +38,14 @@ div#reply_message_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px
 a#a_reply, a#a_reply_all, a#a_forward {}
 p#reply_links { margin: 0px; }
 div#reply_message_table_container table#compose { border-top: 1px solid #cfcfcf; width: 100%; }
+div#reply_message_successful_container { width: 100%; display: none; }
+div#reply_message_successful_container > table { width: 100%; margin: 0px; padding: 0px; }
+div#reply_message_successful_container > table td { vertical-align: top; }
+div#reply_message_successful_container > table tr.first { margin-bottom: 20px; }
+div#reply_message_successful_container > table td.right { text-align: right; }
+div#reply_message_successful_container > table div.replied_from { font-weight: bold; margin-bottom: 4px; }
+div#reply_message_successful_container > table div.replied_to { color: #777; margin-bottom: 10px; }
+div#reply_message_successful_container > table div.replied_time { }
 
 /* setup dialog */
 body#setup_dialog { background: white; text-align: center; font-size: 12.8px; }
