@@ -35,12 +35,21 @@ function find_and_replace_pgp_messages(){
     var their_email = $('h3.iw span').last().attr('email').trim();
     var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')";
     var subject = $('h2.hP').text();
-    $(reply_container_selector).html(reply_message_iframe(reply_container_selector, my_email, their_email, subject));
+    $(reply_container_selector).addClass('remove_borders');
+    $(reply_container_selector).html(reply_message_iframe(my_email, their_email, subject));
   }
 }
 
-function reinsert_reply_box() {
-  console.log('inside reinsert_reply_box');
+function reinsert_reply_box(last_message_frame_id, last_message_frame_height, my_email, their_email) {
+  console.log(last_message_frame_id);
+  console.log(last_message_frame_height);
+  console.log(my_email);
+  console.log(their_email);
+  $('#' + last_message_frame_id).css('height', last_message_frame_height + 'px');
+  var subject = $('h2.hP').text();
+  var secure_reply_box = reply_message_iframe(my_email, their_email, subject);
+  $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads');
+  $('div.nH.hx.aHo').append('<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>');
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
@@ -88,11 +97,8 @@ function resolve_from_to(my_email, their_email) { //when replaying to email I've
   return {from: their_email, to: my_email}
 }
 
-function reply_message_iframe(parent_container_selector, my_email, their_email, subject){
-  console.log(111);
+function reply_message_iframe(my_email, their_email, subject){
   var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
-  console.log(['reply_message_iframe', thread_id]);
-  $(parent_container_selector).addClass('remove_borders');
   var emails = resolve_from_to(my_email, their_email);
   var id = random_string();
   var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') + '?frame_id=frame_' + id + '&to=' + encodeURIComponent(emails['to']) +

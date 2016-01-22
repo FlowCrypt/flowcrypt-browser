@@ -12,7 +12,13 @@ function reply_message_close() {
 }
 
 function reply_message_reinsert_reply_box() {
-  send_signal('reinsert_reply_box', 'reply_message_frame', 'gmail_tab', {});
+  var signal_data = {
+    last_message_frame_height: $('#reply_message_successful_container').height(),
+    last_message_frame_id: url_params['frame_id'],
+    my_email: url_params['from'],
+    their_email: url_params['to']
+  };
+  send_signal('reinsert_reply_box', 'reply_message_frame', 'gmail_tab', signal_data);
 }
 
 function reply_message_render_success() {
