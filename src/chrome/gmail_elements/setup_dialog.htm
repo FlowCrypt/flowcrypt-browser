@@ -40,8 +40,12 @@
 
     <div id="step_2_manual">
       <textarea id="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
-      <input id="input_passphrase" type="password" placeholder="Private Key Passphrase" />
-      <div id="btn_save_private">SAVE</div>
+      <div class="line_container">
+        <input id="input_submit_key" type="checkbox" /> <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync to other keyservers)</label>
+      </div>
+      <div class="line_container">
+        <input id="input_passphrase" type="password" placeholder="Private Key Passphrase" /><div id="btn_save_private">SAVE</div>
+      </div>
     </div>
 
     <script src="/js/signal.js"></script>
