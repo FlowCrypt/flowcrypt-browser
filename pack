@@ -1,0 +1,2 @@
+#!/bin/sh
+zip -r cryptup-chrome.zip src/*
