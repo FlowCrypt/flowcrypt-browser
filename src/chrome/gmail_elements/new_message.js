@@ -29,7 +29,7 @@ function new_message_encrypt_and_send(){
       alert('error: key is undefined although should exist');
       return;
     }
-    keys.push(key_to);
+    keys.push(key_to.key);
   }
   if (to == ''){
     alert('Please add receiving email address.');
