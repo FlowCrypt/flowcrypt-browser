@@ -64,10 +64,7 @@ function new_message_encrypt_and_send(){
     try {
       console.log(['reply', url_params['thread_id']]);
       if (keys.length > 0) {
-        var my_key = pubkey_cache_get(account);
-        if (my_key !== null) {
-          keys.push(my_key.key);
-        }
+        keys.push(localStorage.master_public_key);
         encrypt(keys, plaintext, function(encrypted) {
           reply_message_send_through_gmail_api(to, subject, encrypted, url_params['thread_id']);
         });

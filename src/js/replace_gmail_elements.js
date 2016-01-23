@@ -53,7 +53,7 @@ function reinsert_reply_box(last_message_frame_id, last_message_frame_height, my
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
-  // console.log(pgp_block_text);
+  console.log(pgp_block_text);
   var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
   var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
@@ -69,12 +69,12 @@ function strip_tags_from_pgp_message(pgp_block_text){
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
   var temp = "This is a string.";
-  // console.log(pgp_block_text);
+  console.log(pgp_block_text);
   var double_newlines = pgp_block_text.match(/\n\n/g);
   if(double_newlines !== null && double_newlines.length > 2){ //a lot of newlines are doubled
-    // console.log('removing doubles');
+    console.log('removing doubles');
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    // console.log(pgp_block_text);
+    console.log(pgp_block_text);
   }
   return pgp_block_text;
 }
