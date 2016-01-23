@@ -41,19 +41,22 @@ function find_and_replace_pgp_messages(){
 }
 
 function reinsert_reply_box(last_message_frame_id, last_message_frame_height, my_email, their_email) {
-  console.log(last_message_frame_id);
-  console.log(last_message_frame_height);
-  console.log(my_email);
-  console.log(their_email);
+  // console.log(last_message_frame_id);
+  // console.log(last_message_frame_height);
+  // console.log(my_email);
+  // console.log(their_email);
   $('#' + last_message_frame_id).css('height', last_message_frame_height + 'px');
   var subject = $('h2.hP').text();
   var secure_reply_box = reply_message_iframe(my_email, their_email, subject);
-  $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads');
-  $('div.nH.hx.aHo').append('<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>');
+  // console.log(secure_reply_box);
+  var wrapped_secure_reply_box = '<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>';
+  // console.log(wrapped_secure_reply_box);
+  $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
+  // $('div.nH.hx.aHo').append();
 }
 
 function strip_tags_from_pgp_message(pgp_block_text){
-  console.log(pgp_block_text);
+  // console.log(pgp_block_text);
   var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
   var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
@@ -69,12 +72,12 @@ function strip_tags_from_pgp_message(pgp_block_text){
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
   var temp = "This is a string.";
-  console.log(pgp_block_text);
+  // console.log(pgp_block_text);
   var double_newlines = pgp_block_text.match(/\n\n/g);
   if(double_newlines !== null && double_newlines.length > 2){ //a lot of newlines are doubled
-    console.log('removing doubles');
+    // console.log('removing doubles');
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    console.log(pgp_block_text);
+    // console.log(pgp_block_text);
   }
   return pgp_block_text;
 }

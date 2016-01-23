@@ -5,11 +5,11 @@ function new_message_close(){
 }
 
 function new_message_send_through_gmail_api(to, subject, text){
-  console.log('new_message_send_through_gmail_api inside');
+  // console.log('new_message_send_through_gmail_api inside');
   gmail_api_message_send(account, to, subject, null, text, function(success, response){
-    console.log('gmail_api_message_send callback inside');
+    // console.log('gmail_api_message_send callback inside');
     if (success) {
-      console.log('gmail_api_message_send callback success');
+      // console.log('gmail_api_message_send callback success');
       new_message_close();
     }
     else {
@@ -41,7 +41,7 @@ function new_message_encrypt_and_send(){
           keys.push(localStorage.master_public_key);
         }
         encrypt(keys, plaintext, function(encrypted) {
-          console.log('inside encrypt() callback');
+          // console.log('inside encrypt() callback');
           new_message_send_through_gmail_api(to, subject, encrypted);
         });
       } else {

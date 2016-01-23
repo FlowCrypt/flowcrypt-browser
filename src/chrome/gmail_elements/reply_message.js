@@ -62,7 +62,7 @@ function new_message_encrypt_and_send(){
     return;
   } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
     try {
-      console.log(['reply', url_params['thread_id']]);
+      // console.log(['reply', url_params['thread_id']]);
       if (keys.length > 0) {
         keys.push(localStorage.master_public_key);
         encrypt(keys, plaintext, function(encrypted) {
