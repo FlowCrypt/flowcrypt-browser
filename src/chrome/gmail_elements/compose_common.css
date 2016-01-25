@@ -117,13 +117,13 @@ body#setup_dialog h1 { font-size: 28px; font-weight:300; margin-bottom: 40px; ma
 body#setup_dialog div.setup_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap;
   margin-right: 16px; min-width: 56px; height: 27px; line-height: 27px; outline: 0; padding: 0 8px; margin: 6px 2px; vertical-align: middle; min-width: 200px;}
-body#setup_dialog div.one_click { background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447) }
-body#setup_dialog div.manual { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top,#C9C9C9,#BFBFBF) }
+body#setup_dialog div.green { background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447) }
+body#setup_dialog div.gray { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top,#C9C9C9,#BFBFBF) }
 body#setup_dialog hr { border: none; border-top: 1px solid #ddd; width: 480px; padding: 0px; margin: 0px auto; margin-top: 10px; }
 body#setup_dialog table { width:540px; margin:0px; padding: 0px; margin: 0px auto;  margin-top: 30px; height: 270px; border-collapse: collapse; }
 body#setup_dialog table td { width:50%; margin:0px; padding: 20px; vertical-align: top; text-align: center;}
 body#setup_dialog p { font-weight: 100; font-size: 14px; }
-body#setup_dialog table a { color: #aaa; text-decoration: none; font-size: 12.8px; }
+body#setup_dialog table a.close { color: #aaa; text-decoration: none; font-size: 12.8px; }
 body#setup_dialog a.cryptup_logo { background-image: url('/img/cryptup-logo-146-30-dark.png'); background-size: 100%; display: inline-block; width: 72px; height: 15px; opacity: 0.65; }
 body#setup_dialog div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white; text-align: center; font-size: 16px; font-weight: normal;
   padding-left: 375px; padding-top: 164px; color: #666; }
@@ -139,3 +139,8 @@ body#setup_dialog div#step_2_manual div#btn_save_private {  text-transform: uppe
   min-width: 56px; height: 27px; line-height: 27px; outline: 0; padding: 0 8px; vertical-align: middle; min-width: 100px;
   background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447) }
 body#setup_dialog div#step_2_manual div#btn_save_private i { margin-top: 7px; }
+.hover_underline { text-decoration: none; }
+.hover_underline:hover { text-decoration: underline; cursor: pointer; }
+body#setup_dialog #step_0_found_key { display: none; }
+body#setup_dialog #step_1_easy_or_manual { display: none; }
+body#setup_dialog #loading { margin-top: 150px; }

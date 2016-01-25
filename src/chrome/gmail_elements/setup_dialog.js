@@ -1,4 +1,20 @@
 
+function setup_dialog_init() {
+  chrome.storage.local.get(['primary_email', 'primary_email_name'], function(storage) {
+    get_pubkey(storage['primary_email'], function(pubkey) {
+      if (pubkey !== null) {
+        $('#loading').css('display', 'none');
+        $('#step_0_found_key').css('display', 'block');
+        $('#existing_pgp_email').text(storage['primary_email']);
+      }
+      else {
+        $('#loading').css('display', 'none');
+        $('#step_1_easy_or_manual').css('display', 'table');
+      }
+    })
+  });
+}
+
 function setup_dialog_set_done_and_close() {
   chrome.storage.local.set({cryptup_setup_done: true}, function(){
     send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
@@ -39,7 +55,8 @@ $('a.close').click(function(){
   send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
 });
 
-$('div.setup_btn.one_click').click(function(){
+$('.one_click').click(function(){
+  $('#step_0_found_key').css('display', 'none');
   $('#step_1_easy_or_manual').css('display', 'none');
   $('#step_2_easy_generating').css('display', 'block');
   chrome.storage.local.get(['primary_email', 'primary_email_name'], function(storage) {
@@ -47,7 +64,8 @@ $('div.setup_btn.one_click').click(function(){
   });
 });
 
-$('div.setup_btn.manual').click(function(){
+$('.setup_btn.manual').click(function(){
+  $('#step_0_found_key').css('display', 'none');
   $('#step_1_easy_or_manual').css('display', 'none');
   $('#step_2_manual').css('display', 'block');
 });
@@ -66,3 +84,5 @@ $('div#btn_save_private').click(function(){
     setup_dialog_set_done_and_close();
   }
 });
+
+setup_dialog_init();
