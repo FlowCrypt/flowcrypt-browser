@@ -1,5 +1,7 @@
 
 function setup_dialog_init() {
+  //todo - "skip" next to loading dialog - can take long on slow connection
+  //todo - handle network failure on init. loading
   chrome.storage.local.get(['primary_email', 'primary_email_name'], function(storage) {
     get_pubkey(storage['primary_email'], function(pubkey) {
       if (pubkey !== null) {

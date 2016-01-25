@@ -37,21 +37,27 @@ function pubkey_cache_get(email){
   return null;
 }
 
-function get_pubkey(email, callback) {
+function get_pubkey(email, callback, ignore_cached) {
   email = email.trim();
-  search_email = fake_db_get_primary_email(email);
-  keyserver_keys_find(search_email, function(success, response){
-    if(success) {
-      if(response.pubkey === null){
+  var search_email = fake_db_get_primary_email(email);
+  if(ignore_cached !== true) {
+    var cached = pubkey_cache_get(search_email);
+    if(cached !== null) {
+      callback(cached);
+    }
+  }
+  else {
+    keyserver_keys_find(search_email, function(success, response){
+      if(success) {
+        if(response.pubkey !== null) {
+          pubkey_cache_add(email, response.pubkey);
+        }
+        callback(response.pubkey);  // can be null
+      }
+      else {
+        console.log(['keyserver error', response]);
         callback(null);
       }
-      else{
-        callback({'name': null, 'key': response.pubkey, 'email': email});
-      }
-    }
-    else {
-      console.log(['keyserver error', response]);
-      callback(null);
-    }
-  });
+    });
+  }
 }

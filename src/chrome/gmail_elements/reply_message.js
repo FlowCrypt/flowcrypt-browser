@@ -48,33 +48,9 @@ function new_message_encrypt_and_send(){
   var to = $('#input_to').val();
   var subject = url_params['subject'];
   var plaintext = $('#input_text').html();
-  var keys = [];
-  if($('#send_btn.button_secure').length > 0) {
-    var key_to = pubkey_cache_get(to);
-    if(key_to === null){
-      alert('error: key is undefined although should exist');
-      return;
-    }
-    keys.push(key_to.key);
-  }
-  if (to == ''){
-    alert('Please add receiving email address.');
-    return;
-  } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
-    try {
-      // console.log(['reply', url_params['thread_id']]);
-      if (keys.length > 0) {
-        keys.push(localStorage.master_public_key);
-        encrypt(keys, plaintext, function(encrypted) {
-          reply_message_send_through_gmail_api(to, subject, encrypted, url_params['thread_id']);
-        });
-      } else {
-        reply_message_send_through_gmail_api(to, subject, plaintext, url_params['thread_id']);
-      }
-    } catch(err) {
-      alert(err);
-    }
-  }
+  compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
+    reply_message_send_through_gmail_api(to, subject, message_text_to_send, url_params['thread_id']);
+  });
 }
 
 function on_reply_message_render(){

@@ -49,31 +49,57 @@ function compose_render_pubkey_result(email, pubkey_data) {
 
 function encrypt(pubkey_texts, text, callback) {
   var pubkeys = [];
+
   for (var i=0; i<pubkey_texts.length; i++) {
     pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_texts[i]).keys); // read public key
   }
   openpgp.encryptMessage(pubkeys, text).then(callback, callback);
 }
 
+function compose_encrypt_and_send(to, subject, plaintext, send_email_callback) {
+  var pubkeys = [];
+  get_pubkey(to, function(pubkey_to){
+    if($('#send_btn.button_secure').length > 0) {
+      if(pubkey_to === null){
+        alert('error: key is undefined although should exist');
+        return;
+      }
+      pubkeys.push(pubkey_to);
+    }
+    if (to == ''){
+      alert('Please add receiving email address.');
+      return;
+    } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
+      //todo - tailor for replying w/o subject
+      //todo - change prompts to yes/no
+      try {
+        if (pubkeys.length > 0) {
+          if (localStorage.master_public_key) {  // todo: prompt if not
+            pubkeys.push(localStorage.master_public_key);
+          }
+          encrypt(pubkeys, plaintext, function(encrypted) {
+            send_email_callback(encrypted);
+          });
+        } else {
+          send_email_callback(plaintext);
+        }
+      } catch(err) {
+        alert(err);
+      }
+    }
+  });
+}
 
 function compose_render_email_secure_or_insecure(){
   var email = $(this).val();
   if (is_email_valid(email)) {
-    var pubkey = pubkey_cache_get(email);
-    if (pubkey === null) {
-      $("#send_btn i").addClass("fa-spinner");
-      $("#send_btn i").addClass("fa-pulse");
-      $("#send_btn span").text("");
-      $("#send_btn_note").text("Checking email address");
-      get_pubkey(email, function(pubkey_data) {
-        if(pubkey_data !== null) {
-          pubkey_cache_add(email, pubkey_data);
-        }
-        compose_render_pubkey_result(email, pubkey_data);
-      });
-    } else {
+    $("#send_btn i").addClass("fa-spinner");
+    $("#send_btn i").addClass("fa-pulse");
+    $("#send_btn span").text("");
+    $("#send_btn_note").text("Checking email address");
+    get_pubkey(email, function(pubkey) {
       compose_render_pubkey_result(email, pubkey);
-    }
+    });
   } else {
     compose_render_email_neutral();
   }
