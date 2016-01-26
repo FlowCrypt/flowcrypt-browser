@@ -1,7 +1,25 @@
 
 /* buttons */
 div.T-I.T-I-KE { padding:0px; }
-div.new_message_button { width: 0px; padding-right: 0px; padding-left: 0px; min-width: 30px; position: absolute; top: 117px; left: 146px; z-index: 1; }
+div.new_message_button {
+  width: 45px;
+  padding-right: 0px;
+  padding-left: 0px;
+  min-width: 30px;
+  position: absolute; top: 117px; left: 146px; z-index: 1;
+  background: #009900;
+  color: white;
+  font-size: 20px;
+  -webkit-transition: .4s;
+  transition: .4s;
+  opacity: .8;
+ }
+
+ div.new_message_button:hover {
+  background: #009900;
+  color: #f3f3f3;
+  opacity: 1;
+ }
 
 /* elements */
 div.new_message { position: absolute; bottom: 0px; width: 541px; right: 30px; padding: 0px; z-index: 1; height: 605px; box-shadow: rgba(0,0,0,0.2) 0 2px 6px; }
