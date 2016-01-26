@@ -2,14 +2,14 @@
 /* buttons */
 div.T-I.T-I-KE { padding:0px; }
 div.new_message_button {
-  width: 45px;
+  width: 34px;
   padding-right: 0px;
   padding-left: 0px;
   min-width: 30px;
   position: absolute; top: 117px; left: 146px; z-index: 1;
   background: #009900;
   color: white;
-  font-size: 20px;
+  font-size: 15px;
   -webkit-transition: .4s;
   transition: .4s;
   opacity: .8;
