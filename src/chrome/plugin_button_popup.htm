@@ -3,11 +3,17 @@
   <head>
     <title>CryptUp popup</title>
     <link rel="stylesheet" href="/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="button_popup.css" />
   </head>
-  <body style="width: 300px;">
+  <body style="width: 500px;">
     <img src="/img/cryptup-logo-146-30-dark.png" />
-    <script src="plugin_button_popup.js"></script><br/><br/><br/><h3>Developers</h3>
-    <button id="btn_flush_pubkey_cache">Flush pubkey cache</button>
+    <script src="plugin_button_popup.js"></script><br/><br/><br/><h3 style="font-weight: normal;">Developer tools</h3>
+    <button id="btn_show_private_key">Show private key</button> <button id="btn_show_public_key">Show public key</button><br/>
+    <!-- <button id="btn_back_up_private_key">Back up private key</button><br/> -->
+    <button id="btn_flush_pubkey_cache">Flush pubkey cache</button><br/>
+
+    <br/><br/>
+    <pre id="key_container"></pre>
 
     <script src="../js/jquery.min.js"></script>
     <script src="plugin_button_popup.js"></script>
