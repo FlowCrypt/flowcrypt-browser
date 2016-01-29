@@ -1,18 +1,25 @@
 
 /* buttons */
-div.T-I.T-I-KE { padding:0px; }
+div.T-I.T-I-KE { padding:5px 10px; cursor: pointer;}
+
+div.T-I.T-I-KE .fa-lock {
+  font-size: 23px;
+  margin-top: 2px;
+}
+
 div.new_message_button {
   width: 34px;
   padding-right: 0px;
   padding-left: 0px;
   min-width: 30px;
-  position: absolute; top: 117px; left: 146px; z-index: 1;
-  background: #009900;
+  position: absolute; top: 117px; left: 155px; z-index: 1;
+  background: #228B22;
   color: white;
   font-size: 15px;
   -webkit-transition: .4s;
   transition: .4s;
-  opacity: .8;
+  opacity: 1;
+  cursor: pointer;
  }
 
  div.new_message_button:hover {
