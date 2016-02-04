@@ -14,29 +14,6 @@ function fake_db_get_primary_email(email) {
   return email;
 }
 
-function pubkey_cache_add(email, pubkey){
-  if(typeof localStorage.pubkey_cache === 'undefined') {
-    var storage = {};
-  }
-  else {
-    var storage = JSON.parse(localStorage.pubkey_cache);
-  }
-  storage[email] = pubkey;
-  localStorage.pubkey_cache = JSON.stringify(storage);
-}
-
-function pubkey_cache_get(email){
-  if(typeof localStorage.pubkey_cache === 'undefined') {
-    localStorage.pubkey_cache = JSON.stringify({});
-    return null;
-  }
-  var storage = JSON.parse(localStorage.pubkey_cache);
-  if(typeof storage[email] !== 'undefined') {
-    return storage[email];
-  }
-  return null;
-}
-
 function get_pubkey(email, callback, ignore_cached) {
   email = email.trim();
   var search_email = fake_db_get_primary_email(email);

@@ -14,7 +14,7 @@ function gmail_auth(signal_data, gmail_auth_request_sender) {
   chrome.identity.launchWebAuthFlow({'url': url, 'interactive': true}, function(redirect_uri) {
     var access_token = redirect_uri.split('access_token=')[1].split('&token_type=')[0];
     // console.log('logged in with access token: ' + access_token);
-    chrome.storage.local.set({'token': access_token}, function(){
+    account_storage_set(signal_data.account, 'token', access_token, function(){
       console.log('saved token, sending signal back to: ' + gmail_auth_request_sender)
       send_signal('gmail_auth_response', 'background_process', gmail_auth_request_sender, {message_id: signal_data.message_id});
     });

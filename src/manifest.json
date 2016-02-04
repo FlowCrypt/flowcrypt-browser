@@ -12,6 +12,7 @@
     {
       "matches": ["http://mail.google.com/*", "https://mail.google.com/*"],
       "js": [
+        "js/storage.js",
         "js/jquery.min.js",
         "js/signal.js",
         "js/inject_cryptup_into_gmail.js",
@@ -20,7 +21,7 @@
     }
   ],
   "background": {
-    "scripts": ["js/signal.js", "js/background_process.js"]
+    "scripts": ["js/storage.js", "js/signal.js", "js/background_process.js"]
   },
   "web_accessible_resources": [
     "css/gmail.css",
