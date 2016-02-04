@@ -45,6 +45,9 @@ function get_pubkey(email, callback, ignore_cached) {
     if(cached !== null) {
       callback(cached);
     }
+    else {
+      get_pubkey(email, callback, true);
+    }
   }
   else {
     keyserver_keys_find(search_email, function(success, response){
