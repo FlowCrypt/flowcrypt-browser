@@ -11,14 +11,6 @@ function get_url_params(expected_keys){
   return url_data;
 }
 
-var account = null;
-chrome.storage.local.get(['primary_email'], function(storage){
-  account = storage['primary_email'];
-});
-function get_account() { //might not work if called right after loading the library, needs chrome.storage.local.get to finishs which is async. Not ideal.
-  return account;
-}
-
 function is_email_valid(email) {
   return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
 }
