@@ -4,33 +4,45 @@ var requests_waiting_for_auth = {};
 
 function gmail_api_call(account, resource, parameters, callback, fail_on_auth) {
   account_storage_get(account, 'token', function(token){
-    $.ajax({
-        url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
-        method: 'POST',
-        data: JSON.stringify(parameters),
-        headers: {'Authorization': 'Bearer ' + token},
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        success: function(response) {
-          callback(true, response);
-        },
-        error: function(response) {
-          var error_obj = JSON.parse(response.responseText);
-          // console.log('gmail api error: ' + response.responseText);
-          if(typeof error_obj['error'] !== 'undefined' && error_obj['error']['message'] === "Invalid Credentials" && fail_on_auth !== true) {
-            var message_id = Math.floor(Math.random() * 100000);
-            // console.log('signaling to auth user with message id: ' + message_id);
-            requests_waiting_for_auth[message_id] = {account: account, resource: resource, parameters: parameters, callback: callback};
-            send_signal('gmail_auth_request', 'gmail_api', 'background_process', {message_id: message_id, account: account}); //todo - later check they signed up on the right account
-          }
-          else{
-            // console.log('gmail_api_call: response error evaluated as not fixable, will show alert');
-            callback(false, response);
-          }
-        },
-    });
+    if(typeof token !== 'undefined') { // have a valid gmail_api oauth token
+      $.ajax({
+          url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
+          method: 'POST',
+          data: JSON.stringify(parameters),
+          headers: {'Authorization': 'Bearer ' + token},
+          crossDomain: true,
+          contentType: 'application/json; charset=UTF-8',
+          async: true,
+          success: function(response) {
+            callback(true, response);
+          },
+          error: function(response) {
+            var error_obj = JSON.parse(response.responseText);
+            if(typeof error_obj['error'] !== 'undefined' && error_obj['error']['message'] === "Invalid Credentials") {
+              gmail_api_handle_auth_error(account, resource, parameters, callback, fail_on_auth, response);
+            }
+            else {
+              callback(false, response);
+            }
+          },
+      });
+    }
+    else { // no valid gmail_api oauth token
+      gmail_api_handle_auth_error(account, resource, parameters, callback, fail_on_auth, null);
+    }
   });
+}
+
+function gmail_api_handle_auth_error(account, resource, parameters, callback, fail_on_auth, error_response) {
+  // send signal to initiate auth or call supplied callback
+  if(fail_on_auth !== true) {
+    var message_id = Math.floor(Math.random() * 100000);
+    requests_waiting_for_auth[message_id] = {account: account, resource: resource, parameters: parameters, callback: callback};
+    send_signal('gmail_auth_request', 'gmail_api', 'background_process', {message_id: message_id, account: account}); //todo - later check they signed up on the right account
+  }
+  else{
+    callback(false, error_response);
+  }
 }
 
 function process_postponed_request(signal_data){
