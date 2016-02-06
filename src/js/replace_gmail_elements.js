@@ -46,25 +46,39 @@ function reinsert_reply_box(account_email, signal_scope, last_message_frame_id, 
 }
 
 function strip_tags_from_pgp_message(pgp_block_text) {
+  // console.log('pgp_block_1');
+  // console.log(pgp_block_text);
   var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
   var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
   for(var i = 0; i < newline.length; i++) {
     pgp_block_text = pgp_block_text.replace(newline[i], '\n');
   }
+  // console.log('pgp_block_2');
+  // console.log(pgp_block_text);
   for(var i = 0; i < remove.length; i++) {
     pgp_block_text = pgp_block_text.replace(remove[i], '');
   }
+  // console.log('pgp_block_3');
+  // console.log(pgp_block_text);
   for(var i = 0; i < space.length; i++) {
     pgp_block_text = pgp_block_text.replace(space[i], ' ');
   }
+  // console.log('pgp_block_4');
+  // console.log(pgp_block_text);
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
+  // console.log('pgp_block_5');
+  // console.log(pgp_block_text);
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
-  var temp = "This is a string.";
+  // console.log('pgp_block_6');
+  // console.log(pgp_block_text);
   var double_newlines = pgp_block_text.match(/\n\n/g);
   if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
+    // console.log('pgp_block_removed_doubles');
   }
+  // console.log('pgp_block_final');
+  // console.log(pgp_block_text);
   return pgp_block_text;
 }
 

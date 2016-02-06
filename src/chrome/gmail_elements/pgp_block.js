@@ -31,12 +31,16 @@ if(typeof localStorage.master_private_key !== 'undefined') {
   if(typeof localStorage.master_passphrase !== 'undefined' && sessionStorage.master_passphrase !== '') {
     private_key.decrypt(localStorage.master_passphrase);
   }
-  var pgp_message = openpgp.message.readArmored(url_params['message']);
-  openpgp.decryptMessage(private_key, pgp_message).then(function(plaintext) {
-    set_frame_content_and_resize(format_plaintext(plaintext));
-  }).catch(function(error) {
-    set_frame_content_and_resize('<div style="color:red">[error decrypting message]</div><br>' + url_params['message'].replace(/\r/g, '<br>'));
-  });
+  try {
+    var pgp_message = openpgp.message.readArmored(url_params['message']);
+    openpgp.decryptMessage(private_key, pgp_message).then(function(plaintext) {
+      set_frame_content_and_resize(format_plaintext(plaintext));
+    }).catch(function(error) {
+      set_frame_content_and_resize('<div style="color:red">[error decrypting message, possibly wrong private key]</div><br>' + url_params['message'].replace(/\n/g, '<br>'));
+    });
+  } catch (err) {
+    set_frame_content_and_resize('<div style="color:red">[badly formatted or unknown type of message, error detail: "' + err.message + '"]</div><br>' + url_params['message'].replace(/\n/g, '<br>'));
+  }
 } else {
-  set_frame_content_and_resize('<div style="color:red">[no private key set yet to decrypt this message]</div><br>' + url_params['message'].replace(/\r/g, '<br>'));
+  set_frame_content_and_resize('<div style="color:red">[no private key set yet to decrypt this message]</div><br>' + url_params['message'].replace(/\n/g, '<br>'));
 }
