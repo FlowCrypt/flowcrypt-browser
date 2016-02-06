@@ -1,11 +1,12 @@
 
+var url_params = get_url_params(['account_email']);
 
 function new_message_close(){
   send_signal('close_new_message', 'new_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer});
 }
 
-function new_message_send_through_gmail_api(to, subject, text){
-  gmail_api_message_send(account, to, subject, null, text, function(success, response){
+function new_message_send_through_gmail_api(account_email, to, subject, text){
+  gmail_api_message_send(account_email, to, subject, null, text, function(success, response){
     if (success) {
       new_message_close();
     }
@@ -16,15 +17,12 @@ function new_message_send_through_gmail_api(to, subject, text){
 }
 
 function new_message_encrypt_and_send(){
-  console.log('new_message_encrypt_and_send 1');
   var to = $('#input_to').val();
   var subject = $('#input_subject').val();
   var plaintext = $('#input_text').html();
   compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
-    console.log('new_message_encrypt_and_send 2');
-    new_message_send_through_gmail_api(to, subject, message_text_to_send);
+    new_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send);
   });
-  console.log('new_message_encrypt_and_send 3');
 }
 
 function on_new_message_render(){

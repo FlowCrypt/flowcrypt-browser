@@ -1,5 +1,6 @@
 
-var url_params = get_url_params(['from', 'to', 'subject', 'frame_id', 'thread_id']);
+var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id']);
+// todo: use account_email as opposed to from - differentiate the two
 
 $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function(){
   $('div#reply_message_prompt').css('display', 'none');
@@ -13,10 +14,11 @@ function reply_message_close() {
 
 function reply_message_reinsert_reply_box() {
   var signal_data = {
+    account_email: url_params['account_email'],
     last_message_frame_height: $('#reply_message_successful_container').height(),
     last_message_frame_id: url_params['frame_id'],
     my_email: url_params['from'],
-    their_email: url_params['to']
+    their_email: url_params['to'],
   };
   send_signal('reinsert_reply_box', 'reply_message_frame', 'gmail_tab', signal_data);
 }
@@ -32,8 +34,8 @@ function reply_message_render_success() {
   $('#reply_message_successful_container').css('display', 'block');
 }
 
-function reply_message_send_through_gmail_api(to, subject, text, thread_id) {
-  gmail_api_message_send(account, to, subject, thread_id, text, function(success, response){
+function reply_message_send_through_gmail_api(account_email, to, subject, text, thread_id) {
+  gmail_api_message_send(account_email, to, subject, thread_id, text, function(success, response){
     if (success) {
       reply_message_render_success();
       reply_message_reinsert_reply_box();
@@ -49,7 +51,7 @@ function new_message_encrypt_and_send(){
   var subject = url_params['subject'];
   var plaintext = $('#input_text').html();
   compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
-    reply_message_send_through_gmail_api(to, subject, message_text_to_send, url_params['thread_id']);
+    reply_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send, url_params['thread_id']);
   });
 }
 

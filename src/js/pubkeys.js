@@ -1,4 +1,4 @@
-function fake_db_get_primary_email(email) {
+function fake_db_get_pubkey_email(email) {
   email_mask = {
     'tom@cryptup.org': 'tom@bitoasis.net',
     'tom@nvimp.com': 'tom@bitoasis.net',
@@ -16,7 +16,7 @@ function fake_db_get_primary_email(email) {
 
 function get_pubkey(email, callback, ignore_cached) {
   email = email.trim();
-  var search_email = fake_db_get_primary_email(email);
+  var search_email = fake_db_get_pubkey_email(email);
   if(ignore_cached !== true) {
     var cached = pubkey_cache_get(search_email);
     if(cached !== null) {

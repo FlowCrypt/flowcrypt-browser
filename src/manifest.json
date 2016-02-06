@@ -15,8 +15,8 @@
         "js/storage.js",
         "js/jquery.min.js",
         "js/signal.js",
-        "js/inject_cryptup_into_gmail.js",
-        "js/replace_gmail_elements.js"
+        "js/replace_gmail_elements.js",
+        "js/inject_cryptup_into_gmail.js"
       ]
     }
   ],
