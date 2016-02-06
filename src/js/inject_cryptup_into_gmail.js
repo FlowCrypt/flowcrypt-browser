@@ -6,12 +6,10 @@ function inject_cryptup() {
   var application_signal_scope = random_string(4);
   signal_scope_set(application_signal_scope);
 
-
   save_account_email_full_name_if_needed(account_email);
   inject_essential_elements(account_email, application_signal_scope);
   inject_setup_dialog_if_needed(account_email, application_signal_scope);
   discover_and_replace_pgp_blocks(account_email, application_signal_scope);
-
 
   signal_listen('gmail_tab', {
     close_new_message: function(data) {
@@ -40,7 +38,7 @@ function inject_essential_elements(account_email, signal_scope) {
   $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button"><i class="fa fa-lock"></i></div>');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail.css') + '" />');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/font-awesome.min.css') + '" />');
-  $('div.new_message_button').click(function(){
+  $('div.new_message_button').click(function() {
     if($('div.new_message').length == 0) {
       var url = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
         '?account_email=' + encodeURIComponent(account_email) +
@@ -50,7 +48,7 @@ function inject_essential_elements(account_email, signal_scope) {
   });
 }
 
-function inject_setup_dialog_if_needed(account_email, signal_scope){
+function inject_setup_dialog_if_needed(account_email, signal_scope) {
   account_storage_get(account_email, ['full_name', 'setup_done'], function(account_storage) {
     if(account_storage['setup_done'] !== true) {
       var url = chrome.extension.getURL('chrome/gmail_elements/setup_dialog.htm') +
@@ -69,8 +67,7 @@ function save_account_email_full_name(account_email) {
     var full_name = $("div.gb_hb div.gb_lb").text();
     if(full_name) {
       account_storage_set(account_email, 'full_name', full_name);
-    }
-    else {
+    } else {
       save_account_email_full_name(account_email);
     }
   }, 500);
@@ -78,7 +75,7 @@ function save_account_email_full_name(account_email) {
 
 function save_account_email_full_name_if_needed(account_email) {
   account_storage_get(account_email, 'full_name', function(value) {
-    if (typeof value === 'undefined') {
+    if(typeof value === 'undefined') {
       save_account_email_full_name(account_email);
     }
   });
@@ -91,6 +88,6 @@ function discover_and_replace_pgp_blocks(account_email, signal_scope) {
   }, 1000);
 }
 
-if (document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
+if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
   inject_cryptup();
 }

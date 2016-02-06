@@ -23,20 +23,17 @@ function get_pubkey(email, callback, ignore_cached) {
     var cached = pubkey_cache_get(search_email);
     if(cached !== null) {
       callback(cached);
-    }
-    else {
+    } else {
       get_pubkey(email, callback, true);
     }
-  }
-  else {
-    keyserver_keys_find(search_email, function(success, response){
+  } else {
+    keyserver_keys_find(search_email, function(success, response) {
       if(success) {
         if(response.pubkey !== null) {
           pubkey_cache_add(email, response.pubkey);
         }
-        callback(response.pubkey);  // can be null
-      }
-      else {
+        callback(response.pubkey); // can be null
+      } else {
         console.log(['keyserver error', response]);
         callback(null);
       }

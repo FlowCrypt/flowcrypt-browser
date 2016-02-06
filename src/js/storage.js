@@ -1,17 +1,16 @@
 'use strict';
 
-function pubkey_cache_add(email, pubkey){
+function pubkey_cache_add(email, pubkey) {
   if(typeof localStorage.pubkey_cache === 'undefined') {
     var storage = {};
-  }
-  else {
+  } else {
     var storage = JSON.parse(localStorage.pubkey_cache);
   }
   storage[email] = pubkey;
   localStorage.pubkey_cache = JSON.stringify(storage);
 }
 
-function pubkey_cache_get(email){
+function pubkey_cache_get(email) {
   if(typeof localStorage.pubkey_cache === 'undefined') {
     localStorage.pubkey_cache = JSON.stringify({});
     return null;
@@ -27,12 +26,11 @@ function account_storage_key(gmail_account_email, key) {
   var prefix = 'cryptup_' + gmail_account_email.replace(/[^A-Za-z0-9]+/g, '') + '_';
   if(typeof key === 'object') {
     var account_storage_keys = [];
-    for(var i=0; i<key.length; i++) {
+    for(var i = 0; i < key.length; i++) {
       account_storage_keys.push(prefix + key[i]);
     }
     return account_storage_keys;
-  }
-  else {
+  } else {
     return prefix + key;
   }
 }
@@ -62,8 +60,7 @@ function account_storage_get(gmail_account_email, key, callback) {
     chrome.storage.local.get(account_storage_key(gmail_account_email, key), function(storage_object) {
       callback(account_storage_object_keys_to_original(gmail_account_email, storage_object));
     });
-  }
-  else {
+  } else {
     var account_key = account_storage_key(gmail_account_email, key);
     chrome.storage.local.get([account_key], function(storage_object) {
       callback(storage_object[account_key]);

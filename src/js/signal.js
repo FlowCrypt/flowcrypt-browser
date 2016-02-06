@@ -19,12 +19,12 @@ function signal_scope_get() {
 }
 
 function q_storage_key(name, i, custom_scope) {
-  return '!singal.' + ( custom_scope || signal_scope_get() ) + '.' + name + '.' + i + '!';
+  return '!singal.' + (custom_scope || signal_scope_get()) + '.' + name + '.' + i + '!';
 }
 
 function q_storage_key_list(name, custom_scope) {
   var key_list = [];
-  for(var i=0;i<signal_slots_per_listener;i++){
+  for(var i = 0; i < signal_slots_per_listener; i++) {
     key_list.push(q_storage_key(name, i, custom_scope));
   }
   return key_list;
@@ -33,8 +33,8 @@ function q_storage_key_list(name, custom_scope) {
 function collect_signals_from_storage_and_flush(receiver, storage) {
   var signals = [];
   var keys_to_flush = [];
-  for (var key in storage) {
-    if (storage.hasOwnProperty(key)) {
+  for(var key in storage) {
+    if(storage.hasOwnProperty(key)) {
       keys_to_flush.push(key);
       signals.push(storage[key]);
     }
@@ -55,13 +55,12 @@ function signal_listen(receiver, callbacks) {
     if(typeof key_list_by_receiver[receiver] !== 'undefined') {
       chrome.storage.local.get(key_list_by_receiver[receiver], function(storage) {
         var new_signals = collect_signals_from_storage_and_flush(receiver, storage);
-        for (var i = 0; i < new_signals.length; i++) {
+        for(var i = 0; i < new_signals.length; i++) {
           var signal = new_signals[i];
           console.log('signal in [' + signal_scope_get() + ':' + receiver + '] ' + signal.name + ' ' + JSON.stringify(signal.data));
           if(typeof callbacks[signal.name] !== 'undefined') {
             callbacks[signal.name](signal.data);
-          }
-          else {
+          } else {
             console.log('no listener for ' + signal.name + ' in ' + receiver);
           }
         }
@@ -74,7 +73,10 @@ function signal_send(receiver, name, data, custom_scope) {
   var random_signal_slot = random_int(0, signal_slots_per_listener);
   var random_signal_slot_storage_key = q_storage_key(receiver, random_signal_slot, custom_scope);
   var storage_with_random_signal_slot_filled = {};
-  storage_with_random_signal_slot_filled[random_signal_slot_storage_key] = {name: name, data: data};
-  console.log('signal out [' + ( custom_scope || signal_scope_get() ) + ':' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + JSON.stringify(data));
+  storage_with_random_signal_slot_filled[random_signal_slot_storage_key] = {
+    name: name,
+    data: data
+  };
+  console.log('signal out [' + (custom_scope || signal_scope_get()) + ':' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + JSON.stringify(data));
   chrome.storage.local.set(storage_with_random_signal_slot_filled); //async
 }

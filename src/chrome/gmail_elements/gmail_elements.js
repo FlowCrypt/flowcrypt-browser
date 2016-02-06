@@ -1,11 +1,11 @@
 'use strict';
 
-function get_url_params(expected_keys){
+function get_url_params(expected_keys) {
   var raw_url_data = window.location.search.replace('?', '').split('&');
   var url_data = {};
-  for(var i=0;i<raw_url_data.length;i++){
+  for(var i = 0; i < raw_url_data.length; i++) {
     var pair = raw_url_data[i].split('=');
-    if(expected_keys.indexOf(pair[0]) !== -1){
+    if(expected_keys.indexOf(pair[0]) !== -1) {
       url_data[pair[0]] = decodeURIComponent(pair[1]);
     }
   }
@@ -17,7 +17,7 @@ function is_email_valid(email) {
 }
 
 function compose_render_pubkey_result(email, pubkey_data) {
-  if (pubkey_data !== null) {
+  if(pubkey_data !== null) {
     $("#input_to").removeClass("email_plain");
     $("#input_to").addClass("email_secure");
     $("#send_btn i").removeClass("fa-unlock");
@@ -43,7 +43,7 @@ function compose_render_pubkey_result(email, pubkey_data) {
 function encrypt(pubkey_texts, text, callback) {
   var pubkeys = [];
 
-  for (var i=0; i<pubkey_texts.length; i++) {
+  for(var i = 0; i < pubkey_texts.length; i++) {
     pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_texts[i]).keys); // read public key
   }
   openpgp.encryptMessage(pubkeys, text).then(callback, callback);
@@ -51,23 +51,23 @@ function encrypt(pubkey_texts, text, callback) {
 
 function compose_encrypt_and_send(to, subject, plaintext, send_email_callback) {
   var pubkeys = [];
-  get_pubkey(to, function(pubkey_to){
+  get_pubkey(to, function(pubkey_to) {
     if($('#send_btn.button_secure').length > 0) {
-      if(pubkey_to === null){
+      if(pubkey_to === null) {
         alert('error: key is undefined although should exist');
         return;
       }
       pubkeys.push(pubkey_to);
     }
-    if (to == ''){
+    if(to == '') {
       alert('Please add receiving email address.');
       return;
-    } else if ((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
+    } else if((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
       //todo - tailor for replying w/o subject
       //todo - change prompts to yes/no
       try {
-        if (pubkeys.length > 0) {
-          if (localStorage.master_public_key) {  // todo: prompt if not
+        if(pubkeys.length > 0) {
+          if(localStorage.master_public_key) { // todo: prompt if not
             pubkeys.push(localStorage.master_public_key);
           }
           encrypt(pubkeys, plaintext, function(encrypted) {
@@ -83,9 +83,9 @@ function compose_encrypt_and_send(to, subject, plaintext, send_email_callback) {
   });
 }
 
-function compose_render_email_secure_or_insecure(){
+function compose_render_email_secure_or_insecure() {
   var email = $(this).val();
-  if (is_email_valid(email)) {
+  if(is_email_valid(email)) {
     $("#send_btn i").addClass("fa-spinner");
     $("#send_btn i").addClass("fa-pulse");
     $("#send_btn span").text("");
@@ -98,7 +98,7 @@ function compose_render_email_secure_or_insecure(){
   }
 }
 
-function compose_render_email_neutral(){
+function compose_render_email_neutral() {
   $("#input_to").removeClass("email_secure");
   $("#input_to").removeClass("email_plain");
   $("#send_btn").removeClass("button_secure");

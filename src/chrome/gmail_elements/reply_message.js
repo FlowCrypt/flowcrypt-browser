@@ -5,14 +5,17 @@ var url_params = get_url_params(['account_email', 'signal_scope', 'from', 'to', 
 
 signal_scope_set(url_params['signal_scope']);
 
-$('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function(){
+$('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function() {
   $('div#reply_message_prompt').css('display', 'none');
   $('div#reply_message_table_container').css('display', 'block');
   on_reply_message_render();
 });
 
 function reply_message_close() {
-  signal_send('gmail_tab', 'close_reply_message', {frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
+  signal_send('gmail_tab', 'close_reply_message', {
+    frame_id: url_params['frame_id'],
+    thread_id: url_params['thread_id']
+  });
 }
 
 function reply_message_reinsert_reply_box() {
@@ -38,18 +41,17 @@ function reply_message_render_success() {
 }
 
 function reply_message_send_through_gmail_api(account_email, to, subject, text, thread_id) {
-  gmail_api_message_send(account_email, to, subject, thread_id, text, function(success, response){
-    if (success) {
+  gmail_api_message_send(account_email, to, subject, thread_id, text, function(success, response) {
+    if(success) {
       reply_message_render_success();
       reply_message_reinsert_reply_box();
-    }
-    else {
+    } else {
       alert('error sending message, check log');
     }
   });
 }
 
-function new_message_encrypt_and_send(){
+function new_message_encrypt_and_send() {
   var to = $('#input_to').val();
   var subject = url_params['subject'];
   var plaintext = $('#input_text').html();
@@ -58,11 +60,11 @@ function new_message_encrypt_and_send(){
   });
 }
 
-function on_reply_message_render(){
+function on_reply_message_render() {
   $("#input_to").blur(compose_render_email_secure_or_insecure);
   $("#input_to").focus(compose_render_email_neutral);
   $('#send_btn').click(new_message_encrypt_and_send);
   $("#input_to").focus();
   $("#input_to").val(url_params['to']);
-  document.getElementById ("input_text").focus();
+  document.getElementById("input_text").focus();
 }

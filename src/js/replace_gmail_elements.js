@@ -3,30 +3,30 @@
 function random_string(length) {
   var id = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  for( var i=0; i < (length || 5); i++ ){
+  for(var i = 0; i < (length || 5); i++) {
     id += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   return id;
 }
 
-function find_and_replace_pgp_messages(account_email, signal_scope){
+function find_and_replace_pgp_messages(account_email, signal_scope) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var conversation_has_pgp_message = false;
-  $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function(){
+  $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function() {
     var text = $(this).html();
     var text_with_iframes = text;
     var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r\n])+?-----END PGP MESSAGE-----/gm;
     var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r\n])+?-----END PGP MESSAGE-----/m;
     $(this).addClass('has_known_pgp_blocks');
     var matches;
-    while ((matches = re_pgp_blocks.exec(text)) != null) {
+    while((matches = re_pgp_blocks.exec(text)) != null) {
       var valid_pgp_block = strip_tags_from_pgp_message(matches[0]);
       text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(this, valid_pgp_block, account_email, signal_scope));
     }
     $(this).html(text_with_iframes);
     conversation_has_pgp_message = true;
   });
-  if (conversation_has_pgp_message) {
+  if(conversation_has_pgp_message) {
     var my_email = $('span.g2').last().attr('email').trim();
     var their_email = $('h3.iw span[email]').last().attr('email').trim();
     var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
@@ -45,24 +45,24 @@ function reinsert_reply_box(account_email, signal_scope, last_message_frame_id, 
   // $('div.nH.hx.aHo').append();
 }
 
-function strip_tags_from_pgp_message(pgp_block_text){
+function strip_tags_from_pgp_message(pgp_block_text) {
   var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
   var space = [/&nbsp;/g];
   var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
-  for (var i=0; i < newline.length; i++){
+  for(var i = 0; i < newline.length; i++) {
     pgp_block_text = pgp_block_text.replace(newline[i], '\n');
   }
-  for (var i=0; i < remove.length; i++){
+  for(var i = 0; i < remove.length; i++) {
     pgp_block_text = pgp_block_text.replace(remove[i], '');
   }
-  for (var i=0; i < space.length; i++){
+  for(var i = 0; i < space.length; i++) {
     pgp_block_text = pgp_block_text.replace(space[i], ' ');
   }
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
   var temp = "This is a string.";
   var double_newlines = pgp_block_text.match(/\n\n/g);
-  if(double_newlines !== null && double_newlines.length > 2){ //a lot of newlines are doubled
+  if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
   }
   return pgp_block_text;
@@ -71,7 +71,7 @@ function strip_tags_from_pgp_message(pgp_block_text){
 function pgp_block_iframe(parent_container, pgp_block_text, account_email, signal_scope) {
   var id = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  for( var i=0; i < 5; i++ ){
+  for(var i = 0; i < 5; i++) {
     id += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   var width = $(parent_container).width() - 15;
@@ -85,13 +85,19 @@ function pgp_block_iframe(parent_container, pgp_block_text, account_email, signa
 }
 
 function resolve_from_to(account_email, my_email, their_email) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-  if (their_email !== account_email) {
-    return {to: their_email, from: my_email}
+  if(their_email !== account_email) {
+    return {
+      to: their_email,
+      from: my_email
+    }
   }
-  return {from: their_email, to: my_email}
+  return {
+    from: their_email,
+    to: my_email
+  }
 }
 
-function reply_message_iframe(account_email, signal_scope, my_email, their_email, subject){
+function reply_message_iframe(account_email, signal_scope, my_email, their_email, subject) {
   var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
   var emails = resolve_from_to(account_email, my_email, their_email);
   var id = random_string();
@@ -99,7 +105,7 @@ function reply_message_iframe(account_email, signal_scope, my_email, their_email
     '?frame_id=frame_' + id +
     '&to=' + encodeURIComponent(emails['to']) +
     '&from=' + encodeURIComponent(emails['from']) +
-    '&subject=' +  encodeURIComponent(subject) +
+    '&subject=' + encodeURIComponent(subject) +
     '&thread_id=' + encodeURIComponent(thread_id) +
     '&account_email=' + encodeURIComponent(account_email) +
     '&signal_scope=' + encodeURIComponent(signal_scope);

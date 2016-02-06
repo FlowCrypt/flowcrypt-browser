@@ -17,11 +17,16 @@ function gmail_auth(signal_data) {
     '&scope=' + encodeURIComponent(scope) +
     '&login_hint=' + encodeURIComponent(signal_data.account);
   console.log('url:' + url);
-  chrome.identity.launchWebAuthFlow({'url': url, 'interactive': true}, function(redirect_uri) {
+  chrome.identity.launchWebAuthFlow({
+    'url': url,
+    'interactive': true
+  }, function(redirect_uri) {
     var access_token = redirect_uri.split('access_token=')[1].split('&token_type=')[0];
     // console.log('logged in with access token: ' + access_token);
     account_storage_set(signal_data.account, 'token', access_token, function() {
-      signal_send(signal_data.signal_reply_to_listener, 'gmail_auth_response', {message_id: signal_data.message_id}, signal_data.signal_reply_to_scope);
+      signal_send(signal_data.signal_reply_to_listener, 'gmail_auth_response', {
+        message_id: signal_data.message_id
+      }, signal_data.signal_reply_to_scope);
     });
   });
 }
