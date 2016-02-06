@@ -1,5 +1,7 @@
+'use strict';
+
 function fake_db_get_pubkey_email(email) {
-  email_mask = {
+  var email_mask = {
     'tom@cryptup.org': 'tom@bitoasis.net',
     'tom@nvimp.com': 'tom@bitoasis.net',
     'info@nvimp.com': 'tom@bitoasis.net',

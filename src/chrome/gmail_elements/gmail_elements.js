@@ -1,3 +1,4 @@
+'use strict';
 
 function get_url_params(expected_keys){
   var raw_url_data = window.location.search.replace('?', '').split('&');

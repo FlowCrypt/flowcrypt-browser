@@ -1,6 +1,9 @@
+'use strict';
 
-var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id']);
+var url_params = get_url_params(['account_email', 'signal_scope', 'from', 'to', 'subject', 'frame_id', 'thread_id']);
 // todo: use account_email as opposed to from - differentiate the two
+
+signal_scope_set(url_params['signal_scope']);
 
 $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function(){
   $('div#reply_message_prompt').css('display', 'none');
@@ -9,7 +12,7 @@ $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forwar
 });
 
 function reply_message_close() {
-  send_signal('close_reply_message', 'reply_message_frame', 'gmail_tab', {frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
+  signal_send('gmail_tab', 'close_reply_message', {frame_id: url_params['frame_id'], thread_id: url_params['thread_id']});
 }
 
 function reply_message_reinsert_reply_box() {
@@ -20,7 +23,7 @@ function reply_message_reinsert_reply_box() {
     my_email: url_params['from'],
     their_email: url_params['to'],
   };
-  send_signal('reinsert_reply_box', 'reply_message_frame', 'gmail_tab', signal_data);
+  signal_send('gmail_tab', 'reinsert_reply_box', signal_data);
 }
 
 function reply_message_render_success() {

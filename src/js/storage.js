@@ -1,4 +1,4 @@
-
+'use strict';
 
 function pubkey_cache_add(email, pubkey){
   if(typeof localStorage.pubkey_cache === 'undefined') {

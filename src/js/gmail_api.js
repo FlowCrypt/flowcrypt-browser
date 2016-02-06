@@ -38,20 +38,21 @@ function gmail_api_handle_auth_error(account, resource, parameters, callback, fa
   if(fail_on_auth !== true) {
     var message_id = Math.floor(Math.random() * 100000);
     requests_waiting_for_auth[message_id] = {account: account, resource: resource, parameters: parameters, callback: callback};
-    send_signal('gmail_auth_request', 'gmail_api', 'background_process', {message_id: message_id, account: account}); //todo - later check they signed up on the right account
+    var signal_data = {message_id: message_id, account: account, signal_reply_to_listener: 'gmail_api', signal_reply_to_scope: signal_scope_get()};
+    signal_send('background_process', 'gmail_auth_request', signal_data, signal_scope_default_value); //todo - later check they signed up on the right account
   }
   else{
     callback(false, error_response);
   }
 }
 
-function process_postponed_request(signal_data){
+function gmail_api_process_postponed_request(signal_data){
   var parameters = requests_waiting_for_auth[signal_data.message_id];
   gmail_api_call(parameters.account, parameters.resource, parameters.parameters, parameters.callback, true);
 }
 
-set_signal_listener('gmail_api', {
-  gmail_auth_response: process_postponed_request
+signal_listen('gmail_api', {
+  gmail_auth_response: gmail_api_process_postponed_request
 });
 
 function base64url(str) {

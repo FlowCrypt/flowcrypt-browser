@@ -1,5 +1,8 @@
+'use strict';
 
-var url_params = get_url_params(['account_email', 'full_name']);
+var url_params = get_url_params(['account_email', 'signal_scope', 'full_name']);
+
+signal_scope_set(url_params['signal_scope']);
 
 function setup_dialog_init() {
   //todo - "skip" next to loading dialog - can take long on slow connection
@@ -19,7 +22,7 @@ function setup_dialog_init() {
 
 function setup_dialog_set_done_and_close() {
   account_storage_set(url_params['account_email'], 'setup_done', true, function(){
-    send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
+    signal_send('gmail_tab', 'close_setup_dialog');
   });
 }
 
@@ -54,7 +57,7 @@ function create_save_submit_key_pair(email, email_name, passphrase){
 }
 
 $('a.close').click(function(){
-  send_signal('close_setup_dialog', 'setup_dialog', 'gmail_tab');
+  signal_send('gmail_tab', 'close_setup_dialog');
 });
 
 $('.one_click').click(function(){

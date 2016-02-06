@@ -1,6 +1,9 @@
+'use strict';
 
 // don't do url because of length limit
-var url_params = get_url_params(['account_email', 'frame_id', 'message', 'width']);
+var url_params = get_url_params(['account_email', 'signal_scope', 'frame_id', 'message', 'width']);
+
+signal_scope_set(url_params['signal_scope']);
 
 function format_plaintext(text){
   if(/<((br)|(div)|p) ?\/?>/.test(text)) {
@@ -12,8 +15,7 @@ function format_plaintext(text){
 function set_frame_content_and_resize(content){
   $('#pgp_block').html(content);
   $('#pgp_block').css({width: url_params['width'], height: 'auto'});
-  var new_css = {height: $('#pgp_block').height() + 10};
-  send_signal('pgp_block_iframe_set_css', url_params['frame_id'], 'gmail_tab', new_css);
+  signal_send('gmail_tab', 'pgp_block_iframe_set_css', {frame_id: url_params['frame_id'], css: {height: $('#pgp_block').height() + 10}});
 }
 
 if (typeof localStorage.master_private_key !== 'undefined') {

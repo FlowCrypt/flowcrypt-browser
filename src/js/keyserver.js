@@ -1,4 +1,4 @@
-
+'use strict';
 
 function keyserver_keys_find(email, callback) {
   keyserver_call('keys/find', {'email': email.trim()}, callback);

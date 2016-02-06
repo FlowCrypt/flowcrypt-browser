@@ -1,8 +1,11 @@
+'use strict';
 
-var url_params = get_url_params(['account_email']);
+var url_params = get_url_params(['account_email', 'signal_scope']);
+
+signal_scope_set(url_params['signal_scope']);
 
 function new_message_close(){
-  send_signal('close_new_message', 'new_message_frame', 'gmail_tab', {'gmail_tab_url': document.referrer});
+  signal_send('gmail_tab', 'close_new_message', {'gmail_tab_url': document.referrer});
 }
 
 function new_message_send_through_gmail_api(account_email, to, subject, text){
