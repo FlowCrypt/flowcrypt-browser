@@ -4,8 +4,6 @@
 // If you send many messages programmatically, some will be dropped
 
 
-/* settings */
-
 var signal_listener_frequency_ms = 300;
 var signal_listener_max_inactivity_ms = 700;
 var signal_slots_per_listener = 10000;
