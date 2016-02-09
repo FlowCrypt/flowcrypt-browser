@@ -5,11 +5,33 @@ var url_params = get_url_params(['account_email', 'signal_scope', 'from', 'to', 
 
 signal_scope_set(url_params['signal_scope']);
 
+var thread_message_id_last = '';
+var thread_message_referrences_last = '';
+
 $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function() {
   $('div#reply_message_prompt').css('display', 'none');
   $('div#reply_message_table_container').css('display', 'block');
-  on_reply_message_render();
+  reply_message_on_render();
+  reply_message_determine_header_variables();
 });
+
+function find_header(gmail_api_message_object, header_key) {
+  for(var i = 0; i < gmail_api_message_object.payload.headers.length; i++) {
+    if(gmail_api_message_object.payload.headers[i].name.toLowerCase() === header_key.toLowerCase()) {
+      return gmail_api_message_object.payload.headers[i].value;
+    }
+  }
+  return null;
+}
+
+function reply_message_determine_header_variables() {
+  gmail_api_get_thread(url_params['account_email'], url_params['thread_id'], 'full', function(success, thread) {
+    if(success && thread.messages && thread.messages.length > 0) {
+      thread_message_id_last = find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      thread_message_referrences_last = find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+    }
+  });
+}
 
 function reply_message_close() {
   signal_send('gmail_tab', 'close_reply_message', {
@@ -40,8 +62,8 @@ function reply_message_render_success() {
   $('#reply_message_successful_container').css('display', 'block');
 }
 
-function reply_message_send_through_gmail_api(account_email, to, subject, text, thread_id) {
-  gmail_api_message_send(account_email, to, subject, thread_id, text, function(success, response) {
+function reply_message_send_through_gmail_api(account_email, to, subject, text, thread_id, headers) {
+  gmail_api_message_send(account_email, to, subject, thread_id, text, headers, function(success, response) {
     if(success) {
       reply_message_render_success();
       reply_message_reinsert_reply_box();
@@ -55,12 +77,16 @@ function new_message_encrypt_and_send() {
   var to = $('#input_to').val();
   var subject = url_params['subject'];
   var plaintext = $('#input_text').html();
+  var headers = {
+    'In-Reply-To': thread_message_id_last,
+    'References': thread_message_referrences_last + ' ' + thread_message_id_last,
+  };
   compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
-    reply_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send, url_params['thread_id']);
+    reply_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send, url_params['thread_id'], headers);
   });
 }
 
-function on_reply_message_render() {
+function reply_message_on_render() {
   $("#input_to").blur(compose_render_email_secure_or_insecure);
   $("#input_to").focus(compose_render_email_neutral);
   $('#send_btn').click(new_message_encrypt_and_send);

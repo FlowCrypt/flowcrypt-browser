@@ -5,13 +5,11 @@ var url_params = get_url_params(['account_email', 'signal_scope']);
 signal_scope_set(url_params['signal_scope']);
 
 function new_message_close() {
-  signal_send('gmail_tab', 'close_new_message', {
-    'gmail_tab_url': document.referrer
-  });
+  signal_send('gmail_tab', 'close_new_message');
 }
 
 function new_message_send_through_gmail_api(account_email, to, subject, text) {
-  gmail_api_message_send(account_email, to, subject, null, text, function(success, response) {
+  gmail_api_message_send(account_email, to, subject, null, text, {}, function(success, response) {
     if(success) {
       new_message_close();
     } else {
