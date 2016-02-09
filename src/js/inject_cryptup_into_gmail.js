@@ -6,6 +6,7 @@ function inject_cryptup() {
   var application_signal_scope = random_string(4);
   signal_scope_set(application_signal_scope);
 
+  add_account_email_to_list_of_accounts(account_email);
   save_account_email_full_name_if_needed(account_email);
   inject_essential_elements(account_email, application_signal_scope);
   inject_setup_dialog_if_needed(account_email, application_signal_scope);
@@ -70,7 +71,20 @@ function save_account_email_full_name(account_email) {
     } else {
       save_account_email_full_name(account_email);
     }
-  }, 500);
+  }, 1000);
+}
+
+function add_account_email_to_list_of_accounts(account_email) { //todo: concurrency issues with another tab loaded at the same time
+  account_storage_get(null, 'account_emails', function(account_emails_string) {
+    var account_emails = [];
+    if(typeof account_emails_string !== 'undefined') {
+      account_emails = JSON.parse(account_emails_string);
+    }
+    if(account_emails.indexOf(account_email) === -1) {
+      account_emails.push(account_email);
+      account_storage_set(null, 'account_emails', JSON.stringify(account_emails));
+    }
+  });
 }
 
 function save_account_email_full_name_if_needed(account_email) {

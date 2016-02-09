@@ -1,5 +1,7 @@
 'use strict';
 
+var global_storage_scope = 'global';
+
 function pubkey_cache_add(email, pubkey) {
   if(typeof localStorage.pubkey_cache === 'undefined') {
     var storage = {};
@@ -45,6 +47,9 @@ function account_storage_object_keys_to_original(gmail_account_email, storage_ob
 }
 
 function account_storage_set(gmail_account_email, key, value, callback) {
+  if(!gmail_account_email) {
+    gmail_account_email = global_storage_scope;
+  }
   var storage_key = account_storage_key(gmail_account_email, key);
   var storage_update = {};
   storage_update[storage_key] = value;
@@ -56,6 +61,9 @@ function account_storage_set(gmail_account_email, key, value, callback) {
 }
 
 function account_storage_get(gmail_account_email, key, callback) {
+  if(!gmail_account_email) {
+    gmail_account_email = global_storage_scope;
+  }
   if(typeof key === 'object') {
     chrome.storage.local.get(account_storage_key(gmail_account_email, key), function(storage_object) {
       callback(account_storage_object_keys_to_original(gmail_account_email, storage_object));
@@ -66,4 +74,11 @@ function account_storage_get(gmail_account_email, key, callback) {
       callback(storage_object[account_key]);
     });
   }
+}
+
+function account_storage_remove(gmail_account_email, key, callback) {
+  if(!gmail_account_email) {
+    gmail_account_email = global_storage_scope;
+  }
+  chrome.storage.local.remove(account_storage_key(gmail_account_email, key), callback);
 }

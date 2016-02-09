@@ -5,19 +5,26 @@
     <link rel="stylesheet" href="/css/font-awesome.min.css" />
     <link rel="stylesheet" href="button_popup.css" />
   </head>
-  <body style="width: 500px;">
+  <body style="width: 700px;">
+
     <img src="/img/cryptup-logo-146-30-dark.png" />
     <p>Open gmail and click on a little green lock next to the "Compose" button on the top left.</p>
     <p>The "Send" button on the bottom will turn green if they can receive secure messages.</p>
-    <script src="plugin_button_popup.js"></script><br/><br/><br/><h3 style="font-weight: normal;">Developer tools</h3>
-    <button id="btn_show_private_key">Show private key</button> <button id="btn_show_public_key">Show public key</button><br/>
+    <br/><br/><br/><h3 style="font-weight: normal;">Developer tools</h3>
+    <button id="btn_show_private_key">Show private key</button>
+    <button id="btn_show_public_key">Show public key</button>
+    <button id="btn_show_accounts">Show accounts</button> <br/>
     <!-- <button id="btn_back_up_private_key">Back up private key</button><br/> -->
-    <button id="btn_flush_pubkey_cache">Flush pubkey cache</button><br/>
+    <button id="btn_flush_pubkey_cache">Flush pubkey cache</button>
+    <button id="btn_show_gmail_api_tokens">Show gmail api tokens</button>
+    <button id="btn_flush_gmail_api_tokens">Flush gmail api tokens</button> <br/>
 
     <br/><br/>
     <pre id="key_container"></pre>
 
+
     <script src="/js/jquery.min.js"></script>
+    <script src="/js/storage.js"></script>
     <script src="plugin_button_popup.js"></script>
   </body>
 </html>
