@@ -37,7 +37,7 @@ function signal_send(receiver, name, data, custom_scope) {
     name: name,
     data: data
   };
-  console.log('signal out [' + (custom_scope || signal_scope_get()) + ':' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + JSON.stringify(data));
+  console.log('signal out [' + (custom_scope || signal_scope_get()) + ':' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + (JSON.stringify(data) || ''));
   chrome.storage.local.set(storage_with_random_signal_slot_filled); //async
 }
 
@@ -80,7 +80,7 @@ var internals = new function() {
           var new_signals = self.collect_signals_from_storage_and_flush(receiver, storage);
           for(var i = 0; i < new_signals.length; i++) {
             var signal = new_signals[i];
-            console.log('signal in [' + signal_scope_get() + ':' + receiver + '] ' + signal.name + ' ' + JSON.stringify(signal.data));
+            console.log('signal in [' + signal_scope_get() + ':' + receiver + '] ' + signal.name + ' ' + (JSON.stringify(signal.data) || ''));
             if(typeof callbacks[signal.name] !== 'undefined') {
               callbacks[signal.name](signal.data);
             } else {
@@ -97,7 +97,7 @@ var internals = new function() {
       if(typeof listen_last[receiver] !== 'undefined' && now - listen_last[receiver] > signal_listener_max_inactivity_ms) {
         clearInterval(listen_timers[receiver]); // no listener action for over 2 cycles, stop it and start again
         listen_timers[receiver] = self.setup_signal_listening_interval(receiver, listen_handlers[receiver]);
-        console.log('reactivated signal listener: ' + receiver + ', sleeping ' + now - listen_last[receiver] + 'ms');
+        console.log('reactivated signal listener: ' + receiver + ', sleeping ' + (now - listen_last[receiver]).toString() + 'ms');
       }
     }
   }
