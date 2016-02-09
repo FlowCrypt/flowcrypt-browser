@@ -1,9 +1,9 @@
 
 /* buttons */
-div.T-I.T-I-KE { padding:5px 10px; cursor: pointer;}
+div.T-I.T-I-KE { cursor: pointer;}
 
 div.T-I.T-I-KE .fa-lock {
-  font-size: 23px;
+  font-size: 16px;
   margin-top: 2px;
 }
 
