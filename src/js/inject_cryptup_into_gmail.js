@@ -3,6 +3,8 @@
 var account_email = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
 
 function inject_cryptup() {
+  // chrome.storage.local.set({cryptup_setup_done: true});
+  // account_storage_remove(account_email, 'setup_done');
   var application_signal_scope = random_string(4);
   signal_scope_set(application_signal_scope);
 
@@ -49,15 +51,28 @@ function inject_essential_elements(account_email, signal_scope) {
   });
 }
 
-function inject_setup_dialog_if_needed(account_email, signal_scope) {
-  account_storage_get(account_email, ['full_name', 'setup_done'], function(account_storage) {
-    if(account_storage['setup_done'] !== true) {
-      var url = chrome.extension.getURL('chrome/gmail_elements/setup_dialog.htm') +
-        '?account_email=' + encodeURIComponent(account_email) +
-        '&full_name=' + encodeURIComponent(account_storage['full_name']) +
-        '&signal_scope=' + encodeURIComponent(signal_scope);
-      $('body').append('<div id="cryptup_dialog"><iframe scrolling="no" src="' + url + '"></iframe></div>');
+function migrate_from_earlier_versions(account_email, then) {
+  // migrating from 0.4 to 0.5: global to per_account settings
+  chrome.storage.local.get(['cryptup_setup_done'], function(storage) {
+    if(storage['cryptup_setup_done'] === true) {
+      account_storage_set(account_email, 'setup_done', true, function() {
+        chrome.storage.local.remove('cryptup_setup_done', then);
+      });
     }
+  });
+}
+
+function inject_setup_dialog_if_needed(account_email, signal_scope) {
+  migrate_from_earlier_versions(account_email, function() {
+    account_storage_get(account_email, ['full_name', 'setup_done'], function(account_storage) {
+      if(account_storage['setup_done'] !== true) {
+        var url = chrome.extension.getURL('chrome/gmail_elements/setup_dialog.htm') +
+          '?account_email=' + encodeURIComponent(account_email) +
+          '&full_name=' + encodeURIComponent(account_storage['full_name']) +
+          '&signal_scope=' + encodeURIComponent(signal_scope);
+        $('body').append('<div id="cryptup_dialog"><iframe scrolling="no" src="' + url + '"></iframe></div>');
+      }
+    });
   });
 }
 
