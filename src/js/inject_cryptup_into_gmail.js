@@ -5,6 +5,8 @@ var account_email = $("div.msg:contains('Loading '):contains('…')").text().rep
 function inject_cryptup() {
   // chrome.storage.local.set({cryptup_setup_done: true});
   // account_storage_remove(account_email, 'setup_done');
+
+  console.log(1);
   var application_signal_scope = random_string(4);
   signal_scope_set(application_signal_scope);
 
@@ -58,6 +60,9 @@ function migrate_from_earlier_versions(account_email, then) {
       account_storage_set(account_email, 'setup_done', true, function() {
         chrome.storage.local.remove('cryptup_setup_done', then);
       });
+    }
+    else {
+      then();
     }
   });
 }
