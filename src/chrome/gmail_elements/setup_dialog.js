@@ -20,7 +20,7 @@ function setup_dialog_init() {
 }
 
 function setup_dialog_set_done_and_close() {
-  account_storage_set(url_params['account_email'], 'setup_done', true, function() {
+  account_storage_set(url_params['account_email'], {setup_done: true}, function() {
     signal_send('gmail_tab', 'close_setup_dialog');
   });
 }

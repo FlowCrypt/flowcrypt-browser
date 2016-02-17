@@ -6,7 +6,6 @@ function inject_cryptup() {
   // chrome.storage.local.set({cryptup_setup_done: true});
   // account_storage_remove(account_email, 'setup_done');
 
-  console.log(1);
   var application_signal_scope = random_string(4);
   signal_scope_set(application_signal_scope);
 
@@ -34,7 +33,7 @@ function inject_cryptup() {
     },
     setup_dialog_set_css: function(data) {
       $('div#cryptup_dialog').css(data);
-    }
+    },
   });
 }
 
@@ -57,7 +56,7 @@ function migrate_from_earlier_versions(account_email, then) {
   // migrating from 0.4 to 0.5: global to per_account settings
   chrome.storage.local.get(['cryptup_setup_done'], function(storage) {
     if(storage['cryptup_setup_done'] === true) {
-      account_storage_set(account_email, 'setup_done', true, function() {
+      account_storage_set(account_email, {setup_done: true}, function() {
         chrome.storage.local.remove('cryptup_setup_done', then);
       });
     }
@@ -87,7 +86,7 @@ function save_account_email_full_name(account_email) {
   setTimeout(function() {
     var full_name = $("div.gb_hb div.gb_lb").text();
     if(full_name) {
-      account_storage_set(account_email, 'full_name', full_name);
+      account_storage_set(account_email, {full_name: full_name});
     } else {
       save_account_email_full_name(account_email);
     }
@@ -102,7 +101,7 @@ function add_account_email_to_list_of_accounts(account_email) { //todo: concurre
     }
     if(account_emails.indexOf(account_email) === -1) {
       account_emails.push(account_email);
-      account_storage_set(null, 'account_emails', JSON.stringify(account_emails));
+      account_storage_set(null, {'account_emails': JSON.stringify(account_emails)});
     }
   });
 }

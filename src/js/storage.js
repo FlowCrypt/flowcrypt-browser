@@ -46,13 +46,14 @@ function account_storage_object_keys_to_original(gmail_account_email, storage_ob
   return fixed_keys_object;
 }
 
-function account_storage_set(gmail_account_email, key, value, callback) {
+function account_storage_set(gmail_account_email, values, callback) {
   if(!gmail_account_email) {
     gmail_account_email = global_storage_scope;
   }
-  var storage_key = account_storage_key(gmail_account_email, key);
   var storage_update = {};
-  storage_update[storage_key] = value;
+  for(var key in values) {
+    storage_update[account_storage_key(gmail_account_email, key)] = values[key];
+  }
   chrome.storage.local.set(storage_update, function() {
     if(typeof callback !== 'undefined') {
       callback();
@@ -60,25 +61,25 @@ function account_storage_set(gmail_account_email, key, value, callback) {
   });
 }
 
-function account_storage_get(gmail_account_email, key, callback) {
+function account_storage_get(gmail_account_email, key_or_keys, callback) {
   if(!gmail_account_email) {
     gmail_account_email = global_storage_scope;
   }
-  if(typeof key === 'object') {
-    chrome.storage.local.get(account_storage_key(gmail_account_email, key), function(storage_object) {
+  if(typeof key_or_keys === 'object') {
+    chrome.storage.local.get(account_storage_key(gmail_account_email, key_or_keys), function(storage_object) {
       callback(account_storage_object_keys_to_original(gmail_account_email, storage_object));
     });
   } else {
-    var account_key = account_storage_key(gmail_account_email, key);
+    var account_key = account_storage_key(gmail_account_email, key_or_keys);
     chrome.storage.local.get([account_key], function(storage_object) {
       callback(storage_object[account_key]);
     });
   }
 }
 
-function account_storage_remove(gmail_account_email, key, callback) {
+function account_storage_remove(gmail_account_email, key_or_keys, callback) {
   if(!gmail_account_email) {
     gmail_account_email = global_storage_scope;
   }
-  chrome.storage.local.remove(account_storage_key(gmail_account_email, key), callback);
+  chrome.storage.local.remove(account_storage_key(gmail_account_email, key_or_keys), callback);
 }

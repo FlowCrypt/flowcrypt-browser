@@ -29,7 +29,7 @@ function signal_listen(receiver, callbacks) {
   listen_timers[receiver] = internals.setup_signal_listening_interval(receiver, callbacks);
 }
 
-function signal_send(receiver, name, data, custom_scope) {
+function signal_send(receiver, name, data, custom_scope, then) {
   var random_signal_slot = internals.random_int(0, signal_slots_per_listener);
   var random_signal_slot_storage_key = internals.q_storage_key(receiver, random_signal_slot, custom_scope);
   var storage_with_random_signal_slot_filled = {};
@@ -38,7 +38,7 @@ function signal_send(receiver, name, data, custom_scope) {
     data: data
   };
   console.log('signal out [' + (custom_scope || signal_scope_get()) + ':' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + (JSON.stringify(data) || ''));
-  chrome.storage.local.set(storage_with_random_signal_slot_filled); //async
+  chrome.storage.local.set(storage_with_random_signal_slot_filled, then); //async
 }
 
 
