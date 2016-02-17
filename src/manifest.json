@@ -7,7 +7,7 @@
     "default_icon": "img/plugin-button.png",
     "default_popup": "chrome/plugin_button_popup.htm"
   },
-  "permissions": ["activeTab", "tabs", "https://apis.google.com/", "https://accounts.google.com/", "identity", "storage"],
+  "permissions": ["activeTab", "https://apis.google.com/", "https://accounts.google.com/", "identity", "storage"],
   "content_scripts": [
     {
       "matches": ["http://mail.google.com/*", "https://mail.google.com/*"],
