@@ -23,12 +23,12 @@
       "matches": ["https://accounts.google.com/o/oauth2/approval*"],
       "js": [
         "js/signal.js",
-        "js/google_auth_code.js"
+        "js/google_auth_code_window.js"
       ]
     }
   ],
   "background": {
-    "scripts": ["js/jquery.min.js", "js/storage.js", "js/signal.js", "js/background_process.js"]
+    "scripts": ["js/jquery.min.js", "js/storage.js", "js/signal.js", "js/google_auth.js", "js/background_process.js"]
   },
   "web_accessible_resources": [
     "css/gmail.css",
