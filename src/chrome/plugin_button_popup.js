@@ -1,5 +1,7 @@
 'use strict';
 
+$('span#version').text('v' + chrome.runtime.getManifest().version);
+
 function for_each_known_account_email(callback) {
   account_storage_get(null, 'account_emails', function(account_emails_string) {
     var account_emails = [];

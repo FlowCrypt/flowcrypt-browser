@@ -1,7 +1,0 @@
-body { overflow: hidden; }
-body.popup_body li { margin:0 auto; width: 90%;}
-body.popup_body button { margin: 5px; width: 180px; height: 40px; border: 0; background: #f3f3f3; border: 1px solid rgba(0, 0, 0, 0.25); border-radius: 7px; }
-body.popup_body div { border: 2px solid #e7e7e7; text-align: center; width: 85%; margin: 0 auto; position: relative; padding: 10px 10px;}
-body.popup_body img.logo { display: block; margin-bottom: 20px; }
-body.popup_body div.developer_tools span { position: absolute; width: 200px; top:-50px; padding: 0 10px!important;display: inline;}
-body.popup_body div.developer_tools span i.fa-cogs { display: inline; position: absolute; left: 0; top:20px; font-size: 25px; }
