@@ -82,6 +82,9 @@ function new_message_encrypt_and_send() {
     'References': thread_message_referrences_last + ' ' + thread_message_id_last,
   };
   compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
+    if(message_text_to_send == plaintext) {
+      $('div.replied_body').removeClass('pgp_secure').addClass('pgp_insecure');
+    }
     reply_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send, url_params['thread_id'], headers);
   });
 }

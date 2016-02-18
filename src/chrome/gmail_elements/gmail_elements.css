@@ -6,6 +6,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
   -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
 
 .pgp_secure { border:none; border-left: 3px dashed green; padding-left:10px; min-height: 25px; }
+.pgp_insecure { border:none; border-left: 3px dashed red; padding-left:10px; min-height: 25px; }
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
