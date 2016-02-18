@@ -101,7 +101,11 @@ function gmail_api_message_send(account_email, to, subject, thread_id, message, 
     for(var key in add_headers) {
       add_header(headers, key, add_headers[key]);
     }
-    var raw_message = new MimeBuilder('multipart/alternative').setHeader(headers).setContent(message).build();
+    var root_node = new MimeBuilder('multipart/alternative');
+    root_node.setHeader(headers);
+    root_node.appendChild(new MimeBuilder('text/plain').setContent(message));  //todo - strip tags and add \n instead
+    root_node.appendChild(new MimeBuilder('text/html').setContent(message));
+    var raw_message = root_node.build();
     var params = {
       raw: base64url(raw_message),
       threadId: thread_id || null,
