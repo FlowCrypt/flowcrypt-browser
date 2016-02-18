@@ -20,7 +20,9 @@ function setup_dialog_init() {
 }
 
 function setup_dialog_set_done_and_close() {
-  account_storage_set(url_params['account_email'], {setup_done: true}, function() {
+  account_storage_set(url_params['account_email'], {
+    setup_done: true
+  }, function() {
     signal_send('gmail_tab', 'close_setup_dialog');
   });
 }
@@ -76,14 +78,26 @@ $('.setup_btn.manual').click(function() {
 });
 
 $('div#btn_save_private').click(function() {
-  localStorage.master_private_key = $('#input_private_key').val();
-  localStorage.master_public_key = openpgp.key.readArmored($('#input_private_key').val()).keys[0].toPublic().armor();
-  localStorage.master_passphrase = $('#input_passphrase').val();
-  if($('#input_submit_key').prop('checked')) {
-    $('div#btn_save_private').html('<i class="fa fa-spinner fa-pulse"></i>');
-    setup_dialog_submit_pubkey(url_params['account_email'], localStorage.master_public_key, setup_dialog_set_done_and_close);
+  var prv = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
+  var prv_to_test_passphrase = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
+  if(typeof prv === 'undefined') {
+    alert('Private key is not correctly formated. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
+  } else if(prv.isPublic()) {
+    alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
+  } else if(prv_to_test_passphrase.decrypt($('#input_passphrase').val()) === false) {
+    alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
+    $('#input_passphrase').val('');
+    $('#input_passphrase').focus();
   } else {
-    setup_dialog_set_done_and_close();
+    localStorage.master_public_key = prv.toPublic().armor();
+    localStorage.master_private_key = prv.armor();
+    localStorage.master_passphrase = $('#input_passphrase').val();
+    if($('#input_submit_key').prop('checked')) {
+      $('div#btn_save_private').html('<i class="fa fa-spinner fa-pulse"></i>');
+      setup_dialog_submit_pubkey(url_params['account_email'], localStorage.master_public_key, setup_dialog_set_done_and_close);
+    } else {
+      setup_dialog_set_done_and_close();
+    }
   }
 });
 
