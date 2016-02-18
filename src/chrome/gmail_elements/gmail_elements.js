@@ -62,7 +62,7 @@ function compose_encrypt_and_send(to, subject, plaintext, send_email_callback) {
     if(to == '') {
       alert('Please add receiving email address.');
       return;
-    } else if((plaintext != '' || window.prompt('Send empty message?')) && (subject != '' || window.prompt('Send without a subject?'))) {
+    } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
       //todo - tailor for replying w/o subject
       //todo - change prompts to yes/no
       try {
