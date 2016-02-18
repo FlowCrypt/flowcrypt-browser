@@ -2,26 +2,43 @@
 
 var global_storage_scope = 'global';
 
-function pubkey_cache_add(email, pubkey) {
+function pubkey_cache_retrieve() {
   if(typeof localStorage.pubkey_cache === 'undefined') {
-    var storage = {};
-  } else {
-    var storage = JSON.parse(localStorage.pubkey_cache);
+    localStorage.pubkey_cache = JSON.stringify({});
   }
+  return JSON.parse(localStorage.pubkey_cache);
+}
+
+function pubkey_cache_add(email, pubkey) {
+  var storage = pubkey_cache_retrieve();
   storage[email] = pubkey;
   localStorage.pubkey_cache = JSON.stringify(storage);
 }
 
 function pubkey_cache_get(email) {
-  if(typeof localStorage.pubkey_cache === 'undefined') {
-    localStorage.pubkey_cache = JSON.stringify({});
-    return null;
-  }
-  var storage = JSON.parse(localStorage.pubkey_cache);
+  var storage = pubkey_cache_retrieve();
   if(typeof storage[email] !== 'undefined') {
     return storage[email];
   }
   return null;
+}
+
+function pubkey_cache_search(query, max, highlight) {
+  var storage = pubkey_cache_retrieve();
+  var matches = [];
+  for(var email in storage) {
+    if(email.indexOf(query) !== -1) {
+      if(highlight === true) {
+        matches.push(email.replace(query, '<b>' + query + '</b>'));
+      } else {
+        matches.push(email);
+      }
+      if(matches.length === (max || -1)) {
+        return matches;
+      }
+    }
+  }
+  return matches;
 }
 
 function account_storage_key(gmail_account_email, key) {
