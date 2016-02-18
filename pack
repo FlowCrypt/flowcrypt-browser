@@ -7,8 +7,8 @@ import os
 
 def replace_openpgp_version(manifest_path, openpgpjs_path):
   with open(manifest_path) as fp:
-    versionstring = "CryptUP.org v%s: Easy Gmail Encryption" % json.load(fp)['version']
-    commentstring = "Seamlessly send, receive and search encrypted email. https://cryptup.org/"
+    versionstring = "CryptUP %s Easy Gmail Encryption https://cryptup.org" % json.load(fp)['version']
+    commentstring = "Seamlessly send, receive and search encrypted email"
   fixed_lines = []
   with open(openpgpjs_path) as fp:
     for line in fp.readlines():
