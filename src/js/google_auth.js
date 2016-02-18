@@ -19,7 +19,13 @@ function parse_url_params(url_param_string) {
   return params;
 }
 
-function google_auth_window_show(signal_data) {
+function google_auth_respond_to_signal(signal_object, callback) {
+  signal_send(signal_object.signal_reply_to_listener, 'gmail_auth_response', {
+    message_id: signal_object.message_id
+  }, signal_object.signal_reply_to_scope);
+}
+
+function google_auth_window_show_and_respond_to_signal(signal_data) {
   var auth_code_url = google_oauth2.url_code +
     '?client_id=' + encodeURIComponent(google_oauth2.client_id) +
     '&response_type=code' +
@@ -34,23 +40,65 @@ function google_auth_window_show(signal_data) {
 }
 
 function google_auth_save_tokens(account_email, tokens_object, callback) {
-  var expires = new Date();
-  expires.setSeconds(expires.getSeconds() + tokens_object.expires_in);
   var to_save = {
     google_token_access: tokens_object.access_token,
-    google_token_refresh: tokens_object.refresh_token,
-    gogole_token_expires: expires,
+    google_token_expires: new Date().getTime() + tokens_object.expires_in * 1000,
   };
+  if(typeof tokens_object.refresh_token !== 'undefined') {
+    to_save['google_token_refresh'] = tokens_object.refresh_token;
+  }
   account_storage_set(account_email, to_save, callback);
 }
 
 function google_auth_get_tokens(code, callback) {
-  var get_tokens_url = google_oauth2.url_tokens + '?grant_type=authorization_code' +
+  var get_tokens_url = google_oauth2.url_tokens +
+    '?grant_type=authorization_code' +
     '&code=' + encodeURIComponent(code) +
     '&client_id=' + encodeURIComponent(google_oauth2.client_id) +
     '&redirect_uri=' + encodeURIComponent(google_oauth2.url_redirect);
   $.ajax({
     url: get_tokens_url,
+    method: 'POST',
+    crossDomain: true,
+    async: true,
+    success: function(response) {
+      callback(response);
+    },
+    error: function(XMLHttpRequest, status, error) {
+      callback({
+        request: XMLHttpRequest,
+        status: status,
+        error: error
+      });
+    },
+  });
+}
+
+function google_auth_refresh_token_and_respond_to_signal(signal_data, refresh_token, is_success_callback) {
+  google_auth_refresh_token(refresh_token, function(tokens_object) {
+    if(typeof tokens_object.access_token !== 'undefined') {
+      google_auth_save_tokens(signal_data.account_email, tokens_object, function() {
+        google_auth_respond_to_signal(signal_data);
+        is_success_callback(true);
+      });
+    }
+    else {
+      alert('Failed to login to gmail. Please enable your gmail account in the following window.');
+      console.log('failed token refresh');
+      console.log(refresh_token);
+      console.log(tokens_object);
+      is_success_callback(false);
+    }
+  });
+}
+
+function google_auth_refresh_token(refresh_token, callback) {
+  var get_refresh_token_url = google_oauth2.url_tokens +
+    '?grant_type=refresh_token' +
+    '&refresh_token=' + encodeURIComponent(refresh_token) +
+    '&client_id=' + encodeURIComponent(google_oauth2.client_id);
+  $.ajax({
+    url: get_refresh_token_url,
     method: 'POST',
     crossDomain: true,
     async: true,
@@ -78,9 +126,7 @@ function google_auth_window_result_handler(signal_data) {
       google_auth_get_tokens(params.code, function(tokens_object) {
         if(typeof tokens_object.access_token !== 'undefined') {
           google_auth_save_tokens(state_object.account_email, tokens_object, function() {
-            signal_send(state_object.signal_reply_to_listener, 'gmail_auth_response', {
-              message_id: state_object.message_id
-            }, state_object.signal_reply_to_scope);
+            google_auth_respond_to_signal(state_object);
           });
         } else {
           console.log(params.code); // code seems to be for 1 time use

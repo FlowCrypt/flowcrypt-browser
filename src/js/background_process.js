@@ -10,7 +10,15 @@ signal_listen('background_process', {
 });
 
 function google_auth_request_handler(signal_data) {
-  // todo - if already have refresh token, don't show auth window, refresh only
-  // todo - if refresh token doesn't work, show auth window
-  google_auth_window_show(signal_data);
+  account_storage_get(signal_data.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh'], function(storage) {
+    if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined') {
+      google_auth_window_show_and_respond_to_signal(signal_data);
+    } else {
+      google_auth_refresh_token_and_respond_to_signal(signal_data, storage.google_token_refresh, function(success) {
+        if(success === false) {
+          google_auth_window_show_and_respond_to_signal(signal_data);
+        }
+      });
+    }
+  });
 }
