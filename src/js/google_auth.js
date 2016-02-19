@@ -34,7 +34,7 @@ function google_auth_window_show_and_respond_to_signal(signal_data) {
     '&redirect_uri=' + encodeURIComponent(google_oauth2.url_redirect) +
     '&scope=' + encodeURIComponent(google_oauth2.scopes.join(' ')) +
     '&login_hint=' + encodeURIComponent(signal_data.account_email);
-  var auth_code_window = window.open(auth_code_url, '_blank', 'height=400,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+  var auth_code_window = window.open(auth_code_url, '_blank', 'height=550,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
   // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
   // a "gmail_auth_code_result" signal to "google_auth.window_result_handler" and close itself
 }
