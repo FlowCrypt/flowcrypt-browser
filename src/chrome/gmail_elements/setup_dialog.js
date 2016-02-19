@@ -78,6 +78,12 @@ $('.setup_btn.manual').click(function() {
   $('#step_2_manual').css('display', 'block');
 });
 
+$('#step_2_manual a.back').click(function(){
+  $('#step_0_found_key').css('display', 'none');
+  $('#step_1_easy_or_manual').css('display', 'block');
+  $('#step_2_manual').css('display', 'none');
+});
+
 $('div#btn_save_private').click(function() {
   var prv = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
   var prv_to_test_passphrase = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
