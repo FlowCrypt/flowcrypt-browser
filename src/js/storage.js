@@ -41,6 +41,10 @@ function pubkey_cache_search(query, max, highlight) {
   return matches;
 }
 
+function pubkey_cache_flush() {
+  localStorage.pubkey_cache = JSON.stringify({});
+}
+
 function account_storage_key(gmail_account_email, key) {
   var prefix = 'cryptup_' + gmail_account_email.replace(/[^A-Za-z0-9]+/g, '') + '_';
   if(typeof key === 'object') {
@@ -61,6 +65,37 @@ function account_storage_object_keys_to_original(gmail_account_email, storage_ob
     fixed_keys_object[fixed_key] = storage_object[account_key];
   }
   return fixed_keys_object;
+}
+
+function restricted_account_storage_set(account_email, key, value) {
+  var account_key = account_storage_key(account_email, key);
+  if(typeof value === 'undefined') {
+    localStorage.removeItem('account_key');
+  } else if(value === null) {
+    localStorage[account_key] = 'null#null';
+  } else if(value === true || value === false) {
+    localStorage[account_key] = 'bool#' + value;
+  } else if(value + 0 === value) {
+    localStorage[account_key] = 'int#' + value;
+  } else {
+    localStorage[account_key] = 'str#' + value;
+  }
+
+}
+
+function restricted_account_storage_get(account_email, key) {
+  var value = localStorage[account_storage_key(account_email, key)];
+  if(typeof value === 'undefined') {
+    return value;
+  } else if(value === 'null#null') {
+    return null;
+  } else if(value === 'bool#true' || value === 'bool#false') {
+    return eval(value.replace('bool#', '', 1));
+  } else if(value.indexOf('int#') === 0) {
+    return eval(value.replace('int#', '', 1));
+  } else {
+    return value.replace('str#', '', 1);
+  }
 }
 
 function account_storage_set(gmail_account_email, values, callback) {

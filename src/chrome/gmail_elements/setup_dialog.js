@@ -27,10 +27,10 @@ function setup_dialog_set_done_and_close() {
   });
 }
 
-function setup_dialog_submit_pubkey(email, pubkey, callback) {
-  keyserver_keys_submit(email, pubkey, function(key_submitted, response) {
+function setup_dialog_submit_pubkey(account_email, pubkey, callback) {
+  keyserver_keys_submit(account_email, pubkey, function(key_submitted, response) {
     if(key_submitted && response.saved === true) {
-      localStorage.master_public_key_submitted = true;
+      restricted_account_storage_set(account_email, 'master_public_key_submitted', true);
     } else {
       //todo automatically resubmit later, make a notification if can't, etc
       console.log('warning: pubkey not submitted');
@@ -40,18 +40,19 @@ function setup_dialog_submit_pubkey(email, pubkey, callback) {
   });
 }
 
-function create_save_submit_key_pair(email, email_name, passphrase) {
-  var user_id = email + ' <' + email_name + '>';
+function create_save_submit_key_pair(account_email, email_name, passphrase) {
+  var user_id = account_email + ' <' + email_name + '>';
   openpgp.generateKeyPair({
     numBits: 4096,
     userId: user_id,
     passphrase: passphrase
   }).then(function(keypair) {
-    localStorage.master_private_key = keypair.privateKeyArmored;
-    localStorage.master_public_key = keypair.publicKeyArmored;
-    localStorage.master_public_key_submitted = false;
-    localStorage.master_passphrase = '';
-    setup_dialog_submit_pubkey(email, localStorage.master_public_key, setup_dialog_set_done_and_close);
+    restricted_account_storage_set(account_email, 'master_private_key', keypair.privateKeyArmored);
+    restricted_account_storage_set(account_email, 'master_public_key', keypair.publicKeyArmored);
+    restricted_account_storage_set(account_email, 'master_public_key_submit', true);
+    restricted_account_storage_set(account_email, 'master_public_key_submitted', false);
+    restricted_account_storage_set(account_email, 'master_passphrase', '');
+    setup_dialog_submit_pubkey(account_email, keypair.publicKeyArmored, setup_dialog_set_done_and_close);
   }).catch(function(error) {
     $('#step_2_easy_generating').html('Error, thnaks for discovering it!<br/><br/>This is an early development version.<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed in red and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
@@ -89,12 +90,14 @@ $('div#btn_save_private').click(function() {
     $('#input_passphrase').val('');
     $('#input_passphrase').focus();
   } else {
-    localStorage.master_public_key = prv.toPublic().armor();
-    localStorage.master_private_key = prv.armor();
-    localStorage.master_passphrase = $('#input_passphrase').val();
+    restricted_account_storage_set(url_params['account_email'], 'master_public_key', prv.toPublic().armor());
+    restricted_account_storage_set(url_params['account_email'], 'master_private_key', prv.armor());
+    restricted_account_storage_set(url_params['account_email'], 'master_public_key_submit', $('#input_submit_key').prop('checked'));
+    restricted_account_storage_set(url_params['account_email'], 'master_public_key_submitted', false);
+    restricted_account_storage_set(url_params['account_email'], 'master_passphrase', $('#input_passphrase').val());
     if($('#input_submit_key').prop('checked')) {
       $('div#btn_save_private').html('<i class="fa fa-spinner fa-pulse"></i>');
-      setup_dialog_submit_pubkey(url_params['account_email'], localStorage.master_public_key, setup_dialog_set_done_and_close);
+      setup_dialog_submit_pubkey(url_params['account_email'], prv.toPublic().armor(), setup_dialog_set_done_and_close);
     } else {
       setup_dialog_set_done_and_close();
     }

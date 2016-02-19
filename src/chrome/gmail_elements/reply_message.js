@@ -81,7 +81,7 @@ function new_message_encrypt_and_send() {
     'In-Reply-To': thread_message_id_last,
     'References': thread_message_referrences_last + ' ' + thread_message_id_last,
   };
-  compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
+  compose_encrypt_and_send(url_params['account_email'], to, subject, plaintext, function(message_text_to_send) {
     if(message_text_to_send == plaintext) {
       $('div.replied_body').removeClass('pgp_secure').addClass('pgp_insecure');
     }

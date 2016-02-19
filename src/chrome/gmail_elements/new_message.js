@@ -22,7 +22,7 @@ function new_message_encrypt_and_send() {
   var to = $('#input_to').val();
   var subject = $('#input_subject').val();
   var plaintext = $('#input_text').html();
-  compose_encrypt_and_send(to, subject, plaintext, function(message_text_to_send) {
+  compose_encrypt_and_send(url_params['account_email'], to, subject, plaintext, function(message_text_to_send) {
     new_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send);
   });
 }

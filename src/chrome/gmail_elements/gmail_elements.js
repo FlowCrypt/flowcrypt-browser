@@ -1,21 +1,5 @@
 'use strict';
 
-function get_url_params(expected_keys) {
-  var raw_url_data = window.location.search.replace('?', '').split('&');
-  var url_data = {};
-  for(var i = 0; i < raw_url_data.length; i++) {
-    var pair = raw_url_data[i].split('=');
-    if(expected_keys.indexOf(pair[0]) !== -1) {
-      url_data[pair[0]] = decodeURIComponent(pair[1]);
-    }
-  }
-  return url_data;
-}
-
-function is_email_valid(email) {
-  return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
-}
-
 function compose_render_pubkey_result(email, pubkey_data) {
   if(pubkey_data !== null) {
     $("#input_to").removeClass("email_plain");
@@ -49,7 +33,7 @@ function encrypt(pubkey_texts, text, callback) {
   openpgp.encryptMessage(pubkeys, text).then(callback, callback);
 }
 
-function compose_encrypt_and_send(to, subject, plaintext, send_email_callback) {
+function compose_encrypt_and_send(account_email, to, subject, plaintext, send_email_callback) {
   var pubkeys = [];
   get_pubkey(to, function(pubkey_to) {
     if($('#send_btn.button_secure').length > 0) {
@@ -67,8 +51,9 @@ function compose_encrypt_and_send(to, subject, plaintext, send_email_callback) {
       //todo - change prompts to yes/no
       try {
         if(pubkeys.length > 0) {
-          if(localStorage.master_public_key) { // todo: prompt if not
-            pubkeys.push(localStorage.master_public_key);
+          var my_pubkey = restricted_account_storage_get(account_email, 'master_public_key');
+          if(my_pubkey) { // todo: prompt if not
+            pubkeys.push(my_pubkey);
           }
           encrypt(pubkeys, plaintext, function(encrypted) {
             send_email_callback(encrypted);

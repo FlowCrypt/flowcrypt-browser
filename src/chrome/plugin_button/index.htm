@@ -4,7 +4,7 @@
     <title>CryptUp popup</title>
     <link rel="stylesheet" href="/css/font-awesome.min.css" />
     <link rel="stylesheet" href="/css/ionicons.min.css" />
-    <link rel="stylesheet" href="plugin_button_popup.css" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body class="popup_body">
     <table>
@@ -22,17 +22,18 @@
       <li>The "Send" button on the bottom will turn green if they can receive secure messages.</li>
     </ol>
     <br/><br/>
-    <div class="block">
-      <div>
-        <h3>Developer tools</h3>
-      </div>
+
+    <div id="accounts">
+      <b>Settings:</b>
+      <!--
       <button id="btn_show_private_key">Show private key</button>
       <button id="btn_show_public_key">Show public key</button>
       <button id="btn_show_accounts">Show accounts</button>
-      <!-- <button id="btn_back_up_private_key">Back up private key</button><br/> -->
+      <button id="btn_back_up_private_key">Back up private key</button><br/>
       <button id="btn_flush_pubkey_cache">Flush pubkey cache</button>
       <button id="btn_show_gmail_api_tokens">Show gmail api tokens</button>
       <button id="btn_flush_gmail_api_tokens">Flush gmail api tokens</button>
+      -->
     </div>
 
     <br/>
@@ -41,6 +42,7 @@
 
     <script src="/js/jquery.min.js"></script>
     <script src="/js/storage.js"></script>
-    <script src="plugin_button_popup.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="index.js"></script>
   </body>
 </html>

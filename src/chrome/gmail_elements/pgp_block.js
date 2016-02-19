@@ -26,10 +26,12 @@ function set_frame_content_and_resize(content) {
   });
 }
 
-if(typeof localStorage.master_private_key !== 'undefined') {
-  var private_key = openpgp.key.readArmored(localStorage.master_private_key).keys[0];
-  if(typeof localStorage.master_passphrase !== 'undefined' && sessionStorage.master_passphrase !== '') {
-    private_key.decrypt(localStorage.master_passphrase);
+var my_prvkey = restricted_account_storage_get(url_params['account_email'], 'master_private_key');
+var my_passphrase = restricted_account_storage_get(url_params['account_email'], 'master_passphrase');
+if(typeof my_prvkey !== 'undefined') {
+  var private_key = openpgp.key.readArmored(my_prvkey).keys[0];
+  if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+    private_key.decrypt(my_passphrase);
   }
   try {
     var pgp_message = openpgp.message.readArmored(url_params['message']);
