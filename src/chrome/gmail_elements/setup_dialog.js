@@ -102,7 +102,7 @@ $('div#btn_save_private').click(function() {
     restricted_account_storage_set(url_params['account_email'], 'master_public_key_submitted', false);
     restricted_account_storage_set(url_params['account_email'], 'master_passphrase', $('#input_passphrase').val());
     if($('#input_submit_key').prop('checked')) {
-      $('div#btn_save_private').html('<i class="fa fa-spinner fa-pulse"></i>');
+      $('div#btn_save_private').html('&nbsp;<i class="fa fa-spinner fa-pulse"></i>&nbsp;');
       setup_dialog_submit_pubkey(url_params['account_email'], prv.toPublic().armor(), setup_dialog_set_done_and_close);
     } else {
       setup_dialog_set_done_and_close();

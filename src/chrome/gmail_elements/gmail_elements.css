@@ -86,7 +86,7 @@ body#setup_dialog div#step_2_manual { display: none; padding: 30px 0px; width: 1
 body#setup_dialog div#step_2_manual textarea { width: 86%; height: 172px; font-size: 12px; text-align: left; margin-top:-15px; }
 body#setup_dialog div#step_2_manual input[type=password] { width: 206px; margin-right:178; height:27px; margin-left: 9px; border: 1px solid gray;}
 body#setup_dialog div#step_2_manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0px auto;}
-body#setup_dialog div#step_2_manual i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px;left:10px;}
+body#setup_dialog div#step_2_manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px;left:10px;}
 body#setup_dialog div#step_2_manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); top: 26px; position: absolute; left: 11px;}
 body#setup_dialog div#step_2_manual label { position: relative; top: -3px; width:300px; margin-left: 42px;margin-bottom: 10px; padding-top: 20px; display: inline-block;}
 body#setup_dialog div#step_2_manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
