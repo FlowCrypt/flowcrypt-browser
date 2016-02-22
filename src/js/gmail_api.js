@@ -94,29 +94,23 @@ function gmail_api_message_send(account_email, to, subject, thread_id, message, 
     }
   });
   require(['emailjs-mime-builder'], function(MimeBuilder) {
-    var headers = [];
-    add_header(headers, 'To', to);
-    add_header(headers, 'From', account_email);
-    add_header(headers, 'Subject', subject);
-    for(var key in add_headers) {
-      add_header(headers, key, add_headers[key]);
-    }
     var root_node = new MimeBuilder('multipart/alternative');
-    root_node.setHeader(headers);
-    root_node.appendChild(new MimeBuilder('text/plain').setContent(message));  //todo - strip tags and add \n instead
-    root_node.appendChild(new MimeBuilder('text/html').setContent(message));
-    var raw_message = root_node.build();
+    root_node.addHeader('To', to);
+    root_node.addHeader('From', account_email);
+    root_node.addHeader('Subject', subject);
+    for(var key in add_headers) {
+      root_node.addHeader(key, add_headers[key]);
+    }
+    root_node.appendChild(new MimeBuilder('text/plain').setContent(convert_html_tags_to_newlines(message)));  //todo - strip tags and add \n instead
+    // root_node.appendChild(new MimeBuilder('text/html').setContent(message));
     var params = {
-      raw: base64url(raw_message),
+      raw: base64url(root_node.build()),
       threadId: thread_id || null,
     };
     gmail_api_call(account_email, 'POST', 'messages/send', params, message_send_callback);
   });
 };
 
-function add_header(header_dict, key, value) {
-  header_dict.push({
-    key: key,
-    value: value
-  });
+function convert_html_tags_to_newlines(text) {
+  return text.replace(/<[bB][rR] ?\/?>/g, '\n').replace(/<[dD][iI][vV][^>]*>/g, '').replace(/<\/[dD][iI][vV][^>]*>/g, '\n').trim();
 }
