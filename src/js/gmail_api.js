@@ -1,6 +1,28 @@
 'use strict';
 
+signal_listen('gmail_api', {
+  gmail_auth_response: gmail_api_process_postponed_request
+});
+
 var requests_waiting_for_auth = {};
+
+require.config({
+  baseUrl: '../../js',
+  paths: {
+    'emailjs-mime-builder': './emailjs-mime-builder/src/emailjs-mime-builder',
+    'emailjs-addressparser': './emailjs-mime-builder/node_modules/emailjs-addressparser/src/emailjs-addressparser',
+    'emailjs-mime-types': './emailjs-mime-builder/node_modules/emailjs-mime-types/src/emailjs-mime-types',
+    'emailjs-mime-codec': './emailjs-mime-builder/node_modules/emailjs-mime-codec/src/emailjs-mime-codec',
+    'punycode': './emailjs-mime-builder/node_modules/punycode/punycode',
+    'emailjs-stringencoding': './emailjs-mime-builder/node_modules/emailjs-stringencoding/src/emailjs-stringencoding',
+    'sinon': './emailjs-mime-builder/node_modules/sinon/pkg/sinon',
+  },
+  shim: {
+    sinon: {
+      exports: 'sinon',
+    }
+  }
+});
 
 function gmail_api_call(account_email, method, resource, parameters, callback, fail_on_auth) {
   account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
@@ -61,10 +83,6 @@ function gmail_api_process_postponed_request(signal_data) {
   gmail_api_call(parameters.account_email, parameters.method, parameters.resource, parameters.parameters, parameters.callback, true);
 }
 
-signal_listen('gmail_api', {
-  gmail_auth_response: gmail_api_process_postponed_request
-});
-
 function base64url(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -76,23 +94,6 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
 }
 
 function gmail_api_message_send(account_email, to, subject, thread_id, message, add_headers, message_send_callback) {
-  require.config({
-    baseUrl: '../../js',
-    paths: {
-      'emailjs-mime-builder': './emailjs-mime-builder/src/emailjs-mime-builder',
-      'emailjs-addressparser': './emailjs-mime-builder/node_modules/emailjs-addressparser/src/emailjs-addressparser',
-      'emailjs-mime-types': './emailjs-mime-builder/node_modules/emailjs-mime-types/src/emailjs-mime-types',
-      'emailjs-mime-codec': './emailjs-mime-builder/node_modules/emailjs-mime-codec/src/emailjs-mime-codec',
-      'punycode': './emailjs-mime-builder/node_modules/punycode/punycode',
-      'emailjs-stringencoding': './emailjs-mime-builder/node_modules/emailjs-stringencoding/src/emailjs-stringencoding',
-      'sinon': './emailjs-mime-builder/node_modules/sinon/pkg/sinon',
-    },
-    shim: {
-      sinon: {
-        exports: 'sinon',
-      }
-    }
-  });
   require(['emailjs-mime-builder'], function(MimeBuilder) {
     var root_node = new MimeBuilder('multipart/alternative');
     root_node.addHeader('To', to);
