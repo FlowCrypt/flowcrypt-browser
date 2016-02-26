@@ -1,0 +1,92 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <title>CryptUP</title>
+</head>
+
+<body>
+
+  <div id="content" class="setup">
+    <h1></h1>
+
+    <div id="loading"><i class="fa fa-spinner fa-spin"></i> Loading..</div>
+
+    <div id="step_0_found_key">
+      <div class="line">Used PGP before?</div>
+      <div class="line"><a href="#" class="button long green action_manual_setup">Enter existing key</a></div>
+      <div class="line">Alternatively, <a href="#new_key" class="action_simple_setup hover_underline">create a new key</a></div>
+    </div>
+
+    <div id="step_1_easy_or_manual">
+      <div class="line">
+        <div class="col">
+          <div class="button long green action_simple_setup">One click setup</div>
+        </div>
+        <div class="col">
+          <div class="button long gray action_manual_setup">Advanced setup</div>
+        </div>
+      </div>
+      <div class="line">
+        <div class="col">Create a new encryption key</div>
+        <div class="col">Use existing PGP key</div>
+      </div>
+      <div class="line">
+        <div class="col">Ready in 15 seconds</div>
+        <div class="col">Security enthusiasts welcome</div>
+      </div>
+    </div>
+
+    <div id="step_2_easy_generating">
+      <i class="fa fa-spinner fa-spin" style="font-size: 128px;"></i>
+    </div>
+
+    <div id="step_2_manual">
+      <div>
+        <a href="#" class="back"><i class="fa fa-angle-left"></i></a>
+        <div class="line">
+          <textarea id="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+        </div>
+        <div class="line">
+          <input id="input_submit_key" type="checkbox" />
+          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync to other keyservers)</label>
+        </div>
+        <div class="line">
+          <input id="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+        </div>
+        <div class="line">
+          <div class="button long green action_save_private">SAVE</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="step_3_done">
+      <div class="line"><span class="email"></span> is set up for encrypted email</div>
+      <div class="line">
+        <div class="button long green action_close">CLOSE</div>
+      </div>
+      <div class="line">
+        <div class="button long gray action_account_settings">MORE SETTINGS</div>
+      </div>
+
+      <div class="line">
+        <a class="button long gray" href="index.htm">ALL ACCOUNTS</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/storage.js"></script>
+  <script src="/js/signal.js"></script>
+  <script src="/js/jquery.min.js"></script>
+  <script src="/js/openpgp.min.js"></script>
+  <script src="/js/pubkeys.js"></script>
+  <script src="/js/keyserver.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="common.js"></script>
+  <script src="setup.js"></script>
+
+</body>
+
+</html>

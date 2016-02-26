@@ -64,36 +64,3 @@ div#reply_message_successful_container > table td.right { text-align: right; }
 div#reply_message_successful_container > table div.replied_from { font-weight: bold; margin-bottom: 4px; }
 div#reply_message_successful_container > table div.replied_to { color: #777; margin-bottom: 10px; }
 div#reply_message_successful_container > table div.replied_time { }
-
-/* setup dialog */
-body#setup_dialog { background: white; text-align: center; font-size: 12.8px; }
-body#setup_dialog h1 { font-size: 28px; font-weight:300; margin-bottom: 40px; margin-top: 30px; }
-body#setup_dialog div.setup_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836;
-  border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap;
-  margin-right: 16px; min-width: 56px; height: 27px; line-height: 27px; outline: 0; padding: 0 8px; margin: 6px 2px; vertical-align: middle; min-width: 200px;}
-body#setup_dialog div.green { background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 7px 15px; border-radius: 5px;}
-body#setup_dialog div.gray { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top,#C9C9C9,#BFBFBF) }
-body#setup_dialog hr { border: none; border-top: 1px solid #ddd; width: 480px; padding: 0px; margin: 0px auto; margin-top: 10px; }
-body#setup_dialog table { width:540px; margin:0px; padding: 0px; margin: 0px auto;  margin-top: 30px; height: 270px; border-collapse: collapse; }
-body#setup_dialog table td { width:50%; margin:0px; padding: 20px; vertical-align: top; text-align: center;}
-body#setup_dialog p { font-weight: 100; font-size: 14px; }
-body#setup_dialog table a.close { color: #aaa; text-decoration: none; font-size: 12.8px; }
-body#setup_dialog a.cryptup_logo { background-image: url('/img/cryptup-logo-146-30-dark.png'); background-size: 100%; display: inline-block; width: 72px; height: 15px; opacity: 0.65; }
-body#setup_dialog div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white; text-align: center; font-size: 16px; font-weight: normal;
-  padding-left: 375px; padding-top: 164px; color: #666; }
-body#setup_dialog div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
-body#setup_dialog div#step_2_manual { display: none; padding: 30px 0px; width: 100%; height: 100%; }
-body#setup_dialog div#step_2_manual textarea { width: 86%; height: 172px; font-size: 12px; text-align: left; margin-top:-15px; }
-body#setup_dialog div#step_2_manual input[type=password] { width: 206px; margin-right:178; height:27px; margin-left: 9px; border: 1px solid gray;}
-body#setup_dialog div#step_2_manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0px auto;}
-body#setup_dialog div#step_2_manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px;left:10px;}
-body#setup_dialog div#step_2_manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); top: 26px; position: absolute; left: 11px;}
-body#setup_dialog div#step_2_manual label { position: relative; top: -3px; width:300px; margin-left: 42px;margin-bottom: 10px; padding-top: 20px; display: inline-block;}
-body#setup_dialog div#step_2_manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
-body#setup_dialog div#step_2_manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
-body#setup_dialog div#step_2_manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
-.hover_underline { text-decoration: none; }
-.hover_underline:hover { text-decoration: underline; cursor: pointer; }
-body#setup_dialog #step_0_found_key { display: none; }
-body#setup_dialog #step_1_easy_or_manual { display: none; }
-body#setup_dialog #loading { margin-top: 150px; }

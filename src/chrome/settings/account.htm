@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>CryptUP</title>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="content">
+    <h1></h1>
+    <div class="line">
+      <div class="button long green action_show_public_key">Show public key</div>
+      &nbsp;&nbsp;
+      <div class="button long green action_show_private_key">Show private key</div>
+    </div>
+    <div class="line">
+      <div class="button long green action_show_gmail_api_tokens">Show gmail api tokens</div>
+      &nbsp;&nbsp;
+      <div class="button long green action_flush_gmail_api_tokens">Flush gmail api tokens</div>
+    </div>
+    <div class="line">&nbsp;</div>
+    <pre id="key_container"></pre>
+  </div>
+
+  <script src="/js/jquery.min.js"></script>
+  <script src="/js/storage.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="common.js"></script>
+  <script src="account.js"></script>
+</body>
+
+</html>

@@ -4,8 +4,7 @@
   "description": "Easy Gmail encryption",
   "version": "0.70",
   "browser_action": {
-    "default_icon": "img/plugin-button.png",
-    "default_popup": "chrome/plugin_button/index.htm"
+    "default_icon": "img/plugin-button.png"
   },
   "permissions": ["activeTab", "https://apis.google.com/", "https://accounts.google.com/", "identity", "storage"],
   "content_scripts": [
@@ -16,6 +15,7 @@
         "js/jquery.min.js",
         "js/signal.js",
         "js/replace_gmail_elements.js",
+        "js/common.js",
         "js/inject_cryptup_into_gmail.js"
       ]
     },
@@ -28,7 +28,7 @@
     }
   ],
   "background": {
-    "scripts": ["js/jquery.min.js", "js/storage.js", "js/signal.js", "js/google_auth.js", "js/background_process.js"]
+    "scripts": ["js/jquery.min.js", "js/storage.js", "js/signal.js", "js/google_auth.js", "js/migrations.js", "js/background_process.js"]
   },
   "web_accessible_resources": [
     "css/gmail.css",

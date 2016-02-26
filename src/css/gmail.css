@@ -1,11 +1,7 @@
 
 /* buttons */
 div.T-I.T-I-KE { cursor: pointer;}
-
-div.T-I.T-I-KE .fa-lock {
-  font-size: 16px;
-  margin-top: 2px;
-}
+div.T-I.T-I-KE .fa-lock { font-size: 16px; margin-top: 2px; }
 
 div.new_message_button {
   width: 34px;
@@ -22,11 +18,15 @@ div.new_message_button {
   cursor: pointer;
  }
 
- div.new_message_button:hover {
-  background: #009900;
-  color: #f3f3f3;
-  opacity: 1;
- }
+div.new_message_button:hover { background: #009900; color: #f3f3f3; opacity: 1; }
+
+center.gmail_notifications { position: absolute; top: 0px; left: 0px; width: 100%; z-index: 999; }
+center.gmail_notifications div.gmail_notification { background-color: rgb(249, 237, 190); border: 1px solid rgb(240, 195, 109); border-radius: 2px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 4px 0px; color: rgb(34, 34, 34); font-family: arial, sans-serif; font-size: 12.8px; font-weight: bold; height: 16px;
+  line-height: 16px; padding: 6px 10px; z-index: 999; margin-top: 50px; display:inline-block; }
+center.gmail_notifications div.gmail_notification a { color: black; padding-left: 6px; padding-right: 2px; }
+center.gmail_notifications div.gmail_notification a:hover { text-decoration: none; }
+
 
 /* elements */
 div.new_message { position: absolute; bottom: 0px; width: 541px; right: 30px; padding: 0px; z-index: 5; height: 605px; box-shadow: rgba(0,0,0,0.2) 0 2px 6px; }

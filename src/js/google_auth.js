@@ -1,4 +1,20 @@
+'use strict';
+
 var google_oauth2 = chrome.runtime.getManifest().oauth2;
+
+function google_auth_request_handler(signal_data) {
+  account_storage_get(signal_data.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh'], function(storage) {
+    if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined') {
+      google_auth_window_show_and_respond_to_signal(signal_data);
+    } else {
+      google_auth_refresh_token_and_respond_to_signal(signal_data, storage.google_token_refresh, function(success) {
+        if(success === false) {
+          google_auth_window_show_and_respond_to_signal(signal_data);
+        }
+      });
+    }
+  });
+}
 
 var google_auth_code_request_state = {
   pack: function(status_object) {
@@ -21,7 +37,8 @@ function parse_url_params(url_param_string) {
 
 function google_auth_respond_to_signal(signal_object, callback) {
   signal_send(signal_object.signal_reply_to_listener, 'gmail_auth_response', {
-    message_id: signal_object.message_id
+    message_id: signal_object.message_id,
+    account_email: signal_object.account_email,
   }, signal_object.signal_reply_to_scope);
 }
 
@@ -81,8 +98,7 @@ function google_auth_refresh_token_and_respond_to_signal(signal_data, refresh_to
         google_auth_respond_to_signal(signal_data);
         is_success_callback(true);
       });
-    }
-    else {
+    } else {
       alert('Failed to login to gmail. Please enable your gmail account in the following window.');
       console.log('failed token refresh');
       console.log(refresh_token);
@@ -115,6 +131,28 @@ function google_auth_refresh_token(refresh_token, callback) {
   });
 }
 
+function google_auth_check_email(expected_email, access_token, callback) {
+  $.ajax({
+    url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + access_token
+    },
+    crossDomain: true,
+    contentType: 'application/json; charset=UTF-8',
+    async: true,
+    success: function(response) {
+      callback(response.emailAddress);
+    },
+    error: function(response) {
+      console.log('google_auth_check_email error');
+      console.log(expected_email);
+      console.log(response);
+      callback(expected_email); //todo - handle better
+    },
+  });
+}
+
 function google_auth_window_result_handler(signal_data) {
   var parts = signal_data.title.split(' ', 2);
   var result = parts[0];
@@ -125,8 +163,14 @@ function google_auth_window_result_handler(signal_data) {
       var state_object = google_auth_code_request_state.unpack(params.state);
       google_auth_get_tokens(params.code, function(tokens_object) {
         if(typeof tokens_object.access_token !== 'undefined') {
-          google_auth_save_tokens(state_object.account_email, tokens_object, function() {
-            google_auth_respond_to_signal(state_object);
+          google_auth_check_email(state_object.account_email, tokens_object.access_token, function(account_email) {
+            // if(state_object.account_email && state_object.account_email !== account_email) {
+            //   //user authorized a different account then expected
+            // }
+            state_object.account_email = account_email;
+            google_auth_save_tokens(state_object.account_email, tokens_object, function() {
+              google_auth_respond_to_signal(state_object);
+            });
           });
         } else {
           console.log(params.code); // code seems to be for 1 time use

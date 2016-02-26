@@ -10,74 +10,16 @@ signal_listen('background_process', {
   migrate: migrate,
 });
 
-function google_auth_request_handler(signal_data) {
-  account_storage_get(signal_data.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh'], function(storage) {
-    if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined') {
-      google_auth_window_show_and_respond_to_signal(signal_data);
-    } else {
-      google_auth_refresh_token_and_respond_to_signal(signal_data, storage.google_token_refresh, function(success) {
-        if(success === false) {
-          google_auth_window_show_and_respond_to_signal(signal_data);
-        }
-      });
-    }
-  });
+
+function open_settings_page() {
+  window.open(chrome.extension.getURL('chrome/settings/index.htm'), 'cryptup');
+  // chrome.tabs.create({url: chrome.extension.getURL('settings.htm')});
 }
 
-function migrate(signal_data) {
-  migrate_040_050(signal_data.account_email, function() {
-    migrate_060_070(signal_data.account_email, function() {
-      account_storage_set(null, {version: Number(chrome.runtime.getManifest().version.replace('.', ''))}, function() {
-        signal_send('gmail_tab', 'migrated', {}, signal_data.reply_to_signal_scope);
-      });
-    });
-  });
+if (!localStorage.settings_seen) {
+  open_settings_page();
 }
+// chrome.extension.onConnect.addListener(open_or_focus_plugin_page);
 
-function migrate_040_050(account_email, then) {
-  console.log('migrate_040_050');
-  chrome.storage.local.get(['cryptup_setup_done'], function(storage) {
-    if(storage['cryptup_setup_done'] === true) {
-      console.log('migrating from 0.4 to 0.5: global to per_account settings');
-      account_storage_set(account_email, {
-        setup_done: true
-      }, function() {
-        chrome.storage.local.remove('cryptup_setup_done', then);
-      });
-    } else {
-      then();
-    }
-  });
-}
-
-function migrate_060_070(account_email, then) {
-  console.log('migrate_060_070');
-  var legacy_master_private_key = localStorage.master_private_key;
-  var legacy_master_public_key = localStorage.master_public_key;
-  var legacy_master_passphrase = localStorage.master_passphrase;
-  var legacy_master_public_key_submit = localStorage.master_public_key_submit;
-  var legacy_master_public_key_submitted = localStorage.master_public_key_submitted;
-  if(typeof legacy_master_private_key !== 'undefined' && legacy_master_private_key && legacy_master_private_key.indexOf('-----BEGIN PGP PRIVATE KEY BLOCK-----') !== -1) {
-    account_storage_get(null, 'account_emails', function(account_emails_string) {
-      console.log('migrating from 0.6 to 0.7: global to per_account keys for accounts: ' + account_emails_string);
-      var account_emails = JSON.parse(account_emails_string);
-      for(var i = 0; i < account_emails.length; i++) {
-        if(typeof restricted_account_storage_get(account_emails[i], 'master_private_key') === 'undefined') {
-          restricted_account_storage_set(account_emails[i], 'master_private_key', legacy_master_private_key);
-          restricted_account_storage_set(account_emails[i], 'master_public_key', legacy_master_public_key);
-          restricted_account_storage_set(account_emails[i], 'master_passphrase', legacy_master_passphrase);
-          restricted_account_storage_set(account_emails[i], 'master_public_key_submit', legacy_master_public_key_submit);
-          restricted_account_storage_set(account_emails[i], 'master_public_key_submitted', legacy_master_public_key_submitted);
-        }
-      }
-      localStorage.removeItem("master_private_key");
-      localStorage.removeItem("master_public_key");
-      localStorage.removeItem("master_passphrase");
-      localStorage.removeItem("master_public_key_submit");
-      localStorage.removeItem("master_public_key_submitted");
-      then();
-    });
-  } else {
-    then();
-  }
-}
+// Called when the user clicks on the browser action icon.
+chrome.browserAction.onClicked.addListener(open_settings_page);

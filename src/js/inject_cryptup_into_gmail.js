@@ -3,12 +3,8 @@
 var account_email = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
 
 function inject_cryptup() {
-
   var application_signal_scope = random_string(4);
   signal_scope_set(application_signal_scope);
-
-  add_account_email_to_list_of_accounts(account_email);
-  save_account_email_full_name_if_needed(account_email);
 
   signal_listen('gmail_tab', {
     close_new_message: function(data) {
@@ -23,30 +19,26 @@ function inject_cryptup() {
     pgp_block_iframe_set_css: function(data) {
       $('iframe#' + data.frame_id).css(data.css);
     },
-    close_setup_dialog: function(data) {
-      $('div#cryptup_dialog').remove();
-    },
-    setup_dialog_set_css: function(data) {
-      $('div#cryptup_dialog').css(data);
-    },
     migrated: function(data) {
       inject_visual_elements(account_email, application_signal_scope);
     },
   });
 
-  signal_send('background_process', 'migrate', {account_email: account_email, reply_to_signal_scope: application_signal_scope}, signal_scope_default_value);
+  signal_send('background_process', 'migrate', {
+    account_email: account_email,
+    reply_to_signal_scope: application_signal_scope
+  }, signal_scope_default_value);
 }
 
 function inject_visual_elements(account_email, signal_scope) {
-  inject_meta();
   inject_buttons(account_email, signal_scope);
-  inject_setup_dialog_if_needed(account_email, signal_scope);
   discover_and_replace_pgp_blocks(account_email, signal_scope);
 }
 
 function inject_meta() {
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/gmail.css') + '" />');
   $('body').append('<link rel="stylesheet" href="' + chrome.extension.getURL('css/font-awesome.min.css') + '" />');
+  $('body').append('<center class="gmail_notifications"></center>');
 }
 
 function inject_buttons(account_email, signal_scope) {
@@ -57,18 +49,6 @@ function inject_buttons(account_email, signal_scope) {
         '?account_email=' + encodeURIComponent(account_email) +
         '&signal_scope=' + encodeURIComponent(signal_scope);
       $('body').append('<div class="new_message" id="new_message"><iframe scrolling="no" src="' + url + '"></iframe></div>');
-    }
-  });
-}
-
-function inject_setup_dialog_if_needed(account_email, signal_scope) {
-  account_storage_get(account_email, ['full_name', 'setup_done'], function(account_storage) {
-    if(account_storage['setup_done'] !== true) {
-      var url = chrome.extension.getURL('chrome/gmail_elements/setup_dialog.htm') +
-        '?account_email=' + encodeURIComponent(account_email) +
-        '&full_name=' + encodeURIComponent(account_storage['full_name']) +
-        '&signal_scope=' + encodeURIComponent(signal_scope);
-      $('body').append('<div id="cryptup_dialog"><iframe scrolling="no" src="' + url + '"></iframe></div>');
     }
   });
 }
@@ -88,21 +68,6 @@ function save_account_email_full_name(account_email) {
   }, 1000);
 }
 
-function add_account_email_to_list_of_accounts(account_email) { //todo: concurrency issues with another tab loaded at the same time
-  account_storage_get(null, 'account_emails', function(account_emails_string) {
-    var account_emails = [];
-    if(typeof account_emails_string !== 'undefined') {
-      account_emails = JSON.parse(account_emails_string);
-    }
-    if(account_emails.indexOf(account_email) === -1) {
-      account_emails.push(account_email);
-      account_storage_set(null, {
-        'account_emails': JSON.stringify(account_emails)
-      });
-    }
-  });
-}
-
 function save_account_email_full_name_if_needed(account_email) {
   account_storage_get(account_email, 'full_name', function(value) {
     if(typeof value === 'undefined') {
@@ -118,6 +83,47 @@ function discover_and_replace_pgp_blocks(account_email, signal_scope) {
   }, 1000);
 }
 
+function gmail_notification_clear() {
+  $('.gmail_notifications').html('');
+}
+
+function gmail_notification_show(text) {
+  $('.gmail_notifications').html('<div class="gmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome/settings')) + '</div>');
+}
+
 if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
-  inject_cryptup();
+  inject_meta();
+  add_account_email_to_list_of_accounts(account_email);
+  save_account_email_full_name_if_needed(account_email);
+  var show_setup_needed_notification_if_setup_not_done = true;
+  var wait_for_setup_interval = setInterval(function() {
+    account_storage_get(account_email, ['setup_done', 'notification_setup_needed_dismissed', 'notification_setup_done_seen'], function(storage) {
+      if(storage['setup_done'] === true) {
+        gmail_notification_clear();
+        if(!storage['notification_setup_done_seen']) {
+          account_storage_set(account_email, {
+            notification_setup_done_seen: true
+          }, function() {
+            gmail_notification_show('CryptUP was successfully set up. Click on green lock button on the left to send first secure message. <a href="#" class="notification_close">got it</a>');
+            $('.gmail_notifications a.notification_close').click(function() {
+              gmail_notification_clear();
+            });
+          });
+        }
+        inject_cryptup();
+        clearInterval(wait_for_setup_interval);
+      } else if(!$("div.gmail_notification").length && !storage['notification_setup_needed_dismissed'] && show_setup_needed_notification_if_setup_not_done) {
+        gmail_notification_show('<a href="_PLUGIN/index.htm" target="_blank">Set up CryptUP</a> to send and receive secure email. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="notification_close">remind me later</a>');
+        $('.gmail_notifications a.notification_setup_needed_dismiss').click(function() {
+          account_storage_set(account_email, {
+            notification_setup_needed_dismissed: true
+          }, gmail_notification_clear);
+        });
+        $('.gmail_notifications a.notification_close').click(function() {
+          show_setup_needed_notification_if_setup_not_done = false;
+          gmail_notification_clear();
+        });
+      }
+    });
+  }, 1000);
 }
