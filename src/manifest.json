@@ -14,8 +14,8 @@
         "js/storage.js",
         "js/jquery.min.js",
         "js/signal.js",
-        "js/replace_gmail_elements.js",
         "js/common.js",
+        "js/replace_gmail_elements.js",
         "js/inject_cryptup_into_gmail.js"
       ]
     },
@@ -28,7 +28,7 @@
     }
   ],
   "background": {
-    "scripts": ["js/jquery.min.js", "js/storage.js", "js/signal.js", "js/google_auth.js", "js/migrations.js", "js/background_process.js"]
+    "scripts": ["js/jquery.min.js", "js/storage.js", "js/signal.js", "js/google_auth.js", "js/migrations.js", "js/common.js", "js/background_process.js"]
   },
   "web_accessible_resources": [
     "css/gmail.css",
@@ -48,7 +48,8 @@
     "url_redirect": "urn:ietf:wg:oauth:2.0:oob:auto",
     "state_header": "CRYPTUP_STATE_",
     "scopes": [
-      "https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send"
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/gmail.send"
     ]
   }
 }

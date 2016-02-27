@@ -7,7 +7,6 @@ signal_listen('settings', {
 });
 
 localStorage.settings_seen = true;
-var spinner = '&nbsp;<i class="fa fa-spinner fa-spin"></i>&nbsp;';
 var spinning = undefined;
 
 function refresh_account_list() {
@@ -22,7 +21,7 @@ function refresh_account_list() {
           if(spinning !== account_emails[i]){
             accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#">' + email_text + '</a></div>';
           } else {
-            accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#" style="text-align: center;">' + spinner + '</a></div>';
+            accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#" style="text-align: center;">' + get_spinner() + '</a></div>';
           }
         }
       }

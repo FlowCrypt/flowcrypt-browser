@@ -21,12 +21,20 @@
       &nbsp;&nbsp;
       <div class="button long green action_flush_gmail_api_tokens">Flush gmail api tokens</div>
     </div>
+    <div class="line">
+      <div class="button long green action_load_send_from_email_addresses">account addresses</div>
+      &nbsp;&nbsp;
+      <div class="button long" style="visibility:hidden;">bogus: to keep previous button well aligned</div>
+    </div>
     <div class="line">&nbsp;</div>
     <pre id="key_container"></pre>
   </div>
 
   <script src="/js/jquery.min.js"></script>
   <script src="/js/storage.js"></script>
+  <script src="/js/signal.js"></script>
+  <script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
+  <script src="/js/gmail_api.js"></script>
   <script src="/js/common.js"></script>
   <script src="common.js"></script>
   <script src="account.js"></script>

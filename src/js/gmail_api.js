@@ -26,11 +26,16 @@ require.config({
 
 function gmail_api_call(account_email, method, resource, parameters, callback, fail_on_auth) {
   account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
+    if(method === 'POST') {
+      var data = JSON.stringify(parameters);
+    } else {
+      var data = parameters;
+    }
     if(typeof auth.google_token_access !== 'undefined') { // have a valid gmail_api oauth token
       $.ajax({
         url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
         method: method,
-        data: JSON.stringify(parameters),
+        data: data,
         headers: {
           'Authorization': 'Bearer ' + auth.google_token_access
         },
@@ -113,15 +118,19 @@ function gmail_api_message_send(account_email, to, subject, thread_id, message, 
 };
 
 function gmail_api_message_list(account_email, q, callback) {
-  gmail_api_call(account_email, 'POST', 'messages/send', {
+  gmail_api_call(account_email, 'GET', 'messages', {
     q: q
-  }, callback);
+  }, function(success, response) {
+    callback(response);
+  });
 }
 
 function gmail_api_message_get(account_email, message_id, format, callback) {
-  gmail_api_call(account_email, 'POST', 'messages/' + message_id, {
-    format: format
-  }, callback);
+  gmail_api_call(account_email, 'GET', 'messages/' + message_id, {
+    format: format || full //full or metadata
+  }, function(success, response) {
+    callback(response);
+  });
 }
 
 function convert_html_tags_to_newlines(text) {

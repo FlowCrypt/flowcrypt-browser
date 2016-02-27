@@ -1,14 +1,5 @@
 'use strict';
 
-function random_string(length) {
-  var id = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  for(var i = 0; i < (length || 5); i++) {
-    id += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return id;
-}
-
 function find_and_replace_pgp_messages(account_email, signal_scope) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var conversation_has_pgp_message = false;

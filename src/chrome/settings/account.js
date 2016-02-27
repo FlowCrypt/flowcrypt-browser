@@ -1,3 +1,5 @@
+'use strict';
+
 var url_params = get_url_params(['account_email']);
 
 $('h1').text('Settings for ' + url_params['account_email']);
@@ -23,3 +25,17 @@ $('.action_show_gmail_api_tokens').click(function() {
     $('pre').text(tokens_text);
   });
 });
+
+$('.action_load_send_from_email_addresses').click(prevent(parallel(), function(self, process_id) {
+  var button_text = $(self).text();
+  $(self).html(get_spinner());
+  fetch_all_account_addresses(url_params['account_email'], function(addresses) {
+    account_storage_set(url_params['account_email'], {
+      addresses: addresses
+    }, function() {
+      $(self).text(button_text);
+      $('pre').text(JSON.stringify(addresses));
+      release(process_id);
+    });
+  });
+}));
