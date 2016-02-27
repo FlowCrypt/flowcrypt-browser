@@ -50,7 +50,11 @@
         </div>
         <div class="line">
           <input id="input_submit_key" type="checkbox" />
-          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync to other keyservers)</label>
+          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync to any other keyservers)</label>
+        </div>
+        <div class="line" style="visibility: hidden;" >
+          <input id="input_submit_all" type="checkbox" disabled="disabled" />
+          <label for="input_submit_all">Also submit the same pubkey for: <span id="addresses"></span></label>
         </div>
         <div class="line">
           <input id="input_passphrase" type="password" placeholder="Private Key Passphrase" />
@@ -84,6 +88,8 @@
   <script src="/js/pubkeys.js"></script>
   <script src="/js/keyserver.js"></script>
   <script src="/js/common.js"></script>
+  <script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
+  <script src="/js/gmail_api.js"></script>
   <script src="common.js"></script>
   <script src="setup.js"></script>
 

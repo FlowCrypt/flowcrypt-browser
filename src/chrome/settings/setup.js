@@ -1,11 +1,38 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'signal_scope', 'full_name']);
+var url_params = get_url_params(['account_email']);
 
-signal_scope_set(url_params['signal_scope']);
+// todo: pull full_name from google
+
+var signal_scope = random_string();
+signal_scope_set(signal_scope);
+
+// set account addresses at least once
+account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
+  function show_submit_all_addresses_option(addrs) {
+    if(addrs && addrs.length > 1) {
+      var i = addrs.indexOf(url_params['account_email']);
+      if(i !== -1) {
+        addrs.splice(i, 1);
+      }
+      $('#addresses').text(addrs.join(', '));
+      $('#input_submit_all').parent().css('visibility', 'visible');
+    }
+  }
+  if(typeof storage.addresses === 'undefined') {
+    fetch_all_account_addresses(url_params['account_email'], function(addresses) {
+      account_storage_set(url_params['account_email'], {
+        addresses: addresses
+      }, function() {
+        show_submit_all_addresses_option(addresses);
+      });
+    });
+  } else {
+    show_submit_all_addresses_option(storage['addresses']);
+  }
+});
 
 function setup_dialog_init() {
-  //todo - "skip" next to loading dialog - can take long on slow connection
   //todo - handle network failure on init. loading
   $('h1').text('Set up ' + url_params['account_email']);
   get_pubkey(url_params['account_email'], function(pubkey) {
@@ -35,7 +62,7 @@ function setup_dialog_set_done() {
   });
 }
 
-function setup_dialog_submit_pubkey(account_email, pubkey, callback) {
+function setup_dialog_submit_main_pubkey(account_email, pubkey, callback) {
   keyserver_keys_submit(account_email, pubkey, function(key_submitted, response) {
     if(key_submitted && response.saved === true) {
       restricted_account_storage_set(account_email, 'master_public_key_submitted', true);
@@ -60,7 +87,7 @@ function create_save_submit_key_pair(account_email, email_name, passphrase) {
     restricted_account_storage_set(account_email, 'master_public_key_submit', true);
     restricted_account_storage_set(account_email, 'master_public_key_submitted', false);
     restricted_account_storage_set(account_email, 'master_passphrase', '');
-    setup_dialog_submit_pubkey(account_email, keypair.publicKeyArmored, setup_dialog_set_done);
+    setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, setup_dialog_set_done);
   }).catch(function(error) {
     $('#step_2_easy_generating').html('Error, thnaks for discovering it!<br/><br/>This is an early development version.<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed in red and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
@@ -102,6 +129,32 @@ $('.action_account_settings').click(function() {
   window.location = 'account.htm?account_email=' + encodeURIComponent(url_params['account_email']);
 });
 
+$('#input_submit_key').click(function() {
+  if($('#input_submit_key').prop('checked')) {
+    if($('#input_submit_all').parent().css('visibility') === 'visible') {
+      $('#input_submit_all').prop({
+        checked: true,
+        disabled: false
+      });
+    }
+  } else {
+    $('#input_submit_all').prop({
+      checked: false,
+      disabled: true
+    });
+  }
+});
+
+function submit_pubkey_alternative_addresses(addresses, pubkey, callback) {
+  if(addresses.length) {
+    keyserver_keys_submit(addresses.pop(), pubkey, function(key_submitted, response) {
+      submit_pubkey_alternative_addresses(addresses, pubkey, callback);
+    });
+  } else {
+    callback();
+  }
+}
+
 $('.action_save_private').click(function() {
   var prv = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
   var prv_to_test_passphrase = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
@@ -120,8 +173,20 @@ $('.action_save_private').click(function() {
     restricted_account_storage_set(url_params['account_email'], 'master_public_key_submitted', false);
     restricted_account_storage_set(url_params['account_email'], 'master_passphrase', $('#input_passphrase').val());
     if($('#input_submit_key').prop('checked')) {
-      $('.action_save_private').html('&nbsp;<i class="fa fa-spinner fa-pulse"></i>&nbsp;');
-      setup_dialog_submit_pubkey(url_params['account_email'], prv.toPublic().armor(), setup_dialog_set_done);
+      $('.action_save_private').html(get_spinner());
+      account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
+        // todo: following if/else would use some refactoring in terms of how setup_dialog_set_done is called and transparency about when setup_done
+        if($('#input_submit_all').prop('checked') && typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
+          submit_pubkey_alternative_addresses(storage.addresses, prv.toPublic().armor(), setup_dialog_set_done);
+          setup_dialog_submit_main_pubkey(url_params['account_email'], prv.toPublic().armor(), function() {
+            account_storage_set(url_params['account_email'], {
+              setup_done: true
+            });
+          });
+        } else {
+          setup_dialog_submit_main_pubkey(url_params['account_email'], prv.toPublic().armor(), setup_dialog_set_done);
+        }
+      });
     } else {
       setup_dialog_set_done();
     }
