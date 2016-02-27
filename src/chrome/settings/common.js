@@ -49,3 +49,13 @@ function fetch_all_account_addresses(account_email, callback, q, from_emails) {
     }
   });
 }
+
+function submit_pubkey_alternative_addresses(addresses, pubkey, callback) {
+  if(addresses.length) {
+    keyserver_keys_submit(addresses.pop(), pubkey, function(key_submitted, response) {
+      submit_pubkey_alternative_addresses(addresses, pubkey, callback);
+    });
+  } else {
+    callback();
+  }
+}

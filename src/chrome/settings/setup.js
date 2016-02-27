@@ -157,16 +157,6 @@ $('#input_submit_key').click(function() {
   }
 });
 
-function submit_pubkey_alternative_addresses(addresses, pubkey, callback) {
-  if(addresses.length) {
-    keyserver_keys_submit(addresses.pop(), pubkey, function(key_submitted, response) {
-      submit_pubkey_alternative_addresses(addresses, pubkey, callback);
-    });
-  } else {
-    callback();
-  }
-}
-
 $('.action_save_private').click(function() {
   var prv = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
   var prv_to_test_passphrase = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
