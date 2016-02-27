@@ -87,7 +87,19 @@ function create_save_submit_key_pair(account_email, email_name, passphrase) {
     restricted_account_storage_set(account_email, 'master_public_key_submit', true);
     restricted_account_storage_set(account_email, 'master_public_key_submitted', false);
     restricted_account_storage_set(account_email, 'master_passphrase', '');
-    setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, setup_dialog_set_done);
+    account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
+      // todo: following if/else would use some refactoring in terms of how setup_dialog_set_done is called and transparency about when setup_done
+      if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
+        submit_pubkey_alternative_addresses(storage.addresses, keypair.publicKeyArmored, setup_dialog_set_done);
+        setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, function() {
+          account_storage_set(account_email, {
+            setup_done: true
+          });
+        });
+      } else {
+        setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, setup_dialog_set_done);
+      }
+    });
   }).catch(function(error) {
     $('#step_2_easy_generating').html('Error, thnaks for discovering it!<br/><br/>This is an early development version.<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed in red and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
