@@ -62,11 +62,7 @@ function reply_message_render_success() {
   $('#reply_message_successful_container').css('display', 'block');
 }
 
-function reply_message_send_through_gmail_api(account_email, to, subject, text, thread_id, headers) {
-
-}
-
-function new_message_encrypt_and_send() {
+function reply_message_encrypt_and_send() {
   var to = $('#input_to').val();
   var subject = url_params['subject'];
   var plaintext = $('#input_text').html();
@@ -92,7 +88,7 @@ function new_message_encrypt_and_send() {
 function reply_message_on_render() {
   $("#input_to").blur(compose_render_email_secure_or_insecure);
   $("#input_to").focus(compose_render_email_neutral);
-  $('#send_btn').click(new_message_encrypt_and_send);
+  $('#send_btn').click(prevent(doubleclick(), reply_message_encrypt_and_send));
   $("#input_to").focus();
   $("#input_to").val(url_params['to']);
   document.getElementById("input_text").focus();

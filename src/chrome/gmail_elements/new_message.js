@@ -67,13 +67,12 @@ function on_new_message_render() {
   $("#input_to").focus(compose_render_email_neutral);
   $('#input_to').keyup(search_contacts);
   $("#input_to").blur(compose_render_email_secure_or_insecure);
-  $('#send_btn').click(new_message_encrypt_and_send);
+  $('#send_btn').click(prevent(doubleclick(), new_message_encrypt_and_send));
   $('.close_new_message').click(new_message_close);
   $('table#compose').click(hide_contacts);
   account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
       $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from"></select>');
-      console.log(storage.addresses)
       for(var i = 0; i < storage.addresses.length; i++) {
         $('#input_from').append('<option value="' + storage.addresses[i] + '">' + storage.addresses[i] + '</option>');
       }
