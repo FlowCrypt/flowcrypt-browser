@@ -18,6 +18,9 @@ table#compose th span.close_new_message { display: inline-block; position: absol
 table#compose th span.close_new_message:hover { cursor: pointer; opacity: 1; }
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0px;}
 table#compose td input { border: none; width: 100%; height: 100%; margin: 0px; padding: 6px; padding-left: 9px; background: none; outline: none;}
+table#compose td.input.show_send_from { height: 84px; }
+table#compose td.input.show_send_from input#input_to { height: 50%; }
+table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; padding-left: 6px; margin-top: 10px; width: 98%; outline: none; }
 table#compose td.bottom { background-color: #f5f5f5; padding: 0px; height: 42px; padding-left:9px;}
 table#compose td.bottom div#send_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836;
   background-image: -webkit-linear-gradient(top, #dd4b39, #d14836); background-image: linear-gradient(top, #dd4b39, #d14836);

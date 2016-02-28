@@ -8,22 +8,27 @@ function new_message_close() {
   signal_send('gmail_tab', 'close_new_message');
 }
 
-function new_message_send_through_gmail_api(account_email, to, subject, text) {
-  gmail_api_message_send(account_email, to, subject, null, text, {}, function(success, response) {
-    if(success) {
-      new_message_close();
-    } else {
-      alert('error sending message, check log');
-    }
-  });
+function new_message_send_through_gmail_api(account_email, from, to, subject, text) {
+
 }
 
 function new_message_encrypt_and_send() {
   var to = $('#input_to').val();
   var subject = $('#input_subject').val();
   var plaintext = $('#input_text').html();
+  if($('#input_from').length) {
+    var from = $('#input_from').val();
+  } else {
+    var from = url_params['account_email'];
+  }
   compose_encrypt_and_send(url_params['account_email'], to, subject, plaintext, function(message_text_to_send) {
-    new_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send);
+    gmail_api_message_send(url_params['account_email'], from, to, subject, null, message_text_to_send, {}, function(success, response) {
+      if(success) {
+        new_message_close();
+      } else {
+        alert('error sending message, check log');
+      }
+    });
   });
 }
 
@@ -46,8 +51,7 @@ function search_contacts() {
       $('#contacts ul').html(ul_html);
       $('#contacts ul li').click(select_contact);
       $('#contacts').css('display', 'block');
-    }
-    else {
+    } else {
       hide_contacts();
     }
   } else {
@@ -66,5 +70,14 @@ function on_new_message_render() {
   $('#send_btn').click(new_message_encrypt_and_send);
   $('.close_new_message').click(new_message_close);
   $('table#compose').click(hide_contacts);
+  account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
+    if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
+      $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from"></select>');
+      console.log(storage.addresses)
+      for(var i = 0; i < storage.addresses.length; i++) {
+        $('#input_from').append('<option value="' + storage.addresses[i] + '">' + storage.addresses[i] + '</option>');
+      }
+    }
+  });
 }
 on_new_message_render();

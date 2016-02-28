@@ -98,11 +98,11 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
   }, get_thread_callback);
 }
 
-function gmail_api_message_send(account_email, to, subject, thread_id, message, add_headers, message_send_callback) {
+function gmail_api_message_send(account_email, from, to, subject, thread_id, message, add_headers, message_send_callback) {
   require(['emailjs-mime-builder'], function(MimeBuilder) {
     var root_node = new MimeBuilder('multipart/alternative');
     root_node.addHeader('To', to);
-    root_node.addHeader('From', account_email);
+    root_node.addHeader('From', from);
     root_node.addHeader('Subject', subject);
     for(var key in add_headers) {
       root_node.addHeader(key, add_headers[key]);

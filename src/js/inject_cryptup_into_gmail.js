@@ -104,7 +104,7 @@ if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1
           account_storage_set(account_email, {
             notification_setup_done_seen: true
           }, function() {
-            gmail_notification_show('CryptUP was successfully set up. Click on green lock button on the left to send first secure message. <a href="#" class="notification_close">got it</a>');
+            gmail_notification_show('CryptUP was successfully set up for this account. Click on green lock button on the left to send first secure message. <a href="#" class="notification_close">got it</a>');
             $('.gmail_notifications a.notification_close').click(function() {
               gmail_notification_clear();
             });
@@ -113,7 +113,7 @@ if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1
         inject_cryptup();
         clearInterval(wait_for_setup_interval);
       } else if(!$("div.gmail_notification").length && !storage['notification_setup_needed_dismissed'] && show_setup_needed_notification_if_setup_not_done) {
-        gmail_notification_show('<a href="_PLUGIN/index.htm" target="_blank">Set up CryptUP</a> to send and receive secure email. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="notification_close">remind me later</a>');
+        gmail_notification_show('<a href="_PLUGIN/index.htm" target="_blank">Set up CryptUP</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="notification_close">remind me later</a>');
         $('.gmail_notifications a.notification_setup_needed_dismiss').click(function() {
           account_storage_set(account_email, {
             notification_setup_needed_dismissed: true

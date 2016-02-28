@@ -63,14 +63,7 @@ function reply_message_render_success() {
 }
 
 function reply_message_send_through_gmail_api(account_email, to, subject, text, thread_id, headers) {
-  gmail_api_message_send(account_email, to, subject, thread_id, text, headers, function(success, response) {
-    if(success) {
-      reply_message_render_success();
-      reply_message_reinsert_reply_box();
-    } else {
-      alert('error sending message, check log');
-    }
-  });
+
 }
 
 function new_message_encrypt_and_send() {
@@ -85,7 +78,14 @@ function new_message_encrypt_and_send() {
     if(message_text_to_send == plaintext) {
       $('div.replied_body').removeClass('pgp_secure').addClass('pgp_insecure');
     }
-    reply_message_send_through_gmail_api(url_params['account_email'], to, subject, message_text_to_send, url_params['thread_id'], headers);
+    gmail_api_message_send(url_params['account_email'], url_params['from'], to, subject, url_params['thread_id'], message_text_to_send, headers, function(success, response) {
+      if(success) {
+        reply_message_render_success();
+        reply_message_reinsert_reply_box();
+      } else {
+        alert('error sending message, check log');
+      }
+    });
   });
 }
 
