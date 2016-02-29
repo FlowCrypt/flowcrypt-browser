@@ -94,3 +94,8 @@ function compose_render_email_neutral() {
   $("#send_btn span").text("Send");
   $("#send_btn_note").text('');
 }
+
+function convert_html_tags_to_newlines(text) {
+  // todo: approximation. Does not handle <div><br></div> well which contenteditable fields tend to create
+  return text.replace(/<[bB][rR] ?\/?>/g, '\n').replace(/<[dD][iI][vV][^>]*>/g, '\n').replace(/<\/[dD][iI][vV][^>]*>/g, '').trim();
+}

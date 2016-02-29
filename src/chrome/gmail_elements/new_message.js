@@ -8,21 +8,19 @@ function new_message_close() {
   signal_send('gmail_tab', 'close_new_message');
 }
 
-function new_message_send_through_gmail_api(account_email, from, to, subject, text) {
-
-}
-
 function new_message_encrypt_and_send() {
-  var to = $('#input_to').val();
-  var subject = $('#input_subject').val();
-  var plaintext = $('#input_text').html();
+  var headers = {
+    'To': $('#input_to').val(),
+    'Subject': $('#input_subject').val(),
+  };
   if($('#input_from').length) {
-    var from = $('#input_from').val();
+    headers['From'] = $('#input_from').val();
   } else {
-    var from = url_params['account_email'];
+    headers['From'] = url_params['account_email'];
   }
-  compose_encrypt_and_send(url_params['account_email'], to, subject, plaintext, function(message_text_to_send) {
-    gmail_api_message_send(url_params['account_email'], from, to, subject, null, message_text_to_send, {}, function(success, response) {
+  var plaintext = convert_html_tags_to_newlines($('#input_text').html());
+  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(message_text_to_send) {
+    gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, null, null, function(success, response) {
       if(success) {
         new_message_close();
       } else {

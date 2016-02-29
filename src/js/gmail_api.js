@@ -98,19 +98,41 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
   }, get_thread_callback);
 }
 
-function gmail_api_message_send(account_email, from, to, subject, thread_id, message, add_headers, message_send_callback) {
+/*
+  body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
+  headers: at least {To, From, Subject}
+  attachments: [{filename: 'some.txt', type: 'text/plain', content: }]
+*/
+function gmail_api_message_send(account_email, body, headers, attachments, thread_id, message_send_callback) {
   require(['emailjs-mime-builder'], function(MimeBuilder) {
-    var root_node = new MimeBuilder('multipart/alternative');
-    root_node.addHeader('To', to);
-    root_node.addHeader('From', from);
-    root_node.addHeader('Subject', subject);
-    for(var key in add_headers) {
-      root_node.addHeader(key, add_headers[key]);
+    var root_node = new MimeBuilder('multipart/mixed');
+    for(var key in headers) {
+      root_node.addHeader(key, headers[key]);
     }
-    root_node.appendChild(new MimeBuilder('text/plain').setContent(convert_html_tags_to_newlines(message))); //todo - strip tags and add \n instead
-    // root_node.appendChild(new MimeBuilder('text/html').setContent(message));
+    var text_node = new MimeBuilder('multipart/alternative');
+    if(typeof body === 'string') {
+      text_node.appendChild(new MimeBuilder('text/plain').setContent(body));
+    } else {
+      for(var type in body) {
+        text_node.appendChild(new MimeBuilder(type).setContent(body[type]));
+      }
+    }
+    root_node.appendChild(text_node);
+    for(var i in attachments) {
+      //attachments[i].type + '; name="' + attachments[i].filename + '"'
+      var attachment = new MimeBuilder(false, {
+        filename: attachments[i].filename
+      }).setHeader({
+        'Content-Disposition': 'attachment',
+        'X-Attachment-Id': 'f_' + random_string(10),
+        'Content-Transfer-Encoding': 'base64',
+      }).setContent(attachments[i].content);
+      root_node.appendChild(attachment);
+    }
+    var raw_email = root_node.build();
+    // console.log(raw_email);
     var params = {
-      raw: base64url(root_node.build()),
+      raw: base64url(raw_email),
       threadId: thread_id || null,
     };
     gmail_api_call(account_email, 'POST', 'messages/send', params, message_send_callback);
@@ -131,8 +153,4 @@ function gmail_api_message_get(account_email, message_id, format, callback) {
   }, function(success, response) {
     callback(response);
   });
-}
-
-function convert_html_tags_to_newlines(text) {
-  return text.replace(/<[bB][rR] ?\/?>/g, '\n').replace(/<[dD][iI][vV][^>]*>/g, '').replace(/<\/[dD][iI][vV][^>]*>/g, '\n').trim();
 }
