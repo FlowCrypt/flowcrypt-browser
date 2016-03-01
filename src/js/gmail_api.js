@@ -130,7 +130,6 @@ function gmail_api_message_send(account_email, body, headers, attachments, threa
       root_node.appendChild(attachment);
     }
     var raw_email = root_node.build();
-    // console.log(raw_email);
     var params = {
       raw: base64url(raw_email),
       threadId: thread_id || null,
@@ -139,18 +138,85 @@ function gmail_api_message_send(account_email, body, headers, attachments, threa
   });
 };
 
-function gmail_api_message_list(account_email, q, callback) {
+function gmail_api_message_list(account_email, q, include_deleted, callback) {
   gmail_api_call(account_email, 'GET', 'messages', {
-    q: q
-  }, function(success, response) {
-    callback(response);
-  });
+    q: q,
+    includeSpamTrash: include_deleted || false,
+  }, callback);
 }
 
-function gmail_api_message_get(account_email, message_id, format, callback) {
-  gmail_api_call(account_email, 'GET', 'messages/' + message_id, {
-    format: format || full //full or metadata
-  }, function(success, response) {
-    callback(response);
+function gmail_api_message_get(account_email, message_id, format, callback, results) {
+  if(typeof message_id === 'object') { // todo: chained requests are messy and slow. parallel processing with promises would be better
+    if(!results) {
+      results = {};
+    }
+    if(message_id.length) {
+      var id = message_id.pop();
+      gmail_api_call(account_email, 'GET', 'messages/' + id, {
+        format: format || full //full or metadata
+      }, function(success, response) {
+        if(success) {
+          results[id] = response;
+          gmail_api_message_get(account_email, message_id, format, callback, results);
+        } else {
+          callback(success, response, results);
+        }
+      });
+    } else {
+      callback(true, results);
+    }
+  } else {
+    gmail_api_call(account_email, 'GET', 'messages/' + message_id, {
+      format: format || full //full or metadata
+    }, callback);
+  }
+}
+
+function gmail_api_message_attachment_get(account_email, message_id, attachment_id, callback) { //todo
+  gmail_api_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback);
+}
+
+function gmail_api_find_attachments(gmail_email_object, internal_results, internal_message_id) {
+  if(!internal_results) {
+    internal_results = [];
+  }
+  if(typeof gmail_email_object.payload !== 'undefined') {
+    internal_message_id = gmail_email_object.id;
+    internal_results = internal_results.concat(gmail_api_find_attachments(gmail_email_object.payload, internal_results, internal_message_id));
+  }
+  if(typeof gmail_email_object.parts !== 'undefined') {
+    for(var i in gmail_email_object.parts) {
+      internal_results = internal_results.concat(gmail_api_find_attachments(gmail_email_object.parts[i], internal_results, internal_message_id));
+    }
+  }
+  if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {
+    internal_results.push({
+      message_id: internal_message_id,
+      id: gmail_email_object.body.attachmentId,
+      size: gmail_email_object.body.size,
+      name: gmail_email_object.filename,
+      type: gmail_email_object.mimeType,
+    });
+  }
+  return internal_results;
+}
+
+function gmail_api_fetch_attachments(account_email, attachments, callback, results) { //todo: parallelize with promises
+  if(!results) {
+    results = [];
+  }
+  var attachment = attachments[results.length];
+  gmail_api_message_attachment_get(account_email, attachment.message_id, attachment.id, function(success, response) {
+    if(success) {
+      attachment['data'] = response.data;
+      results.push(attachment);
+      if(results.length === attachments.length) {
+        callback(true, results);
+      } else {
+        gmail_api_fetch_attachments(account_email, attachments, callback, results);
+      }
+    } else {
+      callback(success, response);
+    }
   });
 }

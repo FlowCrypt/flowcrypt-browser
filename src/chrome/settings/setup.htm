@@ -52,7 +52,7 @@
           <input id="input_submit_key" type="checkbox" />
           <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync to any other keyservers)</label>
         </div>
-        <div class="line" style="visibility: hidden;" >
+        <div class="line" style="visibility: hidden;">
           <input id="input_submit_all" type="checkbox" disabled="disabled" />
           <label for="input_submit_all">Also submit the same pubkey for: <span id="addresses"></span></label>
         </div>
@@ -65,15 +65,49 @@
       </div>
     </div>
 
-    <div id="step_3_done">
-      <div class="line"><span class="email"></span> is set up for encrypted email</div>
+    <div id="step_2_recovery">
+      <div class="line">Found a backup of your account key. Enter your password to continue.</div>
+      <div class="line">
+        <input type="text" id="recovery_pasword" placeholder="Enter your password" />
+      </div>
+      <div class="line">
+        <div class="button green long action_recover_account">RECOVER ACCOUNT</div>
+      </div>
+    </div>
+
+    <div id="step_3_backup">
+      <div class="first">
+        <div class="line">Loss of this password cannot be recovered. Note this password on a paper, and file it with your important documents.</div>
+        <div class="line">
+          <input id="password" type="text" placeholder="Password" />
+        </div>
+        <div class="line">
+          <div class="button long green action_password">SET PASSWORD</div>
+        </div>
+        <div class="line">&nbsp;</div>
+        <div class="line" style="color: #888;">Use 8+ characters, 1+ lowercase letters, 1+ uppercase letters, 1+ digits.</div>
+      </div>
+      <div class="second">
+        <div class="line">Please repeat it one more time. Make sure to note the password down.</div>
+        <div class="line">
+          <input id="password2" type="text" placeholder="Repeat password" />
+        </div>
+        <div class="line">
+          <div class="button long green action_backup">CONFIRM PASSWORD</div>
+        </div>
+        <div class="line">
+          <div class="button long gray action_reset_password">USE ANOTHER PASSWORD</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="step_4_done">
       <div class="line">
         <div class="button long green action_close">CLOSE</div>
       </div>
       <div class="line">
         <div class="button long gray action_account_settings">MORE SETTINGS</div>
       </div>
-
       <div class="line">
         <a class="button long gray" href="index.htm">ALL ACCOUNTS</a>
       </div>

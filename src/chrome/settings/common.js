@@ -6,7 +6,8 @@ $('body').append('<div id="footer"><div><div><div>' + v + '</div><img src="/img/
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
     function parse_from_email_header(messages, m_i, from_email_callback) {
-      gmail_api_message_get(account_email, messages[m_i].id, 'metadata', function(message_get_response) {
+      gmail_api_message_get(account_email, messages[m_i].id, 'metadata', function(success, message_get_response) {
+        // todo: check "success"
         var headers = message_get_response.payload.headers;
         for(var i in headers) {
           if(headers[i].name.toLowerCase() === 'from') {
@@ -21,7 +22,8 @@ function fetch_all_account_addresses(account_email, callback, q, from_emails) {
         }
       });
     }
-    gmail_api_message_list(account_email, q, function(message_list_response) {
+    gmail_api_message_list(account_email, q, false, function(success, message_list_response) {
+      // todo: test "success" and handle
       if(typeof message_list_response.messages !== 'undefined') {
         parse_from_email_header(message_list_response.messages, 0, function(from_email) {
           callback(from_email);
