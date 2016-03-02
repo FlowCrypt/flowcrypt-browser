@@ -41,3 +41,7 @@ $('.action_load_send_from_email_addresses').click(prevent(parallel(), function(s
     });
   });
 }));
+
+$('.action_backups').click(function(){
+  window.location = 'backup.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});

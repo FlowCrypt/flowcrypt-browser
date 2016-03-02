@@ -1,5 +1,7 @@
 'use strict';
 
+var recovery_email_subjects = ['CryptUP Account Backup'];
+
 var v = 'v' + chrome.runtime.getManifest().version;
 $('body').append('<div id="footer"><div><div><div>' + v + '</div><img src="/img/cryptup-logo-146-30-dark.png" /></div></div></div>');
 
@@ -60,4 +62,51 @@ function submit_pubkey_alternative_addresses(addresses, pubkey, callback) {
   } else {
     callback();
   }
+}
+
+function fetch_email_key_backups(account_email, callback) {
+  var q = [
+    'from:' + account_email,
+    'to:' + account_email,
+    '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
+    '-is:spam',
+  ];
+  gmail_api_message_list(account_email, q.join(' '), true, function(success, response) {
+    if(success) {
+      if(response.messages) {
+        var message_ids = [];
+        for(var i in response.messages) {
+          message_ids.push(response.messages[i].id);
+        }
+        gmail_api_message_get(account_email, message_ids, 'full', function(success, messages) {
+          if(success) {
+            var attachments = [];
+            for(var id in messages) {
+              attachments = attachments.concat(gmail_api_find_attachments(messages[id]));
+            }
+            gmail_api_fetch_attachments(account_email, attachments, function(success, downloaded_attachments) {
+              var keys = [];
+              for(var i in downloaded_attachments) {
+                try {
+                  var armored_key = atob(downloaded_attachments[i].data);
+                  var key = openpgp.key.readArmored(armored_key).keys[0];
+                  if(key.isPrivate()) {
+                    keys.push(key);
+                  }
+                } catch(err) {}
+              }
+              callback(success, keys);
+            });
+          } else {
+            callback(false, 'Connection dropped while checking for backups. Please try again.');
+            display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
+          }
+        });
+      } else {
+        callback(true, null);
+      }
+    } else {
+      callback(false, 'Connection dropped while checking for backups. Please try again.');
+    }
+  });
 }

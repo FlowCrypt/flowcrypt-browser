@@ -182,11 +182,11 @@ function gmail_api_find_attachments(gmail_email_object, internal_results, intern
   }
   if(typeof gmail_email_object.payload !== 'undefined') {
     internal_message_id = gmail_email_object.id;
-    internal_results = internal_results.concat(gmail_api_find_attachments(gmail_email_object.payload, internal_results, internal_message_id));
+    gmail_api_find_attachments(gmail_email_object.payload, internal_results, internal_message_id);
   }
   if(typeof gmail_email_object.parts !== 'undefined') {
     for(var i in gmail_email_object.parts) {
-      internal_results = internal_results.concat(gmail_api_find_attachments(gmail_email_object.parts[i], internal_results, internal_message_id));
+      gmail_api_find_attachments(gmail_email_object.parts[i], internal_results, internal_message_id);
     }
   }
   if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {

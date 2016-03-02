@@ -3,8 +3,12 @@
 function migrate(signal_data) {
   migrate_040_050(signal_data.account_email, function() {
     migrate_060_070(signal_data.account_email, function() {
-      account_storage_set(null, {version: Number(chrome.runtime.getManifest().version.replace('.', ''))}, function() {
-        signal_send('gmail_tab', 'migrated', {}, signal_data.reply_to_signal_scope);
+      migrate_070_080(signal_data.account_email, function() {
+        account_storage_set(null, {
+          version: Number(chrome.runtime.getManifest().version.replace('.', ''))
+        }, function() {
+          signal_send('gmail_tab', 'migrated', {}, signal_data.reply_to_signal_scope);
+        });
       });
     });
   });
@@ -56,4 +60,18 @@ function migrate_060_070(account_email, then) {
   } else {
     then();
   }
+}
+
+function migrate_070_080(account_email, then) {
+  console.log('migrate_070_080');
+  account_storage_get(account_email, ['setup_done', 'setup_simple'], function(storage) {
+    if(typeof storage.setup_simple === 'undefined' && storage.setup_done === true) {
+      console.log('migrating from 0.70 to 0.80: setting setup_simple');
+      account_storage_set(account_email, {
+        setup_simple: (restricted_account_storage_get('master_public_key_submit') === true && !restricted_account_storage_get('master_passphrase'))
+      }, then);
+    } else {
+      then();
+    }
+  });
 }

@@ -87,8 +87,23 @@ function gmail_notification_clear() {
   $('.gmail_notifications').html('');
 }
 
-function gmail_notification_show(text) {
+function gmail_notification_show(text, callbacks) {
   $('.gmail_notifications').html('<div class="gmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome/settings')) + '</div>');
+  if(!callbacks) {
+    callbacks = {};
+  }
+  if('close' in callbacks) {
+    var original_close_callback = callbacks.close;
+    callbacks.close = function() {
+      original_close_callback();
+      gmail_notification_clear();
+    }
+  } else {
+    callbacks.close = gmail_notification_clear;
+  }
+  for(var name in callbacks) {
+    $('.gmail_notifications a.' + name).click(prevent(doubleclick(), callbacks[name]));
+  }
 }
 
 if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
@@ -97,31 +112,30 @@ if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1
   save_account_email_full_name_if_needed(account_email);
   var show_setup_needed_notification_if_setup_not_done = true;
   var wait_for_setup_interval = setInterval(function() {
-    account_storage_get(account_email, ['setup_done', 'notification_setup_needed_dismissed', 'notification_setup_done_seen'], function(storage) {
+    account_storage_get(account_email, ['setup_done', 'notification_setup_needed_dismissed', 'notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function(storage) {
       if(storage['setup_done'] === true) {
         gmail_notification_clear();
         if(!storage['notification_setup_done_seen']) {
           account_storage_set(account_email, {
             notification_setup_done_seen: true
           }, function() {
-            gmail_notification_show('CryptUP was successfully set up for this account. Click on green lock button on the left to send first secure message. <a href="#" class="notification_close">got it</a>');
-            $('.gmail_notifications a.notification_close').click(function() {
-              gmail_notification_clear();
-            });
+            gmail_notification_show('CryptUP was successfully set up for this account. Click on green lock button on the left to send first secure message. <a href="#" class="close">got it</a>');
           });
+        } else if(storage['key_backup_prompt'] !== false && storage['setup_simple'] === true) {
+          gmail_notification_show('<a href="_PLUGIN/backup.htm?account_email=' + encodeURIComponent(account_email) + '">Back up your CryptUP key</a> so that you don\'t lose access to your encrypted email. <a href="#" class="close">not now</a>');
         }
         inject_cryptup();
         clearInterval(wait_for_setup_interval);
       } else if(!$("div.gmail_notification").length && !storage['notification_setup_needed_dismissed'] && show_setup_needed_notification_if_setup_not_done) {
-        gmail_notification_show('<a href="_PLUGIN/index.htm" target="_blank">Set up CryptUP</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="notification_close">remind me later</a>');
-        $('.gmail_notifications a.notification_setup_needed_dismiss').click(function() {
-          account_storage_set(account_email, {
-            notification_setup_needed_dismissed: true
-          }, gmail_notification_clear);
-        });
-        $('.gmail_notifications a.notification_close').click(function() {
-          show_setup_needed_notification_if_setup_not_done = false;
-          gmail_notification_clear();
+        gmail_notification_show('<a href="_PLUGIN/index.htm" target="_blank">Set up CryptUP</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>', {
+          notification_setup_needed_dismiss: function() {
+            account_storage_set(account_email, {
+              notification_setup_needed_dismissed: true
+            }, gmail_notification_clear);
+          },
+          close: function() {
+            show_setup_needed_notification_if_setup_not_done = false;
+          }
         });
       }
     });

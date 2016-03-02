@@ -41,6 +41,8 @@ body > div#content.setup div#step_3_backup .second { display: none; }
 body > div#content.setup div#step_4_done { display: none; }
 body > div#content.setup div#loading { margin-top: 150px; }
 
+body > div#content.backup div#step_1_password { display: none; }
+body > div#content.backup div#step_2_confirm { display: none; }
 
 body > div#footer { width: 99%; position: absolute; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
 body > div#footer > div { width: 95%; display: inline-block; padding: 30px 0; text-align: right; }

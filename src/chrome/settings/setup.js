@@ -6,7 +6,6 @@ var url_params = get_url_params(['account_email']);
 
 var signal_scope = random_string();
 signal_scope_set(signal_scope);
-var recovery_email_subjects = ['CryptUP Account Backup'];
 var recovered_keys = undefined;
 
 // set account addresses at least once
@@ -34,53 +33,6 @@ account_storage_get(url_params['account_email'], ['addresses'], function(storage
   }
 });
 
-function fetch_email_key_backups(account_email, callback) {
-  var q = [
-    'from:' + account_email,
-    'to:' + account_email,
-    '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
-    'has:attachment',
-    '-is:spam',
-  ];
-  gmail_api_message_list(account_email, q.join(' '), true, function(success, response) {
-    if(success) {
-      if(response.messages) {
-        var message_ids = [];
-        for(var i in response.messages) {
-          message_ids.push(response.messages[i].id);
-        }
-        gmail_api_message_get(account_email, message_ids, 'full', function(success, messages) {
-          if(success) {
-            var attachments = [];
-            for(var id in messages) {
-              attachments = attachments.concat(gmail_api_find_attachments(messages[id]));
-            }
-            gmail_api_fetch_attachments(account_email, attachments, function(success, downloaded_attachments) {
-              var keys = [];
-              for(var i in downloaded_attachments) {
-                try {
-                  var armored_key = atob(downloaded_attachments[i].data);
-                  var key = openpgp.key.readArmored(armored_key).keys[0];
-                  if(key.isPrivate()) {
-                    keys.push(key);
-                  }
-                } catch(err) {}
-              }
-              callback(keys);
-            });
-          } else {
-            display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
-          }
-        });
-      } else {
-        display_block('step_0_found_key'); // no backup messages
-      }
-    } else { // todo: Better handling would be useful. PGP has been used previously but can't pull it from gmail right now.
-      display_block('step_0_found_key');
-    }
-  });
-}
-
 function display_block(name) {
   var blocks = ['loading', 'step_0_found_key', 'step_1_easy_or_manual', 'step_2_manual', 'step_2_easy_generating', 'step_2_recovery', 'step_4_done', 'step_3_backup'];
   for(var i in blocks) {
@@ -91,19 +43,18 @@ function display_block(name) {
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set up ' + url_params['account_email']);
-  account_storage_get(url_params['account_email'], ['setup_done', 'key_backup_prompt'], function(storage) {
+  account_storage_get(url_params['account_email'], ['setup_done', 'key_backup_prompt', 'setup_simple'], function(storage) {
     if(storage['setup_done'] === true) {
-      setup_dialog_set_done(storage['key_backup_prompt'] !== false);
+      setup_dialog_set_done(storage['key_backup_prompt'] !== false, storage.setup_simple);
     } else {
       get_pubkey(url_params['account_email'], function(pubkey) {
         if(pubkey !== null) {
-          fetch_email_key_backups(url_params['account_email'], function(keys) {
-            if(keys) {
+          fetch_email_key_backups(url_params['account_email'], function(success, keys) {
+            if(success && keys) {
               display_block('step_2_recovery');
               recovered_keys = keys;
             } else {
               display_block('step_0_found_key');
-              $('#existing_pgp_email').text(url_params['account_email']);
             }
           });
         } else {
@@ -114,9 +65,10 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   });
 }
 
-function setup_dialog_set_done(key_backup_prompt) {
+function setup_dialog_set_done(key_backup_prompt, setup_simple) {
   var storage = {
-    setup_done: true
+    setup_done: true,
+    setup_simple: setup_simple,
   };
   if(key_backup_prompt === true) {
     storage['key_backup_prompt'] = Date.now();
@@ -125,8 +77,7 @@ function setup_dialog_set_done(key_backup_prompt) {
   }
   account_storage_set(url_params['account_email'], storage, function() {
     if(key_backup_prompt === true) {
-      display_block('step_3_backup');
-      $('h1').text('Choose your password');
+      window.location = 'backup.htm?action=setup&account_email=' + encodeURIComponent(url_params['account_email']);
     } else {
       display_block('step_4_done');
       $('h1').text('Setup done!');
@@ -162,17 +113,18 @@ function create_save_submit_key_pair(account_email, email_name, passphrase) {
       // todo: following if/else would use some refactoring in terms of how setup_dialog_set_done is called and transparency about when setup_done
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
         submit_pubkey_alternative_addresses(storage.addresses, keypair.publicKeyArmored, function() {
-          setup_dialog_set_done(true);
+          setup_dialog_set_done(true, true);
         });
         setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, function() {
           account_storage_set(account_email, {
             setup_done: true,
+            setup_simple: true,
             key_backup_prompt: Date.now(),
           });
         });
       } else {
         setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, function() {
-          setup_dialog_set_done(true);
+          setup_dialog_set_done(true, true);
         });
       }
     });
@@ -200,26 +152,6 @@ $('#step_2_manual a.back').click(function() {
   $('h1').text('Set up ' + url_params['account_email']);
 });
 
-$('#step_3_backup .action_password').click(function() {
-  // todo: measure overall entropy. Eg super long lowercase passwords are also good.
-  if($('#password').val().length < 8) {
-    alert('Please use a password of 8 characters or longer. Please use longer password.');
-    $('#password').focus();
-  } else if($('#password').val().match(/[a-z]/) === null) {
-    alert('Password should contain one or more lowercase letters. Please add some lowercase letters.');
-    $('#password').focus();
-  } else if($('#password').val().match(/[A-Z]/) === null) {
-    alert('Password should contain one or more UPPERCASE letters. Please add some uppercase letters.');
-    $('#password').focus();
-  } else if($('#password').val().match(/[0-9]/) === null) {
-    alert('Password should contain one or more digits. Please add some digits.');
-    $('#password').focus();
-  } else {
-    $('#step_3_backup .first').css('display', 'none');
-    $('#step_3_backup .second').css('display', 'block');
-  }
-});
-
 $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), function(self) {
   var passphrase = $('#recovery_pasword').val();
   if(passphrase) {
@@ -233,7 +165,7 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
         restricted_account_storage_set(url_params['account_email'], 'master_public_key_submit', false); //todo - think about this more
         restricted_account_storage_set(url_params['account_email'], 'master_public_key_submitted', false);
         restricted_account_storage_set(url_params['account_email'], 'master_passphrase', passphrase);
-        setup_dialog_set_done(false);
+        setup_dialog_set_done(false, true);
         return;
       }
     }
@@ -247,60 +179,6 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
     alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.')
   }
 }));
-
-function openpgp_key_encrypt(key, passphrase) {
-  if(key.isPrivate() && passphrase) {
-    var keys = key.getAllKeyPackets();
-    for(var i = 0; i < keys.length; i++) {
-      keys[i].encrypt(passphrase);
-    }
-  } else if(!passphrase) {
-    throw new Error("Encryption passphrase should not be empty");
-  } else {
-    throw new Error("Nothing to decrypt in a public key");
-  }
-}
-
-$('#step_3_backup .action_backup').click(prevent(doubleclick(), function(self) {
-  if($('#password').val() !== $('#password2').val()) {
-    alert('The two passwords do not match, please try again.');
-    $('#password2').val('');
-    $('#password2').focus();
-  } else {
-    var btn_text = $(self).text();
-    $(self).html(get_spinner());
-    var armored_private_key = restricted_account_storage_get(url_params['account_email'], 'master_private_key');
-    var prv = openpgp.key.readArmored(armored_private_key).keys[0];
-    openpgp_key_encrypt(prv, $('#password').val());
-    var email_headers = {
-      From: url_params['account_email'],
-      To: url_params['account_email'],
-      Subject: recovery_email_subjects[0],
-    };
-    var email_attachments = [{
-      filename: 'cryptup-backup-' + url_params['account_email'].replace(/[^A-Za-z0-9]+/g, '') + '.key',
-      type: 'text/plain',
-      content: prv.armor(),
-    }];
-    var email_message = 'I hope you\'ll enjoy using CryptUP! This email might come handy later.\n\nThe backup file below is encrypted using your password. Make sure to keep the password safe! Loss of password might not be recoverable, and will cause your encrypted communication to become undreadable.\n\nDon\'t forward this email to anyone! And say Hi at tom@cryptup.org :)';
-    gmail_api_message_send(url_params['account_email'], email_message, email_headers, email_attachments, null, function(success, response) {
-      if(success) { // todo - test pulling it and decrypting it
-        setup_dialog_set_done(false);
-      } else {
-        $(self).html(btn_text);
-        alert('Need internet connection to finish setting up your account. Please try clicking the button again.');
-      }
-    });
-  }
-}));
-
-$('#step_3_backup .action_reset_password').click(function() {
-  $('#password').val('');
-  $('#password2').val('');
-  $('#step_3_backup .first').css('display', 'block');
-  $('#step_3_backup .second').css('display', 'none');
-  $('#password').focus();
-});
 
 $('.action_close').click(function() {
   window.close();
@@ -349,22 +227,23 @@ $('.action_save_private').click(function() {
         // todo: following if/else would use some refactoring in terms of how setup_dialog_set_done is called and transparency about when setup_done
         if($('#input_submit_all').prop('checked') && typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
           submit_pubkey_alternative_addresses(storage.addresses, prv.toPublic().armor(), function() {
-            setup_dialog_set_done(false);
+            setup_dialog_set_done(false, false);
           });
           setup_dialog_submit_main_pubkey(url_params['account_email'], prv.toPublic().armor(), function() {
             account_storage_set(url_params['account_email'], {
               setup_done: true,
+              setup_simple: false,
               key_backup_prompt: false,
             });
           });
         } else {
           setup_dialog_submit_main_pubkey(url_params['account_email'], prv.toPublic().armor(), function() {
-            setup_dialog_set_done(false);
+            setup_dialog_set_done(false, false);
           });
         }
       });
     } else {
-      setup_dialog_set_done(false);
+      setup_dialog_set_done(false, false);
     }
   }
 });
