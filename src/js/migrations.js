@@ -69,7 +69,7 @@ function migrate_070_080(account_email, then) {
       console.log('migrating from 0.70 to 0.80: setting setup_simple');
       account_storage_set(account_email, {
         notification_setup_done_seen: true,
-        setup_simple: (restricted_account_storage_get('master_public_key_submit') === true && !restricted_account_storage_get('master_passphrase')),
+        setup_simple: (restricted_account_storage_get(account_email, 'master_public_key_submit') === true && !restricted_account_storage_get(account_email, 'master_passphrase')),
       }, then);
     } else {
       then();
