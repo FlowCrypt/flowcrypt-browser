@@ -121,7 +121,7 @@ function gmail_notification_show(text, callbacks) {
   }
 }
 
-if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) {
+if((document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) && account_email) {
   inject_meta();
   add_account_email_to_list_of_accounts(account_email);
   save_account_email_full_name_if_needed(account_email);
