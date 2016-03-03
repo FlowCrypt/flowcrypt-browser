@@ -1,5 +1,7 @@
 'use strict';
 
+signal_scope_set(random_string(4));
+
 var recovery_email_subjects = ['CryptUP Account Backup'];
 
 var v = 'v' + chrome.runtime.getManifest().version;
