@@ -108,10 +108,12 @@ function restricted_account_storage_get(account_email, key) {
     return value;
   } else if(value === 'null#null') {
     return null;
-  } else if(value === 'bool#true' || value === 'bool#false') {
-    return eval(value.replace('bool#', '', 1));
+  } else if(value === 'bool#true') {
+    return true;
+  } else if(value === 'bool#false') {
+    return false;
   } else if(value.indexOf('int#') === 0) {
-    return eval(value.replace('int#', '', 1));
+    return Number(value.replace('int#', '', 1));
   } else {
     return value.replace('str#', '', 1);
   }
