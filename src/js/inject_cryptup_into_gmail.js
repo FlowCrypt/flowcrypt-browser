@@ -33,6 +33,21 @@ function inject_cryptup() {
 function inject_visual_elements(account_email, signal_scope) {
   inject_buttons(account_email, signal_scope);
   discover_and_replace_pgp_blocks(account_email, signal_scope);
+  show_initial_notifications(account_email);
+}
+
+function show_initial_notifications(account_email) {
+  account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function(storage) {
+    if(!storage.notification_setup_done_seen) {
+      account_storage_set(account_email, {
+        notification_setup_done_seen: true
+      }, function() {
+        gmail_notification_show('CryptUP was successfully set up for this account. Click on green lock button on the left to send first secure message. <a href="#" class="close">got it</a>');
+      });
+    } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
+      gmail_notification_show('<a href="_PLUGIN/backup.htm?account_email=' + encodeURIComponent(account_email) + '">Back up your CryptUP key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
+    }
+  });
 }
 
 function inject_meta() {
@@ -112,18 +127,9 @@ if(document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1
   save_account_email_full_name_if_needed(account_email);
   var show_setup_needed_notification_if_setup_not_done = true;
   var wait_for_setup_interval = setInterval(function() {
-    account_storage_get(account_email, ['setup_done', 'notification_setup_needed_dismissed', 'notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function(storage) {
+    account_storage_get(account_email, ['setup_done', 'notification_setup_needed_dismissed'], function(storage) {
       if(storage['setup_done'] === true) {
         gmail_notification_clear();
-        if(!storage['notification_setup_done_seen']) {
-          account_storage_set(account_email, {
-            notification_setup_done_seen: true
-          }, function() {
-            gmail_notification_show('CryptUP was successfully set up for this account. Click on green lock button on the left to send first secure message. <a href="#" class="close">got it</a>');
-          });
-        } else if(storage['key_backup_prompt'] !== false && storage['setup_simple'] === true) {
-          gmail_notification_show('<a href="_PLUGIN/backup.htm?account_email=' + encodeURIComponent(account_email) + '">Back up your CryptUP key</a> so that you don\'t lose access to your encrypted email. <a href="#" class="close">not now</a>');
-        }
         inject_cryptup();
         clearInterval(wait_for_setup_interval);
       } else if(!$("div.gmail_notification").length && !storage['notification_setup_needed_dismissed'] && show_setup_needed_notification_if_setup_not_done) {
