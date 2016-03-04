@@ -58,6 +58,10 @@ function random_string(length) {
   return id;
 }
 
+function array_without(array, i) {
+  return array.splice(0, i).concat(array.splice(i + 1, array.length));
+}
+
 /* -------------------- DOUBLE CLICK/PARALLEL PROTECTION FOR JQUERY ----------------------------------- */
 
 var events_fired = {};

@@ -44,6 +44,17 @@ div#contacts ul li:first-child { background: #eee; }
 div#contacts:hover ul li:first-child { background: none; }
 div#contacts:hover ul li:first-child:hover { background: #eee; }
 div#contacts:hover ul li:hover { background: #eee; }
+table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1px solid #f5f5f5; border-radius: 2px; opacity: 0.5; }
+table#compose .bottom .icon:hover { border-color: #dadada; opacity: 1; }
+table#compose .bottom .icon:active { border-color: #4d90fe; }
+table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: middle; padding: 0; display: inline-block; margin-top: 4px }
+table#compose .bottom .icon.attach div {  background: no-repeat url(/img/gmail-compose-icons.png) 0 -709px;  overflow: inherit !important; }
+table#compose #fineuploader { position: absolute; bottom: 56px; right: 1px; }
+
+table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
+table#compose #fineuploader .qq-total-progress-bar-container { display: none; height: 0; border: 0; visibility: hidden; position: absolute; }
+table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.75; }
+
 
 /* secure or insecure */
 .email_plain { color: #d14836 !important;}

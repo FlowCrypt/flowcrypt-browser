@@ -1,10 +1,18 @@
+<!--
+    This is a document you can use when you start building the page that will contain
+    one or more Fine Uploader UI instances.  A default template that can be customized
+    is located in the text/template script tag below.
+
+    Please see http://docs.fineuploader.com/features/styling.html for information
+    on how to customize this template.
+ -->
+<!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" href="/css/font-awesome.min.css" />
-    <!-- <link rel="stylesheet" href="/css/ionicons.min.css" /> -->
-    <link rel="stylesheet" href="/css/ionicons.min.css">
-    <link rel="stylesheet" href="gmail_elements.css" />
-    <link href="/js/fine_uploader/fine-uploader-new.css" rel="stylesheet">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="client/fine-uploader-new.css" rel="stylesheet">
+    <script src="client/fine-uploader.js"></script>
     <script type="text/template" id="qq-template">
         <div class="qq-uploader-selector qq-uploader" qq-drop-area-text="Drop files here">
             <div class="qq-total-progress-bar-container-selector qq-total-progress-bar-container">
@@ -63,59 +71,12 @@
         </div>
     </script>
 
-  </head>
+    <title>Fine Uploader default UI</title>
+</head>
+<body>
 
-  <body id="body">
-
-    <div id="contacts"><ul></ul></div>
-    <table id="compose">
-      <tr>
-        <th> <!-- header -->
-          <span class="close_new_message"><i class="ion-android-close"></i></span>
-          <h1>New Secure Message </h1>
-        </th>
-      </tr>
-      <tr>
-        <td class="input" id="input_addresses_container"> <!-- to -->
-          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient">
-        </td>
-      </tr>
-      <tr>
-        <td class="input"> <!-- subject -->
-          <input id="input_subject" spellcheck="true" tabindex="1" placeholder="Subject">
-        </td>
-      </tr>
-      <tr>
-        <td> <!-- body -->
-          <div contenteditable id="input_text"></div>
-          <div id="fineuploader">
-
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td class="bottom"> <!-- bottom -->
-          <div id="send_btn">
-            <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
-          </div>
-          <div class="icon attach" id="fineuploader_button"><div></div></div>
-
-					<div id="send_btn_note"></div>
-        </td>
-      </tr>
-    </table>
-
-    <script src="/js/storage.js"></script>
-    <script src="/js/signal.js"></script>
-    <script src="/js/jquery.min.js"></script>
-    <script src="/js/openpgp.min.js"></script>
-    <script src="/js/keyserver.js"></script>
-    <script src="/js/pubkeys.js"></script>
-    <script src="/js/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
-    <script src="/js/gmail_api.js"></script>
-    <script src="/js/common.js"></script>
-    <script src="/js/fine_uploader/fine-uploader.js"></script>
-    <script src="gmail_elements.js"></script>
-    <script src="new_message.js"></script>
-  </body>
+</body>
 </html>
+
+
+

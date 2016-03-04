@@ -26,36 +26,39 @@ function compose_render_pubkey_result(email, pubkey_data) {
 
 function encrypt(pubkey_texts, text, callback) {
   var pubkeys = [];
-
   for(var i = 0; i < pubkey_texts.length; i++) {
     pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_texts[i]).keys); // read public key
   }
   openpgp.encryptMessage(pubkeys, text).then(callback, callback);
 }
 
-function compose_encrypt_and_send(account_email, to, subject, plaintext, send_email_callback) {
+function fetch_pubkeys(account_email, recipient, callback) {
   var pubkeys = [];
-  get_pubkey(to, function(pubkey_to) {
-    if($('#send_btn.button_secure').length > 0) {
-      if(pubkey_to === null) {
+  if($('#send_btn.button_secure').length > 0) {
+    get_pubkey(recipient, function(pubkey_recipient) {
+      if(pubkey_recipient === null) {
         alert('error: key is undefined although should exist');
         return;
       }
-      pubkeys.push(pubkey_to);
-    }
+      pubkeys.push(restricted_account_storage_get(account_email, 'master_public_key'));
+      pubkeys.push(pubkey_recipient);
+      callback(pubkeys);
+    });
+  } else {
+    callback(null);
+  }
+}
+
+function compose_encrypt_and_send(account_email, to, subject, plaintext, send_email_callback) {
+  fetch_pubkeys(account_email, to, function(armored_pubkeys) {
     if(to == '') {
       alert('Please add receiving email address.');
       return;
     } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
       //todo - tailor for replying w/o subject
-      //todo - change prompts to yes/no
       try {
-        if(pubkeys.length > 0) {
-          var my_pubkey = restricted_account_storage_get(account_email, 'master_public_key');
-          if(my_pubkey) { // todo: prompt if not
-            pubkeys.push(my_pubkey);
-          }
-          encrypt(pubkeys, plaintext, function(encrypted) {
+        if(armored_pubkeys) {
+          encrypt(armored_pubkeys, plaintext, function(encrypted) {
             send_email_callback(encrypted);
           });
         } else {
