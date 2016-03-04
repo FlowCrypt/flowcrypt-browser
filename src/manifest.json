@@ -39,7 +39,8 @@
     "chrome/gmail_elements/new_message.htm",
     "chrome/gmail_elements/reply_message.htm",
     "chrome/gmail_elements/pgp_block.htm",
-    "chrome/gmail_elements/setup_dialog.htm"
+    "chrome/gmail_elements/setup_dialog.htm",
+    "chrome/gmail_elements/attachment.htm"
   ],
   "oauth2": {
     "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",

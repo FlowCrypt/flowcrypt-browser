@@ -96,7 +96,7 @@ function process_new_attachment(id, name) {
         if(armored_pubkeys) {
           encrypt(armored_pubkeys, e.target.result, function(encrypted_file_content) {
             attachments.push({
-              filename: f.name,
+              filename: f.name + '.pgp',
               type: file.type,
               content: encrypted_file_content,
               secure: true,

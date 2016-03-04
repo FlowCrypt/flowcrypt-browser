@@ -2,6 +2,14 @@
 
 function find_and_replace_pgp_messages(account_email, signal_scope) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
+  var pgp_block_found = replace_armored_pgp_messages(account_email, signal_scope);
+  if(pgp_block_found) {
+    replace_reply_box(account_email, signal_scope);
+  }
+  replace_pgp_attachments(account_email, signal_scope);
+}
+
+function replace_armored_pgp_messages(account_email, signal_scope) {
   var conversation_has_pgp_message = false;
   $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function() {
     var text = $(this).html();
@@ -17,14 +25,28 @@ function find_and_replace_pgp_messages(account_email, signal_scope) {
     $(this).html(text_with_iframes);
     conversation_has_pgp_message = true;
   });
-  if(conversation_has_pgp_message) {
-    var my_email = $('span.g2').last().attr('email').trim();
-    var their_email = $('h3.iw span[email]').last().attr('email').trim();
-    var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
-    var subject = $('h2.hP').text();
-    $(reply_container_selector).addClass('remove_borders');
-    $(reply_container_selector).html(reply_message_iframe(account_email, signal_scope, my_email, their_email, subject));
-  }
+  return conversation_has_pgp_message;
+}
+
+function replace_pgp_attachments(account_email, signal_scope) {
+  $('div.aQH > span[download_url*=".pgp:https"], div.aQH > span[download_url*=".gpg:https"]').not('.evaluated').each(function() {
+    var meta = $(this).attr('download_url').split(':');
+    var url = meta[2] + ':' + meta[3];
+    if(meta.length === 4) {
+      $(this).replaceWith(pgp_attachment_iframe(url, meta[1], meta[0], account_email, signal_scope));
+    } else {
+      $(this).addClass('evaluated');
+    }
+  });
+}
+
+function replace_reply_box(account_email, signal_scope) {
+  var my_email = $('span.g2').last().attr('email').trim();
+  var their_email = $('h3.iw span[email]').last().attr('email').trim();
+  var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
+  var subject = $('h2.hP').text();
+  $(reply_container_selector).addClass('remove_borders');
+  $(reply_container_selector).html(reply_message_iframe(account_email, signal_scope, my_email, their_email, subject));
 }
 
 function reinsert_reply_box(account_email, signal_scope, last_message_frame_id, last_message_frame_height, my_email, their_email) {
@@ -73,23 +95,9 @@ function strip_tags_from_pgp_message(pgp_block_text) {
   return pgp_block_text;
 }
 
-function pgp_block_iframe(parent_container, pgp_block_text, account_email, signal_scope) {
-  var id = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  for(var i = 0; i < 5; i++) {
-    id += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  var width = $(parent_container).width() - 15;
-  var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
-    '?frame_id=frame_' + id +
-    '&width=' + width.toString() +
-    '&message=' + encodeURIComponent(pgp_block_text) +
-    '&account_email=' + encodeURIComponent(account_email) +
-    '&signal_scope=' + encodeURIComponent(signal_scope);
-  return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
-}
-
-function resolve_from_to(account_email, my_email, their_email) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
+function resolve_from_to(account_email, my_email, their_email) {
+  //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
+  //todo: make sure to take all of my secondary emails into account
   if(their_email !== account_email) {
     return {
       to: their_email,
@@ -100,6 +108,30 @@ function resolve_from_to(account_email, my_email, their_email) { //when replayin
     from: their_email,
     to: my_email
   }
+}
+
+function pgp_attachment_iframe(download_url, name, type, account_email, signal_scope) {
+  var id = random_string();
+  var src = chrome.extension.getURL('chrome/gmail_elements/attachment.htm') +
+    '?frame_id=frame_' + id +
+    '&download_url=' + encodeURIComponent(download_url) +
+    '&name=' + encodeURIComponent(name) +
+    '&type=' + encodeURIComponent(type) +
+    '&account_email=' + encodeURIComponent(account_email) +
+    '&signal_scope=' + encodeURIComponent(signal_scope);
+  return '<iframe class="pgp_attachment" id="frame_' + id + '" src="' + src + '"></iframe>';
+}
+
+function pgp_block_iframe(parent_container, pgp_block_text, account_email, signal_scope) {
+  var id = random_string();
+  var width = $(parent_container).width() - 15;
+  var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
+    '?frame_id=frame_' + id +
+    '&width=' + width.toString() +
+    '&message=' + encodeURIComponent(pgp_block_text) +
+    '&account_email=' + encodeURIComponent(account_email) +
+    '&signal_scope=' + encodeURIComponent(signal_scope);
+  return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
 function reply_message_iframe(account_email, signal_scope, my_email, their_email, subject) {

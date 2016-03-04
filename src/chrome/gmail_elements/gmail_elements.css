@@ -78,3 +78,16 @@ div#reply_message_successful_container > table td.right { text-align: right; }
 div#reply_message_successful_container > table div.replied_from { font-weight: bold; margin-bottom: 4px; }
 div#reply_message_successful_container > table div.replied_to { color: #777; margin-bottom: 10px; }
 div#reply_message_successful_container > table div.replied_time { }
+
+body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; background-image: url(../../img/attachment-corner.png);
+  background-repeat: no-repeat; background-posi tion: bottom right; z-index: 0; }
+body.attachment:hover { border-color: #eaeaea; }
+body.attachment #download { position: absolute; width: 178px;  z-index: 1;  background-color: white; height: 118px; opacity: 0.9; color: #444; visibility: hidden; }
+body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
+body.attachment #download i { font-size: 64px;     padding: 20px;
+    padding-bottom: 6px;}
+body.attachment #header {    width: 178px;
+    padding: 12px 0; padding-bottom: 0px;
+    font-weight: bold; }
+body.attachment #type { padding: 10px 0; color: #999; }
+body.attachment #name { padding: 10px 0; }
