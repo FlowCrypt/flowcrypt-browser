@@ -22,6 +22,9 @@ function inject_cryptup() {
     migrated: function(data) {
       inject_visual_elements(account_email, application_signal_scope);
     },
+    list_pgp_attachments_response: function(data) {
+      list_pgp_attachments_response_handler(data);
+    },
   });
 
   signal_send('background_process', 'migrate', {

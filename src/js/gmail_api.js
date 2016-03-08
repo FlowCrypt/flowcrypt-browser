@@ -88,8 +88,12 @@ function gmail_api_process_postponed_request(signal_data) {
   gmail_api_call(parameters.account_email, parameters.method, parameters.resource, parameters.parameters, parameters.callback, true);
 }
 
-function base64url(str) {
+function base64url_encode(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64url_decode(str) {
+  return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
 }
 
 function gmail_api_get_thread(account_email, thread_id, format, get_thread_callback) {
@@ -131,7 +135,7 @@ function gmail_api_message_send(account_email, body, headers, attachments, threa
     }
     var raw_email = root_node.build();
     var params = {
-      raw: base64url(raw_email),
+      raw: base64url_encode(raw_email),
       threadId: thread_id || null,
     };
     gmail_api_call(account_email, 'POST', 'messages/send', params, message_send_callback);
@@ -153,7 +157,7 @@ function gmail_api_message_get(account_email, message_id, format, callback, resu
     if(message_id.length) {
       var id = message_id.pop();
       gmail_api_call(account_email, 'GET', 'messages/' + id, {
-        format: format || full //full or metadata
+        format: format || 'full' //full or metadata
       }, function(success, response) {
         if(success) {
           results[id] = response;
@@ -167,12 +171,12 @@ function gmail_api_message_get(account_email, message_id, format, callback, resu
     }
   } else {
     gmail_api_call(account_email, 'GET', 'messages/' + message_id, {
-      format: format || full //full or metadata
+      format: format || 'full' //full or metadata
     }, callback);
   }
 }
 
-function gmail_api_message_attachment_get(account_email, message_id, attachment_id, callback) { //todo
+function gmail_api_message_attachment_get(account_email, message_id, attachment_id, callback) {
   gmail_api_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback);
 }
 

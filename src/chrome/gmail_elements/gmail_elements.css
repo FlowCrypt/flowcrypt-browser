@@ -80,7 +80,7 @@ div#reply_message_successful_container > table div.replied_to { color: #777; mar
 div#reply_message_successful_container > table div.replied_time { }
 
 body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; background-image: url(../../img/attachment-corner.png);
-  background-repeat: no-repeat; background-posi tion: bottom right; z-index: 0; }
+  background-repeat: no-repeat; background-position: bottom right; z-index: 0; }
 body.attachment:hover { border-color: #eaeaea; }
 body.attachment #download { position: absolute; width: 178px;  z-index: 1;  background-color: white; height: 118px; opacity: 0.9; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
