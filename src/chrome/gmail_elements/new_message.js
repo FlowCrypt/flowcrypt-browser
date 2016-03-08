@@ -127,6 +127,10 @@ function cancel_attachment(id, name) {
   }
 }
 
+function order_addresses(account_email, addresses) {
+  return [account_email].concat(addresses.without(account_email)); //places main account email as first
+}
+
 function on_new_message_render() {
   $("#input_to").focus(compose_render_email_neutral);
   $('#input_to').keyup(search_contacts);
@@ -137,9 +141,10 @@ function on_new_message_render() {
   $('.bottom .icon.attach').click();
   account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
+      var addresses = order_addresses(url_params.account_email, storage.addresses);
       $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from"></select>');
-      for(var i = 0; i < storage.addresses.length; i++) {
-        $('#input_from').append('<option value="' + storage.addresses[i] + '">' + storage.addresses[i] + '</option>');
+      for(var i = 0; i < addresses.length; i++) {
+        $('#input_from').append('<option value="' + addresses[i] + '">' + addresses[i] + '</option>');
       }
     }
   });

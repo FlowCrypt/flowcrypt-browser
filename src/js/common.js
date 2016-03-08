@@ -1,3 +1,16 @@
+Array.prototype.without = function() {
+  var what, a = arguments;
+  var L = a.length;
+  var ax;
+  while(L && this.length) {
+    what = a[--L];
+    while((ax = this.indexOf(what)) !== -1) {
+      this.splice(ax, 1);
+    }
+  }
+  return this;
+};
+
 function get_url_params(expected_keys) {
   var raw_url_data = window.location.search.replace('?', '').split('&');
   var url_data = {};
