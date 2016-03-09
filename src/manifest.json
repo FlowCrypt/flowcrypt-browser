@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "CryptUp MVP",
   "description": "Easy Gmail encryption",
-  "version": "0.80",
+  "version": "0.90",
   "browser_action": {
     "default_icon": "img/plugin-button.png"
   },
