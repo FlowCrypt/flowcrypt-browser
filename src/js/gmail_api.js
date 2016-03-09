@@ -110,29 +110,27 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
 function gmail_api_message_send(account_email, body, headers, attachments, thread_id, message_send_callback) {
   require(['emailjs-mime-builder'], function(MimeBuilder) {
     var root_node = new MimeBuilder('multipart/mixed');
-    for(var key in headers) {
-      root_node.addHeader(key, headers[key]);
-    }
+    $.each(headers, function(key, header) {
+      root_node.addHeader(key, header);
+    });
     var text_node = new MimeBuilder('multipart/alternative');
     if(typeof body === 'string') {
       text_node.appendChild(new MimeBuilder('text/plain').setContent(body));
     } else {
-      for(var type in body) {
-        text_node.appendChild(new MimeBuilder(type).setContent(body[type]));
-      }
+      $.each(body, function(type, content) {
+        text_node.appendChild(new MimeBuilder(type).setContent(content));
+      });
     }
     root_node.appendChild(text_node);
-    for(var i in attachments) {
-      //attachments[i].type + '; name="' + attachments[i].filename + '"'
-      var attachment = new MimeBuilder(false, {
-        filename: attachments[i].filename
+    $.each(attachments || [], function(i, attachment) {
+      root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.filename + '"', {
+        filename: attachment.filename
       }).setHeader({
         'Content-Disposition': 'attachment',
         'X-Attachment-Id': 'f_' + random_string(10),
         'Content-Transfer-Encoding': 'base64',
-      }).setContent(attachments[i].content);
-      root_node.appendChild(attachment);
-    }
+      }).setContent(attachment.content));
+    });
     var raw_email = root_node.build();
     var params = {
       raw: base64url_encode(raw_email),
@@ -189,9 +187,9 @@ function gmail_api_find_attachments(gmail_email_object, internal_results, intern
     gmail_api_find_attachments(gmail_email_object.payload, internal_results, internal_message_id);
   }
   if(typeof gmail_email_object.parts !== 'undefined') {
-    for(var i in gmail_email_object.parts) {
-      gmail_api_find_attachments(gmail_email_object.parts[i], internal_results, internal_message_id);
-    }
+    $.each(gmail_email_object.parts, function(i, part) {
+      gmail_api_find_attachments(part, internal_results, internal_message_id);
+    });
   }
   if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {
     internal_results.push({
@@ -223,4 +221,13 @@ function gmail_api_fetch_attachments(account_email, attachments, callback, resul
       callback(success, response);
     }
   });
+}
+
+function gmail_api_find_header(gmail_api_message_object, header_name) {
+  for(var i = 0; i < gmail_api_message_object.payload.headers.length; i++) {
+    if(gmail_api_message_object.payload.headers[i].name.toLowerCase() === header_name.toLowerCase()) {
+      return gmail_api_message_object.payload.headers[i].value;
+    }
+  }
+  return null;
 }

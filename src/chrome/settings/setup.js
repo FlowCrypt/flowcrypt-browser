@@ -35,9 +35,9 @@ account_storage_get(url_params['account_email'], ['addresses'], function(storage
 
 function display_block(name) {
   var blocks = ['loading', 'step_0_found_key', 'step_1_easy_or_manual', 'step_2_manual', 'step_2_easy_generating', 'step_2_recovery', 'step_4_done', 'step_3_backup'];
-  for(var i in blocks) {
-    $('#' + blocks[i]).css('display', 'none');
-  }
+  $.each(blocks, function(i, block) {
+    $('#' + block).css('display', 'none');
+  });
   $('#' + name).css('display', 'block');
 }
 
@@ -157,23 +157,27 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
   if(passphrase) {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
-    for(var i in recovered_keys) {
-      var armored_encrypted_key = recovered_keys[i].armor();
-      if(recovered_keys[i].decrypt(passphrase) === true) {
-        restricted_account_storage_set(url_params['account_email'], 'master_public_key', recovered_keys[i].toPublic().armor());
+    var worked = false;
+    $.each(recovered_keys, function(i, recovered_key) {
+      var armored_encrypted_key = recovered_key.armor();
+      if(recovered_key.decrypt(passphrase) === true) {
+        restricted_account_storage_set(url_params['account_email'], 'master_public_key', recovered_key.toPublic().armor());
         restricted_account_storage_set(url_params['account_email'], 'master_private_key', armored_encrypted_key);
         restricted_account_storage_set(url_params['account_email'], 'master_public_key_submit', false); //todo - think about this more
         restricted_account_storage_set(url_params['account_email'], 'master_public_key_submitted', false);
         restricted_account_storage_set(url_params['account_email'], 'master_passphrase', passphrase);
         setup_dialog_set_done(false, true);
-        return;
+        worked = true;
+        return false;
       }
-    }
-    $(self).text(btn_text);
-    if(recovered_keys.length > 1) {
-      alert('This password did not match any of your ' + recovered_keys.length + ' backups. Please try again.');
-    } else {
-      alert('This password did not match your original setup. Please try again.');
+    });
+    if(!worked) {
+      $(self).text(btn_text);
+      if(recovered_keys.length > 1) {
+        alert('This password did not match any of your ' + recovered_keys.length + ' backups. Please try again.');
+      } else {
+        alert('This password did not match your original setup. Please try again.');
+      }
     }
   } else {
     alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.')

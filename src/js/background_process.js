@@ -26,11 +26,11 @@ function list_pgp_attachments_request_handler(signal_data) {
     if(success) {
       var attachments = gmail_api_find_attachments(message);
       var pgp_attachments = [];
-      for(var i in attachments) {
-        if(attachments[i].name.match('(\.pgp)|(\.gpg)$')) {
-          pgp_attachments.push(attachments[i]);
+      $.each(attachments, function(i, attachment) {
+        if(attachment.name.match('(\.pgp)|(\.gpg)$')) {
+          pgp_attachments.push(attachment);
         }
-      }
+      });
       signal_send('gmail_tab', 'list_pgp_attachments_response', {
         success: true,
         attachments: pgp_attachments,

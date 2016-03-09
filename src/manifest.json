@@ -22,6 +22,7 @@
     {
       "matches": ["https://accounts.google.com/o/oauth2/approval*"],
       "js": [
+        "js/common.js",
         "js/signal.js",
         "js/google_auth_code_window.js"
       ]

@@ -13,18 +13,18 @@ function refresh_account_list() {
   get_account_emails(function(account_emails) {
     account_storage_get(account_emails, ['setup_done'], function(account_storages) {
       var accounts_content = '';
-      for(var i in account_emails) {
-        var email_text = '<b>' + account_emails[i].split('@')[0] + '</b>' + '@' + account_emails[i].split('@')[1];
-        if(account_storages[account_emails[i]]['setup_done'] === true) {
-          accounts_content += '<div class="line"><a class="button green has_email" href="account.htm?account_email=' + encodeURIComponent(account_emails[i]) + '">' + email_text + '</a></div>';
+      $.each(account_emails, function(i, account_email) {
+        var email_text = '<b>' + account_email.split('@')[0] + '</b>' + '@' + account_email.split('@')[1];
+        if(account_storages[account_email]['setup_done'] === true) {
+          accounts_content += '<div class="line"><a class="button green has_email" href="account.htm?account_email=' + encodeURIComponent(account_email) + '">' + email_text + '</a></div>';
         } else {
-          if(spinning !== account_emails[i]){
+          if(spinning !== account_email){
             accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#">' + email_text + '</a></div>';
           } else {
             accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#" style="text-align: center;">' + get_spinner() + '</a></div>';
           }
         }
-      }
+      });
       if(accounts_content) {
         $('h1').text('Select Gmail Account');
         $('#accounts').html(accounts_content + '<div class="line"><a href="#" class="block action_auth">Add another account</a></div>');

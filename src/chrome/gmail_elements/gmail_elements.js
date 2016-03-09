@@ -26,9 +26,9 @@ function compose_render_pubkey_result(email, pubkey_data) {
 
 function encrypt(pubkey_texts, text, callback) {
   var pubkeys = [];
-  for(var i = 0; i < pubkey_texts.length; i++) {
-    pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_texts[i]).keys); // read public key
-  }
+  $.each(pubkey_texts, function(i, pubkey_text) {
+    pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_text).keys); // read public key
+  });
   openpgp.encryptMessage(pubkeys, text).then(callback, callback);
 }
 

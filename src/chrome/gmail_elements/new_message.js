@@ -44,9 +44,9 @@ function search_contacts() {
     var found = pubkey_cache_search(query, 6, true);
     if(found.length > 0) {
       var ul_html = '';
-      for(var i = 0; i < found.length; i++) {
-        ul_html += '<li><i class="fa fa-lock"></i>' + found[i] + '</li>';
-      }
+      $.each(found, function(i, email) {
+        ul_html += '<li><i class="fa fa-lock"></i>' + email + '</li>';
+      });
       $('#contacts ul').html(ul_html);
       $('#contacts ul li').click(select_contact);
       $('#contacts').css('display', 'block');
@@ -119,16 +119,16 @@ function process_new_attachment(id, name) {
 }
 
 function cancel_attachment(id, name) {
-  for(var i in attachments) {
-    if(attachments[i].upload_id === id) {
-      attachments = array_without(attachments, i);
-      break;
+  $.each(attachments, function(i, attachment) {
+    if(attachment.upload_id === id) {
+      attachments = array_without_key(attachments, i);
+      return false;
     }
-  }
+  });
 }
 
 function order_addresses(account_email, addresses) {
-  return [account_email].concat(addresses.without(account_email)); //places main account email as first
+  return [account_email].concat(array_without_value(addresses, account_email)); //places main account email as first
 }
 
 function on_new_message_render() {
@@ -143,9 +143,9 @@ function on_new_message_render() {
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
       var addresses = order_addresses(url_params.account_email, storage.addresses);
       $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from"></select>');
-      for(var i = 0; i < addresses.length; i++) {
-        $('#input_from').append('<option value="' + addresses[i] + '">' + addresses[i] + '</option>');
-      }
+      $.each(addresses, function(i, address) {
+        $('#input_from').append('<option value="' + address + '">' + address + '</option>');
+      });
     }
   });
 }

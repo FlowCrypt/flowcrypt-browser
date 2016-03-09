@@ -6,16 +6,15 @@ var url_params = get_url_params(['account_email', 'action']);
 
 function display_block(name) {
   var blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm'];
-  for(var i in blocks) {
-    $('#' + blocks[i]).css('display', 'none');
-  }
+  $.each(blocks, function(i, block) {
+    $('#' + block).css('display', 'none');
+  });
   $('#' + name).css('display', 'block');
 }
 
 function show_status() {
   $('h1').text('Key Backups for ' + url_params.account_email);
   display_block('loading');
-  console.log(0);
   fetch_email_key_backups(url_params.account_email, function(success, keys) {
     if(success) {
       display_block('step_0_status');
@@ -74,9 +73,9 @@ $('.action_reset_password').click(function() {
 function openpgp_key_encrypt(key, passphrase) {
   if(key.isPrivate() && passphrase) {
     var keys = key.getAllKeyPackets();
-    for(var i = 0; i < keys.length; i++) {
-      keys[i].encrypt(passphrase);
-    }
+    $.each(keys, function(i, key) {
+      key.encrypt(passphrase);
+    });
   } else if(!passphrase) {
     throw new Error("Encryption passphrase should not be empty");
   } else {

@@ -1,25 +1,12 @@
-Array.prototype.without = function() {
-  var what, a = arguments;
-  var L = a.length;
-  var ax;
-  while(L && this.length) {
-    what = a[--L];
-    while((ax = this.indexOf(what)) !== -1) {
-      this.splice(ax, 1);
-    }
-  }
-  return this;
-};
-
-function get_url_params(expected_keys) {
-  var raw_url_data = window.location.search.replace('?', '').split('&');
+function get_url_params(expected_keys, string) {
+  var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
   var url_data = {};
-  for(var i = 0; i < raw_url_data.length; i++) {
-    var pair = raw_url_data[i].split('=');
+  $.each(raw_url_data, function(i, pair_string) {
+    var pair = pair_string.split('=');
     if(expected_keys.indexOf(pair[0]) !== -1) {
       url_data[pair[0]] = decodeURIComponent(pair[1]);
     }
-  }
+  });
   return url_data;
 }
 
@@ -39,9 +26,9 @@ function get_account_emails(callback) {
 
 function for_each_known_account_email(callback) {
   get_account_emails(function(account_emails) {
-    for(var i in account_emails) {
+    $.each(account_emails, function(i, account_email) {
       callback(account_emails[i]);
-    }
+    });
   });
 }
 
@@ -71,9 +58,20 @@ function random_string(length) {
   return id;
 }
 
-function array_without(array, i) {
+function array_without_key(array, i) {
   return array.splice(0, i).concat(array.splice(i + 1, array.length));
 }
+
+function array_without_value(array, without_value) {
+  var result = [];
+  $.each(array, function(i, value) {
+    if(value === without_value) {
+      result.push(value);
+    }
+  });
+  return result;
+}
+
 
 /* -------------------- DOUBLE CLICK/PARALLEL PROTECTION FOR JQUERY ----------------------------------- */
 

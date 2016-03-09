@@ -41,15 +41,15 @@ function migrate_060_070(account_email, then) {
     account_storage_get(null, ['account_emails'], function(storage) {
       console.log('migrating from 0.6 to 0.7: global to per_account keys for accounts: ' + storage['account_emails']);
       var account_emails = JSON.parse(storage['account_emails']);
-      for(var i = 0; i < account_emails.length; i++) {
-        if(typeof restricted_account_storage_get(account_emails[i], 'master_private_key') === 'undefined') {
-          restricted_account_storage_set(account_emails[i], 'master_private_key', legacy_master_private_key);
-          restricted_account_storage_set(account_emails[i], 'master_public_key', legacy_master_public_key);
-          restricted_account_storage_set(account_emails[i], 'master_passphrase', legacy_master_passphrase);
-          restricted_account_storage_set(account_emails[i], 'master_public_key_submit', legacy_master_public_key_submit);
-          restricted_account_storage_set(account_emails[i], 'master_public_key_submitted', legacy_master_public_key_submitted);
+      $.each(account_emails, function(i, account_email) {
+        if(typeof restricted_account_storage_get(account_email, 'master_private_key') === 'undefined') {
+          restricted_account_storage_set(account_email, 'master_private_key', legacy_master_private_key);
+          restricted_account_storage_set(account_email, 'master_public_key', legacy_master_public_key);
+          restricted_account_storage_set(account_email, 'master_passphrase', legacy_master_passphrase);
+          restricted_account_storage_set(account_email, 'master_public_key_submit', legacy_master_public_key_submit);
+          restricted_account_storage_set(account_email, 'master_public_key_submitted', legacy_master_public_key_submitted);
         }
-      }
+      });
       localStorage.removeItem("master_private_key");
       localStorage.removeItem("master_public_key");
       localStorage.removeItem("master_passphrase");

@@ -15,20 +15,11 @@ $('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forwar
   reply_message_determine_header_variables();
 });
 
-function find_header(gmail_api_message_object, header_key) {
-  for(var i = 0; i < gmail_api_message_object.payload.headers.length; i++) {
-    if(gmail_api_message_object.payload.headers[i].name.toLowerCase() === header_key.toLowerCase()) {
-      return gmail_api_message_object.payload.headers[i].value;
-    }
-  }
-  return null;
-}
-
 function reply_message_determine_header_variables() {
   gmail_api_get_thread(url_params['account_email'], url_params['thread_id'], 'full', function(success, thread) {
     if(success && thread.messages && thread.messages.length > 0) {
-      thread_message_id_last = find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-      thread_message_referrences_last = find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      thread_message_id_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      thread_message_referrences_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
     }
   });
 }

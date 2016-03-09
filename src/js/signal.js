@@ -14,6 +14,7 @@ var listen_timers = {};
 var listen_last = {};
 var listen_handlers = {};
 var internals = undefined;
+var processed_ids = [];
 
 
 function signal_scope_set(new_scope) {
@@ -35,7 +36,8 @@ function signal_send(receiver, name, data, custom_scope, then) {
   var storage_with_random_signal_slot_filled = {};
   storage_with_random_signal_slot_filled[random_signal_slot_storage_key] = {
     name: name,
-    data: data
+    data: data,
+    id: random_string(20),
   };
   console.log('signal out [' + (custom_scope || signal_scope_get()) + ':' + receiver + '/' + random_signal_slot + '] ' + name + ' ' + (JSON.stringify(data) || ''));
   chrome.storage.local.set(storage_with_random_signal_slot_filled, then); //async
@@ -57,12 +59,10 @@ var internals = new function() {
   self.collect_signals_from_storage_and_flush = function(receiver, storage) {
     var signals = [];
     var keys_to_flush = [];
-    for(var key in storage) {
-      if(storage.hasOwnProperty(key)) {
-        keys_to_flush.push(key);
-        signals.push(storage[key]);
-      }
-    }
+    $.each(storage, function(k, v) {
+      keys_to_flush.push(k);
+      signals.push(v);
+    });
     chrome.storage.local.remove(keys_to_flush); //async
     return signals;
   }
@@ -78,15 +78,17 @@ var internals = new function() {
         chrome.storage.local.get(key_list_by_receiver[receiver], function(storage) {
           listen_last[receiver] = new Date();
           var new_signals = self.collect_signals_from_storage_and_flush(receiver, storage);
-          for(var i = 0; i < new_signals.length; i++) {
-            var signal = new_signals[i];
+          $.each(new_signals, function(i, signal) {
             console.log('signal in [' + signal_scope_get() + ':' + receiver + '] ' + signal.name + ' ' + (JSON.stringify(signal.data) || ''));
             if(typeof callbacks[signal.name] !== 'undefined') {
-              callbacks[signal.name](signal.data);
+              if(processed_ids.indexOf(signal.id) === -1) {
+                processed_ids.push(signal.id);
+                callbacks[signal.name](signal.data);
+              }
             } else {
               console.log('no listener for ' + signal.name + ' in ' + receiver);
             }
-          }
+          });
         });
       }
     }, signal_listener_frequency_ms);

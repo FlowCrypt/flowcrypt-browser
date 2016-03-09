@@ -10,14 +10,11 @@ $('body').append('<div id="footer"><div><div><div>' + v + '</div><img src="/img/
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
     function parse_from_email_header(messages, m_i, from_email_callback) {
-      gmail_api_message_get(account_email, messages[m_i].id, 'metadata', function(success, message_get_response) {
-        // todo: check "success"
-        var headers = message_get_response.payload.headers;
-        for(var i in headers) {
-          if(headers[i].name.toLowerCase() === 'from') {
-            from_email_callback(headers[i].value);
-            return;
-          }
+      gmail_api_message_get(account_email, messages[m_i].id, 'metadata', function(success, message_get_response) { // todo: check "success"
+        var header_from = gmail_api_find_header(message_get_response, 'from');
+        if(header_from) {
+          from_email_callback(header_from);
+          return;
         }
         if(m_i + 1 < messages.length) {
           parse_from_email_header(messages, m_i + 1, from_email_callback);
@@ -77,26 +74,26 @@ function fetch_email_key_backups(account_email, callback) {
     if(success) {
       if(response.messages) {
         var message_ids = [];
-        for(var i in response.messages) {
-          message_ids.push(response.messages[i].id);
-        }
+        $.each(response.messages, function(i, message) {
+          message_ids.push(message.id);
+        });
         gmail_api_message_get(account_email, message_ids, 'full', function(success, messages) {
           if(success) {
             var attachments = [];
-            for(var id in messages) {
-              attachments = attachments.concat(gmail_api_find_attachments(messages[id]));
-            }
+            $.each(messages, function(i, message) {
+              attachments = attachments.concat(gmail_api_find_attachments(message));
+            });
             gmail_api_fetch_attachments(account_email, attachments, function(success, downloaded_attachments) {
               var keys = [];
-              for(var i in downloaded_attachments) {
+              $.each(downloaded_attachments, function(i, downloaded_attachment) {
                 try {
-                  var armored_key = atob(downloaded_attachments[i].data);
+                  var armored_key = base64url_decode(downloaded_attachment.data);
                   var key = openpgp.key.readArmored(armored_key).keys[0];
                   if(key.isPrivate()) {
                     keys.push(key);
                   }
                 } catch(err) {}
-              }
+              });
               callback(success, keys);
             });
           } else {

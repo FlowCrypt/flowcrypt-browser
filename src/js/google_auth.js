@@ -25,16 +25,6 @@ var google_auth_code_request_state = {
   },
 };
 
-function parse_url_params(url_param_string) {
-  var params = {};
-  var data_parts = url_param_string.split('&');
-  for(var i = 0; i < data_parts.length; i++) {
-    var key_value = data_parts[i].split('=');
-    params[key_value[0]] = decodeURIComponent(key_value[1]);
-  }
-  return params;
-}
-
 function google_auth_respond_to_signal(signal_object, callback) {
   signal_send(signal_object.signal_reply_to_listener, 'gmail_auth_response', {
     message_id: signal_object.message_id,
@@ -159,7 +149,7 @@ function google_auth_window_result_handler(signal_data) {
   var message = parts[1];
   switch(result) {
     case 'Success':
-      var params = parse_url_params(message);
+      var params = get_url_params(['code', 'state'], message);
       var state_object = google_auth_code_request_state.unpack(params.state);
       google_auth_get_tokens(params.code, function(tokens_object) {
         if(typeof tokens_object.access_token !== 'undefined') {

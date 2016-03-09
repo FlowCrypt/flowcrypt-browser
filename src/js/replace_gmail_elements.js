@@ -1,5 +1,7 @@
 'use strict';
 
+var attachment_container_classes = [];
+
 function find_and_replace_pgp_messages(account_email, signal_scope) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var pgp_block_found = replace_armored_pgp_messages(account_email, signal_scope);
@@ -29,18 +31,19 @@ function replace_armored_pgp_messages(account_email, signal_scope) {
 }
 
 function replace_pgp_attachments(account_email, signal_scope) {
-  $('div.aQH').not('.evaluated').each(function() {
-    $(this).addClass('evaluated');
-    if($(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').length) {
+  $('div.aQH').each(function() {
+    var new_pgp_messages = $(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').not('.evaluated');
+    if(new_pgp_messages.length) {
+      new_pgp_messages.addClass('evaluated');
+      attachment_container_classes = new_pgp_messages.get(0).classList;
       var message_id = null;
-      var message_classes = $(this).parent().siblings('div.adP.adO').get(0).classList;
-      for(var i in message_classes) {
-        var match = message_classes[i].match(/^m([0-9a-f]{16})$/);
+      $.each($(this).parent().siblings('div.adP.adO').get(0).classList, function(i, message_class) {
+        var match = message_class.match(/^m([0-9a-f]{16})$/);
         if(match) {
           message_id = match[1];
-          break;
+          return false;
         }
-      }
+      });
       if(message_id) {
         signal_send('background_process', 'list_pgp_attachments_request', {
           account_email: account_email,
@@ -62,9 +65,9 @@ function list_pgp_attachments_response_handler(signal_data) {
       // can cause duplicate attachments (one original encrypted + one decryptable), but should never result in lost attachments
       $(pgp_attachments_selector).css('display', 'none');
     }
-    for(var i in signal_data.attachments) {
-      $(container_selector).append(pgp_attachment_iframe(account_email, signal_data.attachments[i]));
-    }
+    $.each(signal_data.attachments, function(i, attachment) {
+      $(container_selector).prepend(pgp_attachment_iframe(account_email, attachment, attachment_container_classes));
+    });
   }
 }
 
@@ -89,22 +92,22 @@ function reinsert_reply_box(account_email, signal_scope, last_message_frame_id, 
 function strip_tags_from_pgp_message(pgp_block_text) {
   // console.log('pgp_block_1');
   // console.log(pgp_block_text);
-  var newline = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
-  var space = [/&nbsp;/g];
-  var remove = [/<wbr ?\/?>/g, /<\/?div>/g];
-  for(var i = 0; i < newline.length; i++) {
-    pgp_block_text = pgp_block_text.replace(newline[i], '\n');
-  }
+  var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
+  var spaces = [/&nbsp;/g];
+  var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
+  $.each(newlines, function(i, newline) {
+    pgp_block_text = pgp_block_text.replace(newline, '\n');
+  });
   // console.log('pgp_block_2');
   // console.log(pgp_block_text);
-  for(var i = 0; i < remove.length; i++) {
-    pgp_block_text = pgp_block_text.replace(remove[i], '');
-  }
+  $.each(removes, function(i, remove) {
+    pgp_block_text = pgp_block_text.replace(remove, '');
+  });
   // console.log('pgp_block_3');
   // console.log(pgp_block_text);
-  for(var i = 0; i < space.length; i++) {
-    pgp_block_text = pgp_block_text.replace(space[i], ' ');
-  }
+  $.each(spaces, function(i, space) {
+    pgp_block_text = pgp_block_text.replace(space, ' ');
+  });
   // console.log('pgp_block_4');
   // console.log(pgp_block_text);
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
@@ -138,7 +141,7 @@ function resolve_from_to(account_email, my_email, their_email) {
   }
 }
 
-function pgp_attachment_iframe(account_email, attachment_meta) {
+function pgp_attachment_iframe(account_email, attachment_meta, container_classes) {
   var src = chrome.extension.getURL('chrome/gmail_elements/attachment.htm') +
     '?message_id=' + encodeURIComponent(attachment_meta.message_id) +
     '&name=' + encodeURIComponent(attachment_meta.name) +
@@ -146,7 +149,7 @@ function pgp_attachment_iframe(account_email, attachment_meta) {
     '&size=' + encodeURIComponent(attachment_meta.size) +
     '&attachment_id=' + encodeURIComponent(attachment_meta.id) +
     '&account_email=' + encodeURIComponent(account_email);
-  return '<iframe class="pgp_attachment" src="' + src + '"></iframe>';
+  return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe src="' + src + '"></iframe></span>';
 }
 
 function pgp_block_iframe(parent_container, pgp_block_text, account_email, signal_scope) {

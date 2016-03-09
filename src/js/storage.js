@@ -27,14 +27,16 @@ function pubkey_cache_search(query, max, highlight) {
   var storage = pubkey_cache_retrieve();
   var matches = [];
   for(var email in storage) {
-    if(email.indexOf(query) !== -1) {
-      if(highlight === true) {
-        matches.push(email.replace(query, '<b>' + query + '</b>'));
-      } else {
-        matches.push(email);
-      }
-      if(matches.length === (max || -1)) {
-        return matches;
+    if(storage.hasOwnProperty(email)) {
+      if(email.indexOf(query) !== -1) {
+        if(highlight === true) {
+          matches.push(email.replace(query, '<b>' + query + '</b>'));
+        } else {
+          matches.push(email);
+        }
+        if(matches.length === (max || -1)) {
+          return matches;
+        }
       }
     }
   }
@@ -48,17 +50,17 @@ function pubkey_cache_flush() {
 function account_storage_key(account_key_or_list, key) {
   if(typeof account_key_or_list === 'object') {
     var all_results = [];
-    for(var i in account_key_or_list) {
-      all_results = all_results.concat(account_storage_key(account_key_or_list[i], key));
-    }
+    $.each(account_key_or_list, function(i, account_key) {
+      all_results = all_results.concat(account_storage_key(account_key, key));
+    });
     return all_results;
   } else {
     var prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '') + '_';
     if(typeof key === 'object') {
       var account_storage_keys = [];
-      for(var i = 0; i < key.length; i++) {
-        account_storage_keys.push(prefix + key[i]);
-      }
+      $.each(key, function(i, k) {
+        account_storage_keys.push(prefix + k);
+      });
       return account_storage_keys;
     } else {
       return prefix + key;
@@ -70,18 +72,18 @@ function account_storage_key(account_key_or_list, key) {
 function account_storage_object_keys_to_original(account_or_accounts, storage_object) {
   if(typeof account_or_accounts === 'string') {
     var fixed_keys_object = {};
-    for(var account_key in storage_object) {
-      var fixed_key = account_key.replace(account_storage_key(account_or_accounts, ''), '');
-      if(fixed_key !== account_key) {
-        fixed_keys_object[fixed_key] = storage_object[account_key];
+    $.each(storage_object, function(k, v) {
+      var fixed_key = k.replace(account_storage_key(account_or_accounts, ''), '');
+      if(fixed_key !== k) {
+        fixed_keys_object[fixed_key] = v;
       }
-    }
+    });
     return fixed_keys_object;
   } else {
     var results_by_account = {};
-    for(var i in account_or_accounts) {
-      results_by_account[account_or_accounts[i]] = account_storage_object_keys_to_original(account_or_accounts[i], storage_object);
-    }
+    $.each(account_or_accounts, function(i, account) {
+      results_by_account[account] = account_storage_object_keys_to_original(account, storage_object);
+    });
     return results_by_account;
   }
 }
@@ -124,9 +126,9 @@ function account_storage_set(gmail_account_email, values, callback) {
     gmail_account_email = global_storage_scope;
   }
   var storage_update = {};
-  for(var key in values) {
-    storage_update[account_storage_key(gmail_account_email, key)] = values[key];
-  }
+  $.each(values, function(key, value) {
+    storage_update[account_storage_key(gmail_account_email, key)] = value;
+  });
   chrome.storage.local.set(storage_update, function() {
     if(typeof callback !== 'undefined') {
       callback();

@@ -119,9 +119,9 @@ function gmail_notification_show(text, callbacks) {
   } else {
     callbacks.close = gmail_notification_clear;
   }
-  for(var name in callbacks) {
-    $('.gmail_notifications a.' + name).click(prevent(doubleclick(), callbacks[name]));
-  }
+  $.each(callbacks, function(name, callback) {
+    $('.gmail_notifications a.' + name).click(prevent(doubleclick(), callback));
+  });
 }
 
 if((document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) && account_email) {
