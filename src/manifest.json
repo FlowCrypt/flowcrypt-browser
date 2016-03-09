@@ -11,47 +11,47 @@
     {
       "matches": ["http://mail.google.com/*", "https://mail.google.com/*"],
       "js": [
-        "js/storage.js",
-        "js/jquery.min.js",
-        "js/signal.js",
-        "js/common.js",
-        "js/replace_gmail_elements.js",
-        "js/inject_cryptup_into_gmail.js"
+        "/lib/jquery.min.js",
+        "/js/common/storage.js",
+        "/js/common/signal.js",
+        "/js/common/common.js",
+        "/js/content_scripts/gmail_tab/replace_gmail_elements.js",
+        "/js/content_scripts/gmail_tab/gmail_tab.js"
       ]
     },
     {
       "matches": ["https://accounts.google.com/o/oauth2/approval*"],
       "js": [
-        "js/common.js",
-        "js/signal.js",
-        "js/google_auth_code_window.js"
+        "/js/common/common.js",
+        "/js/common/signal.js",
+        "/js/content_scripts/oauth_window/oauth_window.js"
       ]
     }
   ],
   "background": {
     "scripts": [
-      "js/jquery.min.js",
-      "js/storage.js",
-      "js/signal.js",
-      "js/google_auth.js",
-      "js/migrations.js",
-      "js/emailjs-mime-builder/node_modules/requirejs/require.js",
-      "js/gmail_api.js",
-      "js/common.js",
-      "js/background_process.js"
+      "/lib/jquery.min.js",
+      "/lib/emailjs-mime-builder/node_modules/requirejs/require.js",
+      "/js/common/storage.js",
+      "/js/common/signal.js",
+      "/js/common/gmail_api.js",
+      "/js/common/common.js",
+      "/js/background_process/google_auth.js",
+      "/js/background_process/migrations.js",
+      "/js/background_process/background_process.js"
     ]
   },
   "web_accessible_resources": [
-    "css/gmail.css",
-    "css/font-awesome.min.css",
-    "fonts/fontawesome-webfont.ttf",
-    "fonts/fontawesome-webfont.woff",
-    "fonts/fontawesome-webfont.woff2",
-    "chrome/gmail_elements/new_message.htm",
-    "chrome/gmail_elements/reply_message.htm",
-    "chrome/gmail_elements/pgp_block.htm",
-    "chrome/gmail_elements/setup_dialog.htm",
-    "chrome/gmail_elements/attachment.htm"
+    "/css/gmail.css",
+    "/css/font-awesome.min.css",
+    "/fonts/fontawesome-webfont.ttf",
+    "/fonts/fontawesome-webfont.woff",
+    "/fonts/fontawesome-webfont.woff2",
+    "/chrome/gmail_elements/new_message.htm",
+    "/chrome/gmail_elements/reply_message.htm",
+    "/chrome/gmail_elements/pgp_block.htm",
+    "/chrome/gmail_elements/setup_dialog.htm",
+    "/chrome/gmail_elements/attachment.htm"
   ],
   "oauth2": {
     "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",

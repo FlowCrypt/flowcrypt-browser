@@ -19,6 +19,6 @@ def replace_openpgp_version(manifest_path, openpgpjs_path):
     fp.write(''.join(fixed_lines))
 
 
-replace_openpgp_version('src/manifest.json', 'src/js/openpgp.min.js')
+replace_openpgp_version('src/manifest.json', 'src/lib/openpgp.min.js')
 os.system('rm -rf cryptup-chrome.zip')
 os.system('zip -r cryptup-chrome.zip src/*')
