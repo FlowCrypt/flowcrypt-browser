@@ -15,7 +15,11 @@
         "/js/common/storage.js",
         "/js/common/signal.js",
         "/js/common/common.js",
-        "/js/content_scripts/gmail_tab/replace_gmail_elements.js",
+        "/js/content_scripts/gmail_tab/elements/inject.js",
+        "/js/content_scripts/gmail_tab/elements/notifications.js",
+        "/js/content_scripts/gmail_tab/elements/factory.js",
+        "/js/content_scripts/gmail_tab/elements/replace.js",
+        "/js/content_scripts/gmail_tab/setup.js",
         "/js/content_scripts/gmail_tab/gmail_tab.js"
       ]
     },
