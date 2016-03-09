@@ -65,7 +65,7 @@ function array_without_key(array, i) {
 function array_without_value(array, without_value) {
   var result = [];
   $.each(array, function(i, value) {
-    if(value === without_value) {
+    if(value !== without_value) {
       result.push(value);
     }
   });
