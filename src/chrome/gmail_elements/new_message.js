@@ -97,7 +97,7 @@ function process_new_attachment(id, name) {
             attachments.push({
               filename: f.name + '.pgp',
               type: file.type,
-              content: encrypted_file_content,
+              content: encrypted_file_content.data,
               secure: true,
               upload_id: id,
             });

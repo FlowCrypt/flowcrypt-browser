@@ -96,24 +96,27 @@ function setup_dialog_submit_main_pubkey(account_email, pubkey, callback) {
 }
 
 function create_save_submit_key_pair(account_email, email_name, passphrase) {
-  var user_id = account_email + ' <' + email_name + '>';
-  openpgp.generateKeyPair({
+  var generate_key_options = {
     numBits: 4096,
-    userId: user_id,
+    userIds: [{
+      name: email_name,
+      email: account_email
+    }],
     passphrase: passphrase
-  }).then(function(keypair) {
-    restricted_account_storage_set(account_email, 'master_private_key', keypair.privateKeyArmored);
-    restricted_account_storage_set(account_email, 'master_public_key', keypair.publicKeyArmored);
+  };
+  openpgp.generateKey(generate_key_options).then(function(key) {
+    restricted_account_storage_set(account_email, 'master_private_key', key.privateKeyArmored);
+    restricted_account_storage_set(account_email, 'master_public_key', key.publicKeyArmored);
     restricted_account_storage_set(account_email, 'master_public_key_submit', true);
     restricted_account_storage_set(account_email, 'master_public_key_submitted', false);
     restricted_account_storage_set(account_email, 'master_passphrase', '');
     account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
       // todo: following if/else would use some refactoring in terms of how setup_dialog_set_done is called and transparency about when setup_done
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
-        submit_pubkey_alternative_addresses(storage.addresses, keypair.publicKeyArmored, function() {
+        submit_pubkey_alternative_addresses(storage.addresses, key.publicKeyArmored, function() {
           setup_dialog_set_done(true, true);
         });
-        setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, function() {
+        setup_dialog_submit_main_pubkey(account_email, key.publicKeyArmored, function() {
           account_storage_set(account_email, {
             setup_done: true,
             setup_simple: true,
@@ -121,7 +124,7 @@ function create_save_submit_key_pair(account_email, email_name, passphrase) {
           });
         });
       } else {
-        setup_dialog_submit_main_pubkey(account_email, keypair.publicKeyArmored, function() {
+        setup_dialog_submit_main_pubkey(account_email, key.publicKeyArmored, function() {
           setup_dialog_set_done(true, true);
         });
       }

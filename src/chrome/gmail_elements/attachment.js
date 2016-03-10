@@ -32,9 +32,14 @@ $('#download').click(prevent(doubleclick(), function(self) {
             private_key.decrypt(my_passphrase);
           }
           try {
-            var pgp_message = openpgp.message.readArmored(encrypted_data);
-            openpgp.decryptMessage(private_key, pgp_message).then(function(plaintext) {
-              download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), 'text/plain', plaintext);
+            var options = {
+              message: openpgp.message.readArmored(encrypted_data),
+              privateKey: private_key, // for decryption
+              format: 'utf8',
+            };
+            openpgp.decrypt(options).then(function(plaintext) {
+              // plaintext.filename
+              download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), 'text/plain', plaintext.data);
             }).catch(function(error) {
               $('body.attachment').html('Error opening file<br>Downloading original..');
               download_file(url_params.name, url_params.type, encrypted_data);

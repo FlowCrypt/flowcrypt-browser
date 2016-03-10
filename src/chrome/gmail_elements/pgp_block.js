@@ -31,9 +31,13 @@ if(typeof my_prvkey !== 'undefined') {
     private_key.decrypt(my_passphrase);
   }
   try {
-    var pgp_message = openpgp.message.readArmored(url_params['message']);
-    openpgp.decryptMessage(private_key, pgp_message).then(function(plaintext) {
-      set_frame_content_and_resize(format_plaintext(plaintext));
+    var options = {
+      message: openpgp.message.readArmored(url_params['message']),
+      privateKey: private_key, // for decryption
+      format: 'utf8',
+    };
+    openpgp.decrypt(options).then(function(plaintext) {
+      set_frame_content_and_resize(format_plaintext(plaintext.data));
     }).catch(function(error) {
       set_frame_content_and_resize('<div style="color:red">[error decrypting message, possibly wrong private key]</div><br>' + url_params['message'].replace(/\n/g, '<br>'));
     });

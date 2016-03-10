@@ -24,12 +24,18 @@ function compose_render_pubkey_result(email, pubkey_data) {
   }
 }
 
-function encrypt(pubkey_texts, text, callback) {
+function encrypt(pubkey_texts, data, callback) {
   var pubkeys = [];
   $.each(pubkey_texts, function(i, pubkey_text) {
     pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_text).keys); // read public key
   });
-  openpgp.encryptMessage(pubkeys, text).then(callback, callback);
+  var encrypt_options = {
+    // data: str_to_uint8(text),
+    data: data,
+    publicKeys: pubkeys,
+    armor: true,
+  };
+  openpgp.encrypt(encrypt_options).then(callback, callback);
 }
 
 function fetch_pubkeys(account_email, recipient, callback) {
@@ -59,7 +65,7 @@ function compose_encrypt_and_send(account_email, to, subject, plaintext, send_em
       try {
         if(armored_pubkeys) {
           encrypt(armored_pubkeys, plaintext, function(encrypted) {
-            send_email_callback(encrypted);
+            send_email_callback(encrypted.data);
           });
         } else {
           send_email_callback(plaintext);
