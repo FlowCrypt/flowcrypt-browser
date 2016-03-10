@@ -72,6 +72,49 @@ function array_without_value(array, without_value) {
   return result;
 }
 
+function chrome_message_send(tab_id, name, data, callback) {
+  var msg = {
+    name: name,
+    data: data,
+    to: Number(tab_id) || null,
+    respondable: (callback) ? true : false,
+  };
+  chrome.runtime.sendMessage(msg, callback);
+}
+
+function chrome_message_get_tab_id(callback) {
+  chrome_message_send(null, '_tab_', null, callback);
+}
+
+function chrome_message_background_listen(handlers) {
+  chrome.runtime.onMessage.addListener(function(request, sender, respond) {
+    handlers._tab_ = function(request, sender, respond) {
+      respond(sender.tab.id);
+    }
+    if(request.to) {
+      request.sender = sender;
+      chrome.tabs.sendMessage(request.to, request, respond);
+    } else {
+      handlers[request.name](request.data, sender, respond);
+    }
+    return request.respondable === true;
+  });
+}
+
+function chrome_message_listen(handlers) {
+  chrome.runtime.onMessage.addListener(function(request, sender, respond) {
+    handlers[request.name](request.data, sender, respond);
+    return request.respondable === true;
+  });
+}
+
+function base64url_encode(str) {
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64url_decode(str) {
+  return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+}
 
 /* -------------------- DOUBLE CLICK/PARALLEL PROTECTION FOR JQUERY ----------------------------------- */
 

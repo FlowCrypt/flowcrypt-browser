@@ -3,10 +3,7 @@
 var account_email = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
 
 function initialize() {
-  var application_signal_scope = random_string(4);
-  signal_scope_set(application_signal_scope);
-
-  signal_listen('gmail_tab', {
+  chrome_message_listen({
     close_new_message: function(data) {
       $('div.new_message').remove();
     },
@@ -14,32 +11,28 @@ function initialize() {
       $('iframe#' + data.frame_id).remove();
     },
     reinsert_reply_box: function(data) {
-      reinsert_reply_box(data.account_email, application_signal_scope, data.last_message_frame_id, data.last_message_frame_height, data.my_email, data.their_email);
+      reinsert_reply_box(data.account_email, data.last_message_frame_id, data.last_message_frame_height, data.my_email, data.their_email);
     },
     pgp_block_iframe_set_css: function(data) {
       $('iframe#' + data.frame_id).css(data.css);
     },
-    migrated: function(data) {
-      start(account_email, application_signal_scope);
-    },
-    list_pgp_attachments_response: function(data) {
-      list_pgp_attachments_response_handler(data);
-    },
   });
 
-  signal_send('background_process', 'migrate', {
+  chrome_message_send(null, 'migrate', {
     account_email: account_email,
-    reply_to_signal_scope: application_signal_scope
-  }, signal_scope_default_value);
+  }, start);
 }
 
-function start(account_email, signal_scope) {
-  inject_buttons(account_email, signal_scope);
-  show_initial_notifications(account_email);
-  replace_pgp_elements(account_email, signal_scope);
-  setInterval(function() {
-    replace_pgp_elements(account_email, signal_scope);
-  }, 1000);
+
+function start() {
+  chrome_message_get_tab_id(function(tab_id) {
+    inject_buttons(account_email, tab_id);
+    show_initial_notifications(account_email);
+    replace_pgp_elements(account_email, tab_id);
+    setInterval(function() {
+      replace_pgp_elements(account_email, tab_id);
+    }, 1000);
+  });
 }
 
 if((document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) && account_email) {

@@ -1,14 +1,12 @@
 'use strict';
 
-function migrate(signal_data) {
-  migrate_040_050(signal_data.account_email, function() {
-    migrate_060_070(signal_data.account_email, function() {
-      migrate_070_080(signal_data.account_email, function() {
+function migrate(data, sender, respond_done) {
+  migrate_040_050(data.account_email, function() {
+    migrate_060_070(data.account_email, function() {
+      migrate_070_080(data.account_email, function() {
         account_storage_set(null, {
           version: Number(chrome.runtime.getManifest().version.replace('.', ''))
-        }, function() {
-          signal_send('gmail_tab', 'migrated', {}, signal_data.reply_to_signal_scope);
-        });
+        }, respond_done);
       });
     });
   });

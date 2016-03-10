@@ -1,9 +1,6 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'signal_scope', 'from', 'to', 'subject', 'frame_id', 'thread_id']);
-// todo: use account_email as opposed to from - differentiate the two
-
-signal_scope_set(url_params['signal_scope']);
+var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id']);
 
 var thread_message_id_last = '';
 var thread_message_referrences_last = '';
@@ -25,21 +22,20 @@ function reply_message_determine_header_variables() {
 }
 
 function reply_message_close() {
-  signal_send('gmail_tab', 'close_reply_message', {
+  chrome_message_send(url_params.parent_tab_id, 'close_reply_message', {
     frame_id: url_params['frame_id'],
     thread_id: url_params['thread_id']
   });
 }
 
 function reply_message_reinsert_reply_box() {
-  var signal_data = {
+  chrome_message_send(url_params.parent_tab_id, 'reinsert_reply_box', {
     account_email: url_params['account_email'],
     last_message_frame_height: $('#reply_message_successful_container').height(),
     last_message_frame_id: url_params['frame_id'],
     my_email: url_params['from'],
     their_email: url_params['to'],
-  };
-  signal_send('gmail_tab', 'reinsert_reply_box', signal_data);
+  });
 }
 
 function reply_message_render_success() {

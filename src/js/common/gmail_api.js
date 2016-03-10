@@ -1,11 +1,5 @@
 'use strict';
 
-signal_listen('gmail_api', {
-  gmail_auth_response: gmail_api_process_postponed_request
-});
-
-var requests_waiting_for_auth = {};
-
 function set_up_require() {
   require.config({
     baseUrl: '../../../lib',
@@ -58,39 +52,16 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
 }
 
 function gmail_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response) {
-  // send signal to initiate auth or call supplied callback
   if(fail_on_auth !== true) {
-    var message_id = Math.floor(Math.random() * 100000);
-    requests_waiting_for_auth[message_id] = {
+    chrome_message_send(null, 'google_auth', {
       account_email: account_email,
-      method: method,
-      resource: resource,
-      parameters: parameters,
-      callback: callback
-    };
-    var signal_data = {
-      message_id: message_id,
-      account_email: account_email,
-      signal_reply_to_listener: 'gmail_api',
-      signal_reply_to_scope: signal_scope_get()
-    };
-    signal_send('background_process', 'gmail_auth_request', signal_data, signal_scope_default_value); //todo - later check they signed up on the right account
+    }, function(response) {
+      //todo: respond with success in background script, test if response.success === true, and error handling
+      gmail_api_call(account_email, method, resource, parameters, callback, true);
+    });
   } else {
     callback(false, error_response);
   }
-}
-
-function gmail_api_process_postponed_request(signal_data) {
-  var parameters = requests_waiting_for_auth[signal_data.message_id];
-  gmail_api_call(parameters.account_email, parameters.method, parameters.resource, parameters.parameters, parameters.callback, true);
-}
-
-function base64url_encode(str) {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function base64url_decode(str) {
-  return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
 }
 
 function gmail_api_get_thread(account_email, thread_id, format, get_thread_callback) {

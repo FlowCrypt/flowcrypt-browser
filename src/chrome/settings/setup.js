@@ -4,8 +4,6 @@ var url_params = get_url_params(['account_email']);
 
 // todo: pull full_name from google
 
-var signal_scope = random_string();
-signal_scope_set(signal_scope);
 var recovered_keys = undefined;
 
 // set account addresses at least once

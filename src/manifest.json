@@ -13,7 +13,6 @@
       "js": [
         "/lib/jquery.min.js",
         "/js/common/storage.js",
-        "/js/common/signal.js",
         "/js/common/common.js",
         "/js/content_scripts/gmail_tab/elements/inject.js",
         "/js/content_scripts/gmail_tab/elements/notifications.js",
@@ -27,7 +26,6 @@
       "matches": ["https://accounts.google.com/o/oauth2/approval*"],
       "js": [
         "/js/common/common.js",
-        "/js/common/signal.js",
         "/js/content_scripts/oauth_window/oauth_window.js"
       ]
     }
@@ -37,7 +35,6 @@
       "/lib/jquery.min.js",
       "/lib/emailjs-mime-builder/node_modules/requirejs/require.js",
       "/js/common/storage.js",
-      "/js/common/signal.js",
       "/js/common/gmail_api.js",
       "/js/common/common.js",
       "/js/background_process/google_auth.js",

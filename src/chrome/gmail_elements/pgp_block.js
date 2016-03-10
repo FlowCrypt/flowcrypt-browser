@@ -1,9 +1,6 @@
 'use strict';
 
-// don't do url because of length limit
-var url_params = get_url_params(['account_email', 'signal_scope', 'frame_id', 'message', 'width']);
-
-signal_scope_set(url_params['signal_scope']);
+var url_params = get_url_params(['account_email', 'frame_id', 'message', 'width', 'parent_tab_id']);
 
 function format_plaintext(text) {
   if(/<((br)|(div)|p) ?\/?>/.test(text)) {
@@ -18,7 +15,7 @@ function set_frame_content_and_resize(content) {
     width: url_params['width'],
     height: 'auto'
   });
-  signal_send('gmail_tab', 'pgp_block_iframe_set_css', {
+  chrome_message_send(url_params.parent_tab_id, 'pgp_block_iframe_set_css', {
     frame_id: url_params['frame_id'],
     css: {
       height: $('#pgp_block').height() + 10
@@ -40,7 +37,7 @@ if(typeof my_prvkey !== 'undefined') {
     }).catch(function(error) {
       set_frame_content_and_resize('<div style="color:red">[error decrypting message, possibly wrong private key]</div><br>' + url_params['message'].replace(/\n/g, '<br>'));
     });
-  } catch (err) {
+  } catch(err) {
     set_frame_content_and_resize('<div style="color:red">[badly formatted or unknown type of message, error detail: "' + err.message + '"]</div><br>' + url_params['message'].replace(/\n/g, '<br>'));
   }
 } else {

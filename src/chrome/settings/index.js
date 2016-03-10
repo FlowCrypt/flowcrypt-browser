@@ -1,11 +1,5 @@
 'use strict';
 
-signal_scope_set(signal_scope_default_value);
-
-signal_listen('settings', {
-  gmail_auth_response: gmail_auth_response_handler,
-});
-
 localStorage.settings_seen = true;
 var spinning = undefined;
 
@@ -18,7 +12,7 @@ function refresh_account_list() {
         if(account_storages[account_email]['setup_done'] === true) {
           accounts_content += '<div class="line"><a class="button green has_email" href="account.htm?account_email=' + encodeURIComponent(account_email) + '">' + email_text + '</a></div>';
         } else {
-          if(spinning !== account_email){
+          if(spinning !== account_email) {
             accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#">' + email_text + '</a></div>';
           } else {
             accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#" style="text-align: center;">' + get_spinner() + '</a></div>';
@@ -39,11 +33,12 @@ function refresh_account_list() {
         } else {
           var account_email = '';
         }
-        signal_send('background_process', 'gmail_auth_request', {
-          message_id: null,
+        chrome_message_send(null, 'google_auth', {
           account_email: account_email,
-          signal_reply_to_listener: 'settings',
-          signal_reply_to_scope: signal_scope_get(),
+        }, function(response) {
+          add_account_email_to_list_of_accounts(response.account_email, function() {
+            window.location = 'setup.htm?account_email=' + encodeURIComponent(response.account_email);
+          });
         });
       });
     });
@@ -52,9 +47,3 @@ function refresh_account_list() {
 
 refresh_account_list();
 setInterval(refresh_account_list, 1000);
-
-function gmail_auth_response_handler(signal_data) {
-  add_account_email_to_list_of_accounts(signal_data.account_email, function() {
-    window.location = 'setup.htm?account_email=' + encodeURIComponent(signal_data.account_email);
-  });
-}
