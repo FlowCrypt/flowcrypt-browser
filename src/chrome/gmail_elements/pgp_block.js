@@ -9,19 +9,26 @@ function format_plaintext(text) {
   return text.replace(/\n/g, '<br>\n');
 }
 
-function set_frame_content_and_resize(content) {
-  $('#pgp_block').html(content);
-  $('#pgp_block').css({
-    width: url_params['width'],
-    height: 'auto'
-  });
+function send_resize_message() {
   chrome_message_send(url_params.parent_tab_id, 'pgp_block_iframe_set_css', {
-    frame_id: url_params['frame_id'],
+    frame_id: url_params.frame_id,
     css: {
-      height: $('#pgp_block').height() + 10
+      height: $('#pgp_block').height() + 30
     }
   });
 }
+
+function set_frame_content_and_resize(content) {
+  $('#pgp_block').html(content);
+  $('#pgp_block').css({
+    height: 'auto'
+  });
+  setTimeout(function() {
+    $(window).resize(prevent(spree(), send_resize_message));
+  }, 1000);
+  send_resize_message();
+}
+
 
 var my_prvkey = restricted_account_storage_get(url_params['account_email'], 'master_private_key');
 var my_passphrase = restricted_account_storage_get(url_params['account_email'], 'master_passphrase');

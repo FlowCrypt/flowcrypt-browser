@@ -149,6 +149,7 @@ function str_to_uint8(string) {
 
 var events_fired = {};
 var DOUBLECLICK_MS = 1000;
+var SPREE_MS = 50;
 
 function doubleclick() {
   return {
@@ -164,20 +165,32 @@ function parallel() {
   };
 }
 
-function prevent(meta, callback) {
+function spree() {
+  return {
+    name: 'spree',
+    id: random_string(10),
+  }
+}
+
+function prevent(meta, callback) { //todo: messy + needs refactoring
   return function() {
-    if(meta.id in events_fired) {
-      if(meta.name === 'parallel') {
-        return; // id was found - means the event handling is still being processed. Do not call back
-      } else if(meta.name === 'doubleclick') {
-        if(Date.now() - events_fired[meta.id] > DOUBLECLICK_MS) {
-          events_fired[meta.id] = Date.now();
-          callback(this, meta.id);
-        }
-      }
+    if(meta.name === 'spree') {
+      clearTimeout(events_fired[meta.id]);
+      events_fired[meta.id] = setTimeout(callback, SPREE_MS);
     } else {
-      events_fired[meta.id] = Date.now();
-      callback(this, meta.id);
+      if(meta.id in events_fired) {
+        if(meta.name === 'parallel') {
+          return; // id was found - means the event handling is still being processed. Do not call back
+        } else if(meta.name === 'doubleclick') {
+          if(Date.now() - events_fired[meta.id] > DOUBLECLICK_MS) {
+            events_fired[meta.id] = Date.now();
+            callback(this, meta.id);
+          }
+        }
+      } else {
+        events_fired[meta.id] = Date.now();
+        callback(this, meta.id);
+      }
     }
   }
 }

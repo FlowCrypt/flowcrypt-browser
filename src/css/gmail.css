@@ -21,7 +21,7 @@ div.new_message { position: absolute; bottom: 0px; width: 541px; right: 30px; pa
 div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0px; margin: 0px; overflow: hidden;}
 
 /* pgp decrypted message */
-iframe.pgp_block { width: 100%; border:none; }
+iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
 
 /* pgp reply box */
 iframe.reply_message { height: 500px; width: 100%; border: none; }
