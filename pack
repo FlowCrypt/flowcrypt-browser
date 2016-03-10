@@ -12,8 +12,8 @@ def replace_openpgp_version(manifest_path, openpgpjs_path):
   fixed_lines = []
   with open(openpgpjs_path) as fp:
     for line in fp.readlines():
-      line = re.sub(r'versionstring:"[^"]+"', 'versionstring:"%s"' % versionstring, line)
-      line = re.sub(r'commentstring:"[^"]+"', 'commentstring:"%s"' % commentstring, line)
+      line = re.sub(r'versionstring: "[^"]+"', 'versionstring: "%s"' % versionstring, line)
+      line = re.sub(r'commentstring: "[^"]+"', 'commentstring: "%s"' % commentstring, line)
       fixed_lines.append(line)
   with open(openpgpjs_path, 'w') as fp:
     fp.write(''.join(fixed_lines))
