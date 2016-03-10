@@ -72,6 +72,10 @@ function array_without_value(array, without_value) {
   return result;
 }
 
+/* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */
+
+var background_script_shortcut_handlers = undefined;
+
 function chrome_message_send(tab_id, name, data, callback) {
   var msg = {
     name: name,
@@ -79,7 +83,11 @@ function chrome_message_send(tab_id, name, data, callback) {
     to: Number(tab_id) || null,
     respondable: (callback) ? true : false,
   };
-  chrome.runtime.sendMessage(msg, callback);
+  if(!background_script_shortcut_handlers) {
+    chrome.runtime.sendMessage(msg, callback);
+  } else { // calling from background script to background script: skip messaging completely
+    background_script_shortcut_handlers[name](data, null, callback);
+  }
 }
 
 function chrome_message_get_tab_id(callback) {
@@ -87,6 +95,7 @@ function chrome_message_get_tab_id(callback) {
 }
 
 function chrome_message_background_listen(handlers) {
+  background_script_shortcut_handlers = handlers;
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
     handlers._tab_ = function(request, sender, respond) {
       respond(sender.tab.id);
@@ -115,6 +124,26 @@ function base64url_encode(str) {
 function base64url_decode(str) {
   return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
 }
+
+function uint8_to_str(u8a) {
+  var CHUNK_SZ = 0x8000;
+  var c = [];
+  for(var i = 0; i < u8a.length; i += CHUNK_SZ) {
+    c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
+  }
+  return c.join("");
+}
+
+function str_to_uint8(string) {
+  var string = btoa(unescape(encodeURIComponent(string)));
+  var charList = string.split('');
+  var uintArray = [];
+  for(var i = 0; i < charList.length; i++) {
+    uintArray.push(charList[i].charCodeAt(0));
+  }
+  return new Uint8Array(uintArray);
+}
+
 
 /* -------------------- DOUBLE CLICK/PARALLEL PROTECTION FOR JQUERY ----------------------------------- */
 
