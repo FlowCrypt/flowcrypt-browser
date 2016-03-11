@@ -1,24 +1,29 @@
 #!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 
+import sys
 import re
 import json
 import os
+import io
 
 
 def replace_openpgp_version(manifest_path, openpgpjs_path):
-  with open(manifest_path) as fp:
-    versionstring = "CryptUP %s Easy Gmail Encryption https://cryptup.org" % json.load(fp)['version']
-    commentstring = "Seamlessly send, receive and search encrypted email"
-  fixed_lines = []
-  with open(openpgpjs_path) as fp:
-    for line in fp.readlines():
-      line = re.sub(r'versionstring: "[^"]+"', 'versionstring: "%s"' % versionstring, line)
-      line = re.sub(r'commentstring: "[^"]+"', 'commentstring: "%s"' % commentstring, line)
-      fixed_lines.append(line)
-  with open(openpgpjs_path, 'w') as fp:
-    fp.write(''.join(fixed_lines))
+    with open(manifest_path) as fp:
+        versionstring = "CryptUP %s Easy Gmail Encryption https://cryptup.org" % json.load(fp)['version']
+        commentstring = "Seamlessly send, receive and search encrypted email"
+    fixed_lines = []
+    with io.open(openpgpjs_path, 'r', encoding='utf8') as fp:
+        for line in fp.readlines():
+            if 'versionstring:' in line or 'commentstring:' in line:
+                line = re.sub(r'versionstring: "[^"]+"', 'versionstring: "%s"' % versionstring, line)
+                line = re.sub(r'commentstring: "[^"]+"', 'commentstring: "%s"' % commentstring, line)
+            fixed_lines.append(line)
+    fixed_content = ''.join(fixed_lines)
+    with io.open(openpgpjs_path, 'w', encoding='utf8') as fp:
+        fp.write(fixed_content)
 
 
-replace_openpgp_version('src/manifest.json', 'src/lib/openpgp.min.js')
+replace_openpgp_version('src/manifest.json', 'src/lib/openpgp.js')
 os.system('rm -rf cryptup-chrome.zip')
 os.system('zip -r cryptup-chrome.zip src/*')
