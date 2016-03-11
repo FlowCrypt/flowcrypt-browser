@@ -141,7 +141,7 @@ function on_new_message_render() {
   account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
       var addresses = order_addresses(url_params.account_email, storage.addresses);
-      $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from"></select>');
+      $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
       $.each(addresses, function(i, address) {
         $('#input_from').append('<option value="' + address + '">' + address + '</option>');
       });

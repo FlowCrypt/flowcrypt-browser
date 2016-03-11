@@ -70,7 +70,7 @@
     <table id="compose">
       <tr>
         <th> <!-- header -->
-          <span class="close_new_message"><i class="ion-android-close"></i></span>
+          <span class="close_new_message"><i class="ion-android-close" tabindex="-1"></i></span>
           <h1>New Secure Message </h1>
         </th>
       </tr>
@@ -81,12 +81,12 @@
       </tr>
       <tr>
         <td class="input"> <!-- subject -->
-          <input id="input_subject" spellcheck="true" tabindex="1" placeholder="Subject">
+          <input id="input_subject" spellcheck="true" tabindex="2" placeholder="Subject">
         </td>
       </tr>
       <tr>
         <td> <!-- body -->
-          <div contenteditable id="input_text"></div>
+          <div contenteditable id="input_text" tabindex="3"></div>
           <div id="fineuploader">
 
           </div>
@@ -95,9 +95,9 @@
       <tr>
         <td class="bottom"> <!-- bottom -->
           <div id="send_btn">
-            <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
+            <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span tabindex="4">Send</span>
           </div>
-          <div class="icon attach" id="fineuploader_button"><div></div></div>
+          <div class="icon attach" id="fineuploader_button" tabindex="-1"><div></div></div>
 
 					<div id="send_btn_note"></div>
         </td>
