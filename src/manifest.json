@@ -6,10 +6,11 @@
   "browser_action": {
     "default_icon": "img/plugin-button.png"
   },
-  "permissions": ["activeTab", "https://apis.google.com/", "https://accounts.google.com/", "identity", "storage"],
+  "permissions": ["storage"],
+  "optional_permissions": ["unlimitedStorage"],
   "content_scripts": [
     {
-      "matches": ["http://mail.google.com/*", "https://mail.google.com/*"],
+      "matches": ["*://mail.google.com/*"],
       "js": [
         "/lib/jquery.min.js",
         "/js/common/storage.js",
@@ -23,7 +24,7 @@
       ]
     },
     {
-      "matches": ["https://accounts.google.com/o/oauth2/approval*"],
+      "matches": ["*://accounts.google.com/o/oauth2/approval*"],
       "js": [
         "/js/common/common.js",
         "/js/content_scripts/oauth_window/oauth_window.js"
