@@ -18,7 +18,6 @@ function new_message_encrypt_and_send() {
   }
   var plaintext = convert_html_tags_to_newlines($('#input_text').html());
   compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(encrypted, message_text_to_send, attachments) {
-    console.log([encrypted, message_text_to_send, attachments]);
     //todo - check encrypted and handle
     gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, attachments, null, function(success, response) {
       if(success) {

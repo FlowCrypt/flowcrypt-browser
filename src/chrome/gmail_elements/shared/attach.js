@@ -22,6 +22,7 @@ function initialize_attach_dialog() {
 
 function encrypt_and_collect_attachments(armored_pubkeys, callback) {
   var attachments = [];
+
   function add(attachment) {
     attachments.push(attachment);
     if(attachments.length === Object.keys(attached_files).length) {
@@ -33,27 +34,25 @@ function encrypt_and_collect_attachments(armored_pubkeys, callback) {
   } else {
     $.each(attached_files, function(id, file) {
       var reader = new FileReader();
-      reader.onload = (function(f) {
-        return function(e) {
-          if(armored_pubkeys) {
-            encrypt(armored_pubkeys, e.target.result, function(encrypted_file_content) {
-              add({
-                filename: f.name + '.pgp',
-                type: file.type,
-                content: encrypted_file_content.data,
-                secure: true,
-              });
-            });
-          } else {
+      reader.onload = function(data) {
+        if(armored_pubkeys) {
+          encrypt(armored_pubkeys, data.target.result, function(encrypted_file_content) {
             add({
-              filename: f.name,
+              filename: file.name + '.pgp',
               type: file.type,
-              content: e.target.result,
-              secure: false,
+              content: encrypted_file_content.data,
+              secure: true,
             });
-          }
-        };
-      })(file);
+          });
+        } else {
+          add({
+            filename: file.name,
+            type: file.type,
+            content: data.target.result,
+            secure: false,
+          });
+        }
+      };
       reader.readAsBinaryString(file); //todo: readAsArrayBuffer might make more sense for performance
     });
   }
