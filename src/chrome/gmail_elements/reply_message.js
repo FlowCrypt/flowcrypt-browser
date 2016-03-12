@@ -58,12 +58,12 @@ function reply_message_encrypt_and_send() {
     'References': thread_message_referrences_last + ' ' + thread_message_id_last,
   };
   var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(message_text_to_send) {
-    if(message_text_to_send == plaintext) {
+  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(encrypted, message_text_to_send, attachments) {
+    if(!encrypted) {
       // todo: good to show warning that they are replying to encrypted message in unencrypted way
       $('div.replied_body').removeClass('pgp_secure').addClass('pgp_insecure');
     }
-    gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, null, url_params['thread_id'], function(success, response) {
+    gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, attachments, url_params['thread_id'], function(success, response) {
       if(success) {
         reply_message_render_success();
         reply_message_reinsert_reply_box();
@@ -81,4 +81,5 @@ function reply_message_on_render() {
   $("#input_to").focus();
   $("#input_to").val(url_params['to']);
   document.getElementById("input_text").focus();
+  initialize_attach_dialog();
 }

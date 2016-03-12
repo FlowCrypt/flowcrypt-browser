@@ -63,13 +63,15 @@ function compose_encrypt_and_send(account_email, to, subject, plaintext, send_em
     } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
       //todo - tailor for replying w/o subject
       try {
-        if(armored_pubkeys) {
-          encrypt(armored_pubkeys, plaintext, function(encrypted) {
-            send_email_callback(encrypted.data);
-          });
-        } else {
-          send_email_callback(plaintext);
-        }
+        encrypt_and_collect_attachments(armored_pubkeys, function(attachments) {
+          if(armored_pubkeys) {
+            encrypt(armored_pubkeys, plaintext, function(encrypted) {
+              send_email_callback(true, encrypted.data, attachments);
+            });
+          } else {
+            send_email_callback(false, plaintext, attachments);
+          }
+        });
       } catch(err) {
         alert(err);
       }
