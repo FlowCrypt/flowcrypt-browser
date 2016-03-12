@@ -62,7 +62,7 @@ function reply_message_render_success(has_attachments, message_id) {
   }
 }
 
-function reply_message_encrypt_and_send() {
+function send_btn_click() {
   var headers = {
     'From': url_params['from'],
     'To': $('#input_to').val(),
@@ -90,7 +90,7 @@ function reply_message_encrypt_and_send() {
 function reply_message_on_render() {
   $("#input_to").blur(compose_render_email_secure_or_insecure);
   $("#input_to").focus(compose_render_email_neutral);
-  $('#send_btn').click(prevent(doubleclick(), reply_message_encrypt_and_send));
+  $('#send_btn').click(prevent(doubleclick(), send_btn_click));
   $("#input_to").focus();
   $("#input_to").val(url_params['to']);
   document.getElementById("input_text").focus();

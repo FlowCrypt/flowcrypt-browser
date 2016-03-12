@@ -56,25 +56,41 @@ function fetch_pubkeys(account_email, recipient, callback) {
 }
 
 function compose_encrypt_and_send(account_email, to, subject, plaintext, send_email_callback) {
+  var btn_text = $('#send_btn').text();
+  $('#send_btn').html('Loading ' + get_spinner());
   fetch_pubkeys(account_email, to, function(armored_pubkeys) {
     if(to == '') {
+      $('#send_btn').text(btn_text);
       alert('Please add receiving email address.');
       return;
     } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
       //todo - tailor for replying w/o subject
+      if(armored_pubkeys) {
+        $('#send_btn').html('Encrypting ' + get_spinner());;
+      }
       try {
         encrypt_and_collect_attachments(armored_pubkeys, function(attachments) {
+          if((attachments || []).length) {
+            var sending = 'Uploading attachments ' + get_spinner();
+          } else {
+            var sending = 'Sending ' + get_spinner();
+          }
           if(armored_pubkeys) {
             encrypt(armored_pubkeys, plaintext, true, function(encrypted) {
+              $('#send_btn').html(sending);
               send_email_callback(true, encrypted.data, attachments);
             });
           } else {
+            $('#send_btn').html(sending);
             send_email_callback(false, plaintext, attachments);
           }
         });
       } catch(err) {
+        $('#send_btn').text(btn_text);
         alert(err);
       }
+    } else {
+      $('#send_btn').text(btn_text);
     }
   });
 }

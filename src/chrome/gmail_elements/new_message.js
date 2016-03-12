@@ -6,7 +6,7 @@ function new_message_close() {
   chrome_message_send(url_params.parent_tab_id, 'close_new_message');
 }
 
-function new_message_encrypt_and_send() {
+function send_btn_click() {
   var headers = {
     'To': $('#input_to').val(),
     'Subject': $('#input_subject').val(),
@@ -68,7 +68,7 @@ function on_new_message_render() {
   $("#input_to").focus(compose_render_email_neutral);
   $('#input_to').keyup(search_contacts);
   $("#input_to").blur(compose_render_email_secure_or_insecure);
-  $('#send_btn').click(prevent(doubleclick(), new_message_encrypt_and_send));
+  $('#send_btn').click(prevent(doubleclick(), send_btn_click));
   $('.close_new_message').click(new_message_close);
   $('table#compose').click(hide_contacts);
   $('.bottom .icon.attach').click();
