@@ -27,7 +27,6 @@ iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
 iframe.reply_message { height: 500px; width: 100%; border: none; }
 div.remove_borders { border: none !important; padding:0px !important; margin:0px !important; }
 
-div.pgp_attachment { height: 120px; width: 180px; margin: 0 0 16px 16px; padding: 0px; border: none; overflow: hidden; display: block; float: left; position: relative; }
 span.pgp_attachment > iframe { height: 120px; width: 180px; margin: 0; padding: 0; border: none; overflow: hidden; }
 
 /* setup dialog */

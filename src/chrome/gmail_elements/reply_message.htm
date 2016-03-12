@@ -21,6 +21,7 @@
         <tr>
           <td> <!-- body -->
             <div contenteditable id="input_text"></div>
+            <div id="fineuploader"></div>
           </td>
         </tr>
         <tr>
@@ -28,6 +29,7 @@
             <div id="send_btn">
               <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
             </div>
+            <div class="icon attach" id="fineuploader_button" tabindex="-1"><div></div></div>
 						<div id="send_btn_note"></div>
           </td>
         </tr>
@@ -51,6 +53,7 @@
           </td>
         </tr>
       </table>
+      <div id="attachments"></div>
     </div>
 
     <script src="/lib/jquery.min.js"></script>
@@ -61,6 +64,7 @@
     <script src="/js/common/keyserver.js"></script>
     <script src="/js/common/gmail_api.js"></script>
     <script src="/js/common/common.js"></script>
+    <script src="/js/content_scripts/gmail_tab/elements/factory.js"></script>
     <script src="shared/compose.js"></script>
     <script src="shared/attach.js"></script>
     <script src="reply_message.js"></script>

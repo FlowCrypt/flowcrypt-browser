@@ -38,7 +38,7 @@ function reply_message_reinsert_reply_box() {
   });
 }
 
-function reply_message_render_success() {
+function reply_message_render_success(has_attachments, message_id) {
   $('#reply_message_table_container').css('display', 'none');
   $('#reply_message_successful_container div.replied_from').text(url_params['from']);
   $('#reply_message_successful_container div.replied_to span').text(url_params['to']);
@@ -47,6 +47,19 @@ function reply_message_render_success() {
   var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
   $('#reply_message_successful_container div.replied_time').text(time);
   $('#reply_message_successful_container').css('display', 'block');
+  if(has_attachments) {
+    gmail_api_message_get(url_params.account_email, message_id, 'full', function(success, gmail_message_object) {
+      if(success) {
+        $('#attachments').css('display', 'block');
+        var attachment_metas = gmail_api_find_attachments(gmail_message_object);
+        $.each(attachment_metas, function(i, attachment_meta) {
+          $('#attachments').append(pgp_attachment_iframe(url_params.account_email, attachment_meta, []));
+        });
+      } else {
+        console.log('failed to re-show sent attachments'); //todo - handle !success
+      }
+    });
+  }
 }
 
 function reply_message_encrypt_and_send() {
@@ -65,7 +78,7 @@ function reply_message_encrypt_and_send() {
     }
     gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, attachments, url_params['thread_id'], function(success, response) {
       if(success) {
-        reply_message_render_success();
+        reply_message_render_success((attachments || []).length > 0, response.id);
         reply_message_reinsert_reply_box();
       } else {
         alert('error sending message, check log');
