@@ -22,38 +22,40 @@ $('#download').click(prevent(doubleclick(), function(self) {
     $(self).html(original_content);
     if(success) {
       var encrypted_data = base64url_decode(attachment.data);
-      if(encrypted_data.match(/-----BEGIN PGP MESSAGE-----/)) {
-        // todo - following lines pretty much copy/pasted from pgp_block.js. Would use a common function in gmail_elements.js
-        var my_prvkey = restricted_account_storage_get(url_params.account_email, 'master_private_key');
-        var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
-        if(typeof my_prvkey !== 'undefined') {
-          var private_key = openpgp.key.readArmored(my_prvkey).keys[0];
-          if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-            private_key.decrypt(my_passphrase);
-          }
-          try {
+      // todo - following lines pretty much copy/pasted from pgp_block.js. Would use a common function in gmail_elements.js
+      var my_prvkey = restricted_account_storage_get(url_params.account_email, 'master_private_key');
+      var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
+      if(typeof my_prvkey !== 'undefined') {
+        var private_key = openpgp.key.readArmored(my_prvkey).keys[0];
+        if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+          private_key.decrypt(my_passphrase);
+        }
+        try {
+          if(encrypted_data.match(/-----BEGIN PGP MESSAGE-----/)) {
             var options = {
               message: openpgp.message.readArmored(encrypted_data),
               privateKey: private_key, // for decryption
-              format: 'utf8',
+              format: 'binary',
             };
-            openpgp.decrypt(options).then(function(plaintext) {
-              // plaintext.filename
-              download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), 'text/plain', plaintext.data);
-            }).catch(function(error) {
-              $('body.attachment').html('Error opening file<br>Downloading original..');
-              download_file(url_params.name, url_params.type, encrypted_data);
-            });
-          } catch(err) {
-            $('body.attachment').html('Badly formatted file<br>Downloading original..<br>' + err.message);
-            download_file(url_params.name, url_params.type, encrypted_data);
+          } else {
+            var options = {
+              message: openpgp.message.read(str_to_uint8(encrypted_data)),
+              privateKey: private_key, // for decryption
+              format: 'binary',
+            };
           }
-        } else {
-          set_frame_content_and_resize('No private key<br>Downloading original..');
+          openpgp.decrypt(options).then(function(decrypted) {
+            download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, uint8_to_str(decrypted.data)); // plaintext.filename
+          }).catch(function(error) {
+            $('body.attachment').html('Error opening file<br>Downloading original..');
+            download_file(url_params.name, url_params.type, encrypted_data);
+          });
+        } catch(err) {
+          $('body.attachment').html('Badly formatted file<br>Downloading original..<br>' + err.message);
           download_file(url_params.name, url_params.type, encrypted_data);
         }
       } else {
-        $('body.attachment').html('Binary files not implemented yet<br>Downloading original..');
+        set_frame_content_and_resize('No private key<br>Downloading original..');
         download_file(url_params.name, url_params.type, encrypted_data);
       }
     }

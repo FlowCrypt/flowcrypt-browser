@@ -134,14 +134,13 @@ function uint8_to_str(u8a) {
   return c.join("");
 }
 
-function str_to_uint8(string) {
-  var string = btoa(unescape(encodeURIComponent(string)));
-  var charList = string.split('');
-  var uintArray = [];
-  for(var i = 0; i < charList.length; i++) {
-    uintArray.push(charList[i].charCodeAt(0));
+function str_to_uint8(raw) {
+  var rawLength = raw.length;
+  var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
+  for(var i = 0; i < rawLength; i++) {
+    uint8[i] = raw.charCodeAt(i);
   }
-  return new Uint8Array(uintArray);
+  return uint8;
 }
 
 

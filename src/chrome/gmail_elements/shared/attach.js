@@ -36,11 +36,11 @@ function encrypt_and_collect_attachments(armored_pubkeys, callback) {
       var reader = new FileReader();
       reader.onload = function(data) {
         if(armored_pubkeys) {
-          encrypt(armored_pubkeys, data.target.result, function(encrypted_file_content) {
+          encrypt(armored_pubkeys, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
             add({
               filename: file.name + '.pgp',
               type: file.type,
-              content: encrypted_file_content.data,
+              content: encrypted_file_content.message.packets.write(),
               secure: true,
             });
           });
@@ -48,21 +48,21 @@ function encrypt_and_collect_attachments(armored_pubkeys, callback) {
           add({
             filename: file.name,
             type: file.type,
-            content: data.target.result,
+            content: new Uint8Array(data.target.result),
             secure: false,
           });
         }
       };
-      reader.readAsBinaryString(file); //todo: readAsArrayBuffer might make more sense for performance
+      reader.readAsArrayBuffer(file);
     });
   }
 }
 
 function process_new_attachment(id, name) {
   var file = uploader.getFile(id);
-  if(file.type !== 'text/plain') {
+  if(false) { //check size
     uploader.cancel(id);
-    alert('For now, only text file attachments are possible. Images and other types of files will be available soon.');
+    alert('Attachments up to 10MB are allowed');
     return;
   }
   attached_files[id] = file;
