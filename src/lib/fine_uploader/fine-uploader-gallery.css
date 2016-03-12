@@ -10,7 +10,7 @@
 * Repository: git://github.com/FineUploader/fine-uploader.git
 *
 * Licensed only under the Widen Commercial License (http://fineuploader.com/licensing).
-*/ 
+*/
 
 
 /* ---------------------------------------
@@ -485,3 +485,11 @@
     background-color: rgba(0, 0, 0, 0.7);
 }
 /*! 2016-02-23 */
+
+
+/*Overriding styles to Cancel Button */
+.qq-btn.qq-upload-cancel-selector.qq-upload-cancel {
+    background: transparent!important;
+    border: 0!important;
+    box-shadow: none;
+}

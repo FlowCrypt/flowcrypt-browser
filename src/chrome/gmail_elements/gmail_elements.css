@@ -30,7 +30,7 @@ table#compose td.bottom div#send_btn { text-transform: uppercase; display: inlin
 table#compose .close_new_message i.ion-android-close { font-size: 27px; top: 10px!important; color: white; margin-top: -5px; }
 table#compose td.bottom div#send_btn_note { display: inline-block; font-size: 12.8px; padding-left: 5px; }
 table#compose td div#input_text { border: none; overflow: none; padding-top:8px; padding-left:8px; outline: none; border: none !important; -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important; box-shadow: none !important; height:100%; word-wrap: break-word; }
+  -moz-box-shadow: none !important; box-shadow: none !important; height:100%; word-wrap: break-word; max-width: 525px;}
 table#compose .fa-close { font-size: 20px; margin-top: -1px; }
 table#compose #send_btn i { font-size: 20px; }
 table#compose #send_btn .fa-lock, #send_btn  .fa-unlock { position: relative; left: -3px; top: 3px; }
@@ -53,7 +53,13 @@ table#compose #fineuploader { position: absolute; bottom: 56px; right: 1px; }
 
 table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
 table#compose #fineuploader .qq-total-progress-bar-container { display: none; height: 0; border: 0; visibility: hidden; position: absolute; }
-table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.75; }
+table#compose #fineuploader .qq-upload-list {overflow-x: hidden;}
+table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.75; margin-left: 12px;}
+table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 5px 0; position: relative; margin-left: 11px; margin-right: 7px;}
+table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
+table#compose #fineuploader .ion-android-close {font-size: 22px; position: absolute; top:7px; bottom:0;}
+
+
 
 
 /* secure or insecure */
