@@ -1,6 +1,7 @@
 
 /* body */
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; word-wrap: break-word; }
+body#reply_message { overflow: hidden; }
 html {  padding:0px; margin: 0px; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0px;
   -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
@@ -50,7 +51,6 @@ table#compose .bottom .icon:active { border-color: #4d90fe; }
 table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: middle; padding: 0; display: inline-block; margin-top: 4px }
 table#compose .bottom .icon.attach div {  background: no-repeat url(/img/gmail-compose-icons.png) 0 -709px;  overflow: inherit !important; }
 table#compose #fineuploader { position: absolute; bottom: 56px; right: 1px; }
-
 table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
 table#compose #fineuploader .qq-total-progress-bar-container { display: none; height: 0; border: 0; visibility: hidden; position: absolute; }
 table#compose #fineuploader .qq-upload-list {overflow-x: hidden;}
@@ -58,7 +58,6 @@ table#compose #fineuploader .qq-upload-list li { border: none; background: #fff;
 table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 5px 0; position: relative; margin-left: 11px; margin-right: 7px;}
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 table#compose #fineuploader .ion-android-close {font-size: 22px; position: absolute; top:7px; bottom:0;}
-
 
 
 /* secure or insecure */
@@ -85,7 +84,9 @@ div#reply_message_successful_container > table div.replied_to { color: #777; mar
 div#reply_message_successful_container > table div.replied_time { }
 div#reply_message_successful_container > table div.replied_time { }
 div#reply_message_successful_container > #attachments { border-top: 1px dotted #CACACA; padding-top: 16px; margin-top: 22px; display: none; }
+div#reply_message_successful_container > #attachments > span.pgp_attachment { margin-right: 16px; margin-bottom: 16px; display: inline-block; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment > iframe { height: 120px; width: 180px; margin: 0; padding: 0; border: none; overflow: hidden; }
+
 
 body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; background-image: url(/img/attachment-corner.png);
   background-repeat: no-repeat; background-position: bottom right; z-index: 0; }
