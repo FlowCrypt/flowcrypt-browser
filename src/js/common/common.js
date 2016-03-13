@@ -1,3 +1,24 @@
+'use strict';
+
+function arrays_equal(first, second) {
+  if(!second) {
+    return false;
+  }
+  if(first.length != second.length) {
+    return false;
+  }
+  for(var i = 0, l = first.length; i < l; i++) {
+    if(first[i] instanceof Array && second[i] instanceof Array) {
+      if(!arrays_equal(first[i], second[i])) {
+        return false;
+      }
+    } else if(first[i] != second[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function get_url_params(expected_keys, string) {
   var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
   var url_data = {};
@@ -70,6 +91,67 @@ function array_without_value(array, without_value) {
     }
   });
   return result;
+}
+
+function extract_key_ids(armored_pubkey) {
+  return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
+}
+
+function check_pubkeys_message(account_email, message) {
+  var message_key_ids = message.getEncryptionKeyIds();
+  var local_key_ids = extract_key_ids(restricted_account_storage_get(account_email, 'master_public_key'));
+  var diagnosis = {
+    found_match: false,
+    receivers: message_key_ids.length,
+  };
+  $.each(message_key_ids, function(i, msg_k_id) {
+    $.each(local_key_ids, function(j, local_k_id) {
+      if(msg_k_id === local_k_id) {
+        diagnosis.found_match = true;
+        return false;
+      }
+    });
+  });
+  return diagnosis;
+}
+
+function check_pubkeys_keyserver(account_email, callback) {
+  var local_key_ids = extract_key_ids(restricted_account_storage_get(account_email, 'master_public_key'));
+  var diagnosis = {
+    has_pubkey_missing: false,
+    has_pubkey_mismatch: false,
+    results: {},
+  };
+  account_storage_get(account_email, ['addresses'], function(storage) {
+    keyserver_keys_find(storage.addresses, function(success, pubkey_search_results) {
+      if(success) {
+        $.each(pubkey_search_results.results, function(i, pubkey_search_result) {
+          if(!pubkey_search_result.pubkey) {
+            diagnosis.has_pubkey_missing = true;
+            diagnosis.results[pubkey_search_result.email] = {
+              pubkey: null,
+              pubkey_ids: null,
+              match: null,
+            }
+          } else {
+            var match = true;
+            if(!arrays_equal(extract_key_ids(pubkey_search_result.pubkey), local_key_ids)) {
+              diagnosis.has_pubkey_mismatch = true;
+              match = false;
+            }
+            diagnosis.results[pubkey_search_result.email] = {
+              pubkey: pubkey_search_result.pubkey,
+              pubkey_ids: extract_key_ids(pubkey_search_result.pubkey),
+              match: match,
+            }
+          }
+        });
+        callback(diagnosis);
+      } else {
+        callback();
+      }
+    });
+  });
 }
 
 /* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */
