@@ -84,6 +84,7 @@ div#reply_message_successful_container > table div.replied_from { font-weight: b
 div#reply_message_successful_container > table div.replied_to { color: #777; margin-bottom: 10px; }
 div#reply_message_successful_container > table div.replied_time { }
 div#reply_message_successful_container > table div.replied_time { }
+
 div#reply_message_successful_container > #attachments { border-top: 1px dotted #CACACA; padding-top: 16px; margin-top: 22px; display: none; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment { margin-right: 16px; margin-bottom: 16px; display: inline-block; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment > iframe { height: 120px; width: 180px; margin: 0; padding: 0; border: none; overflow: hidden; }
@@ -98,6 +99,6 @@ body.attachment #download i { font-size: 50px; padding: 20px; padding-bottom: 6p
 body.attachment #download .download-prompt { font-size: 17px; }
 body.attachment #header { margin-top:10px; padding-bottom: 0px; font-weight: bold; font-size: 15px; }
 body.attachment #type { padding: 10px 0; color: #999; }
-body.attachment #name { padding: 7px 0; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; font-size: 13px;}
+body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 body.attachment .encrypted-circle { background: rgb(92, 148, 103); display: inline-block; width: 35px; height: 35px; border-radius: 120px; position: relative; margin-top: 10px; margin-bottom: 5px;}
 body.attachment .encrypted-circle .ion-locked { position: absolute;top: 7px; bottom: 0; left: 1px; right: 0; font-size: 19px; color: white; }
