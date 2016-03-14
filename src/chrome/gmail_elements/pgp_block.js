@@ -42,13 +42,18 @@ function render_content(content) {
   send_resize_message();
 }
 
-function diagnose_pubkeys_button(text) {
-  return '<div class="button long green" style="margin:30px 0;">' + text + '</div>';
+function diagnose_pubkeys_button(text, color) {
+  return '<br><div class="button settings long ' + color + '" style="margin:30px 0;" target="cryptup">' + text + '</div>';
 }
 //font-family: "Courier New"
 function render_error(error_box_content) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
   render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div><div class="raw_pgp_block">' + url_params.message.replace(/\n/g, '<br>') + '</div>');
+  $('.settings.button').click(prevent(doubleclick(), function() {
+    chrome_message_send(null, 'settings', {
+      page: 'pubkeys.htm?account_email=' + encodeURIComponent(url_params.account_email),
+    });
+  }));
 }
 
 function handle_private_key_mismatch(account_email, message) {
@@ -57,7 +62,7 @@ function handle_private_key_mismatch(account_email, message) {
     render_error(l.cant_open + l.encrypted_correctly_file_bug);
   } else {
     if(msg_diagnosis.receivers === 1) {
-      render_error(l.cant_open + l.single_sender + l.ask_resend);
+      render_error(l.cant_open + l.single_sender + l.ask_resend + diagnose_pubkeys_button('account settings', 'gray2'));
     } else {
       check_pubkeys_keyserver(account_email, function(ksrv_diagnosis) {
         if(!ksrv_diagnosis) {
@@ -65,15 +70,15 @@ function handle_private_key_mismatch(account_email, message) {
         } else {
           if(msg_diagnosis.receivers) {
             if(ksrv_diagnosis.has_pubkey_mismatch) {
-              render_error(l.cant_open + l.account_info_outdated + diagnose_pubkeys_button('review outdated information'));
+              render_error(l.cant_open + l.account_info_outdated + diagnose_pubkeys_button('review outdated information', 'green'));
             } else {
-              render_error(l.cant_open + l.wrong_pubkey_used + l.ask_resend);
+              render_error(l.cant_open + l.wrong_pubkey_used + l.ask_resend + diagnose_pubkeys_button('account settings', 'gray2'));
             }
           } else {
             if(ksrv_diagnosis.has_pubkey_mismatch) {
-              render_error(l.cant_open + l.receivers_hidden + l.account_info_outdated + diagnose_pubkeys_button('review outdated information'));
+              render_error(l.cant_open + l.receivers_hidden + l.account_info_outdated + diagnose_pubkeys_button('review outdated information', 'green'));
             } else {
-              render_error(l.cant_open + l.receivers_hidden + l.ask_resend);
+              render_error(l.cant_open + l.receivers_hidden + l.ask_resend + diagnose_pubkeys_button('account settings', 'gray2'));
             }
           }
         }

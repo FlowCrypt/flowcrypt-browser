@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>CryptUP</title>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/css/cryptup.css" />
+</head>
+
+<body id="settings">
+  <div id="content" class="pubkeys">
+    <h1></h1>
+    <div class="line summary"></div>
+    <div class="fix_container">
+      <div class="line"><div class="button long green fix_all">update keyserver for all</div></div>
+      <div class="line">&nbsp;</div>
+      <div class="line">Alternatively, resolve the issues individually bellow.</div>
+    </div>
+    <table id="emails">
+
+    </table>
+
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/emailjs-mime-builder/node_modules/requirejs/require.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/gmail_api.js"></script>
+  <script src="/js/common/keyserver.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="settings_common.js"></script>
+  <script src="pubkeys.js"></script>
+</body>
+
+</html>

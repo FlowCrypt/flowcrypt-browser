@@ -1,24 +1,5 @@
 'use strict';
 
-function arrays_equal(first, second) {
-  if(!second) {
-    return false;
-  }
-  if(first.length != second.length) {
-    return false;
-  }
-  for(var i = 0, l = first.length; i < l; i++) {
-    if(first[i] instanceof Array && second[i] instanceof Array) {
-      if(!arrays_equal(first[i], second[i])) {
-        return false;
-      }
-    } else if(first[i] != second[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 function get_url_params(expected_keys, string) {
   var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
   var url_data = {};
@@ -29,6 +10,10 @@ function get_url_params(expected_keys, string) {
     }
   });
   return url_data;
+}
+
+function open_settings_page(page) {
+  window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm')), 'cryptup');
 }
 
 function is_email_valid(email) {
@@ -97,6 +82,18 @@ function extract_key_ids(armored_pubkey) {
   return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
 }
 
+function key_ids_match(first, second) {
+  if(first.length !== second.length) {
+    return false;
+  }
+  for(var i = 0; i < first.length; i++) {
+    if(first[i].bytes !== second[i].bytes) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
   var local_key_ids = extract_key_ids(restricted_account_storage_get(account_email, 'master_public_key'));
@@ -135,7 +132,7 @@ function check_pubkeys_keyserver(account_email, callback) {
             }
           } else {
             var match = true;
-            if(!arrays_equal(extract_key_ids(pubkey_search_result.pubkey), local_key_ids)) {
+            if(!key_ids_match(extract_key_ids(pubkey_search_result.pubkey), local_key_ids)) {
               diagnosis.has_pubkey_mismatch = true;
               match = false;
             }

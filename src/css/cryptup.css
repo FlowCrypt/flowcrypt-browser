@@ -1,11 +1,16 @@
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; text-align: center; white-space: nowrap;
-  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; padding: 4px 15px; text-decoration: none; }
+  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 4px 15px; text-decoration: none; }
 .button.long { width: 200px; }
 .button.red { background-color: #d14836; }
 .button.green { background-color: #088447; background-image: -webkit-linear-gradient(top, #0F8C4F, #088447); }
 .button.gray { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top, #C9C9C9, #BFBFBF); }
+.button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444; }
+.button.small { padding: 0 7px; margin-top: 0; }
+.line.red, td.red { color: #d14836; }
+.line.prange, td.orange { color: #d18826; }
+.line.green, td.green { color: #088447; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 
@@ -45,6 +50,12 @@ body#settings > div#content.setup div#loading { margin-top: 150px; }
 
 body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
+
+body#settings > div#content.pubkeys div.fix_container { display: none; }
+body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }
+body#settings > div#content.pubkeys table#emails tr { height: 32px; }
+body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
+  border-bottom: 1px solid #dadada; }
 
 body#settings > div#footer { width: 99%; position: absolute; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
 body#settings > div#footer > div { width: 95%; display: inline-block; padding: 30px 0; text-align: right; }

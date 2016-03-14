@@ -8,16 +8,19 @@ chrome_message_background_listen({
   google_auth: google_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
   list_pgp_attachments: list_pgp_attachments,
+  settings: open_settings_page_handler,
 });
 
-function open_settings_page() {
-  window.open(chrome.extension.getURL('chrome/settings/index.htm'), 'cryptup');
-}
 if(!localStorage.settings_seen) {
   open_settings_page();
 }
-chrome.browserAction.onClicked.addListener(open_settings_page); // Called when the user clicks on the browser action icon.
+chrome.browserAction.onClicked.addListener(function() {
+  open_settings_page(); // Called when the user clicks on the browser action icon.
+});
 
+function open_settings_page_handler(message, sender, callback) {
+  open_settings_page(message.page);
+}
 
 function list_pgp_attachments(request, sender, respond) {
   gmail_api_message_get(request.account_email, request.message_id, 'full', function(success, message) {
