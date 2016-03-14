@@ -6,13 +6,16 @@ $('#type').text(url_params.type);
 $('#name').text(url_params.name);
 
 function download_file(filename, type, data) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:' + type + ';base64,' + btoa(data));
-  element.setAttribute('download', filename);
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
+  var blob = new Blob([data], {
+    type: type
+  });
+  var a = document.createElement('a');
+  var url = window.URL.createObjectURL(blob);
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
 }
 
 $('#download').click(prevent(doubleclick(), function(self) {
@@ -31,22 +34,15 @@ $('#download').click(prevent(doubleclick(), function(self) {
           private_key.decrypt(my_passphrase);
         }
         try {
-          if(encrypted_data.match(/-----BEGIN PGP MESSAGE-----/)) {
-            var options = {
-              message: openpgp.message.readArmored(encrypted_data),
-              privateKey: private_key, // for decryption
-              format: 'binary',
-            };
-          } else {
-            var options = {
-              message: openpgp.message.read(str_to_uint8(encrypted_data)),
-              privateKey: private_key, // for decryption
-              format: 'binary',
-            };
-          }
+          var options = {
+            message: (encrypted_data.match(/-----BEGIN PGP MESSAGE-----/)) ? openpgp.message.readArmored(encrypted_data) : openpgp.message.read(str_to_uint8(encrypted_data)),
+            privateKey: private_key,
+            format: 'binary',
+          };
           openpgp.decrypt(options).then(function(decrypted) {
-            download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, uint8_to_str(decrypted.data)); // plaintext.filename
+            download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, decrypted.data);
           }).catch(function(error) {
+            console.log(error);
             $('body.attachment').html('Error opening file<br>Downloading original..');
             download_file(url_params.name, url_params.type, encrypted_data);
           });
