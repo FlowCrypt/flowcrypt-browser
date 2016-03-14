@@ -14,9 +14,9 @@
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 
-body#settings { text-align: center; }
-body#settings > div#content {  margin-top: 5%; }
-body#settings > div#content > h1 { font-size: 32px; font-weight: 100; color: #999; margin-bottom: 60px; }
+body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
+body#settings > div#content {  margin-top: 120px; }
+body#settings > div#content > div > h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans'; }
 body#settings > div#content a:hover { text-decoration: none; }
 body#settings > div#content > div#accounts a.button.has_email { width: 300px; text-align: left; font-weight: 100; color: #CCC; }
 body#settings > div#content > div#accounts a.button.has_email b { padding-right: 10px; color: #FFF; }
@@ -25,6 +25,12 @@ body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content div.line label { line-height: 22px; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 200px; height:32px; border: 1px solid gray; padding-left:8px; }
+body#settings > div#content .separator {max-width: 600px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
+body#settings .profile-row { position: fixed; top:10px; right:20px;}
+body#settings .profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
+body#settings #content .content-row-holder { position: relative; display: inline-block; min-width: 600px!important; }
+body#settings > div#content > .ion-ios-arrow-left { position: absolute; left:0; top:20px; font-size: 30px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s ;}
+body#settings > .profile-row > .email-address { margin-right: 10px; font-size: 15px;}
 
 body#settings > div#content.setup div#step_0_found_key { display: none; }
 body#settings > div#content.setup div#step_1_easy_or_manual { display: none; }
@@ -57,7 +63,7 @@ body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
 
-body#settings > div#footer { width: 99%; position: absolute; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
+body#settings > div#footer { width: 99%; position: fixed; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
 body#settings > div#footer > div { width: 95%; display: inline-block; padding: 30px 0; text-align: right; }
 
 
