@@ -64,7 +64,7 @@ body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-ali
   border-bottom: 1px solid #dadada; }
 
 body#settings > div#footer { width: 99%; position: fixed; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
-body#settings > div#footer > div { width: 95%; display: inline-block; padding: 30px 0; text-align: right; }
+body#settings > div#footer > div { width: 95%; display: inline-block; padding: 30px 0; text-align: right;     position: fixed; right: 20px; bottom: -10px; }
 
 
 /* body */
