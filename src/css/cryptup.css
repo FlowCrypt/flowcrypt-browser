@@ -80,6 +80,7 @@ body.pgp_insecure { border:none; border-left: 3px dashed red; padding-left:10px;
 body > #pgp_block { height: auto; }
 body > #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
 body > #pgp_block div.raw_pgp_block { margin: 12px; font-family: "Courier New"; color: #444; letter-spacing: -1px; }
+body > #pgp_block input#answer { padding: 8px 8px; width: 232px; }
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }

@@ -1,6 +1,6 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'frame_id', 'message', 'width', 'parent_tab_id']);
+var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id']);
 
 var l = {
   cant_open: 'Could not open this message with CryptUP.\n\n',
@@ -13,6 +13,7 @@ var l = {
   bad_format: 'Message is either badly formatted or not compatible with CryptUP. ',
   no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
   refresh_page: 'Refresh page to see more information.',
+  question_decryt_prompt: 'To decrypt the message, answer: ',
 }
 
 function format_plaintext(text) {
@@ -45,10 +46,15 @@ function render_content(content) {
 function diagnose_pubkeys_button(text, color) {
   return '<br><div class="button settings long ' + color + '" style="margin:30px 0;" target="cryptup">' + text + '</div>';
 }
+
+function armored_message_as_html() {
+  return '<div class="raw_pgp_block">' + url_params.message.replace(/\n/g, '<br>') + '</div>';
+}
+
 //font-family: "Courier New"
 function render_error(error_box_content) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
-  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div><div class="raw_pgp_block">' + url_params.message.replace(/\n/g, '<br>') + '</div>');
+  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html());
   $('.settings.button').click(prevent(doubleclick(), function() {
     chrome_message_send(null, 'settings', {
       page: 'pubkeys.htm?account_email=' + encodeURIComponent(url_params.account_email),
@@ -87,32 +93,52 @@ function handle_private_key_mismatch(account_email, message) {
   }
 }
 
-var my_prvkey_armored = restricted_account_storage_get(url_params.account_email, 'master_private_key');
-var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
-if(typeof my_prvkey_armored !== 'undefined') {
-  var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
-  if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-    private_key.decrypt(my_passphrase);
-  }
-  var message = openpgp.message.readArmored(url_params.message);
+function decrypt_and_render(option_key, option_value, wrong_password_callback) {
   try {
     var options = {
-      message: message,
-      privateKey: private_key,
+      message: openpgp.message.readArmored(url_params.message),
       format: 'utf8',
-    };
+    }
+    options[option_key] = option_value;
     openpgp.decrypt(options).then(function(plaintext) {
       render_content(format_plaintext(plaintext.data));
     }).catch(function(error) {
-      if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null") { // wrong private key
+      if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && option_key === 'privateKey') { // wrong private key
         handle_private_key_mismatch(url_params.account_email, message);
+      } else if(String(error) === 'Error: Error decrypting message: Invalid enum value.' && option_key === 'password') { // wrong password
+        wrong_password_callback();
       } else {
         render_error(l.cant_open + '<em>' + String(error) + '</em>');
       }
     });
   } catch(err) {
+    console.log('ee');
     render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + err.message + '</em>');
   }
+}
+
+function render_password_prompt() {
+  render_content('<p>' + l.question_decryt_prompt + '"' + url_params.question + '" </p><p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>' + armored_message_as_html());
+  $('.button.decrypt').click(prevent(doubleclick(), function() {
+    decrypt_and_render('password', $('#answer').val(), function() {
+      alert('Incorrect answer, please try again');
+      render_password_prompt();
+    });
+  }));
+}
+
+if(!url_params.question) {
+  var my_prvkey_armored = restricted_account_storage_get(url_params.account_email, 'master_private_key');
+  var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
+  if(typeof my_prvkey_armored !== 'undefined') {
+    var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
+    if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+      private_key.decrypt(my_passphrase);
+    }
+    decrypt_and_render('privateKey', private_key);
+  } else {
+    render_error(l.cant_open + l.no_private_key);
+  }
 } else {
-  render_error(l.cant_open + l.no_private_key);
+  render_password_prompt();
 }

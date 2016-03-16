@@ -151,6 +151,9 @@ function check_pubkeys_keyserver(account_email, callback) {
   });
 }
 
+RegExp.escape = function(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
 /* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */
 
 var background_script_shortcut_handlers = undefined;

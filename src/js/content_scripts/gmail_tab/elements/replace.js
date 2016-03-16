@@ -12,15 +12,24 @@ function replace_pgp_elements(account_email, gmail_tab_id) {
 function replace_armored_pgp_messages(account_email, gmail_tab_id) {
   var conversation_has_pgp_message = false;
   $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function() {
-    var text = $(this).html();
-    var text_with_iframes = text;
-    var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r\n])+?-----END PGP MESSAGE-----/gm;
-    var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r\n])+?-----END PGP MESSAGE-----/m;
+    var message_text = $(this).html();
+    var text_with_iframes = message_text;
+    var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/gm;
+    var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
+    var re_first_pgp_question = /<br>\r?\n-----BEGIN PGP QUESTION-----<br>\r?\n(.+)<br>\r?\n-----END PGP QUESTION-----<br>\r?\n/m;
     $(this).addClass('has_known_pgp_blocks');
     var matches;
-    while((matches = re_pgp_blocks.exec(text)) != null) {
+    while((matches = re_pgp_blocks.exec(message_text)) !== null) {
       var valid_pgp_block = strip_tags_from_pgp_message(matches[0]);
-      text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(this, valid_pgp_block, account_email, gmail_tab_id));
+      var question_match = re_first_pgp_question.exec(text_with_iframes);
+      var question = '';
+      if(question_match !== null) {
+        question = window.striptags(question_match[1]);
+        text_with_iframes = text_with_iframes.replace(re_first_pgp_question, '');
+        text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question_match[1]) + '.+'), '');
+        text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question) + '.+'), '');
+      }
+      text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, gmail_tab_id));
     }
     $(this).html(text_with_iframes);
     conversation_has_pgp_message = true;
