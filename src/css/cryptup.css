@@ -83,7 +83,7 @@ body > #pgp_block div.raw_pgp_block { margin: 12px; font-family: "Courier New"; 
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
-table#compose th { width: 538px; height: 36px; background-color: #404040; text-align: left; margin: 0px; border: 1px solid #404040}
+table#compose th { width: 538px; height: 36px; background-color: #088447; text-align: left; margin: 0px; border: 1px solid #088447}
 table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose th h1 { display: inline-block; margin: none; padding: none; font-size: 13.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
 table#compose th span.close_new_message { display: inline-block; position: absolute; right: 0px; margin-right: 6px; margin-top: -3px; color: white;
