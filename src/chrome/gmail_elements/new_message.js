@@ -17,8 +17,7 @@ function send_btn_click() {
     headers['From'] = url_params['account_email'];
   }
   var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(encrypted, message_text_to_send, attachments) {
-    //todo - check encrypted and handle
+  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(message_text_to_send, attachments) {
     gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, attachments, null, function(success, response) {
       if(success) {
         new_message_close();
@@ -65,7 +64,9 @@ function order_addresses(account_email, addresses) {
 }
 
 function on_new_message_render() {
-  $("#input_to").focus(compose_render_email_neutral);
+  $("#input_to").focus(function() {
+    compose_render_pubkey_result($(this).val(), undefined);
+  });
   $('#input_to').keyup(search_contacts);
   $("#input_to").blur(compose_render_email_secure_or_insecure);
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));

@@ -20,15 +20,23 @@
           </td>
         </tr>
         <tr>
-          <td> <!-- body -->
+          <td class="text"> <!-- body -->
             <div contenteditable id="input_text"></div>
             <div id="fineuploader"></div>
           </td>
         </tr>
+        <tr id="challenge_question_container">
+          <td>
+            <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
+            <span style="display: inline-block; width: 33px;">&nbsp;</span>
+            <span class="start">"</span><input id="input_answer" placeholder="answer" /><span class="end">"</span>
+            <p>Only needed when they don't have CryptUP or other PGP app yet.</p>
+          </td>
+        </tr>
         <tr>
           <td class="bottom"> <!-- bottom -->
-            <div id="send_btn">
-              <i class="fa fa-unlock"></i>&nbsp;&nbsp;<span>Send</span>
+            <div id="send_btn" class="button_secure">
+              <i class="fa fa-lock"></i>&nbsp;&nbsp;<span tabindex="4">Send pgp encrypted</span>
             </div>
             <div class="icon attach" id="fineuploader_button" tabindex="-1"><div></div></div>
 						<div id="send_btn_note"></div>

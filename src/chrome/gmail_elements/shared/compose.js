@@ -1,67 +1,96 @@
 'use strict';
 
+var l = {
+  open_challenge_message_1: 'This message is encrypted with a question: "',
+  open_challenge_message_2: '". To open the message, go to https://cryptup.org/decrypt or enable CryptUP at https://chrome.google.com/webstore/detail/cryptup/bnjglocicdkmhmoohhfkfkbbkejdhdgc',
+};
+
+function format_challange_question(question) {
+  return [
+    l.open_challenge_message_1 + question + l.open_challenge_message_2,
+    '',
+    '-----BEGIN PGP QUESTION-----',
+    question,
+    '-----END PGP QUESTION-----',
+    '',
+    '',
+  ].join('\n');
+}
+
 function compose_render_pubkey_result(email, pubkey_data) {
-  if(pubkey_data !== null) {
-    $("#input_to").removeClass("email_plain");
+  $("#send_btn i").removeClass("fa-spinner");
+  $("#send_btn i").removeClass("fa-pulse");
+  $("#send_btn i").addClass("fa-lock");
+  $("#input_to").removeClass("email_plain");
+  $("#input_to").removeClass("email_secure");
+  $("#send_btn_note").text("");
+  $("#send_btn span").text("send pgp encrypted");
+  if(typeof pubkey_data === 'undefined') {
+    $("#challenge_question_container").css('display', 'none');
+  } else if(pubkey_data !== null) {
     $("#input_to").addClass("email_secure");
-    $("#send_btn i").removeClass("fa-unlock");
-    $("#send_btn i").removeClass("fa-spinner");
-    $("#send_btn i").removeClass("fa-pulse");
-    $("#send_btn i").addClass("fa-lock");
-    $("#send_btn").addClass("button_secure");
-    $("#send_btn span").text("Send PGP Encrypted");
-    $("#send_btn_note").text('');
+    $("#challenge_question_container").css('display', 'none');
   } else {
-    $("#input_to").removeClass("email_secure");
     $("#input_to").addClass("email_plain");
-    $("#send_btn i").removeClass("fa-lock");
-    $("#send_btn i").removeClass("fa-spinner");
-    $("#send_btn i").removeClass("fa-pulse");
-    $("#send_btn i").addClass("fa-unlock");
-    $("#send_btn").removeClass("button_secure");
-    $("#send_btn span").text("Send");
-    $("#send_btn_note").text('They don\'t have encryption set up. Invite them to get CryptUP');
+    $("#challenge_question_container").css('display', 'table-row');
   }
 }
 
-function encrypt(pubkey_texts, data, armor, callback) {
-  var pubkeys = [];
-  $.each(pubkey_texts, function(i, pubkey_text) {
-    pubkeys = pubkeys.concat(openpgp.key.readArmored(pubkey_text).keys); // read public key
-  });
-  var encrypt_options = {
-    // data: str_to_uint8(text),
+function encrypt(armored_pubkeys, challenge, data, armor, callback) {
+  var options = {
     data: data,
-    publicKeys: pubkeys,
     armor: armor,
   };
-  openpgp.encrypt(encrypt_options).then(callback, callback);
+  var used_challange = false;
+  if(armored_pubkeys && armored_pubkeys.length > 1) {
+    options.publicKeys = [];
+    $.each(armored_pubkeys, function(i, armored_pubkey) {
+      options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
+    });
+  } else if(challenge.question && challenge.answer) {
+    options.passwords = [challenge.answer];
+    used_challange = true;
+  } else {
+    alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or file a bug report if this happens repeatedly.');
+    throw "no-pubkeys-no-challenge";
+  }
+  openpgp.encrypt(options).then(function(encrypted) {
+    if(armor && typeof encrypted.data === 'string' && used_challange) {
+      encrypted.data = format_challange_question(challenge.question) + encrypted.data;
+    }
+    callback(encrypted);
+  }, function(error) {
+    console.log(error);
+    alert('Error encrypting message, please try again. If you see this repeatedly, please file a bug report.');
+    //todo: make the UI behave well on errors
+  });
 }
 
 function fetch_pubkeys(account_email, recipient, callback) {
-  var pubkeys = [];
-  if($('#send_btn.button_secure').length > 0) {
-    get_pubkey(recipient, function(pubkey_recipient) {
-      if(pubkey_recipient === null) {
-        alert('error: key is undefined although should exist');
-        return;
-      }
-      pubkeys.push(restricted_account_storage_get(account_email, 'master_public_key'));
-      pubkeys.push(pubkey_recipient);
-      callback(pubkeys);
-    });
-  } else {
-    callback(null);
-  }
+  get_pubkey(recipient, function(pubkey_recipient) {
+    if(pubkey_recipient === null) {
+      callback(null);
+    } else {
+      callback([restricted_account_storage_get(account_email, 'master_public_key'), pubkey_recipient]);
+    }
+  });
 }
 
 function compose_encrypt_and_send(account_email, to, subject, plaintext, send_email_callback) {
   var btn_text = $('#send_btn').text();
   $('#send_btn').html('Loading ' + get_spinner());
+  var challenge = {
+    question: $('#input_question').val(),
+    answer: $('#input_answer').val(),
+  };
   fetch_pubkeys(account_email, to, function(armored_pubkeys) {
     if(to == '') {
       $('#send_btn').text(btn_text);
       alert('Please add receiving email address.');
+      return;
+    } else if(!armored_pubkeys && (!challenge.question || !challenge.answer)) {
+      $('#send_btn').text(btn_text);
+      alert('Because they don\'t have CryptUP or other PGP app, a question and answer is needed for encryption. The answer will work as a password to open the message.');
       return;
     } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
       //todo - tailor for replying w/o subject
@@ -69,21 +98,16 @@ function compose_encrypt_and_send(account_email, to, subject, plaintext, send_em
         $('#send_btn').html('Encrypting ' + get_spinner());;
       }
       try {
-        encrypt_and_collect_attachments(armored_pubkeys, function(attachments) {
+        collect_and_encrypt_attachments(armored_pubkeys, challenge, function(attachments) {
           if((attachments || []).length) {
             var sending = 'Uploading attachments ' + get_spinner();
           } else {
             var sending = 'Sending ' + get_spinner();
           }
-          if(armored_pubkeys) {
-            encrypt(armored_pubkeys, plaintext, true, function(encrypted) {
-              $('#send_btn').html(sending);
-              send_email_callback(true, encrypted.data, attachments);
-            });
-          } else {
+          encrypt(armored_pubkeys, challenge, plaintext, true, function(encrypted) {
             $('#send_btn').html(sending);
-            send_email_callback(false, plaintext, attachments);
-          }
+            send_email_callback(encrypted.data, attachments);
+          });
         });
       } catch(err) {
         $('#send_btn').text(btn_text);
@@ -100,26 +124,14 @@ function compose_render_email_secure_or_insecure() {
   if(is_email_valid(email)) {
     $("#send_btn i").addClass("fa-spinner");
     $("#send_btn i").addClass("fa-pulse");
-    $("#send_btn span").text("");
     $("#send_btn_note").text("Checking email address");
+    $("#send_btn span").text("");
     get_pubkey(email, function(pubkey) {
       compose_render_pubkey_result(email, pubkey);
     });
   } else {
-    compose_render_email_neutral();
+    compose_render_pubkey_result(email, undefined);
   }
-}
-
-function compose_render_email_neutral() {
-  $("#input_to").removeClass("email_secure");
-  $("#input_to").removeClass("email_plain");
-  $("#send_btn").removeClass("button_secure");
-  $("#send_btn i").removeClass("fa-lock");
-  $("#send_btn i").removeClass("fa-spinner");
-  $("#send_btn i").removeClass("fa-pulse");
-  $("#send_btn i").addClass("fa-unlock");
-  $("#send_btn span").text("Send");
-  $("#send_btn_note").text('');
 }
 
 function convert_html_tags_to_newlines(text) {

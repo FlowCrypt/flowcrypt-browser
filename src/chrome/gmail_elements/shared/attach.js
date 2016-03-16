@@ -20,7 +20,7 @@ function initialize_attach_dialog() {
   });
 }
 
-function encrypt_and_collect_attachments(armored_pubkeys, callback) {
+function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
   var attachments = [];
 
   function add(attachment) {
@@ -30,29 +30,19 @@ function encrypt_and_collect_attachments(armored_pubkeys, callback) {
     }
   }
   if(!Object.keys(attached_files).length) {
-    callback(null, []);
+    callback(attachments);
   } else {
     $.each(attached_files, function(id, file) {
       var reader = new FileReader();
       reader.onload = function(data) {
-        var filename = file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_');
-        if(armored_pubkeys) {
-          encrypt(armored_pubkeys, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
-            add({
-              filename: filename + '.pgp',
-              type: file.type,
-              content: encrypted_file_content.message.packets.write(),
-              secure: true,
-            });
-          });
-        } else {
+        encrypt(armored_pubkeys, challenge, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
           add({
-            filename: filename,
+            filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
             type: file.type,
-            content: new Uint8Array(data.target.result),
-            secure: false,
+            content: encrypted_file_content.message.packets.write(),
+            secure: true,
           });
-        }
+        });
       };
       reader.readAsArrayBuffer(file);
     });
