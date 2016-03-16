@@ -107,3 +107,7 @@ function fetch_email_key_backups(account_email, callback) {
     }
   });
 }
+
+$('.back').click(function() {
+  window.location = 'index.htm';
+});

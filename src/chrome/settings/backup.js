@@ -2,7 +2,15 @@
 
 var url_params = get_url_params(['account_email', 'action']);
 
-// var recovered_keys = undefined;
+$('.email-address').text(url_params.account_email);
+
+if(url_params.action === 'setup') {
+  display_block('step_1_password');
+  $('h1').text('Choose a password');
+  $('.back').css('display', 'none');
+} else {
+  show_status();
+}
 
 function display_block(name) {
   var blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm'];
@@ -13,7 +21,7 @@ function display_block(name) {
 }
 
 function show_status() {
-  $('h1').text('Key Backups for ' + url_params.account_email);
+  $('h1').text('Key Backups');
   display_block('loading');
   fetch_email_key_backups(url_params.account_email, function(success, keys) {
     if(success) {
@@ -26,7 +34,7 @@ function show_status() {
         $('#step_0_status .container').html('<div class="button long green action_go_backup">BACK UP MY KEY</div>');
         $('.action_go_backup').click(function() {
           display_block('step_1_password');
-          $('h1').text('Set Backup Password for ' + url_params.account_email);
+          $('h1').text('Set Backup Password');
         });
       }
     } else {
@@ -35,13 +43,6 @@ function show_status() {
       $('.action_refresh').click(prevent(doubleclick(), show_status));
     }
   });
-}
-
-if(url_params.action === 'setup') {
-  display_block('step_1_password');
-  $('h1').text('Choose a password');
-} else {
-  show_status();
 }
 
 $('.action_password').click(function() {
@@ -123,3 +124,7 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
     });
   }
 }));
+
+$('.back').off().click(function() {
+  window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});

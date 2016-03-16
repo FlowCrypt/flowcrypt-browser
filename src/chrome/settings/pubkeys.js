@@ -8,7 +8,7 @@ var l = {
 
 var url_params = get_url_params(['account_email']);
 
-$('h1').text(url_params.account_email + ' Keyserver Status');
+$('.email-address').text(url_params.account_email);
 
 $('.summary').html('Loading from keyserver ' + get_spinner());
 
@@ -67,4 +67,8 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
   } else {
     $('.summary').html('Failed to load due to internet connection, please refresh the page.');
   }
+});
+
+$('.back').off().click(function() {
+  window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
 });

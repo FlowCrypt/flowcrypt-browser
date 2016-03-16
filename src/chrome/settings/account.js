@@ -2,7 +2,7 @@
 
 var url_params = get_url_params(['account_email']);
 
-$('h1').text('Settings for ' + url_params['account_email']);
+$('.email-address').text(url_params.account_email);
 
 $('.action_show_private_key').click(function() {
   alert('Key will only show for 10 seconds. Do not share this with anyone.');

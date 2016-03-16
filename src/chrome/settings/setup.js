@@ -4,6 +4,8 @@ var url_params = get_url_params(['account_email']);
 
 // todo: pull full_name from google
 
+$('.email-address').text(url_params.account_email); 
+
 var recovered_keys = undefined;
 
 // set account addresses at least once
