@@ -4,7 +4,9 @@ var url_params = get_url_params(['account_email']);
 
 // todo: pull full_name from google
 
-$('.email-address').text(url_params.account_email); 
+$('.email-address').text(url_params.account_email);
+
+$('.back').css('visibility', 'hidden');
 
 var recovered_keys = undefined;
 
@@ -39,10 +41,15 @@ function display_block(name) {
     $('#' + block).css('display', 'none');
   });
   $('#' + name).css('display', 'block');
+  if(name === 'step_2_manual') {
+    $('.back').css('visibility', 'visible');
+  } else {
+    $('.back').css('visibility', 'hidden');
+  }
 }
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
-  $('h1').text('Set up ' + url_params['account_email']);
+  $('h1').text('Set Up CryptUP');
   account_storage_get(url_params['account_email'], ['setup_done', 'key_backup_prompt', 'setup_simple'], function(storage) {
     if(storage['setup_done'] === true) {
       setup_dialog_set_done(storage['key_backup_prompt'] !== false, storage.setup_simple);
@@ -141,18 +148,18 @@ function create_save_submit_key_pair(account_email, email_name, passphrase) {
 
 $('.action_simple_setup').click(function() {
   display_block('step_2_easy_generating');
-  $('h1').text('Please wait, setting up CryptUp for ' + url_params['account_email']);
+  $('h1').text('Please wait, setting up CryptUP');
   create_save_submit_key_pair(url_params['account_email'], url_params['full_name'], null); // todo - get name from google api. full_name might be undefined
 });
 
 $('.action_manual_setup').click(function() {
   display_block('step_2_manual');
-  $('h1').text('Manual setup for ' + url_params['account_email']);
+  $('h1').text('Manual Setup');
 });
 
-$('#step_2_manual a.back').click(function() {
+$('.back').off().click(function() {
   display_block('step_1_easy_or_manual');
-  $('h1').text('Set up ' + url_params['account_email']);
+  $('h1').text('Set Up');
 });
 
 $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), function(self) {
