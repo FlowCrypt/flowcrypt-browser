@@ -48,7 +48,7 @@ function encrypt(armored_pubkeys, challenge, data, armor, callback) {
       options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
     });
   } else if(challenge.question && challenge.answer) {
-    options.passwords = [challenge.answer];
+    options.passwords = [challenge_answer_hash(challenge.answer)];
     used_challange = true;
   } else {
     alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or file a bug report if this happens repeatedly.');
@@ -87,6 +87,10 @@ function compose_encrypt_and_send(account_email, to, subject, plaintext, send_em
     if(to == '') {
       $('#send_btn').text(btn_text);
       alert('Please add receiving email address.');
+      return;
+    } else if(has_attachment() && !armored_pubkeys) {
+      $('#send_btn').text(btn_text);
+      alert('Sending encrypted attachments is only possible to contacts with a PGP client, such as CryptUP. Get them signed up to send encrypted files.');
       return;
     } else if(!armored_pubkeys && (!challenge.question || !challenge.answer)) {
       $('#send_btn').text(btn_text);

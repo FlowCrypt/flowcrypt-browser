@@ -99,7 +99,11 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
       message: openpgp.message.readArmored(url_params.message),
       format: 'utf8',
     }
-    options[option_key] = option_value;
+    if(option_key !== 'password') {
+      options[option_key] = option_value;
+    } else {
+      options[option_key] = challenge_answer_hash(option_value);
+    }
     openpgp.decrypt(options).then(function(plaintext) {
       render_content(format_plaintext(plaintext.data));
     }).catch(function(error) {
@@ -119,11 +123,14 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
 
 function render_password_prompt() {
   render_content('<p>' + l.question_decryt_prompt + '"' + url_params.question + '" </p><p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>' + armored_message_as_html());
-  $('.button.decrypt').click(prevent(doubleclick(), function() {
-    decrypt_and_render('password', $('#answer').val(), function() {
-      alert('Incorrect answer, please try again');
-      render_password_prompt();
-    });
+  $('.button.decrypt').click(prevent(doubleclick(), function(self) {
+    $(self).html('Opening');
+    setTimeout(function() {
+      decrypt_and_render('password', $('#answer').val(), function() {
+        alert('Incorrect answer, please try again');
+        render_password_prompt();
+      });
+    }, 50);
   }));
 }
 

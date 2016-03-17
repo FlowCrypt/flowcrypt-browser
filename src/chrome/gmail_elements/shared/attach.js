@@ -20,6 +20,10 @@ function initialize_attach_dialog() {
   });
 }
 
+function has_attachment() {
+  return Object.keys(attached_files).length > 0;
+}
+
 function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
   var attachments = [];
 

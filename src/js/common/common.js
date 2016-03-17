@@ -152,7 +152,7 @@ function check_pubkeys_keyserver(account_email, callback) {
 }
 
 RegExp.escape = function(s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 /* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */
 
@@ -199,6 +199,8 @@ function chrome_message_listen(handlers) {
   });
 }
 
+/******************************************* STRINGS **********************************/
+
 function base64url_encode(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -216,6 +218,17 @@ function uint8_to_str(u8a) {
   return c.join("");
 }
 
+function bin_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
+  var i, l, o = '',
+    n;
+  s += '';
+  for(i = 0, l = s.length; i < l; i++) {
+    n = s.charCodeAt(i).toString(16);
+    o += n.length < 2 ? '0' + n : n;
+  }
+  return o;
+}
+
 function str_to_uint8(raw) {
   var rawLength = raw.length;
   var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
@@ -223,6 +236,21 @@ function str_to_uint8(raw) {
     uint8[i] = raw.charCodeAt(i);
   }
   return uint8;
+}
+
+function sha256(string) {
+  return bin_to_hex(uint8_to_str(openpgp.crypto.hash.sha256(string)));
+}
+
+function sha256_loop(string, times) {
+  for(var i = 0; i < (times || 100000); i++) {
+    string = sha256(string);
+  }
+  return string;
+}
+
+function challenge_answer_hash(answer) {
+  return sha256_loop(answer);
 }
 
 
