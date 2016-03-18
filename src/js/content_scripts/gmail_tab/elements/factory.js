@@ -11,13 +11,14 @@ function pgp_attachment_iframe(account_email, attachment_meta, container_classes
   return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe src="' + src + '"></iframe></span>';
 }
 
-function pgp_block_iframe(pgp_block_text, question, account_email, gmail_tab_id) {
+function pgp_block_iframe(pgp_block_text, question, account_email, message_id, gmail_tab_id) {
   var id = random_string();
   var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
     '?frame_id=frame_' + id +
     '&question=' + encodeURIComponent(question) +
     '&message=' + encodeURIComponent(pgp_block_text) +
     '&account_email=' + encodeURIComponent(account_email) +
+    '&message_id=' + encodeURIComponent(message_id) +
     '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
   return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
 }

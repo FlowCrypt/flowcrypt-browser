@@ -1,20 +1,5 @@
 'use strict';
 
-function set_up_require() {
-  require.config({
-    baseUrl: '../../../lib',
-    paths: {
-      'emailjs-mime-builder': './emailjs-mime-builder/src/emailjs-mime-builder',
-      'emailjs-addressparser': './emailjs-mime-builder/node_modules/emailjs-addressparser/src/emailjs-addressparser',
-      'emailjs-mime-types': './emailjs-mime-builder/node_modules/emailjs-mime-types/src/emailjs-mime-types',
-      'emailjs-mime-codec': './emailjs-mime-builder/node_modules/emailjs-mime-codec/src/emailjs-mime-codec',
-      'punycode': './emailjs-mime-builder/node_modules/punycode/punycode',
-      'emailjs-stringencoding': './emailjs-mime-builder/node_modules/emailjs-stringencoding/src/emailjs-stringencoding',
-      'sinon': './emailjs-mime-builder/node_modules/sinon/pkg/sinon',
-    }
-  });
-}
-
 function gmail_api_call(account_email, method, resource, parameters, callback, fail_on_auth) {
   account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
     if(method === 'POST') {

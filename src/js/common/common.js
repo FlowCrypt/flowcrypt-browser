@@ -12,6 +12,26 @@ function get_url_params(expected_keys, string) {
   return url_data;
 }
 
+function as_html_formatted_string(obj) {
+  return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
+}
+
+function set_up_require() {
+  require.config({
+    baseUrl: '../../../lib',
+    paths: {
+      'emailjs-mime-builder': './emailjs-mime-builder/src/emailjs-mime-builder',
+      'emailjs-mime-parser': './emailjs-mime-parser/src/emailjs-mime-parser',
+      'emailjs-addressparser': './emailjs-mime-builder/node_modules/emailjs-addressparser/src/emailjs-addressparser',
+      'emailjs-mime-types': './emailjs-mime-builder/node_modules/emailjs-mime-types/src/emailjs-mime-types',
+      'emailjs-mime-codec': './emailjs-mime-builder/node_modules/emailjs-mime-codec/src/emailjs-mime-codec',
+      'punycode': './emailjs-mime-builder/node_modules/punycode/punycode',
+      'emailjs-stringencoding': './emailjs-mime-builder/node_modules/emailjs-stringencoding/src/emailjs-stringencoding',
+      'sinon': './emailjs-mime-builder/node_modules/sinon/pkg/sinon',
+    }
+  });
+}
+
 function open_settings_page(page) {
   window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm')), 'cryptup');
 }

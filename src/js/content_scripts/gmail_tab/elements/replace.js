@@ -11,11 +11,15 @@ function replace_pgp_elements(account_email, gmail_tab_id) {
 
 function replace_armored_pgp_messages(account_email, gmail_tab_id) {
   var conversation_has_pgp_message = false;
-  $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')").each(function() {
+  var selectors = [
+    "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')",
+    "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('[Message clipped]'):contains('View entire message')"
+  ];
+  $(selectors.join(', ')).each(function() {
     var message_text = $(this).html();
     var text_with_iframes = message_text;
-    var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/gm;
-    var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
+    var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/gm;
+    var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/m;
     var re_first_pgp_question = /<br>\r?\n-----BEGIN PGP QUESTION-----<br>\r?\n(.+)<br>\r?\n-----END PGP QUESTION-----<br>\r?\n/m;
     $(this).addClass('has_known_pgp_blocks');
     var matches;
@@ -29,12 +33,33 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
         text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question_match[1]) + '.+'), '');
         text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question) + '.+'), '');
       }
-      text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, gmail_tab_id));
+      if(valid_pgp_block.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
+        text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', gmail_tab_id));
+      } else { // clipped pgp block
+        var message_id = parse_message_id_from('message', this);
+        text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe('', question, account_email, message_id, gmail_tab_id));
+      }
     }
     $(this).html(text_with_iframes);
     conversation_has_pgp_message = true;
   });
   return conversation_has_pgp_message;
+}
+
+function parse_message_id_from(element_type, my_element) {
+  var selectors = {
+    'message': $(my_element).parents('div.adP.adO'),
+    'attachment': $(my_element).parent().siblings('div.adP.adO')
+  };
+  var message_id = null;
+  $.each(selectors[element_type].get(0).classList, function(i, message_class) {
+    var match = message_class.match(/^m([0-9a-f]{16})$/);
+    if(match) {
+      message_id = match[1];
+      return false;
+    }
+  });
+  return message_id;
 }
 
 function replace_pgp_attachments(account_email) {
@@ -43,14 +68,7 @@ function replace_pgp_attachments(account_email) {
     if(new_pgp_messages.length) {
       new_pgp_messages.addClass('evaluated');
       var attachment_container_classes = new_pgp_messages.get(0).classList;
-      var message_id = null;
-      $.each($(this).parent().siblings('div.adP.adO').get(0).classList, function(i, message_class) {
-        var match = message_class.match(/^m([0-9a-f]{16})$/);
-        if(match) {
-          message_id = match[1];
-          return false;
-        }
-      });
+      var message_id = parse_message_id_from('attachment', this);
       if(message_id) {
         chrome_message_send(null, 'list_pgp_attachments', {
           account_email: account_email,
