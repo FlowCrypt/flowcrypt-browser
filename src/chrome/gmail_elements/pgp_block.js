@@ -24,7 +24,7 @@ function format_plaintext(text) {
   if(/<((br)|(div)|p) ?\/?>/.test(text)) {
     return text;
   }
-  return text.replace(/\n/g, '<br>\n');
+  return (text || '').replace(/\n/g, '<br>\n');
 }
 
 function send_resize_message() {
@@ -175,8 +175,12 @@ function decide_decrypted_content_formatting_and_render(decrypted_content) {
       if(success) {
         if(result.text) {
           render_content(format_plaintext(result.text));
-        } else {
+        } else if(result.html) {
           render_content(format_plaintext(result.html));
+        } else {
+          // this will probably show ugly MIME text to user, which would later be reported by them as a bug
+          // with each report we can extend the capabilities to recognize content of MIME messages
+          render_content(format_plaintext(decrypted_content));
         }
         if(result.attachments.length) {
           render_inner_attachments(result.attachments);
@@ -204,7 +208,7 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
       decide_decrypted_content_formatting_and_render(plaintext.data);
     }).catch(function(error) {
       if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && option_key === 'privateKey') { // wrong private key
-        handle_private_key_mismatch(url_params.account_email, message);
+        handle_private_key_mismatch(url_params.account_email, options.message);
       } else if(String(error) === 'Error: Error decrypting message: Invalid enum value.' && option_key === 'password') { // wrong password
         wrong_password_callback();
       } else {
@@ -212,7 +216,6 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
       }
     });
   } catch(err) {
-    console.log('ee');
     render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + err.message + '</em>');
   }
 }
@@ -305,7 +308,7 @@ function extract_armored_message_using_gmail_api(then) {
 
 function is_mime_message(message) {
   var m = message.toLowerCase();
-  return m.indexOf('content-type:') !== -1 && m.indexOf('boundary=') !== -1 && m.indexOf('content-transfer-encoding:') !== -1;
+  return m.indexOf('content-type:') === 0 && m.indexOf('boundary=') !== -1 && m.indexOf('content-transfer-encoding:') !== -1;
 }
 
 if(url_params.message) { // ascii armored message supplied
