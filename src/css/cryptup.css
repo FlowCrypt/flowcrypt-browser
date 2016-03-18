@@ -65,7 +65,13 @@ body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-ali
   border-bottom: 1px solid #dadada; }
 
 body#settings > div#footer { width: 99%; position: fixed; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
-body#settings > div#footer > div { width: 95%; display: inline-block; padding: 30px 0; text-align: right;     position: fixed; right: 20px; bottom: -10px; }
+body#settings > div#footer > div { width: 94%; height: 50px; margin-left: 4%; }
+body#settings > div#footer > div > div.left { position: relative; float: left; }
+body#settings > div#footer > div > div.right { position: relative; float: right; }
+body#settings > div#footer > div > div.feedback { font-size: 18px; padding-top: 10px; }
+body#settings > div#footer > div > div.feedback i { padding-right: 40px; }
+body#settings > div#footer > div > div.feedback b { padding-left: 40px; }
+
 
 
 /* body */
