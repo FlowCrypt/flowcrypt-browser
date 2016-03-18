@@ -248,33 +248,53 @@ function pgp_block_init() {
   }
 }
 
-function pull_message_from_gmail_api(then) {
+function extract_armored_message_from_text(text) {
+  var matches = null;
+  var re_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
+  if((matches = re_pgp_block.exec(text)) !== null) {
+    return matches[0];
+  }
+}
+
+function extract_armored_message_using_gmail_api(then) {
   gmail_api_message_get(url_params.account_email, url_params.message_id, 'full', function(m_success, gmail_message_object) {
     if(m_success) {
-      // todo - handle encrypted message in body itself instead of as attachment
-      var attachments = gmail_api_find_attachments(gmail_message_object);
-      var found = false;
-      $.each(attachments, function(i, attachment_meta) {
-        if(attachment_meta.name === 'encrypted.asc') {
+      var attachments = [];
+      if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
+        var armored_message_text = base64url_decode(gmail_message_object.payload.body.data);
+        var armored_message = extract_armored_message_from_text(armored_message_text);
+        if(armored_message) {
+          then(armored_message);
           found = true;
-          gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(a_success, attachment) {
-            if(a_success) {
-              var armored_message = base64url_decode(attachment[0].data);
-              var matches = null;
-              var re_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
-              if((matches = re_pgp_block.exec(armored_message)) !== null) {
-                then(matches[0]);
-              } else {
-                render_error(l.cant_open + l.dont_know_how_open, armored_message);
-              }
-            } else {
-              render_error(l.connection_error);
-            }
-          });
-          return false;
+        } else {
+          render_error(l.cant_open + l.dont_know_how_open, armored_message_text);
         }
-      });
-      if(!found) {
+        return;
+      } else if((attachments = gmail_api_find_attachments(gmail_message_object)).length) {
+        var found = false;
+        $.each(attachments, function(i, attachment_meta) {
+          if(attachment_meta.name === 'encrypted.asc') {
+            found = true;
+            gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(a_success, attachment) {
+              if(a_success) {
+                var armored_message_text = base64url_decode(attachment[0].data);
+                var armored_message = extract_armored_message_from_text(armored_message_text);
+                if(armored_message) {
+                  then(armored_message);
+                } else {
+                  render_error(l.cant_open + l.dont_know_how_open, armored_message_text);
+                }
+              } else {
+                render_error(l.connection_error);
+              }
+            });
+            return false;
+          }
+        });
+        if(!found) {
+          render_error(l.cant_open + l.dont_know_how_open, as_html_formatted_string(gmail_message_object.payload));
+        }
+      } else {
         render_error(l.cant_open + l.dont_know_how_open, as_html_formatted_string(gmail_message_object.payload));
       }
     } else {
@@ -288,13 +308,12 @@ function is_mime_message(message) {
   return m.indexOf('content-type:') !== -1 && m.indexOf('boundary=') !== -1 && m.indexOf('content-transfer-encoding:') !== -1;
 }
 
-
 if(url_params.message) { // ascii armored message supplied
   $('#pgp_block').text('Decrypting...');
   pgp_block_init();
 } else { // need to fetch the message from gmail api
   $('#pgp_block').text('Retrieving message...');
-  pull_message_from_gmail_api(function(message_raw) {
+  extract_armored_message_using_gmail_api(function(message_raw) {
     $('#pgp_block').text('Decrypting...');
     url_params.message = message_raw;
     pgp_block_init();
