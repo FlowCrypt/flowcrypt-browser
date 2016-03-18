@@ -5,19 +5,6 @@ var url_params = get_url_params(['account_email', 'message_id', 'attachment_id',
 $('#type').text(url_params.type);
 $('#name').text(url_params.name);
 
-function download_file(filename, type, data) {
-  var blob = new Blob([data], {
-    type: type
-  });
-  var a = document.createElement('a');
-  var url = window.URL.createObjectURL(blob);
-  a.style.display = 'none';
-  a.href = url;
-  a.download = filename;
-  a.click();
-  window.URL.revokeObjectURL(url);
-}
-
 $('#download').click(prevent(doubleclick(), function(self) {
   var original_content = $(self).html();
   $(self).html(get_spinner())

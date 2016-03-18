@@ -2,6 +2,8 @@
 
 var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id']);
 
+var ready_attachmments = [];
+
 var l = {
   cant_open: 'Could not open this message with CryptUP.\n\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
@@ -152,7 +154,16 @@ function parse_mime_message(mime_message, callback) {
 }
 
 function render_inner_attachments(attachments) {
-  // todo
+  $('#pgp_block').append('<div id="attachments"></div>');
+  ready_attachmments = attachments;
+  $.each(ready_attachmments, function(i, attachment) {
+    $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
+  });
+  send_resize_message();
+  $('div.attachment').click(prevent(doubleclick(), function(self) {
+    var attachment = ready_attachmments[$(self).attr('index')];
+    download_file(attachment.name, attachment.type, str_to_uint8(attachment.data));
+  }));
 }
 
 function decide_decrypted_content_formatting_and_render(decrypted_content) {

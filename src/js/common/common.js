@@ -16,6 +16,31 @@ function as_html_formatted_string(obj) {
   return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
 }
 
+function download_file(filename, type, data) {
+  var blob = new Blob([data], {
+    type: type
+  });
+  var a = document.createElement('a');
+  var url = window.URL.createObjectURL(blob);
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+function number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
+  nStr += '';
+  var x = nStr.split('.');
+  var x1 = x[0];
+  var x2 = x.length > 1 ? '.' + x[1] : '';
+  var rgx = /(\d+)(\d{3})/;
+  while(rgx.test(x1)) {
+    x1 = x1.replace(rgx, '$1' + ',' + '$2');
+  }
+  return x1 + x2;
+}
+
 function set_up_require() {
   require.config({
     baseUrl: '../../../lib',
