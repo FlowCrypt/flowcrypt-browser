@@ -64,14 +64,16 @@ body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
 
-body#settings > div#footer { width: 99%; position: fixed; bottom: 0px; padding: 0px; margin: 0px; text-align: center;}
-body#settings > div#footer > div { width: 94%; height: 50px; margin-left: 4%; }
-body#settings > div#footer > div > div.left { position: relative; float: left; }
-body#settings > div#footer > div > div.right { position: relative; float: right; }
-body#settings > div#footer > div > div.feedback { font-size: 18px; padding-top: 10px; }
-body#settings > div#footer > div > div.feedback i { padding-right: 40px; }
-body#settings > div#footer > div > div.feedback b { padding-left: 40px; }
+body#settings > div#content > div#changelog { width: 600px; margin: 0 auto; text-align: left; font-size: 16px; }
+body#settings > div#content > div#changelog b { display: inline-block; margin-top: 20px; }
 
+body#settings > div#footer { width: 99%; position: fixed; bottom: 20px; padding: 0px; margin: 0px; text-align: center; font-size: 18px; color: #666; }
+body#settings > div#footer > div.left { position: relative; float: left; margin-left: 40px; }
+body#settings > div#footer > div.right { position: relative; float: right; margin-right: 40px; }
+body#settings > div#footer > div.feedback { padding-top: 10px; }
+body#settings > div#footer > div.feedback i { padding-right: 40px; }
+body#settings > div#footer > div.feedback b { padding-left: 40px; }
+body#settings > div#footer a { color: #666; }
 
 
 /* body */

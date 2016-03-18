@@ -1,0 +1,23 @@
+<b>version 1.1.0 on Mar 17, 2016</b>
+encrypt to non-PGP contacts with a challenge question
+
+<b>version 1.0.0 on Mar 14, 2016</b>
+binary attachment support (such as images)
+unreadable message / wrong pubkey diagnosis
+bugfixes
+
+<b>version 0.9.0 on Mar 9, 2016</b>
+basic attachment support
+
+<b>version 0.8.0 on Mar 3, 2016</b>
+setup in a separate tab
+register secondary emails on keyserver
+replying improved
+new key backup on setup
+selecting FROM on compose
+
+<b>version 0.7.0 on Feb 29, 2016</b>
+search in pgp contacts on compose
+separate prv key per account
+improved settings
+bugfixes

@@ -2,8 +2,11 @@
 
 var recovery_email_subjects = ['CryptUP Account Backup'];
 
-var v = 'v' + chrome.runtime.getManifest().version;
-$('body').append('<div id="footer"><div><div class="left feedback"><i class="fa fa-comment"></i>Any feedback welcome!<b>tom@cryptup.org</b></div><div class="right"><img src="/img/cryptup-logo-146-30-dark.png" /><div>' + v + '<br><br></div></div></div></div>');
+$.get('footer.htm', null, function(data) {
+  $('body').append(data);
+  $('span#v').text(chrome.runtime.getManifest().version);
+});
+
 
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
