@@ -32,7 +32,7 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
         text_with_iframes = text_with_iframes.replace(re_first_pgp_question, '');
         text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question_match[1]) + '.+'), '');
         text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question) + '.+'), '');
-        text_with_iframes = text_with_iframes.replace('This message is encrypted\. Visit the following link to open it\:', '');
+        text_with_iframes = text_with_iframes.replace(/This message is encrypted\. Visit the following link to open it\:\<br ?\/?>\r?\n?.+\<br ?\/?>\r?\n?.+/gm, '');
       }
       if(valid_pgp_block.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
         text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', gmail_tab_id));
