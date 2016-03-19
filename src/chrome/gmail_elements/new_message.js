@@ -22,6 +22,8 @@ function send_btn_click() {
       if(success) {
         new_message_close();
       } else {
+        console.log(success);
+        console.log(response);
         alert('error sending message, check log');
       }
     });

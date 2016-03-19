@@ -7,7 +7,7 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
     } else {
       var data = parameters;
     }
-    if(typeof auth.google_token_access !== 'undefined') { // have a valid gmail_api oauth token
+    if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
       $.ajax({
         url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
         method: method,
