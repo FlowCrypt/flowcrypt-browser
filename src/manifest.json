@@ -36,7 +36,7 @@
     "scripts": [
       "/lib/jquery.min.js",
       "/lib/openpgp.js",
-      "/lib/emailjs-mime-builder/node_modules/requirejs/require.js",
+      "/lib/require.js",
       "/js/common/storage.js",
       "/js/common/gmail_api.js",
       "/js/common/common.js",

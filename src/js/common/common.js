@@ -43,16 +43,16 @@ function number_format(nStr) { // http://stackoverflow.com/questions/3753483/jav
 
 function set_up_require() {
   require.config({
-    baseUrl: '../../../lib',
+    baseUrl: '/lib',
     paths: {
-      'emailjs-mime-builder': './emailjs-mime-builder/src/emailjs-mime-builder',
-      'emailjs-mime-parser': './emailjs-mime-parser/src/emailjs-mime-parser',
-      'emailjs-addressparser': './emailjs-mime-builder/node_modules/emailjs-addressparser/src/emailjs-addressparser',
-      'emailjs-mime-types': './emailjs-mime-builder/node_modules/emailjs-mime-types/src/emailjs-mime-types',
-      'emailjs-mime-codec': './emailjs-mime-builder/node_modules/emailjs-mime-codec/src/emailjs-mime-codec',
-      'punycode': './emailjs-mime-builder/node_modules/punycode/punycode',
-      'emailjs-stringencoding': './emailjs-mime-builder/node_modules/emailjs-stringencoding/src/emailjs-stringencoding',
-      'sinon': './emailjs-mime-builder/node_modules/sinon/pkg/sinon',
+      'emailjs-mime-builder': './emailjs/emailjs-mime-builder',
+      'emailjs-mime-parser': './emailjs/emailjs-mime-parser',
+      'emailjs-addressparser': './emailjs/emailjs-addressparser',
+      'emailjs-mime-types': './emailjs/emailjs-mime-types',
+      'emailjs-mime-codec': './emailjs/emailjs-mime-codec',
+      'punycode': './emailjs/punycode',
+      'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
+      'sinon': './emailjs/sinon',
     }
   });
 }
