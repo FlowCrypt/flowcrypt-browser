@@ -83,6 +83,10 @@ function send_btn_click() {
   });
 }
 
+function resize_input_text_width() {
+  $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
+}
+
 function reply_message_on_render() {
   $("#input_to").blur(compose_render_email_secure_or_insecure);
   $("#input_to").focus(function() {
@@ -93,4 +97,8 @@ function reply_message_on_render() {
   $("#input_to").val(url_params['to']);
   document.getElementById("input_text").focus();
   initialize_attach_dialog();
+  setTimeout(function() {
+    $(window).resize(prevent(spree(), resize_input_text_width));
+  }, 1000);
+  resize_input_text_width();
 }
