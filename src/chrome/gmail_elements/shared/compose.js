@@ -1,19 +1,19 @@
 'use strict';
 
 var l = {
-  open_challenge_message_1: 'This message is encrypted with a question: "',
-  open_challenge_message_2: '". To open the message, go to https://cryptup.org/decrypt or enable CryptUP at https://chrome.google.com/webstore/detail/cryptup/bnjglocicdkmhmoohhfkfkbbkejdhdgc',
+  open_challenge_message: 'This message is encrypted. Visit the following link to open it:',
 };
 
-function format_challange_question(question) {
+function format_challenge_question_email(question, message) {
   return [
-    l.open_challenge_message_1 + question + l.open_challenge_message_2,
+    l.open_challenge_message,
+    'https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(message),
     '',
     '-----BEGIN PGP QUESTION-----',
     question,
     '-----END PGP QUESTION-----',
     '',
-    '',
+    message,
   ].join('\n');
 }
 
@@ -56,7 +56,7 @@ function encrypt(armored_pubkeys, challenge, data, armor, callback) {
   }
   openpgp.encrypt(options).then(function(encrypted) {
     if(armor && typeof encrypted.data === 'string' && used_challange) {
-      encrypted.data = format_challange_question(challenge.question) + encrypted.data;
+      encrypted.data = format_challenge_question_email(challenge.question, encrypted.data);
     }
     callback(encrypted);
   }, function(error) {
