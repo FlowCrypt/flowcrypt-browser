@@ -308,7 +308,10 @@ function extract_armored_message_using_gmail_api(then) {
 
 function is_mime_message(message) {
   var m = message.toLowerCase();
-  return m.indexOf('content-type:') === 0 && m.indexOf('boundary=') !== -1 && m.indexOf('content-transfer-encoding:') !== -1;
+  var has_content_type = m.match(/content-type: +[a-z\-\/]+/) !== null;
+  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null
+  var starts_with_known_header = m.indexOf('content-type:') === 0 || m.indexOf('content-transfer-encoding:') === 0
+  return has_content_type && has_content_transfer_encoding && starts_with_known_header;
 }
 
 if(url_params.message) { // ascii armored message supplied
