@@ -53,6 +53,7 @@ function set_up_require() {
       'punycode': './emailjs/punycode',
       'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
       'sinon': './emailjs/sinon',
+      'quoted-printable': './emailjs/quoted-printable',
     }
   });
 }
@@ -263,6 +264,61 @@ function uint8_to_str(u8a) {
   return c.join("");
 }
 
+function str_to_uint8(raw) {
+  var rawLength = raw.length;
+  var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
+  for(var i = 0; i < rawLength; i++) {
+    uint8[i] = raw.charCodeAt(i);
+  }
+  return uint8;
+}
+
+function uint8_as_utf(a) { //tom
+  var length = a.length;
+  var bytes_left_in_char = 0;
+  var utf8_string = '';
+  var binary_char = '';
+  for(var i = 0; i < length; i++) {
+    if(a[i] < 128) {
+      if(bytes_left_in_char) {
+        console.log('uint8_to_utf_str: utf-8 continuation byte missing, multi-byte character cut short and omitted');
+      }
+      bytes_left_in_char = 0;
+      binary_char = '';
+      utf8_string += String.fromCharCode(a[i]);
+    } else {
+      if(!bytes_left_in_char) { // beginning of new multi-byte character
+        if(a[i] >= 192 && a[i] < 224) { //110x xxxx
+          bytes_left_in_char = 1;
+          binary_char = a[i].toString(2).substr(3);
+        } else if(a[i] >= 224 && a[i] < 240) { //1110 xxxx
+          bytes_left_in_char = 2;
+          binary_char = a[i].toString(2).substr(4);
+        } else if(a[i] >= 240 && a[i] < 248) { //1111 0xxx
+          bytes_left_in_char = 3;
+          binary_char = a[i].toString(2).substr(5);
+        } else if(a[i] >= 248 && a[i] < 252) { //1111 10xx
+          bytes_left_in_char = 4;
+          binary_char = a[i].toString(2).substr(6);
+        } else if(a[i] >= 252 && a[i] < 254) { //1111 110x
+          bytes_left_in_char = 5;
+          binary_char = a[i].toString(2).substr(7);
+        } else {
+          console.log('uint8_to_utf_str: invalid utf-8 character beginning byte: ' + a[i]);
+        }
+      } else { // continuation of a multi-byte character
+        binary_char += a[i].toString(2).substr(2);
+        bytes_left_in_char--;
+      }
+      if(binary_char && !bytes_left_in_char) {
+        utf8_string += String.fromCharCode(parseInt(binary_char, 2));
+        binary_char = '';
+      }
+    }
+  }
+  return utf8_string;
+}
+
 function bin_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
   var i, l, o = '',
     n;
@@ -272,15 +328,6 @@ function bin_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonnev
     o += n.length < 2 ? '0' + n : n;
   }
   return o;
-}
-
-function str_to_uint8(raw) {
-  var rawLength = raw.length;
-  var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
-  for(var i = 0; i < rawLength; i++) {
-    uint8[i] = raw.charCodeAt(i);
-  }
-  return uint8;
 }
 
 function sha256(string) {
@@ -297,7 +344,6 @@ function sha256_loop(string, times) {
 function challenge_answer_hash(answer) {
   return sha256_loop(answer);
 }
-
 
 /* -------------------- DOUBLE CLICK/PARALLEL PROTECTION FOR JQUERY ----------------------------------- */
 

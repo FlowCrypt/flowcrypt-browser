@@ -24,7 +24,7 @@ function format_plaintext(text) {
   if(/<((br)|(div)|p) ?\/?>/.test(text)) {
     return text;
   }
-  return (text || '').replace(/\n/g, '<br>\n');
+  return(text || '').replace(/\n/g, '<br>\n');
 }
 
 function send_resize_message() {
@@ -118,38 +118,42 @@ function parse_mime_message(mime_message, callback) {
     attachments: []
   };
   require(['emailjs-mime-parser'], function(MimeParser) {
-    //todo - handle mime formatting errors and such, with callback(false, 'XX went wrong');
-    var parser = new MimeParser();
-    var parsed = {};
-    parser.onbody = function(node, chunk) {
-      var path = String(node.path.join("."));
-      if(typeof parsed[path] === 'undefined') {
-        parsed[path] = node;
-      }
-    };
-    parser.onend = function() {
-      $.each(parsed, function(path, node) {
-        var node_content = uint8_to_str(node.content);
-        if(mime_node_type(node) === 'application/pgp-signature') {
-          mime_message_contents.signature = node_content;
-        } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
-          mime_message_contents.html = node_content;
-        } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
-          // todo - encoding, some UTF-8 chars get garbled up
-          mime_message_contents.text = node_content;
-        } else {
-          mime_message_contents.attachments.push({
-            name: mime_node_filename(node),
-            size: node_content.length,
-            type: mime_node_type(node),
-            data: node_content,
-          });
+    try {
+      //todo - handle mime formatting errors and such, with callback(false, 'XX went wrong');
+      var parser = new MimeParser();
+      var parsed = {};
+      parser.onbody = function(node, chunk) {
+        var path = String(node.path.join("."));
+        if(typeof parsed[path] === 'undefined') {
+          parsed[path] = node;
         }
-      });
-      callback(true, mime_message_contents);
+      };
+      parser.onend = function() {
+        $.each(parsed, function(path, node) {
+          if(mime_node_type(node) === 'application/pgp-signature') {
+            mime_message_contents.signature = uint8_as_utf(node.content);
+          } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
+            mime_message_contents.html = uint8_as_utf(node.content);
+          } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
+            mime_message_contents.text = uint8_as_utf(node.content);
+          } else {
+            var node_content = uint8_to_str(node.content);
+            mime_message_contents.attachments.push({
+              name: mime_node_filename(node),
+              size: node_content.length,
+              type: mime_node_type(node),
+              data: node_content,
+            });
+          }
+        });
+        callback(true, mime_message_contents);
+      }
+      parser.write(mime_message);
+      parser.end();
+    } catch(e) {
+      console.log(e + JSON.stringify(e));
+      throw e;
     }
-    parser.write(mime_message);
-    parser.end();
   });
 }
 
