@@ -24,7 +24,11 @@ function format_plaintext(text) {
   if(/<((br)|(div)|p) ?\/?>/.test(text)) {
     return text;
   }
-  return(text || '').replace(/\n/g, '<br>\n');
+  text = (text || '').replace(/\n/g, '<br>\n');
+  if(url_params.message.match(/^Charset: iso-8859-2/m) !== null) {
+    return iso88592.decode(text);
+  }
+  return text;
 }
 
 function send_resize_message() {
