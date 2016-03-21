@@ -119,39 +119,61 @@ function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, 
 }
 
 function strip_tags_from_pgp_message(pgp_block_text) {
-  // console.log('pgp_block_1');
-  // console.log(pgp_block_text);
+  var debug = false;
+  if(debug) {
+    console.log('pgp_block_1');
+    console.log(pgp_block_text);
+  }
   var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
   var spaces = [/&nbsp;/g];
   var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
   $.each(newlines, function(i, newline) {
     pgp_block_text = pgp_block_text.replace(newline, '\n');
   });
-  // console.log('pgp_block_2');
-  // console.log(pgp_block_text);
+  if(debug) {
+    console.log('pgp_block_2');
+    console.log(pgp_block_text);
+  }
   $.each(removes, function(i, remove) {
     pgp_block_text = pgp_block_text.replace(remove, '');
   });
-  // console.log('pgp_block_3');
-  // console.log(pgp_block_text);
+  if(debug) {
+    console.log('pgp_block_3');
+    console.log(pgp_block_text);
+  }
   $.each(spaces, function(i, space) {
     pgp_block_text = pgp_block_text.replace(space, ' ');
   });
-  // console.log('pgp_block_4');
-  // console.log(pgp_block_text);
+  if(debug) {
+    console.log('pgp_block_4');
+    console.log(pgp_block_text);
+  }
   pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
-  // console.log('pgp_block_5');
-  // console.log(pgp_block_text);
+  if(debug) {
+    console.log('pgp_block_5');
+    console.log(pgp_block_text);
+  }
   pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
-  // console.log('pgp_block_6');
-  // console.log(pgp_block_text);
+  if(debug) {
+    console.log('pgp_block_6');
+    console.log(pgp_block_text);
+  }
   var double_newlines = pgp_block_text.match(/\n\n/g);
   if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
     pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    // console.log('pgp_block_removed_doubles');
+    if(debug) {
+      console.log('pgp_block_removed_doubles');
+    }
   }
-  // console.log('pgp_block_final');
-  // console.log(pgp_block_text);
+  if(debug) {
+    console.log('pgp_block_7');
+    console.log(pgp_block_text);
+  }
+  pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
+  if(debug) {
+    console.log('pgp_block_final');
+    console.log(pgp_block_text);
+  }
   return pgp_block_text;
 }
 
