@@ -1,3 +1,12 @@
+<b>version 1.2.0 on Mar 21, 2016</b>
+added changelog :)
+mac client + gpg tools compatibility fix (PGP MIME)
+thunderbird + enigmail compatibility fix (ISO encoding)
+refactoring libraries to reduce app size
+fixing duplicate email send (better google token refreshing)
+reply box style fixes
+support to parse very long PGP messages
+
 <b>version 1.1.0 on Mar 17, 2016</b>
 encrypt to non-PGP contacts with a challenge question
 
