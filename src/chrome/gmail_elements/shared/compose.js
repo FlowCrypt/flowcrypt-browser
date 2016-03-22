@@ -236,5 +236,5 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
 
 function convert_html_tags_to_newlines(text) {
   // todo: approximation. Does not handle <div><br></div> well which contenteditable fields tend to create
-  return text.replace(/<br ?\/?>/gi, '\n').replace(/<div[^>]*>/gi, '\n').replace(/<\/div[^>]*>/gi, '').trim();
+  return text.replace(/<div ?\/?><br ?\/?>/gi, '\n').replace(/<br ?\/?>/gi, '\n').replace(/<div[^>]*>/gi, '\n').replace(/<\/div[^>]*>/gi, '').trim();
 }
