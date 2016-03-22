@@ -103,16 +103,20 @@ function replace_reply_box(account_email, gmail_tab_id) {
   var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
   var subject = $('h2.hP').text();
   $(reply_container_selector).addClass('remove_borders');
-  $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, subject));
+  account_storage_get(account_email, ['addresses'], function(storage) {
+    $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject));
+  });
 }
 
 function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, last_message_frame_height, my_email, their_email) {
   $('#' + last_message_frame_id).css('height', last_message_frame_height + 'px');
   var subject = $('h2.hP').text();
-  var secure_reply_box = reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, subject);
-  var wrapped_secure_reply_box = '<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>';
-  $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
-  // $('div.nH.hx.aHo').append();
+  account_storage_get(account_email, ['addresses'], function(storage) {
+    var secure_reply_box = reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject);
+    var wrapped_secure_reply_box = '<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>';
+    $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
+    // $('div.nH.hx.aHo').append();
+  });
 }
 
 function strip_tags_from_pgp_message(pgp_block_text) {
@@ -172,19 +176,4 @@ function strip_tags_from_pgp_message(pgp_block_text) {
     console.log(pgp_block_text);
   }
   return pgp_block_text;
-}
-
-function resolve_from_to(account_email, my_email, their_email) {
-  //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-  //todo: make sure to take all of my secondary emails into account
-  if(their_email !== account_email) {
-    return {
-      to: their_email,
-      from: my_email
-    }
-  }
-  return {
-    from: their_email,
-    to: my_email
-  }
 }
