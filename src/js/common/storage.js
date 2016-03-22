@@ -47,25 +47,34 @@ function pubkey_cache_flush() {
   localStorage.pubkey_cache = JSON.stringify({});
 }
 
-function get_pubkey(email, callback, ignore_cached) {
-  email = email.trim();
-  if(ignore_cached !== true) {
-    var cached = pubkey_cache_get(email);
-    if(cached !== null) {
-      callback(cached);
+function get_pubkeys(emails, callback, ignore_cached) {
+  emails = emails.map(Function.prototype.call, String.prototype.trim);
+  var results = Array(emails.length);
+  var get_from_keyserver = [];
+  $.each(emails, function(i, email) {
+    if(ignore_cached !== true) {
+      results[i] = pubkey_cache_get(email) || undefined;
+      if(typeof results[i] === 'undefined') {
+        get_from_keyserver.push(email);
+      }
     } else {
-      get_pubkey(email, callback, true);
+      get_from_keyserver.push(email);
     }
+  });
+  if(get_from_keyserver.length === 0) {
+    callback(results);
   } else {
-    keyserver_keys_find(email, function(success, response) {
+    keyserver_keys_find(get_from_keyserver, function(success, keyserver_results) {
       if(success) {
-        if(response.pubkey !== null) {
-          pubkey_cache_add(email, response.pubkey);
-        }
-        callback(response.pubkey); // can be null
+        $.each(keyserver_results.results, function(i, keyserver_result) {
+          results[emails.indexOf(get_from_keyserver[i])] = keyserver_result.pubkey;
+          if(keyserver_result.pubkey) {
+            pubkey_cache_add(keyserver_result.email, keyserver_result.pubkey);
+          }
+        });
+        callback(results);
       } else {
-        console.log(['keyserver error', response]);
-        callback(null);
+        callback(undefined);
       }
     });
   }

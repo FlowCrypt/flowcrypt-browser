@@ -7,8 +7,12 @@ function new_message_close() {
 }
 
 function send_btn_click() {
+  var recipients = [];
+  $('.recipients span').each(function() {
+    recipients.push($(this).text().trim());
+  });
   var headers = {
-    'To': $('#input_to').val(),
+    'To': recipients.join(', '),
     'Subject': $('#input_subject').val(),
   };
   if($('#input_from').length) {
@@ -17,7 +21,7 @@ function send_btn_click() {
     headers['From'] = url_params['account_email'];
   }
   var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(message_text_to_send, attachments) {
+  compose_encrypt_and_send(url_params['account_email'], recipients, headers['Subject'], plaintext, function(message_text_to_send, attachments) {
     gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, attachments, null, function(success, response) {
       if(success) {
         new_message_close();
@@ -30,37 +34,6 @@ function send_btn_click() {
   });
 }
 
-function select_contact() {
-  $('#input_to').focus();
-  $('#input_to').val($(this).text().trim());
-  hide_contacts();
-  $('#input_subject').focus();
-}
-
-function search_contacts() {
-  var query = $(this).val().trim();
-  if(query !== '') {
-    var found = pubkey_cache_search(query, 6, true);
-    if(found.length > 0) {
-      var ul_html = '';
-      $.each(found, function(i, email) {
-        ul_html += '<li><i class="fa fa-lock"></i>' + email + '</li>';
-      });
-      $('#contacts ul').html(ul_html);
-      $('#contacts ul li').click(select_contact);
-      $('#contacts').css('display', 'block');
-    } else {
-      hide_contacts();
-    }
-  } else {
-    hide_contacts();
-  }
-}
-
-function hide_contacts() {
-  $('#contacts').css('display', 'none');
-}
-
 function order_addresses(account_email, addresses) {
   return [account_email].concat(array_without_value(addresses, account_email)); //places main account email as first
 }
@@ -69,8 +42,9 @@ function on_new_message_render() {
   $("#input_to").focus(function() {
     compose_render_pubkey_result($(this).val(), undefined);
   });
+  $('#input_to').keyup(render_receivers);
   $('#input_to').keyup(search_contacts);
-  $("#input_to").blur(compose_render_email_secure_or_insecure);
+  $("#input_to").blur(render_receivers);
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));
   $('.close_new_message').click(new_message_close);
   $('table#compose').click(hide_contacts);

@@ -6,7 +6,7 @@ function initialize_attach_dialog() {
   $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function() {
     uploader = new qq.FineUploader({
       autoUpload: false,
-      debug: true,
+      // debug: true,
       element: document.getElementById('fineuploader'),
       button: document.getElementById('fineuploader_button'),
       // dragAndDrop: {

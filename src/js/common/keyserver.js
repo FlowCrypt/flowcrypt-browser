@@ -1,20 +1,20 @@
 'use strict';
 
 function keyserver_keys_find(email, callback) {
-  keyserver_call('keys/find', {
-    'email': (typeof email === 'string') ? email.trim() : email,
+  return keyserver_call('keys/find', {
+    'email': (typeof email === 'string') ? email.trim() : email.map(Function.prototype.call, String.prototype.trim),
   }, callback);
 }
 
 function keyserver_keys_submit(email, pubkey, callback) {
-  keyserver_call('keys/submit', {
+  return keyserver_call('keys/submit', {
     'email': email.trim(),
     'pubkey': pubkey.trim()
   }, callback);
 }
 
 function keyserver_call(path, data, callback) {
-  $.ajax({
+  return $.ajax({
     url: 'https://cryptup-keyserver.herokuapp.com/' + path,
     method: 'POST',
     data: JSON.stringify(data),

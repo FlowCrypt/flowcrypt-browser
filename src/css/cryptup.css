@@ -96,6 +96,14 @@ body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px so
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; background-color: #088447; text-align: left; margin: 0px; border: 1px solid #088447}
 table#compose td.input { height: 42px; vertical-align: middle; }
+table#compose td#input_addresses_container .recipients { }
+table#compose td#input_addresses_container .recipients span { padding-left: 11px; display: inline-block; margin-top: 2px; }
+table#compose td#input_addresses_container .recipients span.wrong { color: #d14836; }
+table#compose td#input_addresses_container .recipients span.has_pgp { color: #088447; }
+table#compose td#input_addresses_container .recipients span.no_pgp { color: orange; }
+table#compose td#input_addresses_container .recipients span i { padding-left: 4px; position: relative; top: 1px; opacity: 0.5; cursor: pointer;
+  color: black; }
+table#compose td#input_addresses_container .recipients span i.fa { font-size: 70%; top: -1px; }
 table#compose th h1 { display: inline-block; margin: none; padding: none; font-size: 13.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
 table#compose th span.close_new_message { display: inline-block; position: absolute; right: 0px; margin-right: 6px; margin-top: -3px; color: white;
   font-weight: bold; opacity: .6; height: 16px; width: 16px; text-align: center; padding: 5px; }

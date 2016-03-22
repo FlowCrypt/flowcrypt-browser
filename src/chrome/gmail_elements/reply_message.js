@@ -63,15 +63,19 @@ function reply_message_render_success(has_attachments, message_id) {
 }
 
 function send_btn_click() {
+  var recipients = [];
+  $('.recipients span').each(function() {
+    recipients.push($(this).text().trim());
+  });
   var headers = {
+    'To': recipients.join(', '),
     'From': url_params['from'],
-    'To': $('#input_to').val(),
     'Subject': url_params['subject'],
     'In-Reply-To': thread_message_id_last,
     'References': thread_message_referrences_last + ' ' + thread_message_id_last,
   };
   var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params['account_email'], headers['To'], headers['Subject'], plaintext, function(message_text_to_send, attachments) {
+  compose_encrypt_and_send(url_params['account_email'], recipients, headers['Subject'], plaintext, function(message_text_to_send, attachments) {
     gmail_api_message_send(url_params['account_email'], message_text_to_send, headers, attachments, url_params['thread_id'], function(success, response) {
       if(success) {
         reply_message_render_success((attachments || []).length > 0, response.id);
@@ -90,13 +94,18 @@ function resize_input_text_width() {
 }
 
 function reply_message_on_render() {
-  $("#input_to").blur(compose_render_email_secure_or_insecure);
+  $('.recipients').append('<span>' + url_params.to + '</span>');
   $("#input_to").focus(function() {
     compose_render_pubkey_result($(this).val(), undefined);
   });
-  $('#send_btn').click(prevent(doubleclick(), send_btn_click));
+  $('#input_to').keyup(render_receivers);
+  $('#input_to').keyup(search_contacts);
+  $("#input_to").blur(render_receivers);
   $("#input_to").focus();
-  $("#input_to").val(url_params['to']);
+  $('#send_btn').click(prevent(doubleclick(), send_btn_click));
+  $('#input_text').focus();
+  resize_input_to();
+  compose_evaluate_receivers();
   document.getElementById("input_text").focus();
   initialize_attach_dialog();
   setTimeout(function() {

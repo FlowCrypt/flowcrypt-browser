@@ -216,7 +216,11 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
       decide_decrypted_content_formatting_and_render(plaintext.data);
     }).catch(function(error) {
       if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && option_key === 'privateKey') { // wrong private key
-        handle_private_key_mismatch(url_params.account_email, options.message);
+        if(url_params.question) {
+          render_password_prompt();
+        } else {
+          handle_private_key_mismatch(url_params.account_email, options.message);
+        }
       } else if(String(error) === 'Error: Error decrypting message: Invalid enum value.' && option_key === 'password') { // wrong password
         wrong_password_callback();
       } else {
@@ -242,20 +246,16 @@ function render_password_prompt() {
 }
 
 function pgp_block_init() {
-  if(!url_params.question) {
-    var my_prvkey_armored = restricted_account_storage_get(url_params.account_email, 'master_private_key');
-    var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
-    if(typeof my_prvkey_armored !== 'undefined') {
-      var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
-      if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-        private_key.decrypt(my_passphrase);
-      }
-      decrypt_and_render('privateKey', private_key);
-    } else {
-      render_error(l.cant_open + l.no_private_key);
+  var my_prvkey_armored = restricted_account_storage_get(url_params.account_email, 'master_private_key');
+  var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
+  if(typeof my_prvkey_armored !== 'undefined') {
+    var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
+    if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+      private_key.decrypt(my_passphrase);
     }
+    decrypt_and_render('privateKey', private_key);
   } else {
-    render_password_prompt();
+    render_error(l.cant_open + l.no_private_key);
   }
 }
 

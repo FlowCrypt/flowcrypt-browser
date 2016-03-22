@@ -54,8 +54,8 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     if(storage['setup_done'] === true) {
       setup_dialog_set_done(storage['key_backup_prompt'] !== false, storage.setup_simple);
     } else {
-      get_pubkey(url_params['account_email'], function(pubkey) {
-        if(pubkey !== null) {
+      get_pubkeys([url_params['account_email']], function(pubkeys) {
+        if(pubkeys && pubkeys[0]) {
           fetch_email_key_backups(url_params['account_email'], function(success, keys) {
             if(success && keys) {
               display_block('step_2_recovery');

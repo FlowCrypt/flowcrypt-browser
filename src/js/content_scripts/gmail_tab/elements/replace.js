@@ -16,23 +16,20 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
     "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('[Message clipped]'):contains('View entire message')"
   ];
   $(selectors.join(', ')).each(function() {
+    $(this).addClass('has_known_pgp_blocks');
     var message_text = $(this).html();
     var text_with_iframes = message_text;
     var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/gm;
     var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/m;
-    var re_first_pgp_question = /<br>\r?\n-----BEGIN PGP QUESTION-----<br>\r?\n(.+)<br>\r?\n-----END PGP QUESTION-----<br>\r?\n/m;
-    $(this).addClass('has_known_pgp_blocks');
+    var re_first_pgp_question = /.*<br>\r?\n<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
     var matches;
     while((matches = re_pgp_blocks.exec(message_text)) !== null) {
       var valid_pgp_block = strip_tags_from_pgp_message(matches[0]);
       var question_match = re_first_pgp_question.exec(text_with_iframes);
       var question = '';
       if(question_match !== null) {
-        question = window.striptags(question_match[1]);
+        var question = window.striptags(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
         text_with_iframes = text_with_iframes.replace(re_first_pgp_question, '');
-        text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question_match[1]) + '.+'), '');
-        text_with_iframes = text_with_iframes.replace(new RegExp('.+' + RegExp.escape(question) + '.+'), '');
-        text_with_iframes = text_with_iframes.replace(/This message is encrypted\. Visit the following link to open it\:\<br ?\/?>\r?\n?.+\<br ?\/?>\r?\n?.+/gm, '');
       }
       if(valid_pgp_block.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
         text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', gmail_tab_id));
