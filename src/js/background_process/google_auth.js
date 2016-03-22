@@ -135,11 +135,10 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
   close_auth_window();
   var parts = auth_code_window_result.title.split(' ', 2);
   var result = parts[0];
-  var message = parts[1];
+  var params = get_url_params(['code', 'state', 'error'], parts[1]);
+  var state_object = google_auth_code_request_state.unpack(params.state);
   switch(result) {
     case 'Success':
-      var params = get_url_params(['code', 'state'], message);
-      var state_object = google_auth_code_request_state.unpack(params.state);
       google_auth_get_tokens(params.code, function(tokens_object) {
         if(typeof tokens_object.access_token !== 'undefined') {
           google_auth_check_email(state_object.account_email, tokens_object.access_token, function(account_email) {
@@ -150,6 +149,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
               auth_responders[state_object.auth_responder_id]({
                 account_email: account_email,
                 success: true,
+                result: result.toLowerCase(),
                 message_id: state_object.message_id,
               });
             });
@@ -157,6 +157,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
         } else {
           auth_responders[state_object.auth_responder_id]({
             success: false,
+            result: result.toLowerCase(),
             account_email: state_object.account_email,
             message_id: state_object.message_id,
           });
@@ -165,8 +166,13 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
       break;
     case 'Denied':
     case 'Error':
-      // Example: 400 (OAuth2 Error)!!1
-      alert(result + ': ' + message);
+      auth_responders[state_object.auth_responder_id]({
+        success: false,
+        result: result.toLowerCase(),
+        error: params.error,
+        account_email: state_object.account_email,
+        message_id: state_object.message_id,
+      });
       break;
   }
 }
