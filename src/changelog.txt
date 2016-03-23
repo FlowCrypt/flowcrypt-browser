@@ -1,3 +1,10 @@
+<b>version 1.3.0 on Mar 23, 2016</b>
+composing: allow multiple receivers
+replying: reply to our own emails bugfix
+composing: correct line breaks bugfix
+setup: handle denied google auth access
+setup: get name from google api into pubkey
+
 <b>version 1.2.0 on Mar 21, 2016</b>
 added changelog :)
 mac client + gpg tools compatibility fix (PGP MIME)
