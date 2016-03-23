@@ -24,25 +24,25 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
         error: function(response) {
           var error_obj = JSON.parse(response.responseText);
           if(typeof error_obj['error'] !== 'undefined' && error_obj['error']['message'] === "Invalid Credentials") {
-            gmail_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response);
+            google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, gmail_api_call);
           } else {
             callback(false, response);
           }
         },
       });
     } else { // no valid gmail_api oauth token
-      gmail_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null);
+      google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, gmail_api_call);
     }
   });
 }
 
-function gmail_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response) {
+function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function) {
   if(fail_on_auth !== true) {
     chrome_message_send(null, 'google_auth', {
       account_email: account_email,
     }, function(response) {
       //todo: respond with success in background script, test if response.success === true, and error handling
-      gmail_api_call(account_email, method, resource, parameters, callback, true);
+      base_api_function(account_email, method, resource, parameters, callback, true);
     });
   } else {
     callback(false, error_response);

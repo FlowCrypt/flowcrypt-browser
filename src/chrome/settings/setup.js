@@ -2,8 +2,6 @@
 
 var url_params = get_url_params(['account_email']);
 
-// todo: pull full_name from google
-
 $('.email-address').text(url_params.account_email);
 
 $('.back').css('visibility', 'hidden');
@@ -149,7 +147,20 @@ function create_save_submit_key_pair(account_email, email_name, passphrase) {
 $('.action_simple_setup').click(function() {
   display_block('step_2_easy_generating');
   $('h1').text('Please wait, setting up CryptUP');
-  create_save_submit_key_pair(url_params['account_email'], url_params['full_name'], null); // todo - get name from google api. full_name might be undefined
+  google_api_userinfo(url_params.account_email, function(success, response) {
+    if(success) {
+      account_storage_set(url_params.account_email, {
+        full_name: response.name,
+        gender: response.gender,
+        locale: response.locale,
+        picture: response.picture
+      }, function() {
+        create_save_submit_key_pair(url_params.account_email, response.name, null);
+      });
+    } else {
+      create_save_submit_key_pair(url_params.account_email, '', null); // todo - will result in missing name in pubkey, and should have better handling
+    }
+  });
 });
 
 $('.action_manual_setup').click(function() {

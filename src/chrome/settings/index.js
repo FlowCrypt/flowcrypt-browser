@@ -36,7 +36,7 @@ function refresh_account_list() {
         chrome_message_send(null, 'google_auth', {
           account_email: account_email,
         }, function(response) {
-          if(response.result === 'success' && response.success === true) {
+          if(response.success === true) {
             add_account_email_to_list_of_accounts(response.account_email, function() {
               window.location = 'setup.htm?account_email=' + encodeURIComponent(response.account_email);
             });
@@ -44,7 +44,8 @@ function refresh_account_list() {
             alert('Why CryptUP needs this permission:\n\n - to compose messages safely\n - to retrieve and decrypt opened messages seamlessly\n - to send and open encrypted attachments\n\nNobody, CryptUP developers included, is able to access these permissions, they are stored privately in your browser.\n\n');
             window.location.reload();
           } else {
-            alert('Something went wrong, please try again.');
+            console.log(response);
+            alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
             window.location.reload();
           }
         });
