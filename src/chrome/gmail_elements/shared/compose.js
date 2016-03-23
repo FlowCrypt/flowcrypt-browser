@@ -1,14 +1,14 @@
 'use strict';
 
 var l = {
-  open_challenge_message: 'This message is encrypted. Visit the following link to open it:',
+  open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
 
 function format_challenge_question_email(question, message) {
   return [
     l.open_challenge_message,
     'https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(message),
-    '', //????????????? removed challenge question
+    '',
     message,
   ].join('\n');
 }
