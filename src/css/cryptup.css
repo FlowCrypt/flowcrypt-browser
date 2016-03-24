@@ -16,7 +16,7 @@
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
 body#settings > div#content {  margin-top: 120px; }
-body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
+body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content a:hover { text-decoration: none; }
 body#settings > div#content > div#accounts a.button.has_email { width: 300px; text-align: left; font-weight: 100; color: #CCC; }
 body#settings > div#content > div#accounts a.button.has_email b { padding-right: 10px; color: #FFF; }
@@ -25,11 +25,11 @@ body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content div.line label { line-height: 22px; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 200px; height:32px; border: 1px solid gray; padding-left:8px; }
-body#settings > div#content .separator {max-width: 600px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
+body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
 body#settings > div#content .content-row-holder { position: relative; display: inline-block; min-width: 600px!important; }
-body#settings > div#content .ion-ios-arrow-left { position: absolute; left:0; top:20px; font-size: 30px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s ;}
+body#settings > div#content .ion-ios-arrow-left { position: absolute; left: 20px; top:20px; font-size: 30px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s ;}
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
 body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 10px; position: relative; top: 5px; }
 
@@ -195,12 +195,12 @@ div#reply_message_successful_container > #attachments > span.pgp_attachment > if
 body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; background-image: url(/img/attachment-corner.png);
   background-repeat: no-repeat; background-position: bottom right; z-index: 0; }
 body.attachment:hover { border-color: #eaeaea; }
-body.attachment #download { position: absolute; width: 178px;  z-index: 1;  background-color: white; height: 118px; opacity: 1; color: #444; visibility: hidden; }
+body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; right:13px; opacity: 1; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
-body.attachment #download i { font-size: 50px; padding: 20px; padding-bottom: 6px;}
-body.attachment #download .download-prompt { font-size: 17px; }
-body.attachment #header { margin-top:10px; padding-bottom: 0px; font-weight: bold; font-size: 15px; }
+body.attachment #download i { font-size: 39px; padding-bottom: 0px; margin-top: 22px; opacity: .4;}
+body.attachment #download .download-prompt { margin-top:1px; font-size: 14px; }
+body.attachment #header { margin-top:10px; padding-bottom: 0px; font-weight: 400; font-size: 14px; width: 100px; text-align: left; position: absolute; right: 5px; line-height: 1.5; top:15px; overflow: hidden;}
 body.attachment #type { padding: 10px 0; color: #999; }
 body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-body.attachment .encrypted-circle { background: rgb(92, 148, 103); display: inline-block; width: 35px; height: 35px; border-radius: 120px; position: relative; margin-top: 10px; margin-bottom: 5px;}
-body.attachment .encrypted-circle .ion-locked { position: absolute;top: 7px; bottom: 0; left: 1px; right: 0; font-size: 19px; color: white; }
+body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
+body.attachment .file-format-holder img#file-format { width: 55px; height: auto; margin-top: 10px; opacity: .3;}
