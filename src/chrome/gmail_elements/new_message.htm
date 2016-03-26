@@ -3,6 +3,7 @@
     <link rel="stylesheet" href="/css/font-awesome.min.css" />
     <link rel="stylesheet" href="/css/ionicons.min.css">
     <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
     <link rel="stylesheet" href="/lib/fine_uploader/fine-uploader-new.css" />
     <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
   </head>
@@ -36,10 +37,19 @@
       </tr>
       <tr id="challenge_question_container">
         <td>
+          <div class="question-row">
+            <span class="circle">
+              <i class="ion-ios-locked"></i>
+            </span>
+            <div class="question-copy">
+              <p>
+                One or more recipient doesn't have CryptUP or other PGP app yet.
+              Send an encrypted message witha a question they can answer.</p>
+            </div>
+          </div>
           <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
           <span style="display: inline-block; width: 33px;">&nbsp;</span>
-          <span class="start">"</span><input id="input_answer" placeholder="answer" /><span class="end">"</span>
-          <p>Needed because one or more recipients don't have CryptUP or other PGP app yet.</p>
+          <span class="start">"</span><input id="input_answer" placeholder="Answer" /><span class="end">"</span>
         </td>
       </tr>
       <tr>

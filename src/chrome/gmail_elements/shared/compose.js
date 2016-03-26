@@ -224,8 +224,12 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
     // todo - show option to try again
   } else if(pubkey_data !== null) {
     $(email_element).addClass("has_pgp");
+    $(email_element).prepend("<i class='ion-locked'></i>");
+
   } else {
     $(email_element).addClass("no_pgp");
+    $(email_element).prepend("<i class='ion-ios-locked'></i>");
+
   }
   if(!$('.receivers span i.fa-spin').length) {
     $("#send_btn span").text('SEND PGP ENCRYPTED');
