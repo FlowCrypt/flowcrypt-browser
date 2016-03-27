@@ -5,6 +5,30 @@ var url_params = get_url_params(['account_email', 'message_id', 'attachment_id',
 $('#type').text(url_params.type);
 $('#name').text(url_params.name);
 
+$('img#file-format').attr('src', (function() {
+  // url_params.type
+  function p(name) {
+    return '/img/fileformat/' + name + '.png';
+  }
+  var name_split = url_params.name.replace(/\.(pgp|gpg)$/ig, '').split('.');
+  var extension = name_split[name_split.length - 1].toLowerCase();
+  switch(extension) {
+    case 'jpg':
+    case 'jpeg':
+      return p('jpg');
+    case 'xls':
+    case 'xlsx':
+      return p('excel');
+    case 'doc':
+    case 'docx':
+      return p('word');
+    case 'png':
+      return p('png');
+    default:
+      return p('generic');
+  }
+})());
+
 $('#download').click(prevent(doubleclick(), function(self) {
   var original_content = $(self).html();
   $(self).html(get_spinner())
