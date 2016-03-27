@@ -56,7 +56,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
           pubkeys.push(pubkey);
         }
       });
-      callback(true, pubkeys.length === recipients.length, pubkeys.length === 0, pubkeys.concat(private_storage_get(localStorage, account_email, 'master_public_key')));
+      callback(true, pubkeys.length === recipients.length, pubkeys.concat(private_storage_get(localStorage, account_email, 'master_public_key')));
     }
   });
 }
@@ -69,7 +69,7 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
       question: $('#input_question').val(),
       answer: $('#input_answer').val(),
     };
-    fetch_pubkeys(account_email, recipients, function(success, all_have_keys, none_have_keys, armored_pubkeys) {
+    fetch_pubkeys(account_email, recipients, function(success, all_have_keys, armored_pubkeys) {
       if(success) {
         if(!recipients.length) {
           $('#send_btn').text(btn_text);
@@ -87,13 +87,13 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
           //todo - tailor for replying w/o subject
           $('#send_btn').html('Encrypting ' + get_spinner());
           try {
-            collect_and_encrypt_attachments(none_have_keys ? null : armored_pubkeys, all_have_keys ? null : challenge, function(attachments) {
+            collect_and_encrypt_attachments(armored_pubkeys, all_have_keys ? null : challenge, function(attachments) {
               if((attachments || []).length) {
                 var sending = 'Uploading attachments ' + get_spinner();
               } else {
                 var sending = 'Sending ' + get_spinner();
               }
-              encrypt(none_have_keys ? null : armored_pubkeys, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
+              encrypt(armored_pubkeys, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
                 $('#send_btn').html(sending);
                 send_email_callback(encrypted.data, attachments);
               });
@@ -167,7 +167,7 @@ function render_receivers() {
     $(this).val('');
     resize_input_to();
     compose_evaluate_receivers();
-  } else if (!$(this).is(':focus')) {
+  } else if(!$(this).is(':focus')) {
     $(this).attr('placeholder', '');
   }
 }
