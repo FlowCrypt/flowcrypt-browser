@@ -121,24 +121,8 @@ function account_storage_object_keys_to_original(account_or_accounts, storage_ob
   }
 }
 
-function restricted_account_storage_set(account_email, key, value) {
-  var account_key = account_storage_key(account_email, key);
-  if(typeof value === 'undefined') {
-    localStorage.removeItem('account_key');
-  } else if(value === null) {
-    localStorage[account_key] = 'null#null';
-  } else if(value === true || value === false) {
-    localStorage[account_key] = 'bool#' + value;
-  } else if(value + 0 === value) {
-    localStorage[account_key] = 'int#' + value;
-  } else {
-    localStorage[account_key] = 'str#' + value;
-  }
-
-}
-
-function restricted_account_storage_get(account_email, key) {
-  var value = localStorage[account_storage_key(account_email, key)];
+function private_storage_get(storage, account_email, key) {
+  var value = storage[account_storage_key(account_email, key)];
   if(typeof value === 'undefined') {
     return value;
   } else if(value === 'null#null') {
@@ -151,6 +135,21 @@ function restricted_account_storage_get(account_email, key) {
     return Number(value.replace('int#', '', 1));
   } else {
     return value.replace('str#', '', 1);
+  }
+}
+
+function private_storage_set(storage, account_email, key, value) {
+  var account_key = account_storage_key(account_email, key);
+  if(typeof value === 'undefined') {
+    storage.removeItem(account_key);
+  } else if(value === null) {
+    storage[account_key] = 'null#null';
+  } else if(value === true || value === false) {
+    storage[account_key] = 'bool#' + value;
+  } else if(value + 0 === value) {
+    storage[account_key] = 'int#' + value;
+  } else {
+    storage[account_key] = 'str#' + value;
   }
 }
 

@@ -56,7 +56,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
           pubkeys.push(pubkey);
         }
       });
-      callback(true, pubkeys.length === recipients.length, pubkeys.length === 0, pubkeys.concat(restricted_account_storage_get(account_email, 'master_public_key')));
+      callback(true, pubkeys.length === recipients.length, pubkeys.length === 0, pubkeys.concat(private_storage_get(localStorage, account_email, 'master_public_key')));
     }
   });
 }

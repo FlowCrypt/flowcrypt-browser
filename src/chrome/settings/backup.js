@@ -92,7 +92,7 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
   } else {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
-    var armored_private_key = restricted_account_storage_get(url_params.account_email, 'master_private_key');
+    var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
     var prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, $('#password').val());
     var email_headers = {

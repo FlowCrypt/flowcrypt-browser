@@ -16,6 +16,37 @@ function as_html_formatted_string(obj) {
   return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
 }
 
+function get_passphrase(account_email, callback, prompt_text) {
+  if(private_storage_get(localStorage, account_email, 'master_passphrase_needed') === false) {
+    callback('');
+    return;
+  }
+  var stored = private_storage_get(localStorage, account_email, 'master_passphrase');
+  if(stored) {
+    callback(stored);
+    return;
+  }
+  var temporary = private_storage_get(sessionStorage, account_email, 'master_passphrase');
+  if(temporary) {
+    callback(temporary);
+    return;
+  }
+  var prompted = prompt(prompt_text || 'Please enter CryptUP passphrase');
+  if(prompted === null) {
+    callback(null);
+    return;
+  } else {
+    var prv = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
+    if(prv.decrypt(prompted) === true) {
+      private_storage_set(sessionStorage, account_email, 'master_passphrase', prompted);
+      callback(prompted);
+      return;
+    } else {
+      get_passphrase(account_email, callback, 'CryptUP passphrase did not match. Please try again')
+    }
+  }
+}
+
 function download_file(filename, type, data) {
   var blob = new Blob([data], {
     type: type
@@ -142,7 +173,7 @@ function key_ids_match(first, second) {
 
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
-  var local_key_ids = extract_key_ids(restricted_account_storage_get(account_email, 'master_public_key'));
+  var local_key_ids = extract_key_ids(private_storage_get(localStorage, account_email, 'master_public_key'));
   var diagnosis = {
     found_match: false,
     receivers: message_key_ids.length,
@@ -159,7 +190,7 @@ function check_pubkeys_message(account_email, message) {
 }
 
 function check_pubkeys_keyserver(account_email, callback) {
-  var local_key_ids = extract_key_ids(restricted_account_storage_get(account_email, 'master_public_key'));
+  var local_key_ids = extract_key_ids(private_storage_get(localStorage, account_email, 'master_public_key'));
   var diagnosis = {
     has_pubkey_missing: false,
     has_pubkey_mismatch: false,

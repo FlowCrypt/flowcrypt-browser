@@ -6,7 +6,7 @@ $('.email-address').text(url_params.account_email);
 
 $('.action_show_private_key').click(function() {
   alert('Key will only show for 10 seconds. Do not share this with anyone.');
-  $('pre').text(restricted_account_storage_get(url_params.account_email, 'master_private_key'));
+  $('pre').text(private_storage_get(localStorage, url_params.account_email, 'master_private_key'));
   setTimeout(function() {
     if($('pre').text().indexOf('PRIVATE') !== -1) {
       $('pre').text('');
@@ -15,7 +15,7 @@ $('.action_show_private_key').click(function() {
 });
 
 $('.action_show_public_key').click(function() {
-  $('pre').text(restricted_account_storage_get(url_params.account_email, 'master_public_key'));
+  $('pre').text(private_storage_get(localStorage, url_params.account_email, 'master_public_key'));
 });
 
 $('.action_show_gmail_api_tokens').click(function() {
@@ -35,7 +35,7 @@ $('.action_load_send_from_email_addresses').click(prevent(parallel(), function(s
     account_storage_set(url_params['account_email'], {
       addresses: addresses
     }, function() {
-      submit_pubkey_alternative_addresses(addresses.slice(), restricted_account_storage_get(url_params['account_email'], 'master_public_key'), function() {
+      submit_pubkey_alternative_addresses(addresses.slice(), private_storage_get(localStorage, url_params['account_email'], 'master_public_key'), function() {
         $(self).text(button_text);
         $('pre').text(JSON.stringify(addresses));
         release(process_id);

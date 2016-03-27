@@ -18,6 +18,7 @@ var l = {
   question_decryt_prompt: 'To decrypt the message, answer: ',
   connection_error: 'Could not connect to Gmail to open the message, please refresh the page to try again. ',
   dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
+  missing_passphrase: 'Unable to open message without a passphrase.',
 }
 
 function format_plaintext(text) {
@@ -246,17 +247,22 @@ function render_password_prompt() {
 }
 
 function pgp_block_init() {
-  var my_prvkey_armored = restricted_account_storage_get(url_params.account_email, 'master_private_key');
-  var my_passphrase = restricted_account_storage_get(url_params.account_email, 'master_passphrase');
-  if(typeof my_prvkey_armored !== 'undefined') {
-    var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
-    if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-      private_key.decrypt(my_passphrase);
+  var my_prvkey_armored = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+  get_passphrase(url_params.account_email, function(my_passphrase) { //todo - add "waiting for passphrase" spinner
+    if(my_passphrase !== null) {
+      if(typeof my_prvkey_armored !== 'undefined') {
+        var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
+        if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+          private_key.decrypt(my_passphrase);
+        }
+        decrypt_and_render('privateKey', private_key);
+      } else {
+        render_error(l.cant_open + l.no_private_key);
+      }
+    } else {
+      render_error(l.missing_passphrase);
     }
-    decrypt_and_render('privateKey', private_key);
-  } else {
-    render_error(l.cant_open + l.no_private_key);
-  }
+  });
 }
 
 function extract_armored_message_from_text(text) {
