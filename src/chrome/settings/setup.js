@@ -188,6 +188,7 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
         private_storage_set(localStorage, url_params.account_email, 'master_public_key_submit', false); //todo - think about this more
         private_storage_set(localStorage, url_params.account_email, 'master_public_key_submitted', false);
         private_storage_set(localStorage, url_params.account_email, 'master_passphrase', passphrase);
+        private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true); //todo - later might have option to do this
         setup_dialog_set_done(false, true);
         worked = true;
         return false;
