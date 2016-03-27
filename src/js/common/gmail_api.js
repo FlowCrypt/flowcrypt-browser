@@ -22,10 +22,21 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
           callback(true, response);
         },
         error: function(response) {
-          var error_obj = JSON.parse(response.responseText);
-          if(typeof error_obj['error'] !== 'undefined' && error_obj['error']['message'] === "Invalid Credentials") {
-            google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, gmail_api_call);
-          } else {
+          try {
+            var error_obj = JSON.parse(response.responseText);
+            if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
+              google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, gmail_api_call);
+            } else {
+              response._error = error_obj.error;
+              callback(false, response);
+            }
+          } catch(err) {
+            response._error = {};
+            var re_title = /<title>([^<]+)<\/title>/mgi;
+            var title_match = re_title.exec(response.responseText);
+            if(title_match) {
+              response._error.message = title_match[1];
+            }
             callback(false, response);
           }
         },

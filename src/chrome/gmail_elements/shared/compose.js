@@ -62,9 +62,10 @@ function fetch_pubkeys(account_email, recipients, callback) {
 }
 
 function compose_encrypt_and_send(account_email, recipients, subject, plaintext, send_email_callback) {
-  var btn_text = $('#send_btn').text();
-  if(btn_text.toLowerCase().trim() === 'send pgp encrypted') {
-    $('#send_btn').html('Loading ' + get_spinner());
+  if($('#send_btn span').text().toLowerCase().trim() === 'send pgp encrypted') {
+    var btn_html = $('#send_btn').html();
+    $('#send_btn span').text('Loading');
+    $('#send_btn i').replaceWith(get_spinner());
     var challenge = {
       question: $('#input_question').val(),
       answer: $('#input_answer').val(),
@@ -72,46 +73,58 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
     fetch_pubkeys(account_email, recipients, function(success, all_have_keys, armored_pubkeys) {
       if(success) {
         if(!recipients.length) {
-          $('#send_btn').text(btn_text);
+          $('#send_btn').html(btn_html);
           alert('Please add receiving email address.');
           return;
         } else if(has_attachment() && !all_have_keys) {
-          $('#send_btn').text(btn_text);
+          $('#send_btn').html(btn_html);
           alert('Sending encrypted attachments is only possible to contacts with a PGP client, such as CryptUP. Some of the recipients don\'t have PGP. Get them signed up.');
           return;
         } else if(!all_have_keys && (!challenge.question || !challenge.answer)) {
-          $('#send_btn').text(btn_text);
+          $('#send_btn').html(btn_html);
           alert('Because one or more of recipients don\'t have CryptUP or other PGP app, a question and answer is needed for encryption. The answer will work as a password to open the message.');
           return;
         } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
           //todo - tailor for replying w/o subject
-          $('#send_btn').html('Encrypting ' + get_spinner());
+          $('#send_btn span').text('Encrypting');
           try {
             collect_and_encrypt_attachments(armored_pubkeys, all_have_keys ? null : challenge, function(attachments) {
               if((attachments || []).length) {
-                var sending = 'Uploading attachments ' + get_spinner();
+                var sending = 'Uploading attachments';
               } else {
-                var sending = 'Sending ' + get_spinner();
+                var sending = 'Sending';
               }
               encrypt(armored_pubkeys, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
-                $('#send_btn').html(sending);
+                $('#send_btn span').text(sending);
                 send_email_callback(encrypted.data, attachments);
               });
             });
           } catch(err) {
-            $('#send_btn').text(btn_text);
+            $('#send_btn').html(btn_html);
             alert(err);
           }
         } else {
-          $('#send_btn').text(btn_text);
+          $('#send_btn').html(btn_html);
         }
       } else {
-        $('#send_btn').text(btn_text);
+        $('#send_btn').html(btn_html);
         alert('Network error, please try again.');
       }
     });
   } else {
     alert('Please wait, information about recipients is still loading.');
+  }
+}
+
+function handle_send_message_error(response) {
+  if(response.status === 413) {
+    $('#send_btn span').text('send pgp encrypted');
+    $('#send_btn i').attr('class', 'fa fa-lock');
+    alert('Total attachments size should be under 5MB (will be fixed by the end of May)');
+  } else {
+    console.log(success);
+    console.log(response);
+    alert('error sending message, check log');
   }
 }
 

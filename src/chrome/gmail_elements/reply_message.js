@@ -81,9 +81,7 @@ function send_btn_click() {
         reply_message_render_success((attachments || []).length > 0, response.id);
         reply_message_reinsert_reply_box();
       } else {
-        console.log(success);
-        console.log(response);
-        alert('error sending message, check log');
+        handle_send_message_error(response);
       }
     });
   });
