@@ -194,7 +194,7 @@ function select_contact() {
 }
 
 function resize_input_to() {
-  var new_width = Math.max(150, $('#input_to').parent().width() - $('#input_to').siblings('.recipients').width() - 20);
+  var new_width = Math.max(150, $('#input_to').parent().width() - $('#input_to').siblings('.recipients').width() - 50);
   $('#input_to').css('width', new_width + 'px');
 }
 
