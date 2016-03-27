@@ -217,6 +217,8 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
       decide_decrypted_content_formatting_and_render(plaintext.data);
     }).catch(function(error) {
       if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && option_key === 'privateKey') { // wrong private key
+        handle_private_key_mismatch(url_params.account_email, options.message);
+      } else if(String(error) === 'Error: Error decrypting message: Invalid session key for decryption.' && option_key === 'privateKey') { // attempted opening password only message with key
         if(url_params.question) {
           render_password_prompt();
         } else {
