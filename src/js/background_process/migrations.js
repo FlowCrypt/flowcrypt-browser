@@ -79,11 +79,11 @@ function migrate_070_080(account_email, then) {
 
 function migrate_130_140(account_email, then) {
   console.log('migrate_130_140');
-  account_storage_get(account_email, ['setup_done', 'master_passphrase'], function(storage) {
+  account_storage_get(account_email, ['setup_done'], function(storage) {
     var master_passphrase_needed = private_storage_get(localStorage, account_email, 'master_passphrase_needed');
     if(typeof master_passphrase_needed === 'undefined' && storage.setup_done === true) {
       console.log('migrating from 1.3.0 to 1.4.0: setting master_passphrase_needed');
-      private_storage_set(localStorage, account_email, 'master_passphrase_needed', Boolean(storage.master_passphrase));
+      private_storage_set(localStorage, account_email, 'master_passphrase_needed', Boolean(private_storage_get(localStorage, account_email, 'master_passphrase')));
     }
     then();
   });
