@@ -1,3 +1,12 @@
+<b>version 1.4.0 on Mar 27, 2016</b>
+security: manual setup has option to forget passphrase
+security: session passphrase entering dialog
+reading: attachment file icons
+reading: opening password-only messages (bugfix)
+composing: show error on attachments bigger then 5MB
+composing: always include my own pubkey even if recipients don't have any
+composing: recipients + challenge question styling changes
+
 <b>version 1.3.0 on Mar 23, 2016</b>
 composing: allow multiple receivers
 replying: reply to our own emails bugfix
