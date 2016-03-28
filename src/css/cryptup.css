@@ -31,7 +31,7 @@ body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px
 body#settings > div#content .content-row-holder { position: relative; display: inline-block; min-width: 600px!important; }
 body#settings > div#content .ion-ios-arrow-left { position: absolute; left: 20px; top:22px; font-size: 30px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s ;}
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
-body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 10px; position: relative; top: 5px; }
+body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 3px; position: relative; top: 5px; width: 35px; height: 35px; border: 1px solid #ccc; border-radius: 120px; color: #ccc;}
 
 body#settings > div#content.setup div#step_0_found_key { display: none; }
 body#settings > div#content.setup div#step_1_easy_or_manual { display: none; }
@@ -64,16 +64,22 @@ body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
 
-body#settings > div#content > div#changelog { width: 600px; margin: 0 auto; text-align: left; font-size: 16px; }
+body#settings > div#content > div#changelog { width: 550px; margin: 0 auto; text-align: left; font-size: 16px; }
 body#settings > div#content > div#changelog b { display: inline-block; margin-top: 20px; }
 
-body#settings > div#footer { width: 99%; position: fixed; bottom: 20px; padding: 0px; margin: 0px; text-align: center; font-size: 18px; color: #666; }
+body#settings > div#content > pre#key_container { padding-bottom: 60px;}
+
+body#settings > div#footer { width: 99%; position: fixed; bottom: 0; padding: 20px 0; margin: 0 auto; text-align: center; font-size: 18px; color: #666; background: white;}
 body#settings > div#footer > div.left { position: relative; float: left; margin-left: 40px; }
 body#settings > div#footer > div.right { position: relative; float: right; margin-right: 40px; }
+body#settings > div#footer > div.right > img { margin-top: 10px;}
 body#settings > div#footer > div.feedback { padding-top: 10px; }
 body#settings > div#footer > div.feedback i { padding-right: 40px; }
 body#settings > div#footer > div.feedback b { padding-left: 40px; }
-body#settings > div#footer a { color: #666; }
+body#settings > div#footer a { color: #666; display: inline-block; padding-top: 12px; }
+
+body#settings > div.passphrase > input.passphrase { margin-top: 20px; margin-bottom: 30px;}
+body#settings > div.passphrase h1 { max-width: 500px; margin:0 auto; font-size: 28px!important;}
 
 
 /* body */
