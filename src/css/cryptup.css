@@ -78,7 +78,8 @@ body#settings > div#footer > div.feedback i { padding-right: 40px; }
 body#settings > div#footer > div.feedback b { padding-left: 40px; }
 body#settings > div#footer a { color: #666; display: inline-block; padding-top: 12px; }
 
-body#settings > div.passphrase > input.passphrase { margin-top: 20px; margin-bottom: 30px;}
+body#settings > div.passphrase > input.passphrase { margin-top: 20px; margin-bottom: 30px; width: 350px!important;}
+body#settings > div.passphrase .button.long {width: 120px;}
 body#settings > div.passphrase h1 { max-width: 500px; margin:0 auto; font-size: 28px!important;}
 body#settings > div.passphrase { width: 600px; position: fixed; top:30px; left:0; right:0; margin:0 auto; border: 1px solid #ccc; padding: 40px 20px; background: white; z-index: 2;}
 body#settings .passphrase-overlay { background: rgba(205,205,205,.75); position: fixed; bottom: 0; top: 0; right: 0; left: 0; width: 100%; height: 100%;  z-index: -2;}
