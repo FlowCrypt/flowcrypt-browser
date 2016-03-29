@@ -119,7 +119,7 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
 function handle_send_message_error(response) {
   if(response.status === 413) {
     $('#send_btn span').text('send pgp encrypted');
-    $('#send_btn i').attr('class', 'fa fa-lock');
+    $('#send_btn i').attr('class', '');
     alert('Total attachments size should be under 5MB (will be fixed by the end of May)');
   } else {
     console.log(success);

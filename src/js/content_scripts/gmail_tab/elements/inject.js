@@ -7,7 +7,7 @@ function inject_meta() {
 }
 
 function inject_buttons(account_email, tab_id) {
-  $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button"><i class="fa fa-lock"></i></div>');
+  $('body').append('<div class="T-I-KE T-I J-J5-Ji new_message_button"><img src="chrome-extension://nmelpmhpelannghfpkbmmpfggmildcmj/img/logo-19-14-white.png" /></div>');
   $('div.new_message_button').click(function() {
     if($('div.new_message').length == 0) {
       var url = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
