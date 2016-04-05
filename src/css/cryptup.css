@@ -57,6 +57,11 @@ body#settings > div#content.setup div#loading { margin-top: 150px; }
 
 body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
+body#settings > div#content.backup .password_feedback { display: none; }
+body#settings > div#content.backup .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
+body#settings > div#content.backup div.password_bar { width: 300px; border: none; display: inline-block; border: none; }
+body#settings > div#content.backup div.password_bar > div { width: 0; height: 3px; }
+body#settings > div#content.backup #password, body#settings > div#content.backup #password2 { width: 300px; }
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
 body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }

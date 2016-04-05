@@ -6,7 +6,7 @@ $('.email-address').text(url_params.account_email);
 
 if(url_params.action === 'setup') {
   display_block('step_1_password');
-  $('h1').text('Choose a password');
+  $('h1').text('Choose a pass phrase');
   $('.back').css('display', 'none');
 } else {
   show_status();
@@ -20,6 +20,34 @@ function display_block(name) {
   $('#' + name).css('display', 'block');
 }
 
+function evaluate_password_strength() {
+  var result = crack_time_result(zxcvbn($('#password').val()), [
+    'crypt', 'up', 'cryptup', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
+    'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
+    'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
+    'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
+  ]);
+  $('.password_feedback').css('display', 'block');
+  $('.password_bar > div').css('width', result.bar + '%');
+  $('.password_bar > div').css('background-color', result.color);
+  $('.password_result, .password_time').css('color', result.color);
+  $('.password_result').text(result.word);
+  $('.password_time').text(result.time);
+  if(result.pass) {
+    $('.action_password').removeClass('gray');
+    $('.action_password').addClass('green');
+  } else {
+    $('.action_password').removeClass('green');
+    $('.action_password').addClass('gray');
+  }
+  // $('.password_feedback > ul').html('');
+  // $.each(result.suggestions, function(i, suggestion) {
+  //   $('.password_feedback > ul').append('<li>' + suggestion + '</li>');
+  // });
+}
+
+$('#password').on('keyup', prevent(spree(), evaluate_password_strength));
+
 function show_status() {
   $('h1').text('Key Backups');
   display_block('loading');
@@ -30,11 +58,11 @@ function show_status() {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly.');
         $('#step_0_status .container').html('');
       } else {
-        $('.status_summary').text('No backups found on this account. You can store a backup of your key on Gmail. Your key will be protected by a password of your choice.');
+        $('.status_summary').text('No backups found on this account. You can store a backup of your key on Gmail. Your key will be protected by a pass phrase of your choice.');
         $('#step_0_status .container').html('<div class="button long green action_go_backup">BACK UP MY KEY</div>');
         $('.action_go_backup').click(function() {
           display_block('step_1_password');
-          $('h1').text('Set Backup Password');
+          $('h1').text('Set Backup Pass Phrase');
         });
       }
     } else {
@@ -46,21 +74,10 @@ function show_status() {
 }
 
 $('.action_password').click(function() {
-  // todo: measure overall entropy. Eg super long lowercase passwords are also good.
-  if($('#password').val().length < 8) {
-    alert('Please use a password of 8 characters or longer. Please use longer password.');
-    $('#password').focus();
-  } else if($('#password').val().match(/[a-z]/) === null) {
-    alert('Password should contain one or more lowercase letters. Please add some lowercase letters.');
-    $('#password').focus();
-  } else if($('#password').val().match(/[A-Z]/) === null) {
-    alert('Password should contain one or more UPPERCASE letters. Please add some uppercase letters.');
-    $('#password').focus();
-  } else if($('#password').val().match(/[0-9]/) === null) {
-    alert('Password should contain one or more digits. Please add some digits.');
-    $('#password').focus();
-  } else {
+  if($(this).hasClass('green')) {
     display_block('step_2_confirm');
+  } else {
+    alert('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
   }
 });
 
@@ -68,6 +85,7 @@ $('.action_reset_password').click(function() {
   $('#password').val('');
   $('#password2').val('');
   display_block('step_1_password');
+  evaluate_password_strength();
   $('#password').focus();
 });
 
@@ -86,7 +104,7 @@ function openpgp_key_encrypt(key, passphrase) {
 
 $('.action_backup').click(prevent(doubleclick(), function(self) {
   if($('#password').val() !== $('#password2').val()) {
-    alert('The two passwords do not match, please try again.');
+    alert('The two pass phrases do not match, please try again.');
     $('#password2').val('');
     $('#password2').focus();
   } else {
@@ -105,7 +123,7 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
       type: 'text/plain',
       content: prv.armor(),
     }];
-    var email_message = 'I hope you\'ll enjoy CryptUP! This email might come handy later.\n\nThe backup file below is encrypted using your password. Make sure to keep the password safe! Loss of password might not be recoverable, and will cause your encrypted communication to become undreadable.\n\nDon\'t forward this email to anyone! And say Hi at tom@cryptup.org :)';
+    var email_message = 'I hope you\'ll enjoy CryptUP! This email might come handy later.\n\nThe backup file below is encrypted using your pass phrase. Make sure to keep the pass phrase safe! Loss of pass phrase might not be recoverable, and will cause your encrypted communication to become undreadable.\n\nDon\'t forward this email to anyone!\n\n Any feedback is welcome at tom@cryptup.org';
     gmail_api_message_send(url_params.account_email, email_message, email_headers, email_attachments, null, function(success, response) {
       if(success) { // todo - test pulling it and decrypting it
         account_storage_set(url_params.account_email, {

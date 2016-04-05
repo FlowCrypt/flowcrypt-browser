@@ -111,6 +111,77 @@ function fetch_email_key_backups(account_email, callback) {
   });
 }
 
+function readable_crack_time(total_seconds) { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
+  function numberEnding(number) {
+    return(number > 1) ? 's' : '';
+  }
+  total_seconds = Math.round(total_seconds);
+  var millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
+  if(millennia) {
+    return millennia === 1 ? 'a millennium' : 'millennia';
+  }
+  var centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
+  if(centuries) {
+    return centuries === 1 ? 'a century' : 'centuries';
+  }
+  var years = Math.round(total_seconds / (86400 * 30 * 12));
+  if(years) {
+    return years + ' year' + numberEnding(years);
+  }
+  var months = Math.round(total_seconds / (86400 * 30));
+  if(months) {
+    return months + ' month' + numberEnding(months);
+  }
+  var days = Math.round(total_seconds / 86400);
+  if(days) {
+    return days + ' day' + numberEnding(days);
+  }
+  var hours = Math.round(total_seconds / 3600);
+  if(hours) {
+    return hours + ' hour' + numberEnding(hours);
+  }
+  var minutes = Math.round(total_seconds / 60);
+  if(minutes) {
+    return minutes + ' minute' + numberEnding(minutes);
+  }
+  var seconds = total_seconds % 60;
+  if(seconds) {
+    return seconds + ' second' + numberEnding(seconds);
+  }
+  return 'less than a second';
+}
+
+// https://threatpost.com/how-much-does-botnet-cost-022813/77573/
+// https://www.abuse.ch/?p=3294
+var minimal_allowed_time_to_crack = 3600 * 24; // one full botnet day > $5000
+var guesses_per_second = 10000 * 2 * 4000; //(10k ips) * (2 cores p/machine) * (4k guesses p/core)
+var crack_time_words = [
+  ['millenni', 'perfect', 100, 'green'],
+  ['centu', 'great', 80, 'green'],
+  ['year', 'good', 60, 'orange'],
+  ['month', 'reasonable', 40, 'darkorange'],
+  ['day', 'acceptable', 20, 'darkred'],
+  ['', 'weak', 10, 'red'],
+]; // word search, word rating, bar percent, color
+
+function crack_time_result(zxcvbn_result) {
+  var time_to_crack = zxcvbn_result.guesses / guesses_per_second;
+  for(var i = 0; i < crack_time_words.length; i++) {
+    var readable_time = readable_crack_time(time_to_crack);
+    if(readable_time.indexOf(crack_time_words[i][0]) !== -1) {
+      return {
+        word: crack_time_words[i][1],
+        bar: crack_time_words[i][2],
+        time: readable_time,
+        seconds: Math.round(time_to_crack),
+        pass: time_to_crack > minimal_allowed_time_to_crack,
+        color: crack_time_words[i][3],
+        suggestions: zxcvbn_result.feedback.suggestions,
+      };
+    }
+  }
+}
+
 $('.back').click(function() {
   window.location = 'index.htm';
 });
