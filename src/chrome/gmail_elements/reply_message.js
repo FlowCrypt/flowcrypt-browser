@@ -5,7 +5,7 @@ var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'fram
 var thread_message_id_last = '';
 var thread_message_referrences_last = '';
 
-$('div#reply_message_prompt, p#reply_links, a#a_reply, a#a_reply_all, a#a_forward').click(function() {
+$('div#reply_message_prompt').click(function() {
   $('div#reply_message_prompt').css('display', 'none');
   $('div#reply_message_table_container').css('display', 'block');
   reply_message_on_render();
