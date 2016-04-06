@@ -1,79 +1,90 @@
 <html>
-  <head>
-    <link rel="stylesheet" href="/css/font-awesome.min.css" />
-    <link rel="stylesheet" href="/css/ionicons.min.css">
-    <link rel="stylesheet" href="/css/cryptup.css" />
-    <link rel="stylesheet" href="/css/animate.css" />
-    <link rel="stylesheet" href="/lib/fine_uploader/fine-uploader-new.css" />
-    <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
-  </head>
 
-  <body id="body">
+<head>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css">
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="stylesheet" href="/lib/fine_uploader/fine-uploader-new.css" />
+  <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
+</head>
 
-    <div id="contacts"><ul></ul></div>
-    <table id="compose">
-      <tr>
-        <th> <!-- header -->
-          <span class="close_new_message"><i class="ion-android-close" tabindex="-1"></i></span>
-          <h1>New Secure Message </h1>
-        </th>
-      </tr>
-      <tr>
-        <td class="input" id="input_addresses_container"> <!-- to -->
-          <span class="recipients"></span>
-          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient" />
-        </td>
-      </tr>
-      <tr>
-        <td class="input"> <!-- subject -->
-          <input id="input_subject" spellcheck="true" tabindex="2" placeholder="Subject" />
-        </td>
-      </tr>
-      <tr>
-        <td class="text"> <!-- body -->
-          <div contenteditable id="input_text" tabindex="3"></div>
-          <div id="fineuploader"></div>
-        </td>
-      </tr>
-      <tr id="challenge_question_container">
-        <td>
-          <div class="question-row">
-            <span class="circle">
+<body id="body">
+
+  <div id="contacts">
+    <ul></ul>
+  </div>
+  <table id="compose">
+    <tr>
+      <th>
+        <!-- header -->
+        <span class="close_new_message"><i class="ion-android-close" tabindex="-1"></i></span>
+        <h1>New Secure Message </h1>
+      </th>
+    </tr>
+    <tr>
+      <td class="input" id="input_addresses_container">
+        <!-- to -->
+        <span class="recipients"></span>
+        <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient" />
+      </td>
+    </tr>
+    <tr>
+      <td class="input">
+        <!-- subject -->
+        <input id="input_subject" spellcheck="true" tabindex="2" placeholder="Subject" />
+      </td>
+    </tr>
+    <tr>
+      <td class="text">
+        <!-- body -->
+        <div contenteditable id="input_text" tabindex="3"></div>
+        <div id="fineuploader"></div>
+      </td>
+    </tr>
+    <tr id="challenge_question_container">
+      <td>
+        <div class="question-row">
+          <span class="circle">
               <i class="ion-ios-locked"></i>
             </span>
-            <div class="question-copy">
-              <p>
-                One or more recipient doesn't have CryptUP or other PGP app yet.
-              Send an encrypted message with a a question they can answer.</p>
-            </div>
+          <div class="question-copy">
+            <p>
+              One or more recipient doesn't have CryptUP or other PGP app yet. Send an encrypted message with a a question they can answer.</p>
           </div>
-          <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
-          <span style="display: inline-block; width: 33px;">&nbsp;</span>
-          <span class="start">"</span><input id="input_answer" placeholder="Answer" /><span class="end">"</span>
-        </td>
-      </tr>
-      <tr class="bottom">
-        <td class="bottom"> <!-- bottom -->
-          <div id="send_btn" class="button_secure">
-            <i class=""></i>&nbsp;&nbsp;<span tabindex="4">Send pgp encrypted</span>&nbsp;&nbsp;
-          </div>
-          <div class="icon attach" id="fineuploader_button" tabindex="-1"><div></div></div>
-					<div id="send_btn_note"></div>
-          <img class="cryptup-logo-bottom" src="/img/logo-76-18-full.png" alt="Cryptup Logo">
-        </td>
-      </tr>
-    </table>
+        </div>
+        <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
+        <span style="display: inline-block; width: 33px;">&nbsp;</span>
+        <span class="start">"</span>
+        <input id="input_answer" placeholder="Answer" /><span class="end">"</span>
+      </td>
+    </tr>
+    <tr class="bottom">
+      <td class="bottom">
+        <!-- bottom -->
+        <div id="send_btn" class="button_secure">
+          <i class=""></i>&nbsp;&nbsp;<span tabindex="4">Send pgp encrypted</span>&nbsp;&nbsp;
+        </div>
+        <div class="icon attach" id="fineuploader_button" tabindex="-1">
+          <div></div>
+        </div>
+        <div id="send_btn_note"></div>
+        <img class="cryptup-logo-bottom" src="/img/logo-76-18-full.png" alt="Cryptup Logo">
+      </td>
+    </tr>
+  </table>
 
-    <script src="/lib/openpgp.js"></script>
-    <script src="/lib/jquery.min.js"></script>
-    <script src="/lib/require.js"></script>
-    <script src="/lib/fine_uploader/fine-uploader.js"></script>
-    <script src="/js/common/storage.js"></script>
-    <script src="/js/common/keyserver.js"></script>
-    <script src="/js/common/gmail_api.js"></script>
-    <script src="/js/common/common.js"></script>
-    <script src="shared/compose.js"></script>
-    <script src="shared/attach.js"></script>
-    <script src="new_message.js"></script>
-  </body>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/lib/fine_uploader/fine-uploader.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/keyserver.js"></script>
+  <script src="/js/common/gmail_api.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="shared/compose.js"></script>
+  <script src="shared/attach.js"></script>
+  <script src="new_message.js"></script>
+</body>
+
 </html>

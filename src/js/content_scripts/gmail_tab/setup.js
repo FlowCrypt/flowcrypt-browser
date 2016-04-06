@@ -1,3 +1,4 @@
+'use strict';
 
 function save_account_email_full_name(account_email) {
   // will cycle until page loads and name is accessible

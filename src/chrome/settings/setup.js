@@ -234,7 +234,7 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
       }
     }
   } else {
-    alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.')
+    alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.');
   }
 }));
 

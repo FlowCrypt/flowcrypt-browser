@@ -1,33 +1,46 @@
 <html>
-  <head>
-    <link rel="stylesheet" href="/css/font-awesome.min.css" />
-    <link rel="stylesheet" href="/css/ionicons.min.css" />
-    <link rel="stylesheet" href="/css/cryptup.css" />
 
-    <style>
-      body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; }
-      html { padding:0px; margin: 0px; }
-    </style>
-  </head>
-  <body class="attachment">
-    <div id="download">
-      <i class="fa fa-download"></i>
-      <div class="download-prompt">DOWNLOAD</div>
-    </div>
-    <span class="file-format-holder">
+<head>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/css/cryptup.css" />
+
+  <style>
+    body {
+      font-family: arial, sans-serif;
+      font-size: 12.8px;
+      padding: 0px;
+      margin: 0px;
+      background-color: #FFF;
+    }
+
+    html {
+      padding: 0px;
+      margin: 0px;
+    }
+  </style>
+</head>
+
+<body class="attachment">
+  <div id="download">
+    <i class="fa fa-download"></i>
+    <div class="download-prompt">DOWNLOAD</div>
+  </div>
+  <span class="file-format-holder">
       <img id="file-format" src="/img/fileformat/generic.png" alt="png file" />
     </span>
-    <div id="header">
-      <span>ENCRYPTED FILE</span>
-    </div>
-    <div id="name">something-or-other.txt</div>
+  <div id="header">
+    <span>ENCRYPTED FILE</span>
+  </div>
+  <div id="name">something-or-other.txt</div>
 
-    <script src="/lib/jquery.min.js"></script>
-    <script src="/lib/openpgp.js"></script>
-    <script src="/js/common/storage.js"></script>
-    <script src="/js/common/gmail_api.js"></script>
-    <script src="/js/common/common.js"></script>
-    <script src="attachment.js"></script>
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/gmail_api.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="attachment.js"></script>
 
-  </body>
+</body>
+
 </html>

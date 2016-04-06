@@ -1,84 +1,95 @@
 <html>
-  <head>
-    <link rel="stylesheet" href="/css/font-awesome.min.css" />
-    <link rel="stylesheet" href="/css/cryptup.css" />
-    <link rel="stylesheet" href="/css/ionicons.min.css">
-    <link rel="stylesheet" href="/lib/fine_uploader/fine-uploader-new.css" />
-    <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
-  </head>
-  <body id="reply_message">
 
-    <div id="reply_message_prompt">
-      <p id="reply_links">Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#" id="a_forward">Forward</a></p>
-    </div>
+<head>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css">
+  <link rel="stylesheet" href="/lib/fine_uploader/fine-uploader-new.css" />
+  <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
+</head>
 
-    <div id="reply_message_table_container">
-      <table id="compose">
-        <tr>
-          <td class="input" id="input_addresses_container"> <!-- to -->
-            <span class="recipients"></span>
-            <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient" style="border-top: ">
-          </td>
-        </tr>
-        <tr>
-          <td class="text"> <!-- body -->
-            <div contenteditable id="input_text"></div>
-            <div id="fineuploader"></div>
-          </td>
-        </tr>
-        <tr id="challenge_question_container">
-          <td>
-            <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
-            <span style="display: inline-block; width: 33px;">&nbsp;</span>
-            <span class="start">"</span><input id="input_answer" placeholder="answer" /><span class="end">"</span>
-            <p>Only needed when they don't have CryptUP or other PGP app yet.</p>
-          </td>
-        </tr>
-        <tr class="bottom">
-          <td class="bottom"> <!-- bottom -->
-            <div id="send_btn" class="button_secure">
-              <i class=""></i>&nbsp;&nbsp;<span tabindex="4">Send pgp encrypted</span>&nbsp;&nbsp;
-            </div>
-            <div class="icon attach" id="fineuploader_button" tabindex="-1"><div></div></div>
-						<div id="send_btn_note"></div>
-              <img class="cryptup-logo-bottom" src="/img/logo-76-18-full.png" alt="Cryptup Logo">
-          </td>
-        </tr>
-      </table>
-    </div>
+<body id="reply_message">
 
-    <div id="reply_message_successful_container">
-      <table>
-        <tr class="first">
-          <td> <!-- to -->
-            <div class="replied_from"></div>
-            <div class="replied_to">to <span></span></div>
-          </td>
-          <td class="right">
-            <div class="replied_time"></div>
-          </td>
-        </tr>
-        <tr>
-          <td> <!-- body -->
-            <div class="replied_body pgp_secure"></div>
-          </td>
-        </tr>
-      </table>
-      <div id="attachments"></div>
-    </div>
+  <div id="reply_message_prompt">
+    <p id="reply_links">Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#" id="a_forward">Forward</a></p>
+  </div>
 
-    <script src="/lib/jquery.min.js"></script>
-    <script src="/lib/openpgp.js"></script>
-    <script src="/lib/require.js"></script>
-    <script src="/lib/fine_uploader/fine-uploader.js"></script>
-    <script src="/js/common/storage.js"></script>
-    <script src="/js/common/keyserver.js"></script>
-    <script src="/js/common/gmail_api.js"></script>
-    <script src="/js/common/common.js"></script>
-    <script src="/js/content_scripts/gmail_tab/elements/factory.js"></script>
-    <script src="shared/compose.js"></script>
-    <script src="shared/attach.js"></script>
-    <script src="reply_message.js"></script>
+  <div id="reply_message_table_container">
+    <table id="compose">
+      <tr>
+        <td class="input" id="input_addresses_container">
+          <!-- to -->
+          <span class="recipients"></span>
+          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Recipient" style="border-top: ">
+        </td>
+      </tr>
+      <tr>
+        <td class="text">
+          <!-- body -->
+          <div contenteditable id="input_text"></div>
+          <div id="fineuploader"></div>
+        </td>
+      </tr>
+      <tr id="challenge_question_container">
+        <td>
+          <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
+          <span style="display: inline-block; width: 33px;">&nbsp;</span>
+          <span class="start">"</span>
+          <input id="input_answer" placeholder="answer" /><span class="end">"</span>
+          <p>Only needed when they don't have CryptUP or other PGP app yet.</p>
+        </td>
+      </tr>
+      <tr class="bottom">
+        <td class="bottom">
+          <!-- bottom -->
+          <div id="send_btn" class="button_secure">
+            <i class=""></i>&nbsp;&nbsp;<span tabindex="4">Send pgp encrypted</span>&nbsp;&nbsp;
+          </div>
+          <div class="icon attach" id="fineuploader_button" tabindex="-1">
+            <div></div>
+          </div>
+          <div id="send_btn_note"></div>
+          <img class="cryptup-logo-bottom" src="/img/logo-76-18-full.png" alt="Cryptup Logo">
+        </td>
+      </tr>
+    </table>
+  </div>
 
-  </body>
+  <div id="reply_message_successful_container">
+    <table>
+      <tr class="first">
+        <td>
+          <!-- to -->
+          <div class="replied_from"></div>
+          <div class="replied_to">to <span></span></div>
+        </td>
+        <td class="right">
+          <div class="replied_time"></div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <!-- body -->
+          <div class="replied_body pgp_secure"></div>
+        </td>
+      </tr>
+    </table>
+    <div id="attachments"></div>
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/lib/fine_uploader/fine-uploader.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/keyserver.js"></script>
+  <script src="/js/common/gmail_api.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="/js/content_scripts/gmail_tab/elements/factory.js"></script>
+  <script src="shared/compose.js"></script>
+  <script src="shared/attach.js"></script>
+  <script src="reply_message.js"></script>
+
+</body>
+
 </html>
