@@ -54,13 +54,16 @@ function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   });
 }
 
-function submit_pubkey_alternative_addresses(addresses, pubkey, callback) {
+function submit_pubkeys(addresses, pubkey, callback, success) {
   if(addresses.length) {
+    if(typeof success === 'undefined') {
+      success = true;
+    }
     keyserver_keys_submit(addresses.pop(), pubkey, function(key_submitted, response) {
-      submit_pubkey_alternative_addresses(addresses, pubkey, callback);
+      submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
     });
   } else {
-    callback();
+    callback(success);
   }
 }
 
@@ -153,16 +156,15 @@ function readable_crack_time(total_seconds) { // http://stackoverflow.com/questi
 
 // https://threatpost.com/how-much-does-botnet-cost-022813/77573/
 // https://www.abuse.ch/?p=3294
-var minimal_allowed_time_to_crack = 3600 * 24; // one full botnet day > $5000
 var guesses_per_second = 10000 * 2 * 4000; //(10k ips) * (2 cores p/machine) * (4k guesses p/core)
 var crack_time_words = [
-  ['millenni', 'perfect', 100, 'green'],
-  ['centu', 'great', 80, 'green'],
-  ['year', 'good', 60, 'orange'],
-  ['month', 'reasonable', 40, 'darkorange'],
-  ['day', 'acceptable', 20, 'darkred'],
-  ['', 'weak', 10, 'red'],
-]; // word search, word rating, bar percent, color
+  ['millenni', 'perfect', 100, 'green', true],
+  ['centu', 'great', 80, 'green', true],
+  ['year', 'good', 60, 'orange', true],
+  ['month', 'reasonable', 40, 'darkorange', true],
+  ['day', 'acceptable', 20, 'darkred', true],
+  ['', 'weak', 10, 'red', false],
+]; // word search, word rating, bar percent, color, pass
 
 function crack_time_result(zxcvbn_result) {
   var time_to_crack = zxcvbn_result.guesses / guesses_per_second;
@@ -174,7 +176,7 @@ function crack_time_result(zxcvbn_result) {
         bar: crack_time_words[i][2],
         time: readable_time,
         seconds: Math.round(time_to_crack),
-        pass: time_to_crack > minimal_allowed_time_to_crack,
+        pass: crack_time_words[i][4],
         color: crack_time_words[i][3],
         suggestions: zxcvbn_result.feedback.suggestions,
       };
