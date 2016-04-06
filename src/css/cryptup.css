@@ -38,17 +38,17 @@ body#settings > div#content.setup div#step_1_easy_or_manual { display: none; }
 body#settings > div#content.setup div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white; text-align: center; font-size: 16px; font-weight: normal;
   padding-left: 375px; padding-top: 164px; color: #666; }
 body#settings > div#content.setup div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
-body#settings > div#content.setup div#step_2_manual { display: none; }
-body#settings > div#content.setup div#step_2_manual > div { width: 600px; text-align: left; display: inline-block; }
-body#settings > div#content.setup div#step_2_manual textarea { width: 600px; height: 300px; font-size: 12px; text-align: left; margin-top:-15px; padding: 8px; }
-body#settings > div#content.setup div#step_2_manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0px auto;}
-body#settings > div#content.setup div#step_2_manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
-body#settings > div#content.setup div#step_2_manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
-body#settings > div#content.setup div#step_2_manual label { padding-left: 20px;  }
-body#settings > div#content.setup div#step_2_manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
-body#settings > div#content.setup div#step_2_manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
-body#settings > div#content.setup div#step_2_manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
-body#settings > div#content.setup div#step_2_manual #addresses { color: #888; }
+body#settings > div#content.setup div.manual { display: none; }
+body#settings > div#content.setup div.alignleft { width: 600px; text-align: left; display: inline-block; }
+body#settings > div#content.setup div.manual textarea { width: 600px; height: 300px; font-size: 12px; text-align: left; margin-top:-15px; padding: 8px; }
+body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0px auto;}
+body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
+body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
+body#settings > div#content.setup div.manual label { padding-left: 20px;  }
+body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
+body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
+body#settings > div#content.setup div.manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
+body#settings > div#content.setup div.manual #addresses { color: #888; }
 body#settings > div#content.setup div#step_2_recovery { display: none; }
 body#settings > div#content.setup div#step_3_backup { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
