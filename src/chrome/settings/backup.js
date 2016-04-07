@@ -115,7 +115,8 @@ function backup_key_on_gmail(account_email, armored_key, error_callback) {
 }
 
 $('.action_backup').click(prevent(doubleclick(), function(self) {
-  if($('#password').val() !== $('#password2').val()) {
+  var new_passphrase = $('#password').val();
+  if(new_passphrase !== $('#password2').val()) {
     alert('The two pass phrases do not match, please try again.');
     $('#password2').val('');
     $('#password2').focus();
@@ -124,7 +125,10 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
     $(self).html(get_spinner());
     var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
     var prv = openpgp.key.readArmored(armored_private_key).keys[0];
-    openpgp_key_encrypt(prv, $('#password').val());
+    openpgp_key_encrypt(prv, new_passphrase);
+    private_storage_set(localStorage, url_params.account_email, 'master_passphrase', new_passphrase);
+    private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true);
+    private_storage_set(localStorage, url_params.account_email, 'master_private_key', prv.armor());
     backup_key_on_gmail(url_params.account_email, prv.armor(), function(error_message) {
       $(self).html(btn_text);
       alert(error_message);
