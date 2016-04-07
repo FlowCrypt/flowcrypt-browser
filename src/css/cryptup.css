@@ -57,11 +57,16 @@ body#settings > div#content.setup div#loading { margin-top: 150px; }
 
 body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
+body#settings > div#content.backup div#step_3_manual { display: none; }
 body#settings > div#content.backup .password_feedback { display: none; }
-body#settings > div#content.backup .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
-body#settings > div#content.backup div.password_bar { width: 300px; border: none; display: inline-block; border: none; }
-body#settings > div#content.backup div.password_bar > div { width: 0; height: 3px; }
-body#settings > div#content.backup #password, body#settings > div#content.backup #password2 { width: 300px; }
+body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; margin-left: 330px; margin-top: 7px; }
+body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
+body#settings > div#content.backup div.password_bar, body#settings > div#content.setup div.manual div.password_bar { width: 300px; border: none; display: inline-block; border: none; }
+body#settings > div#content.backup div.password_bar > div, body#settings > div#content.setup div.manual div.password_bar > div { width: 0; height: 3px; }
+body#settings > div#content.backup #password, body#settings > div#content.backup #password2,
+body#settings > div#content.setup div.manual .input_password, body#settings > div#content.setup div.manual .input_password2 {
+  width: 300px;
+}
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
 body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }

@@ -16,8 +16,8 @@ account_storage_get(url_params.account_email, ['addresses'], function(storage) {
       if(i !== -1) {
         addrs.splice(i, 1);
       }
-      $('#addresses').text(addrs.join(', '));
-      $('#input_submit_all').parent().css('visibility', 'visible');
+      $('.addresses').text(addrs.join(', '));
+      $('#step_2a_manual_create .input_submit_all, #step_2b_manual_enter .input_submit_all').parent().css('visibility', 'visible');
     }
   }
   if(typeof storage.addresses === 'undefined') {
@@ -40,7 +40,6 @@ function display_block(name) {
     'step_0_found_key',
     'step_1_easy_or_manual',
     'step_2_manual', 'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
-    'step_3_backup',
     'step_4_done'
   ];
   if(name) { //set
@@ -143,52 +142,67 @@ function submit_public_key_if_needed(account_email, armored_pubkey, submit_main,
   });
 }
 
-function create_save_submit_key_pair(account_email, email_name, passphrase, submit_main, submit_all, simple) {
+function create_save_key_pair(account_email, options) {
   openpgp.generateKey({
     numBits: 4096,
     userIds: [{ // todo - add all addresses?
-      name: email_name,
+      name: options.name,
       email: account_email
     }],
-    passphrase: passphrase
+    passphrase: options.passphrase
   }).then(function(key) {
-    save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], passphrase, {
-      to_submit_pubkey: true,
-      save_passphrase: true,
+    save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], options.passphrase, {
+      to_submit_pubkey: options.submit_main,
+      save_passphrase: options.save_passphrase,
     });
-    submit_public_key_if_needed(account_email, key.publicKeyArmored, submit_main, submit_all, function() {
+    submit_public_key_if_needed(account_email, key.publicKeyArmored, options.submit_main, options.submit_all, function() {
       account_storage_set(account_email, {
         setup_done: true,
-        setup_simple: simple,
+        setup_simple: options.simple,
         key_backup_prompt: Date.now(),
       }, function() {
-        setup_dialog_set_done(true, simple);
+        setup_dialog_set_done(true, options.simple);
       });
     });
   }).catch(function(error) {
-    $('#step_2_easy_generating').html('Error, thnaks for discovering it!<br/><br/>This is an early development version.<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed in red and send them to me.<br/><br/>tom@cryptup.org - thanks!');
+    $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>This is an early development version.<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed in red and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
     console.log(error);
     console.log('--- thanks ---')
   });
 }
 
+function get_and_save_userinfo(account_email, callback) {
+  google_api_userinfo(account_email, function(success, response) {
+    var result = {
+      full_name: response.name || '',
+      gender: response.gender,
+      locale: response.locale,
+      picture: response.picture
+    };
+    if(success) {
+      account_storage_set(account_email, result, function() {
+        callback(result);
+      });
+    } else { // todo - will result in missing name in pubkey, and should have better handling
+      callback(result);
+    }
+  });
+
+}
+
 $('.action_simple_setup').click(function() {
   display_block('step_2_easy_generating');
   $('h1').text('Please wait, setting up CryptUP');
-  google_api_userinfo(url_params.account_email, function(success, response) {
-    if(success) {
-      account_storage_set(url_params.account_email, {
-        full_name: response.name,
-        gender: response.gender,
-        locale: response.locale,
-        picture: response.picture
-      }, function() {
-        create_save_submit_key_pair(url_params.account_email, response.name, '', true, true, true);
-      });
-    } else { // todo - will result in missing name in pubkey, and should have better handling
-      create_save_submit_key_pair(url_params.account_email, '', '', true, true, true);
-    }
+  get_and_save_userinfo(url_params.account_email, function(userinfo) {
+    create_save_key_pair(url_params.account_email, {
+      name: userinfo.name,
+      passphrase: '',
+      save_passphrase: true,
+      submit_main: true,
+      submit_all: true,
+      simple: true,
+    });
   });
 });
 
@@ -246,48 +260,48 @@ $('.action_account_settings').click(function() {
   window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
 });
 
-$('#input_submit_key').click(function() {
-  if($('#input_submit_key').prop('checked')) {
-    if($('#input_submit_all').parent().css('visibility') === 'visible') {
-      $('#input_submit_all').prop({
+$('.input_submit_key').click(function() {
+  if($(this).prop('checked')) {
+    if($(this).parent().parent().children('.input_submit_all').css('visibility') === 'visible') {
+      $(this).parent().parent().children('.input_submit_all').prop({
         checked: true,
         disabled: false
       });
     }
   } else {
-    $('#input_submit_all').prop({
+    $(this).parent().parent().children('.input_submit_all').prop({
       checked: false,
       disabled: true
     });
   }
 });
 
-$('.action_manual_create_key').click(function() {
+$('#step_0_found_key .action_manual_create_key, #step_2_manual .action_manual_create_key').click(function() {
   display_block('step_2a_manual_create');
 });
 
-$('.action_manual_enter_key').click(function() {
+$('#step_0_found_key .action_manual_enter_key, #step_2_manual .action_manual_enter_key').click(function() {
   display_block('step_2b_manual_enter');
 });
 
-$('.action_save_private').click(function() {
-  var prv = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
-  var prv_to_test_passphrase = openpgp.key.readArmored($('#input_private_key').val()).keys[0];
+$('#step_2b_manual_enter .action_save_private').click(function() {
+  var prv = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
+  var prv_to_test_passphrase = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
   if(typeof prv === 'undefined') {
     alert('Private key is not correctly formated. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
   } else if(prv.isPublic()) {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
-  } else if(prv_to_test_passphrase.decrypt($('#input_passphrase').val()) === false) {
+  } else if(prv_to_test_passphrase.decrypt($('#step_2b_manual_enter .input_passphrase').val()) === false) {
     alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
-    $('#input_passphrase').val('');
-    $('#input_passphrase').focus();
+    $('#step_2b_manual_enter .input_passphrase').val('');
+    $('#step_2b_manual_enter .input_passphrase').focus();
   } else {
-    $('.action_save_private').html(get_spinner());
-    save_private_key(url_params.account_email, prv, $('#input_passphrase').val(), {
-      to_submit_pubkey: $('#input_submit_key').prop('checked'),
-      save_passphrase: $('#input_passphrase_save').prop('checked'),
+    $('#step_2b_manual_enter .action_save_private').html(get_spinner());
+    save_private_key(url_params.account_email, prv, $('#step_2b_manual_enter .input_passphrase').val(), {
+      to_submit_pubkey: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+      save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
     });
-    submit_public_key_if_needed(url_params.account_email, prv.toPublic().armor(), $('#input_submit_key').prop('checked'), $('#input_submit_all').prop('checked'), function() {
+    submit_public_key_if_needed(url_params.account_email, prv.toPublic().armor(), $('#step_2b_manual_enter .input_submit_key').prop('checked'), $('#step_2b_manual_enter .input_submit_all').prop('checked'), function() {
       account_storage_set(url_params.account_email, {
         setup_done: true,
         setup_simple: false,
@@ -298,5 +312,36 @@ $('.action_save_private').click(function() {
     });
   }
 });
+
+$('#step_2a_manual_create .input_password').on('keyup', prevent(spree(), function() {
+  evaluate_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
+}));
+
+$('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), function() {
+  if(!$('#step_2a_manual_create .input_password').val()) {
+    alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
+    $('#step_2a_manual_create .input_password').focus();
+  } else if($('#step_2a_manual_create .action_create_private').hasClass('gray')) {
+    alert('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
+    $('#step_2a_manual_create .input_password').focus();
+  } else if($('#step_2a_manual_create .input_password').val() !== $('#step_2a_manual_create .input_password2').val()) {
+    alert('The pass phrases do not match. Please try again.');
+    $('#step_2a_manual_create .input_password2').val('');
+    $('#step_2a_manual_create .input_password2').focus();
+  } else {
+    $('h1').text('Please wait, setting up CryptUP');
+    $('#step_2a_manual_create .action_create_private').html(get_spinner() + 'just a minute');
+    get_and_save_userinfo(url_params.account_email, function(userinfo) {
+      create_save_key_pair(url_params.account_email, {
+        name: userinfo.name,
+        passphrase: $('#step_2a_manual_create .input_password').val(),
+        save_passphrase: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
+        submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
+        submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
+        simple: false,
+      });
+    });
+  }
+}));
 
 setup_dialog_init();

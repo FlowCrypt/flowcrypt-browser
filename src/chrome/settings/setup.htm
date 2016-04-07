@@ -66,30 +66,58 @@
     </div>
 
     <div id="step_2a_manual_create" class="manual">
-      <div>
-        todo: create a key manually
+      <div class="alignleft">
+        <div class="line ">Protect your key with a pass phrase. Best pass phrases are long and contain several words.</div>
+        <div class="line password_feedback"><span class="password_result"></span> (average time to crack: <span class="password_time"></span>)
+          <ul></ul>
+        </div>
+        <div class="line">
+          <input class="input_password" type="text" placeholder="Pass phrase" />
+          <br/>
+          <div class="password_bar">
+            <div></div>
+          </div>
+        </div>
+        <div class="line">
+          <input class="input_password2" type="text" placeholder="Repeat pass phrase" />
+        </div>
+        <div class="line">
+          <input class="input_passphrase_save" type="checkbox" />
+          <label for="input_passphrase_save">Remember Pass Phrase after closing browser.</label>
+        </div>
+        <div class="line">
+          <input class="input_submit_key" type="checkbox" />
+          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere)</label>
+        </div>
+        <div class="line" style="visibility: hidden;">
+          <input class="input_submit_all" type="checkbox" disabled="disabled" />
+          <label for="input_submit_all">Also submit the same pubkey for: <span class="addresses"></span></label>
+        </div>
+        <div class="line">
+          <div class="button long gray action_create_private">CREATE AND SAVE</div>
+        </div>
       </div>
     </div>
 
     <div id="step_2b_manual_enter" class="manual">
       <div class="alignleft">
         <div class="line">
-          <textarea id="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+          <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
         </div>
         <div class="line">
-          <input id="input_submit_key" type="checkbox" />
-          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync to any other keyservers)</label>
+          <input class="input_submit_key" type="checkbox" />
+          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere)</label>
         </div>
         <div class="line" style="visibility: hidden;">
-          <input id="input_submit_all" type="checkbox" disabled="disabled" />
-          <label for="input_submit_all">Also submit the same pubkey for: <span id="addresses"></span></label>
+          <input class="input_submit_all" type="checkbox" disabled="disabled" />
+          <label for="input_submit_all">Also submit the same pubkey for: <span class="addresses"></span></label>
         </div>
         <div class="line">
-          <input id="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+          <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
         </div>
         <div class="line">
-          <input id="input_passphrase_save" type="checkbox" />
-          <label for="input_passphrase_save">Remember Passphrase after closing browser.</label>
+          <input class="input_passphrase_save" type="checkbox" />
+          <label for="input_passphrase_save">Remember Pass Phrase after closing browser.</label>
         </div>
         <div class="line">
           <div class="button long green action_save_private">SAVE</div>
@@ -98,38 +126,12 @@
     </div>
 
     <div id="step_2_recovery">
-      <div class="line">Found a backup of your account key. Enter your password to continue.</div>
+      <div class="line">Found a backup of your account key. Enter your pass phrase to continue.</div>
       <div class="line">
-        <input type="text" id="recovery_pasword" placeholder="Enter your password" />
+        <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase" />
       </div>
       <div class="line">
         <div class="button green long action_recover_account">RECOVER ACCOUNT</div>
-      </div>
-    </div>
-
-    <div id="step_3_backup">
-      <div class="first">
-        <div class="line">Loss of this password cannot be recovered. Note this password on a paper, and file it with your important documents.</div>
-        <div class="line">
-          <input id="password" type="text" placeholder="Password" />
-        </div>
-        <div class="line">
-          <div class="button long green action_password">SET PASSWORD</div>
-        </div>
-        <div class="line">&nbsp;</div>
-        <div class="line" style="color: #888;">Use 8+ characters, 1+ lowercase letters, 1+ uppercase letters, 1+ digits.</div>
-      </div>
-      <div class="second">
-        <div class="line">Please repeat it one more time. Make sure to note the password down.</div>
-        <div class="line">
-          <input id="password2" type="text" placeholder="Repeat password" />
-        </div>
-        <div class="line">
-          <div class="button long green action_backup">CONFIRM PASSWORD</div>
-        </div>
-        <div class="line">
-          <div class="button long gray action_reset_password">USE ANOTHER PASSWORD</div>
-        </div>
       </div>
     </div>
 
@@ -148,6 +150,7 @@
   </div>
 
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/zxcvbn.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/require.js"></script>
   <script src="/js/common/storage.js"></script>
