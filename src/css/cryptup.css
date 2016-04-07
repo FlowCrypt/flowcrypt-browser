@@ -14,6 +14,11 @@
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 
+.lightboxed { width: 700px; }
+.lightboxed pre { padding-top: 0px; margin-top: 0px; }
+.good { color: #088447; }
+.bad { color: #A44; }
+
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
 body#settings > div#content {  margin-top: 120px; }
 body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
