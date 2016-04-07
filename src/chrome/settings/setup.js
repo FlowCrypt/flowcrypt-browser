@@ -192,6 +192,11 @@ function get_and_save_userinfo(account_email, callback) {
 }
 
 $('.action_simple_setup').click(function() {
+  if($(this).parents('.manual').length) {
+    if(!confirm('This sets up your account automatically. Great choice for most users.')) {
+      return;
+    }
+  }
   display_block('step_2_easy_generating');
   $('h1').text('Please wait, setting up CryptUP');
   get_and_save_userinfo(url_params.account_email, function(userinfo) {
@@ -208,7 +213,7 @@ $('.action_simple_setup').click(function() {
 
 $('.action_manual_setup').click(function() {
   display_block('step_2_manual');
-  $('h1').text('Manual Setup');
+  $('h1').text('Advanced Setup');
 });
 
 $('.back').off().click(function() {
@@ -261,15 +266,21 @@ $('.action_account_settings').click(function() {
 });
 
 $('.input_submit_key').click(function() {
+  var input_submit_all = $(this).closest('.manual').find('.input_submit_all');
   if($(this).prop('checked')) {
-    if($(this).parent().parent().children('.input_submit_all').css('visibility') === 'visible') {
-      $(this).parent().parent().children('.input_submit_all').prop({
+    console.log(1);
+    console.log(input_submit_all.css('visibility'));
+
+    if(input_submit_all.css('visibility') === 'visible') {
+      console.log(3);
+      input_submit_all.prop({
         checked: true,
         disabled: false
       });
     }
   } else {
-    $(this).parent().parent().children('.input_submit_all').prop({
+    console.log(2);
+    input_submit_all.prop({
       checked: false,
       disabled: true
     });
