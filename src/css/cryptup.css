@@ -116,7 +116,7 @@ body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px so
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
-table#compose th { width: 538px; height: 36px; background-color: rgba(8, 132, 71, .8); text-align: left; margin: 0px; border: 1px solid #088447}
+table#compose th { width: 538px; height: 36px; background-color: #088447; text-align: left; margin: 0px; border: 1px solid #088447}
 table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose td#input_addresses_container .recipients { height: auto; position: relative;}
 table#compose td#input_addresses_container .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative; -webkit-transition: .25s; transition: .25s;}
