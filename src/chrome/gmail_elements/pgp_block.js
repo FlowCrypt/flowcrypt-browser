@@ -4,6 +4,8 @@ var url_params = get_url_params(['account_email', 'frame_id', 'message', 'questi
 
 var ready_attachmments = [];
 
+var passphrase_interval = undefined;
+
 var l = {
   cant_open: 'Could not open this message with CryptUP.\n\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
@@ -18,7 +20,8 @@ var l = {
   question_decryt_prompt: 'To decrypt the message, answer: ',
   connection_error: 'Could not connect to Gmail to open the message, please refresh the page to try again. ',
   dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
-  missing_passphrase: 'Unable to open message without a passphrase.',
+  enter_passphrase: 'Enter passphrase',
+  to_open_message: 'to open this message.',
 }
 
 function format_plaintext(text) {
@@ -214,6 +217,7 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
       options[option_key] = challenge_answer_hash(option_value);
     }
     openpgp.decrypt(options).then(function(plaintext) {
+      $('body').removeClass('pgp_insecure').addClass('pgp_secure');
       decide_decrypted_content_formatting_and_render(plaintext.data);
     }).catch(function(error) {
       if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && option_key === 'privateKey') { // wrong private key
@@ -248,23 +252,38 @@ function render_password_prompt() {
   }));
 }
 
+function check_passphrase_entered() {
+  if(get_passphrase(url_params.account_email) !== null) {
+    clearInterval(passphrase_interval);
+    pgp_block_init();
+  }
+}
+
 function pgp_block_init() {
   var my_prvkey_armored = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
-  get_passphrase(url_params.account_email, function(my_passphrase) { //todo - add "waiting for passphrase" spinner
-    if(my_passphrase !== null) {
-      if(typeof my_prvkey_armored !== 'undefined') {
-        var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
-        if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-          private_key.decrypt(my_passphrase);
-        }
-        decrypt_and_render('privateKey', private_key);
-      } else {
-        render_error(l.cant_open + l.no_private_key);
+  var my_passphrase = get_passphrase(url_params.account_email);
+  if(my_passphrase !== null) {
+    if(typeof my_prvkey_armored !== 'undefined') {
+      var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
+      if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+        private_key.decrypt(my_passphrase);
       }
+      decrypt_and_render('privateKey', private_key);
     } else {
-      render_error(l.missing_passphrase);
+      render_error(l.cant_open + l.no_private_key);
     }
-  });
+  } else {
+    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message);
+    clearInterval(passphrase_interval);
+    passphrase_interval = setInterval(check_passphrase_entered, 1000);
+    $('.enter_passphrase').click(prevent(doubleclick(), function() {
+      chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
+        type: 'message'
+      });
+      clearInterval(passphrase_interval);
+      passphrase_interval = setInterval(check_passphrase_entered, 250);
+    }));
+  }
 }
 
 function extract_armored_message_from_text(text) {

@@ -3,7 +3,6 @@
 console.log('background_process.js starting');
 
 chrome_message_background_listen({
-  // ping: function(data, sender, respond) {
   migrate: migrate,
   google_auth: google_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
@@ -18,7 +17,7 @@ chrome.browserAction.onClicked.addListener(function() {
   open_settings_page(); // Called when the user clicks on the browser action icon.
 });
 
-function open_settings_page_handler(message, sender, callback) {
+function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.page);
 }
 

@@ -60,7 +60,7 @@ function parse_message_id_from(element_type, my_element) {
   return message_id;
 }
 
-function replace_pgp_attachments(account_email) {
+function replace_pgp_attachments(account_email, gmail_tab_id) {
   $('div.aQH').each(function() {
     var new_pgp_messages = $(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').not('.evaluated');
     if(new_pgp_messages.length) {
@@ -73,7 +73,7 @@ function replace_pgp_attachments(account_email) {
           message_id: message_id,
         }, function(response) {
           if(response.success && response.attachments) {
-            replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments);
+            replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments, gmail_tab_id);
           } else {
             //todo: show button to retry
           }
@@ -84,7 +84,7 @@ function replace_pgp_attachments(account_email) {
   });
 }
 
-function replace_pgp_attachments_in_message(account_email, message_id, classes, attachments) {
+function replace_pgp_attachments_in_message(account_email, message_id, classes, attachments, gmail_tab_id) {
   var container_selector = 'div.aQH.message_id_' + message_id;
   var pgp_attachments_selector = container_selector + ' > span[download_url*=".pgp:https"], ' + container_selector + ' > span[download_url*=".gpg:https"]';
   if($(pgp_attachments_selector).length === attachments.length) {
@@ -93,7 +93,7 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
     $(pgp_attachments_selector).css('display', 'none');
   }
   $.each(attachments, function(i, attachment) {
-    $(container_selector).prepend(pgp_attachment_iframe(account_email, attachment, classes));
+    $(container_selector).prepend(pgp_attachment_iframe(account_email, attachment, classes, gmail_tab_id));
   });
 }
 

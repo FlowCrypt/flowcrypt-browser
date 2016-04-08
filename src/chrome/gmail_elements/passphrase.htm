@@ -14,33 +14,28 @@
 
   <div id="content" class="passphrase">
     <div class="content-row-holder">
-      <h1>Enter your passphrase to read encrypted email</h1>
+      <h1>Enter your pass phrase to read encrypted email</h1>
     </div>
     <div class="separator"></div>
-    <input class="passphrase" type="text" placeholder="Enter Passphrase">
+    <input class="passphrase" type="text" placeholder="Enter Pass Phrase">
     <div class="line">
-      <div class="button long green ">OK</div>
+      <div class="button long green action_ok">OK</div>
       &nbsp;&nbsp;
-      <div class="button long gray ">LATER</div>
+      <div class="button long gray action_close">LATER</div>
     </div>
     <br>
     <div>
-      <input type="checkbox" name="passphrase" checked>
-      <label for="passphrase">Forget passphrase when I close chrome</label>
+      <input type="checkbox" name="forget" class="forget" checked="checked">
+      <label for="forget">Forget passphrase when I close chrome</label>
     </div>
   </div>
-  <div class="passphrase-overlay"></div>
 
-
-  <!-- Commenting out scripts for now
   <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/require.js"></script>
+  <script src="/lib/openpgp.js"></script>
   <script src="/js/common/storage.js"></script>
-  <script src="/js/common/gmail_api.js"></script>
-  <script src="/js/common/keyserver.js"></script>
   <script src="/js/common/common.js"></script>
   <script src="settings_common.js"></script>
-  <script src="account.js"></script> -->
+  <script src="passphrase.js"></script>
 </body>
 
 </html>

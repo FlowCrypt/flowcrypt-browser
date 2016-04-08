@@ -1,6 +1,7 @@
 'use strict';
 
 var account_email = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
+var tab_id_global = undefined;
 
 function initialize() {
   chrome_message_listen({
@@ -17,6 +18,14 @@ function initialize() {
     pgp_block_iframe_set_css: function(data) {
       $('iframe#' + data.frame_id).css(data.css);
     },
+    passphrase_dialog: function(data) {
+      if(!$('#cryptup_dialog').length) {
+        $('body').append(passphrase_dialog(account_email, data.type, tab_id_global));
+      }
+    },
+    close_dialog: function(data) {
+      $('#cryptup_dialog').remove();
+    },
   });
 
   chrome_message_send(null, 'migrate', {
@@ -27,6 +36,7 @@ function initialize() {
 
 function start() {
   chrome_message_get_tab_id(function(tab_id) {
+    tab_id_global = tab_id;
     inject_buttons(account_email, tab_id);
     show_initial_notifications(account_email);
     replace_pgp_elements(account_email, tab_id);
