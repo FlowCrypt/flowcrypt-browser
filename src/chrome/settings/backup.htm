@@ -66,12 +66,49 @@
     </div>
 
     <div id="step_3_manual">
-      <div class="line">It is recommended that you back up your key.</div>
+      <div class="line">Your key is stored in the browser. Backups are useful if you lose your laptop in the future.</div>
       <div class="line">
-        <div class="button long green action_manual_backup">BACK UP ON GMAIL</div>
+        <table class="backup_options">
+          <tr class="details">
+            <td><input type="radio" name="input_backup_choice" value="gmail" id="input_backup_gmail" checked="checked" /> <label for="input_backup_gmail">Gmail Inbox</label></td>
+            <td><span class="green_label">easy recovery</span></td>
+            <td><span class="orange_label">reasonable security</span></td>
+          </tr>
+          <tr class="text">
+            <td colspan="3">Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase, which should be very long and hard to guess. Best option for most users.</td>
+          </tr>
+          <tr class="details">
+            <td><input type="radio" name="input_backup_choice" value="file" id="input_backup_download" /> <label for="input_backup_download">download</label></td>
+            <td><span class="orange_label">medium recovery</span></td>
+            <td><span class="green_label">great security</span></td>
+          </tr>
+          <tr class="text">
+            <td colspan="3">Download your key as a file. Very secure option if your device is encrypted, or if you can keep a file stored securely. If you lose both your laptop and the file, your encrypted email will be unreadable, so you need to keep this file on a safe place. Regular emails will not be affected.</td>
+          </tr>
+          <!-- <tr class="details">
+            <td><input type="radio" name="input_backup_choice" value="print" id="input_backup_print" /> <label for="input_backup_print">Print</label></td>
+            <td><span class="orange_label">effortful recovery</span></td>
+            <td><span class="green_label">best security</span></td>
+          </tr>
+          <tr class="text">
+            <td colspan="3">Print your key on a paper. Most secure option because a printed document cannot be stolen by a hacker. If you lose your laptop, scanning the document will be required to open your encrypted emails. Regular emails will not be affected.</td>
+          </tr> -->
+          <tr class="details hide_if_backup_done">
+            <td><input type="radio" name="input_backup_choice" value="none" id="input_backup_none" /> <label for="input_backup_none">no backup</label></td>
+            <td><span class="red_label">no recovery</span></td>
+            <td></td>
+          </tr>
+          <tr class="text hide_if_backup_done">
+            <td colspan="3">Encrypted email you send or receive will become unreadable if you lose your laptop. Regular emails will not be affected.</td>
+          </tr>
+        </table>
       </div>
       <div class="line">
-        <div class="button long gray action_skip_backup">SKIP BACKUP</div>
+      </div>
+      <div class="line">
+          <div class="button long green action_manual_backup">BACK UP ON GMAIL</div>
+          &nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;
+          <div class="button long gray action_skip_backup">LATER</div>
       </div>
     </div>
   </div>

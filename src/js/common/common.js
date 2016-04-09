@@ -12,6 +12,10 @@ function get_url_params(expected_keys, string) {
   return url_data;
 }
 
+function get_future_timestamp_in_months(months_to_add) {
+  return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
+}
+
 function as_html_formatted_string(obj) {
   return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
 }
@@ -29,20 +33,6 @@ function get_passphrase(account_email) {
     return temporary;
   }
   return null;
-  // var prompted = prompt(prompt_text || 'Please enter CryptUP passphrase');
-  // if(prompted === null) {
-  //   callback(null);
-  //   return;
-  // } else {
-  //   var prv = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
-  //   if(prv.decrypt(prompted) === true) {
-  //     private_storage_set(sessionStorage, account_email, 'master_passphrase', prompted);
-  //     callback(prompted);
-  //     return;
-  //   } else {
-  //     get_passphrase(account_email, callback, 'CryptUP passphrase did not match. Please try again')
-  //   }
-  // }
 }
 
 function download_file(filename, type, data) {
@@ -269,7 +259,7 @@ function chrome_message_background_listen(handlers) {
 
 function chrome_message_listen(handlers) {
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
-    if (typeof handlers[request.name] !== 'undefined') {
+    if(typeof handlers[request.name] !== 'undefined') {
       handlers[request.name](request.data, sender, respond);
     } else {
       throw 'chrome_message_listen error: handler "' + request.name + '" not set';

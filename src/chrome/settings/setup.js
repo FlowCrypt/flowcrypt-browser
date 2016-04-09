@@ -341,6 +341,7 @@ $('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), 
     $('#step_2a_manual_create .input_password2').focus();
   } else {
     $('h1').text('Please wait, setting up CryptUP');
+    $('#step_2a_manual_create input').prop('disabled', true);
     $('#step_2a_manual_create .action_create_private').html(get_spinner() + 'just a minute');
     get_and_save_userinfo(url_params.account_email, function(userinfo) {
       create_save_key_pair(url_params.account_email, {

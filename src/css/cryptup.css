@@ -13,6 +13,9 @@
 .line.green, td.green { color: #088447; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
+.green_label { color: white; background-color: #088447; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
+.orange_label { color: white; background-color: #d18826; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
+.red_label { color: white; background-color: #d14836; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0px; margin-top: 0px; }
@@ -63,6 +66,9 @@ body#settings > div#content.setup div#loading { margin-top: 150px; }
 body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
 body#settings > div#content.backup div#step_3_manual { display: none; }
+body#settings > div#content.backup div#step_3_manual table.backup_options tr.details td { padding-top: 20px; }
+body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
+body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px;}
 body#settings > div#content.backup .password_feedback { display: none; }
 body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; margin-left: 330px; margin-top: 7px; }
 body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
