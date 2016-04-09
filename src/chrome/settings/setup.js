@@ -318,7 +318,7 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
         setup_simple: false,
         key_backup_prompt: false,
       }, function() {
-        setup_dialog_set_done(false, false); //todo - add backup options
+        setup_dialog_set_done(false, false);
       });
     });
   }
