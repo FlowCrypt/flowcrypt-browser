@@ -36,6 +36,7 @@ body#settings > div#content input[type=password], body#settings > div#content in
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
+body#settings > div.profile-row .ion-person::before { margin-top: 4px; }
 body#settings > div#content .content-row-holder { position: relative; display: inline-block; min-width: 600px!important; }
 body#settings > div#content .ion-ios-arrow-left { position: absolute; left: 20px; top:22px; font-size: 30px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s ;}
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
@@ -82,7 +83,7 @@ body#settings > div#content.setup div.manual .input_password, body#settings > di
   width: 300px;
 }
 
-.ion-person::before {margin-top: 4px;}
+
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
 body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }
