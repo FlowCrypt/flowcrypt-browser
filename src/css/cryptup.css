@@ -58,7 +58,8 @@ body#settings > div#content.setup div.manual div#btn_save_private { text-transfo
 body#settings > div#content.setup div.manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
 body#settings > div#content.setup div.manual #addresses { color: #888; }
 body#settings > div#content.setup div#step_2_recovery { display: none; }
-body#settings > div#content.setup div#step_2_recovery div#error_text { display: none; line-height: 1.5; color: red; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
+body#settings > div#content.setup div#step_2_recovery div#error_text_container { display: none; }
+body#settings > div#content.setup div#step_2_recovery div#error_text {  line-height: 1.5; color: red; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
 
 body#settings > div#content.setup div#step_3_backup { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
