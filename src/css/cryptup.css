@@ -1,7 +1,7 @@
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; text-align: center; white-space: nowrap;
-  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 4px 15px; text-decoration: none; }
+  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 4px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
 .button.red { background-color: #d14836; }
 .button.green { background-color: #088447; background-image: -webkit-linear-gradient(top, #0F8C4F, #088447); }
@@ -26,13 +26,13 @@ body#settings { text-align: center; position: relative; font-family: 'Open Sans'
 body#settings > div#content {  margin-top: 120px; }
 body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content a:hover { text-decoration: none; }
-body#settings > div#content > div#accounts a.button.has_email { width: 300px; text-align: left; font-weight: 100; color: #CCC; }
+body#settings > div#content > div#accounts a.button.has_email { width: 300px; padding: 5px 20px; text-align: left; font-weight: 100; color: #fff; }
 body#settings > div#content > div#accounts a.button.has_email b { padding-right: 10px; color: #FFF; }
 body#settings > div#content div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto;}
 body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content div.line label { line-height: 22px; }
-body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 200px; height:32px; border: 1px solid gray; padding-left:8px; }
+body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 300px; height:45px; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px;}
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
@@ -58,6 +58,8 @@ body#settings > div#content.setup div.manual div#btn_save_private { text-transfo
 body#settings > div#content.setup div.manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
 body#settings > div#content.setup div.manual #addresses { color: #888; }
 body#settings > div#content.setup div#step_2_recovery { display: none; }
+body#settings > div#content.setup div#step_2_recovery div#error_text { display: none; line-height: 1.5; color: red; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
+
 body#settings > div#content.setup div#step_3_backup { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
 body#settings > div#content.setup div#step_4_done { display: none; }
@@ -78,6 +80,8 @@ body#settings > div#content.backup #password, body#settings > div#content.backup
 body#settings > div#content.setup div.manual .input_password, body#settings > div#content.setup div.manual .input_password2 {
   width: 300px;
 }
+
+.ion-person::before {margin-top: 4px;}
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
 body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }
@@ -244,4 +248,4 @@ body.attachment #header { margin-top:10px; padding-bottom: 0px; font-weight: 400
 body.attachment #type { padding: 10px 0; color: #999; }
 body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
-body.attachment .file-format-holder img#file-format { width: 55px; height: auto; margin-top: 10px; opacity: .3;}
+body.attachment .file-format-holder img#file-format { width: 45px; height: auto; margin-top: 12px; opacity: .2; margin-left: 10px;}
