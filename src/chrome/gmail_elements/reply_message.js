@@ -63,10 +63,7 @@ function reply_message_render_success(has_attachments, message_id) {
 }
 
 function send_btn_click() {
-  var recipients = [];
-  $('.recipients span').each(function() {
-    recipients.push($(this).text().trim());
-  });
+  var recipients = get_recipients_from_dom();
   var headers = {
     'To': recipients.join(', '),
     'From': url_params['from'],

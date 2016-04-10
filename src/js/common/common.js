@@ -77,8 +77,12 @@ function set_up_require() {
   });
 }
 
-function open_settings_page(page) {
-  window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm')), 'cryptup');
+function open_settings_page(page, account_email) {
+  if(account_email) {
+    window.open(chrome.extension.getURL('chrome/settings/' + page) + '?account_email=' + encodeURIComponent(account_email), 'cryptup');
+  } else {
+    window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm')), 'cryptup');
+  }
 }
 
 function is_email_valid(email) {
@@ -114,6 +118,65 @@ function add_account_email_to_list_of_accounts(account_email, callback) { //todo
       callback();
     }
   });
+}
+
+function strip_pgp_armor(pgp_block_text) {
+  var debug = false;
+  if(debug) {
+    console.log('pgp_block_1');
+    console.log(pgp_block_text);
+  }
+  var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
+  var spaces = [/&nbsp;/g];
+  var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
+  $.each(newlines, function(i, newline) {
+    pgp_block_text = pgp_block_text.replace(newline, '\n');
+  });
+  if(debug) {
+    console.log('pgp_block_2');
+    console.log(pgp_block_text);
+  }
+  $.each(removes, function(i, remove) {
+    pgp_block_text = pgp_block_text.replace(remove, '');
+  });
+  if(debug) {
+    console.log('pgp_block_3');
+    console.log(pgp_block_text);
+  }
+  $.each(spaces, function(i, space) {
+    pgp_block_text = pgp_block_text.replace(space, ' ');
+  });
+  if(debug) {
+    console.log('pgp_block_4');
+    console.log(pgp_block_text);
+  }
+  pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
+  if(debug) {
+    console.log('pgp_block_5');
+    console.log(pgp_block_text);
+  }
+  pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
+  if(debug) {
+    console.log('pgp_block_6');
+    console.log(pgp_block_text);
+  }
+  var double_newlines = pgp_block_text.match(/\n\n/g);
+  if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
+    pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
+    if(debug) {
+      console.log('pgp_block_removed_doubles');
+    }
+  }
+  if(debug) {
+    console.log('pgp_block_7');
+    console.log(pgp_block_text);
+  }
+  pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
+  if(debug) {
+    console.log('pgp_block_final');
+    console.log(pgp_block_text);
+  }
+  return pgp_block_text;
 }
 
 function get_spinner() {

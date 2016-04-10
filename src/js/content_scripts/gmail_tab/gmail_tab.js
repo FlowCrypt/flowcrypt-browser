@@ -23,6 +23,11 @@ function initialize() {
         $('body').append(passphrase_dialog(account_email, data.type, tab_id_global));
       }
     },
+    add_pubkey_dialog: function(data) {
+      if(!$('#cryptup_dialog').length) {
+        $('body').append(add_pubkey_dialog(account_email, data.emails, tab_id_global));
+      }
+    },
     close_dialog: function(data) {
       $('#cryptup_dialog').remove();
     },

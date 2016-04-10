@@ -3,8 +3,17 @@
 function passphrase_dialog(account_email, type, gmail_tab_id) {
   var src = chrome.extension.getURL('chrome/gmail_elements/passphrase.htm') +
     '?account_email=' + encodeURIComponent(account_email) +
+    '&type=' + encodeURIComponent(type) +
     '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
   return '<div id="cryptup_dialog"><iframe scrolling="no" src="' + src + '"></iframe></div>';
+}
+
+function add_pubkey_dialog(account_email, emails, gmail_tab_id) {
+  var src = chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm') +
+    '?account_email=' + encodeURIComponent(account_email) +
+    '&emails=' + encodeURIComponent(emails.join(',')) +
+    '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
+  return '<div id="cryptup_dialog"><iframe class="tall" scrolling="no" src="' + src + '"></iframe></div>';
 }
 
 function pgp_attachment_iframe(account_email, attachment_meta, container_classes, gmail_tab_id) {

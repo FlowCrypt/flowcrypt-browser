@@ -12,21 +12,21 @@
 
 <body id="settings">
 
-  <div id="content" class="passphrase dialog">
+  <div id="content" class="add_pubkey dialog">
     <div class="content-row-holder">
-      <h1>Enter your pass phrase to read encrypted email</h1>
+      <h1>Add a pubkey to email address</h1>
     </div>
-    <div class="separator"></div>
-    <input class="passphrase" type="text" placeholder="Enter Pass Phrase">
+    <div class="line">
+      <div class="separator"></div>
+      <select class="email"></select>
+    </div>
+    <div class="line">
+      <textarea class="pubkey" placeholder="ASCII Armored Public Key"></textarea>
+    </div>
     <div class="line">
       <div class="button long green action_ok">OK</div>
-      &nbsp;&nbsp;
-      <div class="button long gray action_close">LATER</div>
-    </div>
-    <br>
-    <div>
-      <input type="checkbox" name="forget" class="forget" checked="checked">
-      <label for="forget">Forget passphrase when I close chrome</label>
+      <div class="button long gray action_settings">SETTINGS</div>
+      <div class="button long gray action_close">CLOSE</div>
     </div>
   </div>
 
@@ -34,7 +34,7 @@
   <script src="/lib/openpgp.js"></script>
   <script src="/js/common/storage.js"></script>
   <script src="/js/common/common.js"></script>
-  <script src="passphrase.js"></script>
+  <script src="add_pubkey.js"></script>
 </body>
 
 </html>

@@ -7,10 +7,7 @@ function new_message_close() {
 }
 
 function send_btn_click() {
-  var recipients = [];
-  $('.recipients span').each(function() {
-    recipients.push($(this).text().trim());
-  });
+  var recipients = get_recipients_from_dom();
   var headers = {
     'To': recipients.join(', '),
     'Subject': $('#input_subject').val(),

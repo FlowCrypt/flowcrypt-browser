@@ -1,5 +1,7 @@
 'use strict';
 
+var pubkey_cache_interval = undefined;
+
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
@@ -149,19 +151,30 @@ function compose_evaluate_receivers() {
   });
 }
 
-function compose_show_hide_challenge_question_container() {
+function compose_show_hide_missing_pubkey_container() {
   if(!$('.recipients span').length) {
     $("#challenge_question_container").css('display', 'none');
+    $("#missing_pubkey_container").css('display', 'none');
+    $('#send_btn').removeClass('gray').addClass('green');
+    console.log(1);
   } else {
     if($('.recipients span.no_pgp').length) {
-      $("#challenge_question_container").css('display', 'table-row');
+      if($("#missing_pubkey_container").css('display') === 'none' && $("#challenge_question_container").css('display') === 'none') {
+        $("#missing_pubkey_container").css('display', 'table-row');
+        $('#send_btn').removeClass('green').addClass('gray');
+        console.log(2);
+      }
     } else {
       $("#challenge_question_container").css('display', 'none');
+      $("#missing_pubkey_container").css('display', 'none');
+      $('#send_btn').removeClass('gray').addClass('green');
+      console.log(3);
     }
   }
 }
 
 function render_receivers() {
+  // move emails from input into their own spans
   var content = $(this).val();
   var icon = '<i class="fa ion-load-c fa-spin"></i>';
   if(content.match(/[, ]/) !== null) {
@@ -201,7 +214,7 @@ function resize_input_to() {
 function remove_receiver() {
   $(this).parent().remove();
   resize_input_to();
-  compose_show_hide_challenge_question_container();
+  compose_show_hide_missing_pubkey_container();
 }
 
 function search_contacts() {
@@ -248,10 +261,61 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
     $("#send_btn span").text('SEND PGP ENCRYPTED');
     $("#send_btn_note").text('');
   }
-  compose_show_hide_challenge_question_container();
+  compose_show_hide_missing_pubkey_container();
+}
+
+function get_recipients_from_dom(filter) {
+  if(filter === 'no_pgp') {
+    var selector = '.recipients span.no_pgp';
+  } else {
+    var selector = '.recipients span';
+  }
+  var recipients = [];
+  $(selector).each(function() {
+    recipients.push($(this).text().trim());
+  });
+  return recipients;
 }
 
 function convert_html_tags_to_newlines(text) {
-  // todo: approximation. Does not handle <div><br></div> well which contenteditable fields tend to create
   return text.replace(/<div ?\/?><br ?\/?>/gi, '\n').replace(/<br ?\/?>/gi, '\n').replace(/<div[^>]*>/gi, '\n').replace(/<\/div[^>]*>/gi, '').trim();
 }
+
+$('#input_question, #input_answer').keyup(prevent(spree(), function() {
+  if($('#input_question').val() && $('#input_answer').val()) {
+    $('#send_btn').removeClass('gray').addClass('green');
+  } else {
+    $('#send_btn').removeClass('green').addClass('gray');
+  }
+}));
+
+$('.add_pubkey').click(function() {
+  chrome_message_send(url_params.parent_tab_id, 'add_pubkey_dialog', {
+    emails: get_recipients_from_dom('no_pgp'),
+  });
+  clearInterval(pubkey_cache_interval);
+  pubkey_cache_interval = setInterval(function() {
+    console.log('.');
+    var pubkeys = pubkey_cache_retrieve();
+    var new_key_added = false;
+    $.each(get_recipients_from_dom('no_pgp'), function(i, email) {
+      if(typeof pubkeys[email] !== 'undefined') {
+        console.log('found ' + email);
+        console.log(pubkeys[email]);
+        $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
+        $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
+        new_key_added = true;
+      }
+    });
+    if(new_key_added) {
+      clearInterval(pubkey_cache_interval);
+      console.log('evaluation');
+      compose_evaluate_receivers();
+    }
+  }, 1000);
+});
+
+$('.use_question').click(function() {
+  $('#missing_pubkey_container').css('display', 'none');
+  $('#challenge_question_container').css('display', 'table-row');
+});

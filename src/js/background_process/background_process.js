@@ -18,7 +18,7 @@ chrome.browserAction.onClicked.addListener(function() {
 });
 
 function open_settings_page_handler(message, sender, respond) {
-  open_settings_page(message.page);
+  open_settings_page(message.page, message.account_email);
 }
 
 function list_pgp_attachments(request, sender, respond) {

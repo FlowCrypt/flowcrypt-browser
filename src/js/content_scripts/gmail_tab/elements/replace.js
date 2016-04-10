@@ -24,7 +24,7 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
     var re_first_pgp_question = /.*<br>\r?\n<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
     var matches;
     while((matches = re_pgp_blocks.exec(message_text)) !== null) {
-      var valid_pgp_block = strip_tags_from_pgp_message(matches[0]);
+      var valid_pgp_block = strip_pgp_armor(matches[0]);
       var question_match = re_first_pgp_question.exec(text_with_iframes);
       var question = '';
       if(question_match !== null) {
@@ -117,63 +117,4 @@ function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, 
     $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
     // $('div.nH.hx.aHo').append();
   });
-}
-
-function strip_tags_from_pgp_message(pgp_block_text) {
-  var debug = false;
-  if(debug) {
-    console.log('pgp_block_1');
-    console.log(pgp_block_text);
-  }
-  var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
-  var spaces = [/&nbsp;/g];
-  var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
-  $.each(newlines, function(i, newline) {
-    pgp_block_text = pgp_block_text.replace(newline, '\n');
-  });
-  if(debug) {
-    console.log('pgp_block_2');
-    console.log(pgp_block_text);
-  }
-  $.each(removes, function(i, remove) {
-    pgp_block_text = pgp_block_text.replace(remove, '');
-  });
-  if(debug) {
-    console.log('pgp_block_3');
-    console.log(pgp_block_text);
-  }
-  $.each(spaces, function(i, space) {
-    pgp_block_text = pgp_block_text.replace(space, ' ');
-  });
-  if(debug) {
-    console.log('pgp_block_4');
-    console.log(pgp_block_text);
-  }
-  pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
-  if(debug) {
-    console.log('pgp_block_5');
-    console.log(pgp_block_text);
-  }
-  pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
-  if(debug) {
-    console.log('pgp_block_6');
-    console.log(pgp_block_text);
-  }
-  var double_newlines = pgp_block_text.match(/\n\n/g);
-  if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
-    pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    if(debug) {
-      console.log('pgp_block_removed_doubles');
-    }
-  }
-  if(debug) {
-    console.log('pgp_block_7');
-    console.log(pgp_block_text);
-  }
-  pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
-  if(debug) {
-    console.log('pgp_block_final');
-    console.log(pgp_block_text);
-  }
-  return pgp_block_text;
 }
