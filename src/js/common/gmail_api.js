@@ -66,6 +66,10 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
   }, get_thread_callback);
 }
 
+function get_master_public_key_fingerprint(account_email) {
+  return openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_public_key')).keys[0].primaryKey.fingerprint.toUpperCase();
+}
+
 /*
   body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
   headers: at least {To, From, Subject}
@@ -78,6 +82,7 @@ function gmail_api_message_send(account_email, body, headers, attachments, threa
     $.each(headers, function(key, header) {
       root_node.addHeader(key, header);
     });
+    root_node.addHeader('OpenPGP', 'id=' + get_master_public_key_fingerprint(account_email));
     var text_node = new MimeBuilder('multipart/alternative');
     if(typeof body === 'string') {
       text_node.appendChild(new MimeBuilder('text/plain').setContent(body));
