@@ -35,7 +35,7 @@ $('.action_load_send_from_email_addresses').click(prevent(parallel(), function(s
     account_storage_set(url_params['account_email'], {
       addresses: addresses
     }, function() {
-      submit_pubkey_alternative_addresses(addresses.slice(), private_storage_get(localStorage, url_params['account_email'], 'master_public_key'), function() {
+      submit_pubkeys(addresses.slice(), private_storage_get(localStorage, url_params['account_email'], 'master_public_key'), function() {
         $(self).text(button_text);
         $('pre').text(JSON.stringify(addresses));
         release(process_id);
