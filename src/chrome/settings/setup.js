@@ -8,7 +8,7 @@ $('.back').css('visibility', 'hidden');
 
 var recovered_keys = undefined;
 
-// set account addresses at least once
+// show alternative account addresses in setup form + save them for later
 account_storage_get(url_params.account_email, ['addresses'], function(storage) {
   function show_submit_all_addresses_option(addrs) {
     if(addrs && addrs.length > 1) {
@@ -32,7 +32,6 @@ account_storage_get(url_params.account_email, ['addresses'], function(storage) {
     show_submit_all_addresses_option(storage['addresses']);
   }
 });
-
 
 function display_block(name) {
   var blocks = [

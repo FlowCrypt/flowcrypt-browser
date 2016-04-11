@@ -42,6 +42,7 @@
       "/lib/jquery.min.js",
       "/lib/openpgp.js",
       "/lib/require.js",
+      "/js/common/keyserver.js",
       "/js/common/storage.js",
       "/js/common/gmail_api.js",
       "/js/common/common.js",

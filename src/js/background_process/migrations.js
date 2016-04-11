@@ -8,6 +8,7 @@ function migrate(data, sender, respond_done) {
           account_storage_set(null, {
             version: Number(chrome.runtime.getManifest().version.replace('.', ''))
           }, respond_done);
+          consistency_fixes(data.account_email);
         })
       });
     });
@@ -86,5 +87,19 @@ function migrate_130_140(account_email, then) {
       private_storage_set(localStorage, account_email, 'master_passphrase_needed', Boolean(private_storage_get(localStorage, account_email, 'master_passphrase')));
     }
     then();
+  });
+}
+
+function consistency_fixes(account_email) {
+  account_storage_get(account_email, ['setup_done'], function(storage) {
+    // re-submitting pubkey if failed
+    if(storage.setup_done && private_storage_get(localStorage, account_email, 'master_public_key_submit') && !private_storage_get(localStorage, account_email, 'master_public_key_submitted')) {
+      console.log('consistency_fixes: submitting pubkey');
+      keyserver_keys_submit(account_email, private_storage_get(localStorage, account_email, 'master_public_key'), function(success, response) {
+        if(success && response.saved) {
+          private_storage_set(localStorage, account_email, 'master_public_key_submitted', true);
+        }
+      });
+    }
   });
 }
