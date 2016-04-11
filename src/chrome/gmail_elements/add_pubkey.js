@@ -6,6 +6,24 @@ $.each(url_params.emails.split(','), function(i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');
 });
 
+var cached = pubkey_cache_retrieve();
+if(Object.keys(cached).length) {
+  $('select.copy_from_email').append('<option value=""></option>');
+  $.each(cached, function(email, pubkey) {
+    $('select.copy_from_email').append('<option value="' + email + '">' + email + '</option>');
+  });
+} else {
+  $('select.copy_from_email').prop('disabled', true);
+}
+
+$('select.copy_from_email').change(function() {
+  if($(this).val()) {
+    $('.pubkey').val(cached[$(this).val()]).prop('disabled', true);
+  } else {
+    $('.pubkey').val('').prop('disabled', false);
+  }
+});
+
 $('.action_ok').click(prevent(doubleclick(), function() {
   var pubkey = openpgp.key.readArmored(strip_pgp_armor($('.pubkey').val())).keys[0];
   if(typeof pubkey !== 'undefined') {

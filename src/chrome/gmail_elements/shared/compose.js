@@ -156,19 +156,16 @@ function compose_show_hide_missing_pubkey_container() {
     $("#challenge_question_container").css('display', 'none');
     $("#missing_pubkey_container").css('display', 'none');
     $('#send_btn').removeClass('gray').addClass('green');
-    console.log(1);
   } else {
     if($('.recipients span.no_pgp').length) {
       if($("#missing_pubkey_container").css('display') === 'none' && $("#challenge_question_container").css('display') === 'none') {
         $("#missing_pubkey_container").css('display', 'table-row');
         $('#send_btn').removeClass('green').addClass('gray');
-        console.log(2);
       }
     } else {
       $("#challenge_question_container").css('display', 'none');
       $("#missing_pubkey_container").css('display', 'none');
       $('#send_btn').removeClass('gray').addClass('green');
-      console.log(3);
     }
   }
 }
@@ -295,13 +292,10 @@ $('.add_pubkey').click(function() {
   });
   clearInterval(pubkey_cache_interval);
   pubkey_cache_interval = setInterval(function() {
-    console.log('.');
     var pubkeys = pubkey_cache_retrieve();
     var new_key_added = false;
     $.each(get_recipients_from_dom('no_pgp'), function(i, email) {
       if(typeof pubkeys[email] !== 'undefined') {
-        console.log('found ' + email);
-        console.log(pubkeys[email]);
         $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
         $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
         new_key_added = true;
