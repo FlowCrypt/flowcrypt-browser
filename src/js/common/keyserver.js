@@ -1,15 +1,22 @@
 'use strict';
 
 function keyserver_keys_find(email, callback) {
+  if(typeof email === 'string') {
+    email = trim_lower(email);
+  } else {
+    $.each(email, function(i, address) {
+      email[i] = trim_lower(address);
+    });
+  }
   return keyserver_call('keys/find', {
-    'email': (typeof email === 'string') ? email.trim() : email.map(Function.prototype.call, String.prototype.trim),
+    email: email,
   }, callback);
 }
 
 function keyserver_keys_submit(email, pubkey, callback) {
   return keyserver_call('keys/submit', {
-    'email': email.trim(),
-    'pubkey': pubkey.trim()
+    'email': trim_lower(email),
+    'pubkey': pubkey.trim(),
   }, callback);
 }
 

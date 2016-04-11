@@ -11,14 +11,14 @@ function pubkey_cache_retrieve() {
 
 function pubkey_cache_add(email, pubkey) {
   var storage = pubkey_cache_retrieve();
-  storage[email] = pubkey;
+  storage[trim_lower(email)] = pubkey;
   localStorage.pubkey_cache = JSON.stringify(storage);
 }
 
 function pubkey_cache_get(email) {
   var storage = pubkey_cache_retrieve();
-  if(typeof storage[email] !== 'undefined') {
-    return storage[email];
+  if(typeof storage[trim_lower(email)] !== 'undefined') {
+    return storage[trim_lower(email)];
   }
   return null;
 }
@@ -28,9 +28,9 @@ function pubkey_cache_search(query, max, highlight) {
   var matches = [];
   for(var email in storage) {
     if(storage.hasOwnProperty(email)) {
-      if(email.indexOf(query) !== -1) {
+      if(email.indexOf(trim_lower(query)) !== -1) {
         if(highlight === true) {
-          matches.push(email.replace(query, '<b>' + query + '</b>'));
+          matches.push(email.replace(trim_lower(query), '<b>' + trim_lower(query) + '</b>'));
         } else {
           matches.push(email);
         }

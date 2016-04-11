@@ -12,6 +12,10 @@ function get_url_params(expected_keys, string) {
   return url_data;
 }
 
+function trim_lower(email) {
+  return email.trim().toLowerCase();
+}
+
 function get_future_timestamp_in_months(months_to_add) {
   return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
 }
