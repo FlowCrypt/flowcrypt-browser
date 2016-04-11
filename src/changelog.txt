@@ -1,3 +1,11 @@
+<b>version 1.6.0 on April 11, 2016: Public key management</b>
+setup: see and manage list of pubkeys
+setup: resubmitting pubkey on
+composing: manually add pubkeys for unknown
+composing: add pubkey fingerprint to email headers
+composing: contacts search is case insensitive
+reading: load pgp pubkey blocs into pubkey cache
+
 <b>version 1.5.0 on April 9, 2016: Private key best practices and backups</b>
 reading: better pass phrase dialog
 security: more and clearer setup and backup options
