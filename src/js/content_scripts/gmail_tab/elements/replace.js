@@ -7,9 +7,20 @@ function replace_pgp_elements(account_email, gmail_tab_id) {
     replace_reply_box(account_email, gmail_tab_id);
   }
   replace_pgp_attachments(account_email, gmail_tab_id);
+  replace_pgp_pubkeys(account_email, gmail_tab_id);
+}
+
+function replace_pgp_pubkeys(account_email, gmail_tab_id) {
+  $("div.adP.adO div.a3s:contains('-----BEGIN PGP PUBLIC KEY BLOCK-----'):contains('-----END PGP PUBLIC KEY BLOCK-----')").each(function() {
+    var re_pubkey_blocks = /-----BEGIN PGP PUBLIC KEY BLOCK-----(.|[\r?\n])+?-----END PGP PUBLIC KEY BLOCK-----/gm;
+    $(this).html($(this).html().replace(re_pubkey_blocks, function(armored_pubkey_match) {
+      return pgp_pubkey_iframe(account_email, strip_pgp_armor(armored_pubkey_match), gmail_tab_id);
+    }));
+  });
 }
 
 function replace_armored_pgp_messages(account_email, gmail_tab_id) {
+  //todo - should be refactored with $(this).html().replace(re, function() ... ) similar as replace_pgp_pubkeys for brevity
   var conversation_has_pgp_message = false;
   var selectors = [
     "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')",

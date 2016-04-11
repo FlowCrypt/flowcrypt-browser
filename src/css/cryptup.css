@@ -124,8 +124,10 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
   -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
 
 body.pgp_secure { border:none; border-left: 3px dashed green; padding-left:10px; min-height: 25px; }
+body.pgp_neutral { border:none; border-left: 3px dashed gray; padding-left:10px; min-height: 25px; }
 body.pgp_insecure { border:none; border-left: 3px dashed red; padding-left:10px; min-height: 25px; }
 body > #pgp_block { height: auto; }
+body > #pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 320px; }
 body > #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
 body > #pgp_block div.raw_pgp_block { margin: 12px; color: #444; }
 body > #pgp_block input#answer { padding: 8px 8px; width: 232px; }

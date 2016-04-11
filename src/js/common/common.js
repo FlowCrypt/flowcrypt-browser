@@ -13,6 +13,9 @@ function get_url_params(expected_keys, string) {
 }
 
 function trim_lower(email) {
+  if(email.indexOf('<') !== -1 && email.indexOf('>') !== -1) {
+    email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
+  }
   return email.trim().toLowerCase();
 }
 
