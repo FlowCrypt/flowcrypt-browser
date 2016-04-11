@@ -51,3 +51,7 @@ $('.action_backups').click(function() {
 $('.action_pubkeys').click(function() {
   window.location = 'pubkeys.htm?account_email=' + encodeURIComponent(url_params.account_email);
 });
+
+$('.action_contacts').click(function() {
+  window.location = 'contacts.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});

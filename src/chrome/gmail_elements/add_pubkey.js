@@ -37,7 +37,7 @@ $('.action_ok').click(prevent(doubleclick(), function() {
 
 $('.action_settings').click(prevent(doubleclick(), function() {
   chrome_message_send(null, 'settings', {
-    page: 'account.htm',
+    page: 'contacts.htm',
     account_email: url_params.account_email,
   });
 }));

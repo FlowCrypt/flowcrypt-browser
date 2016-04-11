@@ -15,6 +15,12 @@ function pubkey_cache_add(email, pubkey) {
   localStorage.pubkey_cache = JSON.stringify(storage);
 }
 
+function pubkey_cache_remove(email) {
+  var storage = pubkey_cache_retrieve();
+  delete storage[trim_lower(email)];
+  localStorage.pubkey_cache = JSON.stringify(storage);
+}
+
 function pubkey_cache_get(email) {
   var storage = pubkey_cache_retrieve();
   if(typeof storage[trim_lower(email)] !== 'undefined') {
