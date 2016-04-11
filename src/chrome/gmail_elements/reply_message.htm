@@ -30,19 +30,37 @@
           <div id="fineuploader"></div>
         </td>
       </tr>
+      <tr id="missing_pubkey_container">
+        <td>
+          It seems one or more recipients don't have CryptUP or other PGP app.
+          <br/>
+          <br/>
+          <div class="button green add_pubkey">add their pubkey</div> if they have PGP enabled or
+          <div class="button green use_question">use a challenge question</div>
+        </td>
+      </tr>
       <tr id="challenge_question_container">
         <td>
+          <div class="question-row">
+            <span class="circle">
+                <i class="ion-ios-locked"></i>
+              </span>
+            <div class="question-copy">
+              <p>One or more recipient doesn't have CryptUP or other PGP app yet.
+                <br/>Send an encrypted message with a a question they can answer.
+                <br/>Or <a href="#" class="add_pubkey">add their public key</a> manually if you know it.</p>
+            </div>
+          </div>
           <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
           <span style="display: inline-block; width: 33px;">&nbsp;</span>
           <span class="start">"</span>
-          <input id="input_answer" placeholder="answer" /><span class="end">"</span>
-          <p>Only needed when they don't have CryptUP or other PGP app yet.</p>
+          <input id="input_answer" placeholder="Answer" /><span class="end">"</span>
         </td>
       </tr>
       <tr class="bottom">
         <td class="bottom">
           <!-- bottom -->
-          <div id="send_btn" class="button_secure green">
+          <div id="send_btn" class="button green">
             <i class=""></i>&nbsp;&nbsp;<span tabindex="4">Send pgp encrypted</span>&nbsp;&nbsp;
           </div>
           <div class="icon attach" id="fineuploader_button" tabindex="-1">

@@ -303,7 +303,6 @@ $('.add_pubkey').click(function() {
     });
     if(new_key_added) {
       clearInterval(pubkey_cache_interval);
-      console.log('evaluation');
       compose_evaluate_receivers();
     }
   }, 1000);
