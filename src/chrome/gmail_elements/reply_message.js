@@ -89,7 +89,7 @@ function resize_input_text_width() {
 }
 
 function reply_message_on_render() {
-  $('.recipients').append('<span>' + url_params.to + '</span>');
+  $('#input_to').val(url_params.to);
   $("#input_to").focus(function() {
     compose_render_pubkey_result($(this).val(), undefined);
   });
