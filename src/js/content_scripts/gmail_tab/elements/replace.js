@@ -109,23 +109,39 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
 }
 
 function replace_reply_box(account_email, gmail_tab_id) {
-  var my_email = $('span.g2').last().attr('email').trim();
-  var their_email = $('h3.iw span[email]').last().attr('email').trim();
-  var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
-  var subject = $('h2.hP').text();
-  $(reply_container_selector).addClass('remove_borders');
+  var reply_to_estimate = [$('h3.iw span[email]').last().attr('email').trim()]; // add original sender
+  var reply_to = [];
+  $('span.hb').last().find('span.g2').each(function() {
+    reply_to_estimate.push($(this).attr('email')); // add all recipients including me
+  });
+  var my_email = account_email;
   account_storage_get(account_email, ['addresses'], function(storage) {
-    $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject));
+    $.each(reply_to_estimate, function(i, email) {
+      if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email goes separately
+        my_email = email;
+      } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
+        reply_to.push(email); // reply to all except my emails
+      }
+    });
+    if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
+      reply_to = unique(reply_to_estimate);
+    }
+    var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
+    var subject = $('h2.hP').text();
+    $(reply_container_selector).addClass('remove_borders');
+    account_storage_get(account_email, ['addresses'], function(storage) {
+      $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, reply_to.join(','), storage.addresses, subject));
+    });
   });
 }
 
-function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, last_message_frame_height, my_email, their_email) {
-  $('#' + last_message_frame_id).css('height', last_message_frame_height + 'px');
-  var subject = $('h2.hP').text();
-  account_storage_get(account_email, ['addresses'], function(storage) {
-    var secure_reply_box = reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject);
-    var wrapped_secure_reply_box = '<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>';
-    $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
-    // $('div.nH.hx.aHo').append();
-  });
-}
+// function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, last_message_frame_height, my_email, their_email) {
+//   $('#' + last_message_frame_id).css('height', last_message_frame_height + 'px');
+//   var subject = $('h2.hP').text();
+//   account_storage_get(account_email, ['addresses'], function(storage) {
+//     var secure_reply_box = reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject);
+//     var wrapped_secure_reply_box = '<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>';
+//     $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
+//     // $('div.nH.hx.aHo').append();
+//   });
+// }

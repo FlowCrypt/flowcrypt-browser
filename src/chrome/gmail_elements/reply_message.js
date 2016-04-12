@@ -89,10 +89,7 @@ function resize_input_text_width() {
 }
 
 function reply_message_on_render() {
-  $('#input_to').val(url_params.to);
-  $("#input_to").focus(function() {
-    compose_render_pubkey_result($(this).val(), undefined);
-  });
+  $('#input_to').val(url_params.to + ' '); // the space causes the last email to be also evaluated
   $('#input_to').keyup(render_receivers);
   $('#input_to').keyup(search_contacts);
   $("#input_to").blur(render_receivers);

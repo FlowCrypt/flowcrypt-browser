@@ -12,6 +12,16 @@ function get_url_params(expected_keys, string) {
   return url_data;
 }
 
+function unique(array) {
+  var unique = [];
+  $.each(array, function(i, v) {
+    if(unique.indexOf(v) === -1) {
+      unique.push(v);
+    }
+  });
+  return unique;
+}
+
 function trim_lower(email) {
   if(email.indexOf('<') !== -1 && email.indexOf('>') !== -1) {
     email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
