@@ -1,10 +1,26 @@
 'use strict';
 
 var pubkey_cache_interval = undefined;
+var can_search_on_google = undefined;
+var GOOGLE_CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts.readonly';
+var GOOGLE_CONTACTS_ORIGIN = 'https://www.google.com/*';
+var compose_url_params = get_url_params(['account_email', 'parent_tab_id']);
 
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
+
+account_storage_get(compose_url_params.account_email, ['google_token_scopes'], function(storage) {
+  if(storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
+    can_search_on_google = false;
+  } else {
+    chrome_message_send(null, 'chrome_auth', {
+      action: 'get',
+    }, function(permissions) {
+      can_search_on_google = (permissions.origins.indexOf(GOOGLE_CONTACTS_ORIGIN) !== -1);
+    });
+  }
+});
 
 function format_challenge_question_email(question, message) {
   return [
@@ -170,12 +186,11 @@ function compose_show_hide_missing_pubkey_container() {
   }
 }
 
-function render_receivers() {
-  // move emails from input into their own spans
+function render_receivers() { // move emails from input into their own spans
   var content = $(this).val();
   var icon = '<i class="fa ion-load-c fa-spin"></i>';
-  if(content.match(/[, ]/) !== null) {
-    var emails = content.split(/[, ]/g);
+  if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back
+    var emails = content.split(/[,]/g);
     for(var i = 0; i < emails.length - 1; i++) {
       $(this).siblings('.recipients').append('<span>' + emails[i] + icon + '</span>');
     }
@@ -198,9 +213,13 @@ function render_receivers() {
 function select_contact() {
   $('.recipients span').last().remove();
   $('#input_to').focus();
-  $('#input_to').val($(this).text().trim());
+  $('#input_to').val(trim_lower($(this).text()));
   hide_contacts();
-  $('#input_subject').focus();
+  if($('#input_subject').length) {
+    $('#input_subject').focus();
+  } else {
+    $('#input_text').focus();
+  }
 }
 
 function resize_input_to() {
@@ -214,20 +233,97 @@ function remove_receiver() {
   compose_show_hide_missing_pubkey_container();
 }
 
-function search_contacts() {
-  var query = $(this).val().trim();
-  if(query !== '') {
-    var found = pubkey_cache_search(query, 6, true);
-    if(found.length > 0) {
-      var ul_html = '';
-      $.each(found, function(i, email) {
-        ul_html += '<li><i class="fa fa-lock"></i>' + email + '</li>';
+function auth_contacts(account_email, for_search_query) {
+  $('#input_to').val($('.recipients span').last().text());
+  $('.recipients span').last().remove();
+  chrome_message_send(null, 'chrome_auth', {
+    action: 'set',
+    origins: [GOOGLE_CONTACTS_ORIGIN],
+  }, function(chrome_pemission_granted) {
+    if(chrome_pemission_granted) {
+      chrome_message_send(null, 'google_auth', {
+        account_email: account_email,
+        scopes: [GOOGLE_CONTACTS_SCOPE],
+      }, function(google_auth_response) {
+        if(google_auth_response.success === true) {
+          can_search_on_google = true;
+          search_contacts();
+        } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
+          alert('CryptUP needs this permission to search your Google Contacts. Without it, CryptUP will keep a separate contact list.');
+        } else {
+          console.log(google_auth_response);
+          alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
+        }
       });
-      $('#contacts ul').html(ul_html);
-      $('#contacts ul li').click(select_contact);
-      $('#contacts').css('display', 'block');
     } else {
-      hide_contacts();
+      alert('CryptUP needs this permission to connect to Google Contacts. Without it, CryptUP will keep a separate contact list.');
+    }
+  });
+}
+
+function search_pubkey_cache(query, max) {
+  var results = [];
+  var local = pubkey_cache_search(query, max, true);
+  $.each(local, function(i, email) {
+    results.push({
+      name: '',
+      email: email,
+      pgp: true,
+    });
+  });
+  return results;
+}
+
+function render_search_results(results, query) {
+  if(results.length > 0 || !can_search_on_google) {
+    var ul_html = '';
+    $.each(results, function(i, result) {
+      ul_html += '<li class="select_contact">';
+      if(result.pgp === true) {
+        ul_html += '<i class="fa fa-lock"></i>';
+      } else {
+        ul_html += '<i class="fa fa-lock" style="color: gray;"></i>';
+      }
+      if(result.name) {
+        ul_html += (result.name + ' &lt;' + result.email + '&gt;');
+      } else {
+        ul_html += result.email;
+      }
+      ul_html += '</li>';
+    });
+    if(!can_search_on_google) {
+      ul_html += '<li class="auth_contacts"><i class="fa fa-search"></i>Search Gmail Contacts</li>';
+    }
+    $('#contacts ul').html(ul_html);
+    $('#contacts ul li.select_contact').click(select_contact);
+    $('#contacts ul li.auth_contacts').click(function() {
+      auth_contacts(compose_url_params.account_email, query);
+    });
+    $('#contacts').css('display', 'block');
+  } else {
+    hide_contacts();
+  }
+}
+
+function search_contacts() {
+  var query = trim_lower($('#input_to').val());
+  if(query !== '') {
+    if(can_search_on_google) {
+      var contacts = search_pubkey_cache(query, 6);
+      google_api_contacts(compose_url_params.account_email, query, 7 - contacts.length, function(success, google_contacts) {
+        if(success) {
+          $.each(google_contacts, function(i, google_contact) {
+            contacts.push(google_contact);
+          });
+        } else {
+          console.log('search_add_google_contacts.google_api_contacts.success === false');
+          console.log(google_contacts);
+        }
+
+        render_search_results(contacts, query);
+      });
+    } else {
+      render_search_results(search_pubkey_cache(query, 7), query);
     }
   } else {
     hide_contacts();
@@ -287,7 +383,7 @@ $('#input_question, #input_answer').keyup(prevent(spree(), function() {
 }));
 
 $('.add_pubkey').click(function() {
-  chrome_message_send(url_params.parent_tab_id, 'add_pubkey_dialog', {
+  chrome_message_send(compose_url_params.parent_tab_id, 'add_pubkey_dialog', {
     emails: get_recipients_from_dom('no_pgp'),
   });
   clearInterval(pubkey_cache_interval);
@@ -312,3 +408,12 @@ $('.use_question').click(function() {
   $('#missing_pubkey_container').css('display', 'none');
   $('#challenge_question_container').css('display', 'table-row');
 });
+
+function compose_on_render() {
+  $('#input_to').keyup(render_receivers);
+  $('#input_to').keyup(prevent(spree('slow'), search_contacts));
+  $("#input_to").blur(render_receivers);
+  $('table#compose').click(hide_contacts);
+  resize_input_to();
+  initialize_attach_dialog();
+}

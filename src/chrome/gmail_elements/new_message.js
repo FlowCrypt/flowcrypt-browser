@@ -34,18 +34,10 @@ function order_addresses(account_email, addresses) {
 }
 
 function on_new_message_render() {
-  $("#input_to").focus(function() {
-    compose_render_pubkey_result($(this).val(), undefined);
-  });
-  $('#input_to').keyup(render_receivers);
-  $('#input_to').keyup(search_contacts);
-  $("#input_to").blur(render_receivers);
+  compose_on_render();
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));
   $('.close_new_message').click(new_message_close);
-  $('table#compose').click(hide_contacts);
-  $('.bottom .icon.attach').click();
-  initialize_attach_dialog();
-  account_storage_get(url_params['account_email'], ['addresses'], function(storage) {
+  account_storage_get(url_params.account_email, ['addresses'], function(storage) { // add send-from addresses
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
       var addresses = order_addresses(url_params.account_email, storage.addresses);
       $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');

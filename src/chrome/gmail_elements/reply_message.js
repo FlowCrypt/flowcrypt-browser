@@ -90,16 +90,12 @@ function resize_input_text_width() {
 
 function reply_message_on_render() {
   $('#input_to').val(url_params.to + ' '); // the space causes the last email to be also evaluated
-  $('#input_to').keyup(render_receivers);
-  $('#input_to').keyup(search_contacts);
-  $("#input_to").blur(render_receivers);
+  compose_on_render();
   $("#input_to").focus();
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));
   $('#input_text').focus();
-  resize_input_to();
-  compose_evaluate_receivers();
   document.getElementById("input_text").focus();
-  initialize_attach_dialog();
+  compose_evaluate_receivers();
   setTimeout(function() {
     $(window).resize(prevent(spree(), resize_input_text_width));
   }, 1000);

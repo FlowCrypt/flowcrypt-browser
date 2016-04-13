@@ -65,9 +65,9 @@ function display_block(name) {
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set Up CryptUP');
-  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple'], function(storage) {
-    if(storage['setup_done'] === true) {
-      setup_dialog_set_done(storage['key_backup_prompt'] !== false, storage.setup_simple);
+  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method'], function(storage) {
+    if(storage.setup_done === true) {
+      setup_dialog_set_done(storage.key_backup_prompt, storage.setup_simple);
     } else {
       get_pubkeys([url_params.account_email], function(pubkeys) {
         if(pubkeys && pubkeys[0]) {
@@ -93,9 +93,9 @@ function setup_dialog_set_done(key_backup_prompt, setup_simple) {
     setup_simple: setup_simple,
   };
   if(key_backup_prompt === true) {
-    storage['key_backup_prompt'] = Date.now();
+    storage.key_backup_prompt = Date.now();
   } else {
-    storage['key_backup_prompt'] = false;
+    storage.key_backup_prompt = key_backup_prompt;
   }
   account_storage_set(url_params.account_email, storage, function() {
     if(key_backup_prompt === true) {

@@ -5,6 +5,7 @@ console.log('background_process.js starting');
 chrome_message_background_listen({
   migrate: migrate,
   google_auth: google_auth,
+  chrome_auth: chrome_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
   list_pgp_attachments: list_pgp_attachments,
   settings: open_settings_page_handler,
@@ -19,6 +20,19 @@ chrome.browserAction.onClicked.addListener(function() {
 
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.page, message.account_email);
+}
+
+function chrome_auth(request, sender, respond) {
+  if(request.action === 'set') {
+    chrome.permissions.request({
+      permissions: request.permissions,
+      origins: request.origins,
+    }, function(granted) {
+      respond(granted);
+    });
+  } else {
+    chrome.permissions.getAll(respond);
+  }
 }
 
 function list_pgp_attachments(request, sender, respond) {

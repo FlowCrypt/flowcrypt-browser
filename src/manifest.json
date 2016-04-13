@@ -12,7 +12,7 @@
     "128": "/img/logo-128-128-white-green.png"
   },
   "permissions": ["storage", "https://www.googleapis.com/*"],
-  "optional_permissions": ["unlimitedStorage"],
+  "optional_permissions": ["https://www.google.com/*"],
   "content_scripts": [
     {
       "matches": ["*://mail.google.com/*"],

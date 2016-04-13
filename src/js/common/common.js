@@ -453,6 +453,7 @@ function challenge_answer_hash(answer) {
 var events_fired = {};
 var DOUBLECLICK_MS = 1000;
 var SPREE_MS = 50;
+var SLOW_SPREE_MS = 200;
 
 function doubleclick() {
   return {
@@ -468,9 +469,9 @@ function parallel() {
   };
 }
 
-function spree() {
+function spree(type) {
   return {
-    name: 'spree',
+    name: (type === 'slow') ? 'slowspree' : 'spree',
     id: random_string(10),
   }
 }
@@ -480,6 +481,9 @@ function prevent(meta, callback) { //todo: messy + needs refactoring
     if(meta.name === 'spree') {
       clearTimeout(events_fired[meta.id]);
       events_fired[meta.id] = setTimeout(callback, SPREE_MS);
+    } else if(meta.name === 'slowspree') {
+      clearTimeout(events_fired[meta.id]);
+      events_fired[meta.id] = setTimeout(callback, SLOW_SPREE_MS);
     } else {
       if(meta.id in events_fired) {
         if(meta.name === 'parallel') {

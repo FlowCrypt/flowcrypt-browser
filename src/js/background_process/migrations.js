@@ -5,11 +5,13 @@ function migrate(data, sender, respond_done) {
     migrate_060_070(data.account_email, function() {
       migrate_070_080(data.account_email, function() {
         migrate_130_140(data.account_email, function() {
-          account_storage_set(null, {
-            version: Number(chrome.runtime.getManifest().version.replace('.', ''))
-          }, respond_done);
-          consistency_fixes(data.account_email);
-        })
+          migrate_160_170(data.account_email, function() {
+            account_storage_set(null, {
+              version: Number(chrome.runtime.getManifest().version.replace('.', ''))
+            }, respond_done);
+            consistency_fixes(data.account_email);
+          });
+        });
       });
     });
   });
@@ -87,6 +89,20 @@ function migrate_130_140(account_email, then) {
       private_storage_set(localStorage, account_email, 'master_passphrase_needed', Boolean(private_storage_get(localStorage, account_email, 'master_passphrase')));
     }
     then();
+  });
+}
+
+function migrate_160_170(account_email, then) {
+  console.log('migrate_160_170');
+  account_storage_get(account_email, ['setup_done', 'google_token_scopes'], function(storage) {
+    if(typeof storage.google_token_scopes === 'undefined') {
+      console.log('migrating from 1.6.0 to 1.7.0: adding google_token_scopes');
+      account_storage_set(account_email, {
+        google_token_scopes: chrome.runtime.getManifest().oauth2.scopes,
+      }, then);
+    } else {
+      then();
+    }
   });
 }
 
