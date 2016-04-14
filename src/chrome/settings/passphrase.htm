@@ -1,0 +1,91 @@
+<html>
+
+<head>
+  <title>CryptUP</title>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
+  <link rel="icon" href="/img/logo-16-16-white-green.png" />
+</head>
+
+<body id="settings">
+  <div class="profile-row">
+    <span class="email-address"></span>
+    <span>
+      <i class="ion-person"></i>
+      <!-- <img class="profile-img" src="http://armando.sx/img/armando.png" alt=""> -->
+    </span>
+  </div>
+
+  <div id="content" class="backup">
+    <div class="content-row-holder">
+      <i class="ion-ios-arrow-left back"></i>
+      <h1></h1>
+    </div>
+    <div class="separator"></div>
+
+    <div id="step_0_enter">
+      <div class="line ">Enter your current passphrase</div>
+      <div class="line">
+        <input id="original_password" type="text" placeholder="Current pass phrase" />
+      </div>
+      <div class="line">
+        <div class="button long gray action_enter">continue</div>
+      </div>
+    </div>
+
+    <div id="step_1_password">
+      <div class="line ">See <a href="#" data-featherlight="passphrase_help.htm">choosing secure pass phrases</a>.</div>
+      <div class="line">
+        <input id="password" type="text" placeholder="Pass phrase" />
+        <br/>
+        <div class="password_bar">
+          <div></div>
+        </div>
+      </div>
+      <div class="line password_feedback"><span class="password_result"></span> (average time to crack: <span class="password_time"></span>)
+        <ul></ul>
+      </div>
+      <div class="line ">Loss of this pass phrase cannot be recovered.</div>
+      <div class="line">
+        <div class="button long gray action_password">SET PASS PHRASE</div>
+      </div>
+    </div>
+
+    <div id="step_2_confirm">
+      <div class="line">Please repeat it one more time. Make sure to note the pass phrase down.</div>
+      <div class="line">
+        <input id="password2" type="text" placeholder="Repeat password" />
+      </div>
+      <div class="line">
+        <div class="button long green action_change">CONFIRM PASS PHRASE</div>
+      </div>
+      <div class="line">
+        <div class="button long gray action_reset_password">USE ANOTHER PASS PHRASE</div>
+      </div>
+    </div>
+
+    <div id="step_3_done">
+      <div class="line">All set!</div>
+    </div>
+
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/zxcvbn.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/keyserver.js"></script>
+  <script src="/js/common/gmail_api.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="settings_common.js"></script>
+  <script src="passphrase.js"></script>
+
+</body>
+
+</html>

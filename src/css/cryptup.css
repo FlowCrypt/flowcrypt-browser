@@ -68,6 +68,8 @@ body#settings > div#content.setup div#step_3_backup .second { display: none; }
 body#settings > div#content.setup div#step_4_done { display: none; }
 body#settings > div#content.setup div#loading { margin-top: 150px; }
 
+body#settings > div#content.backup div#step_0_enter { display: none; }
+body#settings > div#content.backup div#step_3_done { display: none; }
 body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
 body#settings > div#content.backup div#step_3_manual { display: none; }

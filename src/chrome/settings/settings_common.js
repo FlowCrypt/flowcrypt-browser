@@ -211,6 +211,19 @@ function crack_time_result(zxcvbn_result) {
   }
 }
 
+function openpgp_key_encrypt(key, passphrase) {
+  if(key.isPrivate() && passphrase) {
+    var keys = key.getAllKeyPackets();
+    $.each(keys, function(i, key) {
+      key.encrypt(passphrase);
+    });
+  } else if(!passphrase) {
+    throw new Error("Encryption passphrase should not be empty");
+  } else {
+    throw new Error("Nothing to decrypt in a public key");
+  }
+}
+
 $('.back').click(function() {
   window.location = 'index.htm';
 });

@@ -117,19 +117,6 @@ $('.action_reset_password').click(function() {
   $('#password').focus();
 });
 
-function openpgp_key_encrypt(key, passphrase) {
-  if(key.isPrivate() && passphrase) {
-    var keys = key.getAllKeyPackets();
-    $.each(keys, function(i, key) {
-      key.encrypt(passphrase);
-    });
-  } else if(!passphrase) {
-    throw new Error("Encryption passphrase should not be empty");
-  } else {
-    throw new Error("Nothing to decrypt in a public key");
-  }
-}
-
 function backup_key_on_gmail(account_email, armored_key, error_callback) {
   var email_headers = {
     From: account_email,

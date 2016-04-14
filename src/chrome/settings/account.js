@@ -28,21 +28,10 @@ $('.action_show_gmail_api_tokens').click(function() {
   });
 });
 
-$('.action_load_send_from_email_addresses').click(prevent(parallel(), function(self, process_id) {
-  var button_text = $(self).text();
-  $(self).html(get_spinner());
-  fetch_all_account_addresses(url_params['account_email'], function(addresses) {
-    account_storage_set(url_params['account_email'], {
-      addresses: addresses
-    }, function() {
-      submit_pubkeys(addresses.slice(), private_storage_get(localStorage, url_params['account_email'], 'master_public_key'), function() {
-        $(self).text(button_text);
-        $('pre').text(JSON.stringify(addresses));
-        release(process_id);
-      });
-    });
-  });
-}));
+$('.action_passphrase').click(function() {
+  window.location = 'passphrase.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});
+
 
 $('.action_backups').click(function() {
   window.location = 'backup.htm?account_email=' + encodeURIComponent(url_params.account_email);
