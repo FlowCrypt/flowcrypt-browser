@@ -1,3 +1,9 @@
+<b>version 1.7.0 on April 14, 2016: Contacts</b>
+composing: search google contacts in new messge and reply box
+composing: add all recipients on group reply
+composing: change any recipient on reply
+setup: changing pass phrase
+
 <b>version 1.6.0 on April 11, 2016: Public key management</b>
 setup: see and manage list of pubkeys
 setup: resubmitting pubkey on
