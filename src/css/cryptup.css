@@ -123,7 +123,7 @@ html {  padding:0px; margin: 0px; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0px;
   -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
 
-body.pgp_secure { border:none; border-left: 3px dashed green; padding-left:10px; min-height: 25px; }
+body.pgp_secure, div.replied_body.pgp_secure { border:none; border-left: 3px dashed green; padding-left:10px; min-height: 25px; }
 body.pgp_neutral { border:none; border-left: 3px dashed gray; padding-left:10px; min-height: 25px; }
 body.pgp_insecure { border:none; border-left: 3px dashed red; padding-left:10px; min-height: 25px; }
 body > #pgp_block { height: auto; }
