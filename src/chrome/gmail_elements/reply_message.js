@@ -89,7 +89,7 @@ function resize_input_text_width() {
 }
 
 function reply_message_on_render() {
-  $('#input_to').val(url_params.to + ' '); // the space causes the last email to be also evaluated
+  $('#input_to').val(url_params.to + ','); // the space causes the last email to be also evaluated
   compose_on_render();
   $("#input_to").focus();
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));
