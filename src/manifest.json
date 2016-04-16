@@ -74,8 +74,8 @@
     "url_redirect": "urn:ietf:wg:oauth:2.0:oob:auto",
     "state_header": "CRYPTUP_STATE_",
     "scopes": [
-      "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.compose",
+      "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/userinfo.profile"
     ]
   }
