@@ -1254,26 +1254,15 @@ qq.UploadButton = function(o) {
         input.setAttribute("name", options.name);
 
         qq(input).css({
-            position: "absolute",
-            // in Opera only 'browse' button
-            // is clickable and it is located at
-            // the right side of the input
-            right: 0,
-            top: 0,
-            fontFamily: "Arial",
-            // It's especially important to make this an arbitrarily large value
-            // to ensure the rendered input button in IE takes up the entire
-            // space of the container element.  Otherwise, the left side of the
-            // button will require a double-click to invoke the file chooser.
-            // In other browsers, this might cause other issues, so a large font-size
-            // is only used in IE.  There is a bug in IE8 where the opacity style is  ignored
-            // in some cases when the font-size is large.  So, this workaround is not applied
-            // to IE8.
-            fontSize: qq.ie() && !qq.ie8() ? "3500px" : "118px",
-            margin: 0,
-            padding: 0,
-            cursor: "pointer",
-            opacity: 0
+          position: 'absolute',
+          left: '0px',
+          top: '0px',
+          margin: '0px',
+          padding: '0px',
+          opacity: 0,
+          height: '38px',
+          width: '30px',
+          overflow: 'hidden',
         });
 
         // Setting the file input's height to 100% in IE7 causes

@@ -2,10 +2,10 @@
 
 function gmail_api_call(account_email, method, resource, parameters, callback, fail_on_auth) {
   account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
-    if(method === 'POST') {
-      var data = JSON.stringify(parameters);
-    } else {
+    if(method === 'GET' || method === 'DELETE') {
       var data = parameters;
+    } else {
+      var data = JSON.stringify(parameters);
     }
     if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
       $.ajax({
@@ -60,22 +60,15 @@ function google_api_handle_auth_error(account_email, method, resource, parameter
   }
 }
 
-function gmail_api_get_thread(account_email, thread_id, format, get_thread_callback) {
-  gmail_api_call(account_email, 'GET', 'threads/' + thread_id, {
-    format: format
-  }, get_thread_callback);
-}
-
-function get_master_public_key_fingerprint(account_email) {
-  return openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_public_key')).keys[0].primaryKey.fingerprint.toUpperCase();
-}
-
 /*
   body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
   headers: at least {To, From, Subject}
   attachments: [{filename: 'some.txt', type: 'text/plain', content: }]
 */
-function gmail_api_message_send(account_email, body, headers, attachments, thread_id, message_send_callback) {
+function to_mime(account_email, body, headers, attachments, mime_message_callback) {
+  function get_master_public_key_fingerprint(account_email) {
+    return openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_public_key')).keys[0].primaryKey.fingerprint.toUpperCase();
+  }
   set_up_require();
   require(['emailjs-mime-builder'], function(MimeBuilder) {
     var root_node = new MimeBuilder('multipart/mixed');
@@ -101,14 +94,49 @@ function gmail_api_message_send(account_email, body, headers, attachments, threa
         'Content-Transfer-Encoding': 'base64',
       }).setContent(attachment.content));
     });
-    var raw_email = root_node.build();
-    var params = {
-      raw: base64url_encode(raw_email),
-      threadId: thread_id || null,
-    };
-    gmail_api_call(account_email, 'POST', 'messages/send', params, message_send_callback);
+    mime_message_callback(root_node.build());
   });
-};
+}
+
+function gmail_api_get_thread(account_email, thread_id, format, get_thread_callback) {
+  gmail_api_call(account_email, 'GET', 'threads/' + thread_id, {
+    format: format
+  }, get_thread_callback);
+}
+
+function gmail_api_drafts_create(account_email, mime_message, thread_id, callback) {
+  gmail_api_call(account_email, 'POST', 'drafts', {
+    message: {
+      raw: base64url_encode(mime_message),
+      threadId: thread_id || null,
+    },
+  }, callback);
+}
+
+function gmail_api_drafts_delete(account_email, id, callback) {
+  gmail_api_call(account_email, 'DELETE', 'drafts/' + id, null, callback);
+}
+
+function gmail_api_drafts_update(account_email, id, mime_message, callback) {
+  gmail_api_call(account_email, 'PUT', 'drafts/' + id, {
+    message: {
+      raw: base64url_encode(mime_message),
+    },
+  }, callback);
+}
+
+function gmail_api_drafts_send(account_email, id, callback) {
+  gmail_api_call(account_email, 'POST', 'drafts/send', {
+    id: id,
+  }, callback);
+}
+
+function gmail_api_message_send(account_email, mime_message, thread_id, callback) {
+  gmail_api_call(account_email, 'POST', 'messages/send', {
+    raw: base64url_encode(mime_message),
+    threadId: thread_id || null,
+  }, callback);
+}
 
 function gmail_api_message_list(account_email, q, include_deleted, callback) {
   gmail_api_call(account_email, 'GET', 'messages', {

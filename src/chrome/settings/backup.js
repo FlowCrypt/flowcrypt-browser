@@ -129,12 +129,14 @@ function backup_key_on_gmail(account_email, armored_key, error_callback) {
     content: armored_key,
   }];
   var email_message = 'I hope you\'ll enjoy CryptUP! This email might come handy later.\n\nThe backup file below is protected by your pass phrase. Make sure to keep the pass phrase safe. Do not forward this email to anyone.\n\n Any feedback is welcome at tom@cryptup.org';
-  gmail_api_message_send(url_params.account_email, email_message, email_headers, email_attachments, null, function(success, response) {
-    if(success) { // todo - test pulling it and decrypting it
-      write_backup_done_and_render(false, 'gmail');
-    } else {
-      error_callback('Need internet connection to finish setting up your account. Please clicking the button again to retry.');
-    }
+  to_mime(url_params.account_email, email_message, email_headers, email_attachments, function(mime_message) {
+    gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
+      if(success) { // todo - test pulling it and decrypting it right away
+        write_backup_done_and_render(false, 'gmail');
+      } else {
+        error_callback('Need internet connection to finish setting up your account. Please clicking the button again to retry.');
+      }
+    });
   });
 }
 

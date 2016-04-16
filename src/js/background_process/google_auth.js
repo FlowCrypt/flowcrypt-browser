@@ -7,7 +7,7 @@ var auth_responders = [];
 function google_auth(auth_request, sender, respond) {
   account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function(storage) {
     if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || has_new_scope(auth_request.scopes, storage.google_token_scopes)) {
-      google_auth_window_show_and_respond_to_auth_request(auth_request, respond);
+      google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
     } else {
       google_auth_refresh_token(storage.google_token_refresh, function(tokens_object) {
         if(typeof tokens_object.access_token !== 'undefined') {
@@ -19,7 +19,7 @@ function google_auth(auth_request, sender, respond) {
             });
           });
         } else {
-          google_auth_window_show_and_respond_to_auth_request(auth_request, respond);
+          google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
         }
       });
     }
@@ -50,27 +50,28 @@ var google_auth_code_request_state = {
   },
 };
 
-function google_auth_window_show_and_respond_to_auth_request(auth_request, respond) {
+function google_auth_window_show_and_respond_to_auth_request(auth_request, current_scopes, respond) {
   auth_request.auth_responder_id = random_string(20);
   auth_responders[auth_request.auth_responder_id] = respond;
-  var scope = google_oauth2.scopes.join(' ');
-  console.log('befsc');
-  console.log(scope);
-  if(auth_request.scopes && auth_request.scopes.length) {
-    scope += ' ' + auth_request.scopes.join(' ');
-    console.log('extr:' + auth_request.scopes.join(' '));
-  }
-  console.log(scope);
-  auth_request.requested_scopes = scope.split(' ');
+  auth_request.scopes = auth_request.scopes || [];
+  $.each(google_oauth2.scopes, function(i, scope) {
+    if(auth_request.scopes.indexOf(scope) === -1) {
+      auth_request.scopes.push(scope);
+    }
+  });
+  $.each(current_scopes || [], function(i, scope) {
+    if(auth_request.scopes.indexOf(scope) === -1) {
+      auth_request.scopes.push(scope);
+    }
+  });
   var auth_code_url = google_oauth2.url_code +
     '?client_id=' + encodeURIComponent(google_oauth2.client_id) +
     '&response_type=code' +
     '&access_type=offline' +
     '&state=' + encodeURIComponent(google_auth_code_request_state.pack(auth_request)) +
     '&redirect_uri=' + encodeURIComponent(google_oauth2.url_redirect) +
-    '&scope=' + encodeURIComponent(scope) +
+    '&scope=' + encodeURIComponent(auth_request.scopes.join(' ')) +
     '&login_hint=' + encodeURIComponent(auth_request.account_email);
-  console.log(auth_code_url);
   var auth_code_window = window.open(auth_code_url, '_blank', 'height=550,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
   // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
   // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
@@ -171,7 +172,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
             // if(state_object.account_email && state_object.account_email !== account_email) {
             //   //user authorized a different account then expected
             // }
-            google_auth_save_tokens(account_email, tokens_object, state_object.requested_scopes, function() {
+            google_auth_save_tokens(account_email, tokens_object, state_object.scopes, function() {
               auth_responders[state_object.auth_responder_id]({
                 account_email: account_email,
                 success: true,
