@@ -16,14 +16,12 @@ account_storage_get(url_params.account_email, ['drafts_reply'], function(storage
         draft_set_id(storage.drafts_reply[url_params.thread_id]);
         parse_mime_message(base64url_decode(response.message.raw), function(mime_success, parsed_message) {
           if(success) {
-            if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('BEGIN PGP MESSAGE') !== -1) {
-              decrypt_and_render_draft(parsed_message.text || strip_pgp_armor(parsed_message.html));
+            if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
+              var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
+              decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
             } else {
               console.log('gmail_api_draft_get parse_mime_message else {}');
               reply_message_render_table();
-            }
-            if(parsed_message.attachments.length) {
-              render_inner_attachments(parsed_message.attachments);
             }
           } else {
             console.log('gmail_api_draft_get parse_mime_message success===false');
@@ -42,38 +40,10 @@ account_storage_get(url_params.account_email, ['drafts_reply'], function(storage
   }
 });
 
-function decrypt_and_render_draft(encrypted_draft) {
-  var my_passphrase = get_passphrase(url_params.account_email);
-  if(my_passphrase !== null) {
-    var private_key = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
-    if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-      private_key.decrypt(my_passphrase);
-    }
-    openpgp.decrypt({
-      message: openpgp.message.readArmored(encrypted_draft),
-      format: 'utf8',
-      privateKey: private_key,
-    }).then(function(plaintext) {
-      $('#input_text').html(plaintext.data);
-      reply_message_render_table();
-    }).catch(function(error) {
-      console.log('openpgp.decrypt(options).catch(error)');
-      console.log(error);
-      reply_message_render_table();
-    });
-  } else {
-    $('div#reply_message_prompt').html(get_spinner() + ' Waiting for pass phrase to open previous draft..');
-    clearInterval(passphrase_interval);
-    passphrase_interval = setInterval(function() {
-      check_passphrase_entered(encrypted_draft);
-    }, 1000);
-  }
-}
-
 function check_passphrase_entered(encrypted_draft) {
   if(get_passphrase(url_params.account_email) !== null) {
     clearInterval(passphrase_interval);
-    decrypt_and_render_draft(encrypted_draft);
+    decrypt_and_render_draft(url_params.account_email, encrypted_draft, reply_message_render_table);
   }
 }
 

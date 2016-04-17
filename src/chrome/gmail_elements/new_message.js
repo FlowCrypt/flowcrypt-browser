@@ -1,10 +1,34 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id']);
+var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id']);
 
 function new_message_close() {
-  draft_delete(url_params.account_email, function() {
-    chrome_message_send(url_params.parent_tab_id, 'close_new_message');
+  chrome_message_send(url_params.parent_tab_id, 'close_new_message');
+}
+
+if(url_params.draft_id) {
+  // todo - this is mostly copy/pasted from reply_message, would deserve a common function
+  gmail_api_draft_get(url_params.account_email, url_params.draft_id, 'raw', function(success, response) {
+    if(success) {
+      draft_set_id(url_params.draft_id);
+      parse_mime_message(base64url_decode(response.message.raw), function(mime_success, parsed_message) {
+        if(success) {
+          if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
+            var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
+            $('#input_subject').val(parsed_message.headers.subject || '');
+            decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----'))); // todo - regex is better than random clipping
+          } else {
+            console.log('gmail_api_draft_get parse_mime_message else {}');
+          }
+        } else {
+          console.log('gmail_api_draft_get parse_mime_message success===false');
+          console.log(parsed_message);
+        }
+      });
+    } else {
+      console.log('gmail_api_draft_get success===false');
+      console.log(response);
+    }
   });
 }
 

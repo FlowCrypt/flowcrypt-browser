@@ -8,6 +8,31 @@ function replace_pgp_elements(account_email, gmail_tab_id) {
   }
   replace_pgp_attachments(account_email, gmail_tab_id);
   replace_pgp_pubkeys(account_email, gmail_tab_id);
+  replace_cryptup_tags(account_email, gmail_tab_id);
+}
+
+function replace_cryptup_tags(account_email, gmail_tab_id) {
+  $("div[contenteditable='true']:contains('[cryptup:link:')").not('.evaluated').each(function() {
+    $(this).addClass('evaluated');
+    // todo - extremely distastful coding, should use regex match
+    var button = '';
+    var button_href_id = undefined;
+    $(this).html().replace(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)\]/g, function(full_link, name, id) {
+      if(name === 'draft_compose') {
+        button = '<a href="#" class="open_draft">Open draft</a>';
+        button_href_id = id;
+      } else if(name === 'draft_reply') {
+        button = '<a href="#inbox/' + id + '">Open draft</a>';
+      } else {
+        button = $(this).html(); // shows original pgp message
+      }
+    });
+    $(this).replaceWith(button);
+    $('a.open_draft').click(function() {
+      $('div.new_message').remove();
+      $('body').append(compose_message_iframe(account_email, gmail_tab_id, button_href_id));
+    });
+  });
 }
 
 function replace_pgp_pubkeys(account_email, gmail_tab_id) {

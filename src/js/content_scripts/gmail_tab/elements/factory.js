@@ -1,5 +1,13 @@
 'use strict';
 
+function compose_message_iframe(account_email, gmail_tab_id, draft_id) {
+  var src = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
+    '?account_email=' + encodeURIComponent(account_email) +
+    '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
+    '&draft_id=' + encodeURIComponent(draft_id || '');
+  return '<div class="new_message" id="new_message"><iframe scrolling="no" src="' + src + '"></iframe></div>'
+}
+
 function passphrase_dialog(account_email, type, gmail_tab_id) {
   var src = chrome.extension.getURL('chrome/gmail_elements/passphrase.htm') +
     '?account_email=' + encodeURIComponent(account_email) +

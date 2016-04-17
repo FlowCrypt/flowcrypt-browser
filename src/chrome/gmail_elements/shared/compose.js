@@ -11,7 +11,7 @@ var can_search_on_google = undefined;
 var can_save_drafts = undefined;
 var pubkey_cache_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
-var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id']);
+var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'subject']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
@@ -100,10 +100,17 @@ function draft_save() {
     $('#send_btn_note').text('Saving');
     var armored_pubkey = private_storage_get(localStorage, compose_url_params.account_email, 'master_public_key');
     encrypt([armored_pubkey], null, $('#input_text').text(), true, function(encrypted) {
-      to_mime(compose_url_params.account_email, encrypted.data, {
+      if(compose_url_params.thread_id) { // replied message
+        var body = '[cryptup:link:draft_reply:' + compose_url_params.thread_id + ']\n\n' + encrypted.data;
+      } else if(draft_id) {
+        var body = '[cryptup:link:draft_compose:' + draft_id + ']\n\n' + encrypted.data;
+      } else {
+        var body = encrypted.data;
+      }
+      to_mime(compose_url_params.account_email, body, {
         To: get_recipients_from_dom(),
         From: get_sender_from_dom(),
-        Subject: $('#input_subject').val() || 'Encrypted draft',
+        Subject: $('#input_subject').val() || compose_url_params.subject || 'CryptUP draft',
       }, [], function(mime_message) {
         if(!draft_id) {
           gmail_api_draft_create(compose_url_params.account_email, mime_message, compose_url_params.thread_id, function(success, response) {
@@ -126,12 +133,46 @@ function draft_save() {
 
 function draft_delete(account_email, callback) {
   if(draft_id) {
-    draft_meta_store(false, draft_id, thread_id, function() {
+    draft_meta_store(false, draft_id, compose_url_params.thread_id, function() {
       gmail_api_draft_delete(account_email, draft_id, callback);
     })
   } else {
     if(callback) {
       callback();
+    }
+  }
+}
+
+function decrypt_and_render_draft(account_email, encrypted_draft, render_function) {
+  var my_passphrase = get_passphrase(account_email);
+  if(my_passphrase !== null) {
+    var private_key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
+    if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+      private_key.decrypt(my_passphrase);
+    }
+    openpgp.decrypt({
+      message: openpgp.message.readArmored(encrypted_draft),
+      format: 'utf8',
+      privateKey: private_key,
+    }).then(function(plaintext) {
+      $('#input_text').html(plaintext.data);
+      if(render_function) {
+        render_function();
+      }
+    }).catch(function(error) {
+      console.log('openpgp.decrypt(options).catch(error)');
+      console.log(error);
+      if(render_function) {
+        render_function();
+      }
+    });
+  } else {
+    if($('div#reply_message_prompt').length) { // todo - will only work for reply box, not compose box
+      $('div#reply_message_prompt').html(get_spinner() + ' Waiting for pass phrase to open previous draft..');
+      clearInterval(passphrase_interval);
+      passphrase_interval = setInterval(function() {
+        check_passphrase_entered(encrypted_draft);
+      }, 1000);
     }
   }
 }
@@ -444,7 +485,6 @@ function search_contacts() {
           console.log('search_add_google_contacts.google_api_contacts.success === false');
           console.log(google_contacts);
         }
-
         render_search_results(contacts, query);
       });
     } else {

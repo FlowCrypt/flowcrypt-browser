@@ -83,13 +83,21 @@ function mime_node_filename(node) {
 function parse_mime_message(mime_message, callback) {
   set_up_require();
   var mime_message_contents = {
-    attachments: []
+    attachments: [],
+    headers: {},
   };
   require(['emailjs-mime-parser'], function(MimeParser) {
     try {
       //todo - handle mime formatting errors and such, with callback(false, 'XX went wrong');
       var parser = new MimeParser();
       var parsed = {};
+      parser.onheader = function(node) {
+        if(!String(node.path.join("."))) { // root node headers
+          $.each(node.headers, function(name, header) {
+            mime_message_contents.headers[name] = header[0].value;
+          });
+        }
+      };
       parser.onbody = function(node, chunk) {
         var path = String(node.path.join("."));
         if(typeof parsed[path] === 'undefined') {
@@ -116,10 +124,11 @@ function parse_mime_message(mime_message, callback) {
         });
         callback(true, mime_message_contents);
       }
-      parser.write(mime_message);
+      parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
       parser.end();
     } catch(e) {
-      console.log(e + JSON.stringify(e));
+      console.log(e + JSON.stringify(e)); // todo - this will catch on errors inside callback() which is not good
+      // todo - rather should only catch parse error and return through callback(false, ...)
       throw e;
     }
   });
