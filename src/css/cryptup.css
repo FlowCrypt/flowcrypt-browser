@@ -125,7 +125,8 @@ html {  padding:0px; margin: 0px; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0px;
   -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
 
-body.pgp_secure, div.replied_body.pgp_secure { border:none; border-left: 3px dashed green; padding-left:10px; min-height: 25px; }
+body.pgp_secure, div.replied_body.pgp_secure { border: 1px solid #f0f0f0; border-left: 3px dashed green; padding-left:10px; min-height: 25px;
+  background-image: url(/img/lock-seamless-bg-alpha.png); padding-top: 6px;}
 body.pgp_neutral { border:none; border-left: 3px dashed gray; padding-left:10px; min-height: 25px; }
 body.pgp_insecure { border:none; border-left: 3px dashed red; padding-left:10px; min-height: 25px; }
 body > #pgp_block { height: auto; }
@@ -172,7 +173,7 @@ table#compose td.bottom div#send_btn { text-transform: uppercase; display: inlin
 table#compose .close_new_message i.ion-android-close { font-size: 27px; top: 10px!important; color: white; margin-top: -5px; }
 table#compose td.bottom div#send_btn_note { display: inline-block; font-size: 12.8px; padding-left: 5px; opacity: 0.5; }
 table#compose td.text div#input_text { border: none; overflow: none; padding-top:8px; padding-left:8px; outline: none; border: none !important; -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important; box-shadow: none !important; height:100%; word-wrap: break-word; max-width: 525px;}
+  -moz-box-shadow: none !important; box-shadow: none !important; height:100%; word-wrap: break-word; max-width: 525px; background-image: url(/img/lock-seamless-bg-alpha.png);}
 table#compose td.text { border-bottom: none; }
 table#compose .fa-close { font-size: 20px; margin-top: -1px; }
 table#compose #send_btn i { font-size: 20px; }
