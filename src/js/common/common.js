@@ -65,6 +65,66 @@ function download_file(filename, type, data) {
   window.URL.revokeObjectURL(url);
 }
 
+function mime_node_type(node) {
+  if(node.headers['content-type'] && node.headers['content-type'][0]) {
+    return node.headers['content-type'][0].value;
+  }
+}
+
+function mime_node_filename(node) {
+  if(node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
+    return node.headers['content-disposition'][0].params.filename;
+  }
+  if(node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
+    return node.headers['content-disposition'][0].params.name;
+  }
+}
+
+function parse_mime_message(mime_message, callback) {
+  set_up_require();
+  var mime_message_contents = {
+    attachments: []
+  };
+  require(['emailjs-mime-parser'], function(MimeParser) {
+    try {
+      //todo - handle mime formatting errors and such, with callback(false, 'XX went wrong');
+      var parser = new MimeParser();
+      var parsed = {};
+      parser.onbody = function(node, chunk) {
+        var path = String(node.path.join("."));
+        if(typeof parsed[path] === 'undefined') {
+          parsed[path] = node;
+        }
+      };
+      parser.onend = function() {
+        $.each(parsed, function(path, node) {
+          if(mime_node_type(node) === 'application/pgp-signature') {
+            mime_message_contents.signature = uint8_as_utf(node.content);
+          } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
+            mime_message_contents.html = uint8_as_utf(node.content);
+          } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
+            mime_message_contents.text = uint8_as_utf(node.content);
+          } else {
+            var node_content = uint8_to_str(node.content);
+            mime_message_contents.attachments.push({
+              name: mime_node_filename(node),
+              size: node_content.length,
+              type: mime_node_type(node),
+              data: node_content,
+            });
+          }
+        });
+        callback(true, mime_message_contents);
+      }
+      parser.write(mime_message);
+      parser.end();
+    } catch(e) {
+      console.log(e + JSON.stringify(e));
+      throw e;
+    }
+  });
+}
+
 function number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
   nStr += '';
   var x = nStr.split('.');
@@ -138,6 +198,9 @@ function add_account_email_to_list_of_accounts(account_email, callback) { //todo
 }
 
 function strip_pgp_armor(pgp_block_text) {
+  if(!pgp_block_text) {
+    return pgp_block_text;
+  }
   var debug = false;
   if(debug) {
     console.log('pgp_block_1');

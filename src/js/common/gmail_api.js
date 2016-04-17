@@ -104,7 +104,7 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
   }, get_thread_callback);
 }
 
-function gmail_api_drafts_create(account_email, mime_message, thread_id, callback) {
+function gmail_api_draft_create(account_email, mime_message, thread_id, callback) {
   gmail_api_call(account_email, 'POST', 'drafts', {
     message: {
       raw: base64url_encode(mime_message),
@@ -113,11 +113,11 @@ function gmail_api_drafts_create(account_email, mime_message, thread_id, callbac
   }, callback);
 }
 
-function gmail_api_drafts_delete(account_email, id, callback) {
+function gmail_api_draft_delete(account_email, id, callback) {
   gmail_api_call(account_email, 'DELETE', 'drafts/' + id, null, callback);
 }
 
-function gmail_api_drafts_update(account_email, id, mime_message, callback) {
+function gmail_api_draft_update(account_email, id, mime_message, callback) {
   gmail_api_call(account_email, 'PUT', 'drafts/' + id, {
     message: {
       raw: base64url_encode(mime_message),
@@ -125,7 +125,11 @@ function gmail_api_drafts_update(account_email, id, mime_message, callback) {
   }, callback);
 }
 
-function gmail_api_drafts_send(account_email, id, callback) {
+function gmail_api_draft_get(account_email, id, format, callback) {
+  gmail_api_call(account_email, 'GET', 'drafts/' + id, {format: format || 'full'}, callback);
+}
+
+function gmail_api_draft_send(account_email, id, callback) {
   gmail_api_call(account_email, 'POST', 'drafts/send', {
     id: id,
   }, callback);

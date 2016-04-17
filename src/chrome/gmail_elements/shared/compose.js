@@ -10,8 +10,8 @@ var draft_message_id = undefined;
 var can_search_on_google = undefined;
 var can_save_drafts = undefined;
 var pubkey_cache_interval = undefined;
-var save_draft_interval = setInterval(save_draft, SAVE_DRAFT_FREQUENCY);
-var compose_url_params = get_url_params(['account_email', 'parent_tab_id']);
+var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
+var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
@@ -29,8 +29,8 @@ account_storage_get(compose_url_params.account_email, ['google_token_scopes'], f
   }
   can_save_drafts = (storage.google_token_scopes.indexOf(GOOGLE_COMPOSE_SCOPE) !== -1);
   if(!can_save_drafts) {
-    $('#send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
-    $('#send_btn_note a.auth_drafts').click(auth_drafts);
+    $('#send_btn_note').html('<a href="#" class="draft_auth hover_underline">Enable encrypted drafts</a>');
+    $('#send_btn_note a.draft_auth').click(draft_auth);
   }
 });
 
@@ -54,7 +54,41 @@ function should_save_draft(message_body) {
   }
 }
 
-function save_draft() {
+function draft_set_id(id) {
+  draft_id = id;
+}
+
+function draft_meta_store(store_if_true, draft_id, thread_id, recipients, subject, then) {
+  account_storage_get(compose_url_params.account_email, ['drafts_reply', 'drafts_compose'], function(storage) {
+    if(thread_id) { // it's a reply
+      var drafts = storage.drafts_reply || {};
+      if(store_if_true) {
+        drafts[compose_url_params.thread_id] = draft_id;
+      } else {
+        delete drafts[compose_url_params.thread_id];
+      }
+      account_storage_set(compose_url_params.account_email, {
+        drafts_reply: drafts,
+      }, then);
+    } else { // it's a new message
+      var drafts = storage.drafts_compose || {};
+      if(store_if_true) {
+        drafts[draft_id] = {
+          recipients: recipients,
+          subject: subject,
+          date: new Date().getTime(),
+        };
+      } else {
+        delete drafts[draft_id];
+      }
+      account_storage_set(compose_url_params.account_email, {
+        drafts_compose: drafts,
+      }, then);
+    }
+  });
+}
+
+function draft_save() {
   function set_note(result) {
     if(result) {
       $('#send_btn_note').text('Saved');
@@ -72,15 +106,16 @@ function save_draft() {
         Subject: $('#input_subject').val() || 'Encrypted draft',
       }, [], function(mime_message) {
         if(!draft_id) {
-          gmail_api_drafts_create(compose_url_params.account_email, mime_message, compose_url_params.thread_id, function(success, response) {
+          gmail_api_draft_create(compose_url_params.account_email, mime_message, compose_url_params.thread_id, function(success, response) {
             set_note(success);
             if(success) {
               draft_id = response.id;
               draft_message_id = response.message.id;
+              draft_meta_store(true, response.id, compose_url_params.thread_id, get_recipients_from_dom(), $('#input_subject'));
             }
           });
         } else {
-          gmail_api_drafts_update(compose_url_params.account_email, draft_id, mime_message, function(success, response) {
+          gmail_api_draft_update(compose_url_params.account_email, draft_id, mime_message, function(success, response) {
             set_note(success);
           });
         }
@@ -89,13 +124,11 @@ function save_draft() {
   }
 }
 
-function delete_draft(account_email, callback) {
+function draft_delete(account_email, callback) {
   if(draft_id) {
-    gmail_api_drafts_delete(account_email, draft_id, function(success, response) {
-      if(callback) {
-        callback(success);
-      }
-    });
+    draft_meta_store(false, draft_id, thread_id, function() {
+      gmail_api_draft_delete(account_email, draft_id, callback);
+    })
   } else {
     if(callback) {
       callback();
@@ -305,7 +338,7 @@ function remove_receiver() {
   compose_show_hide_missing_pubkey_container();
 }
 
-function auth_drafts() {
+function draft_auth() {
   chrome_message_send(null, 'google_auth', {
     account_email: compose_url_params.account_email,
     scopes: [GOOGLE_COMPOSE_SCOPE],
@@ -314,8 +347,8 @@ function auth_drafts() {
       $('#send_btn_note').text('');
       can_save_drafts = true;
       clearInterval(save_draft_interval);
-      save_draft();
-      setInterval(save_draft, SAVE_DRAFT_FREQUENCY);
+      draft_save();
+      setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
     } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
       alert('CryptUP needs this permission save your encrypted drafts automatically.');
     } else {
