@@ -132,6 +132,7 @@ function draft_save() {
 }
 
 function draft_delete(account_email, callback) {
+  clearInterval(save_draft_interval);
   if(draft_id) {
     draft_meta_store(false, draft_id, compose_url_params.thread_id, null, null, function() {
       gmail_api_draft_delete(account_email, draft_id, callback);
@@ -332,7 +333,7 @@ function compose_show_hide_missing_pubkey_container() {
   }
 }
 
-function render_receivers() { // move emails from input into their own spans
+function render_receivers() { // move emails from input into their own spans. $(this) is input_to
   var content = $(this).val();
   var icon = '<i class="fa ion-load-c fa-spin"></i>';
   if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back

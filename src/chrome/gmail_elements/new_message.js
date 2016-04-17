@@ -48,7 +48,7 @@ function send_btn_click() {
     to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
         if(success) {
-          new_message_close();
+          draft_delete(url_params.account_email, new_message_close);
         } else {
           handle_send_message_error(response);
         }

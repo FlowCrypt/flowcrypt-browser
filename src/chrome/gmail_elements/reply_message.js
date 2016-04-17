@@ -84,7 +84,7 @@ function reply_message_reinsert_reply_box() {
 }
 
 function reply_message_render_success(has_attachments, message_id) {
-  draft_delete(url_params.account_email);
+  draft_delete(url_params.account_email); // todo - handle errors + retry. Otherwise unwanted drafts might show at times after sending a msg
   $('#reply_message_table_container').css('display', 'none');
   $('#reply_message_successful_container div.replied_from').text(url_params.from);
   $('#reply_message_successful_container div.replied_to span').text(url_params.to);
