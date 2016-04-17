@@ -64,12 +64,14 @@ function reply_message_determine_header_variables() {
   });
 }
 
-// function reply_message_close() {
-//   chrome_message_send(url_params.parent_tab_id, 'close_reply_message', {
-//     frame_id: url_params.frame_id,
-//     thread_id: url_params.thread_id
-//   });
-// }
+$('.delete_draft').click(function() {
+  draft_delete(url_params.account_email, function() {
+    chrome_message_send(url_params.parent_tab_id, 'close_reply_message', {
+      frame_id: url_params.frame_id,
+      thread_id: url_params.thread_id
+    });
+  });
+});
 
 function reply_message_reinsert_reply_box() {
   chrome_message_send(url_params.parent_tab_id, 'reinsert_reply_box', {

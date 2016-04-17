@@ -133,7 +133,7 @@ function draft_save() {
 
 function draft_delete(account_email, callback) {
   if(draft_id) {
-    draft_meta_store(false, draft_id, compose_url_params.thread_id, function() {
+    draft_meta_store(false, draft_id, compose_url_params.thread_id, null, null, function() {
       gmail_api_draft_delete(account_email, draft_id, callback);
     })
   } else {
@@ -286,7 +286,7 @@ function handle_send_message_error(response) {
     $('#send_btn i').attr('class', '');
     alert('Total attachments size should be under 5MB (will be fixed by the end of May)');
   } else {
-    console.log(success);
+    console.log('handle_send_message_error');
     console.log(response);
     alert('error sending message, check log');
   }

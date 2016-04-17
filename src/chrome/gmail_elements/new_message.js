@@ -6,6 +6,10 @@ function new_message_close() {
   chrome_message_send(url_params.parent_tab_id, 'close_new_message');
 }
 
+$('.delete_draft').click(function() {
+  draft_delete(url_params.account_email, new_message_close);
+});
+
 if(url_params.draft_id) {
   // todo - this is mostly copy/pasted from reply_message, would deserve a common function
   gmail_api_draft_get(url_params.account_email, url_params.draft_id, 'raw', function(success, response) {
