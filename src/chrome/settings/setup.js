@@ -267,18 +267,13 @@ $('.action_account_settings').click(function() {
 $('.input_submit_key').click(function() {
   var input_submit_all = $(this).closest('.manual').find('.input_submit_all');
   if($(this).prop('checked')) {
-    console.log(1);
-    console.log(input_submit_all.css('visibility'));
-
     if(input_submit_all.css('visibility') === 'visible') {
-      console.log(3);
       input_submit_all.prop({
         checked: true,
         disabled: false
       });
     }
   } else {
-    console.log(2);
     input_submit_all.prop({
       checked: false,
       disabled: true
