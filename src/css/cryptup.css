@@ -67,6 +67,14 @@ body#settings > div#content.setup div.manual #addresses { color: #888; }
 body#settings > div#content.setup div#step_2_recovery { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_2_recovery div#error_text_container { display: none; }
 body#settings > div#content.setup div#step_2_recovery div#error_text {  line-height: 1.5; color: red; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
+body#settings > div#content.setup .squaredFour { width: 20px; position: relative; margin: 5px auto; position: absolute; left:32px; display: inline-block; }
+body#settings > div#content.setup .squaredFour label { width: 20px; height: 20px; cursor: pointer; position: absolute; top: 0; left: 0; background: #fcfff4; background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); border-radius: 4px; box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);}
+body#settings > div#content.setup .squaredFour label:after { content: ''; width: 9px; height: 5px; position: absolute; top: 4px; left: 4px; border: 3px solid #333; border-top: none; border-right: none; background: transparent; opacity: 0;-webkit-transform: rotate(-45deg); transform: rotate(-45deg);  }
+body#settings > div#content.setup .squaredFour label:hover::after {  opacity: 0.5;}
+body#settings > div#content.setup .squaredFour input[type=checkbox] {visibility: hidden;}
+body#settings > div#content.setup .squaredFour input[type=checkbox]:checked + label:after {opacity: 1;}
+body#settings > div#content.setup .labelCopy { margin-top: 7px; position: absolute; left: 30px; right: 0; text-align: left; text-indent: 45px; z-index: -10;}
+body#settings > div#content.setup label.checkboxSquaredOne { padding-left: 0!important; }
 
 body#settings > div#content.setup div#step_3_backup { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
@@ -92,15 +100,13 @@ body#settings > div#content.setup div.manual .input_password, body#settings > di
 }
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
-body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; min-width: 500px; }
+body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; min-width: 500px; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;}
 body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
 body#settings #edit_pubkey textarea.input_pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
-
 body#settings > div#content > div#changelog { width: 550px; margin: 0 auto; text-align: left; font-size: 16px; padding-bottom: 80px; }
 body#settings > div#content > div#changelog b { display: inline-block; margin-top: 20px; }
-
 body#settings > div#content > pre#key_container { padding-bottom: 80px;}
 
 body#settings > div#footer { width: 99%; position: fixed; bottom: 0; padding: 20px 0; margin: 0 auto; text-align: center; font-size: 18px; color: #666; background: white;}
@@ -153,7 +159,7 @@ table#compose td#input_addresses_container .recipients span i { padding-left: 4p
   color: black; }
 table#compose td#input_addresses_container .recipients span.has_pgp i, table#compose td#input_addresses_container .recipients span.no_pgp i,
 table#compose td#input_addresses_container .recipients span.wrong i  { color: white!important;}
-table#compose td#input_addresses_container input#input_to { width: auto!important;}
+table#compose td#input_addresses_container input#input_to { width: auto!important; background: yellow; vertical-align: top;}
 table#compose td#input_addresses_container .recipients span i.fa { font-size: 70%; top: -1px; }
 table#compose td#input_addresses_container .recipients span i.ion-locked {position: absolute; left: 4px; top:7px; color: white; opacity: 1; }
 table#compose td#input_addresses_container .recipients span i.ion-ios-locked {position: absolute; left:4px; top:4px; font-size: 15px; color: white; opacity: 1;}
@@ -276,52 +282,3 @@ body.attachment #type { padding: 10px 0; color: #999; }
 body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
 body.attachment .file-format-holder img#file-format { width: 45px; height: auto; margin-top: 12px; opacity: .2; margin-left: 10px;}
-
-
-
-
-
-
-
-.squaredFour { width: 20px; position: relative; margin: 5px auto; position: absolute; left:32px; display: inline-block; }
-.squaredFour label {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: #fcfff4;
-  background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  border-radius: 4px;
-  box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);
-}
-.squaredFour label:after {
-  content: '';
-  width: 9px;
-  height: 5px;
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  border: 3px solid #333;
-  border-top: none;
-  border-right: none;
-  background: transparent;
-  opacity: 0;
-  -webkit-transform: rotate(-45deg);
-          transform: rotate(-45deg);
-}
-.squaredFour label:hover::after {
-  opacity: 0.5;
-}
-.squaredFour input[type=checkbox] {
-  visibility: hidden;
-}
-.squaredFour input[type=checkbox]:checked + label:after {
-  opacity: 1;
-}
-
-
-.labelCopy { margin-top: 7px; position: absolute; left: 30px; right: 0; text-align: left; text-indent: 45px; z-index: -10;}
-label.checkboxSquaredOne { padding-left: 0!important; }
