@@ -1,7 +1,7 @@
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; text-align: center; white-space: nowrap;
-  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 4px 15px; text-decoration: none; cursor: pointer; }
+  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 6px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
 .button.red { background-color: #d14836; }
 .button.green { background-color: #088447; background-image: -webkit-linear-gradient(top, #0F8C4F, #088447); }
@@ -29,11 +29,11 @@ body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999;
 body#settings > div#content a:hover { text-decoration: none; }
 body#settings > div#content > div#accounts a.button.has_email { width: 300px; padding: 5px 20px; text-align: left; font-weight: 100; color: #fff; }
 body#settings > div#content > div#accounts a.button.has_email b { padding-right: 10px; color: #FFF; }
-body#settings > div#content div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto;}
+body#settings > div#content div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;}
 body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content div.line label { line-height: 22px; }
-body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 300px; height:45px; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px;}
+body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 360px!important; height:45px; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px;}
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
@@ -43,30 +43,35 @@ body#settings > div#content .ion-ios-arrow-left { position: absolute; left: 20px
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
 body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 3px; position: relative; top: 5px; width: 35px; height: 35px; border: 1px solid #ccc; border-radius: 120px; color: #ccc;}
 
-body#settings > div#content.setup div#step_0_found_key { display: none; }
-body#settings > div#content.setup div#step_1_easy_or_manual { display: none; }
+body#settings > div#content.setup [id^="step_"] { animation: fadeIn .7s;}
+body#settings > div#content.setup h1 {-webkit-animation: fadeIn .7s;}
+body#settings > div#content.setup div#step_0_found_key { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
+body#settings > div#content.setup div#step_1_easy_or_manual { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white; text-align: center; font-size: 16px; font-weight: normal;
-  padding-left: 375px; padding-top: 164px; color: #666; }
+  padding-left: 375px; padding-top: 164px; color: #666; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
 body#settings > div#content.setup div.manual { display: none; }
 body#settings > div#content.setup div.alignleft { width: 600px; text-align: left; display: inline-block; }
-body#settings > div#content.setup div.manual textarea { width: 600px; height: 300px; font-size: 12px; text-align: left; margin-top:-15px; padding: 8px; }
+body#settings > div#content.setup div.manual textarea { width: 530px; height: 300px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
 body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0px auto;}
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
 body#settings > div#content.setup div.manual label { padding-left: 20px;  }
+body#settings > div#content.setup div.manual .ion-android-lock { color: rgba(0,0,0,0.25); font-size: 20px; margin-right: 10px; margin-top: 4px;}
+body#settings > div#content.setup div.action_save_private { margin-top: 20px; font-size: 15px;}
+body#settings > div#content.setup div.action_create_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
 body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
 body#settings > div#content.setup div.manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
 body#settings > div#content.setup div.manual #addresses { color: #888; }
-body#settings > div#content.setup div#step_2_recovery { display: none; }
+body#settings > div#content.setup div#step_2_recovery { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_2_recovery div#error_text_container { display: none; }
 body#settings > div#content.setup div#step_2_recovery div#error_text {  line-height: 1.5; color: red; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
 
 body#settings > div#content.setup div#step_3_backup { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
 body#settings > div#content.setup div#step_4_done { display: none; }
-body#settings > div#content.setup div#loading { margin-top: 150px; }
+body#settings > div#content.setup div#loading { width: 100%; margin: 10px auto; padding-left: 0; padding-right: 0; }
 
 body#settings > div#content.backup div#step_0_enter { display: none; }
 body#settings > div#content.backup div#step_3_done { display: none; }
@@ -76,8 +81,8 @@ body#settings > div#content.backup div#step_3_manual { display: none; }
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.details td { padding-top: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px;}
-body#settings > div#content.backup .password_feedback { display: none; }
-body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; margin-left: 330px; margin-top: 7px; }
+body#settings > div#content.backup .password_feedback { display: none;}
+body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left:0; right:0; margin-top: 57px;  -webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
 body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
 body#settings > div#content.backup div.password_bar, body#settings > div#content.setup div.manual div.password_bar { width: 300px; border: none; display: inline-block; border: none; }
 body#settings > div#content.backup div.password_bar > div, body#settings > div#content.setup div.manual div.password_bar > div { width: 0; height: 3px; }
@@ -85,8 +90,6 @@ body#settings > div#content.backup #password, body#settings > div#content.backup
 body#settings > div#content.setup div.manual .input_password, body#settings > div#content.setup div.manual .input_password2 {
   width: 300px;
 }
-
-
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
 body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; min-width: 500px; }
@@ -256,6 +259,10 @@ div#reply_message_successful_container > #attachments { border-top: 1px dotted #
 div#reply_message_successful_container > #attachments > span.pgp_attachment { margin-right: 16px; margin-bottom: 16px; display: inline-block; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment > iframe { height: 120px; width: 180px; margin: 0; padding: 0; border: none; overflow: hidden; }
 
+.loading_copy { -webkit-animation: fadeIn 1s; animation: fadeIn 1s; text-align: center; font-size: 19px; color: #afafaf; margin-top: 4px;}
+.loader { text-align: center; padding-left: 0; margin-left: 0; -webkit-animation: fadeInUp 1s;  animation: fadeInUp 1s;}
+.inline_loader {  display: inline; width: 120px; margin: 0 auto!important; padding: 0!important; position: relative;}
+.inline_loader svg { display: inline; position: absolute; left:0; right: 0; top: -2px;}
 
 body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; background-image: url(/img/attachment-corner.png);
   background-repeat: no-repeat; background-position: bottom right; z-index: 0; }
@@ -269,3 +276,52 @@ body.attachment #type { padding: 10px 0; color: #999; }
 body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
 body.attachment .file-format-holder img#file-format { width: 45px; height: auto; margin-top: 12px; opacity: .2; margin-left: 10px;}
+
+
+
+
+
+
+
+.squaredFour { width: 20px; position: relative; margin: 5px auto; position: absolute; left:32px; display: inline-block; }
+.squaredFour label {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #fcfff4;
+  background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+  background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+  border-radius: 4px;
+  box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);
+}
+.squaredFour label:after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border: 3px solid #333;
+  border-top: none;
+  border-right: none;
+  background: transparent;
+  opacity: 0;
+  -webkit-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+}
+.squaredFour label:hover::after {
+  opacity: 0.5;
+}
+.squaredFour input[type=checkbox] {
+  visibility: hidden;
+}
+.squaredFour input[type=checkbox]:checked + label:after {
+  opacity: 1;
+}
+
+
+.labelCopy { margin-top: 7px; position: absolute; left: 30px; right: 0; text-align: left; text-indent: 45px; z-index: -10;}
+label.checkboxSquaredOne { padding-left: 0!important; }

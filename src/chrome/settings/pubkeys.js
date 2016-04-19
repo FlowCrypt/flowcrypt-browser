@@ -10,7 +10,7 @@ var url_params = get_url_params(['account_email']);
 
 $('.email-address').text(url_params.account_email);
 
-$('.summary').html('Loading from keyserver ' + get_spinner());
+$('.summary').html('Loading from keyserver <br>' + get_spinner());
 
 $('.fix_all').click(prevent(doubleclick(), function(self) {
   $(self).html(get_spinner());

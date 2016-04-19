@@ -27,7 +27,20 @@
     </div>
     <div class="separator"></div>
 
-    <div id="loading"><i class="fa fa-spinner fa-spin"></i> Loading..</div>
+    <div id="loading">
+      <div class="loader" title="0">
+        <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve">
+          <path opacity="0.1" fill="#088447" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946
+    s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634
+    c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z" />
+          <path fill="#088447" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0
+    C22.32,8.481,24.301,9.057,26.013,10.047z">
+            <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.4s" repeatCount="indefinite" />
+          </path>
+        </svg>
+      </div>
+      <div class="loading_copy">Loading...</div>
+    </div>
 
     <div id="step_0_status">
       <div class="line status_summary"></div>
@@ -70,7 +83,10 @@
       <div class="line">
         <table class="backup_options">
           <tr class="details">
-            <td><input type="radio" name="input_backup_choice" value="gmail" id="input_backup_gmail" checked="checked" /> <label for="input_backup_gmail">Gmail Inbox</label></td>
+            <td>
+              <input type="radio" name="input_backup_choice" value="gmail" id="input_backup_gmail" checked="checked" />
+              <label for="input_backup_gmail">Gmail Inbox</label>
+            </td>
             <td><span class="green_label">easy recovery</span></td>
             <td><span class="orange_label">reasonable security</span></td>
           </tr>
@@ -78,12 +94,16 @@
             <td colspan="3">Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase, which should be very long and hard to guess. Best option for most users.</td>
           </tr>
           <tr class="details">
-            <td><input type="radio" name="input_backup_choice" value="file" id="input_backup_download" /> <label for="input_backup_download">download</label></td>
+            <td>
+              <input type="radio" name="input_backup_choice" value="file" id="input_backup_download" />
+              <label for="input_backup_download">download</label>
+            </td>
             <td><span class="orange_label">medium recovery</span></td>
             <td><span class="green_label">great security</span></td>
           </tr>
           <tr class="text">
-            <td colspan="3">Download your key as a file. Very secure option if your device is encrypted, or if you can keep a file stored securely. If you lose both your laptop and the file, your encrypted email will be unreadable, so you need to keep this file on a safe place. Regular emails will not be affected.</td>
+            <td colspan="3">Download your key as a file. Very secure option if your device is encrypted, or if you can keep a file stored securely. If you lose both your laptop and the file, your encrypted email will be unreadable, so you need to keep this file on a
+              safe place. Regular emails will not be affected.</td>
           </tr>
           <!-- <tr class="details">
             <td><input type="radio" name="input_backup_choice" value="print" id="input_backup_print" /> <label for="input_backup_print">Print</label></td>
@@ -94,7 +114,10 @@
             <td colspan="3">Print your key on a paper. Most secure option because a printed document cannot be stolen by a hacker. If you lose your laptop, scanning the document will be required to open your encrypted emails. Regular emails will not be affected.</td>
           </tr> -->
           <tr class="details hide_if_backup_done">
-            <td><input type="radio" name="input_backup_choice" value="none" id="input_backup_none" /> <label for="input_backup_none">no backup</label></td>
+            <td>
+              <input type="radio" name="input_backup_choice" value="none" id="input_backup_none" />
+              <label for="input_backup_none">no backup</label>
+            </td>
             <td><span class="red_label">no recovery</span></td>
             <td></td>
           </tr>
@@ -106,9 +129,9 @@
       <div class="line">
       </div>
       <div class="line">
-          <div class="button long green action_manual_backup">BACK UP ON GMAIL</div>
-          &nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;
-          <div class="button long gray action_skip_backup">LATER</div>
+        <div class="button long green action_manual_backup">BACK UP ON GMAIL</div>
+        &nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;
+        <div class="button long gray action_skip_backup">LATER</div>
       </div>
     </div>
   </div>
