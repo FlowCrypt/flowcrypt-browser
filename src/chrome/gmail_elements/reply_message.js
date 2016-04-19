@@ -1,10 +1,11 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id']);
+var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id', 'skip_click_prompt']);
 var original_reply_message_prompt = undefined;
 var thread_message_id_last = '';
 var thread_message_referrences_last = '';
 var passphrase_interval = undefined;
+url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
 
 // show decrypted draft if available for this thread
 account_storage_get(url_params.account_email, ['drafts_reply'], function(storage) {
@@ -36,7 +37,11 @@ account_storage_get(url_params.account_email, ['drafts_reply'], function(storage
       }
     });
   } else { //no draft available
-    $('div#reply_message_prompt').click(reply_message_render_table);
+    if(!url_params.skip_click_prompt) {
+      $('div#reply_message_prompt').click(reply_message_render_table);
+    } else {
+      reply_message_render_table();
+    }
   }
 });
 

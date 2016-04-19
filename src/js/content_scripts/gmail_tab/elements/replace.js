@@ -9,6 +9,20 @@ function replace_pgp_elements(account_email, gmail_tab_id) {
   replace_pgp_attachments(account_email, gmail_tab_id);
   replace_pgp_pubkeys(account_email, gmail_tab_id);
   replace_cryptup_tags(account_email, gmail_tab_id);
+  replace_reply_buttons(account_email, gmail_tab_id);
+}
+
+function replace_reply_buttons(account_email, gmail_tab_id) {
+  if(!$('td.acX.replaced').length) { // last button in convo gets replaced
+    var reply_button = '<div class="reply_message_button"><i class="fa fa-mail-reply"></i>&nbsp;<img src="' + get_logo_src(true) + '" /></div>';
+    $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(function() {
+      replace_reply_box(account_email, gmail_tab_id, "div.remove_borders, div.nr.tMHS5d:contains('Click here to ')", true);
+    });
+  } else { // all others get removed
+    $('td.acX').not('.replaced').each(function() {
+      $(this).addClass('replaced').html('');
+    });
+  }
 }
 
 function replace_cryptup_tags(account_email, gmail_tab_id) {
@@ -133,7 +147,7 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
   });
 }
 
-function replace_reply_box(account_email, gmail_tab_id) {
+function replace_reply_box(account_email, gmail_tab_id, reply_container_selector, skip_click_prompt) {
   var reply_to_estimate = [$('h3.iw span[email]').last().attr('email').trim()]; // add original sender
   var reply_to = [];
   $('span.hb').last().find('span.g2').each(function() {
@@ -151,11 +165,11 @@ function replace_reply_box(account_email, gmail_tab_id) {
     if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
       reply_to = unique(reply_to_estimate);
     }
-    var reply_container_selector = "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
+    reply_container_selector = reply_container_selector || "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
     var subject = $('h2.hP').text();
     $(reply_container_selector).addClass('remove_borders');
     account_storage_get(account_email, ['addresses'], function(storage) {
-      $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, reply_to.join(','), storage.addresses, subject));
+      $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, reply_to.join(','), storage.addresses, subject, skip_click_prompt));
     });
   });
 }

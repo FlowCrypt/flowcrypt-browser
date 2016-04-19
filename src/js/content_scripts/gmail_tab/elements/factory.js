@@ -1,5 +1,9 @@
 'use strict';
 
+function get_logo_src(include_header) {
+  return (include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
+}
+
 function compose_message_iframe(account_email, gmail_tab_id, draft_id) {
   var src = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
     '?account_email=' + encodeURIComponent(account_email) +
@@ -58,7 +62,7 @@ function pgp_pubkey_iframe(account_email, armored_pubkey, gmail_tab_id) {
   return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
 
-function reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, secondary_emails, subject) {
+function reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, secondary_emails, subject, skip_click_prompt) {
   var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
   var emails = resolve_from_to(secondary_emails, my_email, their_email);
   var id = random_string();
@@ -69,6 +73,7 @@ function reply_message_iframe(account_email, gmail_tab_id, my_email, their_email
     '&subject=' + encodeURIComponent(subject) +
     '&thread_id=' + encodeURIComponent(thread_id) +
     '&account_email=' + encodeURIComponent(account_email) +
+    '&skip_click_prompt=' + encodeURIComponent(Number(skip_click_prompt)) +
     '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }
