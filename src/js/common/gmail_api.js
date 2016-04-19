@@ -19,7 +19,9 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
         contentType: 'application/json; charset=UTF-8',
         async: true,
         success: function(response) {
-          callback(true, response);
+          if(callback) {
+            callback(true, response);
+          }
         },
         error: function(response) {
           try {
@@ -28,7 +30,9 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
               google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, gmail_api_call);
             } else {
               response._error = error_obj.error;
-              callback(false, response);
+              if(callback) {
+                callback(false, response);
+              }
             }
           } catch(err) {
             response._error = {};
@@ -37,7 +41,9 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
             if(title_match) {
               response._error.message = title_match[1];
             }
-            callback(false, response);
+            if(callback) {
+              callback(false, response);
+            }
           }
         },
       });
@@ -126,7 +132,9 @@ function gmail_api_draft_update(account_email, id, mime_message, callback) {
 }
 
 function gmail_api_draft_get(account_email, id, format, callback) {
-  gmail_api_call(account_email, 'GET', 'drafts/' + id, {format: format || 'full'}, callback);
+  gmail_api_call(account_email, 'GET', 'drafts/' + id, {
+    format: format || 'full'
+  }, callback);
 }
 
 function gmail_api_draft_send(account_email, id, callback) {
