@@ -150,6 +150,7 @@ body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px so
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; background-color: #088447; text-align: left; margin: 0px; border: 1px solid #088447}
 table#compose td.input { height: 42px; vertical-align: middle; }
+table#compose td#input_addresses_container {vertical-align: top; }
 table#compose td#input_addresses_container .recipients { height: auto; position: relative;}
 table#compose td#input_addresses_container .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative; -webkit-transition: .25s; transition: .25s;}
 table#compose td#input_addresses_container .recipients span.wrong { padding: 5px 10px; background: #d14836; color: white; }
@@ -159,7 +160,7 @@ table#compose td#input_addresses_container .recipients span i { padding-left: 4p
   color: black; }
 table#compose td#input_addresses_container .recipients span.has_pgp i, table#compose td#input_addresses_container .recipients span.no_pgp i,
 table#compose td#input_addresses_container .recipients span.wrong i  { color: white!important;}
-table#compose td#input_addresses_container input#input_to { width: auto!important; background: yellow; vertical-align: top;}
+table#compose td#input_addresses_container input#input_to { vertical-align: middle; height: 25px; margin: 1px 0;}
 table#compose td#input_addresses_container .recipients span i.fa { font-size: 70%; top: -1px; }
 table#compose td#input_addresses_container .recipients span i.ion-locked {position: absolute; left: 4px; top:7px; color: white; opacity: 1; }
 table#compose td#input_addresses_container .recipients span i.ion-ios-locked {position: absolute; left:4px; top:4px; font-size: 15px; color: white; opacity: 1;}
