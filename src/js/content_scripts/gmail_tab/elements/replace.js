@@ -2,10 +2,8 @@
 
 function replace_pgp_elements(account_email, gmail_tab_id) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
-  var pgp_block_found = replace_armored_pgp_messages(account_email, gmail_tab_id);
-  if(pgp_block_found) {
-    replace_reply_box(account_email, gmail_tab_id);
-  }
+  var new_pgp_block_found = replace_armored_pgp_messages(account_email, gmail_tab_id);
+  replace_standard_reply_box(account_email, gmail_tab_id);
   replace_pgp_attachments(account_email, gmail_tab_id);
   replace_pgp_pubkeys(account_email, gmail_tab_id);
   replace_cryptup_tags(account_email, gmail_tab_id);
@@ -13,15 +11,17 @@ function replace_pgp_elements(account_email, gmail_tab_id) {
 }
 
 function replace_reply_buttons(account_email, gmail_tab_id) {
-  if(!$('td.acX.replaced').length) { // last button in convo gets replaced
-    var reply_button = '<div class="reply_message_button"><i class="fa fa-mail-reply"></i>&nbsp;<img src="' + get_logo_src(true) + '" /></div>';
-    $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(function() {
-      replace_reply_box(account_email, gmail_tab_id, "div.remove_borders, div.nr.tMHS5d:contains('Click here to ')", true);
-    });
-  } else { // all others get removed
-    $('td.acX').not('.replaced').each(function() {
-      $(this).addClass('replaced').html('');
-    });
+  if($('iframe.pgp_block').length) { // if convo has pgp blocks
+    if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
+      var reply_button = '<div class="reply_message_button"><i class="fa fa-mail-reply"></i>&nbsp;<img src="' + get_logo_src(true) + '" /></div>';
+      $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(function() {
+        set_reply_box_editable(account_email, gmail_tab_id);
+      });
+    } else { // all others get removed
+      $('td.acX').not('.replaced').each(function() {
+        $(this).addClass('replaced').html('');
+      });
+    }
   }
 }
 
@@ -60,7 +60,7 @@ function replace_pgp_pubkeys(account_email, gmail_tab_id) {
 
 function replace_armored_pgp_messages(account_email, gmail_tab_id) {
   //todo - should be refactored with $(this).html().replace(re, function() ... ) similar as replace_pgp_pubkeys for brevity
-  var conversation_has_pgp_message = false;
+  var conversation_has_new_pgp_message = false;
   var selectors = [
     "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')",
     "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('[Message clipped]'):contains('View entire message')"
@@ -89,9 +89,9 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
       }
     }
     $(this).html(text_with_iframes);
-    conversation_has_pgp_message = true;
+    conversation_has_new_pgp_message = true;
   });
-  return conversation_has_pgp_message;
+  return conversation_has_new_pgp_message;
 }
 
 function parse_message_id_from(element_type, my_element) {
@@ -147,7 +147,7 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
   });
 }
 
-function replace_reply_box(account_email, gmail_tab_id, reply_container_selector, skip_click_prompt) {
+function get_reply_box_params(account_email, callback) {
   var reply_to_estimate = [$('h3.iw span[email]').last().attr('email').trim()]; // add original sender
   var reply_to = [];
   $('span.hb').last().find('span.g2').each(function() {
@@ -165,13 +165,37 @@ function replace_reply_box(account_email, gmail_tab_id, reply_container_selector
     if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
       reply_to = unique(reply_to_estimate);
     }
-    reply_container_selector = reply_container_selector || "div.nr.tMHS5d:contains('Click here to ')"; //todo - better to choose one of it's parent elements, creates mess
-    var subject = $('h2.hP').text();
-    $(reply_container_selector).addClass('remove_borders');
-    account_storage_get(account_email, ['addresses'], function(storage) {
-      $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, my_email, reply_to.join(','), storage.addresses, subject, skip_click_prompt));
+    callback({
+      subject: $('h2.hP').text(),
+      reply_to: reply_to,
+      addresses: storage.addresses,
+      my_email: my_email,
     });
   });
+}
+
+function replace_standard_reply_box(account_email, gmail_tab_id, set_editable) {
+  if($('iframe.pgp_block').length) {
+    var reply_container_selector = 'div.nr.tMHS5d:not(.reply_message_iframe_container), td.I5:not(.reply_message_iframe_container)'; //todo - better to choose one of div.nr.tMHS5d parent elements, creates mess
+    if($(reply_container_selector).length) {
+      get_reply_box_params(account_email, function(params) {
+        set_editable = set_editable || $(reply_container_selector)[0].tagName === 'TD';
+        var reply_box_iframe = reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, set_editable);
+        $(reply_container_selector).addClass('remove_borders').addClass('reply_message_iframe_container').html(reply_box_iframe);
+      });
+    }
+  }
+}
+
+function set_reply_box_editable(account_email, gmail_tab_id) { // for now replaces secure reply box
+  var reply_container_selector = '.reply_message_iframe_container';
+  if($(reply_container_selector).length) {
+    get_reply_box_params(account_email, function(params) {
+      $(reply_container_selector).html(reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, true));
+    });
+  } else {
+    replace_standard_reply_box(account_email, gmail_tab_id, true);
+  }
 }
 
 // function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, last_message_frame_height, my_email, their_email) {
