@@ -150,7 +150,7 @@ body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px so
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; background-color: #088447; text-align: left; margin: 0px; border: 1px solid #088447}
 table#compose td.input { height: 42px; vertical-align: middle; }
-table#compose td#input_addresses_container {vertical-align: top; }
+table#compose td#input_addresses_container {vertical-align: middle; }
 table#compose td#input_addresses_container .recipients { height: auto; position: relative;}
 table#compose td#input_addresses_container .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative; -webkit-transition: .25s; transition: .25s;}
 table#compose td#input_addresses_container .recipients span.wrong { padding: 5px 10px; background: #d14836; color: white; }
@@ -217,8 +217,8 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: 
   margin-left: 11px; margin-right: 7px;}
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 table#compose #fineuploader .ion-android-close {font-size: 22px; position: absolute; top:7px; bottom:0;}
-table#compose tr#missing_pubkey_container { display: none; }
-table#compose tr#missing_pubkey_container td { padding-left: 11px; height: 72px; }
+table#compose tr#missing_pubkey_container { display: none; margin: 15px 0;}
+table#compose tr#missing_pubkey_container td { text-align: center; height: 72px; }
 table#compose tr#challenge_question_container { display: none; }
 table#compose tr#challenge_question_container td { height: 84px; padding: 12px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s;}
 table#compose tr#challenge_question_container td ::-webkit-input-placeholder { color: red; }
