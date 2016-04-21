@@ -3,6 +3,8 @@
 var account_email = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
 var tab_id_global = undefined;
 
+hijack_gmail_hotkeys();
+
 function initialize() {
   chrome_message_listen({
     close_new_message: function(data) {
@@ -38,6 +40,27 @@ function initialize() {
   }, start);
 }
 
+function hijack_gmail_hotkeys() {
+  var key = {
+    a: 97,
+    r: 114,
+    A: 65,
+    R: 82,
+    f: 102,
+    F: 70,
+    backspace: 8,
+    tab: 9,
+    enter: 13,
+    comma: 188,
+  }
+  $(document).keypress(function(e) {
+    var causes_unsecure_reply = [key.a, key.r, key.A, key.R, key.f, key.F].indexOf(e.which) !== -1;
+    if(causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
+      e.stopImmediatePropagation();
+      set_reply_box_editable(account_email, tab_id_global);
+    }
+  });
+}
 
 function start() {
   chrome_message_get_tab_id(function(tab_id) {
