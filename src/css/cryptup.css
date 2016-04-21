@@ -139,7 +139,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
   -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; vertical-align: top; }
 
 body.pgp_secure, div.replied_body.pgp_secure { border: 1px solid #f0f0f0; border-left: 3px dashed green; padding-left:10px; min-height: 25px;
-  background-image: url(/img/lock-seamless-bg-alpha.png); padding-top: 6px;}
+  background-image: url(/img/lock-seamless-bg-alpha.png); padding-top: 6px; padding-bottom: 6px; }
 body.pgp_neutral { border:none; border-left: 3px dashed gray; padding-left:10px; min-height: 25px; }
 body.pgp_insecure { border:none; border-left: 3px dashed red; padding-left:10px; min-height: 25px; }
 body > #pgp_block { height: auto; }
