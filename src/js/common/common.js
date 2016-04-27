@@ -150,13 +150,13 @@ function set_up_require() {
   require.config({
     baseUrl: '/lib',
     paths: {
-      'emailjs-mime-builder': './emailjs/emailjs-mime-builder',
-      'emailjs-mime-parser': './emailjs/emailjs-mime-parser',
       'emailjs-addressparser': './emailjs/emailjs-addressparser',
-      'emailjs-mime-types': './emailjs/emailjs-mime-types',
+      'emailjs-mime-builder': './emailjs/emailjs-mime-builder',
       'emailjs-mime-codec': './emailjs/emailjs-mime-codec',
-      'punycode': './emailjs/punycode',
+      'emailjs-mime-parser': './emailjs/emailjs-mime-parser',
+      'emailjs-mime-types': './emailjs/emailjs-mime-types',
       'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
+      'punycode': './emailjs/punycode',
       'sinon': './emailjs/sinon',
       'quoted-printable': './emailjs/quoted-printable',
     }
