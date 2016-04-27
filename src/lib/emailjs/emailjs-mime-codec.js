@@ -41,7 +41,7 @@
         });
     } else {
         // global for browser
-        root['emailjs-mimecodec'] = factory(root.TextEncoder, root.TextDecoder, root.btoa);
+        root['emailjs-mime-codec'] = factory(root.TextEncoder, root.TextDecoder, root.btoa);
     }
 }(this, function(TextEncoder, TextDecoder, btoa) {
     'use strict';

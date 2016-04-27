@@ -3,14 +3,14 @@
 *
 * Copyright 2015, Widen Enterprises, Inc. info@fineuploader.com
 *
-* Version: 5.5.1
+* Version: 5.6.0
 *
 * Homepage: http://fineuploader.com
 *
 * Repository: git://github.com/FineUploader/fine-uploader.git
 *
 * Licensed only under the Widen Commercial License (http://fineuploader.com/licensing).
-*/
+*/ 
 
 
 /*globals window, navigator, document, FormData, File, HTMLInputElement, XMLHttpRequest, Blob, Storage, ActiveXObject */
@@ -901,7 +901,7 @@ var qq = function(element) {
 }());
 
 /*global qq */
-qq.version = "5.5.1";
+qq.version = "5.6.0";
 
 /* globals qq */
 qq.supportedFeatures = (function() {
@@ -1200,17 +1200,24 @@ qq.UploadButton = function(o) {
         disposeSupport = new qq.DisposeSupport(),
 
         options = {
-            // "Container" element
-            element: null,
-
-            // If true adds `multiple` attribute to `<input type="file">`
-            multiple: false,
-
             // Corresponds to the `accept` attribute on the associated `<input type="file">`
             acceptFiles: null,
 
+            // "Container" element
+            element: null,
+
+            focusClass: "qq-upload-button-focus",
+
             // A true value allows folders to be selected, if supported by the UA
             folders: false,
+
+            // **This option will be removed** in the future as the :hover CSS pseudo-class is available on all supported browsers
+            hoverClass: "qq-upload-button-hover",
+
+            ios8BrowserCrashWorkaround: false,
+
+            // If true adds `multiple` attribute to `<input type="file">`
+            multiple: false,
 
             // `name` attribute of `<input type="file">`
             name: "qqfile",
@@ -1218,12 +1225,7 @@ qq.UploadButton = function(o) {
             // Called when the browser invokes the onchange handler on the `<input type="file">`
             onChange: function(input) {},
 
-            ios8BrowserCrashWorkaround: false,
-
-            // **This option will be removed** in the future as the :hover CSS pseudo-class is available on all supported browsers
-            hoverClass: "qq-upload-button-hover",
-
-            focusClass: "qq-upload-button-focus"
+            title: null
         },
         input, buttonId;
 
@@ -1237,7 +1239,7 @@ qq.UploadButton = function(o) {
         var input = document.createElement("input");
 
         input.setAttribute(qq.UploadButton.BUTTON_ID_ATTR_NAME, buttonId);
-        input.setAttribute("title", "file input");
+        input.setAttribute("title", options.title);
 
         self.setMultiple(options.multiple, input);
 
@@ -1254,15 +1256,26 @@ qq.UploadButton = function(o) {
         input.setAttribute("name", options.name);
 
         qq(input).css({
-          position: 'absolute',
-          left: '0px',
-          top: '0px',
-          margin: '0px',
-          padding: '0px',
-          opacity: 0,
-          height: '38px',
-          width: '30px',
-          overflow: 'hidden',
+            position: "absolute",
+            // in Opera only 'browse' button
+            // is clickable and it is located at
+            // the right side of the input
+            right: 0,
+            top: 0,
+            fontFamily: "Arial",
+            // It's especially important to make this an arbitrarily large value
+            // to ensure the rendered input button in IE takes up the entire
+            // space of the container element.  Otherwise, the left side of the
+            // button will require a double-click to invoke the file chooser.
+            // In other browsers, this might cause other issues, so a large font-size
+            // is only used in IE.  There is a bug in IE8 where the opacity style is  ignored
+            // in some cases when the font-size is large.  So, this workaround is not applied
+            // to IE8.
+            fontSize: qq.ie() && !qq.ie8() ? "3500px" : "118px",
+            margin: 0,
+            padding: 0,
+            cursor: "pointer",
+            opacity: 0
         });
 
         // Setting the file input's height to 100% in IE7 causes
@@ -1296,7 +1309,7 @@ qq.UploadButton = function(o) {
     // Make button suitable container for input
     qq(options.element).css({
         position: "relative",
-        // overflow: "hidden",
+        overflow: "hidden",
         // Make sure browse button is in the right side in Internet Explorer
         direction: "ltr"
     });
@@ -1571,6 +1584,14 @@ qq.status = {
         // DEPRECATED - TODO REMOVE IN NEXT MAJOR RELEASE (replaced by addFiles)
         addBlobs: function(blobDataOrArray, params, endpoint) {
             this.addFiles(blobDataOrArray, params, endpoint);
+        },
+
+        addInitialFiles: function(cannedFileList) {
+            var self = this;
+
+            qq.each(cannedFileList, function(index, cannedFile) {
+                self._addCannedFile(cannedFile);
+            });
         },
 
         addFiles: function(data, params, endpoint) {
@@ -2185,17 +2206,18 @@ qq.status = {
             }
 
             button = new qq.UploadButton({
-                element: spec.element,
-                folders: spec.folders,
-                name: this._options.request.inputName,
-                multiple: allowMultiple(),
                 acceptFiles: acceptFiles,
+                element: spec.element,
+                focusClass: this._options.classes.buttonFocus,
+                folders: spec.folders,
+                hoverClass: this._options.classes.buttonHover,
+                ios8BrowserCrashWorkaround: this._options.workarounds.ios8BrowserCrash,
+                multiple: allowMultiple(),
+                name: this._options.request.inputName,
                 onChange: function(input) {
                     self._onInputChange(input);
                 },
-                hoverClass: this._options.classes.buttonHover,
-                focusClass: this._options.classes.buttonFocus,
-                ios8BrowserCrashWorkaround: this._options.workarounds.ios8BrowserCrash
+                title: spec.title == null ? this._options.text.fileInputTitle : spec.title
             });
 
             this._disposeSupport.addDisposer(function() {
@@ -2615,11 +2637,12 @@ qq.status = {
         // Creates an extra button element
         _initExtraButton: function(spec) {
             var button = this._createUploadButton({
-                element: spec.element,
-                multiple: spec.multiple,
                 accept: spec.validation.acceptFiles,
+                allowedExtensions: spec.validation.allowedExtensions,
+                element: spec.element,
                 folders: spec.folders,
-                allowedExtensions: spec.validation.allowedExtensions
+                multiple: spec.multiple,
+                title: spec.fileInputTitle
             });
 
             this._extraButtonSpecs[button.getButtonId()] = spec;
@@ -3540,6 +3563,7 @@ qq.status = {
 
             text: {
                 defaultResponseError: "Upload failure reason unknown",
+                fileInputTitle: "file input",
                 sizeSymbols: ["kB", "MB", "GB", "TB", "PB", "EB"]
             },
 
@@ -3666,7 +3690,10 @@ qq.status = {
         this._deleteHandler = qq.DeleteFileAjaxRequester && this._createDeleteHandler();
 
         if (this._options.button) {
-            this._defaultButtonId = this._createUploadButton({element: this._options.button}).getButtonId();
+            this._defaultButtonId = this._createUploadButton({
+                element: this._options.button,
+                title: this._options.text.fileInputTitle
+            }).getButtonId();
         }
 
         this._generateExtraButtonSpecs();
@@ -5784,6 +5811,11 @@ qq.WindowReceiveMessage = function(o) {
     "use strict";
 
     qq.uiPublicApi = {
+        addInitialFiles: function(cannedFileList) {
+            this._parent.prototype.addInitialFiles.apply(this, arguments);
+            this._templating.addCacheToDom();
+        },
+
         clearStoredFiles: function() {
             this._parent.prototype.clearStoredFiles.apply(this, arguments);
             this._templating.clearFiles();
@@ -5810,7 +5842,10 @@ qq.WindowReceiveMessage = function(o) {
             this._templating.reset();
 
             if (!this._options.button && this._templating.getButton()) {
-                this._defaultButtonId = this._createUploadButton({element: this._templating.getButton()}).getButtonId();
+                this._defaultButtonId = this._createUploadButton({
+                    element: this._templating.getButton(),
+                    title: this._options.text.fileInputTitle
+                }).getButtonId();
             }
 
             if (this._dnd) {
@@ -6344,7 +6379,7 @@ qq.WindowReceiveMessage = function(o) {
 
             if (canned) {
                 this._templating.addFileToCache(id, this._options.formatFileName(name), prependData, dontDisplay);
-                this._thumbnailUrls[id] && this._templating.updateThumbnail(id, this._thumbnailUrls[id], true);
+                this._templating.updateThumbnail(id, this._thumbnailUrls[id], true);
             }
             else {
                 this._templating.addFile(id, this._options.formatFileName(name), prependData, dontDisplay);
@@ -6659,7 +6694,10 @@ qq.FineUploader = function(o, namespace) {
         this._classes = this._options.classes;
 
         if (!this._options.button && this._templating.getButton()) {
-            this._defaultButtonId = this._createUploadButton({element: this._templating.getButton()}).getButtonId();
+            this._defaultButtonId = this._createUploadButton({
+                element: this._templating.getButton(),
+                title: this._options.text.fileInputTitle
+            }).getButtonId();
         }
 
         this._setupClickAndEditEventHandlers();
@@ -10608,9 +10646,9 @@ qq.extend(qq.Scaler.prototype, {
 
 var ExifRestorer = (function()
 {
-
+   
 	var ExifRestorer = {};
-
+	 
     ExifRestorer.KEY_STR = "ABCDEFGHIJKLMNOP" +
                          "QRSTUVWXYZabcdef" +
                          "ghijklmnopqrstuv" +
@@ -10651,7 +10689,7 @@ var ExifRestorer = (function()
 
         return output;
     };
-
+    
     ExifRestorer.restore = function(origFileBase64, resizedFileBase64)
     {
         var expectedBase64Header = "data:image/jpeg;base64,";
@@ -10659,15 +10697,15 @@ var ExifRestorer = (function()
         if (!origFileBase64.match(expectedBase64Header))
         {
         	return resizedFileBase64;
-        }
-
+        }       
+        
         var rawImage = this.decode64(origFileBase64.replace(expectedBase64Header, ""));
         var segments = this.slice2Segments(rawImage);
-
+                
         var image = this.exifManipulation(resizedFileBase64, segments);
-
+        
         return expectedBase64Header + this.encode64(image);
-
+        
     };
 
 
@@ -10711,7 +10749,7 @@ var ExifRestorer = (function()
     };
 
 
-
+    
     ExifRestorer.slice2Segments = function(rawImageArray)
     {
         var head = 0,
@@ -10739,8 +10777,8 @@ var ExifRestorer = (function()
     };
 
 
-
-    ExifRestorer.decode64 = function(input)
+    
+    ExifRestorer.decode64 = function(input) 
     {
         var output = "",
             chr1, chr2, chr3 = "",
@@ -10783,7 +10821,7 @@ var ExifRestorer = (function()
         return buf;
     };
 
-
+    
     return ExifRestorer;
 })();
 
@@ -11200,4 +11238,4 @@ qq.FilenameEditHandler = function(s, inheritedInternalApi) {
     });
 };
 
-/*! 2016-02-23 */
+/*! 2016-04-11 */

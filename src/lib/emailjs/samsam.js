@@ -119,6 +119,33 @@
         }
     }
 
+    function isSet(val) {
+        if (typeof Set !== 'undefined' && val instanceof Set) {
+            return true;
+        }
+    }
+
+    function isSubset(s1, s2, compare) {
+        var values1 = Array.from(s1);
+        var values2 = Array.from(s2);
+
+        for (var i = 0; i < values1.length; i++) {
+            var includes = false;
+
+            for (var j = 0; j < values2.length; j++) {
+                if (compare(values2[j], values1[i])) {
+                    includes = true;
+                    break;
+                }
+            }
+
+            if (!includes) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
      * @name samsam.deepEqual
@@ -229,6 +256,14 @@
                 }
             }
 
+            if (isSet(obj1) || isSet(obj2)) {
+                if (!isSet(obj1) || !isSet(obj2) || obj1.size !== obj2.size) {
+                    return false;
+                }
+
+                return isSubset(obj1, obj2, deepEqual);
+            }
+
             var key, i, l,
                 // following vars are used for the cyclic logic
                 value1, value2,
@@ -301,15 +336,14 @@
         }(obj1, obj2, '$1', '$2'));
     }
 
-    var match;
-
-    function arrayContains(array, subset) {
+    function arrayContains(array, subset, compare) {
         if (subset.length === 0) { return true; }
         var i, l, j, k;
         for (i = 0, l = array.length; i < l; ++i) {
-            if (match(array[i], subset[0])) {
+            if (compare(array[i], subset[0])) {
                 for (j = 0, k = subset.length; j < k; ++j) {
-                    if (!match(array[i + j], subset[j])) { return false; }
+                    if ((i + j) >= l) { return false; }
+                    if (!compare(array[i + j], subset[j])) { return false; }
                 }
                 return true;
             }
@@ -324,7 +358,7 @@
      *
      * Compare arbitrary value ``object`` with matcher.
      */
-    match = function match(object, matcher) {
+    function match(object, matcher) {
         if (matcher && typeof matcher.test === "function") {
             return matcher.test(object);
         }
@@ -356,8 +390,12 @@
             return object === null;
         }
 
+        if (isSet(object)) {
+            return isSubset(matcher, object, match);
+        }
+
         if (getClass(object) === "Array" && getClass(matcher) === "Array") {
-            return arrayContains(object, matcher);
+            return arrayContains(object, matcher, match);
         }
 
         if (matcher && typeof matcher === "object") {
@@ -384,7 +422,7 @@
 
         throw new Error("Matcher was not a string, a number, a " +
                         "function, a boolean or an object");
-    };
+    }
 
     return {
         isArguments: isArguments,

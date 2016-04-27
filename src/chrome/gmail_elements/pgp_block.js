@@ -30,7 +30,7 @@ function format_plaintext(text) {
   }
   text = (text || '').replace(/\n/g, '<br>\n');
   if(url_params.message.match(/^Charset: iso-8859-2/m) !== null) {
-    return iso88592.decode(text);
+    return window.iso88592.decode(text);
   }
   return text;
 }

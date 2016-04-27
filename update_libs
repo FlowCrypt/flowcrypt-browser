@@ -1,0 +1,63 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+import sys
+import re
+import json
+import os
+import io
+import urllib
+
+USE_GIT = 'USE_GIT'
+LIBS = [
+    {'name': 'openpgp.js', 'url': 'https://raw.githubusercontent.com/openpgpjs/openpgpjs/master/dist/openpgp.js', 'v': r'versionstring: ?"([^"]+)"'},
+    {'name': 'require.js', 'url': 'https://raw.githubusercontent.com/requirejs/requirejs/master/require.js', 'v': r'version ?= ?\'([^\']+)\''},
+    {'name': 'striptags.js', 'url': 'https://raw.githubusercontent.com/ericnorris/striptags/master/striptags.js', 'v': USE_GIT},
+    {'name': 'zxcvbn.js', 'url': 'https://raw.githubusercontent.com/dropbox/zxcvbn/master/dist/zxcvbn.js', 'v': USE_GIT},
+    {'name': 'iso-8859-2.js', 'url': 'https://raw.githubusercontent.com/mathiasbynens/iso-8859-2/master/iso-8859-2.js', 'v': r'/\*! https://mths\.be/iso-8859-2 v([^ ]+) by @mathias \| MIT license \*/'},
+    {'name': 'emailjs/emailjs-addressparser.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-addressparser/master/src/emailjs-addressparser.js', 'v': USE_GIT},
+    {'name': 'emailjs/emailjs-mime-builder.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-builder/master/src/emailjs-mime-builder.js', 'v': USE_GIT},
+    {'name': 'emailjs/emailjs-mime-codec.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-codec/master/src/emailjs-mime-codec.js', 'v': USE_GIT},
+    {'name': 'emailjs/emailjs-mime-parser.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-parser/master/src/emailjs-mime-parser.js', 'v': USE_GIT},
+    {'name': 'emailjs/emailjs-mime-types.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-types/master/src/emailjs-mime-types.js', 'v': USE_GIT},
+    {'name': 'emailjs/emailjs-stringencoding.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-stringencoding/master/src/emailjs-stringencoding.js', 'v': USE_GIT},
+    {'name': 'emailjs/formatio.js', 'url': 'https://raw.githubusercontent.com/busterjs/formatio/master/lib/formatio.js', 'v': USE_GIT}, # has v in readme
+    {'name': 'emailjs/lolex.js', 'url': 'https://raw.githubusercontent.com/sinonjs/lolex/master/lolex.js', 'v': USE_GIT},
+    {'name': 'emailjs/punycode.js', 'url': 'https://raw.githubusercontent.com/bestiejs/punycode.js/master/punycode.js', 'v': r'/\*! https://mths\.be/punycode v([^ ]+) by @mathias \*/'},
+    {'name': 'emailjs/samsam.js', 'url': 'https://raw.githubusercontent.com/busterjs/samsam/master/lib/samsam.js', 'v': USE_GIT},
+    {'name': 'emailjs/sinon.js', 'url': 'https://raw.githubusercontent.com/sinonjs/sinon/master/lib/sinon.js', 'v': r' \* Sinon\.JS ([^ ,]+)'},
+    {'name': 'emailjs/util.js', 'url': 'https://raw.githubusercontent.com/isaacs/core-util-is/509c1d671df48207b7c1a9708195049fd35c053e/lib/util.js', 'v': USE_GIT}, # outdated https://github.com/joyent/node-http-signature/issues/18
+    {'name': 'featherlight/featherlight.js', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.js', 'v': r' \* Version ([^ ]+) '},
+    {'name': 'featherlight/featherlight.css', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.css', 'v': r' \* Version ([^ ]+) '},
+    # following urls need to be kept up to date
+    {'name': 'jquery.min.js', 'url': 'https://code.jquery.com/jquery-2.2.3.min.js', 'v': r'\/\*\! jQuery v([0-9\.]+) '},
+    {'name': 'fine-uploader.js', 'url': 'http://releases.fineuploader.com/5.6.0/fine-uploader-5.6.0.zip~unzip~/fine-uploader/fine-uploader.js', 'v': r'\* Version: ([0-9\.]+)'},
+]
+
+zips_fetched = []
+
+def download_all(path, temp, libs):
+    for group in ['emailjs', 'featherlight']:
+        os.makedirs(path + group)
+    for lib in libs:
+        parts = lib['url'].split('~unzip~');
+        url = parts[0]
+        inside_zip_path = parts[1] if len(parts) > 1 else None
+        print '* fetching %s from %s' % (lib['name'], lib['url'])
+        o = urllib.URLopener()
+        if not inside_zip_path:
+            o.retrieve(url, path + lib['name'])
+        else:
+            local_zip_path = temp + str(hash(url)) + '.zip'
+            if url not in zips_fetched:
+                o.retrieve(url, local_zip_path)
+                zips_fetched.append(url)
+            unzip_path = temp + lib['name'] + '_unzipped_'
+            os.system('unzip ' + local_zip_path + ' -d ' + unzip_path + ' > /dev/null')
+            os.system('cp %s %s' % (unzip_path + inside_zip_path, path + lib['name']))
+
+os.system('rm -rf ./temp/')
+download_all('./temp/lib/', './temp/', LIBS)
+os.system('mv ./src/lib ./temp/lib.backup')
+print "* replacing src/libs"
+os.system('mv ./temp/lib ./src/lib')

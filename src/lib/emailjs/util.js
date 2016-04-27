@@ -239,13 +239,6 @@ function formatValue(ctx, value, recurseTimes) {
     keys = Object.getOwnPropertyNames(value);
   }
 
-  // IE doesn't make error fields non-enumerable
-  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
-  if (isError(value)
-      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
-    return formatError(value);
-  }
-
   // Some type of object without properties can be shortcutted.
   if (keys.length === 0) {
     if (isFunction(value)) {
@@ -503,8 +496,7 @@ function isDate(d) {
 exports.isDate = isDate;
 
 function isError(e) {
-  return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
+  return isObject(e) && objectToString(e) === '[object Error]';
 }
 exports.isError = isError;
 
@@ -523,7 +515,10 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = require('./support/isBuffer');
+function isBuffer(arg) {
+  return arg instanceof Buffer;
+}
+exports.isBuffer = isBuffer;
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -567,7 +562,17 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = require('inherits');
+exports.inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  ctor.prototype = Object.create(superCtor.prototype, {
+    constructor: {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+};
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -584,3 +589,93 @@ exports._extend = function(origin, add) {
 function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
+
+
+// Deprecated old stuff.
+
+exports.p = exports.deprecate(function() {
+  for (var i = 0, len = arguments.length; i < len; ++i) {
+    console.error(exports.inspect(arguments[i]));
+  }
+}, 'util.p: Use console.error() instead');
+
+
+exports.exec = exports.deprecate(function() {
+  return require('child_process').exec.apply(this, arguments);
+}, 'util.exec is now called `child_process.exec`.');
+
+
+exports.print = exports.deprecate(function() {
+  for (var i = 0, len = arguments.length; i < len; ++i) {
+    process.stdout.write(String(arguments[i]));
+  }
+}, 'util.print: Use console.log instead');
+
+
+exports.puts = exports.deprecate(function() {
+  for (var i = 0, len = arguments.length; i < len; ++i) {
+    process.stdout.write(arguments[i] + '\n');
+  }
+}, 'util.puts: Use console.log instead');
+
+
+exports.debug = exports.deprecate(function(x) {
+  process.stderr.write('DEBUG: ' + x + '\n');
+}, 'util.debug: Use console.error instead');
+
+
+exports.error = exports.deprecate(function(x) {
+  for (var i = 0, len = arguments.length; i < len; ++i) {
+    process.stderr.write(arguments[i] + '\n');
+  }
+}, 'util.error: Use console.error instead');
+
+
+exports.pump = exports.deprecate(function(readStream, writeStream, callback) {
+  var callbackCalled = false;
+
+  function call(a, b, c) {
+    if (callback && !callbackCalled) {
+      callback(a, b, c);
+      callbackCalled = true;
+    }
+  }
+
+  readStream.addListener('data', function(chunk) {
+    if (writeStream.write(chunk) === false) readStream.pause();
+  });
+
+  writeStream.addListener('drain', function() {
+    readStream.resume();
+  });
+
+  readStream.addListener('end', function() {
+    writeStream.end();
+  });
+
+  readStream.addListener('close', function() {
+    call();
+  });
+
+  readStream.addListener('error', function(err) {
+    writeStream.end();
+    call(err);
+  });
+
+  writeStream.addListener('error', function(err) {
+    readStream.destroy();
+    call(err);
+  });
+}, 'util.pump(): Use readableStream.pipe() instead');
+
+
+var uv;
+exports._errnoException = function(err, syscall) {
+  if (isUndefined(uv)) uv = process.binding('uv');
+  var errname = uv.errname(err);
+  var e = new Error(syscall + ' ' + errname);
+  e.code = errname;
+  e.errno = errname;
+  e.syscall = syscall;
+  return e;
+};

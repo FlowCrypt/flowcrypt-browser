@@ -242,17 +242,6 @@ table#compose tr#challenge_question_container .question-row  p { display: inline
 table#compose tr#challenge_question_container .question-row .question-copy {width: 79%; display: inline-block; position: absolute; top:-2px; margin-left: 10px;}
 span.start, span.end { font-weight: 900; position: absolute; margin-top: 5px; font-size: 16px; font-family: 'Open Sans', Arial;}
 span.end { margin-left: -10px; }
-<<<<<<< 08bd3d325deb81070d4717f18b70dfe8463f9054
-
-/* secure or insecure */
-.email_plain { /*color: #d14836 !important; */ color: orange !important; }
-.email_secure { color: #088447 !important;}
-table#compose td.bottom div#send_btn.button_secure { background-color: #088447 !important; padding: 5px 25px 5px 40px;
-  background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); }
-table#compose td.bottom div#send_btn.button_insecure { background-color: #088447 !important; min-width: 180px !important;
-  background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); }
-=======
->>>>>>> add missing pubkeys manually on new message | #118 #93
 
 /* reply elements */
 div#reply_message_table_container { display: none; }

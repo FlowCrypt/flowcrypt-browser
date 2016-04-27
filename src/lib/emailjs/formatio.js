@@ -64,6 +64,7 @@
 
     function ascii(f, object, processed, indent) {
         if (typeof object === "string") {
+            if (object.length === 0) { return "(empty string)"; }
             var qs = f.quoteStrings;
             var quote = typeof qs !== "boolean" || qs;
             return processed || quote ? '"' + object + '"' : object;
@@ -96,6 +97,10 @@
             }
         }
 
+        if (typeof Set !== 'undefined' && object instanceof Set) {
+            return ascii.set.call(f, object, processed);
+        }
+
         return ascii.object.call(f, object, processed, indent);
     }
 
@@ -103,7 +108,12 @@
         return "function " + functionName(func) + "() {}";
     };
 
-    ascii.array = function (array, processed) {
+    function delimit(str, delimiters) {
+        delimiters = delimiters || ["[", "]"];
+        return delimiters[0] + str + delimiters[1];
+    }
+
+    ascii.array = function (array, processed, delimiters) {
         processed = processed || [];
         processed.push(array);
         var pieces = [];
@@ -115,10 +125,15 @@
             pieces.push(ascii(this, array[i], processed));
         }
 
-        if(l < array.length)
+        if (l < array.length) {
             pieces.push("[... " + (array.length - l) + " more elements]");
+        }
 
-        return "[" + pieces.join(", ") + "]";
+        return delimit(pieces.join(", "), delimiters);
+    };
+
+    ascii.set = function (set, processed) {
+        return ascii.array.call(this, Array.from(set), processed, ['Set {', '}']);
     };
 
     ascii.object = function (object, processed, indent) {
@@ -175,7 +190,8 @@
         }
 
         var formatted = "<" + tagName + (pairs.length > 0 ? " " : "");
-        var content = element.innerHTML;
+        // SVG elements have undefined innerHTML
+        var content = element.innerHTML || '';
 
         if (content.length > 20) {
             content = content.substr(0, 20) + "[...]";
