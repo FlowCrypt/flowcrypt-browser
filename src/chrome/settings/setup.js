@@ -17,7 +17,8 @@ account_storage_get(url_params.account_email, ['addresses'], function(storage) {
         addrs.splice(i, 1);
       }
       $('.addresses').text(addrs.join(', '));
-      $('#step_2a_manual_create .input_submit_all, #step_2b_manual_enter .input_submit_all').parent().css('visibility', 'visible');
+      $('#step_2a_manual_create .input_submit_all, #step_2b_manual_enter .input_submit_all').closest('div.line').css('visibility', 'visible');
+      $('#step_2a_manual_create .input_submit_all, #step_2b_manual_enter .input_submit_all').prop('checked', true);
     }
   }
   if(typeof storage.addresses === 'undefined') {
@@ -265,9 +266,9 @@ $('.action_account_settings').click(function() {
 });
 
 $('.input_submit_key').click(function() {
-  var input_submit_all = $(this).closest('.manual').find('.input_submit_all');
+  var input_submit_all = $(this).closest('.manual').find('.input_submit_all').first();
   if($(this).prop('checked')) {
-    if(input_submit_all.css('visibility') === 'visible') {
+    if(input_submit_all.closest('div.line').css('visibility') === 'visible') {
       input_submit_all.prop({
         checked: true,
         disabled: false

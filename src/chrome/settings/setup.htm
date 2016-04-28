@@ -101,7 +101,7 @@
         </div>
         <div class="line">
           <i class="ion-android-lock"></i>
-          <input class="input_password" type="text" placeholder="Pass phrase" />
+          <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" />
           <br/>
           <div class="password_bar">
             <div></div>
@@ -116,41 +116,27 @@
 
         <div class="line">
           <div class="squaredFour">
-            <input type="checkbox" value="None" id="rememberPassphraseAfterClosing" name="check" checked="">
-            <label class="checkboxSquaredOne" for="rememberPassphraseAfterClosing"></label>
+            <input type="checkbox" value="None" id="c_rememberPassphraseAfterClosing" name="check" checked="">
+            <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"></label>
           </div>
           <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
         </div>
 
         <div class="line">
           <div class="squaredFour">
-            <input type="checkbox" value="None" id="submitPubkeytoKeyserver" name="check" checked="">
-            <label class="checkboxSquaredOne" for="submitPubkeytoKeyserver"></label>
+            <input type="checkbox" value="None" id="c_submitPubkeytoKeyserver" name="check" checked="">
+            <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"></label>
           </div>
           <span class="labelCopy">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere).</span>
         </div>
-
-
-
-        <!-- <div class="line">
+        <div class="line" style="visibility: hidden;text-align: left;">
           <div class="squaredFour">
-            <input type="checkbox" value="None" name="check" class="input_passphrase_save squaredFour" checked="">
-            <label class="checkboxSquaredOne" for="input_passphrase_save"></label>
+            <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll"/>
+            <label class="checkboxSquaredOne" for="c_submitAll"></label>
           </div>
-          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
-        </div>
-        <div class="line">
-          <div class="squaredFour">
-            <input type="checkbox" value="None" name="check" class="input_submit_key squaredFour" checked="">
-            <label class="checkboxSquaredOne" for="input_submit_key"></label>
-          </div>
-          <span class="labelCopy">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere).</span>
-        </div> -->
-
-
-         <div class="line" style="visibility: hidden;">
-          <input class="input_submit_all" type="checkbox" checked="checked" disabled="disabled" />
-          <label for="input_submit_all">Also submit the same pubkey for: <span class="addresses"></span></label>
+          <label class="checkboxSquaredOne" for="c_submitAll" style="margin-left: 50px; position: relative; left: 25px;">
+            Also submit the same pubkey for: <br /><span class="addresses" style="padding-left: 50px;"></span>
+          </label>
         </div>
         <div class="line">
           <div class="button long gray action_create_private">CREATE AND SAVE</div>
@@ -166,32 +152,32 @@
         <div class="line">
           <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
         </div>
-        <!-- <div class="line">
-          <input class="input_submit_key" type="checkbox" />
-          <label for="input_submit_key">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere)</label>
-        </div> -->
+        <div class="line" style="text-align: left; padding-left: 40px;">
+          <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+          <i class="ion-android-lock" style="padding-left: 20px;"></i>
+        </div>
         <div class="line">
           <div class="squaredFour">
-            <input type="checkbox" value="None" id="submitPubkey" name="check" checked="">
-            <label class="checkboxSquaredOne" for="submitPubkey"></label>
+            <input type="checkbox" value="None" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
+            <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
+          </div>
+          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+        </div>
+        <div class="line">
+          <div class="squaredFour">
+            <input type="checkbox" value="None" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
+            <label class="checkboxSquaredOne" for="e_submitPubkey"></label>
           </div>
           <span class="labelCopy">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere)</span>
         </div>
-        <!-- <div class="line" style="visibility: hidden;">
-          <input class="input_submit_all" type="checkbox" disabled="disabled" />
-          <label for="input_submit_all">Also submit the same pubkey for: <span class="addresses"></span></label>
-        </div> -->
-        <br>
-        <div class="line">
-          <i class="ion-android-lock"></i>
-          <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
-        </div>
-        <div class="line">
+        <div class="line" style="visibility: hidden;text-align: left;">
           <div class="squaredFour">
-            <input type="checkbox" value="None" id="rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
-            <label class="checkboxSquaredOne" for="rememberPassphrase"></label>
+            <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll"/>
+            <label class="checkboxSquaredOne" for="e_submitAll"></label>
           </div>
-          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+          <label class="checkboxSquaredOne" for="e_submitAll" style="margin-left: 50px; position: relative; left: 25px;">
+            Also submit the same pubkey for: <br /><span class="addresses" style="padding-left: 50px;"></span>
+          </label>
         </div>
 
         <div class="line">

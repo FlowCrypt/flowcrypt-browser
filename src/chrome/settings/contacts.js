@@ -43,3 +43,7 @@ function render() {
 }
 
 render();
+
+$('.back').off().click(function() {
+  window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});
