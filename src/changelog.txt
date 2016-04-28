@@ -1,3 +1,11 @@
+<b>version 1.9.0 on April 28, 2016: Security</b>
+security: reply button results in encrypted message
+security: hotkeys A R F will result in encrypted message
+security: libraries update script
+security: XSS protection tests
+security: clear design distinction for PGP
+setup: don't rely on English language
+
 <b>version 1.8.0 on April 17, 2016: Drafts</b>
 composing: encrypted drafts functionality
 setup: remember pass phrase and submit pubkey by default for new keys

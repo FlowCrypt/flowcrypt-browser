@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "CryptUP",
   "description": "Easy Gmail encryption",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "browser_action": {
     "default_icon": "img/logo-19-19-white-green.png"
   },

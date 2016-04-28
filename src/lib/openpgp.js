@@ -4773,8 +4773,8 @@ exports.default = {
   debug: false,
   show_version: true,
   show_comment: true,
-  versionstring: "OpenPGP.js v2.2.2",
-  commentstring: "http://openpgpjs.org",
+  versionstring: "CryptUP 1.9.0 Easy Gmail Encryption https://cryptup.org",
+  commentstring: "Seamlessly send, receive and search encrypted email",
   keyserver: "https://keyserver.ubuntu.com",
   node_store: './openpgp.store'
 };
