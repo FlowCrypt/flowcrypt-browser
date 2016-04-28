@@ -1,6 +1,6 @@
 'use strict';
 
-var account_email = $("div.msg:contains('Loading '):contains('…')").text().replace('Loading ', '').replace('…', '');
+var account_email = $("#loading div.msg").text().match(/[a-z0-9._]+@[a-z0-9._]+/gi)[0];
 var tab_id_global = undefined;
 
 hijack_gmail_hotkeys();
@@ -74,7 +74,7 @@ function start() {
   });
 }
 
-if((document.title.indexOf("Gmail") != -1 || document.title.indexOf("Mail") != -1) && account_email) {
+if(account_email) {
   inject_meta();
   add_account_email_to_list_of_accounts(account_email);
   save_account_email_full_name_if_needed(account_email);
