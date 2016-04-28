@@ -175,7 +175,7 @@ function get_reply_box_params(account_email, callback) {
 }
 
 function replace_standard_reply_box(account_email, gmail_tab_id, set_editable) {
-  if($('iframe.pgp_block').length) {
+  if($('div.AO iframe.pgp_block').length && $('h2.hP').first().text() === $('h2.hP').last().text()) { // the first() and last() prevents hidden convos not to trigger replacement (when switching between convos)
     var reply_container_selector = 'div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)'; //todo - better to choose one of div.nr.tMHS5d parent elements, creates mess
     if($(reply_container_selector).length) {
       get_reply_box_params(account_email, function(params) {
