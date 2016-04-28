@@ -483,10 +483,17 @@ function search_contacts() {
   if(query !== '') {
     if(can_search_on_google) {
       var contacts = search_pubkey_cache(query, 6);
+      var emails = [];
+      $.each(contacts, function(i, contact) {
+        emails.push(contact.email.replace(/<\/?b>/g, ''));
+      });
       google_api_contacts(compose_url_params.account_email, query, 7 - contacts.length, function(success, google_contacts) {
         if(success) {
           $.each(google_contacts, function(i, google_contact) {
-            contacts.push(google_contact);
+            if(emails.indexOf(google_contact.email) === -1) { // only add contacts that were not there yet
+              contacts.push(google_contact);
+              emails.push(google_contact.email);
+            }
           });
         } else {
           console.log('search_add_google_contacts.google_api_contacts.success === false');
