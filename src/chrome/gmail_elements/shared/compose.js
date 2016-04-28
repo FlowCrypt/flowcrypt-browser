@@ -360,7 +360,7 @@ function render_receivers() { // move emails from input into their own spans. $(
 function select_contact() {
   $('.recipients span').last().remove();
   $('#input_to').focus();
-  $('#input_to').val(trim_lower($(this).text()));
+  $('#input_to').val(trim_lower($(this).attr('email')));
   hide_contacts();
   if($('#input_subject').length) {
     $('#input_subject').focus();
@@ -445,16 +445,22 @@ function render_search_results(results, query) {
   if(results.length > 0 || !can_search_on_google) {
     var ul_html = '';
     $.each(results, function(i, result) {
-      ul_html += '<li class="select_contact">';
+      ul_html += '<li class="select_contact" email="' + result.email.replace(/<\/?b>/g, '') + '">';
       if(result.pgp === true) {
         ul_html += '<i class="fa fa-lock"></i>';
       } else {
         ul_html += '<i class="fa fa-lock" style="color: gray;"></i>';
       }
-      if(result.name) {
-        ul_html += (result.name + ' &lt;' + result.email + '&gt;');
+      if(result.email.length < 40) {
+        var display_email = result.email;
       } else {
-        ul_html += result.email;
+        var parts = result.email.split('@');
+        var display_email = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
+      }
+      if(result.name) {
+        ul_html += (result.name + ' &lt;' + display_email + '&gt;');
+      } else {
+        ul_html += display_email;
       }
       ul_html += '</li>';
     });
