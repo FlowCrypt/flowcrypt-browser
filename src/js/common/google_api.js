@@ -25,7 +25,7 @@ function google_api_call(account_email, method, url, parameters, callback, fail_
           try {
             var error_obj = JSON.parse(response.responseText);
             if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
-              google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, gmail_api_call);
+              google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, gmail_api_call);
             } else {
               response._error = error_obj.error;
               callback(false, response);
@@ -42,7 +42,7 @@ function google_api_call(account_email, method, url, parameters, callback, fail_
         },
       });
     } else { // no valid gmail_api oauth token
-      google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, google_api_call);
+      google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, null, google_api_call);
     }
   });
 }
