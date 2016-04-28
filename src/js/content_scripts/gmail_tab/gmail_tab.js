@@ -41,20 +41,9 @@ function initialize() {
 }
 
 function hijack_gmail_hotkeys() {
-  var key = {
-    a: 97,
-    r: 114,
-    A: 65,
-    R: 82,
-    f: 102,
-    F: 70,
-    backspace: 8,
-    tab: 9,
-    enter: 13,
-    comma: 188,
-  }
+  var keys = key_codes();
   $(document).keypress(function(e) {
-    var causes_unsecure_reply = [key.a, key.r, key.A, key.R, key.f, key.F].indexOf(e.which) !== -1;
+    var causes_unsecure_reply = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F].indexOf(e.which) !== -1;
     if(causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
       e.stopImmediatePropagation();
       set_reply_box_editable(account_email, tab_id_global);

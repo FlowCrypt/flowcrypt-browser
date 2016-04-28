@@ -333,6 +333,14 @@ function compose_show_hide_missing_pubkey_container() {
   }
 }
 
+function respond_to_input_hotkeys(input_to_keypress_event) {
+  var value = $('#input_to').val();
+  var keys = key_codes();
+  if(!value && input_to_keypress_event.which === keys.backspace) {
+    $('.recipients span').last().remove();
+  }
+}
+
 function render_receivers() { // move emails from input into their own spans. $(this) is input_to
   var content = $(this).val();
   var icon = '<i class="fa ion-load-c fa-spin"></i>';
@@ -597,6 +605,7 @@ $('.use_question').click(function() {
 });
 
 function compose_on_render() {
+  $('#input_to').keydown(respond_to_input_hotkeys);
   $('#input_to').keyup(render_receivers);
   $('#input_to').keyup(prevent(spree('slow'), search_contacts));
   $('#input_to').blur(render_receivers);

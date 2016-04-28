@@ -65,6 +65,21 @@ function download_file(filename, type, data) {
   window.URL.revokeObjectURL(url);
 }
 
+function key_codes() {
+  return {
+    a: 97,
+    r: 114,
+    A: 65,
+    R: 82,
+    f: 102,
+    F: 70,
+    backspace: 8,
+    tab: 9,
+    enter: 13,
+    comma: 188,
+  };
+}
+
 function mime_node_type(node) {
   if(node.headers['content-type'] && node.headers['content-type'][0]) {
     return node.headers['content-type'][0].value;
