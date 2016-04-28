@@ -1,3 +1,11 @@
+<b>version 1.9.2 on April 28, 2016: Google API auth bugfix</b>
+internal: google API auth handling bugfix (affecting contact search)
+composing: removed duplicate contacts
+
+<b>version 1.9.1 on April 28, 2016: Contacts select bugfix</b>
+composing: contacts are above secure background
+composing: long contacts shortened
+
 <b>version 1.9.0 on April 28, 2016: Security</b>
 security: reply button results in encrypted message
 security: hotkeys A R F will result in encrypted message
