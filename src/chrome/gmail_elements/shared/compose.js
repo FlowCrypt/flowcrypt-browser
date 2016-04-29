@@ -333,35 +333,48 @@ function compose_show_hide_missing_pubkey_container() {
   }
 }
 
-function respond_to_input_hotkeys(input_to_keypress_event) {
+function respond_to_input_hotkeys(input_to_keydown_event) {
   var value = $('#input_to').val();
   var keys = key_codes();
-  if(!value && input_to_keypress_event.which === keys.backspace) {
+  if(!value && input_to_keydown_event.which === keys.backspace) {
     $('.recipients span').last().remove();
+  } else if(value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {
+    $('#input_to').blur();
+    if($('#contacts').css('display') === 'block') {
+      $('#input_to').blur();
+      if($('#contacts .select_contact.hover').length) {
+        $('#contacts .select_contact.hover').click();
+      } else {
+        $('#contacts .select_contact').first().click();
+      }
+    }
+    $('#input_to').focus();
+    return false;
   }
 }
 
-function render_receivers() { // move emails from input into their own spans. $(this) is input_to
-  var content = $(this).val();
+function render_receivers() {
+  if($('#contacts').css('display') !== 'none') {}
+  var content = $('#input_to').val();
   var icon = '<i class="fa ion-load-c fa-spin"></i>';
   if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back
     var emails = content.split(/[,]/g);
     for(var i = 0; i < emails.length - 1; i++) {
-      $(this).siblings('.recipients').append('<span>' + emails[i] + icon + '</span>');
+      $('#input_to').siblings('.recipients').append('<span>' + emails[i] + icon + '</span>');
     }
     $('.recipients span i').click(remove_receiver);
-    $(this).val(emails[emails.length - 1]);
+    $('#input_to').val(emails[emails.length - 1]);
     resize_input_to();
     compose_evaluate_receivers();
-  } else if(!$(this).is(':focus') && content) {
-    $(this).attr('placeholder', '');
-    $(this).siblings('.recipients').append('<span>' + content + icon + '</span>');
+  } else if(!$('#input_to').is(':focus') && content) {
+    $('#input_to').attr('placeholder', '');
+    $('#input_to').siblings('.recipients').append('<span>' + content + icon + '</span>');
     $('.recipients span i').click(remove_receiver);
-    $(this).val('');
+    $('#input_to').val('');
     resize_input_to();
     compose_evaluate_receivers();
-  } else if(!$(this).is(':focus')) {
-    $(this).attr('placeholder', '');
+  } else if(!$('#input_to').is(':focus')) {
+    $('#input_to').attr('placeholder', '');
   }
 }
 
@@ -370,11 +383,8 @@ function select_contact() {
   $('#input_to').focus();
   $('#input_to').val(trim_lower($(this).attr('email')));
   hide_contacts();
-  if($('#input_subject').length) {
-    $('#input_subject').focus();
-  } else {
-    $('#input_text').focus();
-  }
+  $('#input_to').blur();
+  $('#input_to').focus();
 }
 
 function resize_input_to() {
@@ -477,6 +487,11 @@ function render_search_results(results, query) {
     }
     $('#contacts ul').html(ul_html);
     $('#contacts ul li.select_contact').click(select_contact);
+    $('#contacts ul li.select_contact').hover(function() {
+      $(this).addClass('hover');
+    }, function() {
+      $(this).removeClass('hover');
+    });
     $('#contacts ul li.auth_contacts').click(function() {
       auth_contacts(compose_url_params.account_email, query);
     });
