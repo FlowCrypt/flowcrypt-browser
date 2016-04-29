@@ -116,6 +116,7 @@ function replace_pgp_attachments(account_email, gmail_tab_id) {
       var attachment_container_classes = new_pgp_messages.get(0).classList;
       var message_id = parse_message_id_from('attachment', this);
       if(message_id) {
+        $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
         chrome_message_send(null, 'list_pgp_attachments', {
           account_email: account_email,
           message_id: message_id,
@@ -139,6 +140,8 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
     // only hide original attachments if we found the same amount of them in raw email
     // can cause duplicate attachments (one original encrypted + one decryptable), but should never result in lost attachments
     $(pgp_attachments_selector).css('display', 'none');
+  } else {
+    $(pgp_attachments_selector).children('.attachment_loader').text('Missing file info');
   }
   $.each(attachments, function(i, attachment) {
     $(container_selector).prepend(pgp_attachment_iframe(account_email, attachment, classes, gmail_tab_id));
