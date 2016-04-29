@@ -246,6 +246,7 @@ span.end { margin-left: -10px; }
 /* reply elements */
 div#reply_message_table_container { display: none; }
 div#reply_message_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
+div#reply_message_prompt #reply_click_area { width: 95%; height: 50px; margin-top: 3px; position: absolute; }
 a#a_reply, a#a_reply_all, a#a_forward {}
 p#reply_links { margin: 0px; }
 div#reply_message_table_container table#compose { border-top: 1px solid #cfcfcf; width: 100%; }

@@ -38,7 +38,14 @@ account_storage_get(url_params.account_email, ['drafts_reply'], function(storage
     });
   } else { //no draft available
     if(!url_params.skip_click_prompt) {
-      $('div#reply_message_prompt').click(reply_message_render_table);
+      $('#reply_click_area, #a_reply, #a_reply_all, #a_forward').click(function() {
+        if($(this).attr('id') === 'a_reply') {
+          url_params.to = url_params.to.split(',')[0];
+        } else if($(this).attr('id') === 'a_forward') {
+          url_params.to = '';
+        }
+        reply_message_render_table();
+      });
     } else {
       reply_message_render_table();
     }
@@ -88,11 +95,11 @@ function reply_message_reinsert_reply_box() {
   });
 }
 
-function reply_message_render_success(has_attachments, message_id) {
+function reply_message_render_success(to, has_attachments, message_id) {
   draft_delete(url_params.account_email); // todo - handle errors + retry. Otherwise unwanted drafts might show at times after sending a msg
   $('#reply_message_table_container').css('display', 'none');
   $('#reply_message_successful_container div.replied_from').text(url_params.from);
-  $('#reply_message_successful_container div.replied_to span').text(url_params.to);
+  $('#reply_message_successful_container div.replied_to span').text(to);
   $('#reply_message_successful_container div.replied_body').html($('#input_text').html());
   var t = new Date();
   var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -127,7 +134,7 @@ function send_btn_click() {
     to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function(success, response) {
         if(success) {
-          reply_message_render_success((attachments || []).length > 0, response.id);
+          reply_message_render_success(headers.To, (attachments || []).length > 0, response.id);
           reply_message_reinsert_reply_box();
         } else {
           handle_send_message_error(response);
@@ -142,13 +149,19 @@ function resize_input_text_width() {
 }
 
 function reply_message_on_render() {
-  $('#input_to').val(url_params.to + ','); // the space causes the last email to be also evaluated
+  if(url_params.to) {
+    $('#input_to').val(url_params.to + ','); // the space causes the last email to be also evaluated
+  } else {
+    $('#input_to').val(url_params.to);
+  }
   compose_on_render();
   $("#input_to").focus();
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));
-  $('#input_text').focus();
-  document.getElementById("input_text").focus();
-  compose_evaluate_receivers();
+  if(url_params.to) {
+    $('#input_text').focus();
+    document.getElementById("input_text").focus();
+    compose_evaluate_receivers();
+  }
   setTimeout(function() {
     $(window).resize(prevent(spree(), resize_input_text_width));
   }, 1000);
