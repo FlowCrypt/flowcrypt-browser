@@ -61,35 +61,33 @@ function replace_pgp_pubkeys(account_email, gmail_tab_id) {
 function replace_armored_pgp_messages(account_email, gmail_tab_id) {
   //todo - should be refactored with $(this).html().replace(re, function() ... ) similar as replace_pgp_pubkeys for brevity
   var conversation_has_new_pgp_message = false;
-  var selectors = [
-    "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('-----END PGP MESSAGE-----')",
-    "div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----'):contains('[Message clipped]'):contains('View entire message')"
-  ];
-  $(selectors.join(', ')).each(function() {
-    $(this).addClass('has_known_pgp_blocks');
+  $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----')").each(function() {
     var message_text = $(this).html().replace(/<\/?span( class="il")>/gi, '');
-    var text_with_iframes = message_text;
-    var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/gm;
-    var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/m;
-    var re_first_pgp_question = /.*<br>\r?\n<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
-    var matches;
-    while((matches = re_pgp_blocks.exec(message_text)) !== null) {
-      var valid_pgp_block = strip_pgp_armor(matches[0]);
-      var question_match = re_first_pgp_question.exec(text_with_iframes);
-      var question = '';
-      if(question_match !== null) {
-        var question = window.striptags(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
-        text_with_iframes = text_with_iframes.replace(re_first_pgp_question, '');
+    if(message_text.indexOf('-----END PGP MESSAGE-----') !== -1 || message_text.indexOf('<a class="vem"') !== -1) {
+      $(this).addClass('has_known_pgp_blocks');
+      var text_with_iframes = message_text;
+      var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(\[[^\[]+\]((&nbsp;)|( )|(\r?\n))+<a class="vem"[^>]+>[^<]+<\/a>))/gm;
+      var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(\[[^\[]+\]((&nbsp;)|( )|(\r?\n))+<a class="vem"[^>]+>[^<]+<\/a>))/m;
+      var re_first_pgp_question = /.*<br>\r?\n<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
+      var matches;
+      while((matches = re_pgp_blocks.exec(message_text)) !== null) {
+        var valid_pgp_block = strip_pgp_armor(matches[0]);
+        var question_match = re_first_pgp_question.exec(text_with_iframes);
+        var question = '';
+        if(question_match !== null) {
+          var question = window.striptags(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
+          text_with_iframes = text_with_iframes.replace(re_first_pgp_question, '');
+        }
+        if(valid_pgp_block.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
+          text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', gmail_tab_id));
+        } else { // clipped pgp block
+          var message_id = parse_message_id_from('message', this);
+          text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe('', question, account_email, message_id, gmail_tab_id));
+        }
       }
-      if(valid_pgp_block.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
-        text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', gmail_tab_id));
-      } else { // clipped pgp block
-        var message_id = parse_message_id_from('message', this);
-        text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe('', question, account_email, message_id, gmail_tab_id));
-      }
+      $(this).html(text_with_iframes);
+      conversation_has_new_pgp_message = true;
     }
-    $(this).html(text_with_iframes);
-    conversation_has_new_pgp_message = true;
   });
   return conversation_has_new_pgp_message;
 }
