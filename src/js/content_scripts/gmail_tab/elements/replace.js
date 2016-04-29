@@ -52,7 +52,7 @@ function replace_cryptup_tags(account_email, gmail_tab_id) {
 function replace_pgp_pubkeys(account_email, gmail_tab_id) {
   $("div.adP.adO div.a3s:contains('-----BEGIN PGP PUBLIC KEY BLOCK-----'):contains('-----END PGP PUBLIC KEY BLOCK-----')").each(function() {
     var re_pubkey_blocks = /-----BEGIN PGP PUBLIC KEY BLOCK-----(.|[\r?\n])+?-----END PGP PUBLIC KEY BLOCK-----/gm;
-    $(this).html($(this).html().replace(re_pubkey_blocks, function(armored_pubkey_match) {
+    $(this).html($(this).html().replace(/<\/?span( class="il")>/gi, '').replace(re_pubkey_blocks, function(armored_pubkey_match) {
       return pgp_pubkey_iframe(account_email, strip_pgp_armor(armored_pubkey_match), gmail_tab_id);
     }));
   });
@@ -67,7 +67,7 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
   ];
   $(selectors.join(', ')).each(function() {
     $(this).addClass('has_known_pgp_blocks');
-    var message_text = $(this).html();
+    var message_text = $(this).html().replace(/<\/?span( class="il")>/gi, '');
     var text_with_iframes = message_text;
     var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/gm;
     var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(View entire message\<\/a\>))/m;
