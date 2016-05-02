@@ -1,5 +1,7 @@
 'use strict';
 
+var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
+
 function get_logo_src(include_header) {
   return (include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
 }
@@ -49,7 +51,7 @@ function pgp_block_iframe(pgp_block_text, question, account_email, message_id, g
     '&account_email=' + encodeURIComponent(account_email) +
     '&message_id=' + encodeURIComponent(message_id) +
     '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-  return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
+  return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
 }
 
 function pgp_pubkey_iframe(account_email, armored_pubkey, gmail_tab_id) {
