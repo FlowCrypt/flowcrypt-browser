@@ -17,8 +17,8 @@ function initialize() {
       // reinsert_reply_box(data.account_email, data.last_message_frame_id, data.last_message_frame_height, data.my_email, data.their_email);
       // todo: misbehaving
     },
-    pgp_block_iframe_set_css: function(data) {
-      $('iframe#' + data.frame_id).css(data.css);
+    set_css: function(data) {
+      $(data.selector).css(data.css);
     },
     passphrase_dialog: function(data) {
       if(!$('#cryptup_dialog').length) {

@@ -97,6 +97,7 @@ function reply_message_reinsert_reply_box() {
 
 function reply_message_render_success(to, has_attachments, message_id) {
   draft_delete(url_params.account_email); // todo - handle errors + retry. Otherwise unwanted drafts might show at times after sending a msg
+  $('.replied_body').css('width', $('table#compose').width() - 30);
   $('#reply_message_table_container').css('display', 'none');
   $('#reply_message_successful_container div.replied_from').text(url_params.from);
   $('#reply_message_successful_container div.replied_to span').text(to);
@@ -144,9 +145,26 @@ function send_btn_click() {
   });
 }
 
-function resize_input_text_width() {
+var last_table_height = undefined;
+function resize_reply_box() {
+  console.log($('table#compose').height());
   $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
+  var current_height = $('table#compose').height();
+  if(current_height !== last_table_height){
+    console.log('sending resize');
+    last_table_height = current_height;
+    chrome_message_send(url_params.parent_tab_id, 'set_css', {
+      selector: 'iframe#' + url_params.frame_id,
+      css: {
+        height: Math.max(200, current_height + 1),
+      }
+    });
+  }
 }
+
+$(document).ready(function() {
+  resize_reply_box();
+});
 
 function reply_message_on_render() {
   if(url_params.to) {
@@ -162,8 +180,9 @@ function reply_message_on_render() {
     document.getElementById("input_text").focus();
     compose_evaluate_receivers();
   }
-  setTimeout(function() {
-    $(window).resize(prevent(spree(), resize_input_text_width));
+  setTimeout(function() { // delay automatic resizing until a second later
+    $(window).resize(prevent(spree(), resize_reply_box));
+    $('#input_text').keyup(resize_reply_box);
   }, 1000);
-  resize_input_text_width();
+  resize_reply_box();
 }

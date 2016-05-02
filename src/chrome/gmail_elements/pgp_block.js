@@ -36,8 +36,8 @@ function format_plaintext(text) {
 }
 
 function send_resize_message() {
-  chrome_message_send(url_params.parent_tab_id, 'pgp_block_iframe_set_css', {
-    frame_id: url_params.frame_id,
+  chrome_message_send(url_params.parent_tab_id, 'set_css', {
+    selector: 'iframe#' + url_params.frame_id,
     css: {
       height: $('#pgp_block').height() + 30
     }
