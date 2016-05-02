@@ -14,8 +14,7 @@ function initialize() {
       $('iframe#' + data.frame_id).remove();
     },
     reinsert_reply_box: function(data) {
-      // reinsert_reply_box(data.account_email, data.last_message_frame_id, data.last_message_frame_height, data.my_email, data.their_email);
-      // todo: misbehaving
+      reinsert_reply_box(data.account_email, tab_id_global, data.subject, data.my_email, data.their_email);
     },
     set_css: function(data) {
       $(data.selector).css(data.css);

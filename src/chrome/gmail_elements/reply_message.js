@@ -1,6 +1,6 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id', 'skip_click_prompt']);
+var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
 var original_reply_message_prompt = undefined;
 var thread_message_id_last = '';
 var thread_message_referrences_last = '';
@@ -9,7 +9,7 @@ url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''
 
 // show decrypted draft if available for this thread
 account_storage_get(url_params.account_email, ['drafts_reply'], function(storage) {
-  if(storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
+  if(!url_params.ignore_draft && torage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
     original_reply_message_prompt = $('div#reply_message_prompt').html();
     $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
     gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function(success, response) {
@@ -88,10 +88,9 @@ $('.delete_draft').click(function() {
 function reply_message_reinsert_reply_box() {
   chrome_message_send(url_params.parent_tab_id, 'reinsert_reply_box', {
     account_email: url_params.account_email,
-    last_message_frame_height: $('#reply_message_successful_container').height(),
-    last_message_frame_id: url_params.frame_id,
     my_email: url_params.from,
-    their_email: url_params.to,
+    subject: url_params.subject,
+    their_email: get_recipients_from_dom().join(','),
   });
 }
 

@@ -199,13 +199,8 @@ function set_reply_box_editable(account_email, gmail_tab_id) { // for now replac
   }
 }
 
-// function reinsert_reply_box(account_email, gmail_tab_id, last_message_frame_id, last_message_frame_height, my_email, their_email) {
-//   $('#' + last_message_frame_id).css('height', last_message_frame_height + 'px');
-//   var subject = $('h2.hP').text();
-//   account_storage_get(account_email, ['addresses'], function(storage) {
-//     var secure_reply_box = reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject);
-//     var wrapped_secure_reply_box = '<div class="adn ads" role="listitem" style="padding-left: 40px;">' + secure_reply_box + '</div>';
-//     $('div.gA.gt.acV').removeClass('gA').removeClass('gt').removeClass('acV').addClass('adn').addClass('ads').closest('div.nH').append(wrapped_secure_reply_box);
-//     // $('div.nH.hx.aHo').append();
-//   });
-// }
+function reinsert_reply_box(account_email, gmail_tab_id, subject, my_email, their_email) {
+  account_storage_get(account_email, ['addresses'], function(storage) {
+    $('.reply_message_iframe_container').append(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject, false, true));
+  });
+}
