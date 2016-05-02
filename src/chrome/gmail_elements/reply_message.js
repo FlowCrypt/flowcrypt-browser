@@ -147,11 +147,9 @@ function send_btn_click() {
 
 var last_table_height = undefined;
 function resize_reply_box() {
-  console.log($('table#compose').height());
   $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
   var current_height = $('table#compose').height();
   if(current_height !== last_table_height){
-    console.log('sending resize');
     last_table_height = current_height;
     chrome_message_send(url_params.parent_tab_id, 'set_css', {
       selector: 'iframe#' + url_params.frame_id,
