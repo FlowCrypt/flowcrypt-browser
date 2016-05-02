@@ -50,9 +50,28 @@
         <td>
           It seems one or more recipients don't have CryptUP or other PGP app.
           <br/>
+          To send the email, choose from one of the following:
           <br/>
-          <div class="button green add_pubkey">add their pubkey</div> if they have PGP enabled or
-          <div class="button green use_question">use a challenge question</div>
+          <br/>
+          <div class="choice-row">
+            <div class="button use_question">
+              <i class="ion-help-circled"></i>
+                <span class="challenge-question-copy">Use a challenge
+                  <br> question
+                </span>
+            </div>
+            <div class="button add_pubkey">
+              <span class="circle">
+                <i class="ion-key"></i>
+              </span>
+              <span class="pubkey-copy">
+                add their pubkey
+                <br>
+                <span class="small-copy">if the have pgp enabled</span>
+              </span>
+            </div>
+            <div class="or-copy">or</div>
+          </div>
         </td>
       </tr>
       <tr id="challenge_question_container">
