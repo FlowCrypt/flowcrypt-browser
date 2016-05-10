@@ -11,6 +11,7 @@ var can_search_on_google = undefined;
 var can_save_drafts = undefined;
 var pubkey_cache_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
+var save_draft_in_process = false;
 var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'subject']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
@@ -97,6 +98,7 @@ function draft_save() {
     }
   }
   if(can_save_drafts && should_save_draft($('#input_text').text())) {
+    save_draft_in_process = true;
     $('#send_btn_note').text('Saving');
     var armored_pubkey = private_storage_get(localStorage, compose_url_params.account_email, 'master_public_key');
     encrypt([armored_pubkey], null, $('#input_text').text(), true, function(encrypted) {
@@ -120,10 +122,12 @@ function draft_save() {
               draft_message_id = response.message.id;
               draft_meta_store(true, response.id, compose_url_params.thread_id, get_recipients_from_dom(), $('#input_subject'));
             }
+            save_draft_in_process = false;
           });
         } else {
           gmail_api_draft_update(compose_url_params.account_email, draft_id, mime_message, function(success, response) {
             set_note(success);
+            save_draft_in_process = false;
           });
         }
       });
@@ -133,15 +137,21 @@ function draft_save() {
 
 function draft_delete(account_email, callback) {
   clearInterval(save_draft_interval);
-  if(draft_id) {
-    draft_meta_store(false, draft_id, compose_url_params.thread_id, null, null, function() {
-      gmail_api_draft_delete(account_email, draft_id, callback);
-    })
-  } else {
-    if(callback) {
-      callback();
+  wait(function() {
+    if(!save_draft_in_process) {
+      return true;
     }
-  }
+  }).then(function() {
+    if(draft_id) {
+      draft_meta_store(false, draft_id, compose_url_params.thread_id, null, null, function() {
+        gmail_api_draft_delete(account_email, draft_id, callback);
+      })
+    } else {
+      if(callback) {
+        callback();
+      }
+    }
+  });
 }
 
 function decrypt_and_render_draft(account_email, encrypted_draft, render_function) {

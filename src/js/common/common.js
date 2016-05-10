@@ -22,6 +22,21 @@ function unique(array) {
   return unique;
 }
 
+function wait(until_this_function_evaluates_true) {
+  return new Promise(function(success, error) {
+    var interval = setInterval(function() {
+      var result = until_this_function_evaluates_true();
+      if(result === true) {
+        clearInterval(interval);
+        success();
+      } else if(result === false) {
+        clearInterval(interval);
+        error();
+      }
+    }, 50);
+  });
+}
+
 function trim_lower(email) {
   if(email.indexOf('<') !== -1 && email.indexOf('>') !== -1) {
     email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);

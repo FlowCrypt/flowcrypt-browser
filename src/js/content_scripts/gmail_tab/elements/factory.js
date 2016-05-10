@@ -75,8 +75,8 @@ function reply_message_iframe(account_email, gmail_tab_id, my_email, their_email
     '&subject=' + encodeURIComponent(subject) +
     '&thread_id=' + encodeURIComponent(thread_id) +
     '&account_email=' + encodeURIComponent(account_email) +
-    '&skip_click_prompt=' + encodeURIComponent(Number(skip_click_prompt)) +
-    '&ignore_draft=' + encodeURIComponent(Number(ignore_draft)) +
+    '&skip_click_prompt=' + encodeURIComponent(Number(Boolean(Number(skip_click_prompt)))) + //todo - would use some rethinking, refactoring, or at least a named function
+    '&ignore_draft=' + encodeURIComponent(Number(Boolean(Number(ignore_draft)))) + //these two are to make sure to pass a "1" or "0" in url
     '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
   return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
 }

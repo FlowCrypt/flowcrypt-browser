@@ -6,10 +6,11 @@ var thread_message_id_last = '';
 var thread_message_referrences_last = '';
 var passphrase_interval = undefined;
 url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
+url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
 // show decrypted draft if available for this thread
 account_storage_get(url_params.account_email, ['drafts_reply'], function(storage) {
-  if(!url_params.ignore_draft && torage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
+  if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
     original_reply_message_prompt = $('div#reply_message_prompt').html();
     $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
     gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function(success, response) {
@@ -95,29 +96,32 @@ function reply_message_reinsert_reply_box() {
 }
 
 function reply_message_render_success(to, has_attachments, message_id) {
-  draft_delete(url_params.account_email); // todo - handle errors + retry. Otherwise unwanted drafts might show at times after sending a msg
-  $('.replied_body').css('width', $('table#compose').width() - 30);
-  $('#reply_message_table_container').css('display', 'none');
-  $('#reply_message_successful_container div.replied_from').text(url_params.from);
-  $('#reply_message_successful_container div.replied_to span').text(to);
-  $('#reply_message_successful_container div.replied_body').html($('#input_text').html());
-  var t = new Date();
-  var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
-  $('#reply_message_successful_container div.replied_time').text(time);
-  $('#reply_message_successful_container').css('display', 'block');
-  if(has_attachments) {
-    gmail_api_message_get(url_params.account_email, message_id, 'full', function(success, gmail_message_object) {
-      if(success) {
-        $('#attachments').css('display', 'block');
-        var attachment_metas = gmail_api_find_attachments(gmail_message_object);
-        $.each(attachment_metas, function(i, attachment_meta) {
-          $('#attachments').append(pgp_attachment_iframe(url_params.account_email, attachment_meta, []));
-        });
-      } else {
-        console.log('failed to re-show sent attachments'); //todo - handle !success
-      }
-    });
-  }
+  $('#send_btn_note').text('Sent, deleting draft..');
+  draft_delete(url_params.account_email, function() {
+    reply_message_reinsert_reply_box();
+    $('.replied_body').css('width', $('table#compose').width() - 30);
+    $('#reply_message_table_container').css('display', 'none');
+    $('#reply_message_successful_container div.replied_from').text(url_params.from);
+    $('#reply_message_successful_container div.replied_to span').text(to);
+    $('#reply_message_successful_container div.replied_body').html($('#input_text').html());
+    var t = new Date();
+    var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
+    $('#reply_message_successful_container div.replied_time').text(time);
+    $('#reply_message_successful_container').css('display', 'block');
+    if(has_attachments) {
+      gmail_api_message_get(url_params.account_email, message_id, 'full', function(success, gmail_message_object) {
+        if(success) {
+          $('#attachments').css('display', 'block');
+          var attachment_metas = gmail_api_find_attachments(gmail_message_object);
+          $.each(attachment_metas, function(i, attachment_meta) {
+            $('#attachments').append(pgp_attachment_iframe(url_params.account_email, attachment_meta, []));
+          });
+        } else {
+          console.log('failed to re-show sent attachments'); //todo - handle !success
+        }
+      });
+    }
+  });
 }
 
 function send_btn_click() {
@@ -135,7 +139,6 @@ function send_btn_click() {
       gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function(success, response) {
         if(success) {
           reply_message_render_success(headers.To, (attachments || []).length > 0, response.id);
-          reply_message_reinsert_reply_box();
         } else {
           handle_send_message_error(response);
         }
