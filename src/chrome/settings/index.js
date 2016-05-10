@@ -12,7 +12,7 @@ function refresh_account_list() {
         var email_text = '<b>' + account_email.split('@')[0] + '</b>' + '@' + account_email.split('@')[1];
         if(account_storages[account_email]['setup_done'] === true) {
           accounts_content += '<div class="line"><a class="button green has_email" href="account.htm?account_email=' + encodeURIComponent(account_email) + '">' + email_text + '</a></div>';
-          var has_connected_account = true;
+          has_connected_account = true;
         } else {
           if(spinning !== account_email) {
             accounts_content += '<div class="line"><a class="button red action_auth has_email" href="#">' + email_text + '</a></div>';
