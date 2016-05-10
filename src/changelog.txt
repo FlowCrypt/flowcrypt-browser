@@ -1,3 +1,9 @@
+<b>version 2.0.1 on May 9, 2016: Draft and setup bugfixes</b>
+composing: fixed displaying conversation drafts
+composing: fixed gmail freezing due to draft window replacing
+composing: improved challenge question / add PGP key prompt
+setup: fixed footer covering the SAVE button
+
 <b>version 2.0.0 on May 1, 2016: Messaging UX</b>
 composing: using TAB in recipients field
 composing: long messages get a scroller
