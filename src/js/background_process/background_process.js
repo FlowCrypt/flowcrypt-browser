@@ -12,7 +12,8 @@ chrome_message_background_listen({
 });
 
 if(!localStorage.settings_seen) {
-  open_settings_page();
+  open_settings_page('initial.htm'); // called after the very first installation of the plugin
+  localStorage.settings_seen = true;
 }
 chrome.browserAction.onClicked.addListener(function() {
   open_settings_page(); // Called when the user clicks on the browser action icon.
