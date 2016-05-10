@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/ionicons.min.css" />
   <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="icon" href="/img/logo-16-16-white-green.png" />
 </head>
 
@@ -17,11 +18,24 @@
       <h1></h1>
     </div>
     <div class="separator"></div>
-    <div class="line" id="notes" style="display:none;">This adds encrypted functionality. Your regular emails are not affected.<br /><br />Access to Gmail is limited only to this single computer.<br /><br /></div>
+    <div class="line" id="notes" style="display:none;">
+      This adds encrypted functionality. Your regular emails are not affected.<br /><br />
+      Access to Gmail is limited only to this single computer. <a href="#" data-featherlight="#lightbox_content_security">learn more</a><br /><br />
+    </div>
     <div id="accounts"></div>
   </div>
 
+  <div style="display:none;">
+    <div class="lightboxed" id="lightbox_content_security">
+      <p>To ensure the smoothest experience when using CryptUP, it needs to connect to the Gmail API. This allows your local CryptUP plugin to use Gmail functions to encrypt and decrypt messages when you choose so.</p>
+      <p>When you connect to Gmail, the plugin will receive API Tokens. These tokens are needed to access your Gmail inbox programmatically, and they are only saved on your computer, locally. They will never leave your own browser, and Chrome will destroy them when your uninstall CryptUP.</p>
+      <p>In other words, these Tokens are handled so securely, that even CryptUP developers cannot and will not be able to access them.</p>
+      <p>Because the code running CryptUP is open-source, anyone can verify how these Tokens are handled. To learn more, or inspect the code, visit <a href="https://github.com/tomholub/cryptup-chrome" target="_blank">CryptUP Sources Repository</a> on GitHub. Alternatively, you are welcome to ask me directly at tom@cryptup.org</p>
+    </div>
+  </div>
+
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
   <script src="/js/common/storage.js"></script>
   <script src="/js/common/common.js"></script>
   <script src="settings_common.js"></script>
