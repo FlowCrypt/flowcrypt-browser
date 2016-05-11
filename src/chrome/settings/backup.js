@@ -47,9 +47,7 @@ function show_status() {
             $('h1').text('Back up your private key');
           });
         } else if(storage.key_backup_method) {
-          if(storage.key_backup_method === 'gmail') {
-            $('.status_summary').text('No backups found on this account. You can store a backup of your key on Gmail. Your key will be protected by a pass phrase of your choice.');
-          } else if(storage.key_backup_method === 'file') {
+          if(storage.key_backup_method === 'file') {
             $('.status_summary').text('You have previously backed up your key into a file.');
             $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
             $('.action_go_manual').click(function() {
@@ -63,7 +61,7 @@ function show_status() {
               display_block('step_3_manual');
               $('h1').text('Back up your private key');
             });
-          } else {
+          } else { // gmail or other methods
             $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
             $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
             $('.action_go_manual').click(function() {
@@ -123,19 +121,27 @@ function backup_key_on_gmail(account_email, armored_key, error_callback) {
     To: account_email,
     Subject: recovery_email_subjects[0],
   };
-  var email_attachments = [{
-    filename: 'cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key',
-    type: 'text/plain',
-    content: armored_key,
-  }];
-  var email_message = 'I hope you\'ll enjoy CryptUP! This email might come handy later.\n\nThe backup file below is protected by your pass phrase. Make sure to keep the pass phrase safe. Do not forward this email to anyone.\n\n Any feedback is welcome at tom@cryptup.org';
-  to_mime(url_params.account_email, email_message, email_headers, email_attachments, function(mime_message) {
-    gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
-      if(success) { // todo - test pulling it and decrypting it right away
-        write_backup_done_and_render(false, 'gmail');
-      } else {
-        error_callback('Need internet connection to finish setting up your account. Please clicking the button again to retry.');
-      }
+  $.get('email_intro.template.htm', null, function(email_message) {
+    $.get('/img/email/msg_new.png', null, function(msg_new_png) {
+      $.get('/img/email/msg_reply.png', null, function(msg_reply_png) {
+        var email_attachments = [{
+          filename: 'cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key',
+          type: 'text/plain',
+          content: armored_key,
+        }];
+        var text = {
+          'text/html': email_message
+        };
+        to_mime(url_params.account_email, text, email_headers, email_attachments, function(mime_message) {
+          gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
+            if(success) { // todo - test pulling it and decrypting it right away
+              write_backup_done_and_render(false, 'gmail');
+            } else {
+              error_callback('Need internet connection to finish setting up your account. Please clicking the button again to retry.');
+            }
+          });
+        });
+      });
     });
   });
 }

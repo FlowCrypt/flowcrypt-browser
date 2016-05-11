@@ -1,6 +1,6 @@
 'use strict';
 
-var recovery_email_subjects = ['CryptUP Account Backup'];
+var recovery_email_subjects = ['All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
 $.get('footer.htm', null, function(data) {
   $('body').append(data);
