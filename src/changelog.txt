@@ -1,3 +1,9 @@
+<b>version 2.0.2 on May 10, 2016: Reply button bugfix and setup improvements</b>
+composing: fix reply button
+setup: point to plugin button on first run
+setup: explain what is gmail auth for
+setup: add a visual guide in backup email
+
 <b>version 2.0.1 on May 9, 2016: Draft and setup bugfixes</b>
 composing: fixed displaying conversation drafts
 composing: fixed gmail freezing due to draft window replacing
