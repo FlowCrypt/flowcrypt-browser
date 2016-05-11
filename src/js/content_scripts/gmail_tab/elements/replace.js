@@ -190,9 +190,9 @@ function replace_standard_reply_box(account_email, gmail_tab_id, editable) {
 
 function set_reply_box_editable(account_email, gmail_tab_id) { // for now replaces secure reply box
   var reply_container_iframe_selector = '.reply_message_iframe_container > iframe';
-  if($(reply_container_selector).length) {
+  if($(reply_container_iframe_selector).length) {
     get_reply_box_params(account_email, function(params) {
-      $(reply_container_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, true));
+      $(reply_container_iframe_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, true));
     });
   } else {
     replace_standard_reply_box(account_email, gmail_tab_id, true);
