@@ -1,3 +1,6 @@
+<b>version 2.0.3 on May 10, 2016: Reply button bugfix and setup improvements</b>
+setup: initial screen image link fix
+
 <b>version 2.0.2 on May 10, 2016: Reply button bugfix and setup improvements</b>
 composing: fix reply button
 setup: point to plugin button on first run
