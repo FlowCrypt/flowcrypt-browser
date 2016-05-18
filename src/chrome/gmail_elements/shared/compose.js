@@ -377,14 +377,11 @@ function render_receivers() {
     resize_input_to();
     compose_evaluate_receivers();
   } else if(!$('#input_to').is(':focus') && content) {
-    $('#input_to').attr('placeholder', '');
     $('#input_to').siblings('.recipients').append('<span>' + content + icon + '</span>');
     $('.recipients span i').click(remove_receiver);
     $('#input_to').val('');
     resize_input_to();
     compose_evaluate_receivers();
-  } else if(!$('#input_to').is(':focus')) {
-    $('#input_to').attr('placeholder', '');
   }
 }
 
