@@ -1,0 +1,186 @@
+body {
+  font-family: 'Open Sans', Arial!important;
+  position: relative;
+  height: 100%;
+  width: auto;
+}
+.red {
+  background: red;
+}
+.blue {
+  background: blue;
+}
+#header-row img.cryptup-logo {
+  width: 100px;
+  height: auto;
+  margin-right: 5px;
+  text-align: left;
+}
+#header-row a.cryptup-logo-row {
+  text-decoration: none;
+}
+#header-row .cryptup-logo-row span {
+  /*background: red;*/
+  opacity: .7;
+  transition: .3s;
+}
+#header-row .cryptup-logo-row:hover span {
+  opacity: 1;
+}
+#alt-accounts.accounts-row {
+  /*animation: fadeInUp.4s;*/
+  display: none;
+}
+#alt-accounts.accounts-row.active {
+  display: block;
+  animation: fadeInDown .4s;
+}
+.accounts-row {
+  background: #f3f3f3;
+  height: auto;
+  padding: 10px 5px 30px 5px;
+  position: absolute;
+  right: 0;
+  left: 0;
+  width: 293px;
+  margin: 0 auto;
+  margin-top: 30px;
+  z-index: 10;
+}
+.accounts-row .row.alt-accounts {
+  /*background: pink;*/
+  margin: 13px 0;
+  cursor: pointer;
+  border: 1px solid #f3f3f3;
+}
+.accounts-row .alt-accounts {
+  /*background: black;*/
+  height: 40px;
+  text-align: right;
+}
+.accounts-row .alt-accounts .email-address {
+  /*background: black;*/
+  text-align: right;
+  display: block;
+}
+#header-row .profile-img {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #f3f3f3;
+  border-radius: 120px;
+  margin-left: 10px;
+}
+.accounts-row .alt-accounts .profile-img {
+  position: absolute;
+  width: 30px!important;
+  border: 1px solid #f3f3f3!important;
+  top: 5px;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 30px!important;
+}
+#settings-row .separator {
+  background: rgba(0, 0, 0, .09);
+  width: 60%;
+  margin: 15px auto 20px auto;
+  height: 1px;
+}
+#settings-row .my-keys-row {
+  margin-top: 30px;
+  padding-top: 30px;
+}
+.profile-row .down-option {
+  /*background: black;*/
+  width: 40px;
+  font-size: 25px;
+  position: absolute;
+  right: 17px;
+  text-align: center;
+  margin: 0px auto 0 auto;
+  bottom: -30px;
+  display: inline-block;
+}
+.profile-row .add-account {
+  /*background: blue;*/
+  position: absolute;
+  font-size: 12px;
+  bottom: -20px;
+  opacity: .6;
+  text-decoration: underline;
+  right: 73px;
+}
+#settings-row .ion-key {
+  font-size: 30px;
+  top: -20px;
+  color: green;
+  width: 30px;
+  position: absolute;
+}
+#settings-row .my-keys-copy {
+  text-indent: 20px;
+  display: inline-block;
+}
+#settings-row h1 {
+  font-size: 25px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+#settings-row {
+  /*background: pink;*/
+  padding: 70px 0;
+}
+#settings-row .box {
+  background: green;
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 15px auto;
+}
+#settings-row .box i {
+  color: white;
+  font-size: 39px;
+  position: absolute;
+  top: 30px;
+  /*right:0;*/
+  bottom: 0;
+  /*left:0;*/
+  margin: 0 auto;
+  text-align: center!important;
+  display: block;
+  margin-left: 0;
+  margin-right: 0;
+  width: inherit;
+  /*background: red;*/
+}
+#footer-row {
+  position: fixed;
+  bottom: 20%;
+  text-align: center;
+  right: 0;
+  left: 0;
+  font-weight: 600;
+  /*top:0;*/
+}
+body#settings .advanced {
+  display: none;
+}
+body#settings.advanced .advanced {
+  display: block;
+  animation: fadeIn .7s;
+}
+body#settings.advanced .basic {
+  display: none;
+}
+body#settings .basic {
+  animation: fadeIn .7s;
+}
+body#settings .settings-border {
+  border: 2px solid rgba(0, 0, 0, .2);
+}
+body#settings .settings-border .row {
+  padding: 10px 0;
+}
+body#settings .settings-border .key-content-row:nth-child(odd) {
+  background: #f3f3f3;
+}
