@@ -385,10 +385,14 @@ function render_receivers() {
   }
 }
 
-function select_contact() {
-  $('.recipients span').last().remove();
+function select_contact(email, from_query) {
+  console.log($('.recipients span').last().text());
+  console.log(from_query);
+  if($('.recipients span').last().text() === from_query) {
+    $('.recipients span').last().remove();
+  }
   $('#input_to').focus();
-  $('#input_to').val(trim_lower($(this).attr('email')));
+  $('#input_to').val(trim_lower(email));
   hide_contacts();
   $('#input_to').blur();
   $('#input_to').focus();
@@ -493,7 +497,9 @@ function render_search_results(results, query) {
       ul_html += '<li class="auth_contacts"><i class="fa fa-search"></i>Search Gmail Contacts</li>';
     }
     $('#contacts ul').html(ul_html);
-    $('#contacts ul li.select_contact').click(select_contact);
+    $('#contacts ul li.select_contact').click(function() {
+      select_contact($(this).attr('email'), query);
+    });
     $('#contacts ul li.select_contact').hover(function() {
       $(this).addClass('hover');
     }, function() {
