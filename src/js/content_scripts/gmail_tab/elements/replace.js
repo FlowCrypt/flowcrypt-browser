@@ -1,8 +1,8 @@
 'use strict';
 
-function replace_pgp_elements(account_email, gmail_tab_id) {
+function replace_pgp_elements(account_email, addresses, gmail_tab_id) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
-  var new_pgp_block_found = replace_armored_pgp_messages(account_email, gmail_tab_id);
+  var new_pgp_block_found = replace_armored_pgp_messages(account_email, addresses, gmail_tab_id);
   replace_standard_reply_box(account_email, gmail_tab_id);
   replace_pgp_attachments(account_email, gmail_tab_id);
   replace_pgp_pubkeys(account_email, gmail_tab_id);
@@ -58,13 +58,14 @@ function replace_pgp_pubkeys(account_email, gmail_tab_id) {
   });
 }
 
-function replace_armored_pgp_messages(account_email, gmail_tab_id) {
+function replace_armored_pgp_messages(account_email, addresses, gmail_tab_id) {
   //todo - should be refactored with $(this).html().replace(re, function() ... ) similar as replace_pgp_pubkeys for brevity
   var conversation_has_new_pgp_message = false;
   $("div.adP.adO div.a3s:contains('-----BEGIN PGP MESSAGE-----')").each(function() {
     var message_text = $(this).html().replace(/<\/?span( class="il")>/gi, '');
     if(message_text.indexOf('-----END PGP MESSAGE-----') !== -1 || message_text.indexOf('<a class="vem"') !== -1) {
       $(this).addClass('has_known_pgp_blocks');
+      var is_outgoing = addresses.indexOf($(this).closest('.gs').find('span.gD').attr('email')) !== -1;
       var text_with_iframes = message_text;
       var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(\[[^\[]+\]((&nbsp;)|( )|(\r?\n))+<a class="vem"[^>]+>[^<]+<\/a>))/gm;
       var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(\[[^\[]+\]((&nbsp;)|( )|(\r?\n))+<a class="vem"[^>]+>[^<]+<\/a>))/m;
@@ -79,10 +80,10 @@ function replace_armored_pgp_messages(account_email, gmail_tab_id) {
           text_with_iframes = text_with_iframes.replace(re_first_pgp_question, '');
         }
         if(valid_pgp_block.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
-          text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', gmail_tab_id));
+          text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe(valid_pgp_block, question, account_email, '', is_outgoing, gmail_tab_id));
         } else { // clipped pgp block
           var message_id = parse_message_id_from('message', this);
-          text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe('', question, account_email, message_id, gmail_tab_id));
+          text_with_iframes = text_with_iframes.replace(re_first_pgp_block, pgp_block_iframe('', question, account_email, message_id, is_outgoing, gmail_tab_id));
         }
       }
       $(this).html(text_with_iframes);
@@ -148,7 +149,7 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
   });
 }
 
-function get_reply_box_params(account_email, callback) {
+function get_conversation_params(account_email, callback) {
   var reply_to_estimate = [$('h3.iw span[email]').last().attr('email').trim()]; // add original sender
   var reply_to = [];
   $('span.hb').last().find('span.g2').each(function() {
@@ -157,7 +158,7 @@ function get_reply_box_params(account_email, callback) {
   var my_email = account_email;
   account_storage_get(account_email, ['addresses'], function(storage) {
     $.each(reply_to_estimate, function(i, email) {
-      if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email goes separately
+      if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email
         my_email = email;
       } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
         reply_to.push(email); // reply to all except my emails
@@ -179,7 +180,7 @@ function replace_standard_reply_box(account_email, gmail_tab_id, editable) {
   if($('div.AO iframe.pgp_block').length && $('h2.hP').first().text() === $('h2.hP').last().text()) { // the first() and last() prevents hidden convos not to trigger replacement (when switching between convos)
     var reply_container_selector = 'div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)';
     if($(reply_container_selector).length) {
-      get_reply_box_params(account_email, function(params) {
+      get_conversation_params(account_email, function(params) {
         editable = editable || $(reply_container_selector)[0].tagName === 'TD';
         var iframe = reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, editable);
         $(reply_container_selector).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
@@ -191,7 +192,7 @@ function replace_standard_reply_box(account_email, gmail_tab_id, editable) {
 function set_reply_box_editable(account_email, gmail_tab_id) { // for now replaces secure reply box
   var reply_container_iframe_selector = '.reply_message_iframe_container > iframe';
   if($(reply_container_iframe_selector).length) {
-    get_reply_box_params(account_email, function(params) {
+    get_conversation_params(account_email, function(params) {
       $(reply_container_iframe_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, true));
     });
   } else {

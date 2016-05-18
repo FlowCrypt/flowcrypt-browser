@@ -1,6 +1,7 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id']);
+var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing']);
+url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var ready_attachmments = [];
 
@@ -39,17 +40,29 @@ function send_resize_message() {
   chrome_message_send(url_params.parent_tab_id, 'set_css', {
     selector: 'iframe#' + url_params.frame_id,
     css: {
-      height: $('#pgp_block').height() + 30
+      height: $('#pgp_block').height() + 40
     }
   });
 }
 
-function render_content(content) {
-  $('#pgp_block').html(content);
-  setTimeout(function() {
-    $(window).resize(prevent(spree(), send_resize_message));
-  }, 1000);
-  send_resize_message();
+function render_content(content, is_error) {
+  account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function(storage) {
+    if(!is_error) { //successfully opened message
+      if(url_params.is_outgoing && !storage.successfully_received_at_leat_one_message && !private_storage_get(localStorage, url_params.account_email, 'master_public_key_submitted')) {
+        // successfully opened outgoing message, never received anything, and never submitted their key
+        content = '<div style="border:1px solid #F77;margin:20px 20px;padding:5px;color:#444;">Because your public key was not submitted to a key server, the recipient might be unable to send encrypted messages back. Make sure to send them a copy of your public key. You can get your public key in CryptUP settings.</div>' + content;
+      } else if(!url_params.is_outgoing) { // successfully opened incoming message
+        account_storage_set(url_params.account_email, {
+          successfully_received_at_leat_one_message: true
+        });
+      }
+    }
+    $('#pgp_block').html(content);
+    setTimeout(function() {
+      $(window).resize(prevent(spree(), send_resize_message));
+    }, 1000);
+    send_resize_message();
+  });
 }
 
 function diagnose_pubkeys_button(text, color) {
@@ -65,7 +78,7 @@ function armored_message_as_html(raw_message_substitute) {
 
 function render_error(error_box_content, raw_message_substitute) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
-  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute));
+  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true);
   $('.settings.button').click(prevent(doubleclick(), function() {
     chrome_message_send(null, 'settings', {
       page: 'pubkeys.htm?account_email=' + encodeURIComponent(url_params.account_email),

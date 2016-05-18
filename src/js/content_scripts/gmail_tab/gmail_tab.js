@@ -51,14 +51,17 @@ function hijack_gmail_hotkeys() {
 }
 
 function start() {
-  chrome_message_get_tab_id(function(tab_id) {
-    tab_id_global = tab_id;
-    inject_buttons(account_email, tab_id);
-    show_initial_notifications(account_email);
-    replace_pgp_elements(account_email, tab_id);
-    setInterval(function() {
-      replace_pgp_elements(account_email, tab_id);
-    }, 1000);
+  account_storage_get(account_email, ['addresses'], function(storage) {
+    var addresses = storage.addresses || [account_email];
+    chrome_message_get_tab_id(function(tab_id) {
+      tab_id_global = tab_id;
+      inject_buttons(account_email, tab_id);
+      show_initial_notifications(account_email);
+      replace_pgp_elements(account_email, addresses, tab_id);
+      setInterval(function() {
+        replace_pgp_elements(account_email, addresses, tab_id);
+      }, 1000);
+    });
   });
 }
 
