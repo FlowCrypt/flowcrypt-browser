@@ -3,6 +3,9 @@
 function replace_pgp_elements(account_email, addresses, gmail_tab_id) {
   // <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var new_pgp_block_found = replace_armored_pgp_messages(account_email, addresses, gmail_tab_id);
+  if(new_pgp_block_found) {
+    hide_translate_prompt();
+  }
   replace_standard_reply_box(account_email, gmail_tab_id);
   replace_pgp_attachments(account_email, gmail_tab_id);
   replace_pgp_pubkeys(account_email, gmail_tab_id);
@@ -23,6 +26,10 @@ function replace_reply_buttons(account_email, gmail_tab_id) {
       });
     }
   }
+}
+
+function hide_translate_prompt() {
+  $('.adI').css('display', 'none');
 }
 
 function replace_cryptup_tags(account_email, gmail_tab_id) {
