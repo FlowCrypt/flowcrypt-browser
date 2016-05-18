@@ -1,3 +1,9 @@
+<b>version 2.1.0 on May 18, 2016: Usability: Setup</b>
+setup: initial screen image link fix
+setup: option to disable cryptup for each account
+setup: remind user didn't submit pubkey and never received encrypted message
+setup: creating a new key even if doesn't remember passphrase from last
+
 <b>version 2.0.3 on May 12, 2016: Setup bugfix</b>
 setup: initial screen image link fix
 
