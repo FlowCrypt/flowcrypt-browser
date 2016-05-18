@@ -6,10 +6,12 @@ function migrate(data, sender, respond_done) {
       migrate_070_080(data.account_email, function() {
         migrate_130_140(data.account_email, function() {
           migrate_160_170(data.account_email, function() {
-            account_storage_set(null, {
-              version: Number(chrome.runtime.getManifest().version.replace('.', ''))
-            }, respond_done);
-            consistency_fixes(data.account_email);
+            migrate_203_210(data.account_email, function() {
+              account_storage_set(null, {
+                version: Number(chrome.runtime.getManifest().version.replace('.', ''))
+              }, respond_done);
+              consistency_fixes(data.account_email);
+            });
           });
         });
       });
@@ -99,6 +101,20 @@ function migrate_160_170(account_email, then) {
       console.log('migrating from 1.6.0 to 1.7.0: adding google_token_scopes');
       account_storage_set(account_email, {
         google_token_scopes: chrome.runtime.getManifest().oauth2.scopes,
+      }, then);
+    } else {
+      then();
+    }
+  });
+}
+
+function migrate_203_210(account_email, then) {
+  console.log('migrate_203_210');
+  account_storage_get(account_email, ['setup_done', 'cryptup_enabled'], function(storage) {
+    if(storage.setup_done === true && typeof storage.cryptup_enabled === 'undefined') {
+      console.log('migrating from 2.0.3 to 2.1.0: adding cryptup_enabled');
+      account_storage_set(account_email, {
+        cryptup_enabled: true,
       }, then);
     } else {
       then();

@@ -92,6 +92,7 @@ function setup_dialog_set_done(key_backup_prompt, setup_simple) {
   var storage = {
     setup_done: true,
     setup_simple: setup_simple,
+    cryptup_enabled: true,
   };
   if(key_backup_prompt === true) {
     storage.key_backup_prompt = Date.now();
