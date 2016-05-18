@@ -7,6 +7,7 @@ $('.email-address').text(url_params.account_email);
 $('.back').css('visibility', 'hidden');
 
 var recovered_keys = undefined;
+var recovery_attempts = 0;
 
 // show alternative account addresses in setup form + save them for later
 account_storage_get(url_params.account_email, ['addresses'], function(storage) {
@@ -252,11 +253,20 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
       } else {
         alert('This password did not match your original setup. Please try again.');
       }
+      if(++recovery_attempts === 3) {
+        $('.line_skip_recovery').css('display', 'block');
+      }
     }
   } else {
     alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.');
   }
 }));
+
+$('.action_skip_recovery').click(function() {
+  if(confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
+    display_block('step_1_easy_or_manual');
+  }
+});
 
 $('.action_close').click(function() {
   window.close();
