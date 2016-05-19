@@ -86,12 +86,28 @@ body {
   padding: 5px 0;
   margin:0 auto!important;
 }
+.settings-icons-rows {
+  max-width: 800px;
+  margin:0 auto!important;
+}
 
 .accounts-options-row .btn a {
   border: 1px solid #d3d3d3;
   display: inline-block;
   padding: 5px 14px;
   background: white;
+}
+
+.ion-ios-person-outline {
+  font-size: 80px;
+color: white;
+top: 0;
+right:0;
+margin:0 auto;
+text-align: center;
+bottom:0;
+position: absolute;
+left: 0;
 }
 
 #header-row .profile-img {
@@ -175,7 +191,7 @@ body {
 }
 #settings-row .box svg {
   color: white;
-  opacity: .7;
+  opacity: .9;
   position: absolute;
   top: 25px;
   bottom: 0;
