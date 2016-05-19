@@ -27,6 +27,17 @@ body {
 #header-row .cryptup-logo-row:hover span {
   opacity: 1;
 }
+
+#alt-accounts .separator {
+  background: black;
+  width: 90%;
+  margin:5px auto 10px auto!important;
+  height:1px;
+  opacity: .2;
+
+
+}
+
 #alt-accounts.accounts-row {
   /*animation: fadeInUp.4s;*/
   display: none;
@@ -38,14 +49,15 @@ body {
 .accounts-row {
   background: #f3f3f3;
   height: auto;
-  padding: 10px 5px 30px 5px;
+  padding: 10px 5px 10px 5px;
   position: absolute;
-  right: 0;
-  left: 0;
+  right: 9px;
+  /*left: 0;*/
   width: 293px;
   margin: 0 auto;
   margin-top: 30px;
   z-index: 10;
+  box-shadow: 0px 1px 3px rgba(0,0,0,.3);
 }
 .accounts-row .row.alt-accounts {
   /*background: pink;*/
@@ -63,6 +75,25 @@ body {
   text-align: right;
   display: block;
 }
+.alt-accounts.accounts-options-row {
+  padding-top: 0;
+  display: block;
+
+}
+
+.accounts-options-row {
+  border-top:2px solid #ccc;
+  padding: 5px 0;
+  margin:0 auto!important;
+}
+
+.accounts-options-row .btn a {
+  border: 1px solid #d3d3d3;
+  display: inline-block;
+  padding: 5px 14px;
+  background: white;
+}
+
 #header-row .profile-img {
   width: 40px;
   height: 40px;
@@ -95,7 +126,7 @@ body {
   width: 40px;
   font-size: 25px;
   position: absolute;
-  right: 17px;
+  right: 18px;
   text-align: center;
   margin: 0px auto 0 auto;
   bottom: -30px;
@@ -137,22 +168,45 @@ body {
   height: 120px;
   margin: 0 auto 15px auto;
 }
-#settings-row .box i {
+#settings-row .box:hover svg {
+  opacity: 1;
+  transition: .6s;
+  transform: scale(1.025);
+}
+#settings-row .box svg {
   color: white;
-  font-size: 39px;
+  opacity: .7;
   position: absolute;
-  top: 30px;
-  /*right:0;*/
+  top: 25px;
   bottom: 0;
-  /*left:0;*/
   margin: 0 auto;
   text-align: center!important;
   display: block;
   margin-left: 0;
   margin-right: 0;
   width: inherit;
-  /*background: red;*/
+  transition: .6s;
 }
+#settings-row a p {
+  /*font-weight: 600;*/
+  margin-top: 15px;
+  font-size: 17px;
+}
+#settings-row a {
+  text-decoration: none;
+}
+.ion-ios-arrow-down {
+  transition: .5s;
+}
+.ion-ios-arrow-down.up {
+  /*background: red;*/
+  -webkit-transform: rotate(-180deg);
+  /* Safari */
+  transform: rotate(-180deg);
+}
+
+
+
 #footer-row {
   position: fixed;
   bottom: 20%;
