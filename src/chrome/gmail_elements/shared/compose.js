@@ -101,7 +101,7 @@ function draft_save() {
     save_draft_in_process = true;
     $('#send_btn_note').text('Saving');
     var armored_pubkey = private_storage_get(localStorage, compose_url_params.account_email, 'master_public_key');
-    encrypt([armored_pubkey], null, $('#input_text').text(), true, function(encrypted) {
+    encrypt([armored_pubkey], null, $('#input_text')[0].innerText, true, function(encrypted) {
       if(compose_url_params.thread_id) { // replied message
         var body = '[cryptup:link:draft_reply:' + compose_url_params.thread_id + ']\n\n' + encrypted.data;
       } else if(draft_id) {
@@ -166,7 +166,7 @@ function decrypt_and_render_draft(account_email, encrypted_draft, render_functio
       format: 'utf8',
       privateKey: private_key,
     }).then(function(plaintext) {
-      $('#input_text').html(plaintext.data);
+      $('#input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
       if(render_function) {
         render_function();
       }
@@ -413,8 +413,6 @@ function render_receivers() {
 }
 
 function select_contact(email, from_query) {
-  console.log($('.recipients span').last().text());
-  console.log(from_query);
   if($('.recipients span').last().text() === from_query) {
     $('.recipients span').last().remove();
   }
