@@ -12,7 +12,7 @@ var can_save_drafts = undefined;
 var pubkey_cache_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
 var save_draft_in_process = false;
-var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'subject']);
+var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'frame_id', 'subject']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
@@ -325,6 +325,7 @@ function compose_evaluate_receivers() {
 }
 
 function compose_show_hide_missing_pubkey_container() {
+  var was_previously_visible = $("#missing_pubkey_container").css('display') === 'table-row';
   if(!$('.recipients span').length) {
     $("#challenge_question_container").css('display', 'none');
     $("#missing_pubkey_container").css('display', 'none');
@@ -339,6 +340,13 @@ function compose_show_hide_missing_pubkey_container() {
       $("#challenge_question_container").css('display', 'none');
       $("#missing_pubkey_container").css('display', 'none');
       $('#send_btn').removeClass('gray').addClass('green');
+    }
+  }
+  if($('body#reply_message').length) {
+    if(!was_previously_visible && $("#missing_pubkey_container").css('display') === 'table-row') {
+      resize_reply_box($("#missing_pubkey_container").first().height() + 20);
+    } else {
+      resize_reply_box();
     }
   }
 }
@@ -360,6 +368,25 @@ function respond_to_input_hotkeys(input_to_keydown_event) {
     }
     $('#input_to').focus();
     return false;
+  }
+}
+
+var last_reply_box_table_height = undefined;
+
+function resize_reply_box(add_extra) {
+  if(isNaN(add_extra)) {
+    add_extra = 0;
+  }
+  $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
+  var current_height = $('table#compose').height();
+  if(current_height !== last_reply_box_table_height) {
+    last_reply_box_table_height = current_height;
+    chrome_message_send(compose_url_params.parent_tab_id, 'set_css', {
+      selector: 'iframe#' + compose_url_params.frame_id,
+      css: {
+        height: Math.max(260, current_height + 1) + add_extra,
+      }
+    });
   }
 }
 

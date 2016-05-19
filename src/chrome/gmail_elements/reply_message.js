@@ -147,21 +147,6 @@ function send_btn_click() {
   });
 }
 
-var last_table_height = undefined;
-function resize_reply_box() {
-  $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
-  var current_height = $('table#compose').height();
-  if(current_height !== last_table_height){
-    last_table_height = current_height;
-    chrome_message_send(url_params.parent_tab_id, 'set_css', {
-      selector: 'iframe#' + url_params.frame_id,
-      css: {
-        height: Math.max(200, current_height + 1),
-      }
-    });
-  }
-}
-
 $(document).ready(function() {
   resize_reply_box();
 });
