@@ -9,9 +9,13 @@ function pubkey_cache_retrieve() {
   return JSON.parse(localStorage.pubkey_cache);
 }
 
-function pubkey_cache_add(email, pubkey) {
+function pubkey_cache_add(email, pubkey, name, has_cryptup) {
   var storage = pubkey_cache_retrieve();
-  storage[trim_lower(email)] = pubkey;
+  storage[trim_lower(email)] = {
+    pubkey: pubkey,
+    name: name,
+    has_cryptup: has_cryptup === true,
+  };
   localStorage.pubkey_cache = JSON.stringify(storage);
 }
 
@@ -29,17 +33,16 @@ function pubkey_cache_get(email) {
   return null;
 }
 
-function pubkey_cache_search(query, max, highlight) {
+function pubkey_cache_search(query, max) {
   var storage = pubkey_cache_retrieve();
   var matches = [];
   for(var email in storage) {
     if(storage.hasOwnProperty(email)) {
       if(email.indexOf(trim_lower(query)) !== -1) {
-        if(highlight === true) {
-          matches.push(email.replace(trim_lower(query), '<b>' + trim_lower(query) + '</b>'));
-        } else {
-          matches.push(email);
-        }
+        var match = storage[email];
+        match.email = email;
+        match.email_highlighted = email.replace(trim_lower(query), '<b>' + trim_lower(query) + '</b>');
+        matches.push(match);
         if(matches.length === (max || -1)) {
           return matches;
         }
@@ -73,9 +76,13 @@ function get_pubkeys(emails, callback, ignore_cached) {
     keyserver_keys_find(get_from_keyserver, function(success, keyserver_results) {
       if(success) {
         $.each(keyserver_results.results, function(i, keyserver_result) {
-          results[emails.indexOf(get_from_keyserver[i])] = keyserver_result.pubkey;
+          results[emails.indexOf(get_from_keyserver[i])] = {
+            pubkey: keyserver_result.pubkey,
+            name: keyserver_result.name,
+            has_cryptup: keyserver_result.has_cryptup
+          };
           if(keyserver_result.pubkey) {
-            pubkey_cache_add(keyserver_result.email, keyserver_result.pubkey);
+            pubkey_cache_add(keyserver_result.email, keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup);
           }
         });
         callback(results);

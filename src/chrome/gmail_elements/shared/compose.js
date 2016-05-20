@@ -226,9 +226,9 @@ function fetch_pubkeys(account_email, recipients, callback) {
       callback(false);
     } else {
       var pubkeys = [];
-      $.each(pubkey_results, function(i, pubkey) {
-        if(pubkey !== null) {
-          pubkeys.push(pubkey);
+      $.each(pubkey_results, function(i, pubkey_info) {
+        if(pubkey_info !== null) {
+          pubkeys.push(pubkey_info.pubkey);
         }
       });
       callback(true, pubkeys.length === recipients.length, pubkeys.concat(private_storage_get(localStorage, account_email, 'master_public_key')));
@@ -314,7 +314,7 @@ function compose_evaluate_receivers() {
         if(typeof pubkeys === 'undefined') {
           compose_render_pubkey_result(email_element, undefined);
         } else {
-          compose_render_pubkey_result(email_element, pubkeys[0]);
+          compose_render_pubkey_result(email_element, pubkeys[0].pubkey);
         }
       });
     } else {
@@ -484,11 +484,12 @@ function auth_contacts(account_email, for_search_query) {
 
 function search_pubkey_cache(query, max) {
   var results = [];
-  var local = pubkey_cache_search(query, max, true);
-  $.each(local, function(i, email) {
+  var local = pubkey_cache_search(query, max);
+  $.each(local, function(i, contact) {
     results.push({
-      name: '',
-      email: email,
+      name: contact.name,
+      email: contact.email_highlighted,
+      has_cryptup: contact.has_cryptup,
       pgp: true,
     });
   });

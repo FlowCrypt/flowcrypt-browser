@@ -7,10 +7,12 @@ function migrate(data, sender, respond_done) {
         migrate_130_140(data.account_email, function() {
           migrate_160_170(data.account_email, function() {
             migrate_203_210(data.account_email, function() {
-              account_storage_set(null, {
-                version: Number(chrome.runtime.getManifest().version.replace('.', ''))
-              }, respond_done);
-              consistency_fixes(data.account_email);
+              migrate_210_220(data.account_email, function() {
+                account_storage_set(null, {
+                  version: Number(chrome.runtime.getManifest().version.replace('.', ''))
+                }, respond_done);
+                consistency_fixes(data.account_email);
+              });
             });
           });
         });
@@ -120,6 +122,18 @@ function migrate_203_210(account_email, then) {
       then();
     }
   });
+}
+
+function migrate_210_220(account_email, then) {
+  console.log('migrate_210_220');
+  var pubkeys = pubkey_cache_retrieve();
+  $.each(pubkeys, function(email, pubkey_info) {
+    if(typeof pubkey_info === 'string') {
+      pubkey_cache_add(email, pubkey_info, undefined, undefined);
+      console.log('migrating from 2.1.0 to 2.2.0: fixing pubkey cache for ' + email);
+    }
+  });
+  then();
 }
 
 function consistency_fixes(account_email) {

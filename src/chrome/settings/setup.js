@@ -72,7 +72,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
       setup_dialog_set_done(storage.key_backup_prompt, storage.setup_simple);
     } else {
       get_pubkeys([url_params.account_email], function(pubkeys) {
-        if(pubkeys && pubkeys[0]) {
+        if(pubkeys && pubkeys[0].pubkey) {
           fetch_email_key_backups(url_params.account_email, function(success, keys) {
             if(success && keys) {
               display_block('step_2_recovery');
