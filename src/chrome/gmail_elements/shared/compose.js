@@ -666,6 +666,13 @@ function compose_on_render() {
     $('#send_btn_note').text('');
   });
   $('table#compose').click(hide_contacts);
+  $('#input_addresses_container > div').click(function() {
+    if(!$('#input_to').is(':focus')) {
+      $('#input_to').focus();
+    }
+  }).children().click(function() {
+    return false;
+  });
   resize_input_to();
   initialize_attach_dialog();
 }
