@@ -99,9 +99,11 @@ body {
 }
 
 .ion-ios-person-outline {
-  font-size: 120px;
+  font-size: 85px;
   color: white;
-  top:0;
+  top: -7px;
+  left: 49px;
+  right: 0;
   position: absolute;
 }
 
@@ -219,7 +221,7 @@ body {
 
 
 #footer-row {
-  position: fixed;
+  /*position: fixed;*/
   bottom: 20%;
   text-align: center;
   right: 0;
