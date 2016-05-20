@@ -99,15 +99,10 @@ body {
 }
 
 .ion-ios-person-outline {
-  font-size: 80px;
-color: white;
-top: 0;
-right:0;
-margin:0 auto;
-text-align: center;
-bottom:0;
-position: absolute;
-left: 0;
+  font-size: 120px;
+  color: white;
+  top:0;
+  position: absolute;
 }
 
 #header-row .profile-img {
