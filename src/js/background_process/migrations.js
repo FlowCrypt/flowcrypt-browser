@@ -12,6 +12,7 @@ function migrate(data, sender, respond_done) {
                   version: Number(chrome.runtime.getManifest().version.replace('.', ''))
                 }, respond_done);
                 consistency_fixes(data.account_email);
+                update_pks_status(data.account_email);
               });
             });
           });
@@ -147,5 +148,29 @@ function consistency_fixes(account_email) {
         }
       });
     }
+  });
+}
+
+function update_pks_status(account_email) {
+  // checks if any new emails were registered on pks lately. Not the best async design, but gets the job done.
+  // Happens repeatedly, so that errors will eventually get overwritten. Not of high consequence.
+  var hkp = new openpgp.HKP('https://pgp.mit.edu');
+  account_storage_get(account_email, ['addresses', 'addresses_pks'], function(storage) {
+    var addresses_pks = storage.addresses_pks || [];
+    $.each(storage.addresses || [account_email], function(i, email) {
+      if(addresses_pks.indexOf(email) === -1) {
+        hkp.lookup({
+          query: email
+        }).then(function(pubkey) {
+          if(typeof pubkey !== 'undefined') {
+            addresses_pks.push(email);
+            console.log(email + ' newly found on PKS');
+            account_storage_set(account_email, {
+              addresses_pks: addresses_pks,
+            });
+          }
+        });
+      }
+    });
   });
 }
