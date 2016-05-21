@@ -38,13 +38,22 @@ account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'a
   }
 });
 
-function format_challenge_question_email(question, message) {
-  return [
+function format_challenge_question_email(question, body) {
+  var result = {};
+  result['text/plain'] = [
     l.open_challenge_message,
-    'https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(message),
+    'https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(body['text/plain']),
     '',
-    message,
+    body['text/plain'],
   ].join('\n');
+  if(body['text/html']) {
+    result['text/html'] = [
+      l.open_challenge_message.replace(/ /g, '&nbsp;') + '&nbsp;<a href="https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(body['text/plain']) + '">read&nbsp;message</a>',
+      '',
+      body['text/html'],
+    ].join('<br>\n');
+  }
+  return result;
 }
 
 var last_draft = '';
@@ -268,11 +277,18 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
                 var sending = 'Sending';
               }
               encrypt(armored_pubkeys, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
+                if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
+                  encrypted.data += '\n\n\n\n' + private_storage_get(localStorage, url_params.account_email, 'master_public_key');
+                }
+                var body = {
+                  'text/plain': encrypted.data,
+                  'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'),
+                };
                 if(!all_have_keys) {
-                  encrypted.data = format_challenge_question_email(challenge.question, encrypted.data);
+                  body = format_challenge_question_email(challenge.question, body);
                 }
                 $('#send_btn span').text(sending);
-                send_email_callback(encrypted.data, attachments);
+                send_email_callback(body, attachments);
               });
             });
           } catch(err) {

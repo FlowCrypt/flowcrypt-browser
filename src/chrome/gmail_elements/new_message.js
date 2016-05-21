@@ -44,11 +44,8 @@ function send_btn_click() {
     From: get_sender_from_dom(),
   };
   var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function(encrypted_message_text_to_send, attachments) {
-    if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
-      encrypted_message_text_to_send += '\n\n\n\n' + private_storage_get(localStorage, url_params.account_email, 'master_public_key');
-    }
-    to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function(mime_message) {
+  compose_encrypt_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function(encrypted_message_body, attachments) {
+    to_mime(url_params.account_email, encrypted_message_body, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
         if(success) {
           draft_delete(url_params.account_email, new_message_close);
