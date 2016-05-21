@@ -1,3 +1,15 @@
+<b>version 2.2.0 on May 21, 2016: Usability: Messaging UX II</b>
+composing: nicer challenge question link
+composing: better recipients selection UX
+composing: fixed newlines in drafts
+composing: reply box to resize on challenge q
+composing: hide gmail translate message box
+composing: attach pubkey when talking to non-cryptup contacts
+composing: restyling missing pubkey prompt
+composing: bugfix traditional drafts mid-convo
+composing: bugfix very first google contact not to wipe previous one
+composing: bugfix recipients missing placeholder
+
 <b>version 2.1.0 on May 18, 2016: Usability: Setup</b>
 setup: initial screen image link fix
 setup: option to disable cryptup for each account
