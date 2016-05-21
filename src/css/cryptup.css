@@ -272,8 +272,8 @@ left:-10px; right:0; margin:0 auto; text-align: center; top:13px;z-index: 0; }
 table#compose tr#missing_pubkey_container div.choice-row {clear: both; position: relative;}
 table#compose tr#missing_pubkey_container div.choice-row .button {border-radius: 0;}
 table#compose tr#missing_pubkey_container div.choice-row .button:hover { background: #ddd;}
-table#compose tr#missing_pubkey_container div.choice-row .use_question { width: 43%;background: #f3f3f3; height: 50px; color: #353535; display: inline; position: relative; float:left; }
-table#compose tr#missing_pubkey_container div.choice-row .add_pubkey { width: 44.5%; background: #f3f3f3; height: 50px; color: #353535; display: inline; float: left; }
+table#compose tr#missing_pubkey_container div.choice-row .use_question { width: 50%;background: #f3f3f3; height: 50px; color: #353535; border: 1px solid #ccc; display: inline; position: relative; position: absolute; left:0; padding: 10px 0;}
+table#compose tr#missing_pubkey_container div.choice-row .add_pubkey { width: 50%; background: #f3f3f3; height: 50px; color: #353535; border: 1px solid #ccc; display: inline; position: absolute; right:0; padding: 10px 0;}
 
 table#compose tr#challenge_question_container { display: none; }
 table#compose tr#challenge_question_container td { height: 84px; padding: 12px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s;}
@@ -307,6 +307,7 @@ div#reply_message_successful_container > table div.replied_from { font-weight: b
 div#reply_message_successful_container > table div.replied_to { color: #777; margin-bottom: 10px; }
 div#reply_message_successful_container > table div.replied_time { }
 div#reply_message_successful_container > table div.replied_time { }
+ #reply_message_table_container #compose tr#missing_pubkey_container div.or-copy { left:-2px!important; }
 
 div#reply_message_successful_container > #attachments { border-top: 1px dotted #CACACA; padding-top: 16px; margin-top: 22px; display: none; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment { margin-right: 16px; margin-bottom: 16px; display: inline-block; }
