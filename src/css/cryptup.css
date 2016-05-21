@@ -246,6 +246,9 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: 
   margin-left: 11px; margin-right: 7px;}
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 table#compose #fineuploader .ion-android-close {font-size: 22px; position: absolute; top:7px; bottom:0;}
+table#compose tr#send_pubkey_container { display: none; visibility: visible; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
+table#compose tr#send_pubkey_container td { height: 1px; padding: 8px; }
+table#compose tr#send_pubkey_container td #send_pubkey_recipients { font-style: italic; color: #555; }
 table#compose tr#missing_pubkey_container { display: none; margin: 15px 0; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
 table#compose tr#missing_pubkey_container td { text-align: center; height: 60px; font-size: 15px; line-height: 1.6;}
 

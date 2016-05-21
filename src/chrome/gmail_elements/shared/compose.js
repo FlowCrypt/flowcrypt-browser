@@ -12,13 +12,16 @@ var can_save_drafts = undefined;
 var pubkey_cache_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
 var save_draft_in_process = false;
+var my_addresses_on_pks = [];
+var recipients_missing_my_key = [];
 var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'frame_id', 'subject']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
 
-// set can_search_on_google and can_save_drafts
-account_storage_get(compose_url_params.account_email, ['google_token_scopes'], function(storage) {
+// set can_search_on_google, can_save_drafts, addresses_pks
+account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks'], function(storage) {
+  my_addresses_on_pks = storage.addresses_pks || [];
   if(storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
     can_search_on_google = false;
   } else {
@@ -312,13 +315,13 @@ function compose_evaluate_receivers() {
       var email_element = this;
       get_pubkeys([email], function(pubkeys) {
         if(typeof pubkeys === 'undefined') {
-          compose_render_pubkey_result(email_element, undefined);
+          compose_render_pubkey_result(email_element, undefined, false);
         } else {
-          compose_render_pubkey_result(email_element, pubkeys[0].pubkey);
+          compose_render_pubkey_result(email_element, pubkeys[0].pubkey, pubkeys[0].has_cryptup === false);
         }
       });
     } else {
-      compose_render_pubkey_result(this, undefined);
+      compose_render_pubkey_result(this, undefined, false);
       $(this).addClass('wrong');
     }
   });
@@ -429,9 +432,11 @@ function resize_input_to() {
 }
 
 function remove_receiver() {
+  recipients_missing_my_key = array_without_value(recipients_missing_my_key, $(this).parent().text());
   $(this).parent().remove();
   resize_input_to();
   compose_show_hide_missing_pubkey_container();
+  compose_show_hide_send_pubkey_container();
 }
 
 function draft_auth() {
@@ -575,7 +580,49 @@ function hide_contacts() {
   $('#contacts').css('display', 'none');
 }
 
-function compose_render_pubkey_result(email_element, pubkey_data) {
+function did_i_ever_send_pubkey_to(their_email, callback) {
+  their_email = trim_lower(their_email);
+  account_storage_get(compose_url_params.account_email, ['pubkey_sent_to'], function(storage) {
+    if(storage.pubkey_sent_to && storage.pubkey_sent_to.indexOf(their_email) !== -1) {
+      callback(true);
+    } else {
+      gmail_api_message_list(compose_url_params.account_email, 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"', true, function(success, response) {
+        if(success && response.messages) {
+          account_storage_set(compose_url_params.account_email, {
+            pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email),
+          }, function() {
+            callback(true);
+          })
+        } else {
+          callback(false);
+        }
+      });
+    }
+  });
+}
+
+function compose_show_hide_send_pubkey_container() {
+  if(recipients_missing_my_key.length && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) {
+    $('#send_pubkey_recipients').text(recipients_missing_my_key.join(' and '));
+    $('#send_pubkey_container').css('display', 'table-row');
+  } else {
+    $('#send_pubkey_container').css('display', 'none');
+  }
+}
+
+function compose_render_pubkey_result(email_element, pubkey_data, receiver_might_need_my_pubkey) {
+  if($('body#new_message').length) { //todo: better move this to new_message.js
+    if(receiver_might_need_my_pubkey && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) { // new message, they don't have cryptup, and my keys is not on pks
+      did_i_ever_send_pubkey_to($(email_element).text(), function(pubkey_sent) {
+        if(!pubkey_sent) {
+          recipients_missing_my_key.push(trim_lower($(email_element).text()));
+        }
+        compose_show_hide_send_pubkey_container();
+      });
+    } else {
+      compose_show_hide_send_pubkey_container();
+    }
+  }
   $(email_element).children('i').removeClass('fa');
   $(email_element).children('i').removeClass('fa-spin');
   $(email_element).children('i').removeClass('ion-load-c');
