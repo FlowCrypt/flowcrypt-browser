@@ -76,7 +76,7 @@ function replace_armored_pgp_messages(account_email, addresses, gmail_tab_id) {
       var text_with_iframes = message_text;
       var re_pgp_blocks = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(\[[^\[]+\]((&nbsp;)|( )|(\r?\n))+<a class="vem"[^>]+>[^<]+<\/a>))/gm;
       var re_first_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?((-----END PGP MESSAGE-----)|(\[[^\[]+\]((&nbsp;)|( )|(\r?\n))+<a class="vem"[^>]+>[^<]+<\/a>))/m;
-      var re_first_pgp_question = /.+(<br>\r?\n)?<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/mg;
+      var re_first_pgp_question = /.*(<br>\r?\n)?<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
       var matches;
       while((matches = re_pgp_blocks.exec(message_text)) !== null) {
         var valid_pgp_block = strip_pgp_armor(matches[0]);

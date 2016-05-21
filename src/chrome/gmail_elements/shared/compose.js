@@ -594,13 +594,15 @@ function hide_contacts() {
   $('#contacts').css('display', 'none');
 }
 
-function did_i_ever_send_pubkey_to(their_email, callback) {
+function did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(their_email, callback) {
   their_email = trim_lower(their_email);
   account_storage_get(compose_url_params.account_email, ['pubkey_sent_to'], function(storage) {
     if(storage.pubkey_sent_to && storage.pubkey_sent_to.indexOf(their_email) !== -1) {
       callback(true);
     } else {
-      gmail_api_message_list(compose_url_params.account_email, 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"', true, function(success, response) {
+      var q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
+      var q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
+      gmail_api_message_list(compose_url_params.account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function(success, response) {
         if(success && response.messages) {
           account_storage_set(compose_url_params.account_email, {
             pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email),
@@ -627,7 +629,7 @@ function compose_show_hide_send_pubkey_container() {
 function compose_render_pubkey_result(email_element, pubkey_data, receiver_might_need_my_pubkey) {
   if($('body#new_message').length) { //todo: better move this to new_message.js
     if(receiver_might_need_my_pubkey && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) { // new message, they don't have cryptup, and my keys is not on pks
-      did_i_ever_send_pubkey_to($(email_element).text(), function(pubkey_sent) {
+      did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
         if(!pubkey_sent) {
           recipients_missing_my_key.push(trim_lower($(email_element).text()));
         }
