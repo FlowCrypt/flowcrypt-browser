@@ -211,12 +211,7 @@ function encrypt(armored_pubkeys, challenge, data, armor, callback) {
     alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or file a bug report if this happens repeatedly.');
     throw "no-pubkeys-no-challenge";
   }
-  openpgp.encrypt(options).then(function(encrypted) {
-    if(armor && typeof encrypted.data === 'string' && used_challange) {
-      encrypted.data = format_challenge_question_email(challenge.question, encrypted.data);
-    }
-    callback(encrypted);
-  }, function(error) {
+  openpgp.encrypt(options).then(callback, function(error) {
     console.log(error);
     alert('Error encrypting message, please try again. If you see this repeatedly, please file a bug report.');
     //todo: make the UI behave well on errors
@@ -230,7 +225,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
     } else {
       var pubkeys = [];
       $.each(pubkey_results, function(i, pubkey_info) {
-        if(pubkey_info !== null) {
+        if(pubkey_info !== null && pubkey_info.pubkey !== null) {
           pubkeys.push(pubkey_info.pubkey);
         }
       });
@@ -273,6 +268,9 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
                 var sending = 'Sending';
               }
               encrypt(armored_pubkeys, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
+                if(!all_have_keys) {
+                  encrypted.data = format_challenge_question_email(challenge.question, encrypted.data);
+                }
                 $('#send_btn span').text(sending);
                 send_email_callback(encrypted.data, attachments);
               });
@@ -317,7 +315,7 @@ function compose_evaluate_receivers() {
         if(typeof pubkeys === 'undefined') {
           compose_render_pubkey_result(email_element, undefined, false);
         } else {
-          compose_render_pubkey_result(email_element, pubkeys[0].pubkey, pubkeys[0].has_cryptup === false);
+          compose_render_pubkey_result(email_element, pubkeys[0].pubkey, pubkeys[0].pubkey && pubkeys[0].has_cryptup === false);
         }
       });
     } else {
