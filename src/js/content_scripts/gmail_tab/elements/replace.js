@@ -105,8 +105,9 @@ function parse_message_id_from(element_type, my_element) {
     'message': $(my_element).parents('div.adP.adO'),
     'attachment': $(my_element).parent().siblings('div.adP.adO')
   };
-  var message_id = null;
-  $.each(selectors[element_type].get(0).classList, function(i, message_class) {
+  var message_id = null; // todo: maybe need to traverse through all children elements classes of the whole message to get to /^m([0-9a-f]{16})$/ - as a backup
+  var classes = [].concat(to_array(selectors[element_type].get(0).classList), to_array(selectors[element_type].children('div.a3s').get(0).classList));
+  $.each(classes, function(i, message_class) {
     var match = message_class.match(/^m([0-9a-f]{16})$/);
     if(match) {
       message_id = match[1];
@@ -120,9 +121,11 @@ function replace_pgp_attachments(account_email, gmail_tab_id) {
   $('div.aQH').each(function() {
     var new_pgp_messages = $(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').not('.evaluated');
     if(new_pgp_messages.length) {
+      console.log('a');
       new_pgp_messages.addClass('evaluated');
       var attachment_container_classes = new_pgp_messages.get(0).classList;
       var message_id = parse_message_id_from('attachment', this);
+      console.log(message_id);
       if(message_id) {
         $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
         chrome_message_send(null, 'list_pgp_attachments', {

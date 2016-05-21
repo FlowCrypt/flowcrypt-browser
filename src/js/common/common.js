@@ -22,6 +22,15 @@ function unique(array) {
   return unique;
 }
 
+function to_array(obj) { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+  var array = [];
+  // iterate backwards ensuring that length is an UInt32
+  for (var i = obj.length >>> 0; i--;) {
+    array[i] = obj[i];
+  }
+  return array;
+}
+
 function wait(until_this_function_evaluates_true) {
   return new Promise(function(success, error) {
     var interval = setInterval(function() {
