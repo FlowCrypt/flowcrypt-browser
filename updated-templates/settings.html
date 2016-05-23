@@ -258,7 +258,7 @@
       </div>
     </div>
 
-    <div class="container advanced">
+    <div class="container-fluid advanced">
       <div class="row">
         <h1 class="text-center">CryptUP Settings</h1>
         <div class="separator"></div>
@@ -391,17 +391,18 @@
       </div>
 
       <div class="row my-keys-row">
-        <div class="row">
-          <div class="col-sm-6">
 
-            <span class="ion-key"></span>
-            <span class="my-keys-copy">My Keys</span>
-
-            <span class="pull-right">Primary</span>
+        <div class="col-xs-6 settings-border">
+          <div class="row abs-row">
+            <div class="col-sm-12">
+              <span class="ion-key"></span>
+              <span class="my-keys-copy">My Keys</span>
+              <span class="text-right change-passphrase">
+                <a href="#">Primary</a>
+              </span>
+            </div>
           </div>
 
-        </div>
-        <div class="col-sm-6 settings-border">
           <div class="row key-content-row">
             <div class="col-sm-3">
               2B3210A
@@ -463,8 +464,17 @@
           </div>
         </div>
 
-        <div class="col-sm-6 settings-border" style="text-indent: 20px;">
+        <div class="col-xs-6 settings-border">
 
+          <div class="row abs-row">
+            <div class="col-sm-12">
+              <span class="ion-locked"></span>
+              <span class="security-copy">Security</span>
+              <span class="text-right change-passphrase">
+                <a href="#">Change passphrase</a>
+              </span>
+            </div>
+          </div>
           <div class="row">
             <label for="passphrase-to-open-email">
               <input type="checkbox" id="passphrase-to-open-email"> Require a pass phrase to open encrypted email</label>
@@ -473,11 +483,11 @@
           <p>Time to crack: 20 years</p>
           <p>Your passphrase is NOT STRONG ENOUGH,
             <br>
-          <a href="#" style="display: block;">We suggest you to try this</a>
+            <a href="#" style="display: block;">We suggest you to try this</a>
           </p>
         </div>
-      </div>
 
+      </div>
     </div>
   </section>
 
