@@ -4,7 +4,9 @@
   min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 7px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
 .button.red { background-color: #d14836; }
-.button.green { background-color: #088447; background-image: -webkit-linear-gradient(top, #0F8C4F, #088447); }
+/*.button.green { background-color: #088447; background-image: -webkit-linear-gradient(top, #0F8C4F, #088447); }*/
+
+.button.green { background-color: #31A217;  /*background-image: -webkit-linear-gradient(140deg, #59A72C -40%, green 0%, #59A72C 100%);*/ border:0!important; }
 .button.gray { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top, #C9C9C9, #BFBFBF); }
 .button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444; }
 .button.small { padding: 0 7px; margin-top: 0; }
@@ -152,7 +154,8 @@ body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px so
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
-table#compose th { width: 538px; height: 36px; background-color: #088447; text-align: left; margin: 0px; border: 1px solid #088447}
+table#compose th { width: 538px; height: 36px; text-align: left; margin: 0px; border: 1px solid #59A72C; background-color: #59A72C;}
+    /*background-image: -webkit-linear-gradient(140deg, #59A72C -40%, green 0%, #59A72C 100%); }*/
 table#compose td.input { height: 42px; vertical-align: middle; }
 <<<<<<< 72bf4c88d01470f7b342ace128b9dff2e375e40c
 table#compose td#input_addresses_container {vertical-align: middle; }
