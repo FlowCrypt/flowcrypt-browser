@@ -168,7 +168,6 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
 
 function is_master_private_key_encrypted(account_email) {
   if(private_storage_get(localStorage, account_email, 'master_passphrase_needed') !== true) {
-    console.log('f');
     return false;
   } else {
     var key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
@@ -234,14 +233,13 @@ $('.action_manual_backup').click(prevent(doubleclick(), function(self) {
   } else {
     backup_refused();
   }
-  console.log();
 }));
 
 $('.action_skip_backup').click(prevent(doubleclick(), function() {
   account_storage_set(url_params.account_email, {
     key_backup_prompt: false
   }, function() {
-    window.location = 'setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
+    window.location = '/chrome/setup/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
   });
 }));
 
@@ -259,8 +257,4 @@ $('#step_3_manual input[name=input_backup_choice]').click(function() {
     $('.action_manual_backup').text('test my luck without a backup');
     $('.action_manual_backup').removeClass('green').addClass('red');
   }
-});
-
-$('.back').off().click(function() {
-  window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
 });

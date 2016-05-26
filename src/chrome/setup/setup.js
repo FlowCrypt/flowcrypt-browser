@@ -102,7 +102,7 @@ function setup_dialog_set_done(key_backup_prompt, setup_simple) {
   }
   account_storage_set(url_params.account_email, storage, function() {
     if(key_backup_prompt === true) {
-      window.location = 'backup.htm?action=setup&account_email=' + encodeURIComponent(url_params.account_email);
+      window.location = '../settings/modules/backup.htm?action=setup&account_email=' + encodeURIComponent(url_params.account_email);
     } else {
       display_block('step_4_done');
       $('h1').text('Setup done!');

@@ -1,4 +1,4 @@
-body {
+body, html {
   font-family: 'Open Sans', Arial!important;
   position: relative;
   height: 100%;
@@ -68,10 +68,13 @@ body {
   background: transparent!important;
 }
 .alt-accounts .ion-ios-checkmark, .alt-accounts .ion-ios-close {
-  position: absolute;
-  right: -22px;
+  /* right: -22px;
   top: 15px;
-  bottom: 0;
+  bottom: 0; */
+  position: absolute;
+  right: 1px;
+  top: 6px;
+  bottom: 5px;
   font-size: 20px;
 }
 .alt-accounts .ion-ios-checkmark {
