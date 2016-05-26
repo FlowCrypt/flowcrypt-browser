@@ -12,12 +12,12 @@ html, body {
   padding: 18px 20px;
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
   cursor: pointer!important;
   text-align: left;
   font-weight: 500;
   font-size: 17px;
-  box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);
+  /*box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);*/
+  /*border-bottom: 2px solid transparent;*/
 }
 .menu-row span:first-child {
   width: 250px;

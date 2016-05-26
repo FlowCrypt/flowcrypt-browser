@@ -120,14 +120,23 @@ body, html {
   right: 0;
   position: absolute;
 }
-#header-row .profile-img {
+#header-row .profile-img,
+#header-row .ion-android-person {
   width: 40px;
   height: 40px;
+  display: inline-block;
   border: 2px solid #f3f3f3;
   border-radius: 120px;
   margin-left: 10px;
   cursor: pointer;
 }
+
+#header-row .ion-android-person {
+text-align: center;
+margin-bottom: 0;
+}
+
+
 .accounts-row .alt-accounts .profile-img {
   position: absolute;
   width: 30px!important;
@@ -156,20 +165,20 @@ body, html {
   width: 40px;
   font-size: 25px;
   position: absolute;
-  right: 18px;
+  right: 21px;
   text-align: center;
   margin: 0px auto 0 auto;
-  bottom: -30px;
+  bottom: -40px;
   display: inline-block;
 }
 .profile-row .add-account {
   /*background: blue;*/
   position: absolute;
   font-size: 12px;
-  bottom: -20px;
+  bottom: -30px;
   opacity: .6;
   text-decoration: underline;
-  right: 73px;
+  right: 81px;
 }
 #settings-row .ion-key {
   font-size: 30px;
