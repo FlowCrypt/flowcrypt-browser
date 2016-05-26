@@ -15,9 +15,10 @@ if(!localStorage.settings_seen) {
   open_settings_page('initial.htm'); // called after the very first installation of the plugin
   localStorage.settings_seen = true;
 }
-chrome.browserAction.onClicked.addListener(function() {
-  open_settings_page(); // Called when the user clicks on the browser action icon.
-});
+
+// chrome.browserAction.onClicked.addListener(function() {
+//   open_settings_page(); // Called when the user clicks on the browser action icon.
+// });
 
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.page, message.account_email);

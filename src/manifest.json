@@ -4,7 +4,9 @@
   "description": "Easy Gmail encryption",
   "version": "2.2.0",
   "browser_action": {
-    "default_icon": "img/logo-19-19-white-green.png"
+    "default_icon": "img/logo-19-19-white-green.png",
+    "default_title": "CryptUP encryption for Google Mail",
+    "default_popup": "/chrome/popups/default.htm"
   },
   "icons": {
     "16": "/img/logo-16-16-white-green.png",
