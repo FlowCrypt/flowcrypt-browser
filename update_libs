@@ -30,6 +30,8 @@ LIBS = [
     {'name': 'featherlight/featherlight.js', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.js', 'v': r' \* Version ([^ ]+) '},
     {'name': 'featherlight/featherlight.css', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.css', 'v': r' \* Version ([^ ]+) '},
     # following urls need to be kept up to date
+    {'name': 'bootstrap/bootstrap.css', 'url': 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css', 'v': '3.3.6'},
+    {'name': 'bootstrap/bootstrap.js', 'url': 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js', 'v': '3.3.6'},
     {'name': 'jquery.min.js', 'url': 'https://code.jquery.com/jquery-2.2.3.min.js', 'v': r'\/\*\! jQuery v([0-9\.]+) '},
     {'name': 'fine-uploader.js', 'url': 'http://releases.fineuploader.com/5.6.0/fine-uploader-5.6.0.zip~unzip~/fine-uploader/fine-uploader.js', 'v': r'\* Version: ([0-9\.]+)'},
 ]
@@ -37,7 +39,7 @@ LIBS = [
 zips_fetched = []
 
 def download_all(path, temp, libs):
-    for group in ['emailjs', 'featherlight']:
+    for group in ['emailjs', 'featherlight', 'bootstrap']:
         os.makedirs(path + group)
     for lib in libs:
         parts = lib['url'].split('~unzip~');

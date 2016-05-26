@@ -2,8 +2,6 @@
 
 var url_params = get_url_params(['account_email', 'action']);
 
-$('.email-address').text(url_params.account_email);
-
 account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {
   if(url_params.action === 'setup') {
     $('.back').css('display', 'none');

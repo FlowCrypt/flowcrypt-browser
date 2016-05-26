@@ -2,12 +2,6 @@
 
 var recovery_email_subjects = ['All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
-$.get('footer.htm', null, function(data) {
-  $('body').append(data);
-  $('span#v').text(chrome.runtime.getManifest().version);
-});
-
-
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
     function parse_from_email_header(messages, m_i, from_email_callback) {
@@ -223,7 +217,3 @@ function openpgp_key_encrypt(key, passphrase) {
     throw new Error("Nothing to decrypt in a public key");
   }
 }
-
-$('.back').click(function() {
-  window.location = 'index.htm';
-});
