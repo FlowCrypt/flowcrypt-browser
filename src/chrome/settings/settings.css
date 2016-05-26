@@ -14,7 +14,6 @@ body {
   text-decoration: none;
 }
 #header-row .cryptup-logo-row span {
-  /*background: red;*/
   opacity: .7;
   transition: .3s;
 }
@@ -238,7 +237,6 @@ body {
   transition: .5s;
 }
 .ion-ios-arrow-down.up {
-  /*background: red;*/
   -webkit-transform: rotate(-180deg);
   /* Safari */
   transform: rotate(-180deg);
@@ -246,7 +244,6 @@ body {
 .abs-row {
   position: absolute;
   top: -40px;
-  /*background: red;*/
   width: 100%;
 }
 .abs-row span.change-passphrase {
