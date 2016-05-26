@@ -1,9 +1,8 @@
-html, body {
+body {
   font-family: 'Open Sans', Arial!important;
   position: relative;
   height: 100%;
   width: auto;
-
 }
 #header-row img.cryptup-logo {
   width: 100px;
@@ -42,19 +41,45 @@ html, body {
   height: auto;
   padding: 10px 5px 10px 5px;
   position: absolute;
-  right: 9px;
+  right: -27px;
   /*left: 0;*/
-  width: 293px;
+  width: 343px;
   margin: 0 auto;
   margin-top: 30px;
+  padding-right: 38px;
   z-index: 10;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);
 }
 #alt-accounts.accounts-row .row.alt-accounts {
   /*background: pink;*/
-  margin: 13px 0;
+  margin: 3px 0;
+  padding: 10px 0;
   cursor: pointer;
+  height: auto;
   border: 1px solid #f3f3f3;
+  position: relative;
+}
+.row.alt-accounts:hover {
+  background: rgba(0, 0, 0, .019);
+}
+.accounts-options-row {
+  padding: 0!important;
+}
+.accounts-options-row:hover {
+  background: transparent!important;
+}
+.alt-accounts .ion-ios-checkmark, .alt-accounts .ion-ios-close {
+  position: absolute;
+  right: -22px;
+  top: 15px;
+  bottom: 0;
+  font-size: 20px;
+}
+.alt-accounts .ion-ios-checkmark {
+  color: #31A217;
+}
+.alt-accounts .ion-ios-close {
+  color: gray;
 }
 #alt-accounts.accounts-row .alt-accounts {
   /*background: black;*/
@@ -99,6 +124,7 @@ html, body {
   border: 2px solid #f3f3f3;
   border-radius: 120px;
   margin-left: 10px;
+  cursor: pointer;
 }
 .accounts-row .alt-accounts .profile-img {
   position: absolute;
@@ -146,14 +172,14 @@ html, body {
 #settings-row .ion-key {
   font-size: 30px;
   top: -10px;
-  color: green;
+  color: #31A217;
   width: 30px;
   position: absolute;
   transform: rotate(180deg);
   left: 0;
 }
 .ion-locked {
-  color: green;
+  color: #31A217;
   font-size: 25px;
   top: -10px;
 }
@@ -171,7 +197,10 @@ html, body {
   padding: 70px 0;
 }
 #settings-row .box {
-  background: green;
+  background-color: #31A217;
+  background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%);
+  border: 0;
+  /*background: #31A217;*/
   display: block;
   width: 120px;
   height: 120px;
@@ -199,6 +228,7 @@ html, body {
 #settings-row a p {
   /*font-weight: 600;*/
   margin-top: 15px;
+  width: 120px;
   font-size: 17px;
 }
 #settings-row a {
@@ -232,7 +262,6 @@ html, body {
   text-indent: 5px;
 }
 .security-copy {
-  /*background: blue;*/
   margin-left: 25px;
 }
 #footer-row {
@@ -243,6 +272,7 @@ html, body {
   right: 0;
   left: 0;
   font-weight: 600;
+  -webkit-animation: fadeInUp 2s;
   /*top:0;*/
 }
 input#passphrase-to-open-email {
