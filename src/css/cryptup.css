@@ -318,9 +318,9 @@ div#reply_message_successful_container > #attachments { border-top: 1px dotted #
 div#reply_message_successful_container > #attachments > span.pgp_attachment { margin-right: 16px; margin-bottom: 16px; display: inline-block; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment > iframe { height: 120px; width: 180px; margin: 0; padding: 0; border: none; overflow: hidden; }
 
-table#compose #error_contaner_reply_message {background: #f3f3f3; position: absolute;bottom:0; left:0; right:0; padding: 10px 0; z-index: 10; -webkit- animation: fadeInUp .7s; animation: fadeInUp .7s; text-indent: 10px; color: #d14836; border: 1px solid #d14836;}
-table#compose #error_contaner_reply_message #error_text_reply_message { display: inline-block; text-indent: 15px; color:#d14836; height: auto; position: absolute; margin-top: 7px;}
-table#compose #error_contaner_reply_message .ion-android-alert { font-size: 30px; }
+table#compose #error_container_reply_message {background: #f3f3f3; position: absolute;bottom:0; left:0; right:0; padding: 10px 0; z-index: 10; -webkit- animation: fadeInUp .7s; animation: fadeInUp .7s; text-indent: 10px; color: #d14836; border: 1px solid #d14836;}
+table#compose #error_container_reply_message #error_text_reply_message { display: inline-block; text-indent: 15px; color:#d14836; height: auto; position: absolute; margin-top: 7px;}
+table#compose #error_container_reply_message .ion-android-alert { font-size: 30px; }
 
 .loading_copy { -webkit-animation: fadeIn 1s; animation: fadeIn 1s; text-align: center; font-size: 19px; color: #afafaf; margin-top: 4px;}
 .loader { text-align: center; padding-left: 0; margin-left: 0; -webkit-animation: fadeInUp 1s;  animation: fadeInUp 1s;}
