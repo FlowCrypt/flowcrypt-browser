@@ -380,7 +380,7 @@ function check_pubkeys_keyserver(account_email, callback) {
     results: {},
   };
   account_storage_get(account_email, ['addresses'], function(storage) {
-    keyserver_keys_find(storage.addresses, function(success, pubkey_search_results) {
+    keyserver_keys_find(storage.addresses || [account_email], function(success, pubkey_search_results) {
       if(success) {
         $.each(pubkey_search_results.results, function(i, pubkey_search_result) {
           if(!pubkey_search_result.pubkey) {

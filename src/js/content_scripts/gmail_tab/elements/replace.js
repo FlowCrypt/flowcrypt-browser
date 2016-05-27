@@ -168,6 +168,7 @@ function get_conversation_params(account_email, callback) {
   var my_email = account_email;
   account_storage_get(account_email, ['addresses'], function(storage) {
     $.each(reply_to_estimate, function(i, email) {
+      storage.addresses = storage.addresses || [account_email];
       if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email
         my_email = email;
       } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
