@@ -74,25 +74,47 @@
 		display: block;
 	}
 
-	.featherlight .featherlight-close-icon {
+	/*.featherlight .featherlight-close-icon {*/
 		/* position: centering vertical and horizontal */
-		position: absolute;
-		z-index: 9999;
-		top: 0;
-		right: 0;
+		/*position: absolute;*/
+		/*z-index: 9999;*/
+		/*top: 0;*/
+		/*right: 0;*/
 
 		/* dimensions: 25px x 25px */
-		line-height: 25px;
-		width: 25px;
+		/*line-height: 25px;*/
+		/*width: 25px;*/
 
 		/* styling */
-		cursor: pointer;
-		text-align: center;
-		font-family: Arial, sans-serif;
-		background: #fff; /* Set the background in case it overlaps the content */
-		background: rgba(255, 255, 255, 0.3);
-		color: #000;
+		/*cursor: pointer;*/
+		/*text-align: center;*/
+		/*font-family: Arial, sans-serif;*/
+		/*background: #fff; Set the background in case it overlaps the content */
+		/*background: rgba(255, 255, 255, 0.3);*/
+		/*color: #000;*/
+	/*}*/
+
+
+
+	.featherlight .featherlight-close-icon {
+	  position: absolute;
+	    z-index: 9999;
+	    top: 0;
+	    right: 0;
+	    line-height: 30px;
+	    width: 55px;
+	    padding: 10px 0;
+	    cursor: pointer;
+	    text-align: center;
+	    font-family: Arial, sans-serif;
+	    background: #fff;
+	    background: rgba(255, 255, 255, 0.3);
+	    color: rgba(0,0,0,.25);
+	    font-size: 27px;
+	    height: 50px;
+	    height: 55px;
 	}
+
 
 
 	.featherlight .featherlight-image {
