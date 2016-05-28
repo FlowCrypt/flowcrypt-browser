@@ -216,6 +216,10 @@ function is_email_valid(email) {
   return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
 }
 
+function month_name(month_index) {
+  return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month_index];
+}
+
 function get_account_emails(callback) {
   account_storage_get(null, ['account_emails'], function(storage) {
     var account_emails = [];

@@ -11,6 +11,10 @@ if(url_params.account_email) {
     if(storage.setup_done) {
       $('.hide_if_setup_not_done').css('display', 'block');
       $('.show_if_setup_not_done').css('display', 'none');
+      var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+      $('.key_row_1 .key_id').text(prv.primaryKey.fingerprint.toUpperCase().substr(-8));
+      $('.key_row_1 .key_date').text(month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear());
+      $('.key_row_1 .key_user').text(prv.users[0].userId.userid);
     } else {
       $('.show_if_setup_not_done').css('display', 'block');
       $('.hide_if_setup_not_done').css('display', 'none');
