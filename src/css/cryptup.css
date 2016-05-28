@@ -100,7 +100,7 @@ body#settings > div#content.backup .password_feedback { display: none;}
 body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left:0; right:0; margin-top: 57px;  -webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
 body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
 body#settings > div#content.backup div.password_bar, body#settings > div#content.setup div.manual div.password_bar { width: 360px; border: none; display: inline-block;
-  border: none; margin-bottom: 14px;margin-left: -3px; }
+  border: none; margin-bottom: 14px; margin-left: -3px; }
 body#settings > div#content.backup div.password_bar > div, body#settings > div#content.setup div.manual div.password_bar > div { width: 0; height: 3px; }
 body#settings > div#content.backup #password, body#settings > div#content.backup #password2,
 
