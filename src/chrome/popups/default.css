@@ -58,8 +58,20 @@ html, body {
     top: 5px;
     margin-right: 5px;
 }
+.profile-row .action_open_settings:hover {
+  background: rgba(0,0,0,.034);
+}
+.profile-row .action_open_settings:before {
+    background: rgba(0, 0, 0, .052);
+    position: absolute;
+    content: "";
+    margin-left: -7px;
+    left: 0 top: 0;
+    width: 2px;
+    height: 40px;
+}
 .profile-row .profile-img {
-    width:27px;
+    width: 27px;
     height: 27px;
     display: inline-block;
     border: 2px solid #f3f3f3;
@@ -71,60 +83,62 @@ html, body {
     bottom: 0;
 }
 .ion-android-person {
-  color: rgba(0,0,0,.9 );
-  font-size: 20px;
-  position: absolute;
-  top:5px;
-  bottom:0;
-  z-index: 300;
-  left:3px;
-  border: 3px solid #f3f3f3;
-  display:inline-block;
-  width: 35px;
-  text-align: center;
-  padding-top: 4px;
-  height: 31px;
-  border-radius: 120px;
-  right:0;
-  font-size: 20px;
-
+    color: rgba(0, 0, 0, .9);
+    font-size: 20px;
+    position: absolute;
+    top: 8px;
+    bottom: 0;
+    z-index: 300;
+    left: 15px;
+    border: 3px solid #f3f3f3;
+    display: inline-block;
+    width: 28px;
+    height: 25px;
+    text-align: center;
+    padding-top: 2px;
+    border-radius: 120px;
+    right: 0;
+    font-size: 20px;
 }
 .action_send_email {
-  text-align: center;
-  display: block;
-  margin:0 auto!important;
-  padding-top: 23px;
-  padding-left: 0!important;
-  padding-right: 0!important;
-  font-size:22px;
+    text-align: center;
+    display: block;
+    margin: 0 auto!important;
+    padding-top: 23px;
+    padding-left: 0!important;
+    padding-right: 0!important;
+    font-size: 22px;
 }
-
 .profile-row span {
-  position: relative;
+    position: relative;
 }
-
 .profile-row .ion-ios-arrow-down {
     position: absolute;
     bottom: 0;
-    right: 57px;
+    right: 60px;
     top: 7px;
     color: #337ab7;
     z-index: 20;
     font-size: 27px;
+    cursor: pointer;
 }
+.profile-row .ion-ios-arrow-down:hover {}
 .profile-row .active-profile {
     font-size: 14px;
     font-weight: 500;
     position: absolute;
     bottom: 0;
     top: 15px;
-    left:50px;
+    left: 60px;
     color: #337ab7;
 }
 a:focus {
-    outline:none;
+    outline: none;
 }
 #switch-account.ion-ios-arrow-down.up {
     -webkit-transform: rotate(-180deg);
     transform: rotate(-180deg);
-  }
+}
+.ion-ios-arrow-down.red {
+    background: red !important;
+}
