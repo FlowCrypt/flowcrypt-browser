@@ -1,49 +1,130 @@
 html, body {
-  height: 60px;
-  font-family: 'Open Sans';
-  overflow: hidden;
-  margin: 0px;
-  padding: 0px;
+    height: 110px;
+    font-family: 'Open Sans';
+    overflow: hidden;
+    margin: 0px;
+    padding: 0px;
 }
 .menu-row {
-  display: block;
-  width: 240px;
-  background: #31A217;
-  padding: 18px 20px;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer!important;
-  text-align: left;
-  font-weight: 500;
-  font-size: 17px;
-  /*box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);*/
-  /*border-bottom: 2px solid transparent;*/
+    display: block;
+    width: 300px;
+    background: #31A217;
+    padding: 18px 20px;
+    position: relative;
+    /*overflow: hidden;*/
+    cursor: pointer!important;
+    text-align: left;
+    font-weight: 500;
+    font-size: 17px;
+    /*box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);*/
+    /*border-bottom: 2px solid transparent;*/
 }
 .menu-row span:first-child {
-  width: 250px;
-  color: white;
-  padding-left: 20px;
+    width: 250px;
+    color: white;
+    padding-left: 20px;
 }
 .menu-row span:first-child {
-  width: 250px;
+    width: 250px;
 }
 .menu-row span:nth-child(2) {
-  position: absolute;
-  width: 60px;
-  right: 0;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  bottom: 0;
-  text-align: center;
-  height: 40px;
-  background: white;
+    position: absolute;
+    width: 60px;
+    right: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    bottom: 0;
+    text-align: center;
+    height: 40px;
+    background: white;
 }
 .menu-row span:nth-child(2):hover {
-  background: #f3f3f3;
+    background: #f3f3f3;
 }
 .menu-row span:nth-child(2) svg, .menu-row span:nth-child(2) {
-  transition: .3s;
+    transition: .3s;
 }
 .menu-row span:nth-child(2):hover svg {
-  transform: scale(1.06);
+    transform: scale(1.06);
 }
+.profile-row {
+    position: relative;
+    height: 50px;
+}
+.profile-row .action_open_settings {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    top: 5px;
+    margin-right: 5px;
+}
+.profile-row .profile-img {
+    width:27px;
+    height: 27px;
+    display: inline-block;
+    border: 2px solid #f3f3f3;
+    border-radius: 120px;
+    margin-left: 10px;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    bottom: 0;
+}
+.ion-android-person {
+  color: rgba(0,0,0,.9 );
+  font-size: 20px;
+  position: absolute;
+  top:5px;
+  bottom:0;
+  z-index: 300;
+  left:3px;
+  border: 3px solid #f3f3f3;
+  display:inline-block;
+  width: 35px;
+  text-align: center;
+  padding-top: 4px;
+  height: 31px;
+  border-radius: 120px;
+  right:0;
+  font-size: 20px;
+
+}
+.action_send_email {
+  text-align: center;
+  display: block;
+  margin:0 auto!important;
+  padding-top: 23px;
+  padding-left: 0!important;
+  padding-right: 0!important;
+  font-size:22px;
+}
+
+.profile-row span {
+  position: relative;
+}
+
+.profile-row .ion-ios-arrow-down {
+    position: absolute;
+    bottom: 0;
+    right: 57px;
+    top: 7px;
+    color: #337ab7;
+    z-index: 20;
+    font-size: 27px;
+}
+.profile-row .active-profile {
+    font-size: 14px;
+    font-weight: 500;
+    position: absolute;
+    bottom: 0;
+    top: 15px;
+    left:50px;
+    color: #337ab7;
+}
+a:focus {
+    outline:none;
+}
+#switch-account.ion-ios-arrow-down.up {
+    -webkit-transform: rotate(-180deg);
+    transform: rotate(-180deg);
+  }
