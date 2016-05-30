@@ -9,13 +9,13 @@ html, body {
     display: block;
     width: 300px;
     background: #31A217;
-    padding: 18px 20px;
+    /*padding: 18px 20px;*/
     position: relative;
     /*overflow: hidden;*/
     cursor: pointer!important;
     text-align: left;
     font-weight: 500;
-    font-size: 17px;
+    font-size: 16px;
     /*box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);*/
     /*border-bottom: 2px solid transparent;*/
 }
@@ -50,6 +50,15 @@ html, body {
 .profile-row {
     position: relative;
     height: 50px;
+    cursor: pointer;
+    transition: .5s;
+}
+.profile-row:hover:before {
+    position: absolute;
+    width: 250px;
+    height: 120px;
+    background: #f3f3f3;
+    content: "";
 }
 .profile-row .action_open_settings {
     position: absolute;
@@ -57,18 +66,25 @@ html, body {
     right: 0;
     top: 5px;
     margin-right: 5px;
+    transition: .3s;
 }
 .profile-row .action_open_settings:hover {
-  background: rgba(0,0,0,.034);
+    background: rgba(0, 0, 0, .034);
+    transform: scale(1.1);
+    opacity: 1;
+}
+.profile-row .action_open_settings:hover:before {
+    background: transparent;
 }
 .profile-row .action_open_settings:before {
     background: rgba(0, 0, 0, .052);
     position: absolute;
     content: "";
-    margin-left: -7px;
-    left: 0 top: 0;
+    margin-left: -6px;
+    left: 0;
+    top: -5px;
     width: 2px;
-    height: 40px;
+    height: 60px;
 }
 .profile-row .profile-img {
     width: 27px;
@@ -86,10 +102,10 @@ html, body {
     color: rgba(0, 0, 0, .9);
     font-size: 20px;
     position: absolute;
-    top: 8px;
+    top: 7px;
     bottom: 0;
     z-index: 300;
-    left: 15px;
+    left: 10px;
     border: 3px solid #f3f3f3;
     display: inline-block;
     width: 28px;
@@ -104,7 +120,7 @@ html, body {
     text-align: center;
     display: block;
     margin: 0 auto!important;
-    padding-top: 23px;
+    padding: 17px 25px;
     padding-left: 0!important;
     padding-right: 0!important;
     font-size: 22px;
@@ -115,21 +131,21 @@ html, body {
 .profile-row .ion-ios-arrow-down {
     position: absolute;
     bottom: 0;
-    right: 60px;
-    top: 7px;
+    right: 62px;
+    top: 9px;
     color: #337ab7;
     z-index: 20;
-    font-size: 27px;
+    font-size: 22px;
     cursor: pointer;
 }
 .profile-row .ion-ios-arrow-down:hover {}
 .profile-row .active-profile {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     position: absolute;
     bottom: 0;
     top: 15px;
-    left: 60px;
+    left: 49px;
     color: #337ab7;
 }
 a:focus {
