@@ -52,7 +52,10 @@ html, body {
     height: 50px;
     cursor: pointer;
     transition: .5s;
+    animation: fadeInUp .4s;
 }
+
+
 .profile-row:hover:before {
     position: absolute;
     width: 250px;
@@ -124,6 +127,8 @@ html, body {
     padding-left: 0!important;
     padding-right: 0!important;
     font-size: 22px;
+
+    animation: fadeInRight .3s;
 }
 .profile-row span {
     position: relative;
