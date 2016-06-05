@@ -45,7 +45,7 @@ function send_resize_message() {
   });
 }
 
-function render_content(content, is_error) {
+function render_content(content, is_error, callback) {
   account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function(storage) {
     if(!is_error) { //successfully opened message
       if(url_params.is_outgoing && !storage.successfully_received_at_leat_one_message && !private_storage_get(localStorage, url_params.account_email, 'master_public_key_submitted')) {
@@ -58,6 +58,9 @@ function render_content(content, is_error) {
       }
     }
     $('#pgp_block').html(content);
+    if(callback) {
+      callback();
+    }
     setTimeout(function() {
       $(window).resize(prevent(spree(), send_resize_message));
     }, 1000);
@@ -76,9 +79,9 @@ function armored_message_as_html(raw_message_substitute) {
   return '';
 }
 
-function render_error(error_box_content, raw_message_substitute) {
+function render_error(error_box_content, raw_message_substitute, callback) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
-  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true);
+  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, callback);
   $('.settings.button').click(prevent(doubleclick(), function() {
     chrome_message_send(null, 'settings', {
       page: 'pubkeys.htm?account_email=' + encodeURIComponent(url_params.account_email),
@@ -190,16 +193,20 @@ function decrypt_and_render(option_key, option_value, wrong_password_callback) {
 }
 
 function render_password_prompt() {
-  render_content('<p>' + l.question_decryt_prompt + '"' + url_params.question + '" </p><p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>' + armored_message_as_html());
-  $('.button.decrypt').click(prevent(doubleclick(), function(self) {
-    $(self).html('Opening');
-    setTimeout(function() {
-      decrypt_and_render('password', $('#answer').val(), function() {
-        alert('Incorrect answer, please try again');
-        render_password_prompt();
-      });
-    }, 50);
-  }));
+  var prompt = '<p>' + l.question_decryt_prompt + '"' + url_params.question + '" </p>';
+  prompt += '<p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>';
+  prompt += armored_message_as_html();
+  render_content(prompt, true, function() {
+    $('.button.decrypt').click(prevent(doubleclick(), function(self) {
+      $(self).html('Opening');
+      setTimeout(function() {
+        decrypt_and_render('password', $('#answer').val(), function() {
+          alert('Incorrect answer, please try again');
+          render_password_prompt();
+        });
+      }, 50);
+    }));
+  });
 }
 
 function check_passphrase_entered() {
@@ -223,16 +230,17 @@ function pgp_block_init() {
       render_error(l.cant_open + l.no_private_key);
     }
   } else {
-    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message);
-    clearInterval(passphrase_interval);
-    passphrase_interval = setInterval(check_passphrase_entered, 1000);
-    $('.enter_passphrase').click(prevent(doubleclick(), function() {
-      chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
-        type: 'message'
-      });
+    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function() {
       clearInterval(passphrase_interval);
-      passphrase_interval = setInterval(check_passphrase_entered, 250);
-    }));
+      passphrase_interval = setInterval(check_passphrase_entered, 1000);
+      $('.enter_passphrase').click(prevent(doubleclick(), function() {
+        chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
+          type: 'message',
+        });
+        clearInterval(passphrase_interval);
+        passphrase_interval = setInterval(check_passphrase_entered, 250);
+      }));
+    });
   }
 }
 
