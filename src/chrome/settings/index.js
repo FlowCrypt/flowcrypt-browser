@@ -6,7 +6,7 @@ $('span#v').text(chrome.runtime.getManifest().version);
 
 if(url_params.account_email) {
   $('.email-address').text(url_params.account_email);
-  $('#security_module').attr('src', 'modules/security.htm?embedded=true&account_email=' + encodeURIComponent(url_params.account_email));
+  $('#security_module').attr('src', 'modules/security.htm?embedded=1&account_email=' + encodeURIComponent(url_params.account_email));
   account_storage_get(url_params.account_email, ['setup_done'], function(storage) {
     if(storage.setup_done) {
       $('.hide_if_setup_not_done').css('display', 'block');

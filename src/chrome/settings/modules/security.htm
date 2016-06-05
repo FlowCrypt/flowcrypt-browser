@@ -1,21 +1,49 @@
-<div class="lightboxed">
-  <div class="row abs-row">
-    <div class="col-sm-12">
-      <span class="ion-locked"></span>
-      <span class="security-copy">Security</span>
-      <span class="text-right change-passphrase">
-        <a href="#">Change passphrase</a>
-      </span>
+<!doctype html>
+<html>
+
+<head>
+  <title>CryptUP</title>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="icon" href="/img/logo-16-16-white-green.png" />
+</head>
+
+<body id="settings">
+  <div id="content" style="margin: 0px; text-align: left;">
+    <!-- <div class="line change_passhrase_container">
+      <a href="#">Change pass phrase</a>
+    </div> -->
+    <div class="line passhprase_checkbox_container">
+      <label for="passphrase_to_open_email">
+        <input type="checkbox" id="passphrase_to_open_email"> Require a pass phrase to open encrypted email</label>
     </div>
+    <div class="line passphrase_entry_container" style="display: none;">
+      <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm" />
+    </div>
+    <div class="line passphrase_entry_container" style="display: none;">
+      <div class="button green confirm_passphrase_requirement_change">continue</div>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <div class="button gray cancel_passphrase_requirement_change">cancel</div>
+    </div>
+
+    <!-- <p>Passphrase strength: [**********]</p>
+    <p>Time to crack: 20 years</p>
+    <p>Your passphrase is NOT STRONG ENOUGH,
+      <br>
+      <a href="#" style="display: block;">We suggest you to try this</a>
+    </p> -->
   </div>
-  <div class="row">
-    <label for="passphrase-to-open-email">
-      <input type="checkbox" id="passphrase-to-open-email"> Require a pass phrase to open encrypted email</label>
-  </div>
-  <p>Passphrase strength: [**********]</p>
-  <p>Time to crack: 20 years</p>
-  <p>Your passphrase is NOT STRONG ENOUGH,
-    <br>
-    <a href="#" style="display: block;">We suggest you to try this</a>
-  </p>
-</div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="../settings.js"></script>
+  <script src="security.js"></script>
+</body>
+
+</html>
