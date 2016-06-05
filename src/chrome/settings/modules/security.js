@@ -9,6 +9,10 @@ if(!private_storage_get(localStorage, url_params.account_email, 'master_passphra
   $('#passphrase_to_open_email').prop('checked', true);
 }
 
+$('.action_change_passphrase').click(function() {
+  window.location = 'change_passphrase.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});
+
 $('.confirm_passphrase_requirement_change').click(function() {
   if($('#passphrase_to_open_email').is(':checked')) { // forget passphrase
     if($('input#passphrase_entry').val() === get_passphrase(url_params.account_email)) {

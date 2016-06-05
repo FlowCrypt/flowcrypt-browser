@@ -25,7 +25,7 @@ function display_block(name) {
 $('.action_enter').click(function() {
   var key = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
   if(key.decrypt($('#original_password').val()) === true) {
-    private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', $('#original_password').val());
+    original_passphrase = $('#original_password').val();
     display_block('step_1_password');
   } else {
     alert('Pass phrase did not match, please try again.');
@@ -61,12 +61,14 @@ $('.action_change').click(prevent(doubleclick(), function(self) {
     $('#password2').focus();
   } else {
     var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
-    prv.decrypt(get_passphrase(url_params.account_email));
-    console.log(prv.armor());
+    prv.decrypt(get_passphrase(url_params.account_email) || original_passphrase);
     openpgp_key_encrypt(prv, new_passphrase);
-    if(typeof private_storage_get(localStorage, url_params.account_email, 'master_passphrase') !== 'undefined') {
+    var stored_passphrase = private_storage_get(localStorage, url_params.account_email, 'master_passphrase');
+    if(typeof stored_passphrase !== 'undefined' && stored_passphrase !== '') {
       private_storage_set(localStorage, url_params.account_email, 'master_passphrase', new_passphrase);
+      private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', undefined);
     } else {
+      private_storage_set(localStorage, url_params.account_email, 'master_passphrase', undefined);
       private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', new_passphrase);
     }
     private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true);
