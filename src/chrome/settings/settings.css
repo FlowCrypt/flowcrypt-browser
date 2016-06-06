@@ -125,6 +125,7 @@ body, html {
   left: 49px;
   right: 0;
   position: absolute;
+  z-index: 5;
 }
 #header-row .profile-img,
 #header-row .ion-android-person {
