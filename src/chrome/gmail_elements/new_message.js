@@ -1,9 +1,13 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id']);
+var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement']);
 
 function new_message_close() {
-  chrome_message_send(url_params.parent_tab_id, 'close_new_message');
+  if(url_params.placement === 'settings') {
+    chrome_message_send(url_params.parent_tab_id, 'close_page');
+  } else {
+    chrome_message_send(url_params.parent_tab_id, 'close_new_message');
+  }
 }
 
 $('.delete_draft').click(function() {

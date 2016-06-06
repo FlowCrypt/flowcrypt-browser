@@ -10,7 +10,8 @@ function compose_message_iframe(account_email, gmail_tab_id, draft_id) {
   var src = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
     '?account_email=' + encodeURIComponent(account_email) +
     '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
-    '&draft_id=' + encodeURIComponent(draft_id || '');
+    '&draft_id=' + encodeURIComponent(draft_id || '') +
+    '&placement=gmail';
   return '<div class="new_message" id="new_message"><iframe scrolling="no" src="' + src + '"></iframe></div>'
 }
 
@@ -71,6 +72,7 @@ function reply_message_iframe(account_email, gmail_tab_id, my_email, their_email
   var id = random_string();
   var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') +
     '?frame_id=frame_' + id +
+    '&placement=gmail' +
     '&to=' + encodeURIComponent(emails.to) +
     '&from=' + encodeURIComponent(emails.from) +
     '&subject=' + encodeURIComponent(subject) +
