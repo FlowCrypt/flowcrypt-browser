@@ -7,5 +7,5 @@ $('.action_open_settings').click(function() {
 });
 
 $('.action_send_email').click(function() {
-  window.open('https://mail.google.com');
+  window.location = 'send_from.htm';
 });

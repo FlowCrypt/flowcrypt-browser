@@ -238,6 +238,7 @@ table#compose #error_contaner_new_message .ion-android-alert { font-size: 30px; 
 
 .spinner svg { display: none; }
 .spinner .active svg { display: block; position: absolute; top:0; right: 0; left:0; bottom:0; display: block!important; opacity: 1!important; }
+
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 6px 0; z-index: 1; }
 body#reply_message div#contacts { top: 39px; }
@@ -310,6 +311,10 @@ table#compose tr#challenge_question_container .question-row  p { display: inline
 table#compose tr#challenge_question_container .question-row .question-copy {width: 79%; display: inline-block; position: absolute; top:-2px; margin-left: 10px;}
 span.start, span.end { font-weight: 900; position: absolute; margin-top: 5px; font-size: 16px; font-family: 'Open Sans', Arial;}
 span.end { margin-left: -10px; }
+
+body#new_message.popup { width: 474px; height: 600px; }
+body#new_message.popup table#compose { width: 490px; border: none; }
+body#new_message.popup table#compose tr td { border-left: none; border-right: none; }
 
 /* reply elements */
 div#reply_message_table_container { display: none; }
