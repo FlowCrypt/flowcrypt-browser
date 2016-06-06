@@ -66,6 +66,10 @@ $('.action_add_account').click(function() {
   new_account_authentication_prompt();
 });
 
+$('.action_set_up_account').click(function() {
+  new_account_authentication_prompt(url_params.account_email);
+});
+
 $('body').click(function() {
   $("#alt-accounts").removeClass("active");
   $(".ion-ios-arrow-down").removeClass("up");
