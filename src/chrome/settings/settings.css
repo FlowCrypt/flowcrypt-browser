@@ -16,12 +16,17 @@ body, html {
   margin-right: 5px;
   text-align: left;
 }
+#header-row .logo-row {
+  margin-top: 10px;
+}
 #header-row a.cryptup-logo-row {
   text-decoration: none;
 }
 #header-row .cryptup-logo-row span {
   opacity: .7;
   transition: .3s;
+  top: 7px;
+  position: absolute
 }
 #header-row .cryptup-logo-row:hover span {
   opacity: 1;
@@ -195,6 +200,7 @@ margin-bottom: 0;
   position: absolute;
   transform: rotate(180deg);
   left: 0;
+  z-index: 90!important;
 }
 .ion-locked {
   color: #31A217;
@@ -211,8 +217,7 @@ margin-bottom: 0;
   margin-bottom: 10px;
 }
 #settings-row {
-  /*background: pink;*/
-  padding: 70px 0;
+  padding: 50px 0;
 }
 #settings-row .box {
   background-color: #31A217;
@@ -220,8 +225,8 @@ margin-bottom: 0;
   border: 0;
   /*background: #31A217;*/
   display: block;
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   margin: 0 auto 15px auto;
 }
 #settings-row .box:hover svg {
@@ -233,7 +238,7 @@ margin-bottom: 0;
   color: white;
   opacity: .9;
   position: absolute;
-  top: 25px;
+  top: 21px;
   bottom: 0;
   margin: 0 auto;
   text-align: center!important;
@@ -323,7 +328,7 @@ body#settings .basic {
 }
 body#settings .settings-border {
   border: 1px solid rgba(0, 0, 0, .2);
-  width: 48%;
+  width: 47%;
   margin: 10px;
   min-height: 160px
 }
@@ -338,6 +343,9 @@ body#settings .settings-border .key-content-row:nth-child(odd) {
     margin: 35px auto!important;
     width: 100%!important;
   }
+}
+
+@media (max-width: 761px) {
   #footer-row {
     position: relative;
   }
