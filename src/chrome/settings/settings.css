@@ -243,6 +243,10 @@ margin-bottom: 0;
   width: inherit;
   transition: .6s;
 }
+#settings-row .box svg.contacts {
+  margin-top: -7px;
+}
+
 #settings-row a p {
   /*font-weight: 600;*/
   margin-top: 15px;
