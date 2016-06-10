@@ -133,7 +133,7 @@ body, html {
   z-index: 5;
 }
 #header-row .profile-img,
-#header-row .ion-android-person {
+#header-row .fa-user {
   width: 40px;
   height: 40px;
   display: inline-block;
@@ -141,6 +141,10 @@ body, html {
   border-radius: 120px;
   margin-left: 10px;
   cursor: pointer;
+  text-align: center;
+  font-size: 22px;
+  padding-top: 7px;
+  color:#666;
 }
 
 #header-row .ion-android-person {
@@ -192,20 +196,18 @@ margin-bottom: 0;
   text-decoration: underline;
   right: 81px;
 }
-#settings-row .ion-key {
-  font-size: 30px;
-  top: -10px;
+#settings-row .fa.fa-key {
+  font-size: 22px;
   color: #31A217;
   width: 30px;
   position: absolute;
-  transform: rotate(180deg);
   left: 0;
-  z-index: 90!important;
 }
-.ion-locked {
+.fa.fa-shield {
   color: #31A217;
-  font-size: 25px;
-  top: -10px;
+  font-size: 22px;
+  position: absolute;
+  left: 4px;
 }
 #settings-row .my-keys-copy {
   text-indent: 25px;
