@@ -16,12 +16,9 @@ if(!localStorage.settings_seen) {
   localStorage.settings_seen = true;
 }
 
-// chrome.browserAction.onClicked.addListener(function() {
-//   open_settings_page(); // Called when the user clicks on the browser action icon.
-// });
-
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.page, message.account_email);
+  respond();
 }
 
 function chrome_auth(request, sender, respond) {
