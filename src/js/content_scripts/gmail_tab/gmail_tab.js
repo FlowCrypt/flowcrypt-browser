@@ -4,6 +4,7 @@ var account_email = $("#loading div.msg").text().match(/[a-z0-9._]+@[a-z0-9._]+/
 var tab_id_global = undefined;
 
 hijack_gmail_hotkeys();
+record_active_window();
 
 function initialize() {
   chrome_message_listen({
@@ -48,6 +49,23 @@ function hijack_gmail_hotkeys() {
       set_reply_box_editable(account_email, tab_id_global);
     }
   });
+}
+
+function record_active_window() {
+
+  function record_set() {
+    account_storage_set(null, {
+      current_window_account_email: account_email
+    });
+  }
+
+  function record_reset() {
+    account_storage_remove(null, ['current_window_account_email']);
+  }
+  $(window).load(record_set)
+  $(window).focus(record_set);
+  $(window).blur(record_reset);
+  $(window).unload(record_reset);
 }
 
 function start() {

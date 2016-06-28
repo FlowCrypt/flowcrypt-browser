@@ -204,7 +204,7 @@ function set_up_require() {
 
 function open_settings_page(page, account_email) {
   if(account_email) {
-    window.open(chrome.extension.getURL('chrome/settings/' + page) + '?account_email=' + encodeURIComponent(account_email), 'cryptup');
+    window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm')) + '?account_email=' + encodeURIComponent(account_email), 'cryptup');
   } else {
     get_account_emails(function(account_emails) {
       window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm') + '?account_email=' + account_emails[0]), 'cryptup');
