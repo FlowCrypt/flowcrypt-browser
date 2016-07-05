@@ -1,0 +1,234 @@
+<html>
+
+<head>
+  <title>CryptUP</title>
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
+  <link rel="icon" href="/img/logo-16-16-white-green.png" />
+</head>
+
+<body id="settings">
+  <div class="profile-row">
+    <span class="email-address"></span>
+    <span>
+      <i class="ion-person"></i>
+      <!-- <img class="profile-img" src="http://armando.sx/img/armando.png" alt=""> -->
+    </span>
+  </div>
+
+  <div id="content" class="setup">
+    <div class="content-row-holder">
+      <i class="ion-ios-arrow-left back"></i>
+      <h1></h1>
+    </div>
+    <div class="separator"></div>
+    <div id="loading">
+      <div class="loader" title="0">
+        <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="50px" height="50px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve">
+          <path opacity="0.1" fill="#088447" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946
+    s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634
+    c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z" />
+          <path fill="#088447" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0
+    C22.32,8.481,24.301,9.057,26.013,10.047z">
+            <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.5s" repeatCount="indefinite" />
+          </path>
+        </svg>
+      </div>
+      <div class="loading_copy">Loading...</div>
+    </div>
+
+    <div id="step_0_found_key">
+      <div class="line">Used PGP before?</div>
+      <div class="line"><a href="#" class="button long green action_manual_enter_key">Enter existing key</a></div>
+      <div class="line">Alternatively, <a href="#new_key" class="action_manual_create_key hover_underline">create a new key</a></div>
+    </div>
+
+    <div id="step_1_easy_or_manual">
+      <div class="line">
+        <div class="col">
+          <div class="circle-i"><i class="ion-ios-stopwatch-outline"></i></div>
+          <div class="button long green action_simple_setup">easy setup</div>
+        </div>
+        <div class="col">
+          <div class="circle-i"><i class="fa fa-cogs"></i></div>
+          <div class="button long gray action_manual_setup">advanced setup</div>
+        </div>
+      </div>
+      <div class="line">
+        <div class="col">More convenient</div>
+        <div class="col">Better security</div>
+      </div>
+      <div class="line">
+        <div class="col">Creates a new encryption key</div>
+        <div class="col">Have complete control</div>
+      </div>
+    </div>
+
+    <div id="step_2_easy_generating">
+      <div id="loading">
+        <div class="loader" title="0">
+          <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="50px" height="50px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve">
+            <path opacity="0.1" fill="#088447" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946
+      s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634
+      c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z" />
+            <path fill="#088447" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0
+      C22.32,8.481,24.301,9.057,26.013,10.047z">
+              <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.5s" repeatCount="indefinite" />
+            </path>
+          </svg>
+        </div>
+        <div class="loading_copy">Loading...</div>
+      </div>
+    </div>
+
+    <div id="step_2_manual" class="manual">
+      <div class="line">
+        <div class="button long green action_manual_enter_key">I HAVE A PRIVATE KEY</div>
+        &nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;
+        <div class="button long green action_manual_create_key">CREATE A NEW PRIVATE KEY</div>
+      </div>
+    </div>
+
+    <div id="step_2a_manual_create" class="manual">
+      <div class="aligncenter">
+        <div class="line ">Pass phrase to protect your new key. See <a href="#" data-featherlight="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>.</div>
+        <div class="line password_feedback"><span class="password_result"></span> (average time to crack: <span class="password_time"></span>)
+          <ul></ul>
+        </div>
+        <div class="line">
+          <i class="ion-android-lock"></i>
+          <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" />
+          <br/>
+          <div class="password_bar">
+            <div></div>
+          </div>
+        </div>
+        <div class="line">
+          <i class="ion-android-lock"></i>
+          <input class="input_password2" type="text" placeholder="Repeat pass phrase" />
+        </div>
+
+        <div class="line">
+          <div class="squaredFour">
+            <input type="checkbox" value="None" id="c_rememberPassphraseAfterClosing" name="check" checked="">
+            <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"></label>
+          </div>
+          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+        </div>
+
+        <div class="line">
+          <div class="squaredFour">
+            <input type="checkbox" value="None" id="c_submitPubkeytoKeyserver" name="check" checked="">
+            <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"></label>
+          </div>
+          <span class="labelCopy">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere).</span>
+        </div>
+        <div class="line" style="visibility: hidden;text-align: left;">
+          <div class="squaredFour">
+            <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll"/>
+            <label class="checkboxSquaredOne" for="c_submitAll"></label>
+          </div>
+          <label class="checkboxSquaredOne" for="c_submitAll" style="margin-left: 50px; position: relative; left: 25px;">
+            Also submit the same pubkey for: <br /><span class="addresses" style="padding-left: 50px;"></span>
+          </label>
+        </div>
+        <div class="line">
+          <div class="button long gray action_create_private">CREATE AND SAVE</div>
+        </div>
+        <div class="line">
+          Or to keep things simple, use <a href="#" class="action_simple_setup">quick setup</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="step_2b_manual_enter" class="manual">
+      <div class="aligncenter">
+        <div class="line">
+          <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+        </div>
+        <div class="line" style="text-align: left; padding-left: 40px;">
+          <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+          <i class="ion-android-lock" style="padding-left: 20px;"></i>
+        </div>
+        <div class="line">
+          <div class="squaredFour">
+            <input type="checkbox" value="None" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
+            <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
+          </div>
+          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+        </div>
+        <div class="line">
+          <div class="squaredFour">
+            <input type="checkbox" value="None" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
+            <label class="checkboxSquaredOne" for="e_submitPubkey"></label>
+          </div>
+          <span class="labelCopy">Submit corresponding pubkey to CryptUP keyserver (does not sync elsewhere)</span>
+        </div>
+        <div class="line" style="visibility: hidden;text-align: left;">
+          <div class="squaredFour">
+            <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll"/>
+            <label class="checkboxSquaredOne" for="e_submitAll"></label>
+          </div>
+          <label class="checkboxSquaredOne" for="e_submitAll" style="margin-left: 50px; position: relative; left: 25px;">
+            Also submit the same pubkey for: <br /><span class="addresses" style="padding-left: 50px;"></span>
+          </label>
+        </div>
+
+        <div class="line">
+          <div class="button long green action_save_private">SAVE</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="step_2_recovery">
+      <div class="line">Found a backup of your account key. Enter your pass phrase to continue.</div>
+      <div class="line">
+        <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase" />
+      </div>
+      <div class="line">
+        <div class="button green long action_recover_account">RECOVER ACCOUNT</div>
+      </div>
+      <div class="line line_skip_recovery" style="display: none;">
+        <a href="#" class="action_skip_recovery">Skip recovery and set up encryption again. Your previous encrypted emails will be unreadable.</a>
+      </div>
+      <div id="error_text_container" class="line">
+        <div id="error_text">This password did not match your original setup.
+          <br> Please try again.
+        </div>
+      </div>
+    </div>
+
+    <div id="step_4_done">
+      <div class="line">
+        <div class="button long green action_close">CLOSE</div>
+      </div>
+      <div class="line">
+        <div class="button long gray action_account_settings">MORE SETTINGS</div>
+      </div>
+      <div class="line">
+        <a class="button long gray" href="index.htm">ALL ACCOUNTS</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/zxcvbn.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/keyserver.js"></script>
+  <script src="/js/common/gmail_api.js"></script>
+  <script src="/js/common/google_api.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="../settings/settings.js"></script>
+  <script src="setup.js"></script>
+
+</body>
+
+</html>
