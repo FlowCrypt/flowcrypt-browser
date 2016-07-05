@@ -54,17 +54,19 @@ function hijack_gmail_hotkeys() {
 function record_active_window() {
 
   function record_set() {
-    $('title').text('S' + random_string(2) + ':' + account_email);
     account_storage_set(null, {
       current_window_account_email: account_email
     });
   }
 
   function record_reset() {
-    $('title').text('R' + random_string(2));
     account_storage_remove(null, ['current_window_account_email']);
   }
-  // $(window).load(record_set)
+  $(window).load(function() {
+    if(document.hasFocus()) {
+      record_set();
+    }
+  });
   $(window).focus(record_set);
   $(window).blur(record_reset);
   $(window).unload(record_reset);
