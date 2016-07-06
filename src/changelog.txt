@@ -1,3 +1,11 @@
+<b>version 2.3.0 on July 5, 2016: Usability: Settings</b>
+design: whole new settings screen
+design: unified green colors
+setup: fixed bug preventing initial setup for some
+setup: using a plugin popup
+messaging: fixing enter passphrase link in pgp block
+messaging: fixing reply error
+
 <b>version 2.2.0 on May 21, 2016: Usability: Messaging UX II</b>
 composing: nicer challenge question link
 composing: better recipients selection UX
