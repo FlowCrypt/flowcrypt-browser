@@ -20,7 +20,7 @@ chrome_message_listen({
   },
 });
 
-if(url_params.page) {
+if(url_params.page && url_params.page !== 'undefined') {
   show_settings_page(url_params.page);
 }
 
