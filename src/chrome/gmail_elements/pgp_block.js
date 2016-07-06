@@ -78,7 +78,7 @@ function armored_message_as_html(raw_message_substitute) {
   }
   return '';
 }
-page
+
 function render_error(error_box_content, raw_message_substitute, callback) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
   render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, callback);
