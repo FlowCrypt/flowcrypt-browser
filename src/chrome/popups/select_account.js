@@ -15,13 +15,13 @@ get_account_emails(function(account_emails) {
     account_storage_get(account_emails, ['setup_done'], function(account_storages) {
       if(account_storages[email]['setup_done'] === true) {
         if(url_params.action === 'new_message') {
-          $('ul.emails').prepend('<li><a href="/chrome/gmail_elements/new_message.htm?placement=popup&account_email=' + encodeURIComponent(email) + '">' + email + '</a></li>');
+          $('ul.emails').prepend('<li><a target="cryptup" href="/chrome/settings/index.htm?account_email=' + encodeURIComponent(email) + '&page=' + encodeURIComponent('/chrome/gmail_elements/new_message.htm') + '">' + email + '</a></li>');
         } else {
           $('ul.emails').prepend('<li><a target="cryptup" href="/chrome/settings/index.htm?account_email=' + encodeURIComponent(email) + '">' + email + '</a></li>');
-          $('a').click(function() {
-            window.close();
-          });
         }
+        $('a').click(function() {
+          window.close();
+        });
       }
     });
   });

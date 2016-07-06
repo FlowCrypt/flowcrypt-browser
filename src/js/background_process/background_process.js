@@ -17,7 +17,7 @@ if(!localStorage.settings_seen) {
 }
 
 function open_settings_page_handler(message, sender, respond) {
-  open_settings_page(message.page, message.account_email);
+  open_settings_page(message.path, message.account_email, message.page);
   respond();
 }
 

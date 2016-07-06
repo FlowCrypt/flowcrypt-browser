@@ -37,7 +37,8 @@ $('.action_ok').click(prevent(doubleclick(), function() {
 
 $('.action_settings').click(prevent(doubleclick(), function() {
   chrome_message_send(null, 'settings', {
-    page: 'contacts.htm',
+    path: 'index.htm',
+    page: '/chrome/settings/modules/contacts.htm',
     account_email: url_params.account_email,
   });
 }));
@@ -45,5 +46,10 @@ $('.action_settings').click(prevent(doubleclick(), function() {
 $('.action_close').click(prevent(doubleclick(), close_dialog));
 
 function close_dialog() {
-  chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+  if(url_params.parent_tab_id) {
+    chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+  } else {
+    window.close();
+  }
+
 }

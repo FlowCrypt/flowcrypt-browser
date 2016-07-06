@@ -1,6 +1,6 @@
 'use strict';
 
-var url_params = get_url_params(['account_email']);
+var url_params = get_url_params(['account_email', 'page']);
 
 $('span#v').text(chrome.runtime.getManifest().version);
 
@@ -11,10 +11,18 @@ chrome_message_get_tab_id(function(tab_id) {
 });
 
 chrome_message_listen({
-  close_page: function(data) {
+  close_page: function() {
     $('.featherlight-close').click();
   },
+  add_pubkey_dialog: function(message, sender, respond) {
+    var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(message.emails);
+    window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+  },
 });
+
+if(url_params.page) {
+  show_settings_page(url_params.page);
+}
 
 if(url_params.account_email) {
   $('.email-address').text(url_params.account_email);
@@ -67,7 +75,11 @@ $('.action_send_email').click(function() {
 });
 
 $('.show_settings_page').click(function() {
-  if($(this).attr('page') !== '/chrome/gmail_elements/new_message.htm') {
+  show_settings_page($(this).attr('page'));
+});
+
+function show_settings_page(page) {
+  if(page !== '/chrome/gmail_elements/new_message.htm') {
     var width = Math.min(800, $('body').width() - 200);
     var variant = null;
   } else {
@@ -75,12 +87,12 @@ $('.show_settings_page').click(function() {
     var variant = 'new_message_featherlight';
   }
   $.featherlight({
-    iframe: $(this).attr('page') + '?account_email=' + encodeURIComponent(url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(tab_id_global),
+    iframe: page + '?account_email=' + encodeURIComponent(url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(tab_id_global),
     iframeWidth: width,
     iframeHeight: $('body').height() - 150,
     variant: variant,
   });
-});
+}
 
 $('.action_add_account').click(function() {
   new_account_authentication_prompt();

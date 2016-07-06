@@ -202,12 +202,12 @@ function set_up_require() {
   });
 }
 
-function open_settings_page(page, account_email) {
+function open_settings_page(path, account_email, page) {
   if(account_email) {
-    window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm')) + '?account_email=' + encodeURIComponent(account_email), 'cryptup');
+    window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + encodeURIComponent(account_email) + '&page=' + encodeURIComponent(page)), 'cryptup');
   } else {
     get_account_emails(function(account_emails) {
-      window.open(chrome.extension.getURL('chrome/settings/' + (page || 'index.htm') + '?account_email=' + (account_emails[0] || '')), 'cryptup');
+      window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
     });
   }
 }

@@ -59,7 +59,13 @@ function choose_email_or_settings_popup(active_account_email) {
   });
   $('.action_send_email').click(function() {
     if(typeof active_account_email !== 'undefined') {
-      window.location = '/chrome/gmail_elements/new_message.htm?placement=popup&account_email=' + encodeURIComponent(active_account_email);
+      chrome_message_send(null, 'settings', {
+        path: 'index.htm',
+        account_email: active_account_email,
+        page: '/chrome/gmail_elements/new_message.htm',
+      }, function() {
+        window.close();
+      });
     } else {
       window.location = 'select_account.htm?action=new_message';
     }

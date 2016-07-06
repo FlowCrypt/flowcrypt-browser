@@ -139,7 +139,7 @@ body#settings > div#content.dialog.passphrase > input.passphrase { margin-top: 2
 body#settings > div#content.dialog.passphrase .button.long {width: 120px;}
 body#settings > div#content.dialog.add_pubkey select.email { font-size: 16px; padding: 6px; background-color: white; width: 516px; }
 body#settings > div#content.dialog.add_pubkey select.copy_from_email { font-size: 16px; padding: 6px; background-color: white; width: 260px; margin: 0 16px; }
-body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
+body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; height: 340px; font-size: 12px; padding: 8px; }
 body#settings > div#content.dialog.add_pubkey .button { width: 120px; margin-left: 13px; margin-right: 14px; }
 
 

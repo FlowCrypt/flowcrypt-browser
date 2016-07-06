@@ -14,7 +14,7 @@ var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
 var save_draft_in_process = false;
 var my_addresses_on_pks = [];
 var recipients_missing_my_key = [];
-var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'frame_id', 'subject']);
+var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'frame_id', 'subject', 'placement']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
@@ -695,9 +695,15 @@ $('#input_question, #input_answer').keyup(prevent(spree(), function() {
 }));
 
 $('.add_pubkey').click(function() {
-  chrome_message_send(compose_url_params.parent_tab_id, 'add_pubkey_dialog', {
-    emails: get_recipients_from_dom('no_pgp'),
-  });
+  if(compose_url_params.placement !== 'settings') {
+    chrome_message_send(compose_url_params.parent_tab_id, 'add_pubkey_dialog_gmail', {
+      emails: get_recipients_from_dom('no_pgp'),
+    });
+  } else {
+    chrome_message_send(compose_url_params.parent_tab_id, 'add_pubkey_dialog_settings', {
+      emails: get_recipients_from_dom('no_pgp'),
+    });
+  }
   clearInterval(pubkey_cache_interval);
   pubkey_cache_interval = setInterval(function() {
     var pubkeys = pubkey_cache_retrieve();

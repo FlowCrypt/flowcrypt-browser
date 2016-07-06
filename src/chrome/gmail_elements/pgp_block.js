@@ -78,13 +78,14 @@ function armored_message_as_html(raw_message_substitute) {
   }
   return '';
 }
-
+page
 function render_error(error_box_content, raw_message_substitute, callback) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
   render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, callback);
   $('.settings.button').click(prevent(doubleclick(), function() {
     chrome_message_send(null, 'settings', {
-      page: 'pubkeys.htm?account_email=' + encodeURIComponent(url_params.account_email),
+      path: 'pubkeys.htm',
+      account_email: url_params.account_email,
     });
   }));
 }
