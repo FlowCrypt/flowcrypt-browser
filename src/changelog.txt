@@ -1,5 +1,8 @@
+<b>version 2.3.2 on November 14, 2016: setting bugfix</b>
+setup: fixed manual backup page
+
 <b>version 2.3.1 on July 5, 2016: setting bugfix</b>
-setuo: open settings empty page bugfix
+setup: open settings empty page bugfix
 
 <b>version 2.3.0 on July 5, 2016: Usability: Settings</b>
 design: whole new settings screen
