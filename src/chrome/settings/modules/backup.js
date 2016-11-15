@@ -119,7 +119,7 @@ function backup_key_on_gmail(account_email, armored_key, error_callback) {
     To: account_email,
     Subject: recovery_email_subjects[0],
   };
-  $.get('email_intro.template.htm', null, function(email_message) {
+  $.get('/chrome/emails/email_intro.template.htm', null, function(email_message) {
     $.get('/img/email/msg_new.png', null, function(msg_new_png) {
       $.get('/img/email/msg_reply.png', null, function(msg_reply_png) {
         var email_attachments = [{
@@ -236,11 +236,15 @@ $('.action_manual_backup').click(prevent(doubleclick(), function(self) {
 }));
 
 $('.action_skip_backup').click(prevent(doubleclick(), function() {
-  account_storage_set(url_params.account_email, {
-    key_backup_prompt: false
-  }, function() {
-    window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
-  });
+  if(url_params.action === 'setup') {
+    account_storage_set(url_params.account_email, {
+      key_backup_prompt: false
+    }, function() {
+      window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
+    });
+  } else {
+    chrome_message_send(url_params.parent_tab_id, 'close_page');
+  }
 }));
 
 $('#step_3_manual input[name=input_backup_choice]').click(function() {
