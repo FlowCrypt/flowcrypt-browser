@@ -271,7 +271,7 @@ table#compose tr#send_pubkey_container { display: none; visibility: visible; -we
 table#compose tr#send_pubkey_container td { height: 1px; padding: 8px; }
 table#compose tr#send_pubkey_container td #send_pubkey_recipients { font-style: italic; color: #555; }
 table#compose tr#missing_pubkey_container { display: none; margin: 15px 0; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
-table#compose tr#missing_pubkey_container td { text-align: center; height: 60px; font-size: 15px; line-height: 1.6;}
+table#compose tr#missing_pubkey_container td { text-align: center; height: 109px; font-size: 15px; line-height: 1.6;}
 
 table#compose tr#missing_pubkey_container .use_question {width: 43.5%; display: inline; position: relative;}
 table#compose tr#missing_pubkey_container .add_pubkey {width: 44%; display: inline; position: relative;}
@@ -284,17 +284,17 @@ table#compose tr#missing_pubkey_container .add_pubkey span.small-copy {font-size
 
 table#compose tr#missing_pubkey_container .use_question .challenge-question-copy { position: absolute; width: 140px; font-size: 17px; text-align: left; left:67px; top:12px; line-height: 1.3; color: gray;}
 
-table#compose tr#missing_pubkey_container div.or-copy { position: absolute;
-  width: 20px; background: #f3f3f3; height:20px; padding-bottom: 5px;
-left:-10px; right:0; margin:0 auto; text-align: center; top:13px;z-index: 0; }
-/*table#compose tr#missing_pubkey_container div.or-copy::after { background: #ccc; position: absolute; top: -40px; height: 90px; width: 5px; content: ""; left: 0; right: 0; margin: 0 auto; z-index: 0;}*/
-
+table#compose tr#missing_pubkey_container div.or-copy { position: absolute; width: 20px; background: #f3f3f3; height:20px; padding-bottom: 5px;
+  left:-6px; right:0; margin:0 auto; text-align: center; top:60px; z-index: 0; }
+table#compose tr#missing_pubkey_container div.missing_pubkey_container_sencence { padding: 10px 0px; }
 
 table#compose tr#missing_pubkey_container div.choice-row {clear: both; position: relative;}
 table#compose tr#missing_pubkey_container div.choice-row .button {border-radius: 0;}
 table#compose tr#missing_pubkey_container div.choice-row .button:hover { background: #ddd;}
-table#compose tr#missing_pubkey_container div.choice-row .use_question { width: 50%;background: #f3f3f3; height: 50px; color: #353535; border: 1px solid #ccc; display: inline; position: relative; position: absolute; left:0; padding: 10px 0;}
-table#compose tr#missing_pubkey_container div.choice-row .add_pubkey { width: 50%; background: #f3f3f3; height: 50px; color: #353535; border: 1px solid #ccc; display: inline; position: absolute; right:0; padding: 10px 0;}
+table#compose tr#missing_pubkey_container div.choice-row .use_question { width: 50%;background: #f3f3f3; height: 50px; color: #353535; border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc; display: inline; position: relative; position: absolute; left:0; padding: 10px 0;}
+table#compose tr#missing_pubkey_container div.choice-row .add_pubkey { width: 50%; background: #f3f3f3; height: 50px; color: #353535; border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc; display: inline; position: absolute; right:0; padding: 10px 0;}
 
 table#compose tr#challenge_question_container { display: none; }
 table#compose tr#challenge_question_container td { height: 84px; padding: 12px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s;}

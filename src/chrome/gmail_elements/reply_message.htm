@@ -51,6 +51,7 @@
       <tr id="missing_pubkey_container">
         <td>
           <div class="choice-row">
+            <div class="missing_pubkey_container_sencence">All marked in Grey don't use CryptUP. Tell tem to download it! Alternatively,</div>
             <div class="button use_question">
               <i class="ion-help-circled"></i>
               <span class="challenge-question-copy">Use a challenge
@@ -64,7 +65,7 @@
               <span class="pubkey-copy">
                 add their pubkey
                 <br>
-                <span class="small-copy">if the have pgp enabled</span>
+                <span class="small-copy">if the have PGP enabled</span>
               </span>
             </div>
             <div class="or-copy">or</div>
@@ -78,9 +79,9 @@
                 <i class="ion-ios-locked"></i>
               </span>
             <div class="question-copy">
-              <p>One or more recipient doesn't have CryptUP or other PGP app yet.
-                <br/>Send an encrypted message with a a question they can answer.
-                <br/>Or <a href="#" class="add_pubkey">add their public key</a> manually if you know it.</p>
+              <p>
+                All marked in Grey don't use PGP encryption and will need to <b>answer a challenge question</b> to decrypt your messages.
+                <br/>If they use other PGP software, <a href="#" class="add_pubkey">add their public key</a> to skip this.</p>
             </div>
           </div>
           <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>

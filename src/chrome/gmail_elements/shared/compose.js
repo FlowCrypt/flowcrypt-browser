@@ -725,6 +725,7 @@ $('.add_pubkey').click(function() {
 $('.use_question').click(function() {
   $('#missing_pubkey_container').css('display', 'none');
   $('#challenge_question_container').css('display', 'table-row');
+  resize_reply_box();
 });
 
 function compose_on_render() {
