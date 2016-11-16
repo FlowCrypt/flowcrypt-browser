@@ -539,7 +539,7 @@ function render_search_results(results, query) {
       ul_html += '</li>';
     });
     if(!can_search_on_google) {
-      ul_html += '<li class="auth_contacts"><i class="fa fa-search"></i>Search Gmail Contacts</li>';
+      ul_html += '<li class="auth_contacts"><span class="button red"><i class="fa fa-search"></i>Search Gmail Contacts</span></li>';
     }
     $('#contacts ul').html(ul_html);
     $('#contacts ul li.select_contact').click(function() {
