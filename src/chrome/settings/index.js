@@ -18,6 +18,9 @@ chrome_message_listen({
     var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(message.emails);
     window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
   },
+  notification_show: function(data) {
+    alert(data.notification);
+  },
 });
 
 if(url_params.page && url_params.page !== 'undefined') {

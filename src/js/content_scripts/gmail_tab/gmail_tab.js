@@ -30,7 +30,7 @@ function initialize() {
         $('body').append(add_pubkey_dialog(account_email, data.emails, tab_id_global));
       }
     },
-    gmail_notification_show: function(data) {
+    notification_show: function(data) {
       gmail_notification_show(data.notification);
       $('body').one('click', gmail_notification_clear);
     },
