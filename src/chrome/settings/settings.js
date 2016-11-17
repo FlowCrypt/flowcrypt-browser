@@ -1,6 +1,6 @@
 'use strict';
 
-var recovery_email_subjects = ['All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
+var recovery_email_subjects = ['Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
@@ -95,6 +95,7 @@ function fetch_email_key_backups(account_email, callback) {
     '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
     '-is:spam',
   ];
+  console.log(q.join(' '));
   gmail_api_message_list(account_email, q.join(' '), true, function(success, response) {
     if(success) {
       if(response.messages) {
