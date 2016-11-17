@@ -58,6 +58,7 @@ function send_btn_click() {
     to_mime(url_params.account_email, encrypted_message_body, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
         if(success) {
+          chrome_message_send(url_params.parent_tab_id, 'gmail_notification_show', {notification: 'Your message has been sent.'});
           draft_delete(url_params.account_email, new_message_close);
         } else {
           handle_send_message_error(response);

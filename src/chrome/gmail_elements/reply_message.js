@@ -96,6 +96,7 @@ function reply_message_reinsert_reply_box() {
 }
 
 function reply_message_render_success(to, has_attachments, message_id) {
+  chrome_message_send(url_params.parent_tab_id, 'gmail_notification_show', {notification: 'Your message has been sent.'});
   $('#send_btn_note').text('Sent, deleting draft..');
   draft_delete(url_params.account_email, function() {
     reply_message_reinsert_reply_box();
