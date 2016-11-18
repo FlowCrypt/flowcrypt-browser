@@ -56,7 +56,7 @@ body#settings > div#content.setup div#step_1_easy_or_manual .circle-i i { font-s
 
 
 body#settings > div#content.setup div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white; text-align: center; font-size: 16px; font-weight: normal;
-  padding-left: 375px; padding-top: 164px; color: #666; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
+  color: #666; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
 body#settings > div#content.setup div.manual { display: none; }
 body#settings > div#content.setup div.alignleft { width: 600px; text-align: left; display: inline-block; }
