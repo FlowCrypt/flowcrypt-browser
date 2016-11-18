@@ -59,7 +59,7 @@ function new_account_authentication_prompt(account_email) {
         window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
       });
     } else if(response.success === false && response.result === 'denied' && response.error === 'access_denied') {
-      alert('Why CryptUP needs this permission:\n\n - to compose messages safely\n - to retrieve and decrypt opened messages seamlessly\n - to send and open encrypted attachments\n\nNobody, CryptUP developers included, is able to access these permissions, they are stored privately in your browser.\n\n');
+      alert('Why CryptUP needs this permission:\n\n - to compose encrypted messages\n - to retrieve and decrypt opened messages\n - to send and open encrypted attachments\n\nNobody, CryptUP developers included, is able to access these permissions, they are stored privately in your browser.\n\n');
       window.location.reload();
     } else {
       console.log(response);
