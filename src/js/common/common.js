@@ -428,6 +428,7 @@ function chrome_message_send(tab_id, name, data, callback) {
     data: data,
     to: Number(tab_id) || null,
     respondable: (callback) ? true : false,
+    uid: random_string(10),
   };
   if(!background_script_shortcut_handlers) {
     chrome.runtime.sendMessage(msg, callback);
@@ -456,12 +457,22 @@ function chrome_message_background_listen(handlers) {
   });
 }
 
-function chrome_message_listen(handlers) {
+function chrome_message_listen(handlers, listen_for_tab_id) {
+  var processed = [];
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
-    if(typeof handlers[request.name] !== 'undefined') {
-      handlers[request.name](request.data, sender, respond);
+    if(!listen_for_tab_id || request.to === Number(listen_for_tab_id)) {
+      if(processed.indexOf(request.uid) === -1) {
+        processed.push(request.uid);
+        if(typeof handlers[request.name] !== 'undefined') {
+            handlers[request.name](request.data, sender, respond);
+        } else {
+          throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+        }
+      } else {
+        console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
+      }
     } else {
-      throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+      console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
     }
     return request.respondable === true;
   });

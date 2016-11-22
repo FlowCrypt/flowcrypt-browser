@@ -8,19 +8,19 @@ var tab_id_global = undefined;
 
 chrome_message_get_tab_id(function(tab_id) {
   tab_id_global = tab_id;
-});
 
-chrome_message_listen({
-  close_page: function() {
-    $('.featherlight-close').click();
-  },
-  add_pubkey_dialog: function(message, sender, respond) {
-    var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(message.emails);
-    window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
-  },
-  notification_show: function(data) {
-    alert(data.notification);
-  },
+  chrome_message_listen({
+    close_page: function() {
+      $('.featherlight-close').click();
+    },
+    add_pubkey_dialog: function(message, sender, respond) {
+      var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(message.emails);
+      window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+    },
+    notification_show: function(data) {
+      alert(data.notification);
+    },
+  }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 });
 
 if(url_params.page && url_params.page !== 'undefined') {
