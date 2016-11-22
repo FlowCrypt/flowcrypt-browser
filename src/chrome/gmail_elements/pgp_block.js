@@ -142,14 +142,15 @@ function decide_decrypted_content_formatting_and_render(decrypted_content) {
     parse_mime_message(decrypted_content, function(success, result) {
       if(success) {
         if(result.text || result.html) {
-          render_content(format_plaintext(result.text || result.html));
+          render_content(format_plaintext(result.text || result.html), false, function() {
+            if(result.attachments.length) {
+              render_inner_attachments(result.attachments);
+            }
+          });
         } else {
           // this will probably show ugly MIME text to user, which would later be reported by them as a bug
           // with each report we can extend the capabilities to recognize content of MIME messages
           render_content(format_plaintext(decrypted_content));
-        }
-        if(result.attachments.length) {
-          render_inner_attachments(result.attachments);
         }
       } else {
         // var "result" will contain the error message, once implemented error handling in parse_mime_message
