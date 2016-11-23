@@ -21,11 +21,11 @@ chrome_message_get_tab_id(function(tab_id) {
       alert(data.notification);
     },
   }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
-});
 
-if(url_params.page && url_params.page !== 'undefined') {
-  show_settings_page(url_params.page);
-}
+  if(url_params.page && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
+    show_settings_page(url_params.page);
+  }
+});
 
 if(url_params.account_email) {
   $('.email-address').text(url_params.account_email);
