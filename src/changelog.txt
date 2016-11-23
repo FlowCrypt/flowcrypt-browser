@@ -1,3 +1,17 @@
+<b>version 2.4.0 on November 22, 2016: human feedback</b>
+setup: guide user to send their first email
+setup: explain what is pass phrase for
+setup: suggest to refresh gmail window after installation
+setup: explain what is backup email for
+setup: centering loading symbol
+composing: larger SECURE COMPOSE button in gmail UI
+composing: clearer prompt to connect gmail contacts
+composing: reworded challenge question/answer ui
+composing: changed send button text (less technical)
+composing: message sent confirmation
+reading: formatting email response from non-cryptup people
+reading: mime encrypted attachments fix
+
 <b>version 2.3.2 on November 14, 2016: setting bugfix</b>
 setup: fixed manual backup page
 
