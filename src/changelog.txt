@@ -1,4 +1,7 @@
-<b>version 2.4.1 on November 30, 2016: human feedback</b>
+<b>version 2.4.2 on November 30, 2016: button texts fix</b>
+composing: all compose buttons to read "encrypt and send"
+
+<b>version 2.4.1 on November 30, 2016: first compose fix</b>
 composing: first time users send button freeze fix
 
 <b>version 2.4.0 on November 22, 2016: human feedback</b>
