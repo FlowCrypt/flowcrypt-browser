@@ -22,7 +22,7 @@ var l = {
 // set can_search_on_google, can_save_drafts, addresses_pks
 account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks'], function(storage) {
   my_addresses_on_pks = storage.addresses_pks || [];
-  if(storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
+  if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
     can_search_on_google = false;
   } else {
     chrome_message_send(null, 'chrome_auth', {
