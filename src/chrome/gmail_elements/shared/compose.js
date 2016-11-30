@@ -244,7 +244,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
 }
 
 function compose_encrypt_and_send(account_email, recipients, subject, plaintext, send_email_callback) {
-  if($('#send_btn span').text().toLowerCase().trim() === 'send pgp encrypted') {
+  if($('#send_btn span').text().toLowerCase().trim() === 'encrypt and send') {
     var btn_html = $('#send_btn').html();
     $('#send_btn span').text('Loading');
     $('#send_btn i').replaceWith(get_spinner());
@@ -310,7 +310,7 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
 
 function handle_send_message_error(response) {
   if(response.status === 413) {
-    $('#send_btn span').text('send pgp encrypted');
+    $('#send_btn span').text('encrypt and send');
     $('#send_btn i').attr('class', '');
     alert('Total attachments size should be under 5MB (will be fixed by the end of May)');
   } else {
@@ -655,7 +655,7 @@ function compose_render_pubkey_result(email_element, pubkey_data, receiver_might
 
   }
   if(!$('.receivers span i.fa-spin').length) {
-    $("#send_btn span").text('SEND PGP ENCRYPTED');
+    $("#send_btn span").text('encrypt and send');
     $("#send_btn_note").text('');
   }
   compose_show_hide_missing_pubkey_container();
