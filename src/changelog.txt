@@ -1,3 +1,6 @@
+<b>version 2.4.4 on December 3, 2016: Name change</b>
+Updated name and description
+
 <b>version 2.4.3 on December 2, 2016: compose window fix</b>
 composing: fixing compose window hangup for some users
 
