@@ -31,7 +31,7 @@ account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'a
       can_search_on_google = (permissions.origins.indexOf(GOOGLE_CONTACTS_ORIGIN) !== -1);
     });
   }
-  can_save_drafts = (storage.google_token_scopes.indexOf(GOOGLE_COMPOSE_SCOPE) !== -1);
+  can_save_drafts = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GOOGLE_COMPOSE_SCOPE) !== -1);
   if(!can_save_drafts) {
     $('#send_btn_note').html('<a href="#" class="draft_auth hover_underline">Enable encrypted drafts</a>');
     $('#send_btn_note a.draft_auth').click(draft_auth);
