@@ -1,3 +1,6 @@
+<b>version 2.4.3 on December 2, 2016: compose window fix</b>
+composing: fixing compose window hangup for some users
+
 <b>version 2.4.2 on November 30, 2016: button texts fix</b>
 composing: all compose buttons to read "encrypt and send"
 

@@ -4773,7 +4773,7 @@ exports.default = {
   debug: false,
   show_version: true,
   show_comment: true,
-  versionstring: "CryptUP 2.4.2 Easy Gmail Encryption https://cryptup.org",
+  versionstring: "CryptUP 2.4.3 Easy Gmail Encryption https://cryptup.org",
   commentstring: "Seamlessly send, receive and search encrypted email",
   keyserver: "https://keyserver.ubuntu.com",
   node_store: './openpgp.store'
