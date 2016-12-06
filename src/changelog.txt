@@ -1,3 +1,6 @@
+<b>version 2.4.5 on December 5, 2016: Description change</b>
+Updated app description
+
 <b>version 2.4.4 on December 3, 2016: Name change</b>
 Updated name and description
 
