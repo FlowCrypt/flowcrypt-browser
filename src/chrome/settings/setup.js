@@ -272,12 +272,8 @@ $('.action_send').click(function() {
   window.location = 'index.htm?page=%2Fchrome%2Fgmail_elements%2Fnew_message.htm&account_email=' + encodeURIComponent(url_params.account_email);
 });
 
-// $('.action_close').click(function() {
-//   window.close();
-// });
-
 $('.action_account_settings').click(function() {
-  window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
+  window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email);
 });
 
 $('.input_submit_key').click(function() {
