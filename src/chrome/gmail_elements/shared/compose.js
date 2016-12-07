@@ -1,14 +1,16 @@
 'use strict';
 
 var SAVE_DRAFT_FREQUENCY = 3000;
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 var GOOGLE_CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts.readonly';
-var GOOGLE_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 var GOOGLE_CONTACTS_ORIGIN = 'https://www.google.com/*';
 
 var draft_id = undefined;
 var draft_message_id = undefined;
-var can_search_on_google = undefined;
+var can_search_contacts = undefined;
 var can_save_drafts = undefined;
+var can_read_emails = undefined;
 var pubkey_cache_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
 var save_draft_in_process = false;
@@ -19,19 +21,26 @@ var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
 
-// set can_search_on_google, can_save_drafts, addresses_pks
+// set can_search_contacts, can_save_drafts, addresses_pks
 account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks'], function(storage) {
   my_addresses_on_pks = storage.addresses_pks || [];
-  if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
-    can_search_on_google = false;
+  if(typeof storage.google_token_scopes === 'undefined') {
+    var can_search_contacts = false;
+    var can_save_drafts = false;
+    var can_read_emails = false;
   } else {
-    chrome_message_send(null, 'chrome_auth', {
-      action: 'get',
-    }, function(permissions) {
-      can_search_on_google = (permissions.origins.indexOf(GOOGLE_CONTACTS_ORIGIN) !== -1);
-    });
+    if(storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
+      can_search_contacts = false;
+    } else {
+      chrome_message_send(null, 'chrome_auth', {
+        action: 'get',
+      }, function(permissions) {
+        can_search_contacts = (permissions.origins.indexOf(GOOGLE_CONTACTS_ORIGIN) !== -1);
+      });
+    }
+    can_save_drafts = (storage.google_token_scopes.indexOf(GMAIL_COMPOSE_SCOPE) !== -1);
+    can_read_emails = (storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
   }
-  can_save_drafts = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GOOGLE_COMPOSE_SCOPE) !== -1);
   if(!can_save_drafts) {
     $('#send_btn_note').html('<a href="#" class="draft_auth hover_underline">Enable encrypted drafts</a>');
     $('#send_btn_note a.draft_auth').click(draft_auth);
@@ -456,7 +465,7 @@ function remove_receiver() {
 function draft_auth() {
   chrome_message_send(null, 'google_auth', {
     account_email: compose_url_params.account_email,
-    scopes: [GOOGLE_COMPOSE_SCOPE],
+    scopes: [GMAIL_COMPOSE_SCOPE],
   }, function(google_auth_response) {
     if(google_auth_response.success === true) {
       $('#send_btn_note').text('');
@@ -486,7 +495,7 @@ function auth_contacts(account_email, for_search_query) {
         scopes: [GOOGLE_CONTACTS_SCOPE],
       }, function(google_auth_response) {
         if(google_auth_response.success === true) {
-          can_search_on_google = true;
+          can_search_contacts = true;
           search_contacts();
         } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
           alert('CryptUP needs this permission to search your Google Contacts. Without it, CryptUP will keep a separate contact list.');
@@ -516,7 +525,7 @@ function search_pubkey_cache(query, max) {
 }
 
 function render_search_results(results, query) {
-  if(results.length > 0 || !can_search_on_google) {
+  if(results.length > 0 || !can_search_contacts) {
     var ul_html = '';
     $.each(results, function(i, result) {
       ul_html += '<li class="select_contact" email="' + result.email.replace(/<\/?b>/g, '') + '">';
@@ -538,7 +547,7 @@ function render_search_results(results, query) {
       }
       ul_html += '</li>';
     });
-    if(!can_search_on_google) {
+    if(!can_search_contacts) {
       ul_html += '<li class="auth_contacts"><span class="button red"><i class="fa fa-search"></i>Search Gmail Contacts</span></li>';
     }
     $('#contacts ul').html(ul_html);
@@ -562,7 +571,7 @@ function render_search_results(results, query) {
 function search_contacts() {
   var query = trim_lower($('#input_to').val());
   if(query !== '') {
-    if(can_search_on_google) {
+    if(can_search_contacts) {
       var contacts = search_pubkey_cache(query, 6);
       var emails = [];
       $.each(contacts, function(i, contact) {
@@ -599,6 +608,8 @@ function did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(their_email
   account_storage_get(compose_url_params.account_email, ['pubkey_sent_to'], function(storage) {
     if(storage.pubkey_sent_to && storage.pubkey_sent_to.indexOf(their_email) !== -1) {
       callback(true);
+    } else if(!can_read_emails) {
+      callback(undefined);
     } else {
       var q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
       var q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
@@ -630,7 +641,7 @@ function compose_render_pubkey_result(email_element, pubkey_data, receiver_might
   if($('body#new_message').length) { //todo: better move this to new_message.js
     if(receiver_might_need_my_pubkey && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) { // new message, they don't have cryptup, and my keys is not on pks
       did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
-        if(!pubkey_sent) {
+        if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
           recipients_missing_my_key.push(trim_lower($(email_element).text()));
         }
         compose_show_hide_send_pubkey_container();
