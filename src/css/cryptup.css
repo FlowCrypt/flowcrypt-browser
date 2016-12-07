@@ -21,6 +21,7 @@
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0px; margin-top: 0px; }
+.featherlight .featherlight-close-icon { background: none !important; }
 .good { color: #088447; }
 .bad { color: #A44; }
 

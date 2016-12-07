@@ -13,12 +13,16 @@ chrome_message_get_tab_id(function(tab_id) {
     close_page: function() {
       $('.featherlight-close').click();
     },
-    add_pubkey_dialog: function(message, sender, respond) {
-      var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(message.emails);
+    add_pubkey_dialog: function(data, sender, respond) {
+      var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(data.emails);
       window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     notification_show: function(data) {
       alert(data.notification);
+    },
+    open_google_auth_dialog: function(data) {
+      $('.featherlight-close').click();
+      new_account_authentication_prompt();
     },
   }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
@@ -59,8 +63,7 @@ function new_account_authentication_prompt(account_email) {
         window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
       });
     } else if(response.success === false && response.result === 'denied' && response.error === 'access_denied') {
-      alert('Why CryptUP needs this permission:\n\n - to compose encrypted messages\n - to retrieve and decrypt opened messages\n - to send and open encrypted attachments\n\nNobody, CryptUP developers included, is able to access these permissions, they are stored privately in your browser.\n\n');
-      window.location.reload();
+      show_settings_page('/chrome/settings/modules/auth_denied.htm');
     } else {
       console.log(response);
       alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
@@ -78,7 +81,7 @@ $('.action_send_email').click(function() {
 });
 
 $('.show_settings_page').click(function() {
-  show_settings_page($(this).attr('page'));
+  show_settings_page($(this).attr('page.htm'));
 });
 
 function show_settings_page(page) {
