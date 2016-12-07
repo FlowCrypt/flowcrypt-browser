@@ -312,11 +312,11 @@ function handle_send_message_error(response) {
   if(response.status === 413) {
     $('#send_btn span').text('encrypt and send');
     $('#send_btn i').attr('class', '');
-    alert('Total attachments size should be under 5MB (will be fixed by the end of May)');
+    alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
   } else {
     console.log('handle_send_message_error');
     console.log(response);
-    alert('error sending message, check log');
+    alert('Error sending message, try to re-open your Gmail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
   }
 }
 
