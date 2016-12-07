@@ -18,6 +18,10 @@ center.gmail_notifications div.gmail_notification a:hover { text-decoration: non
 div.new_message { position: absolute; bottom: 0px; width: 541px; right: 30px; padding: 0px; z-index: 5; height: 605px; box-shadow: rgba(0,0,0,0.2) 0 2px 6px; }
 div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0px; margin: 0px; overflow: hidden;}
 
+@media screen and (max-height: 600px) {
+  div.new_message, div.new_message iframe { height: 450px; }
+}
+
 /* pgp decrypted message */
 iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
 
