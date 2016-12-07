@@ -81,7 +81,7 @@ $('.action_send_email').click(function() {
 });
 
 $('.show_settings_page').click(function() {
-  show_settings_page($(this).attr('page.htm'));
+  show_settings_page($(this).attr('page'));
 });
 
 function show_settings_page(page) {
