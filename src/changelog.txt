@@ -1,3 +1,8 @@
+<b>version 2.4.6 on December 6, 2016: Google Auth UX</b>
+composing: secure compose window to fit small screens
+setup: a popup explaining needed permissions when denied
+setup: fixed broken buttons when setup done
+
 <b>version 2.4.5 on December 5, 2016: Description change</b>
 Updated app description
 
