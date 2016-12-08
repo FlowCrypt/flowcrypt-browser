@@ -14,9 +14,7 @@ function inject_buttons(account_email, tab_id) {
   } else {
     $('div.aic').prepend('<div class="z0"><div class="T-I J-J5-Ji T-I-KE L3 new_message_button" role="button" tabindex="0" style="user-select: none;background: #31A217;" gh="cm">SECURE COMPOSE</div></div>')
     $('div.new_message_button').click(function() {
-      if($('div.new_message').length == 0) {
-        $('body').append(compose_message_iframe(account_email, tab_id));
-      }
+      open_new_message(account_email, tab_id);
     });
   }
 }

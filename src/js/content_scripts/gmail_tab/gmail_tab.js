@@ -8,6 +8,9 @@ record_active_window();
 
 function initialize() {
   chrome_message_listen({
+    open_new_message: function(data) {
+      open_new_message(account_email, tab_id_global);
+    },
     close_new_message: function(data) {
       $('div.new_message').remove();
     },
