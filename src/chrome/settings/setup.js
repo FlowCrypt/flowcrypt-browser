@@ -77,7 +77,7 @@ function display_block(name) {
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set Up CryptUP');
-  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method'], function(storage) {
+  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function(storage) {
     if(storage.setup_done === true) {
       setup_dialog_set_done(storage.key_backup_prompt, storage.setup_simple);
     } else {
