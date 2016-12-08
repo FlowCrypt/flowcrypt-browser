@@ -6,11 +6,12 @@ $('.email-address').text(url_params.account_email);
 
 $('.back').css('visibility', 'hidden');
 
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var recovered_keys = undefined;
 var recovery_attempts = 0;
 
 // show alternative account addresses in setup form + save them for later
-account_storage_get(url_params.account_email, ['addresses'], function(storage) {
+account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes'], function(storage) {
   function show_submit_all_addresses_option(addrs) {
     if(addrs && addrs.length > 1) {
       var i = addrs.indexOf(url_params.account_email);
@@ -22,16 +23,21 @@ account_storage_get(url_params.account_email, ['addresses'], function(storage) {
       $('#step_2a_manual_create .input_submit_all, #step_2b_manual_enter .input_submit_all').prop('checked', true);
     }
   }
-  if(typeof storage.addresses === 'undefined') {
-    fetch_all_account_addresses(url_params.account_email, function(addresses) {
-      account_storage_set(url_params.account_email, {
-        addresses: addresses
-      }, function() {
-        show_submit_all_addresses_option(addresses);
-      });
+  function save_and_fill_submit_option(addresses) {
+    account_storage_set(url_params.account_email, {
+      addresses: addresses
+    }, function() {
+      show_submit_all_addresses_option(addresses);
     });
+  }
+  if(typeof storage.addresses === 'undefined') {
+    if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+      fetch_all_account_addresses(url_params.account_email, save_and_fill_submit_option);
+    } else { // cannot read emails, don't fetch alternative addresses
+      save_and_fill_submit_option([url_params.account_email]);
+    }
   } else {
-    show_submit_all_addresses_option(storage['addresses']);
+    show_submit_all_addresses_option(storage.addresses);
   }
 });
 
@@ -167,7 +173,7 @@ function create_save_key_pair(account_email, options) {
       });
     });
   }).catch(function(error) {
-    $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>This is an early development version.<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed in red and send them to me.<br/><br/>tom@cryptup.org - thanks!');
+    $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed there and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
     console.log(error);
     console.log('--- thanks ---')
