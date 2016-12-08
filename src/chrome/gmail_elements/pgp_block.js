@@ -1,5 +1,7 @@
 'use strict';
 
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+
 var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing']);
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
@@ -313,10 +315,23 @@ if(url_params.message) { // ascii armored message supplied
   $('#pgp_block').text('Decrypting...');
   pgp_block_init();
 } else { // need to fetch the message from gmail api
-  $('#pgp_block').text('Retrieving message...');
-  extract_armored_message_using_gmail_api(function(message_raw) {
-    $('#pgp_block').text('Decrypting...');
-    url_params.message = message_raw;
-    pgp_block_init();
+  account_storage_get(url_params.account_email, ['google_token_scopes'], function(storage) {
+    if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+      $('#pgp_block').text('Retrieving message...');
+      extract_armored_message_using_gmail_api(function(message_raw) {
+        $('#pgp_block').text('Decrypting...');
+        url_params.message = message_raw;
+        pgp_block_init();
+      });
+    } else { // gmail message read auth not allowed
+      $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+      $('.auth_settings').click(function() {
+        chrome_message_send(null, 'settings', {
+          account_email: url_params.account_email,
+          page: '/chrome/settings/modules/auth_denied.htm',
+        });
+      });
+    }
   });
+
 }
