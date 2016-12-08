@@ -79,7 +79,7 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
 
         });
       });
-    } else if(response.success === false && response.result === 'denied' && response.error === 'access_denied') {
+    } else if(response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
       if(account_email) {
         show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
       } else {

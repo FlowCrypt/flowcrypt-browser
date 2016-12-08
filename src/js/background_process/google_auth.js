@@ -3,6 +3,7 @@
 var google_oauth2 = chrome.runtime.getManifest().oauth2;
 
 var auth_responders = [];
+var RESPONDED = 'RESPONDED';
 
 function google_auth(auth_request, sender, respond) {
   account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function(storage) {
@@ -77,6 +78,25 @@ function google_auth_window_show_and_respond_to_auth_request(auth_request, curre
   var auth_code_window = window.open(auth_code_url, '_blank', 'height=550,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
   // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
   // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
+  var window_closed_timer = setInterval(window_closed_watcher, 200);
+
+  function window_closed_watcher() {
+    if(auth_code_window.closed) {
+      clearInterval(window_closed_timer);
+      if(auth_responders[auth_request.auth_responder_id] !== RESPONDED) {
+        // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
+        // thus it's impossible for another process to try to respond before the next line
+        // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
+        auth_responders[auth_request.auth_responder_id]({
+          success: false,
+          result: 'closed',
+          account_email: auth_request.account_email,
+          message_id: auth_request.message_id,
+        });
+        auth_responders[auth_request.auth_responder_id] = RESPONDED;
+      }
+    }
+  }
 }
 
 function google_auth_save_tokens(account_email, tokens_object, scopes, callback) {
@@ -161,11 +181,13 @@ function google_auth_check_email(expected_email, access_token, callback) {
 }
 
 function google_auth_window_result_handler(auth_code_window_result, sender, close_auth_window) {
-  close_auth_window();
   var parts = auth_code_window_result.title.split(' ', 2);
   var result = parts[0];
   var params = get_url_params(['code', 'state', 'error'], parts[1]);
   var state_object = google_auth_code_request_state.unpack(params.state);
+  var auth_responder = auth_responders[state_object.auth_responder_id];
+  auth_responders[state_object.auth_responder_id] = RESPONDED;
+  close_auth_window();
   switch(result) {
     case 'Success':
       google_auth_get_tokens(params.code, function(tokens_object) {
@@ -175,7 +197,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
             //   //user authorized a different account then expected
             // }
             google_auth_save_tokens(account_email, tokens_object, state_object.scopes, function() {
-              auth_responders[state_object.auth_responder_id]({
+              auth_responder({
                 account_email: account_email,
                 success: true,
                 result: result.toLowerCase(),
@@ -184,7 +206,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
             });
           });
         } else {
-          auth_responders[state_object.auth_responder_id]({
+          auth_responder({
             success: false,
             result: result.toLowerCase(),
             account_email: state_object.account_email,
@@ -195,7 +217,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
       break;
     case 'Denied':
     case 'Error':
-      auth_responders[state_object.auth_responder_id]({
+      auth_responder({
         success: false,
         result: result.toLowerCase(),
         error: params.error,
