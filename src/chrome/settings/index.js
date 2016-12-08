@@ -22,7 +22,7 @@ chrome_message_get_tab_id(function(tab_id) {
     },
     open_google_auth_dialog: function(data) {
       $('.featherlight-close').click();
-      new_account_authentication_prompt();
+      new_account_authentication_prompt(undefined, (data || {}).omit_read_scope);
     },
   }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
@@ -53,10 +53,11 @@ if(url_params.account_email) {
 }
 
 
-function new_account_authentication_prompt(account_email) {
+function new_account_authentication_prompt(account_email, omit_read_scope) {
   account_email = account_email || '';
   chrome_message_send(null, 'google_auth', {
     account_email: account_email,
+    omit_read_scope: omit_read_scope,
   }, function(response) {
     if(response.success === true) {
       add_account_email_to_list_of_accounts(response.account_email, function() {

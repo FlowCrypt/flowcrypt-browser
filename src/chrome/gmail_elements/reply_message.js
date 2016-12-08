@@ -1,15 +1,19 @@
 'use strict';
 
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+
 var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
 var original_reply_message_prompt = undefined;
 var thread_message_id_last = '';
 var thread_message_referrences_last = '';
 var passphrase_interval = undefined;
+var can_read_emails = undefined;
 url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
 url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
-// show decrypted draft if available for this thread
-account_storage_get(url_params.account_email, ['drafts_reply'], function(storage) {
+// show decrypted draft if available for this thread. Also check if GMAIL_READ_SCOPE is available.
+account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function(storage) {
+  can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
   if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
     original_reply_message_prompt = $('div#reply_message_prompt').html();
     $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
@@ -62,10 +66,24 @@ function check_passphrase_entered(encrypted_draft) {
 
 
 function reply_message_render_table() {
-  $('div#reply_message_prompt').css('display', 'none');
-  $('div#reply_message_table_container').css('display', 'block');
-  reply_message_on_render();
-  reply_message_determine_header_variables();
+  if(can_read_emails) {
+    $('div#reply_message_prompt').css('display', 'none');
+    $('div#reply_message_table_container').css('display', 'block');
+    reply_message_on_render();
+    reply_message_determine_header_variables();
+  } else {
+    $('div#reply_message_prompt').html('CryptUP has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
+    $('div#reply_message_prompt').attr('style', 'border:none !important');
+    $('.auth_settings').click(function() {
+      chrome_message_send(null, 'settings', {
+        account_email: url_params.account_email,
+        page: '/chrome/settings/modules/auth_denied.htm',
+      });
+    })
+    $('.new_message_button').click(function() {
+      chrome_message_send(url_params.parent_tab_id, 'open_new_message');
+    });
+  }
 }
 
 function reply_message_determine_header_variables() {
