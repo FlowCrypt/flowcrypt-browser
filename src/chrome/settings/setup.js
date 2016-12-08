@@ -31,6 +31,9 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
       show_submit_all_addresses_option(addresses);
     });
   }
+  if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) === -1) {
+    $('.auth_denied_warning').css('display', 'block');
+  }
   if(typeof storage.addresses === 'undefined') {
     if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
       fetch_all_account_addresses(url_params.account_email, save_and_fill_submit_option);
@@ -293,6 +296,10 @@ $('.action_send').click(function() {
 
 $('.action_account_settings').click(function() {
   window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email);
+});
+
+$('.action_go_auth_denied').click(function() {
+  window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&page=' + encodeURIComponent('/chrome/settings/modules/auth_denied.htm');
 });
 
 $('.input_submit_key').click(function() {

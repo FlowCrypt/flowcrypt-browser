@@ -5,6 +5,7 @@ var url_params = get_url_params(['account_email', 'page']);
 $('span#v').text(chrome.runtime.getManifest().version);
 
 var tab_id_global = undefined;
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
 chrome_message_get_tab_id(function(tab_id) {
   tab_id_global = tab_id;
@@ -34,8 +35,11 @@ chrome_message_get_tab_id(function(tab_id) {
 if(url_params.account_email) {
   $('.email-address').text(url_params.account_email);
   $('#security_module').attr('src', 'modules/security.htm?embedded=1&account_email=' + encodeURIComponent(url_params.account_email));
-  account_storage_get(url_params.account_email, ['setup_done'], function(storage) {
+  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
     if(storage.setup_done) {
+      if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) === -1) {
+        $('.auth_denied_warning').css('display', 'block');
+      }
       $('.hide_if_setup_not_done').css('display', 'block');
       $('.show_if_setup_not_done').css('display', 'none');
       var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
