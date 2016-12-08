@@ -1,5 +1,7 @@
 'use strict';
 
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+
 var url_params = get_url_params(['account_email', 'action', 'parent_tab_id']);
 
 account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {
@@ -33,67 +35,83 @@ function show_status() {
   $('.hide_if_backup_done').css('display', 'none');
   $('h1').text('Key Backups');
   display_block('loading');
-  account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method'], function(storage) {
-    fetch_email_key_backups(url_params.account_email, function(success, keys) {
-      if(success) {
-        display_block('step_0_status');
-        if(keys && keys.length) {
-          $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly on Gmail.');
-          $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
-          $('.action_go_manual').click(function() {
-            display_block('step_3_manual');
-            $('h1').text('Back up your private key');
-          });
-        } else if(storage.key_backup_method) {
-          if(storage.key_backup_method === 'file') {
-            $('.status_summary').text('You have previously backed up your key into a file.');
-            $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+  account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes'], function(storage) {
+    if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+      fetch_email_key_backups(url_params.account_email, function(success, keys) {
+        if(success) {
+          display_block('step_0_status');
+          if(keys && keys.length) {
+            $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly on Gmail.');
+            $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
             $('.action_go_manual').click(function() {
               display_block('step_3_manual');
               $('h1').text('Back up your private key');
             });
-          } else if(storage.key_backup_method === 'print') {
-            $('.status_summary').text('You have previously backed up your key by printing it.');
-            $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
-            $('.action_go_manual').click(function() {
-              display_block('step_3_manual');
-              $('h1').text('Back up your private key');
-            });
-          } else { // gmail or other methods
-            $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-            $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
-            $('.action_go_manual').click(function() {
-              display_block('step_3_manual');
-              $('h1').text('Back up your private key');
-            });
+          } else if(storage.key_backup_method) {
+            if(storage.key_backup_method === 'file') {
+              $('.status_summary').text('You have previously backed up your key into a file.');
+              $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+              $('.action_go_manual').click(function() {
+                display_block('step_3_manual');
+                $('h1').text('Back up your private key');
+              });
+            } else if(storage.key_backup_method === 'print') {
+              $('.status_summary').text('You have previously backed up your key by printing it.');
+              $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+              $('.action_go_manual').click(function() {
+                display_block('step_3_manual');
+                $('h1').text('Back up your private key');
+              });
+            } else { // gmail or other methods
+              $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
+              $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
+              $('.action_go_manual').click(function() {
+                display_block('step_3_manual');
+                $('h1').text('Back up your private key');
+              });
+            }
+          } else {
+            if(storage.setup_simple) {
+              $('.status_summary').text('No backups found on this account. You can store a backup of your key on Gmail. Your key will be protected by a pass phrase of your choice.');
+              $('#step_0_status .container').html('<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
+              $('.action_go_backup').click(function() {
+                display_block('step_1_password');
+                $('h1').text('Set Backup Pass Phrase');
+              });
+              $('.action_go_manual').click(function() {
+                display_block('step_3_manual');
+                $('h1').text('Back up your private key');
+              });
+            } else {
+              $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
+              $('#step_0_status .container').html('<div class="button long green action_go_manual">BACK UP MY KEY</div>');
+              $('.action_go_manual').click(function() {
+                display_block('step_3_manual');
+                $('h1').text('Back up your private key');
+              });
+            }
           }
         } else {
-          if(storage.setup_simple) {
-            $('.status_summary').text('No backups found on this account. You can store a backup of your key on Gmail. Your key will be protected by a pass phrase of your choice.');
-            $('#step_0_status .container').html('<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
-            $('.action_go_backup').click(function() {
-              display_block('step_1_password');
-              $('h1').text('Set Backup Pass Phrase');
-            });
-            $('.action_go_manual').click(function() {
-              display_block('step_3_manual');
-              $('h1').text('Back up your private key');
-            });
-          } else {
-            $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-            $('#step_0_status .container').html('<div class="button long green action_go_manual">BACK UP MY KEY</div>');
-            $('.action_go_manual').click(function() {
-              display_block('step_3_manual');
-              $('h1').text('Back up your private key');
-            });
-          }
+          $('.status_summary').text('Could not start searching for backups, possibly due to a network failure. Refresh to try again.');
+          $('#step_0_status .container').html('<div class="button long green action_refresh">REFRESH</div>');
+          $('.action_refresh').click(prevent(doubleclick(), show_status));
         }
-      } else {
-        $('.status_summary').text('Could not start searching for backups, possibly due to a network failure. Refresh to try again.');
-        $('#step_0_status .container').html('<div class="button long green action_refresh">REFRESH</div>');
-        $('.action_refresh').click(prevent(doubleclick(), show_status));
-      }
-    });
+      });
+    } else { // gmail read permission not granted - cannot check for backups
+      display_block('step_0_status');
+      $('.status_summary').html('CryptUP cannot check your backups because it\'s missing a Gmail permission.');
+      $('#step_0_status .container').html('<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>');
+      $('.action_go_manual').click(function() {
+        display_block('step_3_manual');
+        $('h1').text('Back up your private key');
+      });
+      $('.action_go_auth_denied').click(function() {
+        chrome_message_send(null, 'settings', {
+          account_email: url_params.account_email,
+          page: '/chrome/settings/modules/auth_denied.htm',
+        });
+      });
+    }
   });
 }
 
