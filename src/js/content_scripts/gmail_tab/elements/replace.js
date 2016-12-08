@@ -118,11 +118,9 @@ function replace_pgp_attachments(account_email, gmail_tab_id) {
   $('div.aQH').each(function() {
     var new_pgp_messages = $(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').not('.evaluated');
     if(new_pgp_messages.length) {
-      console.log('a');
       new_pgp_messages.addClass('evaluated');
       var attachment_container_classes = new_pgp_messages.get(0).classList;
       var message_id = parse_message_id_from('attachment', this);
-      console.log(message_id);
       if(message_id) {
         $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
         chrome_message_send(null, 'list_pgp_attachments', {
