@@ -69,7 +69,15 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
   }, function(response) {
     if(response.success === true) {
       add_account_email_to_list_of_accounts(response.account_email, function() {
-        window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
+        account_storage_get(response.account_email, ['setup_done'], function(storage) {
+          if(storage.setup_done) { // this was just an additional permission
+            alert('You\'re all set.');
+            window.location = '/chrome/settings/index.htm?account_email=' + encodeURIComponent(response.account_email);
+          } else {
+            window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
+          }
+
+        });
       });
     } else if(response.success === false && response.result === 'denied' && response.error === 'access_denied') {
       if(account_email) {
