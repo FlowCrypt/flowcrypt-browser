@@ -1,13 +1,15 @@
 'use strict';
 
-function replace_pgp_elements(account_email, addresses, gmail_tab_id) {
+var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+
+function replace_pgp_elements(account_email, addresses, can_read_emails, gmail_tab_id) {
   // expected format <div id=":30" class="ii gt m15241dbd879bdfb4 adP adO"><div id=":2z" class="a3s" style="overflow: hidden;">-----BEGIN PGP MESSAGE-----<br>
   var new_pgp_block_found = replace_armored_pgp_messages(account_email, addresses, gmail_tab_id);
   if(new_pgp_block_found) {
     hide_translate_prompt();
   }
   replace_standard_reply_box(account_email, gmail_tab_id);
-  replace_pgp_attachments(account_email, gmail_tab_id);
+  replace_pgp_attachments(account_email, can_read_emails, gmail_tab_id);
   replace_pgp_pubkeys(account_email, gmail_tab_id);
   replace_cryptup_tags(account_email, gmail_tab_id);
   replace_reply_buttons(account_email, gmail_tab_id);
@@ -114,7 +116,7 @@ function parse_message_id_from(element_type, my_element) {
   return message_id;
 }
 
-function replace_pgp_attachments(account_email, gmail_tab_id) {
+function replace_pgp_attachments(account_email, can_read_emails, gmail_tab_id) {
   $('div.aQH').each(function() {
     var new_pgp_messages = $(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').not('.evaluated');
     if(new_pgp_messages.length) {
@@ -122,18 +124,28 @@ function replace_pgp_attachments(account_email, gmail_tab_id) {
       var attachment_container_classes = new_pgp_messages.get(0).classList;
       var message_id = parse_message_id_from('attachment', this);
       if(message_id) {
-        $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
-        chrome_message_send(null, 'list_pgp_attachments', {
-          account_email: account_email,
-          message_id: message_id,
-        }, function(response) {
-          if(response.success && response.attachments) {
-            replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments, gmail_tab_id);
-          } else {
-            //todo: show button to retry
-          }
-        });
-        $(this).addClass('message_id_' + message_id);
+        if(can_read_emails) {
+          $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
+          $(this).addClass('message_id_' + message_id);
+          chrome_message_send(null, 'list_pgp_attachments', {
+            account_email: account_email,
+            message_id: message_id,
+          }, function(response) {
+            if(response.success && response.attachments) {
+              replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments, gmail_tab_id);
+            } else {
+              //todo: show button to retry
+            }
+          });
+        } else {
+          $(new_pgp_messages).prepend('<div class="attachment_loader">Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>');
+          $('.auth_settings').click(function() {
+            chrome_message_send(null, 'settings', {
+              account_email: account_email,
+              page: '/chrome/settings/modules/auth_denied.htm',
+            });
+          });
+        }
       }
     }
   });

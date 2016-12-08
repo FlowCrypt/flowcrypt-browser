@@ -80,15 +80,16 @@ function record_active_window() {
 }
 
 function start() {
-  account_storage_get(account_email, ['addresses'], function(storage) {
+  account_storage_get(account_email, ['addresses', 'google_token_scopes'], function(storage) {
     var addresses = storage.addresses || [account_email];
+    var can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
     chrome_message_get_tab_id(function(tab_id) {
       tab_id_global = tab_id;
       inject_buttons(account_email, tab_id);
       show_initial_notifications(account_email);
-      replace_pgp_elements(account_email, addresses, tab_id);
+      replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
       setInterval(function() {
-        replace_pgp_elements(account_email, addresses, tab_id);
+        replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
       }, 1000);
     });
   });
