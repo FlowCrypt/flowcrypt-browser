@@ -6,7 +6,7 @@ var auth_responders = [];
 
 function google_auth(auth_request, sender, respond) {
   account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function(storage) {
-    if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || has_new_scope(auth_request.scopes, storage.google_token_scopes)) {
+    if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
       google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
     } else {
       google_auth_refresh_token(storage.google_token_refresh, function(tokens_object) {
@@ -26,12 +26,12 @@ function google_auth(auth_request, sender, respond) {
   });
 }
 
-function has_new_scope(new_scopes, original_scopes) {
-  if(!(new_scopes || []).length) { // no new scopes
-    return false;
-  }
+function has_new_scope(new_scopes, original_scopes, omit_read_scope) {
   if(!(original_scopes || []).length) { // no original scopes
     return true;
+  }
+  if(!(new_scopes || []).length) { // no new scopes specified
+    return(original_scopes.length === 2 && !omit_read_scope); // however, previously there were only two of three scopes, and third was not omitted this time
   }
   for(var i = 0; i < new_scopes.length; i++) {
     if(original_scopes.indexOf(new_scopes[i]) === -1) {

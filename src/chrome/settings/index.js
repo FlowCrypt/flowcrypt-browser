@@ -23,12 +23,16 @@ chrome_message_get_tab_id(function(tab_id) {
     },
     open_google_auth_dialog: function(data) {
       $('.featherlight-close').click();
-      new_account_authentication_prompt(undefined, (data || {}).omit_read_scope);
+      new_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
     },
   }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
-  if(url_params.page && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
-    show_settings_page(url_params.page);
+  if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
+    if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
+      show_settings_page(url_params.page, '&use_account_email=1');
+    } else {
+      show_settings_page(url_params.page);
+    }
   }
 });
 
@@ -68,7 +72,11 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
         window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
       });
     } else if(response.success === false && response.result === 'denied' && response.error === 'access_denied') {
-      show_settings_page('/chrome/settings/modules/auth_denied.htm');
+      if(account_email) {
+        show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
+      } else {
+        show_settings_page('/chrome/settings/modules/auth_denied.htm');
+      }
     } else {
       console.log(response);
       alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
@@ -89,7 +97,11 @@ $('.show_settings_page').click(function() {
   show_settings_page($(this).attr('page'));
 });
 
-function show_settings_page(page) {
+$('.action_go_auth_denied').click(function() {
+  show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
+});
+
+function show_settings_page(page, add_url_text) {
   if(page !== '/chrome/gmail_elements/new_message.htm') {
     var width = Math.min(800, $('body').width() - 200);
     var variant = null;
@@ -98,7 +110,7 @@ function show_settings_page(page) {
     var variant = 'new_message_featherlight';
   }
   $.featherlight({
-    iframe: page + '?account_email=' + encodeURIComponent(url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(tab_id_global),
+    iframe: page + '?account_email=' + encodeURIComponent(url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(tab_id_global) + (add_url_text || ''),
     iframeWidth: width,
     iframeHeight: $('body').height() - 150,
     variant: variant,
