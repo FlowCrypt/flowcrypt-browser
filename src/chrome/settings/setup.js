@@ -23,6 +23,7 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
       $('#step_2a_manual_create .input_submit_all, #step_2b_manual_enter .input_submit_all').prop('checked', true);
     }
   }
+
   function save_and_fill_submit_option(addresses) {
     account_storage_set(url_params.account_email, {
       addresses: addresses
@@ -79,14 +80,23 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     } else {
       get_pubkeys([url_params.account_email], function(pubkeys) {
         if(pubkeys && pubkeys[0] && pubkeys[0].pubkey) {
-          fetch_email_key_backups(url_params.account_email, function(success, keys) {
-            if(success && keys) {
-              display_block('step_2_recovery');
-              recovered_keys = keys;
+          if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+            fetch_email_key_backups(url_params.account_email, function(success, keys) {
+              if(success && keys) {
+                display_block('step_2_recovery');
+                recovered_keys = keys;
+              } else {
+                display_block('step_0_found_key');
+              }
+            });
+          } else { // cannot read gmail to find a backup
+            if(pubkeys[0].has_cryptup) {
+              display_block('step_2b_manual_enter');
+              $('#step_2b_manual_enter').prepend('<div class="line red">Because of missing Gmail permission, CryptUP can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUP Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
             } else {
-              display_block('step_0_found_key');
+              display_block('step_1_easy_or_manual');
             }
-          });
+          }
         } else {
           display_block('step_1_easy_or_manual');
         }
@@ -222,6 +232,9 @@ $('.action_simple_setup').click(function() {
 $('.action_manual_setup').click(function() {
   display_block('step_2_manual');
   $('h1').text('Advanced Setup');
+  if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+
+  }
 });
 
 $('.back').off().click(function() {
