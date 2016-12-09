@@ -253,9 +253,6 @@ $('.action_simple_setup').click(function() {
 $('.action_manual_setup').click(function() {
   display_block('step_2_manual');
   $('h1').text('Advanced Setup');
-  if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
-
-  }
 });
 
 $('.back').off().click(function() {
