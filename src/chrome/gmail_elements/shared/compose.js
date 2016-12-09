@@ -739,6 +739,13 @@ $('.use_question').click(function() {
   resize_reply_box();
 });
 
+$('.action_feedback').click(function() {
+  chrome_message_send(null, 'settings', {
+    account_email: compose_url_params.account_email,
+    page: '/chrome/settings/modules/help.htm',
+  });
+});
+
 function compose_on_render() {
   $('#input_to').keydown(respond_to_input_hotkeys);
   $('#input_to').keyup(render_receivers);

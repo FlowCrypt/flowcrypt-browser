@@ -109,22 +109,6 @@ $('.action_go_auth_denied').click(function() {
   show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
 });
 
-function show_settings_page(page, add_url_text) {
-  if(page !== '/chrome/gmail_elements/new_message.htm') {
-    var width = Math.min(800, $('body').width() - 200);
-    var variant = null;
-  } else {
-    var width = 542;
-    var variant = 'new_message_featherlight';
-  }
-  $.featherlight({
-    iframe: page + '?account_email=' + encodeURIComponent(url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(tab_id_global) + (add_url_text || ''),
-    iframeWidth: width,
-    iframeHeight: $('body').height() - 150,
-    variant: variant,
-  });
-}
-
 $('.action_add_account').click(function() {
   new_account_authentication_prompt();
 });

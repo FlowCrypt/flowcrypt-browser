@@ -1,6 +1,14 @@
 'use strict';
 
+var settings_url_params = get_url_params(['account_email']);
+var settings_tab_id_global = undefined;
+
 var recovery_email_subjects = ['Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
+
+chrome_message_get_tab_id(function(tab_id) {
+  settings_tab_id_global = tab_id;
+});
+
 
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
@@ -217,4 +225,20 @@ function openpgp_key_encrypt(key, passphrase) {
   } else {
     throw new Error("Nothing to decrypt in a public key");
   }
+}
+
+function show_settings_page(page, add_url_text) {
+  if(page !== '/chrome/gmail_elements/new_message.htm') {
+    var width = Math.min(800, $('body').width() - 200);
+    var variant = null;
+  } else {
+    var width = 542;
+    var variant = 'new_message_featherlight';
+  }
+  $.featherlight({
+    iframe: page + '?account_email=' + encodeURIComponent(settings_url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(settings_tab_id_global) + (add_url_text || ''),
+    iframeWidth: width,
+    iframeHeight: $('html').height() - 150,
+    variant: variant,
+  });
 }

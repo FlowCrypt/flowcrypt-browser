@@ -9,6 +9,20 @@ $('.back').css('visibility', 'hidden');
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var recovered_keys = undefined;
 var recovery_attempts = 0;
+var tab_id_global = undefined;
+
+chrome_message_get_tab_id(function(tab_id) {
+  tab_id_global = tab_id;
+
+  chrome_message_listen({
+    close_page: function() {
+      $('.featherlight-close').click();
+    },
+    notification_show: function(data) {
+      alert(data.notification);
+    },
+  }, tab_id_global);
+});
 
 // show alternative account addresses in setup form + save them for later
 account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes'], function(storage) {
@@ -211,6 +225,10 @@ function get_and_save_userinfo(account_email, callback) {
   });
 
 }
+
+$('.action_show_help').click(function() {
+  show_settings_page('/chrome/settings/modules/help.htm');
+});
 
 $('.action_simple_setup').click(function() {
   if($(this).parents('.manual').length) {
