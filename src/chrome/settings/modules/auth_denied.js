@@ -5,6 +5,14 @@ if(!url_params.use_account_email) {
   url_params.account_email = undefined;
 }
 
+if(!url_params.account_email) {
+  render_setup_done(false);
+} else {
+  account_storage_get(url_params.account_email, ['setup_done'], function(storage) {
+    render_setup_done(storage.setup_done);
+  });
+}
+
 $('.action_auth_proceed').click(function() {
   chrome_message_send(url_params.parent_tab_id, 'open_google_auth_dialog', {
     account_email: url_params.account_email,
@@ -21,3 +29,11 @@ $('.auth_action_limited').click(function() {
 $('.close_page').click(function() {
   chrome_message_send(url_params.parent_tab_id, 'close_page');
 });
+
+function render_setup_done(setup_done) {
+  if(setup_done) {
+    $('.show_if_setup_done').css('display', 'block');
+  } else {
+    $('.show_if_setup_not_done').css('display', 'block');
+  }
+}
