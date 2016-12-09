@@ -66,7 +66,7 @@ body#settings > div#content.setup div.manual div.line_container { width: 534px; 
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
 body#settings > div#content.setup div.manual label { padding-left: 20px;  }
-body#settings > div#content.setup div.manual .ion-android-lock { color: rgba(0,0,0,0.25); font-size: 20px; margin-right: 10px; margin-top: 4px;}
+body#settings > div#content.setup div.manual .ion-android-lock { color: rgba(0,0,0,0.25); font-size: 20px; position: absolute; left: 70px; top: 24px; }
 body#settings > div#content.setup div.action_save_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.action_create_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
