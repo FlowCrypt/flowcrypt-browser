@@ -1,3 +1,6 @@
+<b>version 2.5.1 on December 8, 2016: Draft saving</b>
+composing: fixed bug preventing drafts from saving
+
 <b>version 2.5.0 on December 8, 2016: Optional permissions</b>
 setup: some gmail permissions are now optional
 setup: closing auth window acts same as clicking Deny
