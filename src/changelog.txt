@@ -1,3 +1,8 @@
+<b>version 2.5.0 on December 8, 2016: Optional permissions</b>
+setup: some gmail permissions are now optional
+setup: closing auth window acts same as clicking Deny
+composing: added help buttons
+
 <b>version 2.4.6 on December 6, 2016: Google Auth UX</b>
 composing: secure compose window to fit small screens
 setup: a popup explaining needed permissions when denied
