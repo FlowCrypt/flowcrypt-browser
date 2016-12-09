@@ -25,9 +25,9 @@ var l = {
 account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks'], function(storage) {
   my_addresses_on_pks = storage.addresses_pks || [];
   if(typeof storage.google_token_scopes === 'undefined') {
-    var can_search_contacts = false;
-    var can_save_drafts = false;
-    var can_read_emails = false;
+    can_search_contacts = false;
+    can_save_drafts = false;
+    can_read_emails = false;
   } else {
     if(storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
       can_search_contacts = false;
