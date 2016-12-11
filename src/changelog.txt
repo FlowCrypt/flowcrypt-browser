@@ -1,3 +1,9 @@
+<b>version 2.5.4 on December 11, 2016: Drafts and bugs</b>
+composing: drafts will remember to and from fields
+composing: drafts will always have a clickable link
+composing: preventing multiple compose buttons from showing
+setup: help button moved to prevent accidental clicks
+
 <b>version 2.5.3 on December 10, 2016: Uninstall feedback</b>
 request feedback when someone uninstalls the app
 
