@@ -48,8 +48,8 @@ body#settings > div#content .ion-ios-arrow-left { position: absolute; left: 20px
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
 body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 3px; position: relative; top: 5px; width: 35px; height: 35px; border: 1px solid #ccc; border-radius: 120px; color: #ccc;}
 
-body#settings > .action_show_help { -webkit-animation: fadeInUp 2s; position: fixed; bottom: 0; margin-bottom: 30px; text-align: center;
-  right: 0; left: 0; font-weight: 600; color: #337ab7; text-decoration: none; font-size: 15px; }
+body#settings .action_show_help { -webkit-animation: fadeInDown 3s; font-weight: 600; color: #337ab7; text-decoration: none; font-size: 13px; position: absolute; top: 50px;
+    margin-left: 245px; }
 body#settings > .action_show_help:hover { text-decoration: underline; }
 body#settings > div#content.setup [id^="step_"] { animation: fadeIn .7s;}
 body#settings > div#content.setup h1 {-webkit-animation: fadeIn .7s;}
