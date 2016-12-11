@@ -6,6 +6,7 @@ var url_params = get_url_params(['account_email', 'frame_id', 'message', 'questi
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var ready_attachmments = [];
+var height_history = [];
 
 var passphrase_interval = undefined;
 
@@ -39,12 +40,28 @@ function format_plaintext(text) {
 }
 
 function send_resize_message() {
-  chrome_message_send(url_params.parent_tab_id, 'set_css', {
-    selector: 'iframe#' + url_params.frame_id,
-    css: {
-      height: $('#pgp_block').height() + 40
+  var new_height = $('#pgp_block').height() + 40;
+
+  function is_infinite_resize_loop() {
+    height_history.push(new_height);
+    var len = height_history.length;
+    if(len < 4) {
+      return false;
     }
-  });
+    if(height_history[len - 1] === height_history[len - 3] && height_history[len - 2] === height_history[len - 4] && height_history[len - 1] !== height_history[len - 2]) {
+      console.log('pgp_block.js: repetitive resize loop prevented'); //got repetitive, eg [70, 80, 200, 250, 200, 250]
+      new_height = Math.max(height_history[len - 1], height_history[len - 2]);
+    }
+  }
+
+  if(!is_infinite_resize_loop()) {
+    chrome_message_send(url_params.parent_tab_id, 'set_css', {
+      selector: 'iframe#' + url_params.frame_id,
+      css: {
+        height: new_height,
+      }
+    });
+  }
 }
 
 function render_content(content, is_error, callback) {
