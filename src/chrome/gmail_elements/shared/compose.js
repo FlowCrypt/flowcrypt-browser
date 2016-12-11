@@ -110,7 +110,7 @@ function draft_meta_store(store_if_true, draft_id, thread_id, recipients, subjec
   });
 }
 
-function draft_save() {
+function draft_save(force_save) {
   function set_note(result) {
     if(result) {
       $('#send_btn_note').text('Saved');
@@ -118,7 +118,7 @@ function draft_save() {
       $('#send_btn_note').text('Not saved');
     }
   }
-  if(can_save_drafts && should_save_draft($('#input_text').text())) {
+  if(can_save_drafts && (should_save_draft($('#input_text').text()) || force_save === true)) {
     save_draft_in_process = true;
     $('#send_btn_note').text('Saving');
     var armored_pubkey = private_storage_get(localStorage, compose_url_params.account_email, 'master_public_key');
@@ -142,8 +142,14 @@ function draft_save() {
               draft_id = response.id;
               draft_message_id = response.message.id;
               draft_meta_store(true, response.id, compose_url_params.thread_id, get_recipients_from_dom(), $('#input_subject'));
+              // recursing one more time, because we need the draft_id we get from this reply in the message itself
+              // essentially everytime we save draft for the first time, we have to save it twice
+              // save_draft_in_process will remain true because well.. it's still in process
+              draft_save(true); // force_save = true
+            } else {
+              // it will only be set to false (done) if it's a failure (only in terms of the very first save)
+              save_draft_in_process = false;
             }
-            save_draft_in_process = false;
           });
         } else {
           gmail_api_draft_update(compose_url_params.account_email, draft_id, mime_message, function(success, response) {
