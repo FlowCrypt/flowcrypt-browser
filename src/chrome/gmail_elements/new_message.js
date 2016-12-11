@@ -27,10 +27,11 @@ if(url_params.draft_id) {
       draft_set_id(url_params.draft_id);
       parse_mime_message(base64url_decode(response.message.raw), function(mime_success, parsed_message) {
         if(success) {
+          var draft_headers = mime_headers_to_from(parsed_message);
           if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
             var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
             $('#input_subject').val(parsed_message.headers.subject || '');
-            decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----'))); // todo - regex is better than random clipping
+            decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), undefined, draft_headers);
           } else {
             console.log('gmail_api_draft_get parse_mime_message else {}');
           }
@@ -58,7 +59,9 @@ function send_btn_click() {
     to_mime(url_params.account_email, encrypted_message_body, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
         if(success) {
-          chrome_message_send(url_params.parent_tab_id, 'notification_show', {notification: 'Your message has been sent.'});
+          chrome_message_send(url_params.parent_tab_id, 'notification_show', {
+            notification: 'Your message has been sent.'
+          });
           draft_delete(url_params.account_email, new_message_close);
         } else {
           handle_send_message_error(response);

@@ -181,7 +181,7 @@ function draft_delete(account_email, callback) {
   });
 }
 
-function decrypt_and_render_draft(account_email, encrypted_draft, render_function) {
+function decrypt_and_render_draft(account_email, encrypted_draft, render_function, headers) {
   var my_passphrase = get_passphrase(account_email);
   if(my_passphrase !== null) {
     var private_key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
@@ -194,6 +194,14 @@ function decrypt_and_render_draft(account_email, encrypted_draft, render_functio
       privateKey: private_key,
     }).then(function(plaintext) {
       $('#input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
+      if(headers.to.length) {
+        $('#input_to').focus();
+        $('#input_to').val(headers.to.join(','));
+        $('#input_text').focus();
+      }
+      if(headers.from) {
+        $('#input_from').val(headers.from);
+      }
       if(render_function) {
         render_function();
       }

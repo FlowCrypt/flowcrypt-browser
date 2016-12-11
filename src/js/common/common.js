@@ -25,7 +25,7 @@ function unique(array) {
 function to_array(obj) { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
   var array = [];
   // iterate backwards ensuring that length is an UInt32
-  for (var i = obj.length >>> 0; i--;) {
+  for(var i = obj.length >>> 0; i--;) {
     array[i] = obj[i];
   }
   return array;
@@ -117,6 +117,25 @@ function mime_node_filename(node) {
   if(node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
     return node.headers['content-disposition'][0].params.name;
   }
+}
+
+function mime_headers_to_from(parsed_mime_message) {
+  var header_to = [];
+  var header_from = undefined;
+  if(parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
+    var header_from = parsed_mime_message.headers.from[0].address;
+  }
+  if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
+    $.each(parsed_mime_message.headers.to, function(i, to) {
+      if(to.address) {
+        header_to.push(to.address);
+      }
+    });
+  }
+  return {
+    from: header_from,
+    to: header_to,
+  };
 }
 
 function parse_mime_message(mime_message, callback) {
@@ -464,7 +483,7 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
       if(processed.indexOf(request.uid) === -1) {
         processed.push(request.uid);
         if(typeof handlers[request.name] !== 'undefined') {
-            handlers[request.name](request.data, sender, respond);
+          handlers[request.name](request.data, sender, respond);
         } else {
           throw 'chrome_message_listen error: handler "' + request.name + '" not set';
         }
