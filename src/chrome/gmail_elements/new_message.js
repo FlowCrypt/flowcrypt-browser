@@ -62,7 +62,7 @@ function send_btn_click() {
           chrome_message_send(url_params.parent_tab_id, 'notification_show', {
             notification: 'Your message has been sent.'
           });
-          draft_delete(url_params.account_email, new_message_close);
+          draft_delete(url_params.account_email, increment_metric('compose', new_message_close));
         } else {
           handle_send_message_error(response);
         }

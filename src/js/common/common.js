@@ -437,6 +437,28 @@ function check_pubkeys_keyserver(account_email, callback) {
 RegExp.escape = function(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
+
+/* -------------------- METRICS ----------------------------------------------------*/
+
+function increment_metric(type, callback) {
+  if(['compose', 'view', 'reply', 'attach', 'download', 'setup'].indexOf(type) === -1) {
+    console.log('Unknown metric type"' + type + '"');
+  }
+  account_storage_get(null, ['metrics'], function(storage) {
+    if(!storage.metrics) {
+      storage.metrics = {};
+    }
+    if(!storage.metrics[type]) {
+      storage.metrics[type] = 1;
+    } else {
+      storage.metrics[type] += 1;
+    }
+    account_storage_set(null, {
+      metrics: storage.metrics,
+    }, callback);
+  });
+}
+
 /* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */
 
 var background_script_shortcut_handlers = undefined;

@@ -103,7 +103,6 @@ function fetch_email_key_backups(account_email, callback) {
     '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
     '-is:spam',
   ];
-  console.log(q.join(' '));
   gmail_api_message_list(account_email, q.join(' '), true, function(success, response) {
     if(success) {
       if(response.messages) {

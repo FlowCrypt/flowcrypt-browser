@@ -10,6 +10,8 @@ var height_history = [];
 
 var passphrase_interval = undefined;
 
+increment_metric('view');
+
 var l = {
   cant_open: 'Could not open this message with CryptUP.\n\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',

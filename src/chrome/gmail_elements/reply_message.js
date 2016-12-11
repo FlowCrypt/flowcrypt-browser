@@ -157,7 +157,9 @@ function send_btn_click() {
     to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function(success, response) {
         if(success) {
-          reply_message_render_success(headers.To, (attachments || []).length > 0, response.id);
+          increment_metric('reply', function() {
+            reply_message_render_success(headers.To, (attachments || []).length > 0, response.id);
+          });
         } else {
           handle_send_message_error(response);
         }

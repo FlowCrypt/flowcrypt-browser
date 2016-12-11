@@ -54,6 +54,7 @@ function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
 }
 
 function process_new_attachment(id, name) {
+  increment_metric('attach');
   var file = uploader.getFile(id);
   if(false) { //check size
     uploader.cancel(id);

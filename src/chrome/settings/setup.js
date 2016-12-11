@@ -123,6 +123,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
 }
 
 function setup_dialog_set_done(key_backup_prompt, setup_simple) {
+  increment_metric('setup');
   var storage = {
     setup_done: true,
     setup_simple: setup_simple,
