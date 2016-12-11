@@ -2,6 +2,8 @@
 
 console.log('background_process.js starting');
 
+chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm');
+
 chrome_message_background_listen({
   migrate: migrate,
   google_auth: google_auth,
