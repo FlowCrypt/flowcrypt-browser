@@ -1,3 +1,6 @@
+<b>version 2.5.2 on December 10, 2016: Scrollbar flashing fix</b>
+reading: fixed scrollbar flashing when reading messages
+
 <b>version 2.5.1 on December 8, 2016: Draft saving</b>
 composing: fixed bug preventing drafts from saving
 
