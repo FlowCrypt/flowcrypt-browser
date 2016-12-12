@@ -1,10 +1,12 @@
 
 /* buttons */
-div.new_message_button { background: #31A217; }
+div.new_message_button { border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; height: 27px;
+  line-height: 27px; outline: 0; padding: 0 8px; display: inline-block; position: relative; user-select: none; color: #fff; border: 1px solid transparent;
+  min-width: 97px; margin-right: 0; background: #31A217; }
 div.reply_message_button { min-width: 30px; background: #31A217; color: white; font-size: 15px; -webkit-transition: .4s; transition: .4s; padding: 7px 8px 5px 8px;
-  cursor: pointer; border-radius: 2px; }
+  cursor: pointer; border-radius: 2px; border: 1px solid transparent; }
 div.reply_message_button i { margin-right: 12px; }
-div.new_message_button:hover, div.reply_message_button:hover { background: #31A217; color: #f3f3f3; opacity: 1; }
+div.new_message_button:hover, div.reply_message_button:hover { background-color: #2f9f17; color: white; opacity: 1; border: 1px solid #777;}
 
 center.gmail_notifications { position: absolute; top: 0px; left: 0px; width: 100%; z-index: 999; height: 1px; }
 center.gmail_notifications div.gmail_notification { background-color: rgb(249, 237, 190); border: 1px solid rgb(240, 195, 109); border-radius: 2px;
