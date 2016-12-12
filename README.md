@@ -1,3 +1,4 @@
 # CryptUP: Encrypt Gmail with PGP
 
-Chrome Plugin available to download at https://chrome.google.com/webstore/detail/bnjglocicdkmhmoohhfkfkbbkejdhdgc/
+
+[CryptUP](https://cryptup.org/) Chrome plugin available at: https://chrome.google.com/webstore/detail/bnjglocicdkmhmoohhfkfkbbkejdhdgc/
