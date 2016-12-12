@@ -1,3 +1,7 @@
+<b>version 2.5.5 on December 11, 2016: Typo and compatibility</b>
+composing: fixed typos in compose ui
+composing: improved compatibility with other installed gmail plugins
+
 <b>version 2.5.4 on December 11, 2016: Drafts and bugs</b>
 composing: drafts will remember to and from fields
 composing: drafts will always have a clickable link
