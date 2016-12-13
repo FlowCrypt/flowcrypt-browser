@@ -73,6 +73,15 @@ $('.action_change').click(prevent(doubleclick(), function(self) {
     }
     private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true);
     private_storage_set(localStorage, url_params.account_email, 'master_private_key', prv.armor());
-    display_block('step_3_done');
+    // pass phrase change done in the plugin itself.
+    // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
+    account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {
+      if(storage.setup_simple) {
+        show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
+      } else {
+        alert('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
+        show_settings_page('/chrome/settings/modules/backup.htm', '&action=options');
+      }
+    });
   }
 }));

@@ -14,6 +14,27 @@ account_storage_get(url_params.account_email, ['setup_simple'], function(storage
       display_block('step_3_manual');
       $('h1').text('Back up your private key');
     }
+  } else if(url_params.action === 'passphrase_change_gmail_backup') {
+    if(storage.setup_simple) {
+      display_block('loading');
+      var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+      backup_key_on_gmail(url_params.account_email, armored_private_key, function(success) {
+        if(success) {
+          $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
+        } else {
+          $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
+          $('.reload').click(function() {
+            window.location.reload();
+          });
+        }
+      });
+    } else { // should never happen on this action. Just in case.
+      display_block('step_3_manual');
+      $('h1').text('Back up your private key');
+    }
+  } else if(url_params.action === 'options') {
+    display_block('step_3_manual');
+    $('h1').text('Back up your private key');
   } else {
     show_status();
   }
@@ -172,7 +193,7 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
         write_backup_done_and_render(false, 'gmail');
       } else {
         $(self).html(btn_text);
-        alert('Need internet connection to finish. Please clicking the button again to retry.');
+        alert('Need internet connection to finish. Please click the button again to retry.');
       }
     });
   }
@@ -199,7 +220,7 @@ function backup_on_gmail() {
         write_backup_done_and_render(false, 'gmail');
       } else {
         $(self).html(btn_text);
-        alert('Need internet connection to finish. Please clicking the button again to retry.');
+        alert('Need internet connection to finish. Please click the button again to retry.');
       }
     });
   }
