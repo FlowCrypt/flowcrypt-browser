@@ -7,6 +7,9 @@ function replace_pgp_elements(account_email, addresses, can_read_emails, gmail_t
   var new_pgp_block_found = replace_armored_pgp_messages(account_email, addresses, gmail_tab_id);
   if(new_pgp_block_found) {
     hide_translate_prompt();
+    if(page_refresh_needed()) {
+      show_page_refresh_notification();
+    }
   }
   replace_standard_reply_box(account_email, gmail_tab_id);
   replace_pgp_attachments(account_email, can_read_emails, gmail_tab_id);

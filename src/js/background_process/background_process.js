@@ -11,6 +11,9 @@ chrome_message_background_listen({
   gmail_auth_code_result: google_auth_window_result_handler,
   list_pgp_attachments: list_pgp_attachments,
   settings: open_settings_page_handler,
+  ping: function(message, sender, respond) {
+    respond(true);
+  },
 });
 
 if(!localStorage.settings_seen) {

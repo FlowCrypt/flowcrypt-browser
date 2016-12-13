@@ -23,7 +23,7 @@ function gmail_notification_show(text, callbacks) {
   if(!callbacks) {
     callbacks = {};
   }
-  if('close' in callbacks) {
+  if(typeof callbacks.close !== 'undefined') {
     var original_close_callback = callbacks.close;
     callbacks.close = function() {
       original_close_callback();
@@ -31,6 +31,11 @@ function gmail_notification_show(text, callbacks) {
     }
   } else {
     callbacks.close = gmail_notification_clear;
+  }
+  if(typeof callbacks.reload === 'undefined') {
+    callbacks.reload = function() {
+      window.location.reload();
+    };
   }
   $.each(callbacks, function(name, callback) {
     $('.gmail_notifications a.' + name).click(prevent(doubleclick(), callback));

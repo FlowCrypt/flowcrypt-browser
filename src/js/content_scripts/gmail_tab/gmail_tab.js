@@ -79,6 +79,19 @@ function record_active_window() {
   $(window).unload(record_reset);
 }
 
+function page_refresh_needed() {
+  try {
+    chrome_message_send(null, 'ping');
+    return false;
+  } catch(e) {
+    return true;
+  }
+}
+
+function show_page_refresh_notification() {
+  gmail_notification_show('Please <a href="#" class="reload">refresh your page</a> to use encrypted functionality. <a href="#" class="close">later</a>');
+}
+
 function start() {
   account_storage_get(account_email, ['addresses', 'google_token_scopes'], function(storage) {
     var addresses = storage.addresses || [account_email];
