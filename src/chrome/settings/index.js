@@ -153,7 +153,7 @@ get_account_emails(function(account_emails) {
 function menu_account_html(email, photo) {
   return [
     '<div class="row alt-accounts action_select_account">',
-    '  <div class="col-sm-10 email-address">',
+    '  <div class="col-sm-10">',
     '    <div class="row contains_email">' + email + '</div>',
     '  </div>',
     // '  <div class="col-sm-1 "><img class="profile-img " src="" alt=""></div>',
