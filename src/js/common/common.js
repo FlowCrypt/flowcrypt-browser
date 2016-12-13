@@ -510,10 +510,10 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
           throw 'chrome_message_listen error: handler "' + request.name + '" not set';
         }
       } else {
-        console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
+        // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
       }
     } else {
-      console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
+      // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
     }
     return request.respondable === true;
   });
