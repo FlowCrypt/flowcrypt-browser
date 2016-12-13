@@ -68,7 +68,3 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
     $('.summary').html('Failed to load due to internet connection, please refresh the page.');
   }
 });
-
-$('.back').off().click(function() {
-  window.location = 'account.htm?account_email=' + encodeURIComponent(url_params.account_email);
-});

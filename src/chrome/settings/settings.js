@@ -1,6 +1,6 @@
 'use strict';
 
-var settings_url_params = get_url_params(['account_email']);
+var settings_url_params = get_url_params(['account_email', 'parent_tab_id', 'embedded']);
 var settings_tab_id_global = undefined;
 
 var recovery_email_subjects = ['Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
@@ -227,17 +227,28 @@ function openpgp_key_encrypt(key, passphrase) {
 }
 
 function show_settings_page(page, add_url_text) {
-  if(page !== '/chrome/gmail_elements/new_message.htm') {
-    var width = Math.min(800, $('body').width() - 200);
-    var variant = null;
-  } else {
-    var width = 542;
-    var variant = 'new_message_featherlight';
+  var new_location = page + '?account_email=' + encodeURIComponent(settings_url_params.account_email) + '&placement=settings';
+  new_location += '&parent_tab_id=' + encodeURIComponent(settings_url_params.parent_tab_id || settings_tab_id_global) + (add_url_text || '');
+  if(settings_url_params.embedded) { //embedded on the main page
+    chrome_message_send(settings_tab_id_global, 'open_page', {
+      page: page,
+      add_url_text: add_url_text,
+    });
+  } else if(!settings_url_params.parent_tab_id) { // on a main page
+    if(page !== '/chrome/gmail_elements/new_message.htm') {
+      var width = Math.min(800, $('body').width() - 200);
+      var variant = null;
+    } else {
+      var width = 542;
+      var variant = 'new_message_featherlight';
+    }
+    $.featherlight({
+      iframe: new_location,
+      iframeWidth: width,
+      iframeHeight: $('html').height() - 150,
+      variant: variant,
+    });
+  } else { // on a sub page/module page, inside a lightbox. Just change location.
+    window.location = new_location;
   }
-  $.featherlight({
-    iframe: page + '?account_email=' + encodeURIComponent(settings_url_params.account_email) + '&placement=settings&parent_tab_id=' + encodeURIComponent(settings_tab_id_global) + (add_url_text || ''),
-    iframeWidth: width,
-    iframeHeight: $('html').height() - 150,
-    variant: variant,
-  });
 }

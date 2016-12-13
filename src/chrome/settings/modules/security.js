@@ -1,4 +1,4 @@
-var url_params = get_url_params(['account_email', 'embedded']);
+var url_params = get_url_params(['account_email', 'embedded', 'parent_tab_id']);
 url_params.embedded = Boolean(Number(url_params.embedded));
 
 if(url_params.embedded) {
@@ -10,7 +10,11 @@ if(!private_storage_get(localStorage, url_params.account_email, 'master_passphra
 }
 
 $('.action_change_passphrase').click(function() {
-  window.location = 'change_passphrase.htm?account_email=' + encodeURIComponent(url_params.account_email);
+  show_settings_page('/chrome/settings/modules/change_passphrase.htm');
+});
+
+$('.action_test_passphrase').click(function() {
+  show_settings_page('/chrome/settings/modules/test_passphrase.htm');
 });
 
 $('.confirm_passphrase_requirement_change').click(function() {

@@ -11,6 +11,9 @@ chrome_message_get_tab_id(function(tab_id) {
   tab_id_global = tab_id;
 
   chrome_message_listen({
+    open_page: function(data, sender, respond) {
+      show_settings_page(data.page, data.add_url_text);
+    },
     close_page: function() {
       $('.featherlight-close').click();
     },
@@ -27,6 +30,8 @@ chrome_message_get_tab_id(function(tab_id) {
     },
   }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
+  initialize();
+
   if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
     if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
       show_settings_page(url_params.page, '&use_account_email=1');
@@ -36,28 +41,30 @@ chrome_message_get_tab_id(function(tab_id) {
   }
 });
 
-if(url_params.account_email) {
-  $('.email-address').text(url_params.account_email);
-  $('#security_module').attr('src', 'modules/security.htm?embedded=1&account_email=' + encodeURIComponent(url_params.account_email));
-  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
-    if(storage.setup_done) {
-      if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) === -1) {
-        $('.auth_denied_warning').css('display', 'block');
+function initialize() {
+  if(url_params.account_email) {
+    $('.email-address').text(url_params.account_email);
+    $('#security_module').attr('src', 'modules/security.htm?embedded=1&account_email=' + encodeURIComponent(url_params.account_email) + '&parent_tab_id=' + tab_id_global);
+    account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
+      if(storage.setup_done) {
+        if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) === -1) {
+          $('.auth_denied_warning').css('display', 'block');
+        }
+        $('.hide_if_setup_not_done').css('display', 'block');
+        $('.show_if_setup_not_done').css('display', 'none');
+        var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+        $('.key_row_1 .key_id').text(prv.primaryKey.fingerprint.toUpperCase().substr(-8));
+        $('.key_row_1 .key_date').text(month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear());
+        $('.key_row_1 .key_user').text(prv.users[0].userId.userid);
+      } else {
+        $('.show_if_setup_not_done').css('display', 'block');
+        $('.hide_if_setup_not_done').css('display', 'none');
       }
-      $('.hide_if_setup_not_done').css('display', 'block');
-      $('.show_if_setup_not_done').css('display', 'none');
-      var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
-      $('.key_row_1 .key_id').text(prv.primaryKey.fingerprint.toUpperCase().substr(-8));
-      $('.key_row_1 .key_date').text(month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear());
-      $('.key_row_1 .key_user').text(prv.users[0].userId.userid);
-    } else {
-      $('.show_if_setup_not_done').css('display', 'block');
-      $('.hide_if_setup_not_done').css('display', 'none');
-    }
-  });
-} else {
-  $('.show_if_setup_not_done').css('display', 'block');
-  $('.hide_if_setup_not_done').css('display', 'none');
+    });
+  } else {
+    $('.show_if_setup_not_done').css('display', 'block');
+    $('.hide_if_setup_not_done').css('display', 'none');
+  }
 }
 
 
