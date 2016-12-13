@@ -131,33 +131,23 @@ $('.action_reset_password').click(function() {
   $('#password').focus();
 });
 
-function backup_key_on_gmail(account_email, armored_key, error_callback) {
+function backup_key_on_gmail(account_email, armored_key, callback) {
   var email_headers = {
     From: account_email,
     To: account_email,
     Subject: recovery_email_subjects[0],
   };
   $.get('/chrome/emails/email_intro.template.htm', null, function(email_message) {
-    $.get('/img/email/msg_new.png', null, function(msg_new_png) {
-      $.get('/img/email/msg_reply.png', null, function(msg_reply_png) {
-        var email_attachments = [{
-          filename: 'cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key',
-          type: 'text/plain',
-          content: armored_key,
+    var email_attachments = [{
+      filename: 'cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key',
+      type: 'text/plain',
+      content: armored_key,
         }];
-        var text = {
-          'text/html': email_message
-        };
-        to_mime(url_params.account_email, text, email_headers, email_attachments, function(mime_message) {
-          gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
-            if(success) { // todo - test pulling it and decrypting it right away
-              write_backup_done_and_render(false, 'gmail');
-            } else {
-              error_callback('Need internet connection to finish setting up your account. Please clicking the button again to retry.');
-            }
-          });
-        });
-      });
+    var text = {
+      'text/html': email_message
+    };
+    to_mime(url_params.account_email, text, email_headers, email_attachments, function(mime_message) {
+      gmail_api_message_send(url_params.account_email, mime_message, null, callback);
     });
   });
 }
@@ -177,9 +167,13 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
     private_storage_set(localStorage, url_params.account_email, 'master_passphrase', new_passphrase);
     private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true);
     private_storage_set(localStorage, url_params.account_email, 'master_private_key', prv.armor());
-    backup_key_on_gmail(url_params.account_email, prv.armor(), function(error_message) {
-      $(self).html(btn_text);
-      alert(error_message);
+    backup_key_on_gmail(url_params.account_email, prv.armor(), function(success) {
+      if(success) {
+        write_backup_done_and_render(false, 'gmail');
+      } else {
+        $(self).html(btn_text);
+        alert('Need internet connection to finish. Please clicking the button again to retry.');
+      }
     });
   }
 }));
@@ -200,9 +194,13 @@ function backup_on_gmail() {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
     var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
-    backup_key_on_gmail(url_params.account_email, armored_private_key, function(error_message) {
-      $(self).html(btn_text);
-      alert(error_message);
+    backup_key_on_gmail(url_params.account_email, armored_private_key, function(success) {
+      if(success) {
+        write_backup_done_and_render(false, 'gmail');
+      } else {
+        $(self).html(btn_text);
+        alert('Need internet connection to finish. Please clicking the button again to retry.');
+      }
     });
   }
 }
