@@ -39,7 +39,7 @@ function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
     $.each(attached_files, function(id, file) {
       var reader = new FileReader();
       reader.onload = function(data) {
-        encrypt(armored_pubkeys, challenge, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
+        encrypt(armored_pubkeys, null, challenge, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
           add({
             filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
             type: file.type,

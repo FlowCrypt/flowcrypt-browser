@@ -122,7 +122,7 @@ function draft_save(force_save) {
     save_draft_in_process = true;
     $('#send_btn_note').text('Saving');
     var armored_pubkey = private_storage_get(localStorage, compose_url_params.account_email, 'master_public_key');
-    encrypt([armored_pubkey], null, $('#input_text')[0].innerText, true, function(encrypted) {
+    encrypt([armored_pubkey], null, null, $('#input_text')[0].innerText, true, function(encrypted) {
       if(compose_url_params.thread_id) { // replied message
         var body = '[cryptup:link:draft_reply:' + compose_url_params.thread_id + ']\n\n' + encrypted.data;
       } else if(draft_id) {
@@ -223,7 +223,8 @@ function decrypt_and_render_draft(account_email, encrypted_draft, render_functio
   }
 }
 
-function encrypt(armored_pubkeys, challenge, data, armor, callback) {
+// to only sign, supply armored_pubkeys=[], challenge=null, signing_prv=decrypted key
+function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
   var options = {
     data: data,
     armor: armor,
@@ -240,12 +241,15 @@ function encrypt(armored_pubkeys, challenge, data, armor, callback) {
     used_challange = true;
   }
   if(!armored_pubkeys && !used_challange) {
-    alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or file a bug report if this happens repeatedly.');
+    alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
     throw "no-pubkeys-no-challenge";
+  }
+  if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
+    options.privateKeys = [signing_prv];
   }
   openpgp.encrypt(options).then(callback, function(error) {
     console.log(error);
-    alert('Error encrypting message, please try again. If you see this repeatedly, please file a bug report.');
+    alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
     //todo: make the UI behave well on errors
   });
 }
@@ -299,7 +303,7 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
               } else {
                 var sending = 'Sending';
               }
-              encrypt(armored_pubkeys, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
+              encrypt(armored_pubkeys, null, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
                 if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
                   encrypted.data += '\n\n\n\n' + private_storage_get(localStorage, url_params.account_email, 'master_public_key');
                 }
