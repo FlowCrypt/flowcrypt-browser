@@ -1,3 +1,8 @@
+<b>version 2.5.6 on December 14, 2016: Pass phrase change</b>
+setup: create a new backup on pass phrase change
+setup: smoother plugin update: prompt to refresh gmail
+composing: opened compose window won't close - bugfix
+
 <b>version 2.5.5 on December 11, 2016: Typo and compatibility</b>
 composing: fixed typos in compose ui
 composing: improved compatibility with other installed gmail plugins
