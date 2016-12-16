@@ -485,9 +485,6 @@ function chrome_message_get_tab_id(callback) {
 function chrome_message_background_listen(handlers) {
   background_script_shortcut_handlers = handlers;
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
-    handlers._tab_ = function(request, sender, respond) {
-      respond(sender.tab.id);
-    }
     if(request.to) {
       request.sender = sender;
       chrome.tabs.sendMessage(request.to, request, respond);
@@ -507,7 +504,11 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
         if(typeof handlers[request.name] !== 'undefined') {
           handlers[request.name](request.data, sender, respond);
         } else {
-          throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+          if(request.name !== '_tab_') {
+            throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+          } else {
+            // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
+          }
         }
       } else {
         // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');

@@ -14,6 +14,9 @@ chrome_message_background_listen({
   ping: function(message, sender, respond) {
     respond(true);
   },
+  _tab_: function(request, sender, respond) {
+    respond(sender.tab.id);
+  },
 });
 
 if(!localStorage.settings_seen) {
