@@ -18,7 +18,7 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
     $('.attests').html('Your email was attested by: <span class="green">' + storage.attests_processed.join(', ') + '</span>. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption.');
     hide_attest_button = true;
     $('.request_attest').css('visibility', 'hidden');
-  } else if (storage.attests_requested && storage.attests_requested.length) {
+  } else if(storage.attests_requested && storage.attests_requested.length) {
     $('.attests').html('Attestation was requested from: ' + storage.attests_requested.join(', ') + '. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption.');
     hide_attest_button = true;
     $('.request_attest').css('visibility', 'hidden');
@@ -28,7 +28,7 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
 $('.fix_all').click(prevent(doubleclick(), function(self) {
   $(self).html(get_spinner());
   account_storage_get(url_params.account_email, ['addresses'], function(storage) {
-    submit_pubkey_alternative_addresses(storage.addresses, private_storage_get(localStorage, url_params.account_email, 'master_public_key'), function() {
+    submit_pubkeys(storage.addresses, private_storage_get(localStorage, url_params.account_email, 'master_public_key'), function() {
       window.location.reload();
     });
   });
