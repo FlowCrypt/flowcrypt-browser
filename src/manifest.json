@@ -48,6 +48,7 @@
       "/js/common/storage.js",
       "/js/common/gmail_api.js",
       "/js/common/common.js",
+      "/js/background_process/attests.js",
       "/js/background_process/google_auth.js",
       "/js/background_process/migrations.js",
       "/js/background_process/background_process.js"

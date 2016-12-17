@@ -83,13 +83,39 @@ function evaluate_password_strength(parent_selector, input_selector, button_sele
   // });
 }
 
+function save_attest_request(account_email, attester, callback) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function(storage) {
+    if(typeof storage.attests_requested === 'undefined') {
+      storage.attests_requested = [attester];
+    } else {
+      storage.attests_requested.push(attester);
+    }
+    if(typeof storage.attests_processed === 'undefined') {
+      storage.attests_processed = [];
+    }
+    account_storage_set(account_email, storage, function() {
+      chrome_message_send(null, 'attest_requested', {
+        account_email: account_email,
+      }, callback);
+    });
+  });
+}
+
 function submit_pubkeys(addresses, pubkey, callback, success) {
   if(addresses.length) {
     if(typeof success === 'undefined') {
       success = true;
     }
-    keyserver_keys_submit(addresses.pop(), pubkey, function(key_submitted, response) {
-      submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+    var address = addresses.pop();
+    var attest = (address == settings_url_params.account_email); // only request attestation of main email
+    keyserver_keys_submit(address, pubkey, attest, function(key_submitted, response) {
+      if(attest && key_submitted) {
+        save_attest_request(settings_url_params.account_email, 'CRYPTUP', function() {
+          submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+        });
+      } else {
+        submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+      }
     });
   } else {
     callback(success);

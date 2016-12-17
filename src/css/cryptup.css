@@ -3,21 +3,22 @@
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; text-align: center; white-space: nowrap;
   min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 7px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
-.button.red { background-color: #d14836; }
 
-.button.green { background-color: #31A217; border:0 !important; }
-.button.gray { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top, #C9C9C9, #BFBFBF); }
-.button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444; }
-.button.small { padding: 0 7px; margin-top: 0; }
-.button_secure.green { background:  #31A217; }
-.line.red, td.red, b.red { color: #d14836; }
-.line.prange, td.orange, b.orange { color: #d18826; }
-.line.green, td.green, b.green { color: #31A217; }
+.line.red, td.red, b.red, span.red { color: #d14836; }
+.line.prange, td.orange, b.orange, span.orange { color: #d18826; }
+.line.green, td.green, b.green, span.green { color: #31A217; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 .green_label { color: white; background-color: #31A217; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
 .orange_label { color: white; background-color: #d18826; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
 .red_label { color: white; background-color: #d14836; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
+.button.red { background-color: #d14836; color: white;}
+.button.green { background-color: #31A217; border:0 !important; color: white; }
+.button.gray { background-color: #B9B9B9; background-image: -webkit-linear-gradient(top, #C9C9C9, #BFBFBF); color: white;}
+.button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444; color: white;}
+.button.small { padding: 0 7px; margin-top: 0; }
+.button_secure.green { background:  #31A217; }
+
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0px; margin-top: 0px; }

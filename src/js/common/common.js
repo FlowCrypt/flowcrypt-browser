@@ -438,6 +438,52 @@ RegExp.escape = function(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
+/* -------------------- CRYPTO ----------------------------------------------------*/
+
+function sign(signing_prv, data, armor, callback) {
+  var options = {
+    data: data,
+    armor: armor,
+    privateKeys: signing_prv,
+  };
+  openpgp.sign(options).then(callback, function(error) {
+    console.log(error); // todo - better handling. Alerts suck.
+    alert('Error signing message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
+  });
+}
+
+// to only sign, supply armored_pubkeys=[], challenge=null, signing_prv=decrypted key
+function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
+  var options = {
+    data: data,
+    armor: armor,
+  };
+  var used_challange = false;
+  if(armored_pubkeys) {
+    options.publicKeys = [];
+    $.each(armored_pubkeys, function(i, armored_pubkey) {
+      options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
+    });
+  }
+  if(challenge && challenge.question && challenge.answer) {
+    options.passwords = [challenge_answer_hash(challenge.answer)];
+    used_challange = true;
+  }
+  if(!armored_pubkeys && !used_challange) {
+    alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
+    throw "no-pubkeys-no-challenge";
+  }
+  if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
+    options.privateKeys = [signing_prv];
+    console.log('singing oonly')
+  }
+  openpgp.encrypt(options).then(callback, function(error) {
+    console.log(error);
+    alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
+    //todo: make the UI behave well on errors
+  });
+}
+
 /* -------------------- METRICS ----------------------------------------------------*/
 
 function increment_metric(type, callback) {
@@ -603,6 +649,14 @@ function bin_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonnev
     o += n.length < 2 ? '0' + n : n;
   }
   return o;
+}
+
+function sha1(string) {
+  return bin_to_hex(uint8_to_str(openpgp.crypto.hash.sha1(string)));
+}
+
+function double_sha1_upper(string) {
+  return sha1(sha1(string)).toUpperCase();
 }
 
 function sha256(string) {

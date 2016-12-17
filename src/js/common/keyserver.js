@@ -13,12 +13,20 @@ function keyserver_keys_find(email, callback) {
   }, callback);
 }
 
-function keyserver_keys_submit(email, pubkey, callback) {
+function keyserver_keys_submit(email, pubkey, attest, callback) {
   return keyserver_call('keys/submit', {
     'email': trim_lower(email),
     'pubkey': pubkey.trim(),
+    'attest': attest || false,
   }, callback);
 }
+
+function keyserver_keys_attest(signed_attest_packet, callback) {
+  return keyserver_call('keys/attest', {
+    'packet': signed_attest_packet,
+  }, callback);
+}
+
 
 function keyserver_call(path, data, callback) {
   return $.ajax({

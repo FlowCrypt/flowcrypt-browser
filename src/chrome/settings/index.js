@@ -74,7 +74,7 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
     account_email: account_email,
     omit_read_scope: omit_read_scope,
   }, function(response) {
-    if(response.success === true) {
+    if(response && response.success === true) {
       add_account_email_to_list_of_accounts(response.account_email, function() {
         account_storage_get(response.account_email, ['setup_done'], function(storage) {
           if(storage.setup_done) { // this was just an additional permission
@@ -86,7 +86,7 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
 
         });
       });
-    } else if(response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
+    } else if(response && response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
       if(account_email) {
         show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
       } else {
@@ -94,7 +94,7 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
       }
     } else {
       console.log(response);
-      alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
+      alert('Please try again. If this happens repeatedly, please write me at tom@cryptup.org to fix it.');
       window.location.reload();
     }
   });

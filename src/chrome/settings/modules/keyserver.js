@@ -7,10 +7,23 @@ var l = {
 }
 
 var url_params = get_url_params(['account_email']);
+var hide_attest_button = false;
 
 $('.email-address').text(url_params.account_email);
 
 $('.summary').html('Loading from keyserver <br>' + get_spinner());
+
+account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested'], function(storage) {
+  if(storage.attests_processed && storage.attests_processed.length) {
+    $('.attests').html('Your email was attested by: <span class="green">' + storage.attests_processed.join(', ') + '</span>. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption.');
+    hide_attest_button = true;
+    $('.request_attest').css('visibility', 'hidden');
+  } else if (storage.attests_requested && storage.attests_requested.length) {
+    $('.attests').html('Attestation was requested from: ' + storage.attests_requested.join(', ') + '. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption.');
+    hide_attest_button = true;
+    $('.request_attest').css('visibility', 'hidden');
+  }
+});
 
 $('.fix_all').click(prevent(doubleclick(), function(self) {
   $(self).html(get_spinner());
@@ -25,6 +38,17 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
   if(diagnosis) {
     if(!diagnosis.has_pubkey_mismatch && !diagnosis.has_pubkey_missing) {
       $('.summary').html(l.all_good);
+      if(!hide_attest_button) {
+        $('.line.request_attest').css('display', 'block');
+        $('.action_request_attest').click(function() {
+          keyserver_keys_submit(url_params.account_email, private_storage_get(localStorage, url_params.account_email, 'master_public_key'), true, function(success, response) {
+            save_attest_request(url_params.account_email, 'CRYPTUP', function() {
+              alert('You will receive attestation email soon. No further action needed.');
+              window.location.reload();
+            });
+          });
+        });
+      }
     } else {
       if(diagnosis.has_pubkey_mismatch) {
         $('.summary').html(l.mismatch);
@@ -54,7 +78,7 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
       $(self).html(get_spinner());
       account_storage_get(url_params.account_email, ['addresses'], function(storage) {
         if(storage.addresses.indexOf($(self).attr('email')) !== -1) {
-          keyserver_keys_submit($(self).attr('email'), private_storage_get(localStorage, url_params.account_email, 'master_public_key'), function() {
+          keyserver_keys_submit($(self).attr('email'), private_storage_get(localStorage, url_params.account_email, 'master_public_key'), false, function() {
             window.location.reload();
           });
         } else {

@@ -223,37 +223,6 @@ function decrypt_and_render_draft(account_email, encrypted_draft, render_functio
   }
 }
 
-// to only sign, supply armored_pubkeys=[], challenge=null, signing_prv=decrypted key
-function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
-  var options = {
-    data: data,
-    armor: armor,
-  };
-  var used_challange = false;
-  if(armored_pubkeys) {
-    options.publicKeys = [];
-    $.each(armored_pubkeys, function(i, armored_pubkey) {
-      options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
-    });
-  }
-  if(challenge && challenge.question && challenge.answer) {
-    options.passwords = [challenge_answer_hash(challenge.answer)];
-    used_challange = true;
-  }
-  if(!armored_pubkeys && !used_challange) {
-    alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
-    throw "no-pubkeys-no-challenge";
-  }
-  if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
-    options.privateKeys = [signing_prv];
-  }
-  openpgp.encrypt(options).then(callback, function(error) {
-    console.log(error);
-    alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
-    //todo: make the UI behave well on errors
-  });
-}
-
 function fetch_pubkeys(account_email, recipients, callback) {
   get_pubkeys(recipients, function(pubkey_results) {
     if(typeof pubkey_results === 'undefined') {

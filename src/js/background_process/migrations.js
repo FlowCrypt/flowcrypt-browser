@@ -142,7 +142,7 @@ function consistency_fixes(account_email) {
     // re-submitting pubkey if failed
     if(storage.setup_done && private_storage_get(localStorage, account_email, 'master_public_key_submit') && !private_storage_get(localStorage, account_email, 'master_public_key_submitted')) {
       console.log('consistency_fixes: submitting pubkey');
-      keyserver_keys_submit(account_email, private_storage_get(localStorage, account_email, 'master_public_key'), function(success, response) {
+      keyserver_keys_submit(account_email, private_storage_get(localStorage, account_email, 'master_public_key'), false, function(success, response) {
         if(success && response.saved) {
           private_storage_set(localStorage, account_email, 'master_public_key_submitted', true);
         }
