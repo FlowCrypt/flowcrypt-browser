@@ -1,3 +1,9 @@
+<b>version 2.6.0 on December 17, 2016: Email Attestation</b>
+setup: request and process email attestations
+setup: increased minimal passphrase strength
+setup: fixed broken pubkey submitting on keyservers page
+setup: fixed broken checkboxes on manual setup page
+
 <b>version 2.5.6 on December 14, 2016: Pass phrase change</b>
 setup: create a new backup on pass phrase change
 setup: smoother plugin update: prompt to refresh gmail
