@@ -239,7 +239,7 @@ var crack_time_words = [
   ['centu', 'great', 80, 'green', true],
   ['year', 'good', 60, 'orange', true],
   ['month', 'reasonable', 40, 'darkorange', true],
-  ['day', 'acceptable', 20, 'darkred', true],
+  ['day', 'poor', 20, 'darkred', false],
   ['', 'weak', 10, 'red', false],
 ]; // word search, word rating, bar percent, color, pass
 
