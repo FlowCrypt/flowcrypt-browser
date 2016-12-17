@@ -16,6 +16,7 @@ function replace_pgp_elements(account_email, addresses, can_read_emails, gmail_t
   replace_pgp_pubkeys(account_email, gmail_tab_id);
   replace_cryptup_tags(account_email, gmail_tab_id);
   replace_reply_buttons(account_email, gmail_tab_id);
+  replace_attest_packets(account_email, gmail_tab_id);
 }
 
 function replace_reply_buttons(account_email, gmail_tab_id) {
@@ -166,6 +167,19 @@ function replace_pgp_attachments_in_message(account_email, message_id, classes, 
   }
   $.each(attachments, function(i, attachment) {
     $(container_selector).prepend(pgp_attachment_iframe(account_email, attachment, classes, gmail_tab_id));
+  });
+}
+
+function replace_attest_packets(account_email, gmail_tab_id) {
+  $("div.adP.adO div.a3s:contains('-----BEGIN ATTEST PACKET-----'):contains('-----END ATTEST PACKET-----')").each(function() {
+    var re_attest_packet = /-----BEGIN ATTEST PACKET-----(.|[\r?\n])+?-----END ATTEST PACKET-----/gm;
+    $(this).html($(this).html().replace(/<\/?span( class="il")>/gi, '').replace(re_attest_packet, function(attest_packet_match) {
+      chrome_message_send(null, 'attest_packet_received', {
+        account_email: account_email,
+        packet: strip_pgp_armor(attest_packet_match),
+      });
+      return '';
+    }));
   });
 }
 

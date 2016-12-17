@@ -16,18 +16,22 @@ var can_read_emails = {};
 
 refresh_attest_requests_and_privileges(function(account_email, attests_requested) {
   if(attests_requested && attests_requested.length && can_read_emails[account_email]) {
-    set_attest_email_watcher(account_email);
+    watch_for_attest_email(account_email);
   }
 });
 
 function attest_requested_handler(message, sender, respond) {
   respond();
   refresh_attest_requests_and_privileges(null, function() {
-    set_attest_email_watcher(message.account_email);
+    watch_for_attest_email(message.account_email);
   });
 }
 
-function set_attest_email_watcher(account_email) {
+function attest_packet_received_handler(message, sender, respond) {
+  process_attest_packet_text(message.account_email, message.packet);
+}
+
+function watch_for_attest_email(account_email) {
   clearInterval(currently_watching[account_email]);
   setTimeout(function() {
     check_email_for_attests_and_respond(account_email);
@@ -59,32 +63,42 @@ function check_email_for_attests_and_respond(account_email) {
   });
 }
 
+function process_attest_packet_text(account_email, attest_packet_text) {
+  var attest = parse_attest_packet_from_text(attest_packet_text);
+  var key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
+  var decrypted = key.decrypt(get_passphrase(account_email));
+  if(decrypted) {
+    var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
+    var expected_email_hash = double_sha1_upper(trim_lower(account_email));
+    if(attest && attest.attester in ATTESTERS && attest.fingerprint === expected_fingerprint && attest.email_hash === expected_email_hash) {
+      is_already_attested(account_email, attest.attester, function(is_attested) {
+        if(!is_attested) {
+          sign(key, attest.full, true, function(signed_attest_packet) {
+            keyserver_keys_attest(signed_attest_packet.data, function(success, response) {
+              if(success && response && response.attested) {
+                account_storage_mark_as_attested(account_email, attest.attester, function() {
+                  console.log('successfully attested ' + account_email);
+                });
+              } else {
+                console.log('error attesting ' + account_email);
+                console.log(response);
+              }
+            });
+          });
+        } else {
+          console.log(attest.attester + ' already attested ' + account_email);
+        }
+      });
+    } else {
+      console.log('ignored incorrect (malicious?) attest message for ' + account_email);
+      // todo - ignore that message and stop pulling it - it's a fake attest message
+    }
+  }
+}
+
 function process_attest_email(account_email, gmail_message_object) {
   if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-    var message_text_content = base64url_decode(gmail_message_object.payload.body.data);
-    var attest = parse_attest_packet_from_text(message_text_content);
-    var key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
-    var decrypted = key.decrypt(get_passphrase(account_email));
-    if(decrypted) {
-      var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-      var expected_email_hash = double_sha1_upper(trim_lower(account_email));
-      if(attest && attest.attester in ATTESTERS && attest.fingerprint === expected_fingerprint && attest.email_hash === expected_email_hash) {
-        sign(key, attest.full, true, function(signed_attest_packet) {
-          keyserver_keys_attest(signed_attest_packet.data, function(success, response) {
-            if(success && response && response.attested) {
-              account_storage_mark_as_attested(account_email, attest.attester, function() {
-                console.log('successfully attested ' + account_email);
-              });
-            } else {
-              console.log('error attesting ' + account_email);
-              console.log(response);
-            }
-          });
-        });
-      } else {
-        // todo - ignore that message and stop pulling it - it's a fake attest message
-      }
-    }
+    process_attest_packet_text(account_email, base64url_decode(gmail_message_object.payload.body.data));
   }
 }
 
@@ -135,6 +149,12 @@ function get_attester_emails() {
     emails.push(attester.email)
   });
   return emails;
+}
+
+function is_already_attested(account_email, attester, callback) {
+  account_storage_get(account_email, ['attests_processed'], function(storage) {
+    callback(storage.attests_processed && storage.attests_processed.length && storage.attests_processed.indexOf(attester) !== -1);
+  });
 }
 
 function account_storage_mark_as_attested(account_email, attester, callback) {

@@ -12,6 +12,7 @@ chrome_message_background_listen({
   list_pgp_attachments: list_pgp_attachments,
   settings: open_settings_page_handler,
   attest_requested: attest_requested_handler,
+  attest_packet_received: attest_packet_received_handler,
   ping: function(message, sender, respond) {
     respond(true);
   },
