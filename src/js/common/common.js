@@ -452,7 +452,6 @@ function sign(signing_prv, data, armor, callback) {
   });
 }
 
-// to only sign, supply armored_pubkeys=[], challenge=null, signing_prv=decrypted key
 function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
   var options = {
     data: data,
