@@ -91,6 +91,7 @@ function process_attest_packet_text(account_email, attest_packet_text) {
           });
         } else {
           console.log(attest.attester + ' already attested ' + account_email);
+          stop_watching(account_email);
         }
       });
     } else {
