@@ -87,8 +87,8 @@ function save_attest_request(account_email, attester, callback) {
   account_storage_get(account_email, ['attests_requested', 'attests_processed'], function(storage) {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
-    } else {
-      storage.attests_requested.push(attester);
+    } else if(storage.attests_requested.indexOf(attester) === -1) {
+      storage.attests_requested.push(attester); // insert into requests if not already there
     }
     if(typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [];
@@ -101,6 +101,22 @@ function save_attest_request(account_email, attester, callback) {
   });
 }
 
+function mark_as_attested(account_email, attester, callback) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function(storage) {
+    if(typeof storage.attests_requested === 'undefined') {
+      storage.attests_requested = [];
+    } else if(storage.attests_requested.indexOf(attester) !== -1) {
+      storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
+    }
+    if(typeof storage.attests_processed === 'undefined') {
+      storage.attests_processed = [attester];
+    } else if(storage.attests_processed.indexOf(attester) === -1) {
+      storage.attests_processed.push(attester); //add attester as processed if not already there
+    }
+    account_storage_set(account_email, storage, callback);
+  });
+}
+
 function submit_pubkeys(addresses, pubkey, callback, success) {
   if(addresses.length) {
     if(typeof success === 'undefined') {
@@ -110,9 +126,15 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
     var attest = (address == settings_url_params.account_email); // only request attestation of main email
     keyserver_keys_submit(address, pubkey, attest, function(key_submitted, response) {
       if(attest && key_submitted) {
-        save_attest_request(settings_url_params.account_email, 'CRYPTUP', function() {
-          submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
-        });
+        if(!response.attested) {
+          save_attest_request(settings_url_params.account_email, 'CRYPTUP', function() {
+            submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+          });
+        } else { //previously successfully attested, the attester claims
+          mark_as_attested(settings_url_params.account_email, 'CRYPTUP', function() {
+            submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+          });
+        }
       } else {
         submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
       }
