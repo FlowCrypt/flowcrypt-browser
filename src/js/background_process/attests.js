@@ -48,17 +48,21 @@ function stop_watching(account_email) {
 
 function check_email_for_attests_and_respond(account_email) {
   account_storage_get(account_email, ['attests_requested'], function(storage) {
-    if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email] && get_passphrase(account_email)) {
-      fetch_attest_emails(account_email, function(success, messages) {
-        if(success && messages) {
-          $.each(messages, function(id, message) {
-            process_attest_email(account_email, message);
-          });
-        }
-      })
+    if(get_passphrase(account_email)) {
+      if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email]) {
+        fetch_attest_emails(account_email, function(success, messages) {
+          if(success && messages) {
+            $.each(messages, function(id, message) {
+              process_attest_email(account_email, message);
+            });
+          }
+        })
+      } else {
+        console.log('cannot fetch attest emails for ' + account_email);
+        stop_watching(account_email);
+      }
     } else {
-      console.log('cannot fetch attest emails for ' + account_email);
-      stop_watching(account_email);
+      console.log('cannot get passphrase for signing - skip fetching attest emails for ' + account_email);
     }
   });
 }
