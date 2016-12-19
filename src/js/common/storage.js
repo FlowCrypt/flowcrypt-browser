@@ -134,7 +134,35 @@ function account_storage_object_keys_to_original(account_or_accounts, storage_ob
   }
 }
 
-function private_storage_get(storage, account_email, key) {
+function get_storage(storage_type) {
+  if(storage_type === 'local') {
+    return localStorage;
+  } else if(storage_type === 'session') {
+    return sessionStorage;
+  } else {
+    throw 'unknown type of storage: "' + storage_type + '", use either "local" or "session"'
+  }
+}
+
+function notify_about_storage_access_error(parent_tab_id) {
+  if(parent_tab_id) {
+    chrome_message_send(parent_tab_id, 'notification_show', {
+      notification: 'Some browser settings are keeping CryptUP from working properly. Please go to "Chrome Settings -> Advanced Settings-> Privacy -> Content Settings" and un-check "Block third-party cookies and site data" in Cookies section. When the checkbox is empty, <a href="#" class="reload">reload this page</a>.',
+    });
+  }
+}
+
+function private_storage_get(storage_type, account_email, key, parent_tab_id) {
+
+  try {
+    var storage = get_storage(storage_type);
+  } catch(error) {
+    console.log(error.name);
+    if(error.name === 'SecurityError') {
+      notify_about_storage_access_error(parent_tab_id);
+    }
+    throw error;
+  }
   var value = storage[account_storage_key(account_email, key)];
   if(typeof value === 'undefined') {
     return value;
@@ -151,7 +179,8 @@ function private_storage_get(storage, account_email, key) {
   }
 }
 
-function private_storage_set(storage, account_email, key, value) {
+function private_storage_set(storage_type, account_email, key, value) {
+  var storage = get_storage(storage_type);
   var account_key = account_storage_key(account_email, key);
   if(typeof value === 'undefined') {
     storage.removeItem(account_key);

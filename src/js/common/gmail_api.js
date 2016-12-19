@@ -73,7 +73,7 @@ function google_api_handle_auth_error(account_email, method, resource, parameter
 */
 function to_mime(account_email, body, headers, attachments, mime_message_callback) {
   function get_master_public_key_fingerprint(account_email) {
-    return openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_public_key')).keys[0].primaryKey.fingerprint.toUpperCase();
+    return openpgp.key.readArmored(private_storage_get('local', account_email, 'master_public_key')).keys[0].primaryKey.fingerprint.toUpperCase();
   }
   set_up_require();
   require(['emailjs-mime-builder'], function(MimeBuilder) {

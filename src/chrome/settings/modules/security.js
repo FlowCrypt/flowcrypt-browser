@@ -5,7 +5,7 @@ if(url_params.embedded) {
   $('.change_passhrase_container').css('display', 'none');
 }
 
-if(!private_storage_get(localStorage, url_params.account_email, 'master_passphrase')) {
+if(!private_storage_get('local', url_params.account_email, 'master_passphrase')) {
   $('#passphrase_to_open_email').prop('checked', true);
 }
 
@@ -20,17 +20,17 @@ $('.action_test_passphrase').click(function() {
 $('.confirm_passphrase_requirement_change').click(function() {
   if($('#passphrase_to_open_email').is(':checked')) { // forget passphrase
     if($('input#passphrase_entry').val() === get_passphrase(url_params.account_email)) {
-      private_storage_set(localStorage, url_params.account_email, 'master_passphrase', '');
-      private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', '');
+      private_storage_set('local', url_params.account_email, 'master_passphrase', '');
+      private_storage_set('session', url_params.account_email, 'master_passphrase', '');
       window.location.reload();
     } else {
       alert('Pass phrase did not match, please try again.');
       $('input#passphrase_entry').val('').focus();
     }
   } else { // save passhprase
-    var key = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+    var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
     if(key.decrypt($('input#passphrase_entry').val()) === true) {
-      private_storage_set(localStorage, url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
+      private_storage_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
       window.location.reload();
     } else {
       alert('Pass phrase did not match, please try again.');

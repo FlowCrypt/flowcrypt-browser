@@ -17,7 +17,7 @@ account_storage_get(url_params.account_email, ['setup_simple'], function(storage
   } else if(url_params.action === 'passphrase_change_gmail_backup') {
     if(storage.setup_simple) {
       display_block('loading');
-      var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+      var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
       backup_key_on_gmail(url_params.account_email, armored_private_key, function(success) {
         if(success) {
           $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
@@ -182,12 +182,12 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
   } else {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
-    var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+    var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     var prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, new_passphrase);
-    private_storage_set(localStorage, url_params.account_email, 'master_passphrase', new_passphrase);
-    private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true);
-    private_storage_set(localStorage, url_params.account_email, 'master_private_key', prv.armor());
+    private_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
+    private_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
+    private_storage_set('local', url_params.account_email, 'master_private_key', prv.armor());
     backup_key_on_gmail(url_params.account_email, prv.armor(), function(success) {
       if(success) {
         write_backup_done_and_render(false, 'gmail');
@@ -200,10 +200,10 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
 }));
 
 function is_master_private_key_encrypted(account_email) {
-  if(private_storage_get(localStorage, account_email, 'master_passphrase_needed') !== true) {
+  if(private_storage_get('local', account_email, 'master_passphrase_needed') !== true) {
     return false;
   } else {
-    var key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
+    var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
     return key.primaryKey.isDecrypted === false && key.decrypt('') === false;
   }
 }
@@ -214,7 +214,7 @@ function backup_on_gmail() {
   } else {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
-    var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+    var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     backup_key_on_gmail(url_params.account_email, armored_private_key, function(success) {
       if(success) {
         write_backup_done_and_render(false, 'gmail');
@@ -232,7 +232,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
   } else {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
-    var armored_private_key = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+    var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     download_file('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');
   }

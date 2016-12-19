@@ -28,7 +28,7 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
 $('.fix_all').click(prevent(doubleclick(), function(self) {
   $(self).html(get_spinner());
   account_storage_get(url_params.account_email, ['addresses'], function(storage) {
-    submit_pubkeys(storage.addresses, private_storage_get(localStorage, url_params.account_email, 'master_public_key'), function() {
+    submit_pubkeys(storage.addresses, private_storage_get('local', url_params.account_email, 'master_public_key'), function() {
       window.location.reload();
     });
   });
@@ -41,7 +41,7 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
       if(!hide_attest_button) {
         $('.line.request_attest').css('display', 'block');
         $('.action_request_attest').click(function() {
-          keyserver_keys_submit(url_params.account_email, private_storage_get(localStorage, url_params.account_email, 'master_public_key'), true, function(success, response) {
+          keyserver_keys_submit(url_params.account_email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function(success, response) {
             save_attest_request(url_params.account_email, 'CRYPTUP', function() {
               alert('You will receive attestation email soon. No further action needed.');
               window.location.reload();
@@ -78,7 +78,7 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
       $(self).html(get_spinner());
       account_storage_get(url_params.account_email, ['addresses'], function(storage) {
         if(storage.addresses.indexOf($(self).attr('email')) !== -1) {
-          keyserver_keys_submit($(self).attr('email'), private_storage_get(localStorage, url_params.account_email, 'master_public_key'), false, function() {
+          keyserver_keys_submit($(self).attr('email'), private_storage_get('local', url_params.account_email, 'master_public_key'), false, function() {
             window.location.reload();
           });
         } else {
@@ -86,7 +86,7 @@ check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
         }
       });
     }));
-    var armored_pubkey = private_storage_get(localStorage, url_params.account_email, 'master_public_key');
+    var armored_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key');
     var pubkey = openpgp.key.readArmored(armored_pubkey);
   } else {
     $('.summary').html('Failed to load due to internet connection, please refresh the page.');

@@ -21,6 +21,10 @@ var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
 
+// this is here to trigger a notification to user if due to their chrome settings, they cannot access localStorage
+// if the settings are incorrect, a gmail notification will show to correct it
+var _ = private_storage_get('local', compose_url_params.account_email, 'master_public_key', compose_url_params.parent_tab_id);
+
 // set can_search_contacts, can_save_drafts, addresses_pks
 account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks'], function(storage) {
   my_addresses_on_pks = storage.addresses_pks || [];
@@ -121,7 +125,7 @@ function draft_save(force_save) {
   if(can_save_drafts && (should_save_draft($('#input_text').text()) || force_save === true)) {
     save_draft_in_process = true;
     $('#send_btn_note').text('Saving');
-    var armored_pubkey = private_storage_get(localStorage, compose_url_params.account_email, 'master_public_key');
+    var armored_pubkey = private_storage_get('local', compose_url_params.account_email, 'master_public_key', compose_url_params.parent_tab_id);
     encrypt([armored_pubkey], null, null, $('#input_text')[0].innerText, true, function(encrypted) {
       if(compose_url_params.thread_id) { // replied message
         var body = '[cryptup:link:draft_reply:' + compose_url_params.thread_id + ']\n\n' + encrypted.data;
@@ -184,7 +188,7 @@ function draft_delete(account_email, callback) {
 function decrypt_and_render_draft(account_email, encrypted_draft, render_function, headers) {
   var my_passphrase = get_passphrase(account_email);
   if(my_passphrase !== null) {
-    var private_key = openpgp.key.readArmored(private_storage_get(localStorage, account_email, 'master_private_key')).keys[0];
+    var private_key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key', compose_url_params.parent_tab_id)).keys[0];
     if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
       private_key.decrypt(my_passphrase);
     }
@@ -234,7 +238,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
           pubkeys.push(pubkey_info.pubkey);
         }
       });
-      callback(true, pubkeys.length === recipients.length, pubkeys.concat(private_storage_get(localStorage, account_email, 'master_public_key')));
+      callback(true, pubkeys.length === recipients.length, pubkeys.concat(private_storage_get('local', account_email, 'master_public_key', compose_url_params.parent_tab_id)));
     }
   });
 }
@@ -274,7 +278,7 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
               }
               encrypt(armored_pubkeys, null, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
                 if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
-                  encrypted.data += '\n\n\n\n' + private_storage_get(localStorage, url_params.account_email, 'master_public_key');
+                  encrypted.data += '\n\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', compose_url_params.parent_tab_id);
                 }
                 var body = {
                   'text/plain': encrypted.data,

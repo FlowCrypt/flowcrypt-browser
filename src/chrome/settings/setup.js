@@ -150,16 +150,16 @@ function setup_dialog_set_done(key_backup_prompt, setup_simple) {
 }
 
 function save_private_key(account_email, prv, passphrase, options) {
-  private_storage_set(localStorage, account_email, 'master_private_key', prv.armor());
+  private_storage_set('local', account_email, 'master_private_key', prv.armor());
   if(options.save_passphrase) {
-    private_storage_set(localStorage, account_email, 'master_passphrase', passphrase || '');
+    private_storage_set('local', account_email, 'master_passphrase', passphrase || '');
   } else {
-    private_storage_set(sessionStorage, account_email, 'master_passphrase', passphrase || '');
+    private_storage_set('session', account_email, 'master_passphrase', passphrase || '');
   }
-  private_storage_set(localStorage, account_email, 'master_passphrase_needed', Boolean(passphrase || ''));
-  private_storage_set(localStorage, account_email, 'master_public_key', prv.toPublic().armor());
-  private_storage_set(localStorage, account_email, 'master_public_key_submit', options.to_submit_pubkey);
-  private_storage_set(localStorage, account_email, 'master_public_key_submitted', false);
+  private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(passphrase || ''));
+  private_storage_set('local', account_email, 'master_public_key', prv.toPublic().armor());
+  private_storage_set('local', account_email, 'master_public_key_submit', options.to_submit_pubkey);
+  private_storage_set('local', account_email, 'master_public_key_submitted', false);
 }
 
 function submit_public_key_if_needed(account_email, armored_pubkey, submit_main, submit_all, callback) {
@@ -172,7 +172,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, submit_main,
       }
       submit_pubkeys(addresses, armored_pubkey, function(success) {
         if(success) {
-          private_storage_set(localStorage, account_email, 'master_public_key_submitted', true);
+          private_storage_set('local', account_email, 'master_public_key_submitted', true);
         }
         callback();
       });

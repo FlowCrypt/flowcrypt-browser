@@ -62,14 +62,14 @@ function as_html_formatted_string(obj) {
 }
 
 function get_passphrase(account_email) {
-  if(private_storage_get(localStorage, account_email, 'master_passphrase_needed') === false) {
+  if(private_storage_get('local', account_email, 'master_passphrase_needed') === false) {
     return '';
   }
-  var stored = private_storage_get(localStorage, account_email, 'master_passphrase');
+  var stored = private_storage_get('local', account_email, 'master_passphrase');
   if(stored) {
     return stored;
   }
-  var temporary = private_storage_get(sessionStorage, account_email, 'master_passphrase');
+  var temporary = private_storage_get('session', account_email, 'master_passphrase');
   if(temporary) {
     return temporary;
   }
@@ -379,7 +379,7 @@ function key_ids_match(first, second) {
 
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
-  var local_key_ids = extract_key_ids(private_storage_get(localStorage, account_email, 'master_public_key'));
+  var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
   var diagnosis = {
     found_match: false,
     receivers: message_key_ids.length,
@@ -396,7 +396,7 @@ function check_pubkeys_message(account_email, message) {
 }
 
 function check_pubkeys_keyserver(account_email, callback) {
-  var local_key_ids = extract_key_ids(private_storage_get(localStorage, account_email, 'master_public_key'));
+  var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
   var diagnosis = {
     has_pubkey_missing: false,
     has_pubkey_mismatch: false,

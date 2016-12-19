@@ -2,7 +2,7 @@
 
 var url_params = get_url_params(['account_email']);
 
-var key = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
 
 $('.key_dump').text(key.toPublic().armor());
 $('.key_fingerprint').text(key.primaryKey.fingerprint.toUpperCase().replace(/(.{4})/g,"$1 "));

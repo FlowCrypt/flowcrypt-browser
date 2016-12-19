@@ -50,12 +50,12 @@ function migrate_060_070(account_email, then) {
       console.log('migrating from 0.6 to 0.7: global to per_account keys for accounts: ' + storage['account_emails']);
       var account_emails = JSON.parse(storage['account_emails']);
       $.each(account_emails, function(i, account_email) {
-        if(typeof private_storage_get(localStorage, account_email, 'master_private_key') === 'undefined') {
-          private_storage_set(localStorage, account_email, 'master_private_key', legacy_master_private_key);
-          private_storage_set(localStorage, account_email, 'master_public_key', legacy_master_public_key);
-          private_storage_set(localStorage, account_email, 'master_passphrase', legacy_master_passphrase);
-          private_storage_set(localStorage, account_email, 'master_public_key_submit', legacy_master_public_key_submit);
-          private_storage_set(localStorage, account_email, 'master_public_key_submitted', legacy_master_public_key_submitted);
+        if(typeof private_storage_get('local', account_email, 'master_private_key') === 'undefined') {
+          private_storage_set('local', account_email, 'master_private_key', legacy_master_private_key);
+          private_storage_set('local', account_email, 'master_public_key', legacy_master_public_key);
+          private_storage_set('local', account_email, 'master_passphrase', legacy_master_passphrase);
+          private_storage_set('local', account_email, 'master_public_key_submit', legacy_master_public_key_submit);
+          private_storage_set('local', account_email, 'master_public_key_submitted', legacy_master_public_key_submitted);
         }
       });
       localStorage.removeItem("master_private_key");
@@ -77,7 +77,7 @@ function migrate_070_080(account_email, then) {
       console.log('migrating from 0.70 to 0.80: setting setup_simple');
       account_storage_set(account_email, {
         notification_setup_done_seen: true,
-        setup_simple: private_storage_get(localStorage, account_email, 'master_public_key_submit') === true && !private_storage_get(localStorage, account_email, 'master_passphrase'),
+        setup_simple: private_storage_get('local', account_email, 'master_public_key_submit') === true && !private_storage_get('local', account_email, 'master_passphrase'),
       }, then);
     } else {
       then();
@@ -88,10 +88,10 @@ function migrate_070_080(account_email, then) {
 function migrate_130_140(account_email, then) {
   console.log('migrate_130_140');
   account_storage_get(account_email, ['setup_done'], function(storage) {
-    var master_passphrase_needed = private_storage_get(localStorage, account_email, 'master_passphrase_needed');
+    var master_passphrase_needed = private_storage_get('local', account_email, 'master_passphrase_needed');
     if(typeof master_passphrase_needed === 'undefined' && storage.setup_done === true) {
       console.log('migrating from 1.3.0 to 1.4.0: setting master_passphrase_needed');
-      private_storage_set(localStorage, account_email, 'master_passphrase_needed', Boolean(private_storage_get(localStorage, account_email, 'master_passphrase')));
+      private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(private_storage_get('local', account_email, 'master_passphrase')));
     }
     then();
   });
@@ -140,11 +140,11 @@ function migrate_210_220(account_email, then) {
 function consistency_fixes(account_email) {
   account_storage_get(account_email, ['setup_done'], function(storage) {
     // re-submitting pubkey if failed
-    if(storage.setup_done && private_storage_get(localStorage, account_email, 'master_public_key_submit') && !private_storage_get(localStorage, account_email, 'master_public_key_submitted')) {
+    if(storage.setup_done && private_storage_get('local', account_email, 'master_public_key_submit') && !private_storage_get('local', account_email, 'master_public_key_submitted')) {
       console.log('consistency_fixes: submitting pubkey');
-      keyserver_keys_submit(account_email, private_storage_get(localStorage, account_email, 'master_public_key'), false, function(success, response) {
+      keyserver_keys_submit(account_email, private_storage_get('local', account_email, 'master_public_key'), false, function(success, response) {
         if(success && response.saved) {
-          private_storage_set(localStorage, account_email, 'master_public_key_submitted', true);
+          private_storage_set('local', account_email, 'master_public_key_submitted', true);
         }
       });
     }

@@ -23,7 +23,7 @@ function display_block(name) {
 }
 
 $('.action_enter').click(function() {
-  var key = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+  var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
   if(key.decrypt($('#original_password').val()) === true) {
     original_passphrase = $('#original_password').val();
     display_block('step_1_password');
@@ -60,19 +60,19 @@ $('.action_change').click(prevent(doubleclick(), function(self) {
     $('#password2').val('');
     $('#password2').focus();
   } else {
-    var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+    var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
     prv.decrypt(get_passphrase(url_params.account_email) || original_passphrase);
     openpgp_key_encrypt(prv, new_passphrase);
-    var stored_passphrase = private_storage_get(localStorage, url_params.account_email, 'master_passphrase');
+    var stored_passphrase = private_storage_get('local', url_params.account_email, 'master_passphrase');
     if(typeof stored_passphrase !== 'undefined' && stored_passphrase !== '') {
-      private_storage_set(localStorage, url_params.account_email, 'master_passphrase', new_passphrase);
-      private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', undefined);
+      private_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
+      private_storage_set('session', url_params.account_email, 'master_passphrase', undefined);
     } else {
-      private_storage_set(localStorage, url_params.account_email, 'master_passphrase', undefined);
-      private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', new_passphrase);
+      private_storage_set('local', url_params.account_email, 'master_passphrase', undefined);
+      private_storage_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
     }
-    private_storage_set(localStorage, url_params.account_email, 'master_passphrase_needed', true);
-    private_storage_set(localStorage, url_params.account_email, 'master_private_key', prv.armor());
+    private_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
+    private_storage_set('local', url_params.account_email, 'master_private_key', prv.armor());
     // pass phrase change done in the plugin itself.
     // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
     account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {

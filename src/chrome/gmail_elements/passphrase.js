@@ -20,13 +20,13 @@ $('.action_close').click(prevent(doubleclick(), function() {
 }));
 
 $('.action_ok').click(prevent(doubleclick(), function() {
-  var prv = openpgp.key.readArmored(private_storage_get(localStorage, url_params.account_email, 'master_private_key')).keys[0];
+  var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)).keys[0];
   var pass = $('input.passphrase').val();
   if(prv.decrypt(pass) === true) {
     if($('.forget').prop('checked')) {
-      private_storage_set(sessionStorage, url_params.account_email, 'master_passphrase', pass);
+      private_storage_set('session', url_params.account_email, 'master_passphrase', pass);
     } else {
-      private_storage_set(localStorage, url_params.account_email, 'master_passphrase', pass);
+      private_storage_set('local', url_params.account_email, 'master_passphrase', pass);
     }
     chrome_message_send(url_params.parent_tab_id, 'close_dialog');
   } else {

@@ -47,7 +47,7 @@ $('#download').click(prevent(doubleclick(), function(self) {
     if(success) {
       var encrypted_data = base64url_decode(attachment.data);
       // todo - following lines pretty much copy/pasted from pgp_block.js. Would use a common function in gmail_elements.js
-      var my_prvkey = private_storage_get(localStorage, url_params.account_email, 'master_private_key');
+      var my_prvkey = private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id);
       var my_passphrase = get_passphrase(url_params.account_email);
       if(my_passphrase !== null) {
         if(typeof my_prvkey !== 'undefined') {
