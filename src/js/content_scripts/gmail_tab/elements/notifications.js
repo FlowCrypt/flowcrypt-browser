@@ -6,7 +6,7 @@ function show_initial_notifications(account_email) {
       account_storage_set(account_email, {
         notification_setup_done_seen: true
       }, function() {
-        gmail_notification_show('CryptUP was successfully set up for this account. Click on green "UP" button on the left to send first secure message. <a href="#" class="close">got it</a>');
+        gmail_notification_show('CryptUP was successfully set up for this account. <a href="#" class="close">ok</a>');
       });
     } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
       gmail_notification_show('<a href="_PLUGIN/settings/modules/backup.htm?account_email=' + encodeURIComponent(account_email) + '">Back up your CryptUP key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
