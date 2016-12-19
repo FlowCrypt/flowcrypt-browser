@@ -2,6 +2,10 @@
 
 var url_params = get_url_params(['account_email']);
 
+if(url_params.account_email) {
+  chrome_message_send(null, 'update_uninstall_url');
+}
+
 $('.email-address').text(url_params.account_email);
 
 $('.back').css('visibility', 'hidden');

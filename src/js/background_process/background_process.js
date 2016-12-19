@@ -2,7 +2,7 @@
 
 console.log('background_process.js starting');
 
-chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm');
+update_uninstall_url();
 
 chrome_message_background_listen({
   migrate: migrate,
@@ -13,6 +13,7 @@ chrome_message_background_listen({
   settings: open_settings_page_handler,
   attest_requested: attest_requested_handler,
   attest_packet_received: attest_packet_received_handler,
+  update_uninstall_url: update_uninstall_url,
   ping: function(message, sender, respond) {
     respond(true);
   },
@@ -66,4 +67,14 @@ function list_pgp_attachments(request, sender, respond) {
       });
     }
   });
+}
+
+function update_uninstall_url() {
+  get_account_emails(function(account_emails) {
+    if(account_emails && account_emails.length) {
+      chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm?e=' + encodeURIComponent(account_emails[0]));
+    } else {
+      chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm');
+    }
+  })
 }
