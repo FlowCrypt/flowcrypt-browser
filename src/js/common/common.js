@@ -393,15 +393,6 @@ function extract_armored_message_using_gmail_api(account_email, message_id, succ
         if(!found) {
           error_callback('format', as_html_formatted_string(gmail_message_object.payload));
         }
-        // } else if(gmail_message_object.payload.mimeType === 'multipart/mixed' && gmail_message_object.payload.parts && gmail_message_object.payload.parts.length) {
-        //   var bodies = gmail_api_find_bodies(gmail_message_object);
-        //   console.log(bodies);
-        //   var armored_message = extract_armored_message_from_text(base64url_decode(bodies['text/plain'] || strip_pgp_armor(bodies['text/html']) || ''));
-        //   if(armored_message) {
-        //     success_callback(armored_message);
-        //   } else {
-        //     error_callback('format', as_html_formatted_string(gmail_message_object.payload));
-        //   }
       } else {
         error_callback('format', as_html_formatted_string(gmail_message_object.payload));
       }
