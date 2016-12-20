@@ -157,7 +157,6 @@ function private_storage_get(storage_type, account_email, key, parent_tab_id) {
   try {
     var storage = get_storage(storage_type);
   } catch(error) {
-    console.log(error.name);
     if(error.name === 'SecurityError') {
       notify_about_storage_access_error(parent_tab_id);
     }
