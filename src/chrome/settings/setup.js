@@ -189,7 +189,7 @@ function create_save_key_pair(account_email, options) {
       name: options.name,
       email: account_email
     }],
-    passphrase: options.passphrase
+    passphrase: options.passphrase,
   }).then(function(key) {
     save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], options.passphrase, {
       to_submit_pubkey: options.submit_main,
@@ -228,7 +228,6 @@ function get_and_save_userinfo(account_email, callback) {
       callback(result);
     }
   });
-
 }
 
 $('.action_show_help').click(function() {
