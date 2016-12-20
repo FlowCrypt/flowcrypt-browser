@@ -138,6 +138,28 @@ function mime_headers_to_from(parsed_mime_message) {
   };
 }
 
+function is_mime_message(message) {
+  var m = message.toLowerCase();
+  var has_content_type = m.match(/content-type: +[a-z\-\/]+/) !== null;
+  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null
+  var starts_with_known_header = m.indexOf('content-type:') === 0 || m.indexOf('content-transfer-encoding:') === 0
+  return has_content_type && has_content_transfer_encoding && starts_with_known_header;
+}
+
+function format_mime_plaintext_to_display(text, full_mime_message) {
+  // todo - this function is very confusing, and should be split into two:
+  // ---> format_mime_plaintext_to_display(text, charset)
+  // ---> get_charset(full_mime_message)
+  if(/<((br)|(div)|p) ?\/?>/.test(text)) {
+    return text;
+  }
+  text = (text || '').replace(/\n/g, '<br>\n');
+  if(text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
+    return window.iso88592.decode(text);
+  }
+  return text;
+}
+
 function parse_mime_message(mime_message, callback) {
   set_up_require();
   var mime_message_contents = {
@@ -332,6 +354,64 @@ function strip_pgp_armor(pgp_block_text) {
   return pgp_block_text;
 }
 
+/*
+ * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
+ * success_callback(str armored_pgp_message)
+ * error_callback(str error_type, str html_formatted_data_to_display_to_user)
+ *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
+ *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
+ */
+function extract_armored_message_using_gmail_api(account_email, message_id, success_callback, error_callback) {
+  gmail_api_message_get(account_email, message_id, 'full', function(get_message_success, gmail_message_object) {
+    if(get_message_success) {
+      var bodies = gmail_api_find_bodies(gmail_message_object);
+      var attachments = gmail_api_find_attachments(gmail_message_object);
+      var armored_message_from_bodies = extract_armored_message_from_text(base64url_decode(bodies['text/plain'])) || extract_armored_message_from_text(strip_pgp_armor(base64url_decode(bodies['text/html'])));
+      if(armored_message_from_bodies) {
+        success_callback(armored_message_from_bodies);
+      } else if(attachments.length) {
+        var found = false;
+        $.each(attachments, function(i, attachment_meta) {
+          if(attachment_meta.name === 'encrypted.asc') {
+            found = true;
+            gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(fetch_attachments_success, attachment) {
+              if(fetch_attachments_success) {
+                var armored_message_text = base64url_decode(attachment[0].data);
+                var armored_message = extract_armored_message_from_text(armored_message_text);
+                if(armored_message) {
+                  success_callback(armored_message);
+                } else {
+                  error_callback('format', armored_message_text);
+                }
+              } else {
+                error_callback('connection');
+              }
+            });
+            return false;
+          }
+        });
+        if(!found) {
+          error_callback('format', as_html_formatted_string(gmail_message_object.payload));
+        }
+        // } else if(gmail_message_object.payload.mimeType === 'multipart/mixed' && gmail_message_object.payload.parts && gmail_message_object.payload.parts.length) {
+        //   var bodies = gmail_api_find_bodies(gmail_message_object);
+        //   console.log(bodies);
+        //   var armored_message = extract_armored_message_from_text(base64url_decode(bodies['text/plain'] || strip_pgp_armor(bodies['text/html']) || ''));
+        //   if(armored_message) {
+        //     success_callback(armored_message);
+        //   } else {
+        //     error_callback('format', as_html_formatted_string(gmail_message_object.payload));
+        //   }
+      } else {
+        error_callback('format', as_html_formatted_string(gmail_message_object.payload));
+      }
+    } else {
+      error_callback('connection');
+    }
+  });
+}
+
+
 function get_spinner() {
   return '&nbsp;<i class="fa fa-spinner fa-spin"></i>&nbsp;';
   // Updated spinner still broken.
@@ -483,6 +563,14 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
   });
 }
 
+function extract_armored_message_from_text(text) {
+  var matches = null;
+  var re_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
+  if((matches = re_pgp_block.exec(text)) !== null) {
+    return matches[0];
+  }
+}
+
 /* -------------------- METRICS ----------------------------------------------------*/
 
 function increment_metric(type, callback) {
@@ -568,10 +656,16 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
 /******************************************* STRINGS **********************************/
 
 function base64url_encode(str) {
+  if(typeof str === 'undefined') {
+    return str;
+  }
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function base64url_decode(str) {
+  if(typeof str === 'undefined') {
+    return str;
+  }
   return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
 }
 

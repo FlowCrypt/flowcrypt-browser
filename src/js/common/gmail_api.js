@@ -165,7 +165,7 @@ function gmail_api_message_get(account_email, message_id, format, callback, resu
     if(message_id.length) {
       var id = message_id.pop();
       gmail_api_call(account_email, 'GET', 'messages/' + id, {
-        format: format || 'full' //full or metadata
+        format: format || 'full', //raw, full or metadata
       }, function(success, response) {
         if(success) {
           results[id] = response;
@@ -179,7 +179,7 @@ function gmail_api_message_get(account_email, message_id, format, callback, resu
     }
   } else {
     gmail_api_call(account_email, 'GET', 'messages/' + message_id, {
-      format: format || 'full' //full or metadata
+      format: format || 'full', //raw, full or metadata
     }, callback);
   }
 }
@@ -209,6 +209,24 @@ function gmail_api_find_attachments(gmail_email_object, internal_results, intern
       name: gmail_email_object.filename,
       type: gmail_email_object.mimeType,
     });
+  }
+  return internal_results;
+}
+
+function gmail_api_find_bodies(gmail_email_object, internal_results) {
+  if(!internal_results) {
+    internal_results = {};
+  }
+  if(typeof gmail_email_object.payload !== 'undefined') {
+    gmail_api_find_bodies(gmail_email_object.payload, internal_results);
+  }
+  if(typeof gmail_email_object.parts !== 'undefined') {
+    $.each(gmail_email_object.parts, function(i, part) {
+      gmail_api_find_bodies(part, internal_results);
+    });
+  }
+  if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.data !== 'undefined' && typeof gmail_email_object.body.size !== 0) {
+    internal_results[gmail_email_object.mimeType] = gmail_email_object.body.data;
   }
   return internal_results;
 }

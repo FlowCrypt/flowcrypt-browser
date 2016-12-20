@@ -49,7 +49,7 @@ account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_sco
         } else if($(this).attr('id') === 'a_forward') {
           url_params.to = '';
         }
-        reply_message_render_table();
+        reply_message_render_table($(this).attr('id').replace('a_', ''));
       });
     } else {
       reply_message_render_table();
@@ -65,12 +65,12 @@ function check_passphrase_entered(encrypted_draft) {
 }
 
 
-function reply_message_render_table() {
+function reply_message_render_table(method) {
   if(can_read_emails) {
     $('div#reply_message_prompt').css('display', 'none');
     $('div#reply_message_table_container').css('display', 'block');
     reply_message_on_render();
-    reply_message_determine_header_variables();
+    reply_message_determine_header_variables(method === 'forward');
   } else {
     $('div#reply_message_prompt').html('CryptUP has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
     $('div#reply_message_prompt').attr('style', 'border:none !important');
@@ -86,14 +86,83 @@ function reply_message_render_table() {
   }
 }
 
-function reply_message_determine_header_variables() {
+function reply_message_determine_header_variables(load_last_message_for_forward) {
   gmail_api_get_thread(url_params.account_email, url_params.thread_id, 'full', function(success, thread) {
     if(success && thread.messages && thread.messages.length > 0) {
       thread_message_id_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
       thread_message_referrences_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      if(load_last_message_for_forward) {
+        retrieve_decrypt_and_add_forwarded_message(thread.messages[thread.messages.length - 1].id);
+      }
     }
   });
 }
+
+function append_forwarded_message(text) {
+  $('#input_text').append('<br/><br/>Forwarded message:<br/><br/>> ' + text.replace(/(?:\r\n|\r|\n)/g, '\> '));
+  resize_reply_box();
+}
+
+function retrieve_decrypt_and_add_forwarded_message(message_id) {
+  extract_armored_message_using_gmail_api(url_params.account_email, message_id, function(armored_message) {
+    var my_passphrase = get_passphrase(url_params.account_email);
+    if(my_passphrase !== null) {
+      var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)).keys[0];
+      if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
+        prv.decrypt(my_passphrase);
+      }
+      var options = {
+        message: openpgp.message.readArmored(armored_message),
+        format: 'utf8',
+        privateKey: prv,
+      };
+      try {
+        openpgp.decrypt(options).then(function(decrypted) {
+          if(!is_mime_message(decrypted.data)) {
+            append_forwarded_message(format_mime_plaintext_to_display(decrypted.data, armored_message));
+          } else {
+            parse_mime_message(decrypted.data, function(success, result) {
+              if(result.text || result.html) {
+                append_forwarded_message(format_mime_plaintext_to_display(result.text || result.html, armored_message));
+              }
+            });
+          }
+        }).catch(function(error) {
+          console.log(error);
+          console.log('todo - cannot decrypt message to forward [1]');
+        });
+      } catch(err) {
+        console.log('todo - cannot decrypt message to forward [2]');
+      }
+    } else {
+      console.log('todo - cannot decrypt message to forward [3]');
+    }
+  }, function(error_type, url_formatted_data_block) {
+    if(url_formatted_data_block) {
+      $('#input_text').append('<br/>\n<br/>\n<br/>\n' + url_formatted_data_block);
+    }
+  });
+}
+
+
+// gmail_api_message_get(url_params.account_email, message_id, 'raw', function(gmail_success, response) {
+//     if(gmail_success) {
+//       parse_mime_message(base64url_decode(response.raw), function(mime_success, parsed_message) {
+//           if(mime_success) {
+//             console.log(parsed_message);
+//             var message_armored = extract_armored_message_from_text(parsed_message.text || strip_pgp_armor(parsed_message.html));
+//
+//           } else {
+//             console.log('todo - cannot decrypt message to forward [3]');
+//           }
+//         } else {
+//           console.log('todo - cannot decrypt message to forward [0]');
+//         }
+//       });
+//   } else {
+//     console.log('todo - cannot fetch message to forward');
+//   }
+// });
 
 $('.delete_draft').click(function() {
   draft_delete(url_params.account_email, function() {
@@ -114,7 +183,9 @@ function reply_message_reinsert_reply_box() {
 }
 
 function reply_message_render_success(to, has_attachments, message_id) {
-  chrome_message_send(url_params.parent_tab_id, 'notification_show', {notification: 'Your message has been sent.'});
+  chrome_message_send(url_params.parent_tab_id, 'notification_show', {
+    notification: 'Your message has been sent.'
+  });
   $('#send_btn_note').text('Sent, deleting draft..');
   draft_delete(url_params.account_email, function() {
     reply_message_reinsert_reply_box();

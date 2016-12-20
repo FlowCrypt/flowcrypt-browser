@@ -30,17 +30,6 @@ var l = {
   to_open_message: 'to open this message.',
 }
 
-function format_plaintext(text) {
-  if(/<((br)|(div)|p) ?\/?>/.test(text)) {
-    return text;
-  }
-  text = (text || '').replace(/\n/g, '<br>\n');
-  if(url_params.message.match(/^Charset: iso-8859-2/m) !== null) {
-    return window.iso88592.decode(text);
-  }
-  return text;
-}
-
 function send_resize_message() {
   var new_height = $('#pgp_block').height() + 40;
 
@@ -102,13 +91,17 @@ function armored_message_as_html(raw_message_substitute) {
 
 function render_error(error_box_content, raw_message_substitute, callback) {
   $('body').removeClass('pgp_secure').addClass('pgp_insecure');
-  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, callback);
-  $('.settings.button').click(prevent(doubleclick(), function() {
-    chrome_message_send(null, 'settings', {
-      path: 'pubkeys.htm',
-      account_email: url_params.account_email,
+  render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function() {
+    $('.settings.button').click(function() {
+      chrome_message_send(null, 'settings', {
+        account_email: url_params.account_email,
+        page: '/chrome/settings/modules/keyserver.htm',
+      });
     });
-  }));
+    if(callback) {
+      callback();
+    }
+  });
 }
 
 function handle_private_key_mismatch(account_email, message) {
@@ -157,13 +150,13 @@ function render_inner_attachments(attachments) {
 
 function decide_decrypted_content_formatting_and_render(decrypted_content) {
   if(!is_mime_message(decrypted_content)) {
-    render_content(format_plaintext(decrypted_content));
+    render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
   } else {
     $('#pgp_block').text('Formatting...');
     parse_mime_message(decrypted_content, function(success, result) {
       if(success) {
         if(result.text || result.html) {
-          render_content(format_plaintext(result.text || result.html), false, function() {
+          render_content(format_mime_plaintext_to_display(result.text || result.html, url_params.message), false, function() {
             if(result.attachments.length) {
               render_inner_attachments(result.attachments);
             }
@@ -171,11 +164,11 @@ function decide_decrypted_content_formatting_and_render(decrypted_content) {
         } else {
           // this will probably show ugly MIME text to user, which would later be reported by them as a bug
           // with each report we can extend the capabilities to recognize content of MIME messages
-          render_content(format_plaintext(decrypted_content));
+          render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
         }
       } else {
         // var "result" will contain the error message, once implemented error handling in parse_mime_message
-        render_content(format_plaintext(decrypted_content));
+        render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
       }
     });
   }
@@ -267,69 +260,6 @@ function pgp_block_init() {
   }
 }
 
-function extract_armored_message_from_text(text) {
-  var matches = null;
-  var re_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
-  if((matches = re_pgp_block.exec(text)) !== null) {
-    return matches[0];
-  }
-}
-
-function extract_armored_message_using_gmail_api(then) {
-  gmail_api_message_get(url_params.account_email, url_params.message_id, 'full', function(m_success, gmail_message_object) {
-    if(m_success) {
-      var attachments = [];
-      if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-        var armored_message_text = base64url_decode(gmail_message_object.payload.body.data);
-        var armored_message = extract_armored_message_from_text(armored_message_text);
-        if(armored_message) {
-          then(armored_message);
-          found = true;
-        } else {
-          render_error(l.cant_open + l.dont_know_how_open, armored_message_text);
-        }
-        return;
-      } else if((attachments = gmail_api_find_attachments(gmail_message_object)).length) {
-        var found = false;
-        $.each(attachments, function(i, attachment_meta) {
-          if(attachment_meta.name === 'encrypted.asc') {
-            found = true;
-            gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(a_success, attachment) {
-              if(a_success) {
-                var armored_message_text = base64url_decode(attachment[0].data);
-                var armored_message = extract_armored_message_from_text(armored_message_text);
-                if(armored_message) {
-                  then(armored_message);
-                } else {
-                  render_error(l.cant_open + l.dont_know_how_open, armored_message_text);
-                }
-              } else {
-                render_error(l.connection_error);
-              }
-            });
-            return false;
-          }
-        });
-        if(!found) {
-          render_error(l.cant_open + l.dont_know_how_open, as_html_formatted_string(gmail_message_object.payload));
-        }
-      } else {
-        render_error(l.cant_open + l.dont_know_how_open, as_html_formatted_string(gmail_message_object.payload));
-      }
-    } else {
-      render_error(l.connection_error);
-    }
-  });
-}
-
-function is_mime_message(message) {
-  var m = message.toLowerCase();
-  var has_content_type = m.match(/content-type: +[a-z\-\/]+/) !== null;
-  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null
-  var starts_with_known_header = m.indexOf('content-type:') === 0 || m.indexOf('content-transfer-encoding:') === 0
-  return has_content_type && has_content_transfer_encoding && starts_with_known_header;
-}
-
 if(url_params.message) { // ascii armored message supplied
   $('#pgp_block').text('Decrypting...');
   pgp_block_init();
@@ -337,10 +267,18 @@ if(url_params.message) { // ascii armored message supplied
   account_storage_get(url_params.account_email, ['google_token_scopes'], function(storage) {
     if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
       $('#pgp_block').text('Retrieving message...');
-      extract_armored_message_using_gmail_api(function(message_raw) {
+      extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
         $('#pgp_block').text('Decrypting...');
         url_params.message = message_raw;
         pgp_block_init();
+      }, function(error_type, url_formatted_data_block) {
+        if(error_type === 'format') {
+          render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
+        } else if(error_type === 'connection') {
+          render_error(l.connection_error, url_formatted_data_block);
+        } else {
+          alert('Unknown error type: ' + error_type);
+        }
       });
     } else { // gmail message read auth not allowed
       $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');

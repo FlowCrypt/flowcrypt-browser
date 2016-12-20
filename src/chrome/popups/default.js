@@ -48,11 +48,7 @@ function choose_email_or_settings_popup(active_account_email) {
   $('#email_or_settings').css('display', 'block');
   $('.action_open_settings').click(function() {
     if(typeof active_account_email !== 'undefined') {
-      chrome_message_send(null, 'settings', {
-        account_email: active_account_email
-      }, function() {
-        window.close();
-      });
+      redirect_to_initial_setup(active_account_email);
     } else {
       window.location = 'select_account.htm?action=settings';
     }
@@ -60,7 +56,6 @@ function choose_email_or_settings_popup(active_account_email) {
   $('.action_send_email').click(function() {
     if(typeof active_account_email !== 'undefined') {
       chrome_message_send(null, 'settings', {
-        path: 'index.htm',
         account_email: active_account_email,
         page: '/chrome/gmail_elements/new_message.htm',
       }, function() {

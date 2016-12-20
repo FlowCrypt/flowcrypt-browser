@@ -198,12 +198,12 @@ function decrypt_and_render_draft(account_email, encrypted_draft, render_functio
       privateKey: private_key,
     }).then(function(plaintext) {
       $('#input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
-      if(headers.to.length) {
+      if(headers && headers.to && headers.to.length) {
         $('#input_to').focus();
         $('#input_to').val(headers.to.join(','));
         $('#input_text').focus();
       }
-      if(headers.from) {
+      if(headers && headers.from) {
         $('#input_from').val(headers.from);
       }
       if(render_function) {

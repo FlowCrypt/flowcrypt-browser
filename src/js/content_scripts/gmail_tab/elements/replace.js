@@ -90,10 +90,10 @@ function replace_armored_pgp_messages(account_email, addresses, gmail_tab_id) {
       var re_pgp_question_sentence = /This&nbsp;message&nbsp;is&nbsp;encrypted\.&nbsp;If&nbsp;you&nbsp;can't&nbsp;read&nbsp;it,&nbsp;visit&nbsp;the&nbsp;following&nbsp;link.*/gm;
       var question = extract_pgp_question($(this).html());
       $(this).html($(this).html().replace(/<\/?span( class="il")>/gi, '').replace(/<wbr>/gm, '').replace(re_pgp_question_sentence, '').replace(re_pgp_blocks, function(armored_pubkey_match) {
+        var message_id = parse_message_id_from('message', message_element);
         if(armored_pubkey_match.indexOf('-----END PGP MESSAGE-----') !== -1) { // complete pgp block
-          return pgp_block_iframe(strip_pgp_armor(armored_pubkey_match), question, account_email, '', is_outgoing, gmail_tab_id);
+          return pgp_block_iframe(strip_pgp_armor(armored_pubkey_match), question, account_email, message_id, is_outgoing, gmail_tab_id);
         } else { // clipped pgp block
-          var message_id = parse_message_id_from('message', message_element);
           return pgp_block_iframe('', question, account_email, message_id, is_outgoing, gmail_tab_id);
         }
       }));
