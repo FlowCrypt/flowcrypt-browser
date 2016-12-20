@@ -1,3 +1,8 @@
+<b>version 2.6.1 on December 19, 2016: Chrome settings, Forward email</b>
+composing: Forward Encrypted will include the previous message
+setup: notify user when chrome settings change is needed
+setup: include user email with submitted feedback
+
 <b>version 2.6.0 on December 17, 2016: Email Attestation</b>
 setup: request and process email attestations
 setup: increased minimal passphrase strength
