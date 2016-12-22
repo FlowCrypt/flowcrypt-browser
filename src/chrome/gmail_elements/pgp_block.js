@@ -57,15 +57,10 @@ function send_resize_message() {
 
 function render_content(content, is_error, callback) {
   account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function(storage) {
-    if(!is_error) { //successfully opened message
-      if(url_params.is_outgoing && !storage.successfully_received_at_leat_one_message && !private_storage_get('local', url_params.account_email, 'master_public_key_submitted', url_params.parent_tab_id)) {
-        // successfully opened outgoing message, never received anything, and never submitted their key
-        content = '<div style="border:1px solid #F77;margin:20px 20px;padding:5px;color:#444;">Because your public key was not submitted to a key server, the recipient might be unable to send encrypted messages back. Make sure to send them a copy of your public key. You can get your public key in CryptUP settings.</div>' + content;
-      } else if(!url_params.is_outgoing) { // successfully opened incoming message
-        account_storage_set(url_params.account_email, {
-          successfully_received_at_leat_one_message: true
-        });
-      }
+    if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
+      account_storage_set(url_params.account_email, {
+        successfully_received_at_leat_one_message: true
+      });
     }
     $('#pgp_block').html(content);
     if(callback) {
