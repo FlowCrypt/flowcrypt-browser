@@ -322,21 +322,17 @@ function handle_send_message_error(response) {
 
 function compose_evaluate_receivers() {
   $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested').each(function() {
-    var email = $(this).text().trim();
+    var email_element = this;
+    var email = $(email_element).text().trim();
     if(is_email_valid(email)) {
       $("#send_btn span").text('Wait...');
       $("#send_btn_note").text("Checking email addresses");
-      var email_element = this;
       get_pubkeys([email], function(pubkeys) {
-        if(typeof pubkeys === 'undefined') {
-          compose_render_pubkey_result(email_element, undefined, false);
-        } else {
-          compose_render_pubkey_result(email_element, pubkeys[0].pubkey, pubkeys[0].pubkey && pubkeys[0].has_cryptup === false, pubkeys[0].attested);
-        }
+        compose_render_pubkey_result(email_element, pubkeys[0]);
       });
     } else {
-      compose_render_pubkey_result(this, undefined, false);
-      $(this).addClass('wrong');
+      compose_render_pubkey_result(email_element, undefined);
+      $(email_element).addClass('wrong');
     }
   });
 }
@@ -628,9 +624,10 @@ function compose_show_hide_send_pubkey_container() {
   }
 }
 
-function compose_render_pubkey_result(email_element, pubkey_data, receiver_might_need_my_pubkey, attested) {
+function compose_render_pubkey_result(email_element, pubkey_data) {
   if($('body#new_message').length) { //todo: better move this to new_message.js
-    if(receiver_might_need_my_pubkey && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) { // new message, they don't have cryptup, and my keys is not on pks
+    if(pubkey_data && pubkey_data.pubkey && !pubkey_data.has_cryptup && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) {
+      // new message, they do have pgp but don't have cryptup, and my keys is not on pks
       did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
         if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
           recipients_missing_my_key.push(trim_lower($(email_element).text()));
@@ -641,6 +638,17 @@ function compose_render_pubkey_result(email_element, pubkey_data, receiver_might
       compose_show_hide_send_pubkey_container();
     }
   }
+  function key_id_text(pubkey_data) {
+    if(pubkey_data === null || typeof pubkey_data === 'undefined') {
+      return '';
+    } else if (pubkey_data.has_cryptup && pubkey_data.keywords) {
+      return '\n\n' + 'Public KeyWords:\n' +  pubkey_data.keywords;
+    } else if (pubkey_data.fingerprint) {
+      return '\n\n' + 'Key fingerprint:\n' +  pubkey_data.fingerprint;
+    } else {
+      return '';
+    }
+  };
   var email_address = trim_lower($(email_element).text());
   $(email_element).children('i').removeClass('fa');
   $(email_element).children('i').removeClass('fa-spin');
@@ -649,14 +657,14 @@ function compose_render_pubkey_result(email_element, pubkey_data, receiver_might
   if(typeof pubkey_data === 'undefined') {
     $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
     // todo - show option to try again
-  } else if(pubkey_data !== null && attested) {
+  } else if(pubkey_data && pubkey_data.pubkey !== null && pubkey_data.attested) {
     $(email_element).addClass("attested");
     $(email_element).prepend("<i class='ion-locked'></i>");
-    $(email_element).attr('title', 'Uses encryption and was attested');
-  } else if(pubkey_data !== null) {
+    $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + key_id_text(pubkey_data));
+  } else if(pubkey_data && pubkey_data.pubkey !== null) {
     $(email_element).addClass("has_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");
-    $(email_element).attr('title', 'Uses encryption');
+    $(email_element).attr('title', 'Does use encryption' + key_id_text(pubkey_data));
   } else {
     $(email_element).addClass("no_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");

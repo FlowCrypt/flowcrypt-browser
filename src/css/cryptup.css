@@ -7,6 +7,7 @@
 .line.red, td.red, b.red, span.red { color: #d14836; }
 .line.prange, td.orange, b.orange, span.orange { color: #d18826; }
 .line.green, td.green, b.green, span.green { color: #31A217; }
+.line.gray, td.gray, b.gray, span.gray { color: #B7B7B7; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 .green_label { color: white; background-color: #31A217; display: inline-block; min-width: 150px; padding: 0px 5px 1px 5px; text-transform: uppercase; }
@@ -124,6 +125,9 @@ body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #66
 body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
+
+/*body#settings > div#content.my_key .gray { color: #999; }*/
+
 
 body#settings #edit_pubkey textarea.input_pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
 body#settings > div#content > div#changelog { width: 550px; margin: 0 auto; text-align: left; font-size: 16px; padding-bottom: 80px; }

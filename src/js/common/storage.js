@@ -9,15 +9,31 @@ function pubkey_cache_retrieve() {
   return JSON.parse(localStorage.pubkey_cache);
 }
 
-function pubkey_cache_add(email, pubkey, name, has_cryptup, attested) {
-  var storage = pubkey_cache_retrieve();
-  storage[trim_lower(email)] = {
+function pubkey_object(pubkey, name, has_cryptup, attested) {
+  if(typeof mnemonic !== 'undefined') {
+    var keywords = mnemonic(key_longid(pubkey));
+  } else {
+    var keywords = undefined;
+  }
+  return {
     pubkey: pubkey,
+    fingerprint: key_fingerprint(pubkey, 'spaced'),
+    keywords: keywords,
     name: name,
     has_cryptup: has_cryptup === true,
     attested: attested,
   };
-  localStorage.pubkey_cache = JSON.stringify(storage);
+}
+
+function pubkey_cache_add(email, pubkey_or_obj, name, has_cryptup, attested) {
+  // can work with result of pubkey_object directly. If supplied individual arguments, will convert using  pubkey_object first.
+  if(typeof pubkey_or_obj === 'object') {
+    var storage = pubkey_cache_retrieve();
+    storage[trim_lower(email)] = pubkey_or_obj;
+    localStorage.pubkey_cache = JSON.stringify(storage);
+  } else {
+    pubkey_cache_add(email, pubkey_object(pubkey_or_obj, name, has_cryptup, attested));
+  }
 }
 
 function pubkey_cache_remove(email) {
@@ -28,8 +44,14 @@ function pubkey_cache_remove(email) {
 
 function pubkey_cache_get(email) {
   var storage = pubkey_cache_retrieve();
-  if(typeof storage[trim_lower(email)] !== 'undefined') {
-    return storage[trim_lower(email)];
+  var stored = storage[trim_lower(email)];
+  if(typeof stored !== 'undefined') {
+    if(typeof stored.keywords === 'undefined' && typeof mnemonic !== 'undefined') { // saved in old version of CryptUP, and can be updated now
+      pubkey_cache_add(email, stored.pubkey, stored.name, stored.has_cryptup, stored.attested); // this will update the fingerprints and keywords
+      return pubkey_cache_get(email);
+    } else {
+      return stored;
+    }
   }
   return null;
 }
@@ -77,14 +99,10 @@ function get_pubkeys(emails, callback, ignore_cached) {
     keyserver_keys_find(get_from_keyserver, function(success, keyserver_results) {
       if(success) {
         $.each(keyserver_results.results, function(i, keyserver_result) {
-          results[emails.indexOf(get_from_keyserver[i])] = {
-            pubkey: keyserver_result.pubkey,
-            name: keyserver_result.name,
-            has_cryptup: keyserver_result.has_cryptup,
-            attested: keyserver_result.attested,
-          };
+          var pubkey_obj = pubkey_object(keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup, keyserver_result.attested);
+          results[emails.indexOf(get_from_keyserver[i])] = pubkey_obj;
           if(keyserver_result.pubkey) {
-            pubkey_cache_add(keyserver_result.email, keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup, keyserver_result.attested);
+            pubkey_cache_add(keyserver_result.email, pubkey_obj);
           }
         });
         callback(results);

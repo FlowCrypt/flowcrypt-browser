@@ -554,21 +554,42 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
   });
 }
 
-function key_fingerprint(key) {
-  if(typeof key.primaryKey !== 'undefined') {
+function key_fingerprint(key, formatting) {
+  if(key === null) {
+    return null;
+  } else if(typeof key.primaryKey !== 'undefined') {
+    if(key.primaryKey.fingerprint === null) {
+      return null;
+    }
     try {
-      return key.primaryKey.fingerprint.toUpperCase();
+      var fp = key.primaryKey.fingerprint.toUpperCase();
+      if(formatting === 'spaced') {
+        return fp.replace(/(.{4})/g, "$1 ");
+      }
+      return fp;
     } catch(error) {
       console.log(error);
       return null;
     }
   } else {
     try {
-      return openpgp.key.readArmored(key).keys[0].primaryKey.fingerprint.toUpperCase();
+      return key_fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
     } catch(error) {
       console.log(error);
       return null;
     }
+  }
+}
+
+function key_longid(key_or_fingerprint) {
+  if(key_or_fingerprint === null) {
+    return null;
+  } else if(key_or_fingerprint.length === 40) {
+    return key_or_fingerprint.substr(-16);
+  } else if(key_or_fingerprint.length === 49) {
+    return key_or_fingerprint.replace(/ /g, '').substr(-16);
+  } else {
+    return key_longid(key_fingerprint(key_or_fingerprint));
   }
 }
 

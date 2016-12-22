@@ -39,8 +39,8 @@ LIBS = [
 zips_fetched = []
 
 def download_all(path, temp, libs):
-    for group in ['emailjs', 'featherlight', 'bootstrap']:
-        os.makedirs(path + group)
+    for dirs in ['emailjs', 'featherlight', 'bootstrap']:
+        os.makedirs(path + dirs)
     for lib in libs:
         parts = lib['url'].split('~unzip~');
         url = parts[0]
