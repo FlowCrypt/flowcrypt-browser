@@ -69,7 +69,7 @@ function display_block(name) {
     'loading',
     'step_0_found_key',
     'step_1_easy_or_manual',
-    'step_2_manual', 'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
+    'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
     'step_4_done'
   ];
   if(name) { //set
@@ -77,7 +77,7 @@ function display_block(name) {
       $('#' + block).css('display', 'none');
     });
     $('#' + name).css('display', 'block');
-    if(name === 'step_2_manual' || name === 'step_2b_manual_enter' || name === 'step_2a_manual_create') {
+    if(name === 'step_2b_manual_enter' || name === 'step_2a_manual_create') {
       $('.back').css('visibility', 'visible');
     } else {
       $('.back').css('visibility', 'hidden');
@@ -261,19 +261,9 @@ $('.action_simple_setup').click(function() {
   });
 });
 
-$('.action_manual_setup').click(function() {
-  display_block('step_2_manual');
-  $('h1').text('Advanced Setup');
-});
-
 $('.back').off().click(function() {
-  var current_block = display_block();
-  if(current_block === 'step_2b_manual_enter' || current_block === 'step_2a_manual_create') {
-    display_block('step_2_manual');
-  } else {
-    $('h1').text('Set Up');
-    display_block('step_1_easy_or_manual');
-  }
+  $('h1').text('Set Up');
+  display_block('step_1_easy_or_manual');
 });
 
 $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), function(self) {
@@ -351,11 +341,11 @@ $('.input_submit_key').click(function() {
   }
 });
 
-$('#step_0_found_key .action_manual_create_key, #step_2_manual .action_manual_create_key').click(function() {
+$('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(function() {
   display_block('step_2a_manual_create');
 });
 
-$('#step_0_found_key .action_manual_enter_key, #step_2_manual .action_manual_enter_key').click(function() {
+$('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(function() {
   display_block('step_2b_manual_enter');
 });
 

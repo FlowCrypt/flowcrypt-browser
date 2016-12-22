@@ -28,6 +28,7 @@
 .bad { color: #A44; }
 
 div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;}
+div.wide.line { max-width: 850px; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
 body#settings > div#content {  margin-top: 120px; margin-bottom: 150px; }
@@ -59,6 +60,7 @@ body#settings > div#content.setup div#step_0_found_key { display: none; -webkit-
 body#settings > div#content.setup div#step_1_easy_or_manual { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_1_easy_or_manual .circle-i { width: 90px; height: 90px; margin:0 auto; margin-bottom: 35px; border-radius: 120px;  -webkit-animation: fadeInUp .5s; animation: fadeInUp .5s;}
 body#settings > div#content.setup div#step_1_easy_or_manual .circle-i i { font-size: 73px; padding-top: 19px; display: inline-block; color: #31A217;}
+body#settings > div#content.setup div#step_1_easy_or_manual .circle-i i.manual { color: #B7B7B7; }
 
 
 body#settings > div#content.setup div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white; text-align: center; font-size: 16px; font-weight: normal;
