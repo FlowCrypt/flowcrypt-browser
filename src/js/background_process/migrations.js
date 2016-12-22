@@ -130,7 +130,7 @@ function migrate_210_220(account_email, then) {
   var pubkeys = pubkey_cache_retrieve();
   $.each(pubkeys, function(email, pubkey_info) {
     if(typeof pubkey_info === 'string') {
-      pubkey_cache_add(email, pubkey_info, undefined, undefined);
+      pubkey_cache_add(email, pubkey_info, undefined, undefined, false);
       console.log('migrating from 2.1.0 to 2.2.0: fixing pubkey cache for ' + email);
     }
   });

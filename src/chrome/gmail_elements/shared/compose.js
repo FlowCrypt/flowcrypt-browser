@@ -321,7 +321,7 @@ function handle_send_message_error(response) {
 }
 
 function compose_evaluate_receivers() {
-  $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong').each(function() {
+  $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested').each(function() {
     var email = $(this).text().trim();
     if(is_email_valid(email)) {
       $("#send_btn span").text('Wait...');
@@ -331,7 +331,7 @@ function compose_evaluate_receivers() {
         if(typeof pubkeys === 'undefined') {
           compose_render_pubkey_result(email_element, undefined, false);
         } else {
-          compose_render_pubkey_result(email_element, pubkeys[0].pubkey, pubkeys[0].pubkey && pubkeys[0].has_cryptup === false);
+          compose_render_pubkey_result(email_element, pubkeys[0].pubkey, pubkeys[0].pubkey && pubkeys[0].has_cryptup === false, pubkeys[0].attested);
         }
       });
     } else {
@@ -628,7 +628,7 @@ function compose_show_hide_send_pubkey_container() {
   }
 }
 
-function compose_render_pubkey_result(email_element, pubkey_data, receiver_might_need_my_pubkey) {
+function compose_render_pubkey_result(email_element, pubkey_data, receiver_might_need_my_pubkey, attested) {
   if($('body#new_message').length) { //todo: better move this to new_message.js
     if(receiver_might_need_my_pubkey && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) { // new message, they don't have cryptup, and my keys is not on pks
       did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
@@ -641,20 +641,26 @@ function compose_render_pubkey_result(email_element, pubkey_data, receiver_might
       compose_show_hide_send_pubkey_container();
     }
   }
+  var email_address = trim_lower($(email_element).text());
   $(email_element).children('i').removeClass('fa');
   $(email_element).children('i').removeClass('fa-spin');
   $(email_element).children('i').removeClass('ion-load-c');
   $(email_element).children('i').addClass('ion-android-close');
   if(typeof pubkey_data === 'undefined') {
+    $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
     // todo - show option to try again
+  } else if(pubkey_data !== null && attested) {
+    $(email_element).addClass("attested");
+    $(email_element).prepend("<i class='ion-locked'></i>");
+    $(email_element).attr('title', 'Uses encryption and was attested');
   } else if(pubkey_data !== null) {
     $(email_element).addClass("has_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");
-
+    $(email_element).attr('title', 'Uses encryption');
   } else {
     $(email_element).addClass("no_pgp");
-    $(email_element).prepend("<i class='ion-ios-locked'></i>");
-
+    $(email_element).prepend("<i class='ion-locked'></i>");
+    $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
   }
   if(!$('.receivers span i.fa-spin').length) {
     $("#send_btn span").text('encrypt and send');

@@ -9,12 +9,13 @@ function pubkey_cache_retrieve() {
   return JSON.parse(localStorage.pubkey_cache);
 }
 
-function pubkey_cache_add(email, pubkey, name, has_cryptup) {
+function pubkey_cache_add(email, pubkey, name, has_cryptup, attested) {
   var storage = pubkey_cache_retrieve();
   storage[trim_lower(email)] = {
     pubkey: pubkey,
     name: name,
     has_cryptup: has_cryptup === true,
+    attested: attested,
   };
   localStorage.pubkey_cache = JSON.stringify(storage);
 }
@@ -63,7 +64,7 @@ function get_pubkeys(emails, callback, ignore_cached) {
   $.each(emails, function(i, email) {
     if(ignore_cached !== true) {
       results[i] = pubkey_cache_get(email) || undefined;
-      if(typeof results[i] === 'undefined') {
+      if(typeof results[i] === 'undefined' || typeof results[i].attested === 'undefined') {
         get_from_keyserver.push(email);
       }
     } else {
@@ -79,10 +80,11 @@ function get_pubkeys(emails, callback, ignore_cached) {
           results[emails.indexOf(get_from_keyserver[i])] = {
             pubkey: keyserver_result.pubkey,
             name: keyserver_result.name,
-            has_cryptup: keyserver_result.has_cryptup
+            has_cryptup: keyserver_result.has_cryptup,
+            attested: keyserver_result.attested,
           };
           if(keyserver_result.pubkey) {
-            pubkey_cache_add(keyserver_result.email, keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup);
+            pubkey_cache_add(keyserver_result.email, keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup, keyserver_result.attested);
           }
         });
         callback(results);

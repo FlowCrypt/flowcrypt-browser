@@ -18,7 +18,7 @@ if(typeof pubkey !== 'undefined') {
 
 $('.add_pubkey').click(prevent(doubleclick(), function(self) {
   if(is_email_valid($('.input_email').val())) {
-    pubkey_cache_add($('.input_email').val(), pubkey.armor(), undefined, false);
+    pubkey_cache_add($('.input_email').val(), pubkey.armor(), undefined, false, false);
     $(self).replaceWith('<b style="color: green;">' + $('.input_email').val() +' added</b>')
     $('.input_email').remove();
   } else {

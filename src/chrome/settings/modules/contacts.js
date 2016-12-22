@@ -26,7 +26,7 @@ function render() {
     } else {
       var pubkey = openpgp.key.readArmored(armored_pubkey).keys[0];
       if(typeof pubkey !== 'undefined') {
-        pubkey_cache_add($('#edit_pubkey.featherlight-inner .input_email').text(), pubkey.armor(), undefined, false); // todo - think about if wiping has_cryptup to false is necessary
+        pubkey_cache_add($('#edit_pubkey.featherlight-inner .input_email').text(), pubkey.armor(), undefined, false, false); // todo - think about if wiping has_cryptup to false is necessary
         render();
         $('.featherlight-close').click();
       } else {

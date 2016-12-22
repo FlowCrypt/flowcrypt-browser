@@ -27,7 +27,7 @@ $('select.copy_from_email').change(function() {
 $('.action_ok').click(prevent(doubleclick(), function() {
   var pubkey = openpgp.key.readArmored(strip_pgp_armor($('.pubkey').val())).keys[0];
   if(typeof pubkey !== 'undefined') {
-    pubkey_cache_add($('select.email').val(), pubkey.armor(), undefined, false);
+    pubkey_cache_add($('select.email').val(), pubkey.armor(), undefined, false, false);
     close_dialog();
   } else {
     alert('Could not recognize the format, please try again.');

@@ -195,13 +195,13 @@ table#compose td#input_addresses_container > div .recipients span { margin-top: 
 table#compose td#input_addresses_container > div .recipients { height: auto; position: relative;}
 table#compose td#input_addresses_container > div .recipients span.wrong { padding: 5px 10px; background: #d14836; color: white; }
 table#compose td#input_addresses_container > div .recipients span.has_pgp { padding: 5px 10px 5px 23px;  background: #31A217; color: white; }
+table#compose td#input_addresses_container > div .recipients span.attested { padding: 5px 10px 5px 23px;  background: #31A217; color: white; }
 table#compose td#input_addresses_container > div .recipients span.no_pgp { padding: 5px 10px 5px 23px; background: #989898; color: white; }
-table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85; cursor: pointer;
-  color: black; }
+table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
+  cursor: pointer; color: black; font-size: 90%; }
 table#compose td#input_addresses_container > div .recipients span.wrong i  { color: white!important;}
-table#compose td#input_addresses_container > div .recipients span.has_pgp i, table#compose td#input_addresses_container .recipients span.no_pgp i,
-table#compose td#input_addresses_container > div .recipients span i.fa { font-size: 70%; top: -1px; }
-table#compose td#input_addresses_container > div .recipients span i.ion-locked {position: absolute; left: 4px; top:7px; color: white; opacity: 1; }
+table#compose td#input_addresses_container > div .recipients span i.ion-locked {position: absolute; left: 5px; top:8px; color: white; opacity: 1; }
+table#compose td#input_addresses_container > div .recipients span.has_pgp i.ion-locked {color: #cacaca; }
 table#compose td#input_addresses_container > div .recipients span i.ion-ios-locked {position: absolute; left:4px; top:4px; font-size: 15px; color: white; opacity: 1;}
 >>>>>>> recipients ux improvements | close #181
 table#compose th h1 { display: inline-block; margin: none; padding: none; font-size: 13.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
