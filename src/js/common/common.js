@@ -554,6 +554,24 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
   });
 }
 
+function key_fingerprint(key) {
+  if(typeof key.primaryKey !== 'undefined') {
+    try {
+      return key.primaryKey.fingerprint.toUpperCase();
+    } catch(error) {
+      console.log(error);
+      return null;
+    }
+  } else {
+    try {
+      return openpgp.key.readArmored(key).keys[0].primaryKey.fingerprint.toUpperCase();
+    } catch(error) {
+      console.log(error);
+      return null;
+    }
+  }
+}
+
 function extract_armored_message_from_text(text) {
   var matches = null;
   var re_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;

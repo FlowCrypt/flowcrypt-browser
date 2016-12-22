@@ -1,5 +1,7 @@
 'use strict';
 
+// todo - this file needs some serious refactoring, espacially setup_done, save_private_key and submit_public_key_if_needed which all share some functionality in a comfusing way
+
 var url_params = get_url_params(['account_email']);
 
 if(url_params.account_email) {
@@ -12,7 +14,6 @@ $('.back').css('visibility', 'hidden');
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var recovered_keys = undefined;
-var recovery_attempts = 0;
 var tab_id_global = undefined;
 
 chrome_message_get_tab_id(function(tab_id) {
@@ -177,7 +178,13 @@ function submit_public_key_if_needed(account_email, armored_pubkey, submit_main,
         callback();
       });
     } else {
-      callback()
+      keyserver_keys_find(account_email, function(success, result) {
+        if(success && result.pubkey && key_fingerprint(result.pubkey) !== null && key_fingerprint(result.pubkey) === key_fingerprint(armored_pubkey)) {
+          // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
+          private_storage_set('local', account_email, 'master_public_key_submitted', true);
+        }
+        callback();
+      });
     }
   });
 }
@@ -282,7 +289,15 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
           to_submit_pubkey: false, // todo - think about submitting
           save_passphrase: true, //todo - think about saving passphrase
         });
-        setup_dialog_set_done(false, true); //todo - think about "simple" setting
+        submit_public_key_if_needed(url_params.account_email, key_copy.toPublic().armor(), false, false, function() {
+          account_storage_set(url_params.account_email, {
+            setup_done: true,
+            setup_simple: false,
+            key_backup_prompt: false,
+          }, function() {
+            setup_dialog_set_done(false, true); //todo - think about "simple" setting
+          });
+        });
         worked = true;
         return false;
       }
@@ -294,9 +309,7 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
       } else {
         alert('This password did not match your original setup. Please try again.');
       }
-      if(++recovery_attempts === 3) {
-        $('.line_skip_recovery').css('display', 'block');
-      }
+      $('.line_skip_recovery').css('display', 'block');
     }
   } else {
     alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.');
