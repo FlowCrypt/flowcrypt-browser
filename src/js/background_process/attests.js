@@ -1,8 +1,8 @@
 'use strict';
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-var CHECK_TIMEOUT = 10 * 1000; // first check in 10 seconds
-var CHECK_INTERVAL = 60 * 1000; // one minute. Progressive increments would be better
+var CHECK_TIMEOUT = 60 * 1000; // first check in 60 seconds
+var CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
 var ATTESTERS = {
   CRYPTUP: {
     email: 'attest@cryptup.org',
