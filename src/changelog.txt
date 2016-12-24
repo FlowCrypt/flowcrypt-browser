@@ -1,3 +1,9 @@
+<b>version 2.6.2 on December 23, 2016: Better setup choices</b>
+setup: make initial setup choices clearer
+composing: removed confusing pubkey fix message on sent messages
+composing: display attested ppl with white lock vs gray
+composing: pgp fingerprints as KeyWords
+
 <b>version 2.6.1 on December 19, 2016: Chrome settings, Forward email</b>
 composing: Forward Encrypted will include the previous message
 setup: notify user when chrome settings change is needed
