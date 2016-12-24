@@ -37,7 +37,7 @@ body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999;
 body#settings > div#content a:hover { text-decoration: none; }
 body#settings > div#content > div#accounts a.button.has_email { width: 300px; padding: 5px 20px; text-align: left; font-weight: 100; color: #fff; }
 body#settings > div#content > div#accounts a.button.has_email b { padding-right: 10px; color: #FFF; }
-body#settings > div#content p.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;padding-bottom: 0;margin-bottom: 0; opacity: .3}
+body#settings > div#content p.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;padding-bottom: 0;margin-bottom: 0; opacity: .5}
 body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content div.line label { line-height: 22px; }
