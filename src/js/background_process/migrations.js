@@ -9,7 +9,7 @@ function migrate(data, sender, respond_done) {
             migrate_203_210(data.account_email, function() {
               migrate_210_220(data.account_email, function() {
                 account_storage_set(null, {
-                  version: Number(chrome.runtime.getManifest().version.replace('.', ''))
+                  version: Number(chrome.runtime.getManifest().version.replace(/\./g, '')),
                 }, respond_done);
                 consistency_fixes(data.account_email);
                 update_pks_status(data.account_email);
