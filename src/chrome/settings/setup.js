@@ -1,7 +1,5 @@
 'use strict';
 
-// todo - this file needs some serious refactoring, espacially setup_done, save_private_key and submit_public_key_if_needed which all share some functionality in a comfusing way
-
 var url_params = get_url_params(['account_email']);
 
 if(url_params.account_email) {
@@ -97,8 +95,8 @@ function display_block(name) {
 function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set Up CryptUP');
   account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function(storage) {
-    if(storage.setup_done === true) {
-      setup_dialog_set_done(storage.key_backup_prompt, storage.setup_simple);
+    if(storage.setup_done) {
+      render_setup_done(url_params.account_email, storage.key_backup_prompt);
     } else {
       get_pubkeys([url_params.account_email], function(pubkeys) {
         if(pubkeys && pubkeys[0] && pubkeys[0].pubkey) {
@@ -127,46 +125,11 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   });
 }
 
-function setup_dialog_set_done(key_backup_prompt, setup_simple) {
-  increment_metric('setup');
-  var storage = {
-    setup_done: true,
-    setup_simple: setup_simple,
-    cryptup_enabled: true,
-  };
-  if(key_backup_prompt === true) {
-    storage.key_backup_prompt = Date.now();
-  } else {
-    storage.key_backup_prompt = key_backup_prompt;
-  }
-  account_storage_set(url_params.account_email, storage, function() {
-    if(key_backup_prompt === true) {
-      window.location = '../settings/modules/backup.htm?action=setup&account_email=' + encodeURIComponent(url_params.account_email);
-    } else {
-      display_block('step_4_done');
-      $('h1').text('Setup done!');
-      $('.email').text(url_params.account_email);
-    }
-  });
-}
-
-function save_private_key(account_email, prv, passphrase, options) {
-  private_storage_set('local', account_email, 'master_private_key', prv.armor());
-  if(options.save_passphrase) {
-    private_storage_set('local', account_email, 'master_passphrase', passphrase || '');
-  } else {
-    private_storage_set('session', account_email, 'master_passphrase', passphrase || '');
-  }
-  private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(passphrase || ''));
-  private_storage_set('local', account_email, 'master_public_key', prv.toPublic().armor());
-  private_storage_set('local', account_email, 'master_public_key_submit', options.to_submit_pubkey);
-  private_storage_set('local', account_email, 'master_public_key_submitted', false);
-}
-
-function submit_public_key_if_needed(account_email, armored_pubkey, submit_main, submit_all, callback) {
+// options: {submit_main, submit_all}
+function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
   account_storage_get(account_email, ['addresses'], function(storage) {
-    if(submit_main) {
-      if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && submit_all) {
+    if(options.submit_main) {
+      if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
         var addresses = storage.addresses.concat(account_email);
       } else {
         var addresses = [account_email];
@@ -189,6 +152,45 @@ function submit_public_key_if_needed(account_email, armored_pubkey, submit_main,
   });
 }
 
+function render_setup_done(account_email, key_backup_prompt) {
+  if(key_backup_prompt) {
+    window.location = '../settings/modules/backup.htm?action=setup&account_email=' + encodeURIComponent(account_email);
+  } else {
+    display_block('step_4_done');
+    $('h1').text('Setup done!');
+    $('.email').text(account_email);
+  }
+}
+
+// options: {submit_main, submit_all, setup_simple, key_backup_prompt}
+function finalize_setup(account_email, armored_pubkey, options) {
+  submit_public_key_if_needed(account_email, armored_pubkey, options, function() {
+    increment_metric('setup');
+    var storage = {
+      setup_done: true,
+      cryptup_enabled: true,
+      setup_simple: options.setup_simple,
+      key_backup_prompt: options.key_backup_prompt,
+    };
+    account_storage_set(account_email, storage, function() {
+      render_setup_done(account_email, options.key_backup_prompt);
+    });
+  });
+}
+
+function save_private_key(account_email, prv, options) {
+  private_storage_set('local', account_email, 'master_private_key', prv.armor());
+  if(options.save_passphrase) {
+    private_storage_set('local', account_email, 'master_passphrase', options.passphrase || '');
+  } else {
+    private_storage_set('session', account_email, 'master_passphrase', options.passphrase || '');
+  }
+  private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
+  private_storage_set('local', account_email, 'master_public_key', prv.toPublic().armor());
+  private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
+  private_storage_set('local', account_email, 'master_public_key_submitted', false);
+}
+
 function create_save_key_pair(account_email, options) {
   openpgp.generateKey({
     numBits: 4096,
@@ -198,19 +200,8 @@ function create_save_key_pair(account_email, options) {
     }],
     passphrase: options.passphrase,
   }).then(function(key) {
-    save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], options.passphrase, {
-      to_submit_pubkey: options.submit_main,
-      save_passphrase: options.save_passphrase,
-    });
-    submit_public_key_if_needed(account_email, key.publicKeyArmored, options.submit_main, options.submit_all, function() {
-      account_storage_set(account_email, {
-        setup_done: true,
-        setup_simple: options.simple,
-        key_backup_prompt: Date.now(),
-      }, function() {
-        setup_dialog_set_done(true, options.simple);
-      });
-    });
+    save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], options);
+    finalize_setup(account_email, key.publicKeyArmored, options);
   }).catch(function(error) {
     $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed there and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
@@ -256,10 +247,12 @@ $('.action_simple_setup').click(function() {
       save_passphrase: true,
       submit_main: true,
       submit_all: true,
-      simple: true,
+      setup_simple: true,
+      key_backup_prompt: Date.now(),
     });
   });
 });
+
 
 $('.back').off().click(function() {
   $('h1').text('Set Up');
@@ -275,19 +268,16 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
     $.each(recovered_keys, function(i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
       if(recovered_key.decrypt(passphrase) === true) {
-        save_private_key(url_params.account_email, key_copy, passphrase, {
-          to_submit_pubkey: false, // todo - think about submitting
-          save_passphrase: true, //todo - think about saving passphrase
-        });
-        submit_public_key_if_needed(url_params.account_email, key_copy.toPublic().armor(), false, false, function() {
-          account_storage_set(url_params.account_email, {
-            setup_done: true,
-            setup_simple: false,
-            key_backup_prompt: false,
-          }, function() {
-            setup_dialog_set_done(false, true); //todo - think about "simple" setting
-          });
-        });
+        var options = {
+          submit_main: false, // todo - think about submitting when recovering
+          submit_all: false,
+          passphrase: passphrase,
+          save_passphrase: true, //todo - think about saving passphrase when recovering
+          setup_simple: true,
+          key_backup_prompt: false,
+        };
+        save_private_key(url_params.account_email, key_copy, options);
+        finalize_setup(url_params.account_email, key_copy.toPublic().armor(), options);
         worked = true;
         return false;
       }
@@ -362,19 +352,16 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
     $('#step_2b_manual_enter .input_passphrase').focus();
   } else {
     $('#step_2b_manual_enter .action_save_private').html(get_spinner());
-    save_private_key(url_params.account_email, prv, $('#step_2b_manual_enter .input_passphrase').val(), {
-      to_submit_pubkey: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+    var options = {
+      passphrase: $('#step_2b_manual_enter .input_passphrase').val(),
+      setup_simple: false,
+      key_backup_prompt: false,
+      submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+      submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
       save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
-    });
-    submit_public_key_if_needed(url_params.account_email, prv.toPublic().armor(), $('#step_2b_manual_enter .input_submit_key').prop('checked'), $('#step_2b_manual_enter .input_submit_all').prop('checked'), function() {
-      account_storage_set(url_params.account_email, {
-        setup_done: true,
-        setup_simple: false,
-        key_backup_prompt: false,
-      }, function() {
-        setup_dialog_set_done(false, false);
-      });
-    });
+    };
+    save_private_key(url_params.account_email, prv, options);
+    finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
   }
 });
 
@@ -404,7 +391,8 @@ $('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), 
         save_passphrase: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
         submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
         submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
-        simple: false,
+        setup_simple: false,
+        key_backup_prompt: Date.now(),
       });
     });
   }
