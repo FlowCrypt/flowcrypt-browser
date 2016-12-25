@@ -154,6 +154,11 @@ body#settings > div#content.dialog.add_pubkey select.copy_from_email { font-size
 body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; height: 340px; font-size: 12px; padding: 8px; }
 body#settings > div#content.dialog.add_pubkey .button { width: 120px; margin-left: 13px; margin-right: 14px; }
 
+body#settings > div#content.storage { background-color: #eaeaea; margin-top: 0px; margin-bottom: 0px; padding-top: 30px; padding-bottom: 100px;
+  min-height: 100%; height: auto !important;  height: 100%; margin: 0 auto;}
+body#settings > div#content.storage .emails a { padding-right: 20px; }
+body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; border: 1px solid #cacaca; width: 70%; background-color: white; }
+/*body#settings > div#content.storage .error {  }*/
 
 /* body */
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; word-wrap: break-word; }

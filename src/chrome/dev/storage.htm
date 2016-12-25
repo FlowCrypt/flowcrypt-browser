@@ -1,0 +1,34 @@
+<html>
+
+<head>
+  <title>CryptUP</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="icon" href="/img/logo-16-16-white-green.png" />
+</head>
+
+<body id="settings">
+  <div id="content" class="storage">
+    <p class="emails"></p>
+    <div class="pre" style="text-align: left; font-size: 12px;font-family: monospace;">
+
+    </div>
+    <p>
+      <select class="namespace">
+        <option>-- namespace --</option>
+      </select>
+      <input placeholder="key" class="key" style="width: 200px; " />
+      <input placeholder="value"  class="value" style="width: 500px; "/>
+      <button class="save">add or edit</button>
+    </p>
+    <p class="error bad" style="font-weight: bold;"></p>
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="storage.js"></script>
+
+</body>
+
+</html>
