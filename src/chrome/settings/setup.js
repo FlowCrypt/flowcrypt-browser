@@ -167,10 +167,12 @@ function finalize_setup(account_email, armored_pubkey, options) {
   submit_public_key_if_needed(account_email, armored_pubkey, options, function() {
     increment_metric('setup');
     var storage = {
+      setup_date: Date.now(),
       setup_done: true,
       cryptup_enabled: true,
       setup_simple: options.setup_simple,
       key_backup_prompt: options.key_backup_prompt,
+      is_newly_created_key: options.is_newly_created_key === true,
     };
     account_storage_set(account_email, storage, function() {
       render_setup_done(account_email, options.key_backup_prompt);
@@ -200,6 +202,7 @@ function create_save_key_pair(account_email, options) {
     }],
     passphrase: options.passphrase,
   }).then(function(key) {
+    options.is_newly_created_key = true;
     save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], options);
     finalize_setup(account_email, key.publicKeyArmored, options);
   }).catch(function(error) {
