@@ -1,3 +1,7 @@
+<b>version 2.7.0 on December 25, 2016: Pubkey Attests</b>
+setup: re-attesting a new pubkey
+setup: additional text when entering pubkey
+
 <b>version 2.6.2 on December 23, 2016: Better setup choices</b>
 setup: make initial setup choices clearer
 composing: removed confusing pubkey fix message on sent messages
