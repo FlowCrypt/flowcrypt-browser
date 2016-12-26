@@ -1,5 +1,49 @@
 'use strict';
 
+var on_error = window.onerror;
+window.onerror = function(error_message, url, line, col, error) {
+  if(on_error) {
+    on_error.apply(this, arguments); // Call any previously assigned handler
+  }
+  if(error_message.indexOf('Script error.') !== -1) {
+    return;
+  }
+  if(error.stack.indexOf('PRIVATE') !== -1) {
+    return;
+  }
+  if(url.indexOf('bnjglocicd') !== -1) {
+    var environment = 'prod';
+  } else if (url.indexOf('nmelpmhpel') !== -1) {
+    var environment = 'local';
+  } else {
+    var environment = 'unknown';
+  }
+  $.ajax({
+    url: 'https://cryptup-keyserver.herokuapp.com/help/error',
+    method: 'POST',
+    data: JSON.stringify({
+      name: error.name.substring(0, 50),
+      message: error_message.substring(0, 200),
+      url: url.substring(0, 300),
+      line: line,
+      col: col,
+      trace: error.stack,
+      version: chrome.runtime.getManifest().version,
+      environment: environment,
+    }),
+    dataType: 'json',
+    crossDomain: true,
+    contentType: 'application/json; charset=UTF-8',
+    async: true,
+    success: function(response) {
+      console.log('ERROR OCCURED');
+    },
+    error: function(XMLHttpRequest, status, error) {
+      console.log('FAILED');
+    },
+  });
+}
+
 function get_url_params(expected_keys, string) {
   var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
   var url_data = {};
