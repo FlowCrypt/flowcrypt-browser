@@ -1,7 +1,7 @@
 'use strict';
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-var CHECK_TIMEOUT = 60 * 1000; // first check in 60 seconds
+var CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
 var CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
 var ATTESTERS = {
   CRYPTUP: {
@@ -68,19 +68,24 @@ function check_email_for_attests_and_respond(account_email) {
 }
 
 function process_attest_packet_text(account_email, attest_packet_text) {
-  var attest = parse_attest_packet_from_text(attest_packet_text);
+  var attest = attest_packet_parse(attest_packet_text);
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
   var decrypted = key.decrypt(get_passphrase(account_email));
   if(decrypted) {
     var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
     var expected_email_hash = double_sha1_upper(trim_lower(account_email));
-    if(attest && attest.attester in ATTESTERS && attest.fingerprint === expected_fingerprint && attest.email_hash === expected_email_hash) {
+    if(attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
       is_already_attested(account_email, attest.attester, function(is_attested) {
         if(!is_attested) {
-          sign(key, attest.full, true, function(signed_attest_packet) {
-            keyserver_keys_attest(signed_attest_packet.data, function(success, response) {
+          sign(key, attest.text, true, function(signed_attest_packet) {
+            if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
+              var keyserver_api_endpoint = keyserver_keys_attest;
+            } else {
+              var keyserver_api_endpoint = keyserver_replace_confirm;
+            }
+            keyserver_api_endpoint(signed_attest_packet.data, function(success, response) {
               if(success && response && response.attested) {
-                account_storage_mark_as_attested(account_email, attest.attester, function() {
+                account_storage_mark_as_attested(account_email, attest.content.attester, function() {
                   console.log('successfully attested ' + account_email);
                 });
               } else {
@@ -90,12 +95,13 @@ function process_attest_packet_text(account_email, attest_packet_text) {
             });
           });
         } else {
-          console.log(attest.attester + ' already attested ' + account_email);
+          console.log(attest.content.attester + ' already attested ' + account_email);
           stop_watching(account_email);
         }
       });
     } else {
       console.log('ignored incorrect (malicious?) attest message for ' + account_email);
+      console.log(attest);
       // todo - ignore that message and stop pulling it - it's a fake attest message
     }
   }
@@ -173,51 +179,4 @@ function account_storage_mark_as_attested(account_email, attester, callback) {
       account_storage_set(account_email, storage, callback);
     }
   });
-}
-
-function parse_attest_packet_from_text(text) {
-  // "-----BEGIN ATTEST PACKET-----
-  // ATT:CRYPTUP
-  // ADD:AF0546C698E636F6C9737A8ADDCDB8805115AA51
-  // PUB:97906EF076E683F529A273AF29EFA49A6DEC3889
-  // RAN:F4671B45BAB0BEC2F84CFB7D59192F47118DE273
-  // -----END ATTEST PACKET-----"
-  var accepted_values = {
-    'ATT': 'attester',
-    'ADD': 'email_hash',
-    'PUB': 'fingerprint',
-    'RAN': 'random',
-  };
-  var value_order = ['ATT', 'ADD', 'PUB', 'RAN'];
-  var parsed_attest = {};
-  var matches = text.match(/-----BEGIN ATTEST PACKET-----((.|[\r?\n])+)-----END ATTEST PACKET-----/m);
-  if(matches && matches[1]) {
-    parsed_attest.full = matches[1].replace(/^\s+|\s+$/g, '');
-    var lines = parsed_attest.full.split('\n');
-    var line_count = 0;
-    $.each(lines, function(i, line) {
-      var line_parts = line.replace('\n', '').replace('\r', '').split(':');
-      if(line_parts.length !== 2) {
-        return null; // incorrect format
-      }
-      if(!accepted_values[line_parts[0]]) {
-        return null; // value name is not one of ATT, ADD, PUB, RAN
-      }
-      if(parsed_attest[accepted_values[line_parts[0]]]) {
-        return null; // this value name was already parsed - duplicate value names
-      }
-      if(line_parts[0] !== value_order.shift()) {
-        return null; // wrong order
-      }
-      parsed_attest[accepted_values[line_parts[0]]] = line_parts[1];
-      line_count++;
-    });
-    if(line_count !== 4) {
-      return null; // wrong line count
-    }
-    if(parsed_attest.fingerprint.length === 40 && parsed_attest.email_hash.length === 40 && parsed_attest.random.length === 40) {
-      return parsed_attest;
-    }
-    return null;
-  }
 }

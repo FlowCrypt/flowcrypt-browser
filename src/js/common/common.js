@@ -432,22 +432,6 @@ function array_without_value(array, without_value) {
   return result;
 }
 
-function extract_key_ids(armored_pubkey) {
-  return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
-}
-
-function key_ids_match(first, second) {
-  if(first.length !== second.length) {
-    return false;
-  }
-  for(var i = 0; i < first.length; i++) {
-    if(first[i].bytes !== second[i].bytes) {
-      return false;
-    }
-  }
-  return true;
-}
-
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
   var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
@@ -467,7 +451,6 @@ function check_pubkeys_message(account_email, message) {
 }
 
 function check_pubkeys_keyserver(account_email, callback) {
-  var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
   var diagnosis = {
     has_pubkey_missing: false,
     has_pubkey_mismatch: false,
@@ -480,19 +463,20 @@ function check_pubkeys_keyserver(account_email, callback) {
           if(!pubkey_search_result.pubkey) {
             diagnosis.has_pubkey_missing = true;
             diagnosis.results[pubkey_search_result.email] = {
+              attested: false,
               pubkey: null,
-              pubkey_ids: null,
-              match: null,
+              match: false,
             }
           } else {
             var match = true;
-            if(!key_ids_match(extract_key_ids(pubkey_search_result.pubkey), local_key_ids)) {
+            var local_fingerprint = key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
+            if(key_fingerprint(pubkey_search_result.pubkey) !== local_fingerprint) {
               diagnosis.has_pubkey_mismatch = true;
               match = false;
             }
             diagnosis.results[pubkey_search_result.email] = {
               pubkey: pubkey_search_result.pubkey,
-              pubkey_ids: extract_key_ids(pubkey_search_result.pubkey),
+              attested: pubkey_search_result.attested,
               match: match,
             }
           }
