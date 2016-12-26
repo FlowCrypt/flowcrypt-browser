@@ -37,8 +37,15 @@ account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_sco
         });
       } else {
         reply_message_render_table();
-        console.log('gmail_api_draft_get success===false');
-        console.log(response);
+        if(response.status === 404) {
+          draft_meta_store(false, storage.drafts_reply[url_params.thread_id], url_params.thread_id, null, null, function() {
+            console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
+            window.location.reload();
+          });
+        } else {
+          console.log('gmail_api_draft_get success===false');
+          console.log(response);
+        }
       }
     });
   } else { //no draft available

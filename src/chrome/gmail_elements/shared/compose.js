@@ -176,7 +176,7 @@ function draft_delete(account_email, callback) {
     if(draft_id) {
       draft_meta_store(false, draft_id, compose_url_params.thread_id, null, null, function() {
         gmail_api_draft_delete(account_email, draft_id, callback);
-      })
+      });
     } else {
       if(callback) {
         callback();
