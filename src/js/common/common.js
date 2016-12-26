@@ -1,47 +1,120 @@
 'use strict';
 
-var on_error = window.onerror;
-window.onerror = function(error_message, url, line, col, error) {
-  if(on_error) {
-    on_error.apply(this, arguments); // Call any previously assigned handler
-  }
-  if(error_message.indexOf('Script error.') !== -1) {
+var original_on_error = window.onerror;
+window.onerror = cryptup_error_handler;
+
+function cryptup_error_handler(error_message, url, line, col, error, is_manually_called, version, environment) {
+  var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.'
+  var ignored_errors = [
+    'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
+  ];
+  if(!error) {
     return;
+  }
+  if(ignored_errors.indexOf(error.message) !== -1) {
+    return true;
+  }
+  console.log('%c ' + error.message, 'color: #F00; font-weight: bold;');
+  console.log('%c ' + error.stack, 'color: #F66');
+  if(is_manually_called !== true && original_on_error && original_on_error !== cryptup_error_handler) {
+    original_on_error.apply(this, arguments); // Call any previously assigned handler
   }
   if(error.stack.indexOf('PRIVATE') !== -1) {
     return;
   }
-  if(url.indexOf('bnjglocicd') !== -1) {
-    var environment = 'prod';
-  } else if (url.indexOf('nmelpmhpel') !== -1) {
-    var environment = 'local';
-  } else {
-    var environment = 'unknown';
+  if(!version) {
+    if(chrome.runtime.getManifest) {
+      version = chrome.runtime.getManifest().version;
+    } else {
+      version = 'unknown';
+    }
   }
-  $.ajax({
-    url: 'https://cryptup-keyserver.herokuapp.com/help/error',
-    method: 'POST',
-    data: JSON.stringify({
-      name: error.name.substring(0, 50),
-      message: error_message.substring(0, 200),
-      url: url.substring(0, 300),
-      line: line,
-      col: col,
-      trace: error.stack,
-      version: chrome.runtime.getManifest().version,
-      environment: environment,
-    }),
-    dataType: 'json',
-    crossDomain: true,
-    contentType: 'application/json; charset=UTF-8',
-    async: true,
-    success: function(response) {
-      console.log('ERROR OCCURED');
-    },
-    error: function(XMLHttpRequest, status, error) {
-      console.log('FAILED');
-    },
-  });
+  if(!environment) {
+    environment = get_environment();
+  }
+  try {
+    $.ajax({
+      url: 'https://cryptup-keyserver.herokuapp.com/help/error',
+      method: 'POST',
+      data: JSON.stringify({
+        name: error.name.substring(0, 50),
+        message: error_message.substring(0, 200),
+        url: url.substring(0, 300),
+        line: line,
+        col: col,
+        trace: error.stack,
+        version: version,
+        environment: environment,
+      }),
+      dataType: 'json',
+      crossDomain: true,
+      contentType: 'application/json; charset=UTF-8',
+      async: true,
+      success: function(response) {
+        console.log('CRYPTUP ERROR:' + user_log_message);
+      },
+      error: function(XMLHttpRequest, status, error) {
+        console.log('CRYPTUP FAILED:' + user_log_message);
+      },
+    });
+  } catch (ajax_err) {
+    console.log(ajax_err);
+    console.log('CRYPTUP EXCEPTION:' + user_log_message);
+  }
+  return true;
+}
+
+// last argument will be the function to run. Previous arguments will be passed to that function.
+function Try(code) {
+  return function() {
+    try {
+      return code();
+    } catch(code_err) {
+      try {
+        var caller_line = code_err.stack.split("\n")[4];
+        var index = caller_line.indexOf("at ");
+        var line = caller_line.slice(index + 2, caller_line.length);
+      } catch(line_err) {
+        var line = 0;
+      }
+      try {
+        chrome_message_send(null, 'runtime', null, function(runtime) {
+          cryptup_error_handler(code_err.message, window.location.href, line, 0, code_err, true, runtime.version, runtime.environment);
+        });
+      } catch(message_err) {
+        cryptup_error_handler(code_err.message, window.location.href, line, 0, code_err, true);
+      }
+    }
+  };
+}
+
+function WrapWithTryIfContentScript(code) {
+  if(get_environment() === 'content_script') {
+    return Try(code);
+  } else {
+    return code;
+  }
+}
+
+function TrySetTimeout(code, delay) {
+  return setTimeout(Try(code), delay);
+}
+
+function TrySetInterval(code, delay) {
+  return setInterval(Try(code), delay);
+}
+
+function get_environment(url) {
+  if(!url) {
+    url = window.location.href;
+  }
+  if(url.indexOf('bnjglocicd') !== -1) {
+    return 'prod';
+  } else if(url.indexOf('nmelpmhpel') !== -1) {
+    return 'dev';
+  } else {
+    return 'content_script';
+  }
 }
 
 function get_url_params(expected_keys, string) {
@@ -689,25 +762,27 @@ function chrome_message_background_listen(handlers) {
 function chrome_message_listen(handlers, listen_for_tab_id) {
   var processed = [];
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
-    if(!listen_for_tab_id || request.to === Number(listen_for_tab_id)) {
-      if(processed.indexOf(request.uid) === -1) {
-        processed.push(request.uid);
-        if(typeof handlers[request.name] !== 'undefined') {
-          handlers[request.name](request.data, sender, respond);
-        } else {
-          if(request.name !== '_tab_') {
-            throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+    return WrapWithTryIfContentScript(function() {
+      if(!listen_for_tab_id || request.to === Number(listen_for_tab_id)) {
+        if(processed.indexOf(request.uid) === -1) {
+          processed.push(request.uid);
+          if(typeof handlers[request.name] !== 'undefined') {
+            handlers[request.name](request.data, sender, respond);
           } else {
-            // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
+            if(request.name !== '_tab_') {
+              throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+            } else {
+              // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
+            }
           }
+        } else {
+          // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
         }
       } else {
-        // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
+        // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
       }
-    } else {
-      // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
-    }
-    return request.respondable === true;
+      return request.respondable === true;
+    })();
   });
 }
 

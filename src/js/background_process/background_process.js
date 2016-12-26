@@ -2,8 +2,6 @@
 
 console.log('background_process.js starting');
 
-update_uninstall_url();
-
 chrome_message_background_listen({
   migrate: migrate,
   google_auth: google_auth,
@@ -14,6 +12,12 @@ chrome_message_background_listen({
   attest_requested: attest_requested_handler,
   attest_packet_received: attest_packet_received_handler,
   update_uninstall_url: update_uninstall_url,
+  runtime: function(message, sender, respond) {
+    respond({
+      environment: get_environment(),
+      version: chrome.runtime.getManifest().version,
+    });
+  },
   ping: function(message, sender, respond) {
     respond(true);
   },
@@ -21,6 +25,8 @@ chrome_message_background_listen({
     respond(sender.tab.id);
   },
 });
+
+update_uninstall_url();
 
 if(!localStorage.settings_seen) {
   open_settings_page('initial.htm'); // called after the very first installation of the plugin
