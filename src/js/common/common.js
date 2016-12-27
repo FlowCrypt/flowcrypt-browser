@@ -61,11 +61,12 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
         console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
       },
     });
-  } catch (ajax_err) {
+  } catch(ajax_err) {
     console.log(ajax_err);
     console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
   }
   try {
+    increment_metric('error');
     account_storage_get(null, ['errors'], function(storage) {
       if(typeof storage.errors === 'undefined') {
         storage.errors = [];
@@ -73,7 +74,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       storage.errors.unshift(error.stack);
       account_storage_set(null, storage);
     });
-  } catch (storage_err) {
+  } catch(storage_err) {
 
   }
   return true;
@@ -720,7 +721,7 @@ function extract_armored_message_from_text(text) {
 /* -------------------- METRICS ----------------------------------------------------*/
 
 function increment_metric(type, callback) {
-  if(['compose', 'view', 'reply', 'attach', 'download', 'setup'].indexOf(type) === -1) {
+  if(['compose', 'view', 'reply', 'attach', 'download', 'setup', 'error'].indexOf(type) === -1) {
     console.log('Unknown metric type"' + type + '"');
   }
   account_storage_get(null, ['metrics'], function(storage) {
@@ -734,7 +735,9 @@ function increment_metric(type, callback) {
     }
     account_storage_set(null, {
       metrics: storage.metrics,
-    }, callback);
+    }, function() {
+      chrome_message_send(null, 'update_uninstall_url', null, callback);
+    });
   });
 }
 

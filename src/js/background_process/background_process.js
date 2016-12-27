@@ -77,10 +77,11 @@ function list_pgp_attachments(request, sender, respond) {
 
 function update_uninstall_url() {
   get_account_emails(function(account_emails) {
-    if(account_emails && account_emails.length) {
-      chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + encodeURIComponent(account_emails[0]));
-    } else {
-      chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm');
-    }
-  })
+    account_storage_get(null, ['metrics'], function(storage) {
+      chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + encodeURIComponent(JSON.stringify({
+        email: (account_emails && account_emails.length) ? account_emails[0] : null,
+        metrics: storage.metrics || null,
+      })));
+    });
+  });
 }
