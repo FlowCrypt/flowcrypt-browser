@@ -11,6 +11,8 @@ var can_read_emails = undefined;
 url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
 url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
+init_elements_factory_js();
+
 // show decrypted draft if available for this thread. Also check if GMAIL_READ_SCOPE is available.
 account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function(storage) {
   can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);

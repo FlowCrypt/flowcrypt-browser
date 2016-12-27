@@ -1,7 +1,5 @@
 'use strict';
 
-init_elements_factory_js();
-
 var SAVE_DRAFT_FREQUENCY = 3000;
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
