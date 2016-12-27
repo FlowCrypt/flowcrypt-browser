@@ -19,11 +19,9 @@ function init_setup_js() {
 
   window.save_account_email_full_name_if_needed = function(account_email) {
     account_storage_get(account_email, 'full_name', function(value) {
-      Try(function() {
-        if(typeof value === 'undefined') {
-          save_account_email_full_name(account_email);
-        }
-      })();
+      if(typeof value === 'undefined') {
+        save_account_email_full_name(account_email);
+      }
     });
   };
 

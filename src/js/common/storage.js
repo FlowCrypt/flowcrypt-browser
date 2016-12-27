@@ -223,9 +223,11 @@ function account_storage_set(gmail_account_email, values, callback) {
     storage_update[account_storage_key(gmail_account_email, key)] = value;
   });
   chrome.storage.local.set(storage_update, function() {
-    if(typeof callback !== 'undefined') {
-      callback();
-    }
+    Try(function() {
+      if(typeof callback !== 'undefined') {
+        callback();
+      }
+    })();
   });
 }
 
@@ -234,7 +236,9 @@ function account_storage_get(account_or_accounts, keys, callback) {
     account_or_accounts = global_storage_scope;
   }
   chrome.storage.local.get(account_storage_key(account_or_accounts, keys), function(storage_object) {
-    callback(account_storage_object_keys_to_original(account_or_accounts, storage_object));
+    Try(function() {
+      callback(account_storage_object_keys_to_original(account_or_accounts, storage_object));
+    })();
   });
 }
 
@@ -242,5 +246,11 @@ function account_storage_remove(gmail_account_email, key_or_keys, callback) {
   if(!gmail_account_email) {
     gmail_account_email = global_storage_scope;
   }
-  chrome.storage.local.remove(account_storage_key(gmail_account_email, key_or_keys), callback);
+  chrome.storage.local.remove(account_storage_key(gmail_account_email, key_or_keys), function() {
+    Try(function() {
+      if(typeof callback !== 'undefined') {
+        callback();
+      }
+    })();
+  });
 }

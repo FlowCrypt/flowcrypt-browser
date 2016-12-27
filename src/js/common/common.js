@@ -4,8 +4,9 @@ var original_on_error = window.onerror;
 window.onerror = cryptup_error_handler;
 
 function cryptup_error_handler(error_message, url, line, col, error, is_manually_called, version, environment) {
-  var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.'
+  var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
   var ignored_errors = [
+    // happens in gmail window when reloaded extension + now reloading the gmail
     'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
   ];
   if(!error) {
@@ -14,8 +15,11 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
   if(ignored_errors.indexOf(error.message) !== -1) {
     return true;
   }
-  console.log('%c ' + error.message, 'color: #F00; font-weight: bold;');
-  console.log('%c ' + error.stack, 'color: #F66');
+  if(error.stack) {
+    console.log('%c' + error.stack, 'color: #F00; font-weight: bold;');
+  } else {
+    console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
+  }
   if(is_manually_called !== true && original_on_error && original_on_error !== cryptup_error_handler) {
     original_on_error.apply(this, arguments); // Call any previously assigned handler
   }
@@ -51,15 +55,26 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       contentType: 'application/json; charset=UTF-8',
       async: true,
       success: function(response) {
-        console.log('CRYPTUP ERROR:' + user_log_message);
+        console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
       },
       error: function(XMLHttpRequest, status, error) {
-        console.log('CRYPTUP FAILED:' + user_log_message);
+        console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
       },
     });
   } catch (ajax_err) {
     console.log(ajax_err);
-    console.log('CRYPTUP EXCEPTION:' + user_log_message);
+    console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
+  }
+  try {
+    account_storage_get(null, ['errors'], function(storage) {
+      if(typeof storage.errors === 'undefined') {
+        storage.errors = [];
+      }
+      storage.errors.unshift(error.stack);
+      account_storage_set(null, storage);
+    });
+  } catch (storage_err) {
+
   }
   return true;
 }

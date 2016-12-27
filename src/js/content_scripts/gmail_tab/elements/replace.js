@@ -196,25 +196,23 @@ function init_elements_replace_js() {
     });
     var my_email = account_email;
     account_storage_get(account_email, ['addresses'], function(storage) {
-      Try(function() {
-        $.each(reply_to_estimate, function(i, email) {
-          storage.addresses = storage.addresses || [account_email];
-          if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email
-            my_email = email;
-          } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
-            reply_to.push(email); // reply to all except my emails
-          }
-        });
-        if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-          reply_to = unique(reply_to_estimate);
+      $.each(reply_to_estimate, function(i, email) {
+        storage.addresses = storage.addresses || [account_email];
+        if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email
+          my_email = email;
+        } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
+          reply_to.push(email); // reply to all except my emails
         }
-        callback({
-          subject: $('h2.hP').text(),
-          reply_to: reply_to,
-          addresses: storage.addresses,
-          my_email: my_email,
-        });
-      })();
+      });
+      if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
+        reply_to = unique(reply_to_estimate);
+      }
+      callback({
+        subject: $('h2.hP').text(),
+        reply_to: reply_to,
+        addresses: storage.addresses,
+        my_email: my_email,
+      });
     });
   };
 
@@ -244,9 +242,7 @@ function init_elements_replace_js() {
 
   window.reinsert_reply_box = function(account_email, gmail_tab_id, subject, my_email, their_email) {
     account_storage_get(account_email, ['addresses'], function(storage) {
-      Try(function() {
-        $('.reply_message_iframe_container').append(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject, false, true));
-      })();
+      $('.reply_message_iframe_container').append(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject, false, true));
     });
   };
 
