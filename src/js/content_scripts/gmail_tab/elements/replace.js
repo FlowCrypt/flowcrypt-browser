@@ -124,8 +124,9 @@ function init_elements_replace_js() {
   };
 
   window.replace_pgp_attachments = function(account_email, can_read_emails, gmail_tab_id) {
-    $('div.aQH').each(function() {
-      var new_pgp_messages = $(this).children('span[download_url*=".pgp:https"], span[download_url*=".gpg:https"]').not('.evaluated');
+    var selectors = get_attachments_selectors(null, ['.pgp', '.gpg', '.asc', 'noname']);
+    $(selectors.container).each(function() {
+      var new_pgp_messages = $(this).children(selectors.attachments).not('.evaluated');
       if(new_pgp_messages.length) {
         new_pgp_messages.addClass('evaluated');
         var attachment_container_classes = new_pgp_messages.get(0).classList;
@@ -139,8 +140,13 @@ function init_elements_replace_js() {
               message_id: message_id,
             }, function(response) {
               Try(function() {
-                if(response.success && response.attachments) {
-                  replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments, gmail_tab_id);
+                if(response.success) {
+                  if(response.attachments && response.attachments.length) {
+                    replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments, gmail_tab_id);
+                  }
+                  if(response.messages && response.messages.length) {
+                    hide_pgp_attached_message_and_show(account_email, message_id, attachment_container_classes, response.messages, gmail_tab_id);
+                  }
                 } else {
                   //todo: show button to retry
                 }
@@ -160,19 +166,47 @@ function init_elements_replace_js() {
     });
   };
 
-  window.replace_pgp_attachments_in_message = function(account_email, message_id, classes, attachments, gmail_tab_id) {
-    var container_selector = 'div.aQH.message_id_' + message_id;
-    var pgp_attachments_selector = container_selector + ' > span[download_url*=".pgp:https"], ' + container_selector + ' > span[download_url*=".gpg:https"]';
-    if($(pgp_attachments_selector).length === attachments.length) {
+  window.get_attachments_selectors = function(message_id, file_name_ends_array) {
+    var attachments = [];
+    var container_selector = 'div.aQH';
+    if(message_id) {
+      container_selector += '.message_id_' + message_id;
+    }
+    $.each(file_name_ends_array, function(i, file_name_end) {
+      attachments.push(((message_id) ? (container_selector + ' > ') : '') + 'span[download_url*="' + file_name_end + ':https"]');
+    });
+    return {
+      container: container_selector,
+      attachments: attachments.join(', '),
+    };
+  };
+
+  window.hide_attachments = function(attachments_selector, attachments_length) {
+    if($(attachments_selector).length === attachments_length) {
       // only hide original attachments if we found the same amount of them in raw email
       // can cause duplicate attachments (one original encrypted + one decryptable), but should never result in lost attachments
-      $(pgp_attachments_selector).css('display', 'none');
+      $(attachments_selector).css('display', 'none');
     } else {
-      $(pgp_attachments_selector).children('.attachment_loader').text('Missing file info');
+      $(attachments_selector).children('.attachment_loader').text('Missing file info');
     }
+  };
+
+  window.replace_pgp_attachments_in_message = function(account_email, message_id, classes, attachments, gmail_tab_id) {
+    var selectors = get_attachments_selectors(message_id, ['.pgp', '.gpg']);
+    hide_attachments(selectors.attachments, attachments.length);
     $.each(attachments, function(i, attachment) {
-      $(container_selector).prepend(pgp_attachment_iframe(account_email, attachment, classes, gmail_tab_id));
+      $(selectors.container).prepend(pgp_attachment_iframe(account_email, attachment, classes, gmail_tab_id));
     });
+  };
+
+  window.hide_pgp_attached_message_and_show = function(account_email, message_id, classes, attachments, gmail_tab_id) {
+    var selectors = get_attachments_selectors(message_id, ['.asc', 'noname']);
+    hide_attachments(selectors.attachments, attachments.length);
+    if($('div.a3s.m' + message_id + ' iframe').length === 0) {
+      $('span.aVW').css('display', 'none');
+      $('div.a3s.m' + message_id).css('display', 'block');
+      $('div.a3s.m' + message_id).html(pgp_block_iframe('', null, account_email, message_id, false, gmail_tab_id));
+    }
   };
 
   window.replace_attest_packets = function(account_email, gmail_tab_id) {

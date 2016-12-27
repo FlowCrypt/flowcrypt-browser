@@ -280,9 +280,10 @@ function mime_headers_to_from(parsed_mime_message) {
 function is_mime_message(message) {
   var m = message.toLowerCase();
   var has_content_type = m.match(/content-type: +[a-z\-\/]+/) !== null;
-  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null
-  var starts_with_known_header = m.indexOf('content-type:') === 0 || m.indexOf('content-transfer-encoding:') === 0
-  return has_content_type && has_content_transfer_encoding && starts_with_known_header;
+  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null;
+  var has_content_disposition = m.match(/content-disposition: +[a-z\-\/]+/) !== null;
+  var starts_with_known_header = m.indexOf('content-type:') === 0 || m.indexOf('content-transfer-encoding:') === 0 || m.indexOf('content-disposition:') === 0;
+  return has_content_type && (has_content_transfer_encoding || has_content_disposition) && starts_with_known_header;
 }
 
 function format_mime_plaintext_to_display(text, full_mime_message) {
@@ -511,7 +512,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, succ
       } else if(attachments.length) {
         var found = false;
         $.each(attachments, function(i, attachment_meta) {
-          if(attachment_meta.name === 'encrypted.asc') {
+          if(attachment_meta.name.match(/\.asc$/)) {
             found = true;
             gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(fetch_attachments_success, attachment) {
               if(fetch_attachments_success) {

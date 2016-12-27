@@ -56,14 +56,18 @@ function list_pgp_attachments(request, sender, respond) {
     if(success) {
       var attachments = gmail_api_find_attachments(message);
       var pgp_attachments = [];
+      var pgp_messages = [];
       $.each(attachments, function(i, attachment) {
         if(attachment.name.match('(\.pgp)|(\.gpg)$')) {
           pgp_attachments.push(attachment);
+        } else if (attachment.name.match('(\.asc)$') || attachment.name === '') {
+          pgp_messages.push(attachment);
         }
       });
       respond({
         success: true,
         attachments: pgp_attachments,
+        messages: pgp_messages,
         message_id: request.message_id,
       });
     } else {
