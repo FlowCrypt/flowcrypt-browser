@@ -55,7 +55,11 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       contentType: 'application/json; charset=UTF-8',
       async: true,
       success: function(response) {
-        console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
+        if(response.saved === true) {
+          console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
+        } else {
+          console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
+        }
       },
       error: function(XMLHttpRequest, status, error) {
         console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
@@ -63,7 +67,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
     });
   } catch(ajax_err) {
     console.log(ajax_err);
-    console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
+    console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
   }
   try {
     increment_metric('error');
@@ -87,18 +91,20 @@ function Try(code) {
       return code();
     } catch(code_err) {
       try {
-        var caller_line = code_err.stack.split("\n")[4];
-        var index = caller_line.indexOf("at ");
-        var line = caller_line.slice(index + 2, caller_line.length);
+        var caller_line = code_err.stack.split('\n')[1];
+        var matched = caller_line.match(/\.js\:([0-9]+)\:([0-9]+)\)?/);
+        var line = Number(matched[1]);
+        var col = Number(matched[2]);
       } catch(line_err) {
         var line = 0;
+        var col = 0;
       }
       try {
         chrome_message_send(null, 'runtime', null, function(runtime) {
-          cryptup_error_handler(code_err.message, window.location.href, line, 0, code_err, true, runtime.version, runtime.environment);
+          cryptup_error_handler(code_err.message, window.location.href, line, col, code_err, true, runtime.version, runtime.environment);
         });
       } catch(message_err) {
-        cryptup_error_handler(code_err.message, window.location.href, line, 0, code_err, true);
+        cryptup_error_handler(code_err.message, window.location.href, line, col, code_err, true);
       }
     }
   };
