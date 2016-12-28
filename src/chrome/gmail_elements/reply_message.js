@@ -114,38 +114,21 @@ function append_forwarded_message(text) {
 
 function retrieve_decrypt_and_add_forwarded_message(message_id) {
   extract_armored_message_using_gmail_api(url_params.account_email, message_id, function(armored_message) {
-    var my_passphrase = get_passphrase(url_params.account_email);
-    if(my_passphrase !== null) {
-      var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)).keys[0];
-      if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-        prv.decrypt(my_passphrase);
+    decrypt(url_params.account_email, armored_message, undefined, function(result) {
+      if(result.success) {
+        if(!is_mime_message(result.content.data)) {
+          append_forwarded_message(format_mime_plaintext_to_display(result.content.data, armored_message));
+        } else {
+          parse_mime_message(result.content.data, function(success, mime_parse_result) {
+            if(mime_parse_result.text || mime_parse_result.html) {
+              append_forwarded_message(format_mime_plaintext_to_display(mime_parse_result.text || mime_parse_result.html, armored_message));
+            }
+          });
+        }
+      } else {
+        $('#input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
       }
-      var options = {
-        message: openpgp.message.readArmored(armored_message),
-        format: 'utf8',
-        privateKey: prv,
-      };
-      try {
-        openpgp.decrypt(options).then(function(decrypted) {
-          if(!is_mime_message(decrypted.data)) {
-            append_forwarded_message(format_mime_plaintext_to_display(decrypted.data, armored_message));
-          } else {
-            parse_mime_message(decrypted.data, function(success, result) {
-              if(result.text || result.html) {
-                append_forwarded_message(format_mime_plaintext_to_display(result.text || result.html, armored_message));
-              }
-            });
-          }
-        }).catch(function(error) {
-          console.log(error);
-          console.log('todo - cannot decrypt message to forward [1]');
-        });
-      } catch(err) {
-        console.log('todo - cannot decrypt message to forward [2]');
-      }
-    } else {
-      console.log('todo - cannot decrypt message to forward [3]');
-    }
+    });
   }, function(error_type, url_formatted_data_block) {
     if(url_formatted_data_block) {
       $('#input_text').append('<br/>\n<br/>\n<br/>\n' + url_formatted_data_block);
