@@ -18,7 +18,7 @@ $('.action_test_passphrase').click(function() {
 });
 
 $('.confirm_passphrase_requirement_change').click(function() {
-  if($('#passphrase_to_open_email').is(':checked')) { // forget passphrase
+  if($('#passphrase_to_open_email').is(':checked')) { // forget pass all phrases
     if($('input#passphrase_entry').val() === get_passphrase(url_params.account_email)) {
       private_storage_set('local', url_params.account_email, 'master_passphrase', '');
       private_storage_set('session', url_params.account_email, 'master_passphrase', '');
@@ -27,7 +27,7 @@ $('.confirm_passphrase_requirement_change').click(function() {
       alert('Pass phrase did not match, please try again.');
       $('input#passphrase_entry').val('').focus();
     }
-  } else { // save passhprase
+  } else { // save pass phrase
     var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
     if(key.decrypt($('input#passphrase_entry').val()) === true) {
       private_storage_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());

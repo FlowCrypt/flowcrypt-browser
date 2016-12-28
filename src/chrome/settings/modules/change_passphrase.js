@@ -2,6 +2,12 @@
 
 var url_params = get_url_params(['account_email']);
 
+if(private_keys_get(url_params.account_email).length > 1) {
+  $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
+  $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');
+  $('#step_1_password #password').attr('placeholder', 'Enter a new primary key pass phrase');
+}
+
 var original_passphrase = get_passphrase(url_params.account_email);
 if(original_passphrase === null) {
   display_block('step_0_enter');

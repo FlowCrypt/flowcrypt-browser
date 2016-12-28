@@ -31,6 +31,9 @@ body, html {
 #header-row .cryptup-logo-row:hover span {
   opacity: 1;
 }
+#security_module {
+  min-height: 180px;
+}
 #alt-accounts .separator {
   background: black;
   width: 90%;
@@ -336,7 +339,7 @@ body#settings .settings-border {
   border: 1px solid rgba(0, 0, 0, .2);
   width: 47%;
   margin: 10px;
-  min-height: 182px;
+  min-height: 188px;
   text-align: left;
 }
 body#settings .settings-border .row {
