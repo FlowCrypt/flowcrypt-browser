@@ -74,11 +74,11 @@ function init_elements_replace_js() {
     });
   };
 
-  window.extract_pgp_question = function(message_text, re_pgp_question) {
+  window.extract_pgp_question = function(message_text) {
     var re_pgp_question = /<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
     var question_match = message_text.match(re_pgp_question);
     if(question_match !== null) {
-      return window.striptags(get_url_params(['question'], question_match[2].split('?', 2)[1]).question);
+      return window.striptags(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
     }
   };
 

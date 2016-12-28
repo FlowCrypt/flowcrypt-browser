@@ -78,7 +78,8 @@ $('#download').click(prevent(doubleclick(), function(self) {
         }
       } else {
         chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
-          type: 'attachment'
+          type: 'attachment',
+          longids: [],
         });
         clearInterval(passphrase_interval);
         passphrase_interval = setInterval(check_passphrase_entered, 1000);

@@ -66,7 +66,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       },
     });
   } catch(ajax_err) {
-    console.log(ajax_err);
+    console.log(ajax_err.message);
     console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
   }
   try {
@@ -210,10 +210,14 @@ function get_passphrase(account_email, longid) {
       if(temporary) {
         return temporary;
       } else {
-        return null;
+        if(key_longid(private_storage_get('local', account_email, 'master_private_key')) === longid) {
+          return get_passphrase(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+        } else {
+          return null;
+        }
       }
     }
-  } else {
+  } else { //todo - this whole part would also be unnecessary if we did a migration
     if(private_storage_get('local', account_email, 'master_passphrase_needed') === false) {
       return '';
     }
@@ -586,6 +590,10 @@ function array_without_value(array, without_value) {
   return result;
 }
 
+function extract_key_ids(armored_pubkey) {
+  return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
+}
+
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
   var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
@@ -661,6 +669,109 @@ function sign(signing_prv, data, armor, callback) {
   });
 }
 
+function decrypt(account_email, encrypted_data, one_time_message_password, callback) {
+  var wait_for_all_attempts_interval = undefined; //todo - promises are better
+  var is_armored = (encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1);
+  if(is_armored) {
+    var message = openpgp.message.readArmored(encrypted_data);;
+  } else {
+    var message = openpgp.message.read(str_to_uint8(encrypted_data));
+  }
+  var encrypted_for = (message.getEncryptionKeyIds() || []).map(function(id) {
+    return key_longid(id.bytes);
+  });
+  var keys = private_keys_get(account_email, encrypted_for);
+  if(keys.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
+    var keys = private_keys_get(account_email);
+  }
+  var keys_with_passphrases = [];
+  var keys_without_passphrases = [];
+  $.each(keys, function(i, key) {
+    key.passphrase = get_passphrase(url_params.account_email, key_longid(key.armored));
+    if(key.passphrase !== null) {
+      keys_with_passphrases.push(key);
+    } else {
+      keys_without_passphrases.push(key);
+    }
+  });
+  var successfully_decrypted = false;
+  var attempts_count = 0;
+  var key_mismatch_count = 0;
+  var wrong_password_count = 0;
+  var other_errors = [];
+  $.each(keys_with_passphrases, function(i, key) {
+    if(!successfully_decrypted) {
+      var options = {
+        message: message,
+        format: (is_armored) ? 'utf8' : 'binary',
+      };
+      if(!one_time_message_password) {
+        var prv = openpgp.key.readArmored(key.armored).keys[0];
+        if(key.passphrase !== '') {
+          prv.decrypt(key.passphrase);
+        }
+        options.privateKey = prv;
+      } else {
+        options.password = challenge_answer_hash(one_time_message_password);
+      }
+      try {
+        openpgp.decrypt(options).then(function(decrypted) {
+          successfully_decrypted = true;
+          callback({
+            success: true,
+            content: decrypted,
+          });
+        }).catch(function(decrypt_error) {
+          if(String(decrypt_error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && !one_time_message_password) {
+            // wrong private key
+            key_mismatch_count++;
+          } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
+            // attempted opening password only message with key
+            if(one_time_message_password) {
+              wrong_password_count++;
+            } else {
+              key_mismatch_count++;
+            }
+          } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid enum value.' && one_time_message_password) { // wrong password
+            wrong_password_count++;
+          } else {
+            other_errors.push(String(decrypt_error));
+          }
+          attempts_count++;
+        });
+      } catch(decrypt_exception) {
+        other_errors.push(String(decrypt_exception));
+        attempts_count++;
+      }
+    }
+  });
+  wait_for_all_attempts_interval = setInterval(function() {
+    if(successfully_decrypted) {
+      clearInterval(wait_for_all_attempts_interval);
+    } else {
+      if(attempts_count === keys_with_passphrases.length) { // decrypting attempted with all keys, no need to wait longer - can evaluate result now
+        clearInterval(wait_for_all_attempts_interval);
+        callback({
+          success: false,
+          message: message,
+          counts: {
+            potentially_matching_keys: keys.length,
+            attempts: attempts_count,
+            key_mismatch: key_mismatch_count,
+            wrong_password: wrong_password_count,
+          },
+          missing_passphrases: keys_without_passphrases.map(function(keyinfo) {
+            return key_longid(keyinfo.armored);
+          }),
+          errors: other_errors,
+        });
+      } else {
+        // interval will run again in 100 ms to check if done. Promises would be better.
+      }
+    }
+  }, 100);
+}
+
 function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
   var options = {
     data: data,
@@ -719,15 +830,17 @@ function key_fingerprint(key, formatting) {
   }
 }
 
-function key_longid(key_or_fingerprint) {
-  if(key_or_fingerprint === null) {
+function key_longid(key_or_fingerprint_or_bytes) {
+  if(key_or_fingerprint_or_bytes === null) {
     return null;
-  } else if(key_or_fingerprint.length === 40) {
-    return key_or_fingerprint.substr(-16);
-  } else if(key_or_fingerprint.length === 49) {
-    return key_or_fingerprint.replace(/ /g, '').substr(-16);
+  } else if(key_or_fingerprint_or_bytes.length === 8) {
+    return bin_to_hex(key_or_fingerprint_or_bytes).toUpperCase();
+  } else if(key_or_fingerprint_or_bytes.length === 40) {
+    return key_or_fingerprint_or_bytes.substr(-16);
+  } else if(key_or_fingerprint_or_bytes.length === 49) {
+    return key_or_fingerprint_or_bytes.replace(/ /g, '').substr(-16);
   } else {
-    return key_longid(key_fingerprint(key_or_fingerprint));
+    return key_longid(key_fingerprint(key_or_fingerprint_or_bytes));
   }
 }
 

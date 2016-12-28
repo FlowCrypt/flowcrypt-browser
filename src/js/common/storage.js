@@ -229,7 +229,8 @@ function private_storage_set(storage_type, account_email, key, value) {
 }
 
 function save_passphrase(storage_type, account_email, longid, passphrase) {
-  if(longid) {
+  var master_prv_longid = key_longid(private_storage_get('local', account_email, 'master_public_key')); //todo - migration needed
+  if(longid && longid !== master_prv_longid) {
     private_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
   } else {
     private_storage_set(storage_type, account_email, 'master_passphrase', passphrase);
@@ -253,13 +254,22 @@ function private_keys_get(account_email, longid) {
       primary: true,
     });
   }
-  if(typeof longid !== 'undefined') { // looking for a specific key
-    var found = null;
-    $.each(keys, function(i, keyinfo) {
-      if(key_longid(keyinfo.armored) === longid) {
-        found = keyinfo;
-      }
-    });
+  if(typeof longid !== 'undefined') { // looking for a specific key(s)
+    if(typeof longid === 'object') { // looking for an array of keys
+      var found = [];
+      $.each(keys, function(i, keyinfo) {
+        if(longid.indexOf(key_longid(keyinfo.armored)) !== -1) {
+          found.push(keyinfo);
+        }
+      });
+    } else { // looking for a single key
+      var found = null;
+      $.each(keys, function(i, keyinfo) {
+        if(key_longid(keyinfo.armored) === longid) {
+          found = keyinfo;
+        }
+      });
+    }
     return found;
   } else {
     return keys;

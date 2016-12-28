@@ -9,6 +9,7 @@ var ready_attachmments = [];
 var height_history = [];
 
 var passphrase_interval = undefined;
+var missing_passprase_longids = [];
 
 increment_metric('view');
 
@@ -17,8 +18,8 @@ var l = {
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
   single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
   account_info_outdated: 'Some your account information is incorrect. Update it to prevent future errors. ',
-  wrong_pubkey_used: 'It looks like it was encrypted for someone else. ',
-  ask_resend: 'Please ask them to send a new message. ',
+  wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
+  ask_resend: 'Please ask them to send a new message.',
   receivers_hidden: 'We cannot tell if the message was encrypted correctly for you. ',
   bad_format: 'Message is either badly formatted or not compatible with CryptUP. ',
   no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
@@ -28,6 +29,7 @@ var l = {
   dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
   enter_passphrase: 'Enter passphrase',
   to_open_message: 'to open this message.',
+  write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly.',
 }
 
 function send_resize_message() {
@@ -99,7 +101,7 @@ function render_error(error_box_content, raw_message_substitute, callback) {
   });
 }
 
-function handle_private_key_mismatch(account_email, message) {
+function handle_private_key_mismatch(account_email, message) { //todo - make it work for multiple stored keys
   var msg_diagnosis = check_pubkeys_message(account_email, message);
   if(msg_diagnosis.found_match) {
     render_error(l.cant_open + l.encrypted_correctly_file_bug);
@@ -169,38 +171,47 @@ function decide_decrypted_content_formatting_and_render(decrypted_content) {
   }
 }
 
-function decrypt_and_render(option_key, option_value, wrong_password_callback) {
-  try {
-    var options = {
-      message: openpgp.message.readArmored(url_params.message),
-      format: 'utf8',
-    }
-    if(option_key !== 'password') {
-      options[option_key] = option_value;
-    } else {
-      options[option_key] = challenge_answer_hash(option_value);
-    }
-    openpgp.decrypt(options).then(function(plaintext) {
+function decrypt_and_render(optional_password) {
+  decrypt(url_params.account_email, url_params.message, optional_password, function(result) {
+    if(result.success) {
       $('body').removeClass('pgp_insecure').addClass('pgp_secure');
-      decide_decrypted_content_formatting_and_render(plaintext.data);
-    }).catch(function(error) {
-      if(String(error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && option_key === 'privateKey') { // wrong private key
-        handle_private_key_mismatch(url_params.account_email, options.message);
-      } else if(String(error) === 'Error: Error decrypting message: Invalid session key for decryption.' && option_key === 'privateKey') { // attempted opening password only message with key
-        if(url_params.question) {
+      decide_decrypted_content_formatting_and_render(result.content.data);
+    } else {
+      if(result.missing_passphrases.length) {
+        render_passphrase_prompt(result.missing_passphrases);
+      } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
+        if(url_params.question && !optional_password) {
           render_password_prompt();
         } else {
-          handle_private_key_mismatch(url_params.account_email, options.message);
+          handle_private_key_mismatch(url_params.account_email, result.message);
         }
-      } else if(String(error) === 'Error: Error decrypting message: Invalid enum value.' && option_key === 'password') { // wrong password
-        wrong_password_callback();
+      } else if(result.counts.wrong_password) {
+        alert('Incorrect answer, please try again');
+        render_password_prompt();
+      } else if(result.counts.errors) {
+        render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
       } else {
-        render_error(l.cant_open + '<em>' + String(error) + '</em>');
+        delete result.message;
+        render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result)) + '"';
       }
-    });
-  } catch(err) {
-    render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + err.message + '</em>');
-  }
+    }
+  });
+}
+
+function render_passphrase_prompt(missing_passphrse_key_longids) {
+  missing_passprase_longids = missing_passphrse_key_longids;
+  render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function() {
+    clearInterval(passphrase_interval);
+    passphrase_interval = setInterval(check_passphrase_entered, 1000);
+    $('.enter_passphrase').click(prevent(doubleclick(), function() {
+      chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
+        type: 'message',
+        longids: missing_passphrse_key_longids,
+      });
+      clearInterval(passphrase_interval);
+      passphrase_interval = setInterval(check_passphrase_entered, 250);
+    }));
+  });
 }
 
 function render_password_prompt() {
@@ -211,53 +222,28 @@ function render_password_prompt() {
     $('.button.decrypt').click(prevent(doubleclick(), function(self) {
       $(self).html('Opening');
       setTimeout(function() {
-        decrypt_and_render('password', $('#answer').val(), function() {
-          alert('Incorrect answer, please try again');
-          render_password_prompt();
-        });
+        decrypt_and_render($('#answer').val());
       }, 50);
     }));
   });
 }
 
 function check_passphrase_entered() {
-  if(get_passphrase(url_params.account_email) !== null) {
-    clearInterval(passphrase_interval);
-    pgp_block_init();
-  }
-}
-
-function pgp_block_init() {
-  var my_prvkey_armored = private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id);
-  var my_passphrase = get_passphrase(url_params.account_email);
-  if(my_passphrase !== null) {
-    if(typeof my_prvkey_armored !== 'undefined') {
-      var private_key = openpgp.key.readArmored(my_prvkey_armored).keys[0];
-      if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-        private_key.decrypt(my_passphrase);
-      }
-      decrypt_and_render('privateKey', private_key);
-    } else {
-      render_error(l.cant_open + l.no_private_key);
-    }
-  } else {
-    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function() {
+  $.each(missing_passprase_longids, function(i, longid) {
+    if(missing_passprase_longids && get_passphrase(url_params.account_email, longid) !== null) {
+      missing_passprase_longids = [];
       clearInterval(passphrase_interval);
-      passphrase_interval = setInterval(check_passphrase_entered, 1000);
-      $('.enter_passphrase').click(prevent(doubleclick(), function() {
-        chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
-          type: 'message',
-        });
-        clearInterval(passphrase_interval);
-        passphrase_interval = setInterval(check_passphrase_entered, 250);
-      }));
-    });
-  }
+      decrypt_and_render();
+      return false;
+    }
+  });
 }
 
 if(url_params.message) { // ascii armored message supplied
   $('#pgp_block').text('Decrypting...');
-  pgp_block_init();
+  decrypt_and_render(undefined, function() {
+
+  });
 } else { // need to fetch the message from gmail api
   account_storage_get(url_params.account_email, ['google_token_scopes'], function(storage) {
     if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
@@ -265,7 +251,7 @@ if(url_params.message) { // ascii armored message supplied
       extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
         $('#pgp_block').text('Decrypting...');
         url_params.message = message_raw;
-        pgp_block_init();
+        decrypt_and_render();
       }, function(error_type, url_formatted_data_block) {
         if(error_type === 'format') {
           render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);

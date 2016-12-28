@@ -17,12 +17,13 @@ function init_elements_factory_js() {
     return '<div class="new_message" id="new_message"><iframe scrolling="no" src="' + src + '"></iframe></div>'
   };
 
-  window.passphrase_dialog = function(account_email, type, gmail_tab_id) {
+  window.passphrase_dialog = function(account_email, type, longids, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/passphrase.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&type=' + encodeURIComponent(type) +
+      '&longids=' + encodeURIComponent((longids || []).join(',')) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<div id="cryptup_dialog"><iframe scrolling="no" src="' + src + '"></iframe></div>';
+    return '<div id="cryptup_dialog"><iframe class="medium" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
   window.add_pubkey_dialog = function(account_email, emails, gmail_tab_id) {
@@ -49,7 +50,7 @@ function init_elements_factory_js() {
     var id = random_string();
     var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
       '?frame_id=frame_' + id +
-      '&question=' + encodeURIComponent(question) +
+      '&question=' + encodeURIComponent(question || '') +
       '&message=' + encodeURIComponent(pgp_block_text) +
       '&account_email=' + encodeURIComponent(account_email) +
       '&message_id=' + encodeURIComponent(message_id) +

@@ -153,26 +153,6 @@ function retrieve_decrypt_and_add_forwarded_message(message_id) {
   });
 }
 
-
-// gmail_api_message_get(url_params.account_email, message_id, 'raw', function(gmail_success, response) {
-//     if(gmail_success) {
-//       parse_mime_message(base64url_decode(response.raw), function(mime_success, parsed_message) {
-//           if(mime_success) {
-//             console.log(parsed_message);
-//             var message_armored = extract_armored_message_from_text(parsed_message.text || strip_pgp_armor(parsed_message.html));
-//
-//           } else {
-//             console.log('todo - cannot decrypt message to forward [3]');
-//           }
-//         } else {
-//           console.log('todo - cannot decrypt message to forward [0]');
-//         }
-//       });
-//   } else {
-//     console.log('todo - cannot fetch message to forward');
-//   }
-// });
-
 $('.delete_draft').click(function() {
   draft_delete(url_params.account_email, function() {
     chrome_message_send(url_params.parent_tab_id, 'close_reply_message', {

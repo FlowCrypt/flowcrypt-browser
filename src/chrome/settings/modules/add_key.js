@@ -27,8 +27,8 @@ $('.action_add_private_key').click(prevent(doubleclick(), function() {
     } else {
       save_passphrase('session', url_params.account_email, key_longid(new_key), $('.input_passphrase').val());
     }
+    chrome_message_send(url_params.parent_tab_id, 'reload', {
+      advanced: true,
+    });
   }
-  chrome_message_send(url_params.parent_tab_id, 'reload', {
-    advanced: true,
-  });
 }));

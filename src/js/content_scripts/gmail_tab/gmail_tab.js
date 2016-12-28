@@ -32,7 +32,7 @@ Try(function() {
       },
       passphrase_dialog: function(data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(passphrase_dialog(account_email, data.type, tab_id_global));
+          $('body').append(passphrase_dialog(account_email, data.type, data.longids, tab_id_global));
         }
       },
       add_pubkey_dialog_gmail: function(data) {

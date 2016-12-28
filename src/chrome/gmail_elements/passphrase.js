@@ -1,6 +1,30 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id', 'type']);
+var url_params = get_url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
+
+var all_private_keys = private_keys_get(url_params.account_email);
+
+if(url_params.longids) {
+  var private_keys = private_keys_get(url_params.account_email, url_params.longids.split(','));
+} else {
+  var private_keys = all_private_keys;
+}
+
+console.log(url_params.longids);
+console.log(private_keys);
+
+if(all_private_keys.length > 1) {
+  if(private_keys.length === 1) {
+    var html = 'For the following key: <span class="good">' + mnemonic(key_longid(private_keys[0].armored)) + '</span> (KeyWords)';
+  } else {
+    var html = 'Pass phrase needed for any of the following keys:';
+    $.each(private_keys, function(i, keyinfo) {
+      html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + mnemonic(key_longid(private_keys[i].armored)) + '</div>';
+    });
+  }
+  $('.which_key').html(html);
+  $('.which_key').css('display', 'block');
+}
 
 function render_error() {
   $('input.passphrase').val('');
@@ -20,16 +44,21 @@ $('.action_close').click(prevent(doubleclick(), function() {
 }));
 
 $('.action_ok').click(prevent(doubleclick(), function() {
-  var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)).keys[0];
   var pass = $('input.passphrase').val();
-  if(prv.decrypt(pass) === true) {
-    if($('.forget').prop('checked')) {
-      private_storage_set('session', url_params.account_email, 'master_passphrase', pass);
-    } else {
-      private_storage_set('local', url_params.account_email, 'master_passphrase', pass);
+  var is_correct = false;
+  $.each(private_keys, function(i, keyinfo) { // if passphrase matches more keys, it will save them all
+    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    if(prv.decrypt(pass) === true) {
+      is_correct = true;
+      if($('.forget').prop('checked')) {
+        save_passphrase('session', url_params.account_email, key_longid(prv), pass);
+      } else {
+        save_passphrase('local', url_params.account_email, key_longid(prv), pass);
+      }
+      chrome_message_send(url_params.parent_tab_id, 'close_dialog');
     }
-    chrome_message_send(url_params.parent_tab_id, 'close_dialog');
-  } else {
+  });
+  if(!is_correct) {
     render_error();
     setTimeout(render_normal, 1500);
   }
