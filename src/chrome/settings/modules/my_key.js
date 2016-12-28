@@ -3,12 +3,10 @@
 var url_params = get_url_params(['account_email']);
 
 var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
-var fingerprint = key_fingerprint(key, 'spaced');
-var longid = key_longid(key);
 
 $('.key_dump').text(key.toPublic().armor());
-$('.key_fingerprint').text(key_fingerprint);
-$('.key_words').text(mnemonic(longid));
+$('.key_fingerprint').text(key_fingerprint(key, 'spaced'));
+$('.key_words').text(mnemonic(key_longid(key)));
 
 $('.action_show_other_type').click(function() {
   if($('.action_show_other_type').text().toLowerCase() === 'show private') {

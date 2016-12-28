@@ -336,13 +336,14 @@ body#settings .settings-border {
   border: 1px solid rgba(0, 0, 0, .2);
   width: 47%;
   margin: 10px;
-  min-height: 160px
+  min-height: 182px;
+  text-align: left;
 }
 body#settings .settings-border .row {
   padding: 10px 0;
 }
 body#settings .settings-border .key-content-row:nth-child(odd) {
-  background: #f3f3f3;
+  /*background: #f3f3f3;*/
 }
 @media (max-width: 991px) {
   .my-keys-row .settings-border {

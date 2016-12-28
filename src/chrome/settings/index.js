@@ -53,10 +53,10 @@ function initialize() {
         $('.hide_if_setup_not_done').css('display', 'block');
         $('.show_if_setup_not_done').css('display', 'none');
         var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
-        $('.key_row_1 .key_id span').text(prv.primaryKey.fingerprint.toUpperCase().substr(-8));
-        $('.key_row_1 .key_date').text(month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear());
-        $('.key_row_1 .key_user').text(prv.users[0].userId.userid);
-        $('.key_words span').text(mnemonic(key_longid(prv)));
+        $('.primary_key .key_date').text(month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear());
+        $('.primary_key .key_user').text(trim_lower(prv.users[0].userId.userid));
+        $('.primary_key .key_user').attr('addurltext', '&longid=' + key_longid(prv));
+        $('.primary_key .key_words span').text(mnemonic(key_longid(prv)));
       } else {
         $('.show_if_setup_not_done').css('display', 'block');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -110,7 +110,7 @@ $('.action_send_email').click(function() {
 });
 
 $('.show_settings_page').click(function() {
-  show_settings_page($(this).attr('page'));
+  show_settings_page($(this).attr('page'), $(this).attr('addurltext') || '');
 });
 
 $('.action_go_auth_denied').click(function() {
@@ -140,10 +140,6 @@ $("#switch-account, #toggle-accounts-profile-img").click(function(event) {
   $("#alt-accounts").toggleClass("active");
   $(".ion-ios-arrow-down").toggleClass("up");
   $(".add-account").toggleClass("hidden");
-});
-
-$('.action_replace_prv').click(function() {
-  alert('Replacing private keys will be implemented in 7-10 days.\n\nTo change key before then, you would need to re-install the plugin and select "USE MY OWN PRIVATE KEY".\n\nEither way, you can already use other keys for other Gmail accounts.\n\nAgain, ability to change keys should be done by 3rd January 2017.');
 });
 
 get_account_emails(function(account_emails) {

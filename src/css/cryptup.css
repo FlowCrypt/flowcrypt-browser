@@ -32,7 +32,7 @@ div.wide.line { max-width: 850px; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
 body#settings > div#content {  margin-top: 120px; margin-bottom: 150px; }
-body#settings > div#content.page { margin-top: 20px !important; margin-bottom: 50px; }
+body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
 body#settings > div#content.page img.screen { border: 1px dotted #cacaca; }
 body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
