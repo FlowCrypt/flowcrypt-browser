@@ -8,7 +8,7 @@ var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
 
 $('.key_dump').text(key.toPublic().armor());
 $('.key_fingerprint').text(key_fingerprint(key, 'spaced'));
-$('.key_words').text(mnemonic(key_longid(key)));
+$('.key_words').text(mnemonic(keyinfo.longid));
 
 $('.action_show_other_type').click(function() {
   if($('.action_show_other_type').text().toLowerCase() === 'show private') {

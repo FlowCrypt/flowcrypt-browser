@@ -15,11 +15,11 @@ console.log(private_keys);
 
 if(all_private_keys.length > 1) {
   if(private_keys.length === 1) {
-    var html = 'For the following key: <span class="good">' + mnemonic(key_longid(private_keys[0].armored)) + '</span> (KeyWords)';
+    var html = 'For the following key: <span class="good">' + mnemonic(private_keys[0].longid) + '</span> (KeyWords)';
   } else {
     var html = 'Pass phrase needed for any of the following keys:';
     $.each(private_keys, function(i, keyinfo) {
-      html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + mnemonic(key_longid(private_keys[i].armored)) + '</div>';
+      html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + mnemonic(private_keys[i].longid) + '</div>';
     });
   }
   $('.which_key').html(html);
@@ -51,9 +51,9 @@ $('.action_ok').click(prevent(doubleclick(), function() {
     if(prv.decrypt(pass) === true) {
       is_correct = true;
       if($('.forget').prop('checked')) {
-        save_passphrase('session', url_params.account_email, key_longid(prv), pass);
+        save_passphrase('session', url_params.account_email, keyinfo.longid, pass);
       } else {
-        save_passphrase('local', url_params.account_email, key_longid(prv), pass);
+        save_passphrase('local', url_params.account_email, keyinfo.longid, pass);
       }
       chrome_message_send(url_params.parent_tab_id, 'close_dialog');
     }

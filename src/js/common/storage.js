@@ -247,25 +247,26 @@ function private_keys_get(account_email, longid) {
     }
     keys.push(keyinfo);
   });
-  var primary_armored_key = private_storage_get('local', account_email, 'master_private_key');
-  if(!contains_primary && primary_armored_key) {
+  var primary_key_armored = private_storage_get('local', account_email, 'master_private_key');
+  if(!contains_primary && primary_key_armored) {
     keys.push({
-      armored: primary_armored_key,
+      armored: primary_key_armored,
       primary: true,
+      longid: key_longid(primary_key_armored),
     });
   }
   if(typeof longid !== 'undefined') { // looking for a specific key(s)
     if(typeof longid === 'object') { // looking for an array of keys
       var found = [];
       $.each(keys, function(i, keyinfo) {
-        if(longid.indexOf(key_longid(keyinfo.armored)) !== -1) {
+        if(longid.indexOf(keyinfo.longid) !== -1) {
           found.push(keyinfo);
         }
       });
     } else { // looking for a single key
       var found = null;
       $.each(keys, function(i, keyinfo) {
-        if(key_longid(keyinfo.armored) === longid) {
+        if(keyinfo.longid === longid) {
           found = keyinfo;
         }
       });
@@ -276,13 +277,13 @@ function private_keys_get(account_email, longid) {
   }
 }
 
-function private_keys_add(account_email, armored) {
+function private_keys_add(account_email, new_key_armored) {
   var private_keys = private_keys_get(account_email);
   var do_add = true;
-  var longid = key_longid(armored);
-  if(longid) {
+  var new_key_longid = key_longid(new_key_armored);
+  if(new_key_longid) {
     $.each(private_keys, function(i, keyinfo) {
-      if(key_longid(keyinfo.armored) === longid) {
+      if(new_key_longid === keyinfo.longid) {
         do_add = false;
       }
     });
@@ -291,18 +292,19 @@ function private_keys_add(account_email, armored) {
   }
   if(do_add) {
     private_keys.push({
-      armored: armored,
+      armored: new_key_armored,
+      longid: new_key_longid,
       primary: false,
     });
     private_storage_set('local', account_email, 'private_keys', private_keys);
   }
 }
 
-function private_keys_remove(account_email, longid) {
+function private_keys_remove(account_email, remove_longid) {
   var private_keys = private_keys_get(account_email);
   var filtered_private_keys = [];
   $.each(private_keys, function(i, keyinfo) {
-    if(key_longid(keyinfo.armored) !== longid) {
+    if(keyinfo.longid !== remove_longid) {
       filtered_private_keys.push(keyinfo);
     }
   });

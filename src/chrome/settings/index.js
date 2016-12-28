@@ -76,13 +76,12 @@ function initialize() {
 function add_key_rows_html(private_keys) {
   var html = '';
   $.each(private_keys, function(i, keyinfo) {
-    var longid = key_longid(keyinfo.armored);
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     var date = month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-    var primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + longid + '">remove</a>)';
-    html += '<div class="row key-content-row key_' + longid + '">';
-    html += '  <div class="col-sm-12"><a href="#" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + longid + '">' + trim_lower(prv.users[0].userId.userid) + '</a> from ' + date + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
-    html += '  <div class="col-sm-12">KeyWords: <span class="good">' + mnemonic(key_longid(prv)) + '</span></div>';
+    var primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + keyinfo.longid + '">remove</a>)';
+    html += '<div class="row key-content-row key_' + keyinfo.longid + '">';
+    html += '  <div class="col-sm-12"><a href="#" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + keyinfo.longid + '">' + trim_lower(prv.users[0].userId.userid) + '</a> from ' + date + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
+    html += '  <div class="col-sm-12">KeyWords: <span class="good">' + mnemonic(keyinfo.longid) + '</span></div>';
     html += '</div>';
   });
   $('.key_list').append(html);

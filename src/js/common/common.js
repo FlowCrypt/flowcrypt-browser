@@ -686,12 +686,12 @@ function decrypt(account_email, encrypted_data, one_time_message_password, callb
   }
   var keys_with_passphrases = [];
   var keys_without_passphrases = [];
-  $.each(keys, function(i, key) {
-    key.passphrase = get_passphrase(url_params.account_email, key_longid(key.armored));
-    if(key.passphrase !== null) {
-      keys_with_passphrases.push(key);
+  $.each(keys, function(i, keyinfo) {
+    keyinfo.passphrase = get_passphrase(url_params.account_email, keyinfo.longid);
+    if(keyinfo.passphrase !== null) {
+      keys_with_passphrases.push(keyinfo);
     } else {
-      keys_without_passphrases.push(key);
+      keys_without_passphrases.push(keyinfo);
     }
   });
   var successfully_decrypted = false;
@@ -699,16 +699,16 @@ function decrypt(account_email, encrypted_data, one_time_message_password, callb
   var key_mismatch_count = 0;
   var wrong_password_count = 0;
   var other_errors = [];
-  $.each(keys_with_passphrases, function(i, key) {
+  $.each(keys_with_passphrases, function(i, keyinfo) {
     if(!successfully_decrypted) {
       var options = {
         message: message,
         format: (is_armored) ? 'utf8' : 'binary',
       };
       if(!one_time_message_password) {
-        var prv = openpgp.key.readArmored(key.armored).keys[0];
-        if(key.passphrase !== '') {
-          prv.decrypt(key.passphrase);
+        var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+        if(keyinfo.passphrase !== '') {
+          prv.decrypt(keyinfo.passphrase);
         }
         options.privateKey = prv;
       } else {
@@ -761,7 +761,7 @@ function decrypt(account_email, encrypted_data, one_time_message_password, callb
             wrong_password: wrong_password_count,
           },
           missing_passphrases: keys_without_passphrases.map(function(keyinfo) {
-            return key_longid(keyinfo.armored);
+            return keyinfo.longid;
           }),
           errors: other_errors,
         });
