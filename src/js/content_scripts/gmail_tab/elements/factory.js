@@ -20,7 +20,7 @@ function init_elements_factory_js() {
   window.passphrase_dialog = function(account_email, type, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/passphrase.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
-      '&type=' + encodeURIComponsent(type) +
+      '&type=' + encodeURIComponent(type) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
     return '<div id="cryptup_dialog"><iframe scrolling="no" src="' + src + '"></iframe></div>';
   };
