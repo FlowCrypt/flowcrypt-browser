@@ -173,6 +173,9 @@ function account_storage_mark_as_attested(account_email, attester, callback) {
   account_storage_get(account_email, ['attests_requested', 'attests_processed'], function(storage) {
     if(storage.attests_requested && storage.attests_requested.length && storage.attests_requested.indexOf(attester) !== -1) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
+      if(typeof storage.attests_processed === 'undefined') {
+        storage.attests_processed = [];
+      }
       if(storage.attests_processed.indexOf(attester) === -1) {
         storage.attests_processed.push(attester); //add attester as processed if not already there
       }

@@ -109,18 +109,3 @@ function submit_pubkey(email) {
     });
   }
 }
-
-
-// if(!diagnosis.has_pubkey_mismatch && !diagnosis.has_pubkey_missing) {
-//   if() {
-//     $('.line.request_attest').css('display', 'block');
-//     $('.action_request_attest').click(function() {
-//       keyserver_keys_submit(url_params.account_email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function(success, response) {
-//         save_attest_request(url_params.account_email, 'CRYPTUP', function() {
-//           alert('You will receive attestation email soon. No further action needed.');
-//           window.location.reload();
-//         });
-//       });
-//     });
-//   }
-// }
