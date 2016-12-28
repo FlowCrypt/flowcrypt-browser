@@ -371,25 +371,16 @@
       </div>
       <div class="row my-keys-row">
 
-        <div class="col-xs-6 settings-border">
+        <div class="col-xs-6 settings-border key_list">
           <div class="row abs-row">
             <div class="col-sm-12">
               <i class="fa fa-key"></i>
               <span class="my-keys-copy">My Keys</span>
-              <span class="text-right change-passphrase"></span>
+              <span class="text-right change-passphrase">
+                <a href="#" class="show_settings_page add_key" page="/chrome/settings/modules/add_key.htm">Add Key</a>
+              </span>
             </div>
           </div>
-
-          <div class="row key-content-row primary_key">
-            <div class="col-sm-12"><a href="#" class="show_settings_page key_user" page="modules/my_key.htm"></a> from <span class="key_date"></span> (<span class="primary">PRIMARY</span>)</div>
-            <div class="col-sm-12 key_words">KeyWords: <span class="good"></span></div>
-          </div>
-
-          <div class="row key-content-row key_row_1 secondary_key" style="display:none;">
-            <div class="col-sm-12"><a href="#" class="show_settings_page key_user" page="modules/my_key.htm"></a> from <span class="key_date"></span> (<span class="primary">PRIMARY</span>)</div>
-            <div class="col-sm-12 key_words">KeyWords: <span class="good"></span></div>
-          </div>
-
         </div>
 
         <div class="col-xs-6 settings-border">
@@ -398,7 +389,7 @@
               <i class="fa fa-shield"></i>
               <span class="security-copy">Security</span>
               <span class="text-right change-passphrase">
-                <a href="#" class="show_settings_page" page="modules/change_passphrase.htm">Change pass phrase</a>
+                <a href="#" class="show_settings_page" page="/chrome/settings/modules/change_passphrase.htm">Change pass phrase</a>
               </span>
             </div>
           </div>

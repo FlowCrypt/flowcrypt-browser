@@ -1,6 +1,6 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'page']);
+var url_params = get_url_params(['account_email', 'page', 'advanced']);
 
 $('span#v').text(chrome.runtime.getManifest().version);
 
@@ -16,6 +16,10 @@ chrome_message_get_tab_id(function(tab_id) {
     },
     close_page: function() {
       $('.featherlight-close').click();
+    },
+    reload: function(data) {
+      $('.featherlight-close').click();
+      reload(data.advanced);
     },
     add_pubkey_dialog: function(data, sender, respond) {
       var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(data.emails);
@@ -52,11 +56,11 @@ function initialize() {
         }
         $('.hide_if_setup_not_done').css('display', 'block');
         $('.show_if_setup_not_done').css('display', 'none');
-        var prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
-        $('.primary_key .key_date').text(month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear());
-        $('.primary_key .key_user').text(trim_lower(prv.users[0].userId.userid));
-        $('.primary_key .key_user').attr('addurltext', '&longid=' + key_longid(prv));
-        $('.primary_key .key_words span').text(mnemonic(key_longid(prv)));
+        var private_keys = private_keys_get(url_params.account_email);
+        add_key_rows_html(private_keys);
+        if(private_keys.length > 1) {
+          $('.add_key').css('display', 'none');
+        }
       } else {
         $('.show_if_setup_not_done').css('display', 'block');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -68,6 +72,30 @@ function initialize() {
   }
 }
 
+
+function add_key_rows_html(private_keys) {
+  var html = '';
+  $.each(private_keys, function(i, keyinfo) {
+    var longid = key_longid(keyinfo.armored);
+    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    var date = month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
+    var primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + longid + '">remove</a>)';
+    html += '<div class="row key-content-row key_' + longid + '">';
+    html += '  <div class="col-sm-12"><a href="#" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + longid + '">' + trim_lower(prv.users[0].userId.userid) + '</a> from ' + date + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
+    html += '  <div class="col-sm-12">KeyWords: <span class="good">' + mnemonic(key_longid(prv)) + '</span></div>';
+    html += '</div>';
+  });
+  $('.key_list').append(html);
+  $('.action_show_key').click(function() {
+    show_settings_page($(this).attr('page'), $(this).attr('addurltext') || '');
+  });
+  $('.action_remove_key').click(function() {
+    private_keys_remove(url_params.account_email, $(this).attr('longid'));
+    save_passphrase('local', url_params.account_email, $(this).attr('longid'), undefined);
+    save_passphrase('session', url_params.account_email, $(this).attr('longid'), undefined);
+    reload(true);
+  });
+}
 
 function new_account_authentication_prompt(account_email, omit_read_scope) {
   account_email = account_email || '';
@@ -84,7 +112,6 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
           } else {
             window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
           }
-
         });
       });
     } else if(response && response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
@@ -135,6 +162,10 @@ $(".toggle-settings").click(function() {
   $("#settings").toggleClass("advanced");
 });
 
+if(url_params.advanced) {
+  $("#settings").toggleClass("advanced");
+}
+
 $("#switch-account, #toggle-accounts-profile-img").click(function(event) {
   event.stopPropagation();
   $("#alt-accounts").toggleClass("active");
@@ -150,6 +181,14 @@ get_account_emails(function(account_emails) {
     window.location = 'index.htm?account_email=' + encodeURIComponent($(this).find('.contains_email').text());
   });
 });
+
+function reload(advanced) {
+  if(advanced) {
+    window.location = '/chrome/settings/index.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&advanced=1';
+  } else {
+    window.location.reload();
+  }
+}
 
 function menu_account_html(email, photo) {
   return [

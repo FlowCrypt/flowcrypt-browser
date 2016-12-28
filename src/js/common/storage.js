@@ -181,6 +181,8 @@ function notify_about_storage_access_error(account_email, parent_tab_id) {
     chrome_message_send(parent_tab_id, 'notification_show', {
       notification: 'Some browser settings are keeping CryptUP from working properly. <a href="chrome-extension://bnjglocicdkmhmoohhfkfkbbkejdhdgc/chrome/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '&page=%2Fchrome%2Ftexts%2Fchrome_content_settings.htm" target="cryptup">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.',
     });
+  } else {
+    console.log('SecurityError: cannot access localStorage or sessionStorage');
   }
 }
 
@@ -201,6 +203,8 @@ function private_storage_get(storage_type, account_email, key, parent_tab_id) {
     return false;
   } else if(value.indexOf('int#') === 0) {
     return Number(value.replace('int#', '', 1));
+  } else if(value.indexOf('json#') === 0) {
+    return JSON.parse(value.replace('json#', '', 1));
   } else {
     return value.replace('str#', '', 1);
   }
@@ -217,9 +221,82 @@ function private_storage_set(storage_type, account_email, key, value) {
     storage[account_key] = 'bool#' + value;
   } else if(value + 0 === value) {
     storage[account_key] = 'int#' + value;
+  } else if(typeof value === 'object') {
+    storage[account_key] = 'json#' + JSON.stringify(value);
   } else {
     storage[account_key] = 'str#' + value;
   }
+}
+
+function save_passphrase(storage_type, account_email, longid, passphrase) {
+  if(longid) {
+    private_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
+  } else {
+    private_storage_set(storage_type, account_email, 'master_passphrase', passphrase);
+  }
+}
+
+function private_keys_get(account_email, longid) {
+  var keys = [];
+  var private_keys = private_storage_get('local', account_email, 'private_keys');
+  var contains_primary = false;
+  $.each(private_keys || [], function(i, keyinfo) {
+    if(keyinfo.primary === true) {
+      contains_primary = true;
+    }
+    keys.push(keyinfo);
+  });
+  var primary_armored_key = private_storage_get('local', account_email, 'master_private_key');
+  if(!contains_primary && primary_armored_key) {
+    keys.push({
+      armored: primary_armored_key,
+      primary: true,
+    });
+  }
+  if(typeof longid !== 'undefined') { // looking for a specific key
+    var found = null;
+    $.each(keys, function(i, keyinfo) {
+      if(key_longid(keyinfo.armored) === longid) {
+        found = keyinfo;
+      }
+    });
+    return found;
+  } else {
+    return keys;
+  }
+}
+
+function private_keys_add(account_email, armored) {
+  var private_keys = private_keys_get(account_email);
+  var do_add = true;
+  var longid = key_longid(armored);
+  if(longid) {
+    $.each(private_keys, function(i, keyinfo) {
+      if(key_longid(keyinfo.armored) === longid) {
+        do_add = false;
+      }
+    });
+  } else {
+    do_add = false;
+  }
+  if(do_add) {
+    private_keys.push({
+      armored: armored,
+      primary: false,
+    });
+    private_storage_set('local', account_email, 'private_keys', private_keys);
+  }
+}
+
+function private_keys_remove(account_email, longid) {
+  var private_keys = private_keys_get(account_email);
+  var filtered_private_keys = [];
+  $.each(private_keys, function(i, keyinfo) {
+    if(key_longid(keyinfo.armored) !== longid) {
+      filtered_private_keys.push(keyinfo);
+    }
+  });
+  private_storage_set('local', account_email, 'private_keys', filtered_private_keys);
 }
 
 function account_storage_set(gmail_account_email, values, callback) {

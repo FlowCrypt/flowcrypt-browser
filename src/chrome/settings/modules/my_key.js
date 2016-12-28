@@ -1,8 +1,10 @@
 'use strict';
 
-var url_params = get_url_params(['account_email']);
+var url_params = get_url_params(['account_email', 'longid']);
 
-var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
+var keyinfo = private_keys_get(url_params.account_email, url_params.longid);
+
+var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
 
 $('.key_dump').text(key.toPublic().armor());
 $('.key_fingerprint').text(key_fingerprint(key, 'spaced'));
