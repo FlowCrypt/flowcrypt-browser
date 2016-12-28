@@ -37,7 +37,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
       var color = 'orange';
     } else if(result.match) {
       if(email === url_params.account_email && !result.attested) {
-        if(attests_requested.length) {
+        if(attests_requested && attests_requested.length) {
           var note = 'Submitted. Attestation was requested from ' + attests_requested.join(', ') + ' and should process shortly.';
           var action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
           var color = 'orange';
@@ -60,7 +60,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
         var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
         var action = '<div class="button gray2 small submit_pubkey" email="' + email + '">Request Attestation</div>';
         var color = 'red';
-      } else if (email === url_params.account_email && result.attested && attests_requested.length) {
+      } else if (email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
         var note = 'Re-Attestation requested. This should process shortly.';
         var action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
         var color = 'orange';
