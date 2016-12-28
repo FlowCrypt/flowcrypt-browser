@@ -3,10 +3,14 @@
 var global_storage_scope = 'global';
 
 function pubkey_cache_retrieve() {
-  if(typeof localStorage.pubkey_cache === 'undefined') {
-    localStorage.pubkey_cache = JSON.stringify({});
+  var storage = get_storage('local');
+  if(storage === null) {
+    throw 'oy';
   }
-  return JSON.parse(localStorage.pubkey_cache);
+  if(typeof storage.pubkey_cache === 'undefined') {
+    storage.pubkey_cache = JSON.stringify({});
+  }
+  return JSON.parse(storage.pubkey_cache);
 }
 
 function pubkey_object(pubkey, name, has_cryptup, attested) {
@@ -155,32 +159,36 @@ function account_storage_object_keys_to_original(account_or_accounts, storage_ob
 }
 
 function get_storage(storage_type) {
-  if(storage_type === 'local') {
-    return localStorage;
-  } else if(storage_type === 'session') {
-    return sessionStorage;
-  } else {
-    throw 'unknown type of storage: "' + storage_type + '", use either "local" or "session"'
+  try {
+    if(storage_type === 'local') {
+      return localStorage;
+    } else if(storage_type === 'session') {
+      return sessionStorage;
+    } else {
+      throw 'unknown type of storage: "' + storage_type + '", use either "local" or "session"'
+    }
+  } catch(error) {
+    if(error.name === 'SecurityError') {
+      return null;
+    } else {
+      throw error;
+    }
   }
 }
 
-function notify_about_storage_access_error(parent_tab_id) {
+function notify_about_storage_access_error(account_email, parent_tab_id) {
   if(parent_tab_id) {
     chrome_message_send(parent_tab_id, 'notification_show', {
-      notification: 'Some browser settings are keeping CryptUP from working properly. Please go to "Chrome Settings -> Advanced Settings-> Privacy -> Content Settings" and un-check "Block third-party cookies and site data" in Cookies section. When the checkbox is empty, <a href="#" class="reload">reload this page</a>.',
+      notification: 'Some browser settings are keeping CryptUP from working properly. <a href="chrome-extension://bnjglocicdkmhmoohhfkfkbbkejdhdgc/chrome/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '&page=%2Fchrome%2Ftexts%2Fchrome_content_settings.htm" target="cryptup">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.',
     });
   }
 }
 
 function private_storage_get(storage_type, account_email, key, parent_tab_id) {
-
-  try {
-    var storage = get_storage(storage_type);
-  } catch(error) {
-    if(error.name === 'SecurityError') {
-      notify_about_storage_access_error(parent_tab_id);
-    }
-    throw error;
+  var storage = get_storage(storage_type);
+  if(storage === null) {
+    notify_about_storage_access_error(account_email, parent_tab_id);
+    return;
   }
   var value = storage[account_storage_key(account_email, key)];
   if(typeof value === 'undefined') {

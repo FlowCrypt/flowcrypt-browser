@@ -41,7 +41,7 @@ Try(function() {
         }
       },
       notification_show: function(data) {
-        gmail_notification_show(data.notification);
+        gmail_notification_show(data.notification, data.callbacks);
         $('body').one('click', Try(gmail_notification_clear));
       },
       close_dialog: function(data) {
