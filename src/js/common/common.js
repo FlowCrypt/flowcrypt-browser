@@ -831,7 +831,7 @@ function key_fingerprint(key, formatting) {
 }
 
 function key_longid(key_or_fingerprint_or_bytes) {
-  if(key_or_fingerprint_or_bytes === null) {
+  if(key_or_fingerprint_or_bytes === null || typeof key_or_fingerprint_or_bytes === 'undefined') {
     return null;
   } else if(key_or_fingerprint_or_bytes.length === 8) {
     return bin_to_hex(key_or_fingerprint_or_bytes).toUpperCase();
