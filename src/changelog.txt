@@ -1,3 +1,7 @@
+<b>version 2.8.3 on December 29, 2016: 2.8.3 Composing and Reading Bugfixes</b>
+composing: inform and offer to retry failed pubkey lookups
+setup: safer CryptUP content script loading
+
 <b>version 2.8.2 on December 29, 2016: Setup Bugfixes</b>
 setup: background page was failing repeatedly for some users
 setup: clearing error log if it gets too big
