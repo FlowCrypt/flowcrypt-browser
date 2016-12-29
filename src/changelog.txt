@@ -1,3 +1,7 @@
+<b>version 2.8.2 on December 29, 2016: Setup Bugfixes</b>
+setup: background page was failing repeatedly for some users
+setup: clearing error log if it gets too big
+
 <b>version 2.8.1 on December 28, 2016: Conversation Bugfixes</b>
 composing: fixed thread_id problems when replying
 reading: better pgp block behavior on install/update
