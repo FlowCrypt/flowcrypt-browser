@@ -10,9 +10,57 @@ Try(function() {
   init_elements_replace_js();
 
   var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-  var account_email = $("#loading div.msg").text().match(/[a-z0-9._]+@[a-z0-9._]+/gi)[0];
+  var account_email_interval = 1000;
+
+  var account_email = undefined;
   var tab_id_global = undefined;
 
+  window.wait_for_account_email_then_setup = function() {
+    account_email = get_account_email();
+    if(typeof account_email !== 'undefined') {
+      console.log('Loading CryptUP');
+      setup();
+    } else {
+      console.log('Cannot load CryptUP yet. Page: ' + window.location + ' (' + document.title + ')');
+      account_email_interval += 1000;
+      TrySetTimeout(wait_for_account_email_then_setup, account_email_interval);
+    }
+  };
+
+  // called by wait_for_account_email_then_setup
+  window.setup = function() {
+    if(account_email) {
+      hijack_gmail_hotkeys();
+      record_active_window();
+      inject_meta();
+      add_account_email_to_list_of_accounts(account_email);
+      save_account_email_full_name_if_needed(account_email);
+      var show_setup_needed_notification_if_setup_not_done = true;
+      var wait_for_setup_interval = TrySetInterval(function() {
+        account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], function(storage) {
+          if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
+            gmail_notification_clear();
+            initialize();
+            clearInterval(wait_for_setup_interval);
+          } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
+            var set_up_notification = '<a href="_PLUGIN/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '" target="cryptup">Set up CryptUP</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+            gmail_notification_show(set_up_notification, {
+              notification_setup_needed_dismiss: function() {
+                account_storage_set(account_email, {
+                  notification_setup_needed_dismissed: true
+                }, gmail_notification_clear);
+              },
+              close: function() {
+                show_setup_needed_notification_if_setup_not_done = false;
+              }
+            });
+          }
+        });
+      }, 1000);
+    }
+  };
+
+  // called by setup
   window.initialize = function() {
     chrome_message_listen({
       open_new_message: function(data) {
@@ -54,6 +102,25 @@ Try(function() {
     }, Try(start));
   };
 
+  // called by initialize
+  window.start = function() {
+    account_storage_get(account_email, ['addresses', 'google_token_scopes'], function(storage) {
+      var addresses = storage.addresses || [account_email];
+      var can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+      chrome_message_get_tab_id(function(tab_id) {
+        Try(function() {
+          tab_id_global = tab_id;
+          inject_buttons(account_email, tab_id);
+          show_initial_notifications(account_email);
+          replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
+          TrySetInterval(function() {
+            replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
+          }, 1000);
+        })();
+      });
+    });
+  };
+
   window.hijack_gmail_hotkeys = function() {
     var keys = key_codes();
     $(document).keypress(function(e) {
@@ -63,6 +130,21 @@ Try(function() {
         set_reply_box_editable(account_email, tab_id_global);
       }
     });
+  };
+
+  window.get_account_email = function() {
+    var benevolent_email_regex = /[a-z0-9._]+@[a-z0-9._]+/gi;
+    var account_email_loading_match = $("#loading div.msg").text().match(benevolent_email_regex);
+    if(account_email_loading_match !== null) {
+      return account_email_loading_match[0];
+    } else {
+      var account_email_title_match = document.title.match(benevolent_email_regex);
+      if(account_email_title_match !== null) {
+        return account_email_title_match[0];
+      } else {
+        return undefined;
+      }
+    }
   };
 
   window.record_active_window = function() {
@@ -98,53 +180,6 @@ Try(function() {
     gmail_notification_show('Please <a href="#" class="reload">refresh your page</a> to use encrypted functionality. <a href="#" class="close">later</a>');
   };
 
-  window.start = function() {
-    account_storage_get(account_email, ['addresses', 'google_token_scopes'], function(storage) {
-      var addresses = storage.addresses || [account_email];
-      var can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
-      chrome_message_get_tab_id(function(tab_id) {
-        Try(function() {
-          tab_id_global = tab_id;
-          inject_buttons(account_email, tab_id);
-          show_initial_notifications(account_email);
-          replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
-          TrySetInterval(function() {
-            replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
-          }, 1000);
-        })();
-      });
-    });
-  };
-
-  hijack_gmail_hotkeys();
-  record_active_window();
-
-  if(account_email) {
-    inject_meta();
-    add_account_email_to_list_of_accounts(account_email);
-    save_account_email_full_name_if_needed(account_email);
-    var show_setup_needed_notification_if_setup_not_done = true;
-    var wait_for_setup_interval = TrySetInterval(function() {
-      account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], function(storage) {
-        if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
-          gmail_notification_clear();
-          initialize();
-          clearInterval(wait_for_setup_interval);
-        } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-          var set_up_notification = '<a href="_PLUGIN/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '" target="cryptup">Set up CryptUP</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
-          gmail_notification_show(set_up_notification, {
-            notification_setup_needed_dismiss: function() {
-              account_storage_set(account_email, {
-                notification_setup_needed_dismissed: true
-              }, gmail_notification_clear);
-            },
-            close: function() {
-              show_setup_needed_notification_if_setup_not_done = false;
-            }
-          });
-        }
-      });
-    }, 1000);
-  }
+  wait_for_account_email_then_setup();
 
 })();
