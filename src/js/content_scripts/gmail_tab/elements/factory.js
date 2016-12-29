@@ -69,17 +69,17 @@ function init_elements_factory_js() {
     return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
   };
 
-  window.reply_message_iframe = function(account_email, gmail_tab_id, my_email, their_email, secondary_emails, subject, skip_click_prompt, ignore_draft) {
-    var thread_id = /\/([0-9a-f]{16})/g.exec(window.location)[1]; // could fail? Is it possible to reply on a messagee without being in a certain thread?
-    var emails = resolve_from_to(secondary_emails, my_email, their_email);
+  window.reply_message_iframe = function(account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
+    var emails = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
     var id = random_string();
     var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') +
       '?frame_id=frame_' + id +
       '&placement=gmail' +
       '&to=' + encodeURIComponent(emails.to) +
       '&from=' + encodeURIComponent(emails.from) +
-      '&subject=' + encodeURIComponent(subject) +
-      '&thread_id=' + encodeURIComponent(thread_id) +
+      '&subject=' + encodeURIComponent(conversation_params.subject) +
+      '&thread_id=' + encodeURIComponent(conversation_params.thread_id) +
+      '&thread_message_id=' + encodeURIComponent(conversation_params.thread_message_id) +
       '&account_email=' + encodeURIComponent(account_email) +
       '&skip_click_prompt=' + encodeURIComponent(Number(Boolean(Number(skip_click_prompt)))) + //todo - would use some rethinking, refactoring, or at least a named function
       '&ignore_draft=' + encodeURIComponent(Number(Boolean(Number(ignore_draft)))) + //these two are to make sure to pass a "1" or "0" in url

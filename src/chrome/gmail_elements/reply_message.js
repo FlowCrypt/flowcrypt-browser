@@ -2,7 +2,7 @@
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
-var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
+var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
 var original_reply_message_prompt = undefined;
 var thread_message_id_last = '';
 var thread_message_referrences_last = '';
@@ -13,58 +13,76 @@ url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
 init_elements_factory_js();
 
-// show decrypted draft if available for this thread. Also check if GMAIL_READ_SCOPE is available.
-account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function(storage) {
-  can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
-  if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
-    original_reply_message_prompt = $('div#reply_message_prompt').html();
-    $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
-    gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function(success, response) {
-      if(success) {
-        draft_set_id(storage.drafts_reply[url_params.thread_id]);
-        parse_mime_message(base64url_decode(response.message.raw), function(mime_success, parsed_message) {
-          if(success) {
-            if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
-              var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
-              decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
+recover_thread_id_if_missing(function() {
+  // show decrypted draft if available for this thread. Also check if GMAIL_READ_SCOPE is available.
+  account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function(storage) {
+    can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+    if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
+      original_reply_message_prompt = $('div#reply_message_prompt').html();
+      $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
+      gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function(success, response) {
+        if(success) {
+          draft_set_id(storage.drafts_reply[url_params.thread_id]);
+          parse_mime_message(base64url_decode(response.message.raw), function(mime_success, parsed_message) {
+            if(success) {
+              if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
+                var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
+                decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
+              } else {
+                console.log('gmail_api_draft_get parse_mime_message else {}');
+                reply_message_render_table();
+              }
             } else {
-              console.log('gmail_api_draft_get parse_mime_message else {}');
+              console.log('gmail_api_draft_get parse_mime_message success===false');
+              console.log(parsed_message);
               reply_message_render_table();
             }
+          });
+        } else {
+          reply_message_render_table();
+          if(response.status === 404) {
+            draft_meta_store(false, storage.drafts_reply[url_params.thread_id], url_params.thread_id, null, null, function() {
+              console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
+              window.location.reload();
+            });
           } else {
-            console.log('gmail_api_draft_get parse_mime_message success===false');
-            console.log(parsed_message);
-            reply_message_render_table();
+            console.log('gmail_api_draft_get success===false');
+            console.log(response);
           }
+        }
+      });
+    } else { //no draft available
+      if(!url_params.skip_click_prompt) {
+        $('#reply_click_area, #a_reply, #a_reply_all, #a_forward').click(function() {
+          if($(this).attr('id') === 'a_reply') {
+            url_params.to = url_params.to.split(',')[0];
+          } else if($(this).attr('id') === 'a_forward') {
+            url_params.to = '';
+          }
+          reply_message_render_table($(this).attr('id').replace('a_', ''));
         });
       } else {
         reply_message_render_table();
-        if(response.status === 404) {
-          draft_meta_store(false, storage.drafts_reply[url_params.thread_id], url_params.thread_id, null, null, function() {
-            console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
-            window.location.reload();
-          });
-        } else {
-          console.log('gmail_api_draft_get success===false');
-          console.log(response);
-        }
       }
-    });
-  } else { //no draft available
-    if(!url_params.skip_click_prompt) {
-      $('#reply_click_area, #a_reply, #a_reply_all, #a_forward').click(function() {
-        if($(this).attr('id') === 'a_reply') {
-          url_params.to = url_params.to.split(',')[0];
-        } else if($(this).attr('id') === 'a_forward') {
-          url_params.to = '';
-        }
-        reply_message_render_table($(this).attr('id').replace('a_', ''));
-      });
-    } else {
-      reply_message_render_table();
     }
-  }
+  });
 });
+
+function recover_thread_id_if_missing(callback) {
+  if(url_params.thread_id) {
+    callback();
+  } else {
+    gmail_api_message_get(url_params.account_email, url_params.thread_message_id, 'metadata' , function(success, gmail_message_object) {
+      if(success) {
+        url_params.thread_id = gmail_message_object.threadId;
+      } else {
+        url_params.thread_id = url_params.thread_message_id;
+        console.log('CRYPTUP: Substituting thread_id with thread_message_id: might cause issues');
+      }
+      callback();
+    });
+  }
+}
 
 function check_passphrase_entered(encrypted_draft) {
   if(get_passphrase(url_params.account_email) !== null) {
@@ -151,6 +169,7 @@ function reply_message_reinsert_reply_box() {
     my_email: url_params.from,
     subject: url_params.subject,
     their_email: get_recipients_from_dom().join(','),
+    thread_id: url_params.thread_id,
   });
 }
 

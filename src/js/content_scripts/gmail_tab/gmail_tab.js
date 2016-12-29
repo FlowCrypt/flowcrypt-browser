@@ -25,7 +25,7 @@ Try(function() {
         $('iframe#' + data.frame_id).remove();
       },
       reinsert_reply_box: function(data) {
-        reinsert_reply_box(data.account_email, tab_id_global, data.subject, data.my_email, data.their_email);
+        reinsert_reply_box(data.account_email, tab_id_global, data.subject, data.my_email, data.their_email, data.thread_id);
       },
       set_css: function(data) {
         $(data.selector).css(data.css);

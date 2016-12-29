@@ -223,6 +223,14 @@ function init_elements_replace_js() {
   };
 
   window.get_conversation_params = function(account_email, callback) {
+    var thread_match = /\/([0-9a-f]{16})/g.exec(window.location);
+    if(thread_match !== null) {
+      var thread_id = thread_match[1];
+      var thread_message_id = thread_match[1];
+    } else { // sometimes won't work, that's why the else
+      var thread_id = '';
+      var thread_message_id = parse_message_id_from('message', $('.has_known_pgp_blocks'));
+    }
     var reply_to_estimate = [$('h3.iw span[email]').last().attr('email').trim()]; // add original sender
     var reply_to = [];
     $('span.hb').last().find('span.g2').each(function() {
@@ -246,6 +254,8 @@ function init_elements_replace_js() {
         reply_to: reply_to,
         addresses: storage.addresses,
         my_email: my_email,
+        thread_id: thread_id,
+        thread_message_id: thread_message_id,
       });
     });
   };
@@ -256,7 +266,7 @@ function init_elements_replace_js() {
       if($(reply_container_selector).length) {
         get_conversation_params(account_email, function(params) {
           editable = editable || $(reply_container_selector)[0].tagName === 'TD';
-          var iframe = reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, editable);
+          var iframe = reply_message_iframe(account_email, gmail_tab_id, params, editable);
           $(reply_container_selector).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
         });
       }
@@ -267,16 +277,24 @@ function init_elements_replace_js() {
     var reply_container_iframe_selector = '.reply_message_iframe_container > iframe';
     if($(reply_container_iframe_selector).length) {
       get_conversation_params(account_email, function(params) {
-        $(reply_container_iframe_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params.my_email, params.reply_to.join(','), params.addresses, params.subject, true));
+        $(reply_container_iframe_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params, true));
       });
     } else {
       replace_standard_reply_box(account_email, gmail_tab_id, true);
     }
   }
 
-  window.reinsert_reply_box = function(account_email, gmail_tab_id, subject, my_email, their_email) {
+  window.reinsert_reply_box = function(account_email, gmail_tab_id, subject, my_email, reply_to, thread_id) {
     account_storage_get(account_email, ['addresses'], function(storage) {
-      $('.reply_message_iframe_container').append(reply_message_iframe(account_email, gmail_tab_id, my_email, their_email, storage.addresses, subject, false, true));
+      var conversation_params = {
+        subject: subject,
+        reply_to: reply_to,
+        addresses: storage.addresses,
+        my_email: my_email,
+        thread_id: thread_id,
+        thread_message_id: thread_id,
+      };
+      $('.reply_message_iframe_container').append(reply_message_iframe(account_email, gmail_tab_id, conversation_params, false, true));
     });
   };
 
