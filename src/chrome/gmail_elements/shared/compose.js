@@ -6,6 +6,13 @@ var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 var GOOGLE_CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts.readonly';
 var GOOGLE_CONTACTS_ORIGIN = 'https://www.google.com/*';
 
+var PUBKEY_SEARCH_RESULT_WRONG = 'wrong';
+var PUBKEY_SEARCH_RESULT_FAIL = 'fail';
+
+var BTN_ENCRYPT_AND_SEND = 'encrypt and send';
+var BTN_WRONG_ENTRY = 're-enter recipient..';
+var BTN_WAIT = 'wait..';
+
 var draft_id = undefined;
 var draft_message_id = undefined;
 var can_search_contacts = undefined;
@@ -244,7 +251,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
 }
 
 function compose_encrypt_and_send(account_email, recipients, subject, plaintext, send_email_callback) {
-  if($('#send_btn span').text().toLowerCase().trim() === 'encrypt and send') {
+  if($('#send_btn span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND) {
     var btn_html = $('#send_btn').html();
     $('#send_btn span').text('Loading');
     $('#send_btn i').replaceWith(get_spinner());
@@ -303,6 +310,8 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
         alert('Network error, please try again.');
       }
     });
+  } else if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
+    alert('Please re-enter recipients marked in red color.');
   } else {
     alert('Please wait, information about recipients is still loading.');
   }
@@ -310,7 +319,7 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
 
 function handle_send_message_error(response) {
   if(response.status === 413) {
-    $('#send_btn span').text('encrypt and send');
+    $('#send_btn span').text(BTN_ENCRYPT_AND_SEND);
     $('#send_btn i').attr('class', '');
     alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
   } else {
@@ -321,34 +330,42 @@ function handle_send_message_error(response) {
 }
 
 function compose_evaluate_receivers() {
-  $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested').each(function() {
+  $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed').each(function() {
     var email_element = this;
     var email = $(email_element).text().trim();
     if(is_email_valid(email)) {
-      $("#send_btn span").text('Wait...');
+      $("#send_btn span").text(BTN_WAIT);
       $("#send_btn_note").text("Checking email addresses");
       get_pubkeys([email], function(pubkeys) {
-        compose_render_pubkey_result(email_element, pubkeys[0]);
+        if(typeof pubkeys !== undefined && pubkeys && typeof pubkeys[0] !== 'undefined') {
+          compose_render_pubkey_result(email_element, pubkeys[0]);
+        } else {
+          compose_render_pubkey_result(email_element, PUBKEY_SEARCH_RESULT_FAIL);
+        }
       });
     } else {
-      compose_render_pubkey_result(email_element, undefined);
-      $(email_element).addClass('wrong');
+      compose_render_pubkey_result(email_element, PUBKEY_SEARCH_RESULT_WRONG);
     }
   });
 }
 
-function compose_show_hide_missing_pubkey_container() {
+function compose_show_hide_missing_pubkey_container_and_color_send_button() {
+  $("#send_btn span").text(BTN_ENCRYPT_AND_SEND);
+  $("#send_btn_note").text('');
+  $("#send_btn").attr('title', '');
   var was_previously_visible = $("#missing_pubkey_container").css('display') === 'table-row';
   if(!$('.recipients span').length) {
     $("#challenge_question_container").css('display', 'none');
     $("#missing_pubkey_container").css('display', 'none');
     $('#send_btn').removeClass('gray').addClass('green');
   } else {
-    if($('.recipients span.no_pgp').length) {
-      if($("#missing_pubkey_container").css('display') === 'none' && $("#challenge_question_container").css('display') === 'none') {
-        $("#missing_pubkey_container").css('display', 'table-row');
-        $('#send_btn').removeClass('green').addClass('gray');
-      }
+    if($('.recipients span.no_pgp').length && $("#missing_pubkey_container").css('display') === 'none' && $("#challenge_question_container").css('display') === 'none') {
+      $("#missing_pubkey_container").css('display', 'table-row');
+      $('#send_btn').removeClass('green').addClass('gray');
+    } else if($('.recipients span.failed, .recipients span.wrong').length) {
+      $("#send_btn span").text(BTN_WRONG_ENTRY);
+      $("#send_btn").attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
+      $("#send_btn").removeClass('green').addClass('gray');
     } else {
       $("#challenge_question_container").css('display', 'none');
       $("#missing_pubkey_container").css('display', 'none');
@@ -445,7 +462,7 @@ function remove_receiver() {
   recipients_missing_my_key = array_without_value(recipients_missing_my_key, $(this).parent().text());
   $(this).parent().remove();
   resize_input_to();
-  compose_show_hide_missing_pubkey_container();
+  compose_show_hide_missing_pubkey_container_and_color_send_button();
   compose_show_hide_send_pubkey_container();
 }
 
@@ -626,7 +643,7 @@ function compose_show_hide_send_pubkey_container() {
 
 function compose_render_pubkey_result(email_element, pubkey_data) {
   if($('body#new_message').length) { //todo: better move this to new_message.js
-    if(pubkey_data && pubkey_data.pubkey && !pubkey_data.has_cryptup && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) {
+    if(pubkey_data && typeof pubkey_data === 'object' && pubkey_data.pubkey && !pubkey_data.has_cryptup && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) {
       // new message, they do have pgp but don't have cryptup, and my keys is not on pks
       did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
         if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
@@ -638,13 +655,14 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
       compose_show_hide_send_pubkey_container();
     }
   }
+
   function key_id_text(pubkey_data) {
     if(pubkey_data === null || typeof pubkey_data === 'undefined') {
       return '';
-    } else if (pubkey_data.has_cryptup && pubkey_data.keywords) {
-      return '\n\n' + 'Public KeyWords:\n' +  pubkey_data.keywords;
-    } else if (pubkey_data.fingerprint) {
-      return '\n\n' + 'Key fingerprint:\n' +  pubkey_data.fingerprint;
+    } else if(pubkey_data.has_cryptup && pubkey_data.keywords) {
+      return '\n\n' + 'Public KeyWords:\n' + pubkey_data.keywords;
+    } else if(pubkey_data.fingerprint) {
+      return '\n\n' + 'Key fingerprint:\n' + pubkey_data.fingerprint;
     } else {
       return '';
     }
@@ -653,11 +671,19 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
   $(email_element).children('i').removeClass('fa');
   $(email_element).children('i').removeClass('fa-spin');
   $(email_element).children('i').removeClass('ion-load-c');
+  $(email_element).children('i').removeClass('fa-repeat');
   $(email_element).children('i').addClass('ion-android-close');
   if(typeof pubkey_data === 'undefined') {
-    $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
+
     // todo - show option to try again
-  } else if(pubkey_data && pubkey_data.pubkey !== null && pubkey_data.attested) {
+  } else if(pubkey_data === PUBKEY_SEARCH_RESULT_FAIL) {
+    $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
+    $(email_element).addClass("failed");
+    $(email_element).children('i').removeClass('ion-android-close').addClass('fa').addClass('fa-repeat');
+  } else if(pubkey_data === PUBKEY_SEARCH_RESULT_WRONG) {
+    $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
+    $(email_element).addClass("wrong");
+  } else if(pubkey_data && pubkey_data.pubkey !== null && pubkey_data.pubkey !== null && pubkey_data.attested) {
     $(email_element).addClass("attested");
     $(email_element).prepend("<i class='ion-locked'></i>");
     $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + key_id_text(pubkey_data));
@@ -670,11 +696,7 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
     $(email_element).prepend("<i class='ion-locked'></i>");
     $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
   }
-  if(!$('.receivers span i.fa-spin').length) {
-    $("#send_btn span").text('encrypt and send');
-    $("#send_btn_note").text('');
-  }
-  compose_show_hide_missing_pubkey_container();
+  compose_show_hide_missing_pubkey_container_and_color_send_button();
 }
 
 function get_recipients_from_dom(filter) {

@@ -103,10 +103,14 @@ function get_pubkeys(emails, callback, ignore_cached) {
     keyserver_keys_find(get_from_keyserver, function(success, keyserver_results) {
       if(success) {
         $.each(keyserver_results.results, function(i, keyserver_result) {
-          var pubkey_obj = pubkey_object(keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup, keyserver_result.attested);
-          results[emails.indexOf(get_from_keyserver[i])] = pubkey_obj;
-          if(keyserver_result.pubkey) {
-            pubkey_cache_add(keyserver_result.email, pubkey_obj);
+          if(typeof keyserver_result.pubkey !== 'undefined') {
+            var pubkey_obj = pubkey_object(keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup, keyserver_result.attested);
+            results[emails.indexOf(get_from_keyserver[i])] = pubkey_obj;
+            if(keyserver_result.pubkey) {
+              pubkey_cache_add(keyserver_result.email, pubkey_obj);
+            }
+          } else {
+            results[emails.indexOf(get_from_keyserver[i])] = undefined;
           }
         });
         callback(results);

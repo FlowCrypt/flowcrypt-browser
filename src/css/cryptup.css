@@ -210,6 +210,7 @@ table#compose td#input_addresses_container > div .recipients span.wrong { paddin
 table#compose td#input_addresses_container > div .recipients span.has_pgp { padding: 5px 10px 5px 23px;  background: #31A217; color: white; }
 table#compose td#input_addresses_container > div .recipients span.attested { padding: 5px 10px 5px 23px;  background: #31A217; color: white; }
 table#compose td#input_addresses_container > div .recipients span.no_pgp { padding: 5px 10px 5px 23px; background: #989898; color: white; }
+table#compose td#input_addresses_container > div .recipients span.failed { padding: 4px 9px 4px 10px; border: 1px dashed red; }
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
 table#compose td#input_addresses_container > div .recipients span.wrong i  { color: white!important;}
