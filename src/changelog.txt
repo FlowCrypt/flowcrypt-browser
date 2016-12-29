@@ -1,3 +1,8 @@
+<b>version 2.8.1 on December 28, 2016: Conversation Bugfixes</b>
+composing: fixed thread_id problems when replying
+reading: better pgp block behavior on install/update
+setup: add key exception on wrongly formatted key fixed
+
 <b>version 2.8.0 on December 28, 2016: Multiple Private Keys</b>
 setup: allow multiple private keys per account
 setup: Public Key Server page blank screen fix
