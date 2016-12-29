@@ -30,6 +30,7 @@ var l = {
   enter_passphrase: 'Enter passphrase',
   to_open_message: 'to open this message.',
   write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly.',
+  refresh_window: 'Please refresh your Gmail window to read encrypted messages.',
 }
 
 function send_resize_message() {
@@ -239,37 +240,38 @@ function check_passphrase_entered() {
   });
 }
 
-if(url_params.message) { // ascii armored message supplied
-  $('#pgp_block').text('Decrypting...');
-  decrypt_and_render(undefined, function() {
-
-  });
-} else { // need to fetch the message from gmail api
-  account_storage_get(url_params.account_email, ['google_token_scopes'], function(storage) {
-    if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
-      $('#pgp_block').text('Retrieving message...');
-      extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
-        $('#pgp_block').text('Decrypting...');
-        url_params.message = message_raw;
-        decrypt_and_render();
-      }, function(error_type, url_formatted_data_block) {
-        if(error_type === 'format') {
-          render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
-        } else if(error_type === 'connection') {
-          render_error(l.connection_error, url_formatted_data_block);
-        } else {
-          alert('Unknown error type: ' + error_type);
-        }
-      });
-    } else { // gmail message read auth not allowed
-      $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
-      $('.auth_settings').click(function() {
-        chrome_message_send(null, 'settings', {
-          account_email: url_params.account_email,
-          page: '/chrome/settings/modules/auth_denied.htm',
+account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
+  if(storage.setup_done) {
+    if(url_params.message) { // ascii armored message supplied
+      $('#pgp_block').text('Decrypting...');
+      decrypt_and_render();
+    } else { // need to fetch the message from gmail api
+      if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+        $('#pgp_block').text('Retrieving message...');
+        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
+          $('#pgp_block').text('Decrypting...');
+          url_params.message = message_raw;
+          decrypt_and_render();
+        }, function(error_type, url_formatted_data_block) {
+          if(error_type === 'format') {
+            render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
+          } else if(error_type === 'connection') {
+            render_error(l.connection_error, url_formatted_data_block);
+          } else {
+            alert('Unknown error type: ' + error_type);
+          }
         });
-      });
+      } else { // gmail message read auth not allowed
+        $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+        $('.auth_settings').click(function() {
+          chrome_message_send(null, 'settings', {
+            account_email: url_params.account_email,
+            page: '/chrome/settings/modules/auth_denied.htm',
+          });
+        });
+      }
     }
-  });
-
-}
+  } else {
+    render_error(l.refresh_window, url_params.message || '');
+  }
+});
