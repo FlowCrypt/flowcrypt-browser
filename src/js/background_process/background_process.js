@@ -28,6 +28,12 @@ chrome_message_background_listen({
 
 update_uninstall_url();
 
+account_storage_get(null, 'errors', function(storage) {
+  if(storage.errors && storage.errors.length && storage.errors.length > 100) {
+    account_storage_remove(null, 'errors');
+  }
+});
+
 if(!localStorage.settings_seen) {
   open_settings_page('initial.htm'); // called after the very first installation of the plugin
   localStorage.settings_seen = true;
