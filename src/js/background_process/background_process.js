@@ -60,7 +60,7 @@ function list_pgp_attachments(request, sender, respond) {
       $.each(attachments, function(i, attachment) {
         if(attachment.name.match('(\.pgp)|(\.gpg)$')) {
           pgp_attachments.push(attachment);
-        } else if (attachment.name.match('(\.asc)$') || attachment.name === '') {
+        } else if(attachment.name.match('(\.asc)$') || attachment.name === '') {
           pgp_messages.push(attachment);
         }
       });
@@ -82,11 +82,13 @@ function list_pgp_attachments(request, sender, respond) {
 function update_uninstall_url(request, sender, respond) {
   get_account_emails(function(account_emails) {
     account_storage_get(null, ['metrics'], function(storage) {
-      chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + encodeURIComponent(JSON.stringify({
-        email: (account_emails && account_emails.length) ? account_emails[0] : null,
-        metrics: storage.metrics || null,
-      })));
-      if(respond){
+      if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
+        chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + encodeURIComponent(JSON.stringify({
+          email: (account_emails && account_emails.length) ? account_emails[0] : null,
+          metrics: storage.metrics || null,
+        })));
+      }
+      if(respond) {
         respond();
       }
     });
