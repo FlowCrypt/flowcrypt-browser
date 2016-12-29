@@ -10,6 +10,8 @@ $('.email-address').text(url_params.account_email);
 
 $('.back').css('visibility', 'hidden');
 
+var account_email_attested_fingerprint = undefined;
+
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var recovered_keys = undefined;
 var tab_id_global = undefined;
@@ -100,6 +102,9 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     } else {
       get_pubkeys([url_params.account_email], function(pubkeys) {
         if(pubkeys && pubkeys[0] && pubkeys[0].pubkey) {
+          if(pubkeys[0].attested) {
+            account_email_attested_fingerprint = key_fingerprint(pubkeys[0].pubkey);
+          }
           if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
             fetch_email_key_backups(url_params.account_email, function(success, keys) {
               if(success && keys) {
@@ -134,12 +139,17 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
       } else {
         var addresses = [account_email];
       }
-      submit_pubkeys(addresses, armored_pubkey, function(success) {
-        if(success) {
-          private_storage_set('local', account_email, 'master_public_key_submitted', true);
-        }
+      if(account_email_attested_fingerprint && account_email_attested_fingerprint !== key_fingerprint(armored_pubkey)) {
+        // already submitted and ATTESTED another pubkey for this email
         callback();
-      });
+      } else {
+        submit_pubkeys(addresses, armored_pubkey, function(success) {
+          if(success) {
+            private_storage_set('local', account_email, 'master_public_key_submitted', true);
+          }
+          callback();
+        });
+      }
     } else {
       keyserver_keys_find(account_email, function(success, result) {
         if(success && result.pubkey && key_fingerprint(result.pubkey) !== null && key_fingerprint(result.pubkey) === key_fingerprint(armored_pubkey)) {
