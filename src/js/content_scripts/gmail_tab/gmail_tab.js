@@ -138,12 +138,13 @@ Try(function() {
     if(account_email_loading_match !== null) {
       return account_email_loading_match[0];
     } else {
-      var account_email_title_match = document.title.match(benevolent_email_regex);
-      if(account_email_title_match !== null) {
-        return account_email_title_match[0];
-      } else {
+      // commented out because can cause email addresses from conversations to show as belonging to the user
+      // var account_email_title_match = document.title.match(benevolent_email_regex);
+      // if(account_email_title_match !== null) {
+      //   return account_email_title_match[0];
+      // } else {
         return undefined;
-      }
+      // }
     }
   };
 
