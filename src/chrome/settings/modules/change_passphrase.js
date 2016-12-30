@@ -55,7 +55,7 @@ $('.action_reset_password').click(function() {
   $('#password').val('');
   $('#password2').val('');
   display_block('step_1_password');
-  evaluate_password_strength();
+  evaluate_password_strength('#step_1_password', '#password', '.action_password');
   $('#password').focus();
 });
 
