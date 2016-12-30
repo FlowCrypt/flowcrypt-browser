@@ -241,7 +241,7 @@ function fetch_pubkeys(account_email, recipients, callback) {
     } else {
       var pubkeys = [];
       $.each(pubkey_results, function(i, pubkey_info) {
-        if(pubkey_info !== null && pubkey_info.pubkey !== null) {
+        if(pubkey_info && pubkey_info.pubkey !== null) {
           pubkeys.push(pubkey_info.pubkey);
         }
       });
