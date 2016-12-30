@@ -180,6 +180,8 @@ function decrypt_and_render(optional_password) {
     } else {
       if(result.missing_passphrases.length) {
         render_passphrase_prompt(result.missing_passphrases);
+      } else if (!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
+        render_error(l.refresh_window);
       } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
         if(url_params.question && !optional_password) {
           render_password_prompt();
@@ -193,7 +195,7 @@ function decrypt_and_render(optional_password) {
         render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
       } else {
         delete result.message;
-        render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result)) + '"';
+        render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
       }
     }
   });
