@@ -181,6 +181,15 @@ function google_auth_check_email(expected_email, access_token, callback) {
 }
 
 function google_auth_window_result_handler(auth_code_window_result, sender, close_auth_window) {
+  function safe_respond(responder, response) {
+    try {
+      responder(response);
+    } catch(e) {
+      if(e.message.indexOf('Attempting to use a disconnected port object') === -1) { // ignore this message - target tab no longer exists
+        throw e;
+      }
+    }
+  }
   var parts = auth_code_window_result.title.split(' ', 2);
   var result = parts[0];
   var params = get_url_params(['code', 'state', 'error'], parts[1]);
@@ -197,7 +206,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
             //   //user authorized a different account then expected
             // }
             google_auth_save_tokens(account_email, tokens_object, state_object.scopes, function() {
-              auth_responder({
+              safe_respond(auth_responder, {
                 account_email: account_email,
                 success: true,
                 result: result.toLowerCase(),
@@ -206,7 +215,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
             });
           });
         } else {
-          auth_responder({
+          safe_respond(auth_responder, {
             success: false,
             result: result.toLowerCase(),
             account_email: state_object.account_email,
@@ -217,7 +226,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
       break;
     case 'Denied':
     case 'Error':
-      auth_responder({
+      safe_respond(auth_responder, {
         success: false,
         result: result.toLowerCase(),
         error: params.error,
