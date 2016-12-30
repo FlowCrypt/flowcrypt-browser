@@ -21,6 +21,12 @@ function keyserver_keys_submit(email, pubkey, attest, callback) {
   }, callback);
 }
 
+function keyserver_keys_check(emails, callback) {
+  return keyserver_call('keys/check', {
+    'emails': emails.map(trim_lower),
+  }, callback);
+}
+
 function keyserver_keys_attest(signed_attest_packet, callback) {
   return keyserver_call('keys/attest', {
     'packet': signed_attest_packet,

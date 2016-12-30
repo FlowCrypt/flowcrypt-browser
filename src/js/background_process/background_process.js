@@ -39,6 +39,9 @@ if(!localStorage.settings_seen) {
   localStorage.settings_seen = true;
 }
 
+Try(check_keyserver_pubkey_fingerprints)();
+TrySetInterval(check_keyserver_pubkey_fingerprints, 1000 * 60 * 60 * 6);
+
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);
   respond();

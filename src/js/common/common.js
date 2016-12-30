@@ -560,6 +560,29 @@ function extract_armored_message_using_gmail_api(account_email, message_id, succ
   });
 }
 
+function check_keyserver_pubkey_fingerprints() {
+  get_account_emails(function(account_emails) {
+    if(account_emails && account_emails.length) {
+      account_storage_get(account_emails, ['setup_done'], function(multi_storage) {
+        var emails_setup_done = [];
+        $.each(multi_storage, function(account_email, storage) {
+          if(storage.setup_done) {
+            emails_setup_done.push(account_email);
+          }
+        });
+        keyserver_keys_check(emails_setup_done, function(success, response) {
+          var save_result = {};
+          $.each(emails_setup_done, function(i, account_email) {
+            save_result[account_email] = response.fingerprints[i];
+          });
+          account_storage_set(null, {
+            keyserver_fingerprints: save_result
+          });
+        });
+      });
+    }
+  });
+}
 
 function get_spinner() {
   return '&nbsp;<i class="fa fa-spinner fa-spin"></i>&nbsp;';
