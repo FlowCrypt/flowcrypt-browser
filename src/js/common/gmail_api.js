@@ -72,16 +72,13 @@ function google_api_handle_auth_error(account_email, method, resource, parameter
   attachments: [{filename: 'some.txt', type: 'text/plain', content: }]
 */
 function to_mime(account_email, body, headers, attachments, mime_message_callback) {
-  function get_master_public_key_fingerprint(account_email) {
-    return openpgp.key.readArmored(private_storage_get('local', account_email, 'master_public_key')).keys[0].primaryKey.fingerprint.toUpperCase();
-  }
   set_up_require();
   require(['emailjs-mime-builder'], function(MimeBuilder) {
     var root_node = new MimeBuilder('multipart/mixed');
     $.each(headers, function(key, header) {
       root_node.addHeader(key, header);
     });
-    root_node.addHeader('OpenPGP', 'id=' + get_master_public_key_fingerprint(account_email));
+    root_node.addHeader('OpenPGP', 'id=' + key_fingerprint(private_storage_get('local', account_email, 'master_public_key')));
     var text_node = new MimeBuilder('multipart/alternative');
     if(typeof body === 'string') {
       text_node.appendChild(new MimeBuilder('text/plain').setContent(body));
