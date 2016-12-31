@@ -571,13 +571,15 @@ function check_keyserver_pubkey_fingerprints() {
           }
         });
         keyserver_keys_check(emails_setup_done, function(success, response) {
-          var save_result = {};
-          $.each(emails_setup_done, function(i, account_email) {
-            save_result[account_email] = response.fingerprints[i];
-          });
-          account_storage_set(null, {
-            keyserver_fingerprints: save_result
-          });
+          if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
+            var save_result = {};
+            $.each(emails_setup_done, function(i, account_email) {
+              save_result[account_email] = response.fingerprints[i];
+            });
+            account_storage_set(null, {
+              keyserver_fingerprints: save_result
+            });
+          }
         });
       });
     }
@@ -875,7 +877,7 @@ function extract_armored_message_from_text(text) {
       if((matches = re_pgp_block.exec(text)) !== null) {
         return matches[0];
       }
-    }    
+    }
   }
 }
 
