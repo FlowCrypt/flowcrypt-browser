@@ -250,9 +250,12 @@ function init_elements_replace_js() {
   window.replace_standard_reply_box = function(account_email, gmail_tab_id, editable) {
     if($('div.AO iframe.pgp_block').length && $('h2.hP').first().text() === $('h2.hP').last().text()) { // the first() and last() prevents hidden convos not to trigger replacement (when switching between convos)
       var reply_container_selector = 'div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)';
-      if($(reply_container_selector).length) {
+      try {
+        var selected_tag = $(reply_container_selector)[0].tagName;
+      } catch(e) {}
+      if(typeof selected_tag !== 'undefined') {
         get_conversation_params(account_email, function(params) {
-          editable = editable || $(reply_container_selector)[0].tagName === 'TD';
+          editable = editable || selected_tag === 'TD';
           var iframe = reply_message_iframe(account_email, gmail_tab_id, params, editable);
           $(reply_container_selector).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
         });
