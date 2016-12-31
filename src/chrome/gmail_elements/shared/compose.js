@@ -4,7 +4,6 @@ var SAVE_DRAFT_FREQUENCY = 3000;
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 var GOOGLE_CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts.readonly';
-var GOOGLE_CONTACTS_ORIGIN = 'https://www.google.com/*';
 
 var PUBKEY_SEARCH_RESULT_WRONG = 'wrong';
 var PUBKEY_SEARCH_RESULT_FAIL = 'fail';
@@ -40,15 +39,7 @@ account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'a
     can_save_drafts = false;
     can_read_emails = false;
   } else {
-    if(storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) === -1) {
-      can_search_contacts = false;
-    } else {
-      chrome_message_send(null, 'chrome_auth', {
-        action: 'get',
-      }, function(permissions) {
-        can_search_contacts = (permissions.origins.indexOf(GOOGLE_CONTACTS_ORIGIN) !== -1);
-      });
-    }
+    can_search_contacts = (storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) !== -1);
     can_save_drafts = (storage.google_token_scopes.indexOf(GMAIL_COMPOSE_SCOPE) !== -1);
     can_read_emails = (storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
   }
@@ -489,27 +480,18 @@ function draft_auth() {
 function auth_contacts(account_email, for_search_query) {
   $('#input_to').val($('.recipients span').last().text());
   $('.recipients span').last().remove();
-  chrome_message_send(null, 'chrome_auth', {
-    action: 'set',
-    origins: [GOOGLE_CONTACTS_ORIGIN],
-  }, function(chrome_pemission_granted) {
-    if(chrome_pemission_granted) {
-      chrome_message_send(null, 'google_auth', {
-        account_email: account_email,
-        scopes: [GOOGLE_CONTACTS_SCOPE],
-      }, function(google_auth_response) {
-        if(google_auth_response.success === true) {
-          can_search_contacts = true;
-          search_contacts();
-        } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
-          alert('CryptUP needs this permission to search your Google Contacts. Without it, CryptUP will keep a separate contact list.');
-        } else {
-          console.log(google_auth_response);
-          alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
-        }
-      });
+  chrome_message_send(null, 'google_auth', {
+    account_email: account_email,
+    scopes: [GOOGLE_CONTACTS_SCOPE],
+  }, function(google_auth_response) {
+    if(google_auth_response.success === true) {
+      can_search_contacts = true;
+      search_contacts();
+    } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
+      alert('CryptUP needs this permission to search your Google Contacts. Without it, CryptUP will keep a separate contact list.');
     } else {
-      alert('CryptUP needs this permission to connect to Google Contacts. Without it, CryptUP will keep a separate contact list.');
+      console.log(google_auth_response);
+      alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
     }
   });
 }
