@@ -1,3 +1,12 @@
+<b>version 2.8.5 on December 30, 2016: Compose Bugfixes</b>
+composing: fixed exception when pulling pubkeys
+composing: fixed trouble retrieving fingerprint to include in header
+reading: fixed issue with very large messages + more efficient
+reading: better message decrypting behavior on update or uninstall
+setup: checking public key fingerprints on keyserver
+setup: fixed bug in internal plugin messaging during setup
+setup: evaluating pass phrase strength error fix
+
 <b>version 2.8.4 on December 29, 2016: Improved Message Detection</b>
 reading: more robust and faster pgp block replacing
 
