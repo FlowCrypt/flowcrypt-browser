@@ -1,3 +1,10 @@
+<b>version 2.9.0 on December 31, 2016: Permission Update</b>
+setup: allowing CryptUP to work with any webmail in future (Yahoo etc)
+setup: gmail notification that page needs refresh after install
+setup: fingerprint check exception fix
+composing: more robust reply box replacing
+composing: attach pubkey if didn't submit to cryptup keyserver
+
 <b>version 2.8.5 on December 30, 2016: Compose Bugfixes</b>
 composing: fixed exception when pulling pubkeys
 composing: fixed trouble retrieving fingerprint to include in header
