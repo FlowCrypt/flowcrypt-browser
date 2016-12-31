@@ -13,8 +13,7 @@
     "48": "/img/logo-48-48-white-green.png",
     "128": "/img/logo-128-128-white-green.png"
   },
-  "permissions": ["storage", "https://www.googleapis.com/*"],
-  "optional_permissions": ["https://www.google.com/*"],
+  "permissions": ["storage", "tabs", "*://*/*", "unlimitedStorage", "clipboardWrite", "webRequest"],
   "content_scripts": [
     {
       "matches": ["*://mail.google.com/*"],
