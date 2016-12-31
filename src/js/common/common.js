@@ -868,10 +868,14 @@ function key_longid(key_or_fingerprint_or_bytes) {
 }
 
 function extract_armored_message_from_text(text) {
-  var matches = null;
-  var re_pgp_block = /-----BEGIN PGP MESSAGE-----(.|[\r?\n])+?-----END PGP MESSAGE-----/m;
-  if((matches = re_pgp_block.exec(text)) !== null) {
-    return matches[0];
+  if(text) {
+    var matches = null;
+    var re_pgp_block = /-----BEGIN PGP MESSAGE-----[^]+-----END PGP MESSAGE-----/m;
+    if(text.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 && text.indexOf('-----END PGP MESSAGE-----') !== -1) {
+      if((matches = re_pgp_block.exec(text)) !== null) {
+        return matches[0];
+      }
+    }    
   }
 }
 

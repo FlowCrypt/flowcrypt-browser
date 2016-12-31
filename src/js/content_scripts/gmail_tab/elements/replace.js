@@ -26,12 +26,12 @@ function init_elements_replace_js() {
       var text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
       var blocks = [];
       if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1 && text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
-        $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----(.|[\r?\n])+?-----END PGP PUBLIC KEY BLOCK-----/gm), function(i, armored) {
+        $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+-----END PGP PUBLIC KEY BLOCK-----/gm), function(i, armored) {
           blocks.push(pgp_pubkey_iframe(account_email, armored, gmail_tab_id));
         });
       }
       if(text.indexOf('-----BEGIN ATTEST PACKET-----') !== -1 && text.indexOf('-----END ATTEST PACKET-----') !== -1) {
-        $.each(text.match(/-----BEGIN ATTEST PACKET-----(.|[\r?\n])+?-----END ATTEST PACKET-----/gm), function(i, armored) {
+        $.each(text.match(/-----BEGIN ATTEST PACKET-----[^]+-----END ATTEST PACKET-----/gm), function(i, armored) {
           chrome_message_send(null, 'attest_packet_received', {
             account_email: account_email,
             packet: armored,
@@ -46,7 +46,7 @@ function init_elements_replace_js() {
         var message_id = parse_message_id_from('message', this);
         var is_outgoing = addresses.indexOf($(this).closest('.gs').find('span.gD').attr('email')) !== -1;
         var question = extract_pgp_question(html);
-        $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----(.|[\\\r?\\\n])+' + ((has_pgp_end) ? '?(-----END PGP MESSAGE-----)' : ''), 'gm')), function(i, armored) {
+        $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----[^]+' + ((has_pgp_end) ? '-----END PGP MESSAGE-----' : ''), 'gm')), function(i, armored) {
           blocks.push(pgp_block_iframe((armored.indexOf('-----END PGP MESSAGE-----') !== -1) ? armored : '', question, account_email, message_id, is_outgoing, gmail_tab_id));
         });
         conversation_has_new_pgp_message = true;
@@ -98,7 +98,7 @@ function init_elements_replace_js() {
   };
 
   window.extract_pgp_question = function(message_html) {
-    var re_pgp_question = /<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>(<br>\r?\n)+/m;
+    var re_pgp_question = /<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>/m;
     var question_match = message_html.match(re_pgp_question);
     if(question_match !== null) {
       return window.striptags(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);

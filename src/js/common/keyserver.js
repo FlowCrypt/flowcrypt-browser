@@ -108,7 +108,7 @@ function attest_packet_parse(text) {
     error: null,
     text: null,
   };
-  var matches = text.match(/-----BEGIN ATTEST PACKET-----((.|[\r?\n])+)-----END ATTEST PACKET-----/m);
+  var matches = text.match(/-----BEGIN ATTEST PACKET-----([^]+)-----END ATTEST PACKET-----/m);
   if(matches && matches[1]) {
     result.text = matches[1].replace(/^\s+|\s+$/g, '');
     var lines = result.text.split('\n');
