@@ -12,7 +12,8 @@ function migrate(data, sender, respond_done) {
                   version: Number(chrome.runtime.getManifest().version.replace(/\./g, '')),
                 }, respond_done);
                 consistency_fixes(data.account_email);
-                update_pks_status(data.account_email);
+                update_status_pks(data.account_email);
+                update_status_keyserver(data.account_email);
               });
             });
           });
@@ -151,9 +152,27 @@ function consistency_fixes(account_email) {
   });
 }
 
-function update_pks_status(account_email) {
-  // checks if any new emails were registered on pks lately. Not the best async design, but gets the job done.
-  // Happens repeatedly, so that errors will eventually get overwritten. Not of high consequence.
+function update_status_keyserver(account_email) { // checks which emails were registered on cryptup keyserver.
+  var my_longids = private_keys_get(account_email).map(map_select('longid'));
+  account_storage_get(account_email, ['addresses', 'addresses_keyserver'], function(storage) {
+    keyserver_keys_find(storage.addresses, function(success, results) {
+      if(success) {
+        var addresses_keyserver = [];
+        $.each(results.results, function(i, result) {
+          if(result && result.pubkey && my_longids.indexOf(key_longid(result.pubkey)) !== -1) {
+            addresses_keyserver.push(result.email);
+          }
+        });
+        account_storage_set(account_email, {
+          addresses_keyserver: addresses_keyserver,
+        });
+      }
+    });
+  });
+}
+
+function update_status_pks(account_email) { // checks if any new emails were registered on pks lately
+  var my_longids = private_keys_get(account_email).map(map_select('longid'));
   var hkp = new openpgp.HKP('https://pgp.mit.edu');
   account_storage_get(account_email, ['addresses', 'addresses_pks'], function(storage) {
     var addresses_pks = storage.addresses_pks || [];
@@ -163,11 +182,13 @@ function update_pks_status(account_email) {
           query: email
         }).then(function(pubkey) {
           if(typeof pubkey !== 'undefined') {
-            addresses_pks.push(email);
-            console.log(email + ' newly found on PKS');
-            account_storage_set(account_email, {
-              addresses_pks: addresses_pks,
-            });
+            if(my_longids.indexOf(key_longid(pubkey)) !== -1) {
+              addresses_pks.push(email);
+              console.log(email + ' newly found matching pubkey on PKS');
+              account_storage_set(account_email, {
+                addresses_pks: addresses_pks,
+              });
+            }
           }
         });
       }

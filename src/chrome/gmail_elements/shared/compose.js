@@ -21,19 +21,17 @@ var pubkey_cache_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
 var save_draft_in_process = false;
 var my_addresses_on_pks = [];
+var my_addresses_on_keyserver = [];
 var recipients_missing_my_key = [];
 var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'frame_id', 'subject', 'placement']);
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
 
-// this is here to trigger a notification to user if due to their chrome settings, they cannot access localStorage
-// if the settings are incorrect, a gmail notification will show to correct it
-var _ = private_storage_get('local', compose_url_params.account_email, 'master_public_key', compose_url_params.parent_tab_id);
-
 // set can_search_contacts, can_save_drafts, addresses_pks
-account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks'], function(storage) {
+account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function(storage) {
   my_addresses_on_pks = storage.addresses_pks || [];
+  my_addresses_on_keyserver = storage.addresses_keyserver || [];
   if(typeof storage.google_token_scopes === 'undefined') {
     can_search_contacts = false;
     can_save_drafts = false;
@@ -350,8 +348,10 @@ function compose_show_hide_missing_pubkey_container_and_color_send_button() {
     $("#missing_pubkey_container").css('display', 'none');
     $('#send_btn').removeClass('gray').addClass('green');
   } else {
-    if($('.recipients span.no_pgp').length && $("#missing_pubkey_container").css('display') === 'none' && $("#challenge_question_container").css('display') === 'none') {
-      $("#missing_pubkey_container").css('display', 'table-row');
+    if($('.recipients span.no_pgp').length) {
+      if($('#challenge_question_container').css('display') === 'none') {
+        $("#missing_pubkey_container").css('display', 'table-row');
+      }
       $('#send_btn').removeClass('green').addClass('gray');
     } else if($('.recipients span.failed, .recipients span.wrong').length) {
       $("#send_btn span").text(BTN_WRONG_ENTRY);
@@ -623,16 +623,22 @@ function compose_show_hide_send_pubkey_container() {
   }
 }
 
-function compose_render_pubkey_result(email_element, pubkey_data) {
-  if($('body#new_message').length) { //todo: better move this to new_message.js
-    if(pubkey_data && typeof pubkey_data === 'object' && pubkey_data.pubkey && !pubkey_data.has_cryptup && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) {
-      // new message, they do have pgp but don't have cryptup, and my keys is not on pks
-      did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
-        if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-          recipients_missing_my_key.push(trim_lower($(email_element).text()));
-        }
+function compose_render_pubkey_result(email_element, their_pubkey_data) {
+  if($('body#new_message').length) {
+    if(their_pubkey_data && typeof their_pubkey_data === 'object' && their_pubkey_data.pubkey) {
+      var sending_address_on_pks = (my_addresses_on_pks.indexOf(get_sender_from_dom()) !== -1);
+      var sending_address_on_keyserver = (my_addresses_on_keyserver.indexOf(get_sender_from_dom()) !== -1);
+      if((their_pubkey_data.has_cryptup && !sending_address_on_keyserver) || (!their_pubkey_data.has_cryptup && !sending_address_on_pks)) {
+        // new message, and my key is not uploaded where the recipient would look for it
+        did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
+          if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
+            recipients_missing_my_key.push(trim_lower($(email_element).text()));
+          }
+          compose_show_hide_send_pubkey_container();
+        });
+      } else {
         compose_show_hide_send_pubkey_container();
-      });
+      }
     } else {
       compose_show_hide_send_pubkey_container();
     }
@@ -655,24 +661,21 @@ function compose_render_pubkey_result(email_element, pubkey_data) {
   $(email_element).children('i').removeClass('ion-load-c');
   $(email_element).children('i').removeClass('fa-repeat');
   $(email_element).children('i').addClass('ion-android-close');
-  if(typeof pubkey_data === 'undefined') {
-
-    // todo - show option to try again
-  } else if(pubkey_data === PUBKEY_SEARCH_RESULT_FAIL) {
+  if(their_pubkey_data === PUBKEY_SEARCH_RESULT_FAIL) {
     $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
     $(email_element).addClass("failed");
     $(email_element).children('i').removeClass('ion-android-close').addClass('fa').addClass('fa-repeat');
-  } else if(pubkey_data === PUBKEY_SEARCH_RESULT_WRONG) {
+  } else if(their_pubkey_data === PUBKEY_SEARCH_RESULT_WRONG) {
     $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
     $(email_element).addClass("wrong");
-  } else if(pubkey_data && pubkey_data.pubkey !== null && pubkey_data.pubkey !== null && pubkey_data.attested) {
+  } else if(their_pubkey_data && their_pubkey_data.pubkey !== null && their_pubkey_data.pubkey !== null && their_pubkey_data.attested) {
     $(email_element).addClass("attested");
     $(email_element).prepend("<i class='ion-locked'></i>");
-    $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + key_id_text(pubkey_data));
-  } else if(pubkey_data && pubkey_data.pubkey !== null) {
+    $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + key_id_text(their_pubkey_data));
+  } else if(their_pubkey_data && their_pubkey_data.pubkey !== null) {
     $(email_element).addClass("has_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");
-    $(email_element).attr('title', 'Does use encryption' + key_id_text(pubkey_data));
+    $(email_element).attr('title', 'Does use encryption' + key_id_text(their_pubkey_data));
   } else {
     $(email_element).addClass("no_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");
@@ -753,6 +756,11 @@ $('.action_feedback').click(function() {
     account_email: compose_url_params.account_email,
     page: '/chrome/settings/modules/help.htm',
   });
+});
+
+$('#input_from').change(function() {
+  // when I change input_from, I should completely re-evaluate: compose_show_hide_send_pubkey_container() and compose_render_pubkey_result()
+  // because they might not have a pubkey for the alternative address, and might get confused
 });
 
 function compose_on_render() {

@@ -1,15 +1,8 @@
 'use strict';
 
 function keyserver_keys_find(email, callback) {
-  if(typeof email === 'string') {
-    email = trim_lower(email);
-  } else {
-    $.each(email, function(i, address) {
-      email[i] = trim_lower(address);
-    });
-  }
   return keyserver_call('keys/find', {
-    email: email,
+    email: (typeof email === 'string') ? trim_lower(email) : email.map(trim_lower),
   }, callback);
 }
 

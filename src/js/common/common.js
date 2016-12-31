@@ -619,6 +619,12 @@ function extract_key_ids(armored_pubkey) {
   return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
 }
 
+function map_select(mapped_object_key) {
+  return function(mapped_object) {
+    return mapped_object[mapped_object_key];
+  };
+}
+
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
   var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
