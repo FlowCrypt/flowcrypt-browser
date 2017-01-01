@@ -924,7 +924,7 @@ function chrome_message_send(tab_id, name, data, callback) {
   };
   if(background_script_shortcut_handlers && msg.to === null) {
     background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
-  } else if(msg.to !== null) {
+  } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
     chrome.tabs.sendMessage(msg.to, msg, undefined, callback);
   } else {
     chrome.runtime.sendMessage(msg, callback);
