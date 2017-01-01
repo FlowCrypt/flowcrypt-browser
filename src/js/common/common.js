@@ -922,10 +922,12 @@ function chrome_message_send(tab_id, name, data, callback) {
     respondable: (callback) ? true : false,
     uid: random_string(10),
   };
-  if(!background_script_shortcut_handlers) {
+  if(background_script_shortcut_handlers && msg.to === null) {
+    background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
+  } else if(msg.to !== null) {
+    chrome.tabs.sendMessage(msg.to, msg, undefined, callback);
+  } else {
     chrome.runtime.sendMessage(msg, callback);
-  } else { // calling from background script to background script: skip messaging completely
-    background_script_shortcut_handlers[name](data, null, callback);
   }
 }
 

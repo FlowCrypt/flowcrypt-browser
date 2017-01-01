@@ -68,6 +68,7 @@ function inject_notification(tab_id, notification) {
         inject_meta('');
         gmail_notification_show('` + notification + `');
         $('body').one('click', Try(gmail_notification_clear));
+        window.same_world_global = true;
       })();
     `;
     chrome.tabs.executeScript(tab_id, {

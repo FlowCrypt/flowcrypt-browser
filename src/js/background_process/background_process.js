@@ -11,6 +11,7 @@ chrome_message_background_listen({
   attest_requested: attest_requested_handler,
   attest_packet_received: attest_packet_received_handler,
   update_uninstall_url: update_uninstall_url,
+  get_active_tab_info: get_active_tab_info,
   runtime: function(message, sender, respond) {
     respond({
       environment: get_environment(),
@@ -45,6 +46,31 @@ TrySetInterval(check_keyserver_pubkey_fingerprints, 1000 * 60 * 60 * 6);
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);
   respond();
+}
+
+function get_active_tab_info(request, sender, respond) {
+  chrome.tabs.query({
+    active: true,
+    url: "*://mail.google.com/*",
+  }, function(tabs) {
+    if(tabs.length) {
+      chrome.tabs.executeScript(tabs[0].id, {
+        code: 'var r = {account_email: window.account_email_global, same_world: window.same_world_global}; r'
+      }, function(result) {
+        respond({
+          provider: 'gmail',
+          account_email: result[0].account_email || null,
+          same_world: result[0].same_world === true,
+        });
+      });
+    } else {
+      respond({
+        provider: null,
+        account_email: null,
+        same_world: null,
+      });
+    }
+  });
 }
 
 function list_pgp_attachments(request, sender, respond) {
