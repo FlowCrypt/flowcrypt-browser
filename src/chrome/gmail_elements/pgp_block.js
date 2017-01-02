@@ -155,7 +155,7 @@ function render_inner_attachments(attachments) {
 function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, is_signed, is_signature_match) {
   if(is_encrypted) {
     $('body').removeClass('pgp_insecure').removeClass('pgp_neutral').addClass('pgp_secure');
-  } else if (is_signed) {
+  } else if(is_signed) {
     $('body').removeClass('pgp_insecure').removeClass('pgp_secure').addClass('pgp_neutral');
   }
   if(!is_mime_message(decrypted_content)) {
@@ -190,7 +190,7 @@ function decrypt_and_render(optional_password) {
     } else {
       if(result.missing_passphrases.length) {
         render_passphrase_prompt(result.missing_passphrases);
-      } else if (!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
+      } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
         render_error(l.refresh_window);
       } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
         if(url_params.question && !optional_password) {
@@ -266,7 +266,11 @@ account_storage_get(url_params.account_email, ['setup_done', 'google_token_scope
           decrypt_and_render();
         }, function(error_type, url_formatted_data_block) {
           if(error_type === 'format') {
-            render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
+            if(url_formatted_data_block.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
+              window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email) + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block) + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id) + '&frame_id=' + encodeURIComponent(url_params.frame_id);
+            } else {
+              render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
+            }
           } else if(error_type === 'connection') {
             render_error(l.connection_error, url_formatted_data_block);
           } else {
