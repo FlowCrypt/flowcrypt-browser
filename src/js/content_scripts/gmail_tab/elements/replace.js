@@ -147,6 +147,9 @@ function init_elements_replace_js() {
                   if(response.messages && response.messages.length) {
                     hide_pgp_attached_message_and_show(account_email, message_id, attachment_container_classes, response.messages, gmail_tab_id);
                   }
+                  if(response.signatures && response.signatures.length) {
+                    hide_pgp_attached_signatures_and_handle(account_email, message_id, attachment_container_classes, response.signatures, gmail_tab_id);
+                  }
                 } else {
                   //todo: show button to retry
                 }
@@ -207,6 +210,12 @@ function init_elements_replace_js() {
       $('div.a3s.m' + message_id).css('display', 'block');
       $('div.a3s.m' + message_id).html(pgp_block_iframe('', null, account_email, message_id, false, gmail_tab_id));
     }
+  };
+
+  window.hide_pgp_attached_signatures_and_handle = function(account_email, message_id, classes, attachments, gmail_tab_id) {
+    var selectors = get_attachments_selectors(message_id, ['signature.asc']);
+    hide_attachments(selectors.attachments, attachments.length);
+    // todo - transfer signature into existing pgp_block, or create a new pgp_block
   };
 
   window.get_conversation_params = function(account_email, callback) {

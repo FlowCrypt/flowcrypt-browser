@@ -79,9 +79,12 @@ function list_pgp_attachments(request, sender, respond) {
       var attachments = gmail_api_find_attachments(message);
       var pgp_attachments = [];
       var pgp_messages = [];
+      var pgp_signatures = [];
       $.each(attachments, function(i, attachment) {
         if(attachment.name.match('(\.pgp)|(\.gpg)$')) {
           pgp_attachments.push(attachment);
+        } else if(attachment.name === 'signature.asc') {
+          pgp_signatures.push(attachment);
         } else if(attachment.name.match('(\.asc)$') || attachment.name === '') {
           pgp_messages.push(attachment);
         }
@@ -89,6 +92,7 @@ function list_pgp_attachments(request, sender, respond) {
       respond({
         success: true,
         attachments: pgp_attachments,
+        signatures: pgp_signatures,
         messages: pgp_messages,
         message_id: request.message_id,
       });
