@@ -233,6 +233,12 @@ function get_passphrase(account_email, longid) {
   }
 }
 
+function inner_text(html_text) {
+  var e = document.createElement('div');
+  e.innerHTML = html_text;
+  return e.innerText;
+}
+
 function download_file(filename, type, data) {
   var blob = new Blob([data], {
     type: type

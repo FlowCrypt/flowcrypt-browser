@@ -705,10 +705,6 @@ function get_sender_from_dom() {
   }
 }
 
-function convert_html_tags_to_newlines(text) {
-  return text.replace(/<div ?\/?><br ?\/?>/gi, '\n').replace(/<br ?\/?>/gi, '\n').replace(/<div[^>]*>/gi, '\n').replace(/<\/div[^>]*>/gi, '').trim();
-}
-
 $('#input_question, #input_answer').keyup(prevent(spree(), function() {
   if($('#input_question').val() && $('#input_answer').val()) {
     $('#send_btn').removeClass('gray').addClass('green');
@@ -762,6 +758,18 @@ $('#input_from').change(function() {
   // when I change input_from, I should completely re-evaluate: compose_show_hide_send_pubkey_container() and compose_render_pubkey_result()
   // because they might not have a pubkey for the alternative address, and might get confused
 });
+
+function simulate_ctrl_v(to_paste) {
+  var r = window.getSelection().getRangeAt(0);
+  r.insertNode(r.createContextualFragment(to_paste));
+}
+
+$('#input_text').get(0).onpaste = function(e) {
+  if(e.clipboardData.getData('text/html')) {
+    simulate_ctrl_v(inner_text(e.clipboardData.getData('text/html')).replace(/\n/g, '<br>'));
+    return false;
+  }
+};
 
 function compose_on_render() {
   $('#input_to').keydown(respond_to_input_hotkeys);

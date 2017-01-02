@@ -54,8 +54,7 @@ function send_btn_click() {
     Subject: $('#input_subject').val(),
     From: get_sender_from_dom(),
   };
-  var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function(encrypted_message_body, attachments) {
+  compose_encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function(encrypted_message_body, attachments) {
     to_mime(url_params.account_email, encrypted_message_body, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, function(success, response) {
         if(success) {

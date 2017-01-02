@@ -184,7 +184,7 @@ function reply_message_render_success(to, has_attachments, message_id) {
     $('#reply_message_table_container').css('display', 'none');
     $('#reply_message_successful_container div.replied_from').text(url_params.from);
     $('#reply_message_successful_container div.replied_to span').text(to);
-    $('#reply_message_successful_container div.replied_body').html($('#input_text').html());
+    $('#reply_message_successful_container div.replied_body').html($('#input_text').get(0).innerText.replace(/\n/g, '<br>'));
     var t = new Date();
     var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     $('#reply_message_successful_container div.replied_time').text(time);
@@ -214,8 +214,7 @@ function send_btn_click() {
     'In-Reply-To': thread_message_id_last,
     'References': thread_message_referrences_last + ' ' + thread_message_id_last,
   };
-  var plaintext = convert_html_tags_to_newlines($('#input_text').html());
-  compose_encrypt_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function(encrypted_message_text_to_send, attachments) {
+  compose_encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function(encrypted_message_text_to_send, attachments) {
     to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function(mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function(success, response) {
         if(success) {
