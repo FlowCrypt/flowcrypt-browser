@@ -13,11 +13,13 @@ chrome_message_get_tab_id(function(tab_id) {
 function fetch_all_account_addresses(account_email, callback, q, from_emails) {
   function parse_first_message_from_email_header(account_email, q, callback) {
     function parse_from_email_header(messages, m_i, from_email_callback) {
-      gmail_api_message_get(account_email, messages[m_i].id, 'metadata', function(success, message_get_response) { // todo: check "success"
-        var header_from = gmail_api_find_header(message_get_response, 'from');
-        if(header_from) {
-          from_email_callback(header_from);
-          return;
+      gmail_api_message_get(account_email, messages[m_i].id, 'metadata', function(success, message_get_response) {
+        if(success) {
+          var header_from = gmail_api_find_header(message_get_response, 'from');
+          if(header_from) {
+            from_email_callback(header_from);
+            return;
+          }
         }
         if(m_i + 1 < messages.length) {
           parse_from_email_header(messages, m_i + 1, from_email_callback);
