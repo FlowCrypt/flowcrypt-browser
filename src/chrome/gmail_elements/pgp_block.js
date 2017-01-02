@@ -58,6 +58,12 @@ function send_resize_message() {
   }
 }
 
+function format_for_contenteditable(text_or_html) {
+  return inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function(spaces) {
+    return '&nbsp;'.repeat(spaces.length);
+  });
+}
+
 function render_content(content, is_error, callback) {
   account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function(storage) {
     if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
@@ -65,7 +71,7 @@ function render_content(content, is_error, callback) {
         successfully_received_at_leat_one_message: true
       });
     }
-    $('#pgp_block').html(content);
+    $('#pgp_block').html(is_error ? content : format_for_contenteditable(content));
     if(callback) {
       callback();
     }
