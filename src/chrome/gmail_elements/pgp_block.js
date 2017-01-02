@@ -152,7 +152,12 @@ function render_inner_attachments(attachments) {
   }));
 }
 
-function decide_decrypted_content_formatting_and_render(decrypted_content) {
+function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, is_signed, is_signature_match) {
+  if(is_encrypted) {
+    $('body').removeClass('pgp_insecure').removeClass('pgp_neutral').addClass('pgp_secure');
+  } else if (is_signed) {
+    $('body').removeClass('pgp_insecure').removeClass('pgp_secure').addClass('pgp_neutral');
+  }
   if(!is_mime_message(decrypted_content)) {
     render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
   } else {
@@ -181,8 +186,7 @@ function decide_decrypted_content_formatting_and_render(decrypted_content) {
 function decrypt_and_render(optional_password) {
   decrypt(url_params.account_email, url_params.message, optional_password, function(result) {
     if(result.success) {
-      $('body').removeClass('pgp_insecure').addClass('pgp_secure');
-      decide_decrypted_content_formatting_and_render(result.content.data);
+      decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signed, result.signature_match);
     } else {
       if(result.missing_passphrases.length) {
         render_passphrase_prompt(result.missing_passphrases);

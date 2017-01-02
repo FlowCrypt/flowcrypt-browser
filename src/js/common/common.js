@@ -760,6 +760,8 @@ function wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other
         clearInterval(wait_for_all_attempts_interval);
         callback({
           success: false,
+          signed: null, //todo
+          signature_match: null, //todo
           message: message,
           counts: counts,
           encrypted_for: keys.encrypted_for,
@@ -791,8 +793,9 @@ function get_decrypt_options(message, keyinfo, is_armored, one_time_message_pass
 }
 
 function decrypt(account_email, encrypted_data, one_time_message_password, callback) {
-  var is_armored = (encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 || encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1);
-  if(is_armored) {
+  var armored_encrypted = encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1;
+  var armored_signed_only = encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1;
+  if(armored_encrypted || armored_signed_only) {
     var message = openpgp.message.readArmored(encrypted_data);;
   } else {
     var message = openpgp.message.read(str_to_uint8(encrypted_data));
@@ -800,28 +803,55 @@ function decrypt(account_email, encrypted_data, one_time_message_password, callb
   var keys = get_sorted_private_keys_for_message(account_email, message);
   var counts = zeroed_decrypt_error_counts(keys);
   var other_errors = [];
-  $.each(keys.with_passphrases, function(i, keyinfo) {
-    if(!counts.decrypted) {
-      try {
-        openpgp.decrypt(get_decrypt_options(message, keyinfo, is_armored, one_time_message_password)).then(function(decrypted) {
-          if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-            callback({
-              success: true,
-              content: decrypted,
-            });
-          }
-        }).catch(function(decrypt_error) {
-          Try(function() {
-            increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
-          })();
-        });
-      } catch(decrypt_exception) {
-        other_errors.push(String(decrypt_exception));
-        counts.attempts++;
-      }
+  if(armored_signed_only) { // todo - actual verification
+    var content = encrypted_data.match(/-----BEGIN PGP SIGNED MESSAGE-----\n([^]+)\n-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/m);
+    if(content.length === 2) {
+      callback({
+        success: true,
+        content: {
+          data: content[1].replace(/^Hash: [A-Z0-9]+\n/, '')
+        },
+        encrypted: false,
+        signed: true,
+        signature_match: null, // todo - encrypted messages might be signed
+      });
+    } else {
+      callback({
+        success: false,
+        message: message,
+        encrypted: false,
+        signed: true,
+        signature_match: null, // todo - encrypted messages might be signed
+        counts: counts,
+      });
     }
-  });
-  wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback);
+  } else {
+    $.each(keys.with_passphrases, function(i, keyinfo) {
+      if(!counts.decrypted) {
+        try {
+          openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function(decrypted) {
+            if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
+              callback({
+                success: true,
+                content: decrypted,
+                encrypted: true,
+                signed: null, // todo - encrypted messages might be signed
+                signature_match: null, // todo - encrypted messages might be signed
+              });
+            }
+          }).catch(function(decrypt_error) {
+            Try(function() {
+              increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
+            })();
+          });
+        } catch(decrypt_exception) {
+          other_errors.push(String(decrypt_exception));
+          counts.attempts++;
+        }
+      }
+    });
+    wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback);
+  }
 }
 
 function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
