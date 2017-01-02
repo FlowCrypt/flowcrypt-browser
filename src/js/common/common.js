@@ -706,107 +706,122 @@ function sign(signing_prv, data, armor, callback) {
   });
 }
 
+function get_sorted_private_keys_for_message(account_email, message) {
+  var keys = {};
+  keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(function(id) {
+    return key_longid(id.bytes);
+  });
+  keys.potentially_matching = private_keys_get(account_email, keys.encrypted_for);
+  if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
+    keys.potentially_matching = private_keys_get(account_email);
+  }
+  keys.with_passphrases = [];
+  keys.without_passphrases = [];
+  $.each(keys.potentially_matching, function(i, keyinfo) {
+    keyinfo.passphrase = get_passphrase(account_email, keyinfo.longid);
+    if(keyinfo.passphrase !== null) {
+      keys.with_passphrases.push(keyinfo);
+    } else {
+      keys.without_passphrases.push(keyinfo);
+    }
+  });
+  return keys;
+}
+
+function zeroed_decrypt_error_counts(keys) {
+  return {
+    decrypted: 0,
+    potentially_matching_keys: keys.potentially_matching.length,
+    attempts: 0,
+    key_mismatch: 0,
+    wrong_password: 0,
+  };
+}
+
+function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
+  if(String(decrypt_error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && !one_time_message_password) {
+    counts.key_mismatch++; // wrong private key
+  } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
+    counts.key_mismatch++; // attempted opening password only message with key
+  } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid enum value.' && one_time_message_password) {
+    counts.wrong_password++; // wrong password
+  } else {
+    other_errors.push(String(decrypt_error));
+  }
+  counts.attempts++;
+}
+
+function wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback) {
+  var wait_for_all_attempts_interval = setInterval(function() { //todo - promises are better
+    if(counts.decrypted) {
+      clearInterval(wait_for_all_attempts_interval);
+    } else {
+      if(counts.attempts === keys.with_passphrases.length) { // decrypting attempted with all keys, no need to wait longer - can evaluate result now, otherwise wait
+        clearInterval(wait_for_all_attempts_interval);
+        callback({
+          success: false,
+          message: message,
+          counts: counts,
+          encrypted_for: keys.encrypted_for,
+          missing_passphrases: keys.without_passphrases.map(function(keyinfo) {
+            return keyinfo.longid;
+          }),
+          errors: other_errors,
+        });
+      }
+    }
+  }, 100);
+}
+
+function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password) {
+  var options = {
+    message: message,
+    format: (is_armored) ? 'utf8' : 'binary',
+  };
+  if(!one_time_message_password) {
+    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    if(keyinfo.passphrase !== '') {
+      prv.decrypt(keyinfo.passphrase);
+    }
+    options.privateKey = prv;
+  } else {
+    options.password = challenge_answer_hash(one_time_message_password);
+  }
+  return options
+}
+
 function decrypt(account_email, encrypted_data, one_time_message_password, callback) {
-  var wait_for_all_attempts_interval = undefined; //todo - promises are better
-  var is_armored = (encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1);
+  var is_armored = (encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 || encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1);
   if(is_armored) {
     var message = openpgp.message.readArmored(encrypted_data);;
   } else {
     var message = openpgp.message.read(str_to_uint8(encrypted_data));
   }
-  var encrypted_for = (message.getEncryptionKeyIds() || []).map(function(id) {
-    return key_longid(id.bytes);
-  });
-  var keys = private_keys_get(account_email, encrypted_for);
-  if(keys.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
-    var keys = private_keys_get(account_email);
-  }
-  var keys_with_passphrases = [];
-  var keys_without_passphrases = [];
-  $.each(keys, function(i, keyinfo) {
-    keyinfo.passphrase = get_passphrase(url_params.account_email, keyinfo.longid);
-    if(keyinfo.passphrase !== null) {
-      keys_with_passphrases.push(keyinfo);
-    } else {
-      keys_without_passphrases.push(keyinfo);
-    }
-  });
-  var successfully_decrypted = false;
-  var attempts_count = 0;
-  var key_mismatch_count = 0;
-  var wrong_password_count = 0;
+  var keys = get_sorted_private_keys_for_message(account_email, message);
+  var counts = zeroed_decrypt_error_counts(keys);
   var other_errors = [];
-  $.each(keys_with_passphrases, function(i, keyinfo) {
-    if(!successfully_decrypted) {
-      var options = {
-        message: message,
-        format: (is_armored) ? 'utf8' : 'binary',
-      };
-      if(!one_time_message_password) {
-        var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-        if(keyinfo.passphrase !== '') {
-          prv.decrypt(keyinfo.passphrase);
-        }
-        options.privateKey = prv;
-      } else {
-        options.password = challenge_answer_hash(one_time_message_password);
-      }
+  $.each(keys.with_passphrases, function(i, keyinfo) {
+    if(!counts.decrypted) {
       try {
-        openpgp.decrypt(options).then(function(decrypted) {
-          successfully_decrypted = true;
-          callback({
-            success: true,
-            content: decrypted,
-          });
-        }).catch(function(decrypt_error) {
-          if(String(decrypt_error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && !one_time_message_password) {
-            // wrong private key
-            key_mismatch_count++;
-          } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
-            // attempted opening password only message with key
-            if(one_time_message_password) {
-              wrong_password_count++;
-            } else {
-              key_mismatch_count++;
-            }
-          } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid enum value.' && one_time_message_password) { // wrong password
-            wrong_password_count++;
-          } else {
-            other_errors.push(String(decrypt_error));
+        openpgp.decrypt(get_decrypt_options(message, keyinfo, is_armored, one_time_message_password)).then(function(decrypted) {
+          if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
+            callback({
+              success: true,
+              content: decrypted,
+            });
           }
-          attempts_count++;
+        }).catch(function(decrypt_error) {
+          Try(function() {
+            increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
+          })();
         });
       } catch(decrypt_exception) {
         other_errors.push(String(decrypt_exception));
-        attempts_count++;
+        counts.attempts++;
       }
     }
   });
-  wait_for_all_attempts_interval = setInterval(function() {
-    if(successfully_decrypted) {
-      clearInterval(wait_for_all_attempts_interval);
-    } else {
-      if(attempts_count === keys_with_passphrases.length) { // decrypting attempted with all keys, no need to wait longer - can evaluate result now
-        clearInterval(wait_for_all_attempts_interval);
-        callback({
-          success: false,
-          message: message,
-          counts: {
-            potentially_matching_keys: keys.length,
-            attempts: attempts_count,
-            key_mismatch: key_mismatch_count,
-            wrong_password: wrong_password_count,
-          },
-          missing_passphrases: keys_without_passphrases.map(function(keyinfo) {
-            return keyinfo.longid;
-          }),
-          errors: other_errors,
-        });
-      } else {
-        // interval will run again in 100 ms to check if done. Promises would be better.
-      }
-    }
-  }, 100);
+  wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback);
 }
 
 function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
