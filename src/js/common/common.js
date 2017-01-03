@@ -1019,11 +1019,20 @@ function chrome_message_get_tab_id(callback) {
 function chrome_message_background_listen(handlers) {
   background_script_shortcut_handlers = handlers;
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
+    var safe_respond = function(response) {
+      try { // avoiding unnecessary errors when target tab gets closed
+        respond(response);
+      } catch(e) {
+        if(e.message !== 'Attempting to use a disconnected port object') {
+          throw e;
+        }
+      }
+    };
     if(request.to) {
       request.sender = sender;
-      chrome.tabs.sendMessage(request.to, request, respond);
+      chrome.tabs.sendMessage(request.to, request, safe_respond);
     } else {
-      handlers[request.name](request.data, sender, respond);
+      handlers[request.name](request.data, sender, safe_respond);
     }
     return request.respondable === true;
   });
