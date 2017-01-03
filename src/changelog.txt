@@ -1,3 +1,11 @@
+<b>version 2.9.3 on January 3, 2017: Browser Incompatibility Test</b>
+setup: do a test during setup to see if the created key is usable
+setup: error on entering ECC keys - notify user
+setup: better behavior when closing CryptUP tabs
+reading: match multiple PGP blocks in a message
+reading: properly catch PGP message format errors when decrypting
+sending: more robust key fingerprints
+
 <b>version 2.9.2 on January 2, 2017: Recognizing Signed Messages</b>
 reading: properly display signed messages (don't verify yet)
 reading: stop treating signature attachments as message content
