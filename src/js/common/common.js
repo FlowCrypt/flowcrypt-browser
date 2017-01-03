@@ -916,7 +916,7 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
 }
 
 function key_fingerprint(key, formatting) {
-  if(key === null) {
+  if(key === null || typeof key === 'undefined') {
     return null;
   } else if(typeof key.primaryKey !== 'undefined') {
     if(key.primaryKey.fingerprint === null) {
