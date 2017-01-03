@@ -1,3 +1,7 @@
+<b>version 2.9.2 on January 2, 2017: Recognizing Signed Messages</b>
+reading: properly display signed messages (don't verify yet)
+reading: stop treating signature attachments as message content
+
 <b>version 2.9.1 on January 1, 2017: Message Content Security</b>
 composing: strip all html from text before sending or on pasting
 reading: scrip all html from text before displaying
