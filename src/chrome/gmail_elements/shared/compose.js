@@ -790,3 +790,44 @@ function compose_on_render() {
   resize_input_to();
   initialize_attach_dialog();
 }
+
+function search_contacts_on_gmail(account_email, user_query, limit, known_emails, callback) {
+  var gmail_query = ['is:sent'];
+  if(user_query) {
+    gmail_query.push();
+    var variations_of_to = user_query.split(/[ \.]/g);
+    if(variations_of_to.indexOf(user_query) === -1) {
+      variations_of_to.push(user_query);
+    }
+    gmail_query.push('(to:' + variations_of_to.join(' OR to:') + ')');
+  } else {
+    gmail_query.push('BEGIN PGP');
+  }
+  $.each(known_emails, function(i, contact) {
+    gmail_query.push('-to:"' + contact.email + '"');
+  });
+  loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), callback)
+}
+
+function loop_through_emails_to_compile_contacts(account_email, query, callback, results) {
+  results = results || [];
+  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, 'to', function(sent_to) {
+    if(sent_to) {
+      var sent_tos = sent_to.split(', ').map(trim_lower);
+      var add_filter = sent_tos.map(function(sent_to) {
+        return ' -to:"' + sent_to + '"';
+      }).join('');
+      results = results.concat(sent_tos);
+      callback({
+        new: sent_tos,
+        all: results,
+      });
+      loop_through_emails_to_compile_contacts(account_email, query + add_filter, callback, results);
+    } else {
+      callback({
+        new: [],
+        all: results,
+      });
+    }
+  });
+}

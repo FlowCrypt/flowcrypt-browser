@@ -518,6 +518,36 @@ function strip_pgp_armor(pgp_block_text) {
   return pgp_block_text;
 }
 
+function fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_name, callback, i) {
+  // this won a prize for the most precisely named function in the hostory of javascriptkind
+  i = i || 0;
+  gmail_api_message_get(account_email, messages[i].id, 'metadata', function(success, message_get_response) {
+    var header_value = undefined;
+    if(success) { // non-mission critical - just skip failed requests
+      header_value = gmail_api_find_header(message_get_response, header_name);
+    }
+    if(header_value) {
+      callback(header_value);
+    } else if(i + 1 < messages.length) {
+      fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_name, callback, i + 1);
+    } else {
+      callback();
+    }
+  });
+}
+
+function fetch_messages_based_on_query_and_extract_first_available_header(account_email, q, header_name, callback) {
+  gmail_api_message_list(account_email, q, false, function(success, message_list_response) {
+    if(success && typeof message_list_response.messages !== 'undefined') {
+      fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, message_list_response.messages, header_name, function(from_email) {
+        callback(from_email);
+      });
+    } else {
+      callback(); // if the request is !success, it will just return nothing like this, which may not be the best
+    }
+  });
+}
+
 /*
  * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
  * success_callback(str armored_pgp_message)
