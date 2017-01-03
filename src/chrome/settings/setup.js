@@ -359,22 +359,34 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
     alert('Private key is not correctly formated. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
   } else if(prv.isPublic()) {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
-  } else if(prv_to_test_passphrase.decrypt($('#step_2b_manual_enter .input_passphrase').val()) === false) {
-    alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
-    $('#step_2b_manual_enter .input_passphrase').val('');
-    $('#step_2b_manual_enter .input_passphrase').focus();
   } else {
-    $('#step_2b_manual_enter .action_save_private').html(get_spinner());
-    var options = {
-      passphrase: $('#step_2b_manual_enter .input_passphrase').val(),
-      setup_simple: false,
-      key_backup_prompt: false,
-      submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
-      submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-      save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
-    };
-    save_private_key(url_params.account_email, prv, options);
-    finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
+    try {
+      var decrypted = prv_to_test_passphrase.decrypt($('#step_2b_manual_enter .input_passphrase').val());
+    } catch(e) {
+      if(e.message === 'Invalid enum value.') {
+        alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (error: Invalid enum value.)');
+        return;
+      } else {
+        throw e;
+      }
+    }
+    if(decrypted === false) {
+      alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
+      $('#step_2b_manual_enter .input_passphrase').val('');
+      $('#step_2b_manual_enter .input_passphrase').focus();
+    } else {
+      $('#step_2b_manual_enter .action_save_private').html(get_spinner());
+      var options = {
+        passphrase: $('#step_2b_manual_enter .input_passphrase').val(),
+        setup_simple: false,
+        key_backup_prompt: false,
+        submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+        submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
+        save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+      };
+      save_private_key(url_params.account_email, prv, options);
+      finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
+    }
   }
 });
 

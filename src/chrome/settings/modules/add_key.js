@@ -20,18 +20,30 @@ $('.action_add_private_key').click(prevent(doubleclick(), function() {
       alert('This key may not be compatible. Please write me at tom@cryptup.org and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
     } else if(private_keys_long_ids.indexOf(new_key_longid) !== -1) {
       alert('This is one of your current keys.');
-    } else if(new_key.decrypt($('.input_passphrase').val()) === false) {
-      alert('The pass phrase does not match. Please try a different pass phrase.');
     } else {
-      private_keys_add(url_params.account_email, $('#step_2b_manual_enter .input_private_key').val());
-      if($('#step_2b_manual_enter .input_passphrase_save').prop('checked')) {
-        save_passphrase('local', url_params.account_email, new_key_longid, $('.input_passphrase').val());
-      } else {
-        save_passphrase('session', url_params.account_email, new_key_longid, $('.input_passphrase').val());
+      try {
+        var decrypted = prv_to_test_passphrase.decrypt($('#step_2b_manual_enter .input_passphrase').val());
+      } catch(e) {
+        if(e.message === 'Invalid enum value.') {
+          alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (error: Invalid enum value.)');
+          return;
+        } else {
+          throw e;
+        }
       }
-      chrome_message_send(url_params.parent_tab_id, 'reload', {
-        advanced: true,
-      });
+      if(decrypted === false) {
+        alert('The pass phrase does not match. Please try a different pass phrase.');
+      } else {
+        private_keys_add(url_params.account_email, $('#step_2b_manual_enter .input_private_key').val());
+        if($('#step_2b_manual_enter .input_passphrase_save').prop('checked')) {
+          save_passphrase('local', url_params.account_email, new_key_longid, $('.input_passphrase').val());
+        } else {
+          save_passphrase('session', url_params.account_email, new_key_longid, $('.input_passphrase').val());
+        }
+        chrome_message_send(url_params.parent_tab_id, 'reload', {
+          advanced: true,
+        });
+      }
     }
   }
 }));

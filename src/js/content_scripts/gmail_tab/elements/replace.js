@@ -52,7 +52,6 @@ function init_elements_replace_js() {
       if(text.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 && (has_pgp_end || has_gmail_crop)) {
         var question = extract_pgp_question(html);
         $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----[^]+' + ((has_pgp_end) ? '?-----END PGP MESSAGE-----' : ''), 'mg')), function(i, armored) {
-          console.log(armored);
           blocks.push(pgp_block_iframe((armored.indexOf('-----END PGP MESSAGE-----') !== -1) ? armored : '', question, account_email, message_id, is_outgoing, gmail_tab_id));
         });
         conversation_has_new_pgp_message = true;
