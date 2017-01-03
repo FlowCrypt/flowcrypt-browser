@@ -187,26 +187,26 @@ function decrypt_and_render(optional_password) {
   decrypt(url_params.account_email, url_params.message, optional_password, function(result) {
     if(result.success) {
       decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signed, result.signature_match);
-    } else {
-      if(result.missing_passphrases.length) {
-        render_passphrase_prompt(result.missing_passphrases);
-      } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
-        render_error(l.refresh_window);
-      } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
-        if(url_params.question && !optional_password) {
-          render_password_prompt();
-        } else {
-          handle_private_key_mismatch(url_params.account_email, result.message);
-        }
-      } else if(result.counts.wrong_password) {
-        alert('Incorrect answer, please try again');
+    } else if(result.format_error) {
+      render_error(l.bad_format + '\n\n' + result.format_error);
+    } else if(result.missing_passphrases.length) {
+      render_passphrase_prompt(result.missing_passphrases);
+    } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
+      render_error(l.refresh_window);
+    } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
+      if(url_params.question && !optional_password) {
         render_password_prompt();
-      } else if(result.counts.errors) {
-        render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
       } else {
-        delete result.message;
-        render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+        handle_private_key_mismatch(url_params.account_email, result.message);
       }
+    } else if(result.counts.wrong_password) {
+      alert('Incorrect answer, please try again');
+      render_password_prompt();
+    } else if(result.counts.errors) {
+      render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
+    } else {
+      delete result.message;
+      render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
     }
   });
 }

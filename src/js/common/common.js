@@ -761,10 +761,11 @@ function get_sorted_private_keys_for_message(account_email, message) {
 function zeroed_decrypt_error_counts(keys) {
   return {
     decrypted: 0,
-    potentially_matching_keys: keys.potentially_matching.length,
+    potentially_matching_keys: keys ? keys.potentially_matching.length : 0,
     attempts: 0,
     key_mismatch: 0,
     wrong_password: 0,
+    format_error: 0,
   };
 }
 
@@ -825,10 +826,20 @@ function get_decrypt_options(message, keyinfo, is_armored, one_time_message_pass
 function decrypt(account_email, encrypted_data, one_time_message_password, callback) {
   var armored_encrypted = encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1;
   var armored_signed_only = encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1;
-  if(armored_encrypted || armored_signed_only) {
-    var message = openpgp.message.readArmored(encrypted_data);;
-  } else {
-    var message = openpgp.message.read(str_to_uint8(encrypted_data));
+  try {
+    if(armored_encrypted || armored_signed_only) {
+      var message = openpgp.message.readArmored(encrypted_data);;
+    } else {
+      var message = openpgp.message.read(str_to_uint8(encrypted_data));
+    }
+  } catch(format_error) {
+    callback({
+      success: false,
+      counts: zeroed_decrypt_error_counts(),
+      format_error: format_error.message,
+      errors: other_errors,
+    });
+    return;
   }
   var keys = get_sorted_private_keys_for_message(account_email, message);
   var counts = zeroed_decrypt_error_counts(keys);
