@@ -28,12 +28,12 @@ function init_elements_replace_js() {
       var is_outgoing = addresses.indexOf($(this).closest('.gs').find('span.gD').attr('email')) !== -1;
       var blocks = [];
       if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1 && text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
-        $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+-----END PGP PUBLIC KEY BLOCK-----/gm), function(i, armored) {
+        $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+?-----END PGP PUBLIC KEY BLOCK-----/mg), function(i, armored) {
           blocks.push(pgp_pubkey_iframe(account_email, armored, gmail_tab_id));
         });
       }
       if(text.indexOf('-----BEGIN ATTEST PACKET-----') !== -1 && text.indexOf('-----END ATTEST PACKET-----') !== -1) {
-        $.each(text.match(/-----BEGIN ATTEST PACKET-----[^]+-----END ATTEST PACKET-----/gm), function(i, armored) {
+        $.each(text.match(/-----BEGIN ATTEST PACKET-----[^]+?-----END ATTEST PACKET-----/mg), function(i, armored) {
           chrome_message_send(null, 'attest_packet_received', {
             account_email: account_email,
             packet: armored,
@@ -43,7 +43,7 @@ function init_elements_replace_js() {
         });
       }
       if(text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1 && text.indexOf('-----END PGP SIGNATURE-----') !== -1) { //todo - what if the end was clipped by gmail
-        $.each(text.match(/-----BEGIN PGP SIGNED MESSAGE-----[^]+-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/gm), function(i, armored) {
+        $.each(text.match(/-----BEGIN PGP SIGNED MESSAGE-----[^]+?-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/mg), function(i, armored) {
           blocks.push(pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, gmail_tab_id));
         });
       }
@@ -51,7 +51,8 @@ function init_elements_replace_js() {
       var has_gmail_crop = html.indexOf('<a class="vem"') !== -1;
       if(text.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 && (has_pgp_end || has_gmail_crop)) {
         var question = extract_pgp_question(html);
-        $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----[^]+' + ((has_pgp_end) ? '-----END PGP MESSAGE-----' : ''), 'gm')), function(i, armored) {
+        $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----[^]+' + ((has_pgp_end) ? '?-----END PGP MESSAGE-----' : ''), 'mg')), function(i, armored) {
+          console.log(armored);
           blocks.push(pgp_block_iframe((armored.indexOf('-----END PGP MESSAGE-----') !== -1) ? armored : '', question, account_email, message_id, is_outgoing, gmail_tab_id));
         });
         conversation_has_new_pgp_message = true;
