@@ -979,6 +979,32 @@ function extract_armored_message_from_text(text) {
   }
 }
 
+function test_private_key(armored, passphrase, callback) {
+  try {
+    openpgp.encrypt({
+      data: 'this is a test encrypt/decrypt loop to discover certain browser inabilities to create proper keys with openpgp.js',
+      armor: true,
+      publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
+    }).then(function(result) {
+      var prv = openpgp.key.readArmored(armored).keys[0];
+      prv.decrypt(passphrase);
+      openpgp.decrypt({
+        message: openpgp.message.readArmored(result.data),
+        format: 'utf8',
+        privateKey: prv,
+      }).then(function() {
+        callback(true);
+      }).catch(function(error) {
+        callback(false, error.message);
+      });
+    }).catch(function(error) {
+      callback(false, error.message);
+    });
+  } catch(error) {
+    callback(false, error.message);
+  }
+}
+
 /* -------------------- METRICS ----------------------------------------------------*/
 
 function increment_metric(type, callback) {

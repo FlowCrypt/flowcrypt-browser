@@ -70,6 +70,7 @@ function display_block(name) {
     'step_0_found_key',
     'step_1_easy_or_manual',
     'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
+    'step_3_test_failed',
     'step_4_done'
   ];
   if(name) { //set
@@ -213,8 +214,11 @@ function create_save_key_pair(account_email, options) {
     passphrase: options.passphrase,
   }).then(function(key) {
     options.is_newly_created_key = true;
-    save_private_key(account_email, openpgp.key.readArmored(key.privateKeyArmored).keys[0], options);
-    finalize_setup(account_email, key.publicKeyArmored, options);
+    var prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
+    test_private_key_and_handle(url_params.account_email, prv, options, function() {
+      save_private_key(account_email, prv, options);
+      finalize_setup(account_email, key.publicKeyArmored, options);
+    });
   }).catch(function(error) {
     $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed there and send them to me.<br/><br/>tom@cryptup.org - thanks!');
     console.log('--- copy message below for debugging  ---')
@@ -351,6 +355,17 @@ $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_m
 $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(function() {
   display_block('step_2b_manual_enter');
 });
+
+function test_private_key_and_handle(account_email, key, options, success_callback) {
+  test_private_key(key.armor(), $('#step_2b_manual_enter .input_passphrase').val(), function(key_works, error) {
+    if(key_works) {
+      success_callback()
+    } else {
+      $('h1').text('Browser incompatibility discovered');
+      display_block('step_3_test_failed');
+    }
+  });
+}
 
 $('#step_2b_manual_enter .action_save_private').click(function() {
   var prv = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];

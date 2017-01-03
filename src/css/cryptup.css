@@ -95,8 +95,9 @@ body#settings > div#content.setup .squaredFour input[type=checkbox]:checked + la
 body#settings > div#content.setup .labelCopy { margin-top: 7px; position: absolute; left: 30px; right: 0; text-align: left; text-indent: 45px; z-index: -10;}
 body#settings > div#content.setup label.checkboxSquaredOne { padding-left: 0!important; }
 
-body#settings > div#content.setup div#step_3_backup { display: none; }
+body#settings > div#content.setup div#step_3_back { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
+body#settings > div#content.setup div#step_3_test_failed { display: none; }
 body#settings > div#content.setup div#step_4_done { display: none; }
 body#settings > div#content.setup div#loading { width: 100%; margin: 10px auto; padding-left: 0; padding-right: 0; }
 
