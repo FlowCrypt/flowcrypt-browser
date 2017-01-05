@@ -355,3 +355,82 @@ function account_storage_remove(gmail_account_email, key_or_keys, callback) {
     })();
   });
 }
+
+function db_open(callback) {
+  var open_db = indexedDB.open('cryptup', 1);
+  open_db.onupgradeneeded = function() {
+    var contacts = open_db.result.createObjectStore('contacts', {
+      keyPath: 'email',
+    });
+    contacts.createIndex('search', 'searchable', {
+      multiEntry: true,
+    });
+  };
+  open_db.onsuccess = function() {
+    callback(open_db.result);
+  };
+}
+
+function db_create_search_index(email, name) {
+  email = email.toLowerCase();
+  name = name ? name.toLowerCase() : '';
+  var parts = [email, name];
+  parts = parts.concat(email.split(/[^a-z0-9]/));
+  parts = parts.concat(name.split(/[^a-z0-9]/));
+  var index = [];
+  $.each(parts, function(i, part) {
+    if (part) {
+      var substring = '';
+      $.each(part.split(''), function(i, letter) {
+        substring += letter;
+        if (index.indexOf(substring) === -1) {
+          index.push(substring);
+        }
+      });
+    }
+  });
+  return index;
+}
+
+function db_contact_save(db, email, name, client, pubkey, attested, callback) {
+  var tx = db.transaction('contacts', 'readwrite');
+  var contacts = tx.objectStore('contacts');
+  var contact = {
+    email: email,
+    name: name || null,
+    pubkey: pubkey,
+    searchable: db_create_search_index(email, name),
+    client: pubkey ? client : null,
+    attested: pubkey ? attested : null,
+    fingerprint: pubkey ? key_fingerprint(pubkey) : null,
+    longid: pubkey ? key_longid(pubkey) : null,
+    mnemonic: pubkey ? mnemonic(key_longid(pubkey)) : null,
+  };
+  contacts.put(contact);
+  tx.oncomplete = callback;
+}
+
+function db_contact_get(db, email, callback) {
+  var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email);
+  get.onsuccess = function() {
+    if (get.result !== undefined) {
+      callback(get.result);
+    } else {
+      callback(null);
+    }
+  };
+}
+
+function db_contact_search(db, substring, limit, callback) {
+  var search = db.transaction('contacts', 'readonly').objectStore('contacts').index('search').openCursor(IDBKeyRange.only(substring));
+  var found = [];
+  search.onsuccess = function() {
+    var cursor = search.result;
+    if (!cursor || found.length === limit) {
+      callback(found);
+    } else {
+      found.push(cursor.value);
+      cursor.continue();
+    }
+  };
+}
