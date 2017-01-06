@@ -3,6 +3,7 @@
 function init_shared_compose_js(url_params, db) {
 
   var SAVE_DRAFT_FREQUENCY = 3000;
+  var RENDER_SEARCH_RESULTS_LIMIT = 8;
   var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
   var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 
@@ -479,8 +480,13 @@ function init_shared_compose_js(url_params, db) {
     });
   }
 
-  function render_search_results(contacts, query) {
-    if(contacts.length > 0) {
+  function render_search_results_loading_done() {
+    $('#contacts ul li.loading').remove();
+  }
+
+  function render_search_results(contacts, query, force_loader) {
+    contacts = contacts.splice(0, RENDER_SEARCH_RESULTS_LIMIT);
+    if(contacts.length > 0 || force_loader) {
       var ul_html = '';
       $.each(contacts, function(i, contact) {
         ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
@@ -502,6 +508,7 @@ function init_shared_compose_js(url_params, db) {
         }
         ul_html += '</li>';
       });
+      ul_html += '<li class="loading">loading...</li>';
       $('#contacts ul').html(ul_html);
       $('#contacts ul li.select_contact').click(function() {
         select_contact($(this).attr('email'), query);
@@ -526,8 +533,10 @@ function init_shared_compose_js(url_params, db) {
     };
     if(query.substring !== '') {
       db_contact_search(db, query, function(contacts) {
-        render_search_results(contacts, query);
-        if(!db_only) {
+        if(db_only) {
+          render_search_results(contacts, query, false);
+        } else {
+          render_search_results(contacts, query, true);
           gmail_api_search_contacts(url_params.account_email, query.substring, contacts, function(gmail_contact_results) {
             if(gmail_contact_results.new.length) {
               $.each(gmail_contact_results.new, function(e, email_string) {
@@ -536,6 +545,8 @@ function init_shared_compose_js(url_params, db) {
                   search_contacts(true);
                 });
               });
+            } else {
+              render_search_results_loading_done();
             }
           });
         }
