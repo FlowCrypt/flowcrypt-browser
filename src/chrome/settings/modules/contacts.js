@@ -33,7 +33,7 @@ db_open(function(db) {
         } else {
           if(key_fingerprint(armored_pubkey) !== null) {
             $('.featherlight-close').click();
-            db_contact_save(db, db_contact_object($('#edit_pubkey.featherlight-inner .input_email').text(), null, 'pgp', armored_pubkey, null, false), render);
+            db_contact_save(db, db_contact_object($('#edit_pubkey.featherlight-inner .input_email').text(), null, 'pgp', armored_pubkey, null, false, Date.now()), render);
           } else {
             alert('Cannot recognize a valid pubkey, please try again.');
             $('#edit_pubkey.featherlight-inner .input_pubkey').val('').focus();
@@ -42,7 +42,7 @@ db_open(function(db) {
       }));
 
       $('a.action_remove').off().click(prevent(doubleclick(), function(self) {
-        db_contact_save(db, db_contact_object($(self).closest('tr').attr('email'), null, null, null, null, null), render);
+        db_contact_save(db, db_contact_object($(self).closest('tr').attr('email'), null, null, null, null, null, null), render);
       }));
 
     });

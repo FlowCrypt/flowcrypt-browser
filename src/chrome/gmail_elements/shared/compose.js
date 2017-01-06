@@ -295,7 +295,7 @@ function init_shared_compose_js(url_params, db) {
       } else {
         keyserver_keys_find(email, function(success, result) {
           if(success) {
-            var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false);
+            var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
             keyserver_lookup_results_by_email[result.email] = ks_contact;
             db_contact_save(db, ks_contact, function() {
               callback(ks_contact);
@@ -485,10 +485,11 @@ function init_shared_compose_js(url_params, db) {
   }
 
   function render_search_results(contacts, query, force_loader) {
-    contacts = contacts.splice(0, RENDER_SEARCH_RESULTS_LIMIT);
-    if(contacts.length > 0 || force_loader) {
+    var renderable_contacts = contacts.slice();
+    renderable_contacts.splice(0, RENDER_SEARCH_RESULTS_LIMIT);
+    if(renderable_contacts.length > 0 || force_loader) {
       var ul_html = '';
-      $.each(contacts, function(i, contact) {
+      $.each(renderable_contacts, function(i, contact) {
         ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
         if(contact.has_pgp) {
           ul_html += '<i class="fa fa-lock"></i>';
@@ -539,9 +540,8 @@ function init_shared_compose_js(url_params, db) {
           render_search_results(contacts, query, true);
           gmail_api_search_contacts(url_params.account_email, query.substring, contacts, function(gmail_contact_results) {
             if(gmail_contact_results.new.length) {
-              $.each(gmail_contact_results.new, function(e, email_string) {
-                var email = parse_email_string(email_string);
-                db_contact_save(db, db_contact_object(email.email, email.name, null, null, null, true), function() {
+              $.each(gmail_contact_results.new, function(i, contact) {
+                db_contact_save(db, db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function() {
                   search_contacts(true);
                 });
               });

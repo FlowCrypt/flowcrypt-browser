@@ -282,7 +282,7 @@ function db_create_search_index_list(email, name, has_pgp) {
   return index;
 }
 
-function db_contact_object(email, name, client, pubkey, attested, pending_lookup) {
+function db_contact_object(email, name, client, pubkey, attested, pending_lookup, last_use) {
   return {
     email: email,
     name: name || null,
@@ -295,6 +295,7 @@ function db_contact_object(email, name, client, pubkey, attested, pending_lookup
     longid: pubkey ? key_longid(pubkey) : null,
     keywords: pubkey ? mnemonic(key_longid(pubkey)) : null,
     pending_lookup: pubkey ? 0 : Number(Boolean(pending_lookup)),
+    last_use: last_use || null,
   };
 }
 

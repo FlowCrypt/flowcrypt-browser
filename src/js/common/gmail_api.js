@@ -275,15 +275,18 @@ function gmail_api_search_contacts(account_email, user_query, known_contacts, ca
 
 function gmail_api_loop_through_emails_to_compile_contacts(account_email, query, callback, results) {
   results = results || [];
-  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to'], function(headers) {
+  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date'], function(headers) {
     if(headers && headers.to) {
-      var sent_tos = headers.to.split(/, ?/);
-      var add_filter = sent_tos.map(function(sent_to) {
-        return ' -to:"' + trim_lower(sent_to) + '"';
+      var result = headers.to.split(/, ?/).map(parse_email_string).map(function(r) {
+        r.date = headers.date;
+        return r;
+      });
+      var add_filter = result.map(function(email) {
+        return ' -to:"' + email.email + '"';
       }).join('');
-      results = results.concat(sent_tos);
+      results = results.concat(result);
       callback({
-        new: sent_tos,
+        new: result,
         all: results,
       });
       gmail_api_loop_through_emails_to_compile_contacts(account_email, query + add_filter, callback, results);

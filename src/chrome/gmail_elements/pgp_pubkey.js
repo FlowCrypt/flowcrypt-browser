@@ -37,7 +37,7 @@ db_open(function(db) {
 
   $('.add_pubkey').click(prevent(doubleclick(), function(self) {
     if(is_email_valid($('.input_email').val())) {
-      db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', url_params.armored_pubkey, null, false), function () {
+      db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', url_params.armored_pubkey, null, false, Date.now()), function () {
         $(self).replaceWith('<b style="color: green;">' + $('.input_email').val() + ' added</b>')
         $('.input_email').remove();
       });
