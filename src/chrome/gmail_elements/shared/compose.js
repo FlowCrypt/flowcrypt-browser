@@ -28,16 +28,9 @@ var db = undefined;
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
-var known_emails_cache = [];
 
 db_open(function(_db) {
   db = _db;
-
-  db_contact_search(db, {}, function(all_contacts) {
-    known_emails_cache = all_contacts.map(function(contact) {
-      return contact.email;
-    });
-  });
 
   // set can_save_drafts, addresses_pks
   account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function(storage) {
@@ -327,12 +320,6 @@ function handle_send_message_error(response) {
   }
 }
 
-function known_emails_cache_add(email) {
-  if(known_emails_cache.indexOf(email) === -1) {
-    known_emails_cache.push(email);
-  }
-}
-
 function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(db, email, callback) {
   db_contact_get(db, email, function(db_contact) {
     if(db_contact && db_contact.has_pgp) {
@@ -343,7 +330,6 @@ function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(db, email, c
           var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false);
           keyserver_lookup_results_by_email[result.email] = ks_contact;
           db_contact_save(db, ks_contact, function() {
-            known_emails_cache_add(result.email); // todo - maybe adding it earlier would cause better behavior
             callback(ks_contact);
           });
         } else {
@@ -583,7 +569,6 @@ function search_contacts(db_only) {
             $.each(gmail_contact_results.new, function(e, email_string) {
               var email = parse_email_string(email_string);
               db_contact_save(db, db_contact_object(email.email, email.name, null, null, null, true), function() {
-                known_emails_cache_add(email);
                 search_contacts(true);
               });
             });
