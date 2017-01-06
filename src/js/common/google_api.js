@@ -52,29 +52,3 @@ function google_api_userinfo(account_email, callback) {
     alt: 'json'
   }, callback);
 }
-
-function google_api_contacts(account_email, query, max, callback) {
-  google_api_call(account_email, 'GET', 'https://www.google.com/m8/feeds/contacts/default/thin', {
-    'alt': 'json',
-    'q': query,
-    'max-results': max,
-    'v': '3.0',
-  }, function(success, response) {
-    if(!success) {
-      callback(false, response);
-    } else {
-      var structured = [];
-      $.each(response.feed.entry, function(_, person) {
-        $.each(person.gd$email, function(__, email) {
-          if(email.primary === "true") {
-            structured.push({
-              name: (person.gd$name && person.gd$name.gd$fullName && person.gd$name.gd$fullName.$t) ? person.gd$name.gd$fullName.$t : '',
-              email: email.address,
-            });
-          }
-        });
-      });
-      callback(true, structured);
-    }
-  });
-}
