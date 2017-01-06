@@ -275,9 +275,9 @@ function gmail_api_search_contacts(account_email, user_query, known_contacts, ca
 
 function gmail_api_loop_through_emails_to_compile_contacts(account_email, query, callback, results) {
   results = results || [];
-  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, 'to', function(sent_to) {
-    if(sent_to) {
-      var sent_tos = sent_to.split(', ');
+  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to'], function(headers) {
+    if(headers && headers.to) {
+      var sent_tos = headers.to.split(/, ?/);
       var add_filter = sent_tos.map(function(sent_to) {
         return ' -to:"' + trim_lower(sent_to) + '"';
       }).join('');
@@ -296,33 +296,36 @@ function gmail_api_loop_through_emails_to_compile_contacts(account_email, query,
   });
 }
 
-
-function fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_name, callback, i) {
-  // this won a prize for the most precisely named function in the hostory of javascriptkind
-  i = i || 0;
-  gmail_api_message_get(account_email, messages[i].id, 'metadata', function(success, message_get_response) {
-    var header_value = undefined;
-    if(success) { // non-mission critical - just skip failed requests
-      header_value = gmail_api_find_header(message_get_response, header_name);
-    }
-    if(header_value) {
-      callback(header_value);
-    } else if(i + 1 < messages.length) {
-      fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_name, callback, i + 1);
+function fetch_messages_based_on_query_and_extract_first_available_header(account_email, q, header_names, callback) {
+  gmail_api_message_list(account_email, q, false, function(success, message_list_response) {
+    if(success && typeof message_list_response.messages !== 'undefined') {
+      fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, message_list_response.messages, header_names, callback);
     } else {
-      callback();
+      callback(); // if the request is !success, it will just return undefined, which may not be the best
     }
   });
 }
 
-function fetch_messages_based_on_query_and_extract_first_available_header(account_email, q, header_name, callback) {
-  gmail_api_message_list(account_email, q, false, function(success, message_list_response) {
-    if(success && typeof message_list_response.messages !== 'undefined') {
-      fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, message_list_response.messages, header_name, function(from_email) {
-        callback(from_email);
+function fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_names, callback, i) {
+  // this won a prize for the most precisely named function in the hostory of javascriptkind
+  i = i || 0;
+  gmail_api_message_get(account_email, messages[i].id, 'metadata', function(success, message_get_response) {
+    var header_values = {};
+    var missing_header = false;
+    if(success) { // non-mission critical - just skip failed requests
+      $.each(header_names, function(i, header_name) {
+        header_values[header_name] = gmail_api_find_header(message_get_response, header_name);
+        if(!header_values[header_name]) {
+          missing_header = true;
+        }
       });
+    }
+    if(!missing_header) {
+      callback(header_values);
+    } else if(i + 1 < messages.length) {
+      fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_names, callback, i + 1);
     } else {
-      callback(); // if the request is !success, it will just return nothing like this, which may not be the best
+      callback();
     }
   });
 }
