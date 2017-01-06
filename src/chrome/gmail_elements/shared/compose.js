@@ -3,48 +3,59 @@
 var SAVE_DRAFT_FREQUENCY = 3000;
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
-var GOOGLE_CONTACTS_SCOPE = 'https://www.googleapis.com/auth/contacts.readonly';
 
-var PUBKEY_SEARCH_RESULT_WRONG = 'wrong';
-var PUBKEY_SEARCH_RESULT_FAIL = 'fail';
+var PUBKEY_LOOKUP_RESULT_WRONG = 'wrong';
+var PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
 
 var BTN_ENCRYPT_AND_SEND = 'encrypt and send';
 var BTN_WRONG_ENTRY = 're-enter recipient..';
 var BTN_WAIT = 'wait..';
 
+var last_draft = '';
 var draft_id = undefined;
 var draft_message_id = undefined;
-var can_search_contacts = undefined;
 var can_save_drafts = undefined;
 var can_read_emails = undefined;
-var pubkey_cache_interval = undefined;
+var added_pubkey_db_lookup_interval = undefined;
 var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
 var save_draft_in_process = false;
 var my_addresses_on_pks = [];
 var my_addresses_on_keyserver = [];
 var recipients_missing_my_key = [];
+var keyserver_lookup_results_by_email = {};
 var compose_url_params = get_url_params(['account_email', 'parent_tab_id', 'thread_id', 'frame_id', 'subject', 'placement']);
+var db = undefined;
 var l = {
   open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
 };
+var known_emails_cache = [];
 
-// set can_search_contacts, can_save_drafts, addresses_pks
-account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function(storage) {
-  my_addresses_on_pks = storage.addresses_pks || [];
-  my_addresses_on_keyserver = storage.addresses_keyserver || [];
-  if(typeof storage.google_token_scopes === 'undefined') {
-    can_search_contacts = false;
-    can_save_drafts = false;
-    can_read_emails = false;
-  } else {
-    can_search_contacts = (storage.google_token_scopes.indexOf(GOOGLE_CONTACTS_SCOPE) !== -1);
-    can_save_drafts = (storage.google_token_scopes.indexOf(GMAIL_COMPOSE_SCOPE) !== -1);
-    can_read_emails = (storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
-  }
-  if(!can_save_drafts) {
-    $('#send_btn_note').html('<a href="#" class="draft_auth hover_underline">Enable encrypted drafts</a>');
-    $('#send_btn_note a.draft_auth').click(draft_auth);
-  }
+db_open(function(_db) {
+  db = _db;
+
+  db_contact_search(db, {}, function(all_contacts) {
+    known_emails_cache = all_contacts.map(function(contact) {
+      return contact.email;
+    });
+  });
+
+  // set can_save_drafts, addresses_pks
+  account_storage_get(compose_url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function(storage) {
+    my_addresses_on_pks = storage.addresses_pks || [];
+    my_addresses_on_keyserver = storage.addresses_keyserver || [];
+    if(typeof storage.google_token_scopes === 'undefined') {
+      can_save_drafts = false;
+      can_read_emails = false;
+    } else {
+      can_save_drafts = (storage.google_token_scopes.indexOf(GMAIL_COMPOSE_SCOPE) !== -1);
+      can_read_emails = (storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+    }
+    if(!can_save_drafts) {
+      $('#send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
+      $('#send_btn_note a.auth_drafts').click(auth_drafts);
+    }
+  });
+
 });
 
 function format_challenge_question_email(question, body) {
@@ -64,8 +75,6 @@ function format_challenge_question_email(question, body) {
   }
   return result;
 }
-
-var last_draft = '';
 
 function should_save_draft(message_body) {
   if(message_body && message_body !== last_draft) {
@@ -223,19 +232,20 @@ function decrypt_and_render_draft(account_email, encrypted_draft, render_functio
   }
 }
 
-function fetch_pubkeys(account_email, recipients, callback) {
-  get_pubkeys(recipients, function(pubkey_results) {
-    if(typeof pubkey_results === 'undefined') {
-      callback(false);
-    } else {
-      var pubkeys = [];
-      $.each(pubkey_results, function(i, pubkey_info) {
-        if(pubkey_info && pubkey_info.pubkey) {
-          pubkeys.push(pubkey_info.pubkey);
-        }
-      });
-      callback(true, pubkeys.length === recipients.length, pubkeys.concat(private_storage_get('local', account_email, 'master_public_key', compose_url_params.parent_tab_id)));
-    }
+function collect_all_available_public_keys(db, account_email, recipients, callback) {
+  db_contact_get(db, recipients, function(contacts) { //todo - make sure that db is always set before calling
+    var armored_pubkeys = [private_storage_get('local', account_email, 'master_public_key', compose_url_params.parent_tab_id)];
+    var emails_without_pubkeys = [];
+    $.each(contacts, function(i, contact) {
+      if(contact && contact.has_pgp) {
+        armored_pubkeys.push(contact.pubkey);
+      } else if(keyserver_lookup_results_by_email[contact.email]) {
+        armored_pubkeys.push(keyserver_lookup_results_by_email[contact.email].pubkey);
+      } else {
+        emails_without_pubkeys.push(recipients[i]);
+      }
+    });
+    callback(armored_pubkeys, emails_without_pubkeys);
   });
 }
 
@@ -248,56 +258,55 @@ function compose_encrypt_and_send(account_email, recipients, subject, plaintext,
       question: $('#input_question').val(),
       answer: $('#input_answer').val(),
     };
-    fetch_pubkeys(account_email, recipients, function(success, all_have_keys, armored_pubkeys) {
-      if(success) {
-        if(!recipients.length) {
-          $('#send_btn').html(btn_html);
-          alert('Please add receiving email address.');
-          return;
-        } else if(has_attachment() && !all_have_keys) {
-          $('#send_btn').html(btn_html);
-          alert('Sending encrypted attachments is only possible to contacts with a PGP client, such as CryptUP. Some of the recipients don\'t have PGP. Get them signed up.');
-          return;
-        } else if(!all_have_keys && (!challenge.question || !challenge.answer)) {
-          $('#send_btn').html(btn_html);
-          alert('Because one or more of recipients don\'t have CryptUP or other PGP app, a question and answer is needed for encryption. The answer will work as a password to open the message.');
-          return;
-        } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
-          //todo - tailor for replying w/o subject
-          $('#send_btn span').text('Encrypting');
-          try {
-            collect_and_encrypt_attachments(armored_pubkeys, all_have_keys ? null : challenge, function(attachments) {
-              if((attachments || []).length) {
-                var sending = 'Uploading attachments';
-              } else {
-                var sending = 'Sending';
+    collect_all_available_public_keys(db, account_email, recipients, function(armored_pubkeys, emails_without_pubkeys) {
+      if(!recipients.length) {
+        $('#send_btn').html(btn_html);
+        alert('Please add receiving email address.');
+        return;
+      } else if(has_attachment() && emails_without_pubkeys.length) {
+        $('#send_btn').html(btn_html);
+        alert('Sending encrypted attachments is only possible to contacts with a PGP client, such as CryptUP. Some of the recipients don\'t have PGP. Try sending the message without an attachment, or get them signed up.');
+        return;
+      } else if(emails_without_pubkeys.length && (!challenge.question || !challenge.answer)) {
+        $('#send_btn').html(btn_html);
+        alert('Because one or more of recipients don\'t have CryptUP or other PGP app, a question and answer is needed for encryption. The answer will work as a password to open the message.');
+        return;
+      } else if((plaintext != '' || window.confirm('Send empty message?')) && (subject != '' || window.confirm('Send without a subject?'))) {
+        //todo - tailor for replying w/o subject
+        $('#send_btn span').text('Encrypting');
+        try {
+          collect_and_encrypt_attachments(armored_pubkeys, !emails_without_pubkeys.length ? null : challenge, function(attachments) {
+            if((attachments || []).length) {
+              var sending = 'Uploading attachments';
+            } else {
+              var sending = 'Sending';
+            }
+            encrypt(armored_pubkeys, null, !emails_without_pubkeys.length ? null : challenge, plaintext, true, function(encrypted) {
+              if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
+                encrypted.data += '\n\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', compose_url_params.parent_tab_id);
               }
-              encrypt(armored_pubkeys, null, all_have_keys ? null : challenge, plaintext, true, function(encrypted) {
-                if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
-                  encrypted.data += '\n\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', compose_url_params.parent_tab_id);
-                }
-                var body = {
-                  'text/plain': encrypted.data,
-                  'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'),
-                };
-                if(!all_have_keys) {
-                  body = format_challenge_question_email(challenge.question, body);
-                }
-                $('#send_btn span').text(sending);
-                send_email_callback(body, attachments);
-              });
+              var body = {
+                'text/plain': encrypted.data,
+                'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'),
+              };
+              if(emails_without_pubkeys.length) {
+                body = format_challenge_question_email(challenge.question, body);
+              }
+              $('#send_btn span').text(sending);
+              send_email_callback(body, attachments);
             });
-          } catch(err) {
-            $('#send_btn').html(btn_html);
-            alert(err);
-          }
-        } else {
+          });
+        } catch(err) {
           $('#send_btn').html(btn_html);
+          alert(err);
         }
       } else {
         $('#send_btn').html(btn_html);
-        alert('Network error, please try again.');
       }
+      // } else {
+      //   $('#send_btn').html(btn_html);
+      //   alert('Network error, please try again.');
+      // }
     });
   } else if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
     alert('Please re-enter recipients marked in red color.');
@@ -318,22 +327,45 @@ function handle_send_message_error(response) {
   }
 }
 
+function known_emails_cache_add(email) {
+  if(known_emails_cache.indexOf(email) === -1) {
+    known_emails_cache.push(email);
+  }
+}
+
+function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(db, email, callback) {
+  db_contact_get(db, email, function(db_contact) {
+    if(db_contact && db_contact.has_pgp) {
+      callback(db_contact);
+    } else {
+      keyserver_keys_find(email, function(success, result) {
+        if(success) {
+          var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false);
+          keyserver_lookup_results_by_email[result.email] = ks_contact;
+          db_contact_save(db, ks_contact, function() {
+            known_emails_cache_add(result.email); // todo - maybe adding it earlier would cause better behavior
+            callback(ks_contact);
+          });
+        } else {
+          callback(PUBKEY_LOOKUP_RESULT_FAIL);
+        }
+      });
+    }
+  });
+}
+
 function compose_evaluate_receivers() {
   $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed').each(function() {
     var email_element = this;
-    var email = $(email_element).text().trim();
+    var email = trim_lower($(email_element).text());
     if(is_email_valid(email)) {
       $("#send_btn span").text(BTN_WAIT);
       $("#send_btn_note").text("Checking email addresses");
-      get_pubkeys([email], function(pubkeys) {
-        if(typeof pubkeys !== undefined && pubkeys && typeof pubkeys[0] !== 'undefined') {
-          compose_render_pubkey_result(email_element, pubkeys[0]);
-        } else {
-          compose_render_pubkey_result(email_element, PUBKEY_SEARCH_RESULT_FAIL);
-        }
+      lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(db, email, function(pubkey_lookup_result) { //todo - make sure that db is always set before calling
+        compose_render_pubkey_result(email_element, email, pubkey_lookup_result);
       });
     } else {
-      compose_render_pubkey_result(email_element, PUBKEY_SEARCH_RESULT_WRONG);
+      compose_render_pubkey_result(email_element, email, PUBKEY_LOOKUP_RESULT_WRONG);
     }
   });
 }
@@ -457,7 +489,7 @@ function remove_receiver() {
   compose_show_hide_send_pubkey_container();
 }
 
-function draft_auth() {
+function auth_drafts() {
   chrome_message_send(null, 'google_auth', {
     account_email: compose_url_params.account_email,
     scopes: [GMAIL_COMPOSE_SCOPE],
@@ -477,18 +509,18 @@ function draft_auth() {
   });
 }
 
-function auth_contacts(account_email, for_search_query) {
+function auth_contacts(account_email) {
   $('#input_to').val($('.recipients span').last().text());
   $('.recipients span').last().remove();
   chrome_message_send(null, 'google_auth', {
     account_email: account_email,
-    scopes: [GOOGLE_CONTACTS_SCOPE],
+    scopes: [GMAIL_READ_SCOPE],
   }, function(google_auth_response) {
     if(google_auth_response.success === true) {
-      can_search_contacts = true;
+      can_read_emails = true;
       search_contacts();
     } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
-      alert('CryptUP needs this permission to search your Google Contacts. Without it, CryptUP will keep a separate contact list.');
+      alert('CryptUP needs this permission to search your contacts on Gmail. Without it, CryptUP will keep a separate contact list.');
     } else {
       console.log(google_auth_response);
       alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
@@ -496,46 +528,30 @@ function auth_contacts(account_email, for_search_query) {
   });
 }
 
-function search_pubkey_cache(query, max) {
-  var results = [];
-  var local = pubkey_cache_search(query, max);
-  $.each(local, function(i, contact) {
-    results.push({
-      name: contact.name,
-      email: contact.email_highlighted,
-      has_cryptup: contact.has_cryptup,
-      pgp: true,
-    });
-  });
-  return results;
-}
 
-function render_search_results(results, query) {
-  if(results.length > 0 || !can_search_contacts) {
+function render_search_results(contacts, query) {
+  if(contacts.length > 0) {
     var ul_html = '';
-    $.each(results, function(i, result) {
-      ul_html += '<li class="select_contact" email="' + result.email.replace(/<\/?b>/g, '') + '">';
-      if(result.pgp === true) {
+    $.each(contacts, function(i, contact) {
+      ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
+      if(contact.has_pgp) {
         ul_html += '<i class="fa fa-lock"></i>';
       } else {
         ul_html += '<i class="fa fa-lock" style="color: gray;"></i>';
       }
-      if(result.email.length < 40) {
-        var display_email = result.email;
+      if(contact.email.length < 40) {
+        var display_email = contact.email;
       } else {
-        var parts = result.email.split('@');
+        var parts = contact.email.split('@');
         var display_email = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
       }
-      if(result.name) {
-        ul_html += (result.name + ' &lt;' + display_email + '&gt;');
+      if(contact.name) {
+        ul_html += (contact.name + ' &lt;' + display_email + '&gt;');
       } else {
         ul_html += display_email;
       }
       ul_html += '</li>';
     });
-    if(!can_search_contacts) {
-      ul_html += '<li class="auth_contacts"><span class="button red"><i class="fa fa-search"></i>Search Gmail Contacts</span></li>';
-    }
     $('#contacts ul').html(ul_html);
     $('#contacts ul li.select_contact').click(function() {
       select_contact($(this).attr('email'), query);
@@ -546,7 +562,7 @@ function render_search_results(results, query) {
       $(this).removeClass('hover');
     });
     $('#contacts ul li.auth_contacts').click(function() {
-      auth_contacts(compose_url_params.account_email, query);
+      auth_contacts(compose_url_params.account_email);
     });
     $('#contacts').css('display', 'block');
   } else {
@@ -554,34 +570,29 @@ function render_search_results(results, query) {
   }
 }
 
-function search_contacts() {
-  var query = trim_lower($('#input_to').val());
-  if(query !== '') {
-    if(can_search_contacts) {
-      var contacts = search_pubkey_cache(query, 6);
-      var emails = [];
-      $.each(contacts, function(i, contact) {
-        emails.push(contact.email.replace(/<\/?b>/g, ''));
-      });
-      google_api_contacts(compose_url_params.account_email, query, 7 - contacts.length, function(success, google_contacts) {
-        if(success) {
-          $.each(google_contacts, function(i, google_contact) {
-            if(emails.indexOf(google_contact.email) === -1) { // only add contacts that were not there yet
-              contacts.push(google_contact);
-              emails.push(google_contact.email);
-            }
-          });
-        } else {
-          console.log('search_add_google_contacts.google_api_contacts.success === false');
-          console.log(google_contacts);
-        }
-        render_search_results(contacts, query);
-      });
-    } else {
-      render_search_results(search_pubkey_cache(query, 7), query);
-    }
+function search_contacts(db_only) {
+  var query = {
+    substring: trim_lower($('#input_to').val())
+  };
+  if(query.substring !== '') {
+    db_contact_search(db, query, function(contacts) {
+      render_search_results(contacts, query);
+      if(!db_only) {
+        search_contacts_on_gmail(compose_url_params.account_email, query.substring, contacts, function(gmail_contact_results) {
+          if(gmail_contact_results.new.length) {
+            $.each(gmail_contact_results.new, function(e, email_string) {
+              var email = parse_email_string(email_string);
+              db_contact_save(db, db_contact_object(email.email, email.name, null, null, null, true), function() {
+                known_emails_cache_add(email);
+                search_contacts(true);
+              });
+            });
+          }
+        });
+      }
+    });
   } else {
-    hide_contacts();
+    hide_contacts(); //todo - show suggestions of most contacted ppl etc
   }
 }
 
@@ -623,16 +634,26 @@ function compose_show_hide_send_pubkey_container() {
   }
 }
 
-function compose_render_pubkey_result(email_element, their_pubkey_data) {
+function recipient_key_id_text(contact) {
+  if(contact.client === 'cryptup' && contact.keywords) {
+    return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
+  } else if(contact.fingerprint) {
+    return '\n\n' + 'Key fingerprint:\n' + contact.fingerprint;
+  } else {
+    return '';
+  }
+}
+
+function compose_render_pubkey_result(email_element, email, contact) {
   if($('body#new_message').length) {
-    if(their_pubkey_data && typeof their_pubkey_data === 'object' && their_pubkey_data.pubkey) {
+    if(typeof contact === 'object' && contact.has_pgp) {
       var sending_address_on_pks = (my_addresses_on_pks.indexOf(get_sender_from_dom()) !== -1);
       var sending_address_on_keyserver = (my_addresses_on_keyserver.indexOf(get_sender_from_dom()) !== -1);
-      if((their_pubkey_data.has_cryptup && !sending_address_on_keyserver) || (!their_pubkey_data.has_cryptup && !sending_address_on_pks)) {
+      if((contact.client === 'cryptup' && !sending_address_on_keyserver) || (contact.client !== 'cryptup' && !sending_address_on_pks)) {
         // new message, and my key is not uploaded where the recipient would look for it
-        did_i_ever_send_pubkey_to_or_receive_encrypted_message_from($(email_element).text(), function(pubkey_sent) {
+        did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(email, function(pubkey_sent) {
           if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-            recipients_missing_my_key.push(trim_lower($(email_element).text()));
+            recipients_missing_my_key.push(email);
           }
           compose_show_hide_send_pubkey_container();
         });
@@ -643,39 +664,22 @@ function compose_render_pubkey_result(email_element, their_pubkey_data) {
       compose_show_hide_send_pubkey_container();
     }
   }
-
-  function key_id_text(pubkey_data) {
-    if(pubkey_data === null || typeof pubkey_data === 'undefined') {
-      return '';
-    } else if(pubkey_data.has_cryptup && pubkey_data.keywords) {
-      return '\n\n' + 'Public KeyWords:\n' + pubkey_data.keywords;
-    } else if(pubkey_data.fingerprint) {
-      return '\n\n' + 'Key fingerprint:\n' + pubkey_data.fingerprint;
-    } else {
-      return '';
-    }
-  };
-  var email_address = trim_lower($(email_element).text());
-  $(email_element).children('i').removeClass('fa');
-  $(email_element).children('i').removeClass('fa-spin');
-  $(email_element).children('i').removeClass('ion-load-c');
-  $(email_element).children('i').removeClass('fa-repeat');
-  $(email_element).children('i').addClass('ion-android-close');
-  if(their_pubkey_data === PUBKEY_SEARCH_RESULT_FAIL) {
+  $(email_element).children('i').removeClass('fa').removeClass('fa-spin').removeClass('ion-load-c').removeClass('fa-repeat').addClass('ion-android-close');
+  if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
     $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
     $(email_element).addClass("failed");
     $(email_element).children('i').removeClass('ion-android-close').addClass('fa').addClass('fa-repeat');
-  } else if(their_pubkey_data === PUBKEY_SEARCH_RESULT_WRONG) {
+  } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
     $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
     $(email_element).addClass("wrong");
-  } else if(their_pubkey_data && their_pubkey_data.pubkey !== null && their_pubkey_data.pubkey !== null && their_pubkey_data.attested) {
+  } else if(contact.has_pgp && contact.attested) {
     $(email_element).addClass("attested");
     $(email_element).prepend("<i class='ion-locked'></i>");
-    $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + key_id_text(their_pubkey_data));
-  } else if(their_pubkey_data && their_pubkey_data.pubkey !== null) {
+    $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + recipient_key_id_text(contact));
+  } else if(contact.has_pgp) {
     $(email_element).addClass("has_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");
-    $(email_element).attr('title', 'Does use encryption' + key_id_text(their_pubkey_data));
+    $(email_element).attr('title', 'Does use encryption' + recipient_key_id_text(contact));
   } else {
     $(email_element).addClass("no_pgp");
     $(email_element).prepend("<i class='ion-locked'></i>");
@@ -723,21 +727,18 @@ $('.add_pubkey').click(function() {
       emails: get_recipients_from_dom('no_pgp'),
     });
   }
-  clearInterval(pubkey_cache_interval);
-  pubkey_cache_interval = setInterval(function() {
-    var pubkeys = pubkey_cache_retrieve();
-    var new_key_added = false;
+  clearInterval(added_pubkey_db_lookup_interval);
+  added_pubkey_db_lookup_interval = setInterval(function() {
     $.each(get_recipients_from_dom('no_pgp'), function(i, email) {
-      if(typeof pubkeys[email] !== 'undefined') {
-        $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
-        $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
-        new_key_added = true;
-      }
+      db_contact_get(db, email, function(contact) {
+        if(contact.has_pgp) {
+          $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
+          $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
+          clearInterval(added_pubkey_db_lookup_interval);
+          compose_evaluate_receivers();
+        }
+      });
     });
-    if(new_key_added) {
-      clearInterval(pubkey_cache_interval);
-      compose_evaluate_receivers();
-    }
   }, 1000);
 });
 
@@ -774,7 +775,7 @@ $('#input_text').get(0).onpaste = function(e) {
 function compose_on_render() {
   $('#input_to').keydown(respond_to_input_hotkeys);
   $('#input_to').keyup(render_receivers);
-  $('#input_to').keyup(prevent(spree('slow'), search_contacts));
+  $('#input_to').keyup(prevent(spree('veryslow'), search_contacts));
   $('#input_to').blur(render_receivers);
   $('#input_text').keyup(function() {
     $('#send_btn_note').text('');
@@ -791,7 +792,7 @@ function compose_on_render() {
   initialize_attach_dialog();
 }
 
-function search_contacts_on_gmail(account_email, user_query, limit, known_emails, callback) {
+function search_contacts_on_gmail(account_email, user_query, known_contacts, callback) {
   var gmail_query = ['is:sent'];
   if(user_query) {
     gmail_query.push();
@@ -803,7 +804,7 @@ function search_contacts_on_gmail(account_email, user_query, limit, known_emails
   } else {
     gmail_query.push('BEGIN PGP');
   }
-  $.each(known_emails, function(i, contact) {
+  $.each(known_contacts, function(i, contact) {
     gmail_query.push('-to:"' + contact.email + '"');
   });
   loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), callback)
@@ -813,9 +814,9 @@ function loop_through_emails_to_compile_contacts(account_email, query, callback,
   results = results || [];
   fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, 'to', function(sent_to) {
     if(sent_to) {
-      var sent_tos = sent_to.split(', ').map(trim_lower);
+      var sent_tos = sent_to.split(', ');
       var add_filter = sent_tos.map(function(sent_to) {
-        return ' -to:"' + sent_to + '"';
+        return ' -to:"' + trim_lower(sent_to) + '"';
       }).join('');
       results = results.concat(sent_tos);
       callback({

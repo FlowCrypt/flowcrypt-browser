@@ -2,8 +2,12 @@
 
 console.log('background_process.js starting');
 
+migrate_global(function() {
+  console.log('migrate_global done');
+});
+
 chrome_message_background_listen({
-  migrate: migrate,
+  migrate_account: migrate_account,
   google_auth: google_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
   list_pgp_attachments: list_pgp_attachments,
@@ -42,6 +46,7 @@ if(!localStorage.settings_seen) {
 
 Try(check_keyserver_pubkey_fingerprints)();
 TrySetInterval(check_keyserver_pubkey_fingerprints, 1000 * 60 * 60 * 6);
+
 
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);

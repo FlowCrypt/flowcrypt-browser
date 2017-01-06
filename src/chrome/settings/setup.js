@@ -101,10 +101,10 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     if(storage.setup_done) {
       render_setup_done(url_params.account_email, storage.key_backup_prompt);
     } else {
-      get_pubkeys([url_params.account_email], function(pubkeys) {
-        if(pubkeys && pubkeys[0] && pubkeys[0].pubkey) {
-          if(pubkeys[0].attested) {
-            account_email_attested_fingerprint = key_fingerprint(pubkeys[0].pubkey);
+      keyserver_keys_find(url_params.account_email, function(keyserver_success, result) {
+        if(keyserver_success && result.pubkey) {
+          if(result.attested) {
+            account_email_attested_fingerprint = key_fingerprint(result.pubkey);
           }
           if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
             fetch_email_key_backups(url_params.account_email, function(success, keys) {
@@ -116,7 +116,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
               }
             });
           } else { // cannot read gmail to find a backup
-            if(pubkeys[0].has_cryptup) {
+            if(result.has_cryptup) {
               display_block('step_2b_manual_enter');
               $('#step_2b_manual_enter').prepend('<div class="line red">Because of missing Gmail permission, CryptUP can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUP Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
             } else {

@@ -2,125 +2,6 @@
 
 var global_storage_scope = 'global';
 
-function pubkey_cache_retrieve() {
-  var storage = get_storage('local');
-  if(storage === null) {
-    throw 'oy';
-  }
-  if(typeof storage.pubkey_cache === 'undefined') {
-    storage.pubkey_cache = JSON.stringify({});
-  }
-  return JSON.parse(storage.pubkey_cache);
-}
-
-function pubkey_object(pubkey, name, has_cryptup, attested) {
-  if(typeof mnemonic !== 'undefined') {
-    var keywords = mnemonic(key_longid(pubkey));
-  } else {
-    var keywords = undefined;
-  }
-  return {
-    pubkey: pubkey,
-    fingerprint: key_fingerprint(pubkey, 'spaced'),
-    keywords: keywords,
-    name: name,
-    has_cryptup: has_cryptup === true,
-    attested: attested,
-  };
-}
-
-function pubkey_cache_add(email, pubkey_or_obj, name, has_cryptup, attested) {
-  // can work with result of pubkey_object directly. If supplied individual arguments, will convert using  pubkey_object first.
-  if(typeof pubkey_or_obj === 'object') {
-    var storage = pubkey_cache_retrieve();
-    storage[trim_lower(email)] = pubkey_or_obj;
-    localStorage.pubkey_cache = JSON.stringify(storage);
-  } else {
-    pubkey_cache_add(email, pubkey_object(pubkey_or_obj, name, has_cryptup, attested));
-  }
-}
-
-function pubkey_cache_remove(email) {
-  var storage = pubkey_cache_retrieve();
-  delete storage[trim_lower(email)];
-  localStorage.pubkey_cache = JSON.stringify(storage);
-}
-
-function pubkey_cache_get(email) {
-  var storage = pubkey_cache_retrieve();
-  var stored = storage[trim_lower(email)];
-  if(typeof stored !== 'undefined') {
-    if(typeof stored.keywords === 'undefined' && typeof mnemonic !== 'undefined') { // saved in old version of CryptUP, and can be updated now
-      pubkey_cache_add(email, stored.pubkey, stored.name, stored.has_cryptup, stored.attested); // this will update the fingerprints and keywords
-      return pubkey_cache_get(email);
-    } else {
-      return stored;
-    }
-  }
-  return null;
-}
-
-function pubkey_cache_search(query, max) {
-  var storage = pubkey_cache_retrieve();
-  var matches = [];
-  for(var email in storage) {
-    if(storage.hasOwnProperty(email)) {
-      if(email.indexOf(trim_lower(query)) !== -1) {
-        var match = storage[email];
-        match.email = email;
-        match.email_highlighted = email.replace(trim_lower(query), '<b>' + trim_lower(query) + '</b>');
-        matches.push(match);
-        if(matches.length === (max || -1)) {
-          return matches;
-        }
-      }
-    }
-  }
-  return matches;
-}
-
-function pubkey_cache_flush() {
-  localStorage.pubkey_cache = JSON.stringify({});
-}
-
-function get_pubkeys(emails, callback, ignore_cached) {
-  emails = emails.map(Function.prototype.call, String.prototype.trim);
-  var results = Array(emails.length);
-  var get_from_keyserver = [];
-  $.each(emails, function(i, email) {
-    if(ignore_cached !== true) {
-      results[i] = pubkey_cache_get(email) || undefined;
-      if(typeof results[i] === 'undefined' || typeof results[i].attested === 'undefined') {
-        get_from_keyserver.push(email);
-      }
-    } else {
-      get_from_keyserver.push(email);
-    }
-  });
-  if(get_from_keyserver.length === 0) {
-    callback(results);
-  } else {
-    keyserver_keys_find(get_from_keyserver, function(success, keyserver_results) {
-      if(success) {
-        $.each(keyserver_results.results, function(i, keyserver_result) {
-          if(typeof keyserver_result.pubkey !== 'undefined') {
-            var pubkey_obj = pubkey_object(keyserver_result.pubkey, keyserver_result.name, keyserver_result.has_cryptup, keyserver_result.attested);
-            results[emails.indexOf(get_from_keyserver[i])] = pubkey_obj;
-            if(keyserver_result.pubkey) {
-              pubkey_cache_add(keyserver_result.email, pubkey_obj);
-            }
-          } else {
-            results[emails.indexOf(get_from_keyserver[i])] = undefined;
-          }
-        });
-        callback(results);
-      } else {
-        callback(undefined);
-      }
-    });
-  }
-}
-
 function account_storage_key(account_key_or_list, key) {
   if(typeof account_key_or_list === 'object') {
     var all_results = [];
@@ -357,7 +238,7 @@ function account_storage_remove(gmail_account_email, key_or_keys, callback) {
 }
 
 function db_open(callback) {
-  var open_db = indexedDB.open('cryptup', 1);
+  var open_db = indexedDB.open('cryptup_t4');
   open_db.onupgradeneeded = function() {
     var contacts = open_db.result.createObjectStore('contacts', {
       keyPath: 'email',
@@ -365,13 +246,22 @@ function db_open(callback) {
     contacts.createIndex('search', 'searchable', {
       multiEntry: true,
     });
+    contacts.createIndex('index_has_pgp', 'has_pgp');
+    contacts.createIndex('index_pending_lookup', 'pending_lookup');
   };
   open_db.onsuccess = function() {
     callback(open_db.result);
   };
 }
 
-function db_create_search_index(email, name) {
+function db_index(has_pgp, substring) {
+  if(!substring) {
+    throw 'db_index has to include substring';
+  }
+  return(has_pgp ? 't:' : 'f:') + substring;
+}
+
+function db_create_search_index_list(email, name, has_pgp) {
   email = email.toLowerCase();
   name = name ? name.toLowerCase() : '';
   var parts = [email, name];
@@ -379,12 +269,12 @@ function db_create_search_index(email, name) {
   parts = parts.concat(name.split(/[^a-z0-9]/));
   var index = [];
   $.each(parts, function(i, part) {
-    if (part) {
+    if(part) {
       var substring = '';
       $.each(part.split(''), function(i, letter) {
         substring += letter;
-        if (index.indexOf(substring) === -1) {
-          index.push(substring);
+        if(index.indexOf(substring) === -1) {
+          index.push(db_index(has_pgp, substring));
         }
       });
     }
@@ -392,45 +282,104 @@ function db_create_search_index(email, name) {
   return index;
 }
 
-function db_contact_save(db, email, name, client, pubkey, attested, callback) {
-  var tx = db.transaction('contacts', 'readwrite');
-  var contacts = tx.objectStore('contacts');
-  var contact = {
+function db_contact_object(email, name, client, pubkey, attested, pending_lookup) {
+  return {
     email: email,
     name: name || null,
     pubkey: pubkey,
-    searchable: db_create_search_index(email, name),
+    has_pgp: Number(Boolean(pubkey)),
+    searchable: db_create_search_index_list(email, name, Boolean(pubkey)),
     client: pubkey ? client : null,
-    attested: pubkey ? attested : null,
+    attested: pubkey ? Boolean(attested) : null,
     fingerprint: pubkey ? key_fingerprint(pubkey) : null,
     longid: pubkey ? key_longid(pubkey) : null,
-    mnemonic: pubkey ? mnemonic(key_longid(pubkey)) : null,
+    keywords: pubkey ? mnemonic(key_longid(pubkey)) : null,
+    pending_lookup: pubkey ? 0 : Number(Boolean(pending_lookup)),
   };
+}
+
+function db_contact_save(db, contact, callback) {
+  var tx = db.transaction('contacts', 'readwrite');
+  var contacts = tx.objectStore('contacts');
   contacts.put(contact);
-  tx.oncomplete = callback;
+  tx.oncomplete = callback; // todo - shouldn't I do success instead?
 }
 
 function db_contact_get(db, email, callback) {
-  var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email);
-  get.onsuccess = function() {
-    if (get.result !== undefined) {
-      callback(get.result);
-    } else {
-      callback(null);
-    }
-  };
+  if(typeof email !== 'object')  {
+    var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email);
+    get.onsuccess = function() {
+      if(get.result !== undefined) {
+        callback(get.result);
+      } else {
+        callback(null);
+      }
+    };
+  } else {
+    var results = Array(email.length);
+    var finished = 0;
+    $.each(email, function(i, single_email) {
+      db_contact_get(db, single_email, function(contact) {
+        results[i] = contact;
+        if(++finished >= email.length) {
+          callback(results);
+        }
+      });
+    });
+  }
 }
 
-function db_contact_search(db, substring, limit, callback) {
-  var search = db.transaction('contacts', 'readonly').objectStore('contacts').index('search').openCursor(IDBKeyRange.only(substring));
-  var found = [];
-  search.onsuccess = function() {
-    var cursor = search.result;
-    if (!cursor || found.length === limit) {
-      callback(found);
-    } else {
-      found.push(cursor.value);
-      cursor.continue();
+var db_query_keys = ['limit', 'substring', 'has_pgp'];
+
+// query: substring, has_pgp, limit. All voluntary
+function db_contact_search(db, query, callback) {
+  $.each(query, function(key, value) {
+    if(db_query_keys.indexOf(key) === -1) {
+      throw 'db_contact_search: unknown key: ' + key;
     }
-  };
+  });
+  var contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
+  if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
+    if(query.substring) {
+      var with_pgp = {
+        substring: query.substring,
+        limit: query.limit,
+        has_pgp: true,
+      };
+      db_contact_search(db, with_pgp, function(results_with_pgp) {
+        if(query.limit && results_with_pgp.length === query.limit) {
+          callback(results_with_pgp);
+        } else {
+          var without_pgp = {
+            substring: query.substring,
+            limit: query.limit ? query.limit - results_with_pgp.length : undefined,
+            has_pgp: false,
+          };
+          db_contact_search(db, without_pgp, function(results_without_pgp) {
+            callback(results_with_pgp.concat(results_without_pgp));
+          });
+        }
+      });
+    } else {
+      var search = contacts.openCursor();
+    }
+  } else { // specific query.has_pgp value
+    if(query.substring) {
+      var search = contacts.index('search').openCursor(IDBKeyRange.only(db_index(query.has_pgp, query.substring)));
+    } else {
+      var search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
+    }
+  }
+  if(typeof search !== 'undefined') {
+    var found = [];
+    search.onsuccess = function() {
+      var cursor = search.result;
+      if(!cursor || found.length === query.limit) {
+        callback(found);
+      } else {
+        found.push(cursor.value);
+        cursor.continue();
+      }
+    };
+  }
 }

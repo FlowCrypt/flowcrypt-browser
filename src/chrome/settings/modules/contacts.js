@@ -2,44 +2,52 @@
 
 var url_params = get_url_params(['account_email']);
 
-function render() {
-  var pubkeys = pubkey_cache_retrieve();
-  $('table#emails').html('');
-  $.each(pubkeys, function(email, pubkey) {
-    $('table#emails').append('<tr email="' + email + '"><td>' + email + '</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>');
-  });
+db_open(function(db) {
 
-  $('a.action_show').off().click(prevent(doubleclick(), function(self) {
-    $.featherlight('<pre>' + pubkeys[$(self).closest('tr').attr('email')].pubkey + '</pre>');
-  }));
+  function render() {
+    db_contact_search(db, {
+      has_pgp: true
+    }, function(contacts) {
 
-  $('a.action_change').off().click(prevent(doubleclick(), function(self) {
-    var email = $(self).closest('tr').attr('email');
-    $('#edit_pubkey .input_email').text(email);
-    $.featherlight($('#edit_pubkey'));
-  }));
+      $('table#emails').html('');
+      $.each(contacts, function(i, contact) {
+        $('table#emails').append('<tr email="' + contact.email + '"><td>' + contact.email + '</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>');
+      });
 
-  $('#edit_pubkey .action_save_edited_pubkey').off().click(prevent(doubleclick(), function(self) {
-    var armored_pubkey = $('#edit_pubkey.featherlight-inner .input_pubkey').val();
-    if(!armored_pubkey) {
-      $('.featherlight-close').click();
-    } else {
-      var pubkey = openpgp.key.readArmored(armored_pubkey).keys[0];
-      if(typeof pubkey !== 'undefined') {
-        pubkey_cache_add($('#edit_pubkey.featherlight-inner .input_email').text(), pubkey.armor(), undefined, false, false); // todo - think about if wiping has_cryptup to false is necessary
-        render();
-        $('.featherlight-close').click();
-      } else {
-        alert('Cannot recognize a valid pubkey, please try again.');
-        $('#edit_pubkey.featherlight-inner .input_pubkey').val('').focus();
-      }
-    }
-  }));
+      $('a.action_show').off().click(prevent(doubleclick(), function(self) {
+        db_contact_get(db, $(self).closest('tr').attr('email'), function(contact) {
+          $.featherlight('<pre>' + contact.pubkey + '</pre>');
+        });
+      }));
 
-  $('a.action_remove').off().click(prevent(doubleclick(), function(self) {
-    pubkey_cache_remove($(self).closest('tr').attr('email'));
-    render();
-  }));
-}
+      $('a.action_change').off().click(prevent(doubleclick(), function(self) {
+        var email = $(self).closest('tr').attr('email');
+        $('#edit_pubkey .input_email').text(email);
+        $.featherlight($('#edit_pubkey'));
+      }));
 
-render();
+      $('#edit_pubkey .action_save_edited_pubkey').off().click(prevent(doubleclick(), function(self) {
+        var armored_pubkey = $('#edit_pubkey.featherlight-inner .input_pubkey').val();
+        if(!armored_pubkey) {
+          $('.featherlight-close').click();
+        } else {
+          if(key_fingerprint(armored_pubkey) !== null) {
+            $('.featherlight-close').click();
+            db_contact_save(db, db_contact_object($('#edit_pubkey.featherlight-inner .input_email').text(), null, 'pgp', armored_pubkey, null, false), render);
+          } else {
+            alert('Cannot recognize a valid pubkey, please try again.');
+            $('#edit_pubkey.featherlight-inner .input_pubkey').val('').focus();
+          }
+        }
+      }));
+
+      $('a.action_remove').off().click(prevent(doubleclick(), function(self) {
+        db_contact_save(db, db_contact_object($(self).closest('tr').attr('email'), null, null, null, null, null), render);
+      }));
+
+    });
+  }
+
+  render();
+
+});

@@ -115,7 +115,7 @@ function init_setup_js() {
       },
     }, tab_id);
 
-    chrome_message_send(null, 'migrate', {
+    chrome_message_send(null, 'migrate_account', {
       account_email: account_email,
     }, Try(function() {
       start(account_email, tab_id);

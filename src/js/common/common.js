@@ -151,6 +151,10 @@ function get_url_params(expected_keys, string) {
   return url_data;
 }
 
+function cryptup_version_integer() {
+  return Number(chrome.runtime.getManifest().version.replace(/\./g, ''));
+}
+
 function unique(array) {
   var unique = [];
   $.each(array, function(i, v) {
@@ -190,6 +194,19 @@ function trim_lower(email) {
     email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
   }
   return email.trim().toLowerCase();
+}
+
+function parse_email_string(email_string) {
+  if(email_string.indexOf('<') !== -1 && email_string.indexOf('>') !== -1) {
+    return {
+      email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).trim().toLowerCase(),
+      name: email_string.substr(0, email_string.indexOf('<')).trim(),
+    };
+  }
+  return {
+    email: email_string.trim().toLowerCase(),
+    name: null,
+  };
 }
 
 function get_future_timestamp_in_months(months_to_add) {
@@ -1222,6 +1239,7 @@ var events_fired = {};
 var DOUBLECLICK_MS = 1000;
 var SPREE_MS = 50;
 var SLOW_SPREE_MS = 200;
+var VERY_SLOW_SPREE_MS = 500;
 
 function doubleclick() {
   return {
@@ -1239,7 +1257,7 @@ function parallel() {
 
 function spree(type) {
   return {
-    name: (type === 'slow') ? 'slowspree' : 'spree',
+    name: (type || '') + 'spree',
     id: random_string(10),
   }
 }
@@ -1252,6 +1270,9 @@ function prevent(meta, callback) { //todo: messy + needs refactoring
     } else if(meta.name === 'slowspree') {
       clearTimeout(events_fired[meta.id]);
       events_fired[meta.id] = setTimeout(callback, SLOW_SPREE_MS);
+    } else if(meta.name === 'veryslowspree') {
+      clearTimeout(events_fired[meta.id]);
+      events_fired[meta.id] = setTimeout(callback, VERY_SLOW_SPREE_MS);
     } else {
       if(meta.id in events_fired) {
         if(meta.name === 'parallel') {

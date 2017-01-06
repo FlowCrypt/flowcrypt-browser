@@ -4,28 +4,7 @@ var url_params = get_url_params(['account_email', 'armored_pubkey', 'parent_tab_
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
-var cache = pubkey_cache_retrieve();
-
 $('.pubkey').text(url_params.armored_pubkey);
-
-if(typeof pubkey !== 'undefined') {
-  $('.input_email').val(trim_lower(pubkey.users[0].userId.userid));
-  set_button_text();
-} else {
-  $('.add_pubkey').replaceWith('<div style="color: red;">This public key is invalid or has unknown format.</div>');
-  send_resize_message();
-}
-
-$('.add_pubkey').click(prevent(doubleclick(), function(self) {
-  if(is_email_valid($('.input_email').val())) {
-    pubkey_cache_add($('.input_email').val(), pubkey.armor(), undefined, false, false);
-    $(self).replaceWith('<b style="color: green;">' + $('.input_email').val() +' added</b>')
-    $('.input_email').remove();
-  } else {
-    alert('This email is invalid, please check for typos. Not added.');
-    $('.input_email').focus();
-  }
-}));
 
 function send_resize_message() {
   chrome_message_send(url_params.parent_tab_id, 'set_css', {
@@ -36,14 +15,42 @@ function send_resize_message() {
   });
 }
 
-function set_button_text() {
-  if(Object.keys(cache).indexOf($('.input_email').val()) === -1) {
-    $('.add_pubkey').text('add to contacts');
-  } else {
-    $('.add_pubkey').text('update contact');
-  }
+function set_button_text(db) {
+  db_contact_get(db, $('.input_email').val(), function(contact) {
+    if(contact.has_pgp) {
+      $('.add_pubkey').text('update contact');
+    } else {
+      $('.add_pubkey').text('add to contacts');
+    }
+  });
 }
 
-$('.input_email').keyup(set_button_text);
+db_open(function(db) {
+
+  if(typeof pubkey !== 'undefined') {
+    $('.input_email').val(trim_lower(pubkey.users[0].userId.userid));
+    set_button_text(db);
+  } else {
+    $('.add_pubkey').replaceWith('<div style="color: red;">This public key is invalid or has unknown format.</div>');
+    send_resize_message();
+  }
+
+  $('.add_pubkey').click(prevent(doubleclick(), function(self) {
+    if(is_email_valid($('.input_email').val())) {
+      db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', url_params.armored_pubkey, null, false), function () {
+        $(self).replaceWith('<b style="color: green;">' + $('.input_email').val() + ' added</b>')
+        $('.input_email').remove();
+      });
+    } else {
+      alert('This email is invalid, please check for typos. Not added.');
+      $('.input_email').focus();
+    }
+  }));
+
+  $('.input_email').keyup(function() {
+    set_button_text(db);
+  });
+
+});
 
 send_resize_message();

@@ -6,34 +6,35 @@ $.each(url_params.emails.split(','), function(i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');
 });
 
-var cached = pubkey_cache_retrieve();
-if(Object.keys(cached).length) {
-  $('select.copy_from_email').append('<option value=""></option>');
-  $.each(cached, function(email, pubkey) {
-    $('select.copy_from_email').append('<option value="' + email + '">' + email + '</option>');
+db_open(function(db) {
+  db_contact_search(db, {has_pgp: true}, function(contacts) {
+
+    $('select.copy_from_email').append('<option value=""></option>');
+    $.each(contacts, function(i, contact) {
+      $('select.copy_from_email').append('<option value="' + contact.email + '">' + contact.email + '</option>');
+    });
+
+    $('select.copy_from_email').change(function() {
+      if($(this).val()) {
+        db_contact_get(db, $(this).val(), function(contact) {
+          $('.pubkey').val(contact.pubkey).prop('disabled', true);
+        });
+      } else {
+        $('.pubkey').val('').prop('disabled', false);
+      }
+    });
+
+    $('.action_ok').click(prevent(doubleclick(), function() {
+      if(key_fingerprint(strip_pgp_armor($('.pubkey').val()))) {
+        db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', strip_pgp_armor($('.pubkey').val()), null, false), close_dialog);
+      } else {
+        alert('Could not recognize the format, please try again.');
+        $('.pubkey').val('').focus();
+      }
+    }));
+
   });
-} else {
-  $('select.copy_from_email').prop('disabled', true);
-}
-
-$('select.copy_from_email').change(function() {
-  if($(this).val()) {
-    $('.pubkey').val(cached[$(this).val()].pubkey).prop('disabled', true);
-  } else {
-    $('.pubkey').val('').prop('disabled', false);
-  }
 });
-
-$('.action_ok').click(prevent(doubleclick(), function() {
-  var pubkey = openpgp.key.readArmored(strip_pgp_armor($('.pubkey').val())).keys[0];
-  if(typeof pubkey !== 'undefined') {
-    pubkey_cache_add($('select.email').val(), pubkey.armor(), undefined, false, false);
-    close_dialog();
-  } else {
-    alert('Could not recognize the format, please try again.');
-    $('.pubkey').val('').focus();
-  }
-}));
 
 $('.action_settings').click(prevent(doubleclick(), function() {
   chrome_message_send(null, 'settings', {
