@@ -196,6 +196,10 @@ function trim_lower(email) {
   return email.trim().toLowerCase();
 }
 
+function normalize_string(str) {
+  return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
+}
+
 function parse_email_string(email_string) {
   if(email_string.indexOf('<') !== -1 && email_string.indexOf('>') !== -1) {
     return {

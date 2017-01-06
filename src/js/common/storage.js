@@ -238,7 +238,7 @@ function account_storage_remove(gmail_account_email, key_or_keys, callback) {
 }
 
 function db_open(callback) {
-  var open_db = indexedDB.open('cryptup_t4');
+  var open_db = indexedDB.open('cryptup_t5');
   open_db.onupgradeneeded = function() {
     var contacts = open_db.result.createObjectStore('contacts', {
       keyPath: 'email',
@@ -304,6 +304,23 @@ function db_contact_save(db, contact, callback) {
   var contacts = tx.objectStore('contacts');
   contacts.put(contact);
   tx.oncomplete = callback; // todo - shouldn't I do success instead?
+}
+
+function db_contact_update(db, email, update, callback) {
+  db_contact_get(db, email, function(original) {
+    var updated = {};
+    $.each(original, function(k, original_value) {
+      if(k in update) {
+        updated[k] = update[k];
+      } else {
+        updated[k] = original_value;
+      }
+    });
+    var tx = db.transaction('contacts', 'readwrite');
+    var contacts = tx.objectStore('contacts');
+    contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
+    tx.oncomplete = callback; // todo - shouldn't I do success instead?
+  });
 }
 
 function db_contact_get(db, email, callback) {

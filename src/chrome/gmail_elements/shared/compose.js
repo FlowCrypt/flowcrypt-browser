@@ -486,7 +486,10 @@ function init_shared_compose_js(url_params, db) {
 
   function render_search_results(contacts, query, force_loader) {
     var renderable_contacts = contacts.slice();
-    renderable_contacts.splice(0, RENDER_SEARCH_RESULTS_LIMIT);
+    renderable_contacts.sort(function(a, b) { // all that have pgp group on top. Without pgp bottom. Sort both groups by last used first.
+      return(10 * (b.has_pgp - a.has_pgp)) + (b.last_use - a.last_use > 0 ? 1 : -1);
+    });
+    renderable_contacts.splice(8);
     if(renderable_contacts.length > 0 || force_loader) {
       var ul_html = '';
       $.each(renderable_contacts, function(i, contact) {
@@ -539,10 +542,22 @@ function init_shared_compose_js(url_params, db) {
         } else {
           render_search_results(contacts, query, true);
           gmail_api_search_contacts(url_params.account_email, query.substring, contacts, function(gmail_contact_results) {
+            var re_rendering_needed = false;
             if(gmail_contact_results.new.length) {
               $.each(gmail_contact_results.new, function(i, contact) {
-                db_contact_save(db, db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function() {
-                  search_contacts(true);
+                db_contact_get(db, contact.email, function(in_db) {
+                  if(!in_db) {
+                    db_contact_save(db, db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function() {
+                      search_contacts(true);
+                    });
+                  } else if(!in_db.name && contact.name) {
+                    var to_update = {
+                      name: contact.name
+                    };
+                    db_contact_update(db, contact.email, to_update, function() {
+                      search_contacts(true);
+                    });
+                  }
                 });
               });
             } else {
