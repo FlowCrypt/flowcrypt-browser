@@ -1,5 +1,7 @@
 'use strict';
 
+var USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
+
 function gmail_api_call(account_email, method, resource, parameters, callback, fail_on_auth) {
   account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
     if(method === 'GET' || method === 'DELETE') {
@@ -258,7 +260,7 @@ function gmail_api_find_header(gmail_api_message_object, header_name) {
 }
 
 function gmail_api_search_contacts(account_email, user_query, known_contacts, callback) {
-  var gmail_query = ['is:sent'];
+  var gmail_query = ['is:sent', USELESS_CONTACTS_FILTER];
   if(user_query) {
     gmail_query.push();
     var variations_of_to = user_query.split(/[ \.]/g);
