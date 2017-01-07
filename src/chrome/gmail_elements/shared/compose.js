@@ -483,6 +483,9 @@ function init_shared_compose_js(url_params, db) {
 
   function render_search_results_loading_done() {
     $('#contacts ul li.loading').remove();
+    if(!$('#contacts ul li').length) {
+      hide_contacts();
+    }
   }
 
   function render_search_results(contacts, query) {
