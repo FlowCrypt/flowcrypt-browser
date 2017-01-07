@@ -418,7 +418,7 @@ function init_shared_compose_js(url_params, db) {
   }
 
   function select_contact(email, from_query) {
-    if($('.recipients span').last().text() === from_query) {
+    if($('.recipients span').last().text() === from_query.substring) {
       $('.recipients span').last().remove();
     }
     $('#input_to').focus();
