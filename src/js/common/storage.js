@@ -242,7 +242,7 @@ function normalize_string(str) {
 }
 
 function db_open(callback) {
-  var open_db = indexedDB.open('cryptup_t6');
+  var open_db = indexedDB.open('cryptup_t7');
   open_db.onupgradeneeded = function() {
     var contacts = open_db.result.createObjectStore('contacts', {
       keyPath: 'email',

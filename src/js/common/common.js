@@ -199,12 +199,12 @@ function trim_lower(email) {
 function parse_email_string(email_string) {
   if(email_string.indexOf('<') !== -1 && email_string.indexOf('>') !== -1) {
     return {
-      email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).trim().toLowerCase(),
-      name: email_string.substr(0, email_string.indexOf('<')).trim(),
+      email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
+      name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
     };
   }
   return {
-    email: email_string.trim().toLowerCase(),
+    email: email_string.replace(/["']/g, '').trim().toLowerCase(),
     name: null,
   };
 }
