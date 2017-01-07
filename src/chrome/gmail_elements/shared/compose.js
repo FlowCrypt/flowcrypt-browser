@@ -19,6 +19,7 @@ function init_shared_compose_js(url_params, db) {
   var can_save_drafts = undefined;
   var can_read_emails = undefined;
   var last_reply_box_table_height = undefined;
+  var contact_search_in_progress = false;
   var added_pubkey_db_lookup_interval = undefined;
   var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
   var save_draft_in_process = false;
@@ -484,13 +485,13 @@ function init_shared_compose_js(url_params, db) {
     $('#contacts ul li.loading').remove();
   }
 
-  function render_search_results(contacts, query, force_loader) {
+  function render_search_results(contacts, query) {
     var renderable_contacts = contacts.slice();
     renderable_contacts.sort(function(a, b) { // all that have pgp group on top. Without pgp bottom. Sort both groups by last used first.
       return(10 * (b.has_pgp - a.has_pgp)) + (b.last_use - a.last_use > 0 ? 1 : -1);
     });
     renderable_contacts.splice(8);
-    if(renderable_contacts.length > 0 || force_loader) {
+    if(renderable_contacts.length > 0 || contact_search_in_progress) {
       var ul_html = '';
       $.each(renderable_contacts, function(i, contact) {
         ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
@@ -512,7 +513,9 @@ function init_shared_compose_js(url_params, db) {
         }
         ul_html += '</li>';
       });
-      ul_html += '<li class="loading">loading...</li>';
+      if(contact_search_in_progress) {
+        ul_html += '<li class="loading">loading...</li>';
+      }
       $('#contacts ul').html(ul_html);
       $('#contacts ul li.select_contact').click(function() {
         select_contact($(this).attr('email'), query);
@@ -538,9 +541,10 @@ function init_shared_compose_js(url_params, db) {
     if(query.substring !== '') {
       db_contact_search(db, query, function(contacts) {
         if(db_only) {
-          render_search_results(contacts, query, false);
+          render_search_results(contacts, query);
         } else {
-          render_search_results(contacts, query, true);
+          contact_search_in_progress = true;
+          render_search_results(contacts, query);
           gmail_api_search_contacts(url_params.account_email, query.substring, contacts, function(gmail_contact_results) {
             var re_rendering_needed = false;
             if(gmail_contact_results.new.length) {
@@ -562,6 +566,7 @@ function init_shared_compose_js(url_params, db) {
               });
             } else {
               render_search_results_loading_done();
+              contact_search_in_progress = false;
             }
           });
         }
