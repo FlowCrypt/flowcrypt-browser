@@ -241,6 +241,14 @@ function normalize_string(str) {
   return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
 }
 
+function db_error_handle(exception, error_stack, callback) {
+  exception.stack = error_stack.replace(/^Error/, String(exception));
+  cryptup_error_handler_manual(exception);
+  if(typeof callback === 'function') {
+    callback();
+  }
+}
+
 function db_open(callback) {
   var open_db = indexedDB.open('cryptup_t10');
   open_db.onupgradeneeded = function() {
@@ -253,9 +261,18 @@ function db_open(callback) {
     contacts.createIndex('index_has_pgp', 'has_pgp');
     contacts.createIndex('index_pending_lookup', 'pending_lookup');
   };
-  open_db.onsuccess = function() {
+  var handled = 0; // the indexedDB docs don't say if onblocked and onerror can happen in the same request, or if the event/exception bubbles to both
+  open_db.onsuccess = Try(function() {
+    handled++;
     callback(open_db.result);
-  };
+  });
+  var stack_fill = (new Error()).stack;
+  open_db.onblocked = Try(function() {
+    db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
+  });
+  open_db.onerror = Try(function() {
+    db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
+  });
 }
 
 function db_index(has_pgp, substring) {
@@ -318,7 +335,11 @@ function db_contact_save(db, contact, callback) {
     var tx = db.transaction('contacts', 'readwrite');
     var contacts = tx.objectStore('contacts');
     contacts.put(contact);
-    tx.oncomplete = callback; // todo - shouldn't I do success instead?
+    tx.oncomplete = Try(callback);
+    var stack_fill = (new Error()).stack;
+    tx.onabort = Try(function() {
+      db_error_handle(tx.error, stack_fill, callback);
+    });
   }
 }
 
@@ -345,7 +366,11 @@ function db_contact_update(db, email, update, callback) {
       var tx = db.transaction('contacts', 'readwrite');
       var contacts = tx.objectStore('contacts');
       contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
-      tx.oncomplete = callback; // todo - shouldn't I do success instead?
+      tx.oncomplete = Try(callback);
+      var stack_fill = (new Error()).stack;
+      tx.onabort = Try(function() {
+        db_error_handle(tx.error, stack_fill, callback);
+      });
     });
   }
 }
@@ -353,12 +378,16 @@ function db_contact_update(db, email, update, callback) {
 function db_contact_get(db, email, callback) {
   if(typeof email !== 'object') {
     var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email);
-    get.onsuccess = function() {
+    get.onsuccess = Try(function() {
       if(get.result !== undefined) {
         callback(get.result);
       } else {
         callback(null);
       }
+    });
+    var stack_fill = (new Error()).stack;
+    get.onerror = function() {
+      db_error_handle(get.error, stack_fill, callback);
     };
   } else {
     var results = Array(email.length);
@@ -418,7 +447,7 @@ function db_contact_search(db, query, callback) {
   }
   if(typeof search !== 'undefined') {
     var found = [];
-    search.onsuccess = function() {
+    search.onsuccess = Try(function() {
       var cursor = search.result;
       if(!cursor || found.length === query.limit) {
         callback(found);
@@ -426,6 +455,10 @@ function db_contact_search(db, query, callback) {
         found.push(cursor.value);
         cursor.continue();
       }
-    };
+    });
+    var stack_fill = (new Error()).stack;
+    search.onerror = Try(function() {
+      db_error_handle(search.error, stack_fill, callback);
+    });
   }
 }

@@ -84,30 +84,33 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
   return true;
 }
 
-// last argument will be the function to run. Previous arguments will be passed to that function.
 function Try(code) {
   return function() {
     try {
       return code();
     } catch(code_err) {
-      try {
-        var caller_line = code_err.stack.split('\n')[1];
-        var matched = caller_line.match(/\.js\:([0-9]+)\:([0-9]+)\)?/);
-        var line = Number(matched[1]);
-        var col = Number(matched[2]);
-      } catch(line_err) {
-        var line = 0;
-        var col = 0;
-      }
-      try {
-        chrome_message_send(null, 'runtime', null, function(runtime) {
-          cryptup_error_handler(code_err.message, window.location.href, line, col, code_err, true, runtime.version, runtime.environment);
-        });
-      } catch(message_err) {
-        cryptup_error_handler(code_err.message, window.location.href, line, col, code_err, true);
-      }
+      cryptup_error_handler_manual(code_err);
     }
   };
+}
+
+function cryptup_error_handler_manual(exception) {
+  try {
+    var caller_line = exception.stack.split('\n')[1];
+    var matched = caller_line.match(/\.js\:([0-9]+)\:([0-9]+)\)?/);
+    var line = Number(matched[1]);
+    var col = Number(matched[2]);
+  } catch(line_err) {
+    var line = 0;
+    var col = 0;
+  }
+  try {
+    chrome_message_send(null, 'runtime', null, function(runtime) {
+      cryptup_error_handler(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
+    });
+  } catch(message_err) {
+    cryptup_error_handler(exception.message, window.location.href, line, col, exception, true);
+  }
 }
 
 function WrapWithTryIfContentScript(code) {
