@@ -323,20 +323,31 @@ function db_contact_save(db, contact, callback) {
 }
 
 function db_contact_update(db, email, update, callback) {
-  db_contact_get(db, email, function(original) {
-    var updated = {};
-    $.each(original, function(k, original_value) {
-      if(k in update) {
-        updated[k] = update[k];
-      } else {
-        updated[k] = original_value;
-      }
+  if(Array.isArray(email)) {
+    var processed = 0;
+    $.each(email, function(i, single_email) {
+      db_contact_update(db, single_email, update, function() {
+        if(++processed === email.length && typeof callback === 'function') {
+          callback();
+        }
+      });
     });
-    var tx = db.transaction('contacts', 'readwrite');
-    var contacts = tx.objectStore('contacts');
-    contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
-    tx.oncomplete = callback; // todo - shouldn't I do success instead?
-  });
+  } else {
+    db_contact_get(db, email, function(original) {
+      var updated = {};
+      $.each(original, function(k, original_value) {
+        if(k in update) {
+          updated[k] = update[k];
+        } else {
+          updated[k] = original_value;
+        }
+      });
+      var tx = db.transaction('contacts', 'readwrite');
+      var contacts = tx.objectStore('contacts');
+      contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
+      tx.oncomplete = callback; // todo - shouldn't I do success instead?
+    });
+  }
 }
 
 function db_contact_get(db, email, callback) {

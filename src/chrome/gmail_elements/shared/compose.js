@@ -255,7 +255,12 @@ function init_shared_compose_js(url_params, db) {
                   body = format_challenge_question_email(challenge.question, body);
                 }
                 $('#send_btn span').text(sending);
-                send_email_callback(body, attachments);
+                var contact_update_last_use = {
+                  last_use: Date.now(),
+                };
+                db_contact_update(db, recipients, contact_update_last_use, function() {
+                  send_email_callback(body, attachments);
+                });
               });
             });
           } catch(err) {
