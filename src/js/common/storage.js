@@ -237,8 +237,12 @@ function account_storage_remove(gmail_account_email, key_or_keys, callback) {
   });
 }
 
+function normalize_string(str) {
+  return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
+}
+
 function db_open(callback) {
-  var open_db = indexedDB.open('cryptup_t5');
+  var open_db = indexedDB.open('cryptup_t6');
   open_db.onupgradeneeded = function() {
     var contacts = open_db.result.createObjectStore('contacts', {
       keyPath: 'email',
@@ -273,8 +277,9 @@ function db_create_search_index_list(email, name, has_pgp) {
       var substring = '';
       $.each(part.split(''), function(i, letter) {
         substring += letter;
-        if(index.indexOf(substring) === -1) {
-          index.push(db_index(has_pgp, substring));
+        var normalized = normalize_string(substring);
+        if(index.indexOf(normalized) === -1) {
+          index.push(db_index(has_pgp, normalized));
         }
       });
     }
@@ -324,7 +329,7 @@ function db_contact_update(db, email, update, callback) {
 }
 
 function db_contact_get(db, email, callback) {
-  if(typeof email !== 'object')  {
+  if(typeof email !== 'object') {
     var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email);
     get.onsuccess = function() {
       if(get.result !== undefined) {
@@ -358,6 +363,7 @@ function db_contact_search(db, query, callback) {
   });
   var contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
   if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
+    query.substring = normalize_string(query.substring);
     if(query.substring) {
       var with_pgp = {
         substring: query.substring,
