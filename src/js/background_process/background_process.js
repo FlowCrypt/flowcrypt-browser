@@ -3,7 +3,9 @@
 console.log('background_process.js starting');
 
 migrate_global(function() {
-  console.log('migrate_global done');
+  account_storage_set(null, {
+    version: cryptup_version_integer(),
+  }, callback);
 });
 
 chrome_message_background_listen({

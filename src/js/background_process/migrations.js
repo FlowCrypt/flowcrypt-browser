@@ -14,7 +14,7 @@ function migrate_account(data, sender, respond_done) {
 
 function migrate_global(callback) {
   account_storage_get(null, ['version'], function(global_storage) {
-    if(global_storage.version && global_storage.version < 300 && typeof localStorage.pubkey_cache !== 'undefined') {
+    if((!global_storage.version || global_storage.version < 300) && typeof localStorage.pubkey_cache !== 'undefined') {
       global_migrate_v_300(callback);
     } else {
       callback();
@@ -31,7 +31,7 @@ function global_migrate_v_300(callback) {
       contacts.put(db_contact_object(email, null, contact.has_cryptup ? 'cryptup' : 'pgp', contact.pubkey, contact.attested, false, Date.now()));
     });
     tx.oncomplete = function() {
-      // delete localStorage.pubkey_cache;
+      delete localStorage.pubkey_cache;
       callback();
     };
   });
