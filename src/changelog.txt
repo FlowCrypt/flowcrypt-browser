@@ -1,3 +1,10 @@
+<b>version 3.0.0 on January 7, 2017: Seamless Contacts</b>
+composing: using sent emails for contacts search
+setup: fixing broken adding of secondary keys
+setup: notify user about incompatible s2k type key
+setup: injecting initial scripts into gmail broken on some browsers
+setup: fixing broken manual key create
+
 <b>version 2.9.3 on January 3, 2017: Browser Incompatibility Test</b>
 setup: do a test during setup to see if the created key is usable
 setup: error on entering ECC keys - notify user
