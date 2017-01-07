@@ -391,8 +391,8 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
     try {
       var decrypted = prv_to_test_passphrase.decrypt($('#step_2b_manual_enter .input_passphrase').val());
     } catch(e) {
-      if(e.message === 'Invalid enum value.') {
-        alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (error: Invalid enum value.)');
+      if(e.message === 'Invalid enum value.' || e.message === 'Unknown s2k type.') {
+        alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (error: ' + e.message + ')');
         return;
       } else {
         throw e;
