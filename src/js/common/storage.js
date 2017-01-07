@@ -305,10 +305,21 @@ function db_contact_object(email, name, client, pubkey, attested, pending_lookup
 }
 
 function db_contact_save(db, contact, callback) {
-  var tx = db.transaction('contacts', 'readwrite');
-  var contacts = tx.objectStore('contacts');
-  contacts.put(contact);
-  tx.oncomplete = callback; // todo - shouldn't I do success instead?
+  if(Array.isArray(contact)) {
+    var processed = 0;
+    $.each(contact, function(i, single_contact) {
+      db_contact_save(db, single_contact, function() {
+        if(++processed === contact.length && typeof callback === 'function') {
+          callback();
+        }
+      });
+    });
+  } else {
+    var tx = db.transaction('contacts', 'readwrite');
+    var contacts = tx.objectStore('contacts');
+    contacts.put(contact);
+    tx.oncomplete = callback; // todo - shouldn't I do success instead?
+  }
 }
 
 function db_contact_update(db, email, update, callback) {

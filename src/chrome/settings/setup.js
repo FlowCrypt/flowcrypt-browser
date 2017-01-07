@@ -10,11 +10,12 @@ $('.email-address').text(url_params.account_email);
 
 $('.back').css('visibility', 'hidden');
 
-var account_email_attested_fingerprint = undefined;
-
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+
+var account_email_attested_fingerprint = undefined;
 var recovered_keys = undefined;
 var tab_id_global = undefined;
+var all_addresses = [url_params.account_email];
 
 chrome_message_get_tab_id(function(tab_id) {
   tab_id_global = tab_id;
@@ -44,6 +45,7 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
   }
 
   function save_and_fill_submit_option(addresses) {
+    all_addresses = addresses.concat(url_params.account_email);
     account_storage_set(url_params.account_email, {
       addresses: addresses
     }, function() {
@@ -191,7 +193,7 @@ function finalize_setup(account_email, armored_pubkey, options) {
   });
 }
 
-function save_private_key(account_email, prv, options) {
+function save_key(account_email, prv, options, callback) {
   private_storage_set('local', account_email, 'master_private_key', prv.armor());
   if(options.save_passphrase) {
     private_storage_set('local', account_email, 'master_passphrase', options.passphrase || '');
@@ -202,6 +204,14 @@ function save_private_key(account_email, prv, options) {
   private_storage_set('local', account_email, 'master_public_key', prv.toPublic().armor());
   private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
+  var contacts = [];
+  $.each(all_addresses, function(i, address) {
+    var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== key_fingerprint(prv.toPublic().armor()));
+    contacts.push(db_contact_object(address, options.name, 'cryptup', prv.toPublic().armor(), attested, false, Date.now()));
+  });
+  db_open(function(db) {
+    db_contact_save(db, contacts, callback);
+  });
 }
 
 function create_save_key_pair(account_email, options) {
@@ -216,8 +226,9 @@ function create_save_key_pair(account_email, options) {
     options.is_newly_created_key = true;
     var prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
     test_private_key_and_handle(url_params.account_email, prv, options, function() {
-      save_private_key(account_email, prv, options);
-      finalize_setup(account_email, key.publicKeyArmored, options);
+      save_key(account_email, prv, options, function() {
+        finalize_setup(account_email, key.publicKeyArmored, options);
+      });
     });
   }).catch(function(error) {
     $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed there and send them to me.<br/><br/>tom@cryptup.org - thanks!');
@@ -293,8 +304,9 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
           setup_simple: true,
           key_backup_prompt: false,
         };
-        save_private_key(url_params.account_email, key_copy, options);
-        finalize_setup(url_params.account_email, key_copy.toPublic().armor(), options);
+        save_key(url_params.account_email, key_copy, options, function() {
+          finalize_setup(url_params.account_email, key_copy.toPublic().armor(), options);
+        });
         worked = true;
         return false;
       }
@@ -357,10 +369,11 @@ $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_ma
 });
 
 function test_private_key_and_handle(account_email, key, options, success_callback) {
-  test_private_key(key.armor(), $('#step_2b_manual_enter .input_passphrase').val(), function(key_works, error) {
+  test_private_key(key.armor(), options.passphrase, function(key_works, error) {
     if(key_works) {
-      success_callback()
+      success_callback();
     } else {
+      console.log(error);
       $('h1').text('Browser incompatibility discovered');
       display_block('step_3_test_failed');
     }
@@ -399,8 +412,9 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
         submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
         save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
       };
-      save_private_key(url_params.account_email, prv, options);
-      finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
+      save_key(url_params.account_email, prv, options, function() {
+        finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
+      });
     }
   }
 });

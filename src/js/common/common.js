@@ -926,7 +926,6 @@ function test_private_key(armored, passphrase, callback) {
       publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
     }).then(function(result) {
       var prv = openpgp.key.readArmored(armored).keys[0];
-      prv.decrypt(passphrase);
       openpgp.decrypt({
         message: openpgp.message.readArmored(result.data),
         format: 'utf8',
