@@ -61,16 +61,16 @@ function inject_notification(tab_id, notification) {
     "/js/content_scripts/gmail_tab/elements/notifications.js",
   ];
   inject_content_scripts(tab_id, files, function() {
-    var code = `
-      Try(function() {
-        init_elements_inject_js();
-        init_elements_notifications_js();
-        inject_meta('');
-        gmail_notification_show('` + notification + `');
-        $('body').one('click', Try(gmail_notification_clear));
-        window.same_world_global = true;
-      })();
-    `;
+    var code = [
+      'Try(function() {',
+      '  init_elements_inject_js();',
+      '  init_elements_notifications_js();',
+      '  inject_meta("");',
+      '  gmail_notification_show("' + notification.replace(/"/g, '\\\"') + '");',
+      '  $("body").one("click", Try(gmail_notification_clear));',
+      '  window.same_world_global = true;',
+      '})();',
+    ].join('\n');
     chrome.tabs.executeScript(tab_id, {
       code: code,
     });
