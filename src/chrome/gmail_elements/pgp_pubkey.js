@@ -17,7 +17,7 @@ function send_resize_message() {
 
 function set_button_text(db) {
   db_contact_get(db, $('.input_email').val(), function(contact) {
-    if(contact.has_pgp) {
+    if(contact && contact.has_pgp) {
       $('.add_pubkey').text('update contact');
     } else {
       $('.add_pubkey').text('add to contacts');
