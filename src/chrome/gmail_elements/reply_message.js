@@ -1,10 +1,16 @@
 'use strict';
 
+var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
+
 db_open(function(db) {
+
+  if(db === db_denied) {
+    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+    return;
+  }
 
   var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
-  var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
   var original_reply_message_prompt = undefined;
   var thread_message_id_last = '';
   var thread_message_referrences_last = '';

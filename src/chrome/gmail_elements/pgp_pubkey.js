@@ -27,6 +27,11 @@ function set_button_text(db) {
 
 db_open(function(db) {
 
+  if(db === db_denied) {
+    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+    return;
+  }
+
   if(typeof pubkey !== 'undefined') {
     $('.input_email').val(trim_lower(pubkey.users[0].userId.userid));
     set_button_text(db);

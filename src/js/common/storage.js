@@ -249,6 +249,10 @@ function db_error_handle(exception, error_stack, callback) {
   }
 }
 
+function db_denied() {
+  throw 'db_denied is not callable';
+}
+
 function db_open(callback) {
   var open_db = indexedDB.open('cryptup');
   open_db.onupgradeneeded = function() {
@@ -271,7 +275,11 @@ function db_open(callback) {
     db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
   });
   open_db.onerror = Try(function() {
-    db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
+    if(open_db.error.message === 'The user denied permission to access the database.') {
+      callback(db_denied);
+    } else {
+      db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
+    }
   });
 }
 

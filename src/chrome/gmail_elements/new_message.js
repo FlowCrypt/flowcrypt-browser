@@ -1,19 +1,16 @@
 'use strict';
 
+var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id']);
+
 db_open(function(db) {
 
-  var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id']);
-  var compose = init_shared_compose_js(url_params, db);
-
-  function new_message_close() {
-    if(url_params.placement === 'settings') {
-      chrome_message_send(url_params.parent_tab_id, 'close_page');
-    } else if(url_params.placement === 'popup') {
-      window.close();
-    } else {
-      chrome_message_send(url_params.parent_tab_id, 'close_new_message');
-    }
+  if(db === db_denied) {
+    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+    setTimeout(new_message_close, 300);
+    return;
   }
+
+  var compose = init_shared_compose_js(url_params, db);
 
   function send_btn_click() {
     var recipients = compose.get_recipients_from_dom();
@@ -96,3 +93,13 @@ db_open(function(db) {
   });
 
 });
+
+function new_message_close() {
+  if(url_params.placement === 'settings') {
+    chrome_message_send(url_params.parent_tab_id, 'close_page');
+  } else if(url_params.placement === 'popup') {
+    window.close();
+  } else {
+    chrome_message_send(url_params.parent_tab_id, 'close_new_message');
+  }
+}
