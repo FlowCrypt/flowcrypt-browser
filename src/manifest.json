@@ -19,7 +19,6 @@
       "matches": ["*://mail.google.com/*"],
       "js": [
         "/lib/jquery.min.js",
-        "/lib/striptags.js",
         "/js/common/storage.js",
         "/js/common/common.js",
         "/js/content_scripts/gmail_tab/elements/inject.js",

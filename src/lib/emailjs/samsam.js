@@ -1,3 +1,4 @@
+// BSD LICENSE Copyright (c) 2010-2012, Christian Johansen and August Lilleaas https://github.com/busterjs/samsam/blob/master/LICENSE
 ((typeof define === "function" && define.amd && function (m) { define("samsam", m); }) ||
  (typeof module === "object" &&
       function (m) { module.exports = m(); }) || // Node

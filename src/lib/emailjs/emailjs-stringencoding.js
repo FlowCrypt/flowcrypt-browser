@@ -1,3 +1,4 @@
+// un-licensed as public domain https://github.com/inexorabletash/text-encoding/blob/master/LICENSE.md
 (function(root, factory) {
     'use strict';
 

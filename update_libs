@@ -12,19 +12,18 @@ USE_GIT = 'USE_GIT'
 LIBS = [
     {'name': 'openpgp.js', 'url': 'https://raw.githubusercontent.com/openpgpjs/openpgpjs/master/dist/openpgp.js', 'v': r'versionstring: ?"([^"]+)"'},
     {'name': 'require.js', 'url': 'https://raw.githubusercontent.com/requirejs/requirejs/master/require.js', 'v': r'version ?= ?\'([^\']+)\''},
-    {'name': 'striptags.js', 'url': 'https://raw.githubusercontent.com/ericnorris/striptags/master/striptags.js', 'v': USE_GIT},
-    {'name': 'zxcvbn.js', 'url': 'https://raw.githubusercontent.com/dropbox/zxcvbn/master/dist/zxcvbn.js', 'v': USE_GIT},
+    {'name': 'zxcvbn.js', 'url': 'https://raw.githubusercontent.com/dropbox/zxcvbn/master/dist/zxcvbn.js', 'v': USE_GIT, 'license': '// MIT-style Copyright (c) 2012-2016 Dan Wheeler and Dropbox, Inc. https://github.com/dropbox/zxcvbn/blob/master/LICENSE.txt'},
     {'name': 'iso-8859-2.js', 'url': 'https://raw.githubusercontent.com/mathiasbynens/iso-8859-2/master/iso-8859-2.js', 'v': r'/\*! https://mths\.be/iso-8859-2 v([^ ]+) by @mathias \| MIT license \*/'},
     {'name': 'emailjs/emailjs-addressparser.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-addressparser/master/src/emailjs-addressparser.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-mime-builder.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-builder/master/src/emailjs-mime-builder.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-mime-codec.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-codec/master/src/emailjs-mime-codec.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-mime-parser.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-parser/master/src/emailjs-mime-parser.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-mime-types.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-types/master/src/emailjs-mime-types.js', 'v': USE_GIT},
-    {'name': 'emailjs/emailjs-stringencoding.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-stringencoding/master/src/emailjs-stringencoding.js', 'v': USE_GIT},
-    {'name': 'emailjs/formatio.js', 'url': 'https://raw.githubusercontent.com/busterjs/formatio/master/lib/formatio.js', 'v': USE_GIT}, # has v in readme
+    {'name': 'emailjs/emailjs-stringencoding.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-stringencoding/master/src/emailjs-stringencoding.js', 'v': USE_GIT, 'license': '// un-licensed as public domain https://github.com/inexorabletash/text-encoding/blob/master/LICENSE.md\n'},
+    {'name': 'emailjs/formatio.js', 'url': 'https://raw.githubusercontent.com/busterjs/formatio/master/lib/formatio.js', 'v': USE_GIT, 'lincense': '// BSD LICENSE Copyright (c) 2010-2012, Christian Johansen and August Lilleaas https://raw.githubusercontent.com/busterjs/formatio/master/LICENSE\n'}, # has v in readme
     {'name': 'emailjs/lolex.js', 'url': 'https://raw.githubusercontent.com/sinonjs/lolex/master/lolex.js', 'v': USE_GIT},
     {'name': 'emailjs/punycode.js', 'url': 'https://raw.githubusercontent.com/bestiejs/punycode.js/master/punycode.js', 'v': r'/\*! https://mths\.be/punycode v([^ ]+) by @mathias \*/'},
-    {'name': 'emailjs/samsam.js', 'url': 'https://raw.githubusercontent.com/busterjs/samsam/master/lib/samsam.js', 'v': USE_GIT},
+    {'name': 'emailjs/samsam.js', 'url': 'https://raw.githubusercontent.com/busterjs/samsam/master/lib/samsam.js', 'v': USE_GIT, 'license': '// BSD LICENSE Copyright (c) 2010-2012, Christian Johansen and August Lilleaas https://github.com/busterjs/samsam/blob/master/LICENSE'},
     {'name': 'emailjs/sinon.js', 'url': 'https://raw.githubusercontent.com/sinonjs/sinon/master/lib/sinon.js', 'v': r' \* Sinon\.JS ([^ ,]+)'},
     {'name': 'emailjs/util.js', 'url': 'https://raw.githubusercontent.com/isaacs/core-util-is/509c1d671df48207b7c1a9708195049fd35c053e/lib/util.js', 'v': USE_GIT}, # outdated https://github.com/joyent/node-http-signature/issues/18
     {'name': 'featherlight/featherlight.js', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.js', 'v': r' \* Version ([^ ]+) '},
