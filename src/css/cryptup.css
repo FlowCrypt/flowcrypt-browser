@@ -1,7 +1,7 @@
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; text-align: center; white-space: nowrap;
-  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 7px 15px; text-decoration: none; cursor: pointer; }
+  min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 5px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
 
 .line.red, td.red, b.red, span.red { color: #d14836; }
@@ -181,6 +181,9 @@ body > #pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px
 body > #pgp_block input#answer { padding: 8px 8px; width: 232px; }
 body > #pgp_block #attachments { margin-top: 20px; }
 body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; padding: 12px; }
+body > #pgp_block > .block_pubkey_full { display: none; }
+body > #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
+body > #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }

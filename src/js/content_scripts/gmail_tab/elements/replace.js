@@ -29,7 +29,7 @@ function init_elements_replace_js() {
       var blocks = [];
       if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1 && text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
         $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+?-----END PGP PUBLIC KEY BLOCK-----/mg), function(i, armored) {
-          blocks.push(pgp_pubkey_iframe(account_email, armored, gmail_tab_id));
+          blocks.push(pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id));
         });
       }
       if(text.indexOf('-----BEGIN ATTEST PACKET-----') !== -1 && text.indexOf('-----END ATTEST PACKET-----') !== -1) {

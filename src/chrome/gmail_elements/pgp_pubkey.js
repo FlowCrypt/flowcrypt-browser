@@ -1,6 +1,7 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'frame_id']);
+var url_params = get_url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'is_outgoing', 'frame_id']);
+url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
@@ -34,6 +35,7 @@ db_open(function(db) {
 
   if(typeof pubkey !== 'undefined') {
     $('.input_email').val(trim_lower(pubkey.users[0].userId.userid));
+    $('.email').text(trim_lower(pubkey.users[0].userId.userid));
     set_button_text(db);
   } else {
     $('.add_pubkey').replaceWith('<div style="color: red;">This public key is invalid or has unknown format.</div>');
@@ -57,5 +59,17 @@ db_open(function(db) {
   });
 
 });
+
+$('.action_show_full').click(function() {
+  $('.block_pubkey_outgoing').css('display', 'none');
+  $('.block_pubkey_full').css('display', 'block');
+  send_resize_message();
+});
+
+if(url_params.is_outgoing) {
+  $('.block_pubkey_outgoing').css('display', 'block');
+} else {
+  $('.block_pubkey_full').css('display', 'block');
+}
 
 send_resize_message();
