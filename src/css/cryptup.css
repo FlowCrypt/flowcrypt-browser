@@ -1,3 +1,5 @@
+@font-face { font-family: 'signature'; src: url('/fonts/Tangerine_Regular.ttf'); }
+@font-face { font-family: 'signature'; src: url('/fonts/Tangerine_Bold.ttf'); font-weight: bold; }
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; text-align: center; white-space: nowrap;
@@ -26,6 +28,7 @@
 .featherlight .featherlight-close-icon { background: none !important; }
 .good { color: #088447; }
 .bad { color: #A44; }
+.neutral { color: #B7B7B7; }
 
 div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;}
 div.wide.line { max-width: 850px; }
@@ -184,6 +187,13 @@ body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px so
 body > #pgp_block > .block_pubkey_full { display: none; }
 body > #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
 body > #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
+body > #pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; }
+body > #pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
+body > #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 100px; float: right; }
+body > #pgp_signature.neutral, body > #pgp_signature.bad, body > #pgp_signature:hover { opacity: 1; }
+body > #pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #B7B7B7; }
+body > #pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }
+body > #pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
 
 /* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }

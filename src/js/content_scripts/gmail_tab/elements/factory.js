@@ -50,7 +50,7 @@ function init_elements_factory_js() {
     return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe src="' + src + '"></iframe></span>';
   };
 
-  window.pgp_block_iframe = function(pgp_block_text, question, account_email, message_id, is_outgoing, gmail_tab_id) {
+  window.pgp_block_iframe = function(pgp_block_text, question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id) {
     var id = random_string();
     var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
       '?frame_id=frame_' + id +
@@ -58,6 +58,7 @@ function init_elements_factory_js() {
       '&message=' + encodeURIComponent(pgp_block_text) +
       '&account_email=' + encodeURIComponent(account_email) +
       '&message_id=' + encodeURIComponent(message_id) +
+      '&sender_email=' + encodeURIComponent(sender_email) +
       '&is_outgoing=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) + //todo - improve/simplify
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
     return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;

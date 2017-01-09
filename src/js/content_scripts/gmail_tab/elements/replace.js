@@ -25,7 +25,8 @@ function init_elements_replace_js() {
       var html = $(this).html();
       var text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
       var message_id = parse_message_id_from('message', this);
-      var is_outgoing = addresses.indexOf($(this).closest('.gs').find('span.gD').attr('email')) !== -1;
+      var sender_email = $(this).closest('.gs').find('span.gD').attr('email');
+      var is_outgoing = addresses.indexOf(sender_email) !== -1;
       var blocks = [];
       if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1 && text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
         $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+?-----END PGP PUBLIC KEY BLOCK-----/mg), function(i, armored) {
@@ -44,7 +45,7 @@ function init_elements_replace_js() {
       }
       if(text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1 && text.indexOf('-----END PGP SIGNATURE-----') !== -1) { //todo - what if the end was clipped by gmail
         $.each(text.match(/-----BEGIN PGP SIGNED MESSAGE-----[^]+?-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/mg), function(i, armored) {
-          blocks.push(pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, gmail_tab_id));
+          blocks.push(pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, sender_email, gmail_tab_id));
         });
       }
       var has_pgp_end = text.indexOf('-----END PGP MESSAGE-----') !== -1;
@@ -52,7 +53,7 @@ function init_elements_replace_js() {
       if(text.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 && (has_pgp_end || has_gmail_crop)) {
         var question = extract_pgp_question(html);
         $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----[^]+' + ((has_pgp_end) ? '?-----END PGP MESSAGE-----' : ''), 'mg')), function(i, armored) {
-          blocks.push(pgp_block_iframe((armored.indexOf('-----END PGP MESSAGE-----') !== -1) ? armored : '', question, account_email, message_id, is_outgoing, gmail_tab_id));
+          blocks.push(pgp_block_iframe((armored.indexOf('-----END PGP MESSAGE-----') !== -1) ? armored : '', question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id));
         });
         conversation_has_new_pgp_message = true;
       }
@@ -157,7 +158,7 @@ function init_elements_replace_js() {
                     replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, response.attachments, gmail_tab_id);
                   }
                   if(response.messages && response.messages.length) {
-                    hide_pgp_attached_message_and_show(account_email, message_id, attachment_container_classes, response.messages, gmail_tab_id);
+                    hide_pgp_attached_message_and_show_as_text(account_email, message_id, attachment_container_classes, response.messages, gmail_tab_id);
                   }
                   if(response.hide && response.hide.length) {
                     hide_pgp_meaningless_attachments(account_email, message_id, attachment_container_classes, response.hide, gmail_tab_id);
@@ -217,13 +218,14 @@ function init_elements_replace_js() {
     });
   };
 
-  window.hide_pgp_attached_message_and_show = function(account_email, message_id, classes, attachments, gmail_tab_id) {
+  window.hide_pgp_attached_message_and_show_as_text = function(account_email, message_id, classes, attachments, gmail_tab_id) {
     var selectors = get_attachments_selectors(message_id, ['.asc']);
     hide_attachments(selectors.attachments, attachments.length);
     if($('div.a3s.m' + message_id + ' iframe').length === 0) {
       $('span.aVW').css('display', 'none');
       $('div.a3s.m' + message_id).css('display', 'block');
-      $('div.a3s.m' + message_id).html(pgp_block_iframe('', null, account_email, message_id, false, gmail_tab_id));
+      var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
+      $('div.a3s.m' + message_id).html(pgp_block_iframe('', null, account_email, message_id, false, sender_email, gmail_tab_id));
     }
   };
 

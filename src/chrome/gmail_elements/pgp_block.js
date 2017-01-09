@@ -2,7 +2,7 @@
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
-var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing']);
+var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var ready_attachmments = [];
@@ -152,12 +152,33 @@ function render_inner_attachments(attachments) {
   }));
 }
 
+function render_pgp_signature_check_result(sender, is_signed, is_signature_match) {
+  if(is_signed) {
+    $('#pgp_signature > .cursive > span').text(sender);
+    if(is_signature_match === null) {
+      $('#pgp_signature').addClass('neutral');
+      $('#pgp_signature > .result').text('cannot verify');
+      $('#pgp_signature > .cursive > span').attr('title', 'CryptUP doesn\'t have the functionality to verify signatures yet.');
+    } else if(is_signature_match === true) {
+      $('#pgp_signature').addClass('good');
+      $('#pgp_signature > .result').text('verified');
+      $('#pgp_signature > .cursive > span').attr('title', '');
+    } else {
+      $('#pgp_signature').addClass('bad');
+      $('#pgp_signature > .result').text('does not match');
+      $('#pgp_signature > .cursive > span').attr('title', '');
+    }
+    $('#pgp_signature').css('block');
+  }
+}
+
 function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, is_signed, is_signature_match) {
   if(is_encrypted) {
     $('body').removeClass('pgp_insecure').removeClass('pgp_neutral').addClass('pgp_secure');
   } else if(is_signed) {
     $('body').removeClass('pgp_insecure').removeClass('pgp_secure').addClass('pgp_neutral');
   }
+  render_pgp_signature_check_result(url_params.sender_email, is_signed, is_signature_match);
   if(!is_mime_message(decrypted_content)) {
     render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
   } else {
