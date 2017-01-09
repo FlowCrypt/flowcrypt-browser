@@ -63,11 +63,11 @@ function init_elements_replace_js() {
     return conversation_has_new_pgp_message;
   }
 
-  window.replace_reply_buttons = function(account_email, gmail_tab_id) {
-    if($('iframe.pgp_block').length) { // if convo has pgp blocks
+  window.replace_reply_buttons = function(account_email, gmail_tab_id, force) {
+    if($('iframe.pgp_block').length || force) { // if convo has pgp blocks
       if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
         //todo - button below should be in factory.js
-        var reply_button = '<div class="' + destroyable_class + 'reply_message_button"><i class="fa fa-mail-reply"></i>&nbsp;<img src="' + get_logo_src(true) + '" /></div>';
+        var reply_button = '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
         $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(Try(function() {
           set_reply_box_editable(account_email, gmail_tab_id);
         }));
@@ -76,6 +76,13 @@ function init_elements_replace_js() {
           $(this).addClass('replaced').html('');
         });
       }
+    } else {
+      //todo - button below should be in factory.js
+      $('div.ade').not('.appended').append('<span class="hk J-J5-Ji use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>').addClass('appended');
+      $('div.ade.appended span.use_secure_reply').click(function() {
+        replace_reply_buttons(account_email, gmail_tab_id, true);
+        replace_standard_reply_box(account_email, gmail_tab_id, true, true);
+      });
     }
   };
 
@@ -269,8 +276,9 @@ function init_elements_replace_js() {
     });
   };
 
-  window.replace_standard_reply_box = function(account_email, gmail_tab_id, editable) {
-    if($('div.AO iframe.pgp_block').length && $('h2.hP').first().text() === $('h2.hP').last().text()) { // the first() and last() prevents hidden convos not to trigger replacement (when switching between convos)
+  window.replace_standard_reply_box = function(account_email, gmail_tab_id, editable, force) {
+    if(($('div.AO iframe.pgp_block').length && $('h2.hP').first().text() === $('h2.hP').last().text()) || force === true) {
+      // the first() and last() prevents hidden convos not to trigger replacement (when switching between convos)
       var reply_container_selector = 'div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)';
       try {
         var selected_tag = $(reply_container_selector)[0].tagName;
