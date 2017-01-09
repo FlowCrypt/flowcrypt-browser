@@ -1,4 +1,8 @@
-<b>version 3.0.2 on January 7, 2017: Challenge Question Fix</b>
+<b>version 3.0.3 on January 8, 2017: Compose Buttons</b>
+reading: added button to reply encrypted to a plain text conversation
+composing: added button to include my public key
+
+<b>version 3.0.2 on January 8, 2017: Challenge Question Fix</b>
 composing: fixing challenge question after Seamless Contacts update
 
 <b>version 3.0.1 on January 7, 2017: DB Permission Notification</b>
