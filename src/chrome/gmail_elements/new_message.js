@@ -78,14 +78,11 @@ db_open(function(db) {
   compose.on_render();
   $('#send_btn').click(prevent(doubleclick(), send_btn_click));
   $('.close_new_message').click(new_message_close);
-  $('.do_not_include_pubkey').click(function() {
-    $('#send_pubkey_container').css('display', 'none').css('visibility', 'hidden');
-  });
   account_storage_get(url_params.account_email, ['addresses'], function(storage) { // add send-from addresses
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {
       var addresses = order_addresses(url_params.account_email, storage.addresses);
       $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
-      $('#input_from').change(compose.show_hide_send_pubkey_container);
+      $('#input_from').change(compose.rerender_include_pubkey_icon);
       $.each(addresses, function(i, address) {
         $('#input_from').append('<option value="' + address + '">' + address + '</option>');
       });

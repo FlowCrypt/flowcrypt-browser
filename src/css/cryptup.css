@@ -212,8 +212,6 @@ table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
 table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; padding-left: 6px; margin-top: 10px; width: 98%; outline: none; }
 table#compose tr.bottom { background-color: #f5f5f5; }
-table#compose tr.bottom td.bottom .cryptup-logo-bottom { position: absolute; right: 10px; top: 18px; bottom:0; }
-table#compose tr.bottom td.bottom .ion-help-circled { position: absolute; right: 100px; left: initial; font-size: 19px; top: 10px; padding: 6px; }
 table#compose td.bottom { padding: 0px; height: 42px; padding-left:9px; border-top: 1px solid #cfcfcf; position: relative;}
 table#compose td.bottom div#send_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; position: relative; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center;
@@ -257,6 +255,11 @@ table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: mid
 table#compose .bottom .icon.attach div {  background: no-repeat url(/img/gmail-compose-icons.png) 0 -709px;  overflow: inherit !important; }
 table#compose .bottom .icon.standard { position: relative; top: 3px; }
 table#compose .bottom .icon.standard i { font-size: 24px; font-size: 20px; display: inline-block; padding: 3px 5px; }
+table#compose .bottom .icon.pubkey { background-image: url(/img/pubkey-icon-16-16-standard.png); background-repeat: no-repeat;
+  background-position: center; width: 16px; height: 16px; position: absolute; right: 50px; left: initial; top: 13px; padding: 7px 6px; }
+table#compose .bottom .icon.pubkey.active { background-image: url('/img/pubkey-icon-16-16-active.png'); opacity: 1;}
+table#compose .bottom .icon.ion-help-circled { position: absolute; right: 14px; left: initial; font-size: 19px; top: 14px; padding: 6px; }
+
 
 table#compose #fineuploader { position: absolute; bottom: 56px; right: 1px; }
 table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
@@ -268,9 +271,6 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: 
   margin-left: 11px; margin-right: 7px;}
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 table#compose #fineuploader .ion-android-close {font-size: 22px; position: absolute; top:7px; bottom:0;}
-table#compose tr#send_pubkey_container { display: none; visibility: visible; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
-table#compose tr#send_pubkey_container td { height: 1px; padding: 8px; }
-table#compose tr#send_pubkey_container td #send_pubkey_recipients { font-style: italic; color: #555; }
 table#compose tr#missing_pubkey_container { display: none; margin: 15px 0; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
 table#compose tr#missing_pubkey_container td { text-align: center; height: 109px; font-size: 15px; line-height: 1.6;}
 

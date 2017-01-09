@@ -23,13 +23,18 @@ function init_shared_compose_js(url_params, db) {
   var added_pubkey_db_lookup_interval = undefined;
   var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
   var save_draft_in_process = false;
+  var include_pubkey_toggled_manually = false;
   var my_addresses_on_pks = [];
   var my_addresses_on_keyserver = [];
   var recipients_missing_my_key = [];
   var keyserver_lookup_results_by_email = {};
   var l = {
     open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
+    include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUP encryption to reply to you.',
+    include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUP encryption to reply to you.',
   };
+
+  $('.icon.pubkey').attr('title', l.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
   account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function(storage) {
@@ -244,7 +249,7 @@ function init_shared_compose_js(url_params, db) {
                 var sending = 'Sending';
               }
               encrypt(armored_pubkeys, null, !emails_without_pubkeys.length ? null : challenge, plaintext, true, function(encrypted) {
-                if($('#send_pubkey_container').css('display') === 'table-row' && $('#send_pubkey_container').css('visibility') === 'visible') {
+                if($('.bottom .icon.pubkey').length && $('.bottom .icon.pubkey').is('.active')) {
                   encrypted.data += '\n\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
                 }
                 var body = {
@@ -444,7 +449,7 @@ function init_shared_compose_js(url_params, db) {
     $(this).parent().remove();
     resize_input_to();
     show_hide_missing_pubkey_container_and_color_send_button();
-    show_hide_send_pubkey_container();
+    rerender_include_pubkey_icon();
   }
 
   function auth_drafts() {
@@ -613,12 +618,17 @@ function init_shared_compose_js(url_params, db) {
     });
   }
 
-  function show_hide_send_pubkey_container() {
-    if(recipients_missing_my_key.length && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1) {
-      $('#send_pubkey_recipients').text(recipients_missing_my_key.join(' and '));
-      $('#send_pubkey_container').css('display', 'table-row');
-    } else {
-      $('#send_pubkey_container').css('display', 'none');
+  function rerender_include_pubkey_icon(include) {
+    if(include === null || typeof include === 'undefined') { // decide if pubkey should be included
+      if(!include_pubkey_toggled_manually) { // leave it as is if toggled manually beforeconsole.log('a');
+        rerender_include_pubkey_icon(recipients_missing_my_key.length && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1);
+      }
+    } else { // set icon to specific state
+      if(include) {
+        $('.bottom .icon.pubkey').addClass('active').attr('title', l.include_pubkey_icon_title_active);
+      } else {
+        $('.bottom .icon.pubkey').removeClass('active').attr('title', l.include_pubkey_icon_title);
+      }
     }
   }
 
@@ -643,13 +653,13 @@ function init_shared_compose_js(url_params, db) {
             if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
               recipients_missing_my_key.push(email);
             }
-            show_hide_send_pubkey_container();
+            rerender_include_pubkey_icon();
           });
         } else {
-          show_hide_send_pubkey_container();
+          rerender_include_pubkey_icon();
         }
       } else {
-        show_hide_send_pubkey_container();
+        rerender_include_pubkey_icon();
       }
     }
     $(email_element).children('i').removeClass('fa').removeClass('fa-spin').removeClass('ion-load-c').removeClass('fa-repeat').addClass('ion-android-close');
@@ -796,7 +806,7 @@ function init_shared_compose_js(url_params, db) {
   });
 
   $('#input_from').change(function() {
-    // when I change input_from, I should completely re-evaluate: show_hide_send_pubkey_container() and render_pubkey_result()
+    // when I change input_from, I should completely re-evaluate: rerender_include_pubkey_icon() and render_pubkey_result()
     // because they might not have a pubkey for the alternative address, and might get confused
   });
 
@@ -807,6 +817,11 @@ function init_shared_compose_js(url_params, db) {
     }
   };
 
+  $('.icon.action_include_pubkey').click(function() {
+    include_pubkey_toggled_manually = true;
+    rerender_include_pubkey_icon(!$(this).is('.active'));
+  });
+
   return {
     draft_set_id: draft_set_id,
     draft_meta_store: draft_meta_store,
@@ -816,7 +831,7 @@ function init_shared_compose_js(url_params, db) {
     handle_send_message_error: handle_send_message_error,
     evaluate_receivers: evaluate_receivers,
     resize_reply_box: resize_reply_box,
-    show_hide_send_pubkey_container: show_hide_send_pubkey_container,
+    rerender_include_pubkey_icon: rerender_include_pubkey_icon,
     get_recipients_from_dom: get_recipients_from_dom,
     get_sender_from_dom: get_sender_from_dom,
     on_render: on_render,
