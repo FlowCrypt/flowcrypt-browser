@@ -201,7 +201,7 @@ function init_shared_compose_js(url_params, db) {
       $.each(contacts, function(i, contact) {
         if(contact && contact.has_pgp) {
           armored_pubkeys.push(contact.pubkey);
-        } else if(keyserver_lookup_results_by_email[contact.email]) {
+        } else if(keyserver_lookup_results_by_email[contact.email] && keyserver_lookup_results_by_email[contact.email].has_pgp) {
           armored_pubkeys.push(keyserver_lookup_results_by_email[contact.email].pubkey);
         } else {
           emails_without_pubkeys.push(recipients[i]);
