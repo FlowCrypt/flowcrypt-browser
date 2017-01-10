@@ -841,14 +841,16 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
         if(!counts.decrypted) {
           try {
             openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function(decrypted) {
-              if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                callback({
-                  success: true,
-                  content: decrypted,
-                  encrypted: true,
-                  signature: key.signed_by.length ? verify_message_signature(message, keys) : false,
-                });
-              }
+              Try(function() {
+                if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
+                  callback({
+                    success: true,
+                    content: decrypted,
+                    encrypted: true,
+                    signature: keys.signed_by.length ? verify_message_signature(message, keys) : false,
+                  });
+                }
+              })();
             }).catch(function(decrypt_error) {
               Try(function() {
                 increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
@@ -938,14 +940,9 @@ function key_longid(key_or_fingerprint_or_bytes) {
 }
 
 function extract_armored_message_from_text(text) {
-  if(text) {
-    var matches = null;
-    var re_pgp_block = /-----BEGIN PGP MESSAGE-----[^]+-----END PGP MESSAGE-----/m;
-    if(text.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 && text.indexOf('-----END PGP MESSAGE-----') !== -1) {
-      if((matches = re_pgp_block.exec(text)) !== null) {
-        return matches[0];
-      }
-    }
+  if(text && text.indexOf('-----BEGIN') !== -1 && text.indexOf('-----END') !== -1) {
+    var match = text.match(/(-----BEGIN PGP (MESSAGE|PUBLIC KEY BLOCK|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|PUBLIC KEY BLOCK|SIGNED MESSAGE|SIGNATURE)-----)/gm);
+    return(match !== null && match.length) ? match[0] : null;
   }
 }
 

@@ -15,9 +15,10 @@ db_open(function(db) {
 
   var ready_attachmments = [];
   var height_history = [];
-
+  var message_fetched_from_api = false;
   var passphrase_interval = undefined;
   var missing_passprase_longids = [];
+  var can_read_emails = undefined;
 
   increment_metric('view');
 
@@ -212,7 +213,12 @@ db_open(function(db) {
   function decrypt_and_render(optional_password) {
     decrypt(db, url_params.account_email, url_params.message, optional_password, function(result) {
       if(result.success) {
-        decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
+        if(result.success && result.signature && !result.signature.match && can_read_emails && !message_fetched_from_api) {
+          console.log('re-fetching message from api because failed signature check - possibly gmail formatting error')
+          initialize(true);
+        } else {
+          decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
+        }
       } else if(result.format_error) {
         render_error(l.bad_format + '\n\n' + result.format_error);
       } else if(result.missing_passphrases.length) {
@@ -278,44 +284,49 @@ db_open(function(db) {
     });
   }
 
-  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
-    if(storage.setup_done) {
-      if(url_params.message) { // ascii armored message supplied
-        $('#pgp_block').text('Decrypting...');
-        decrypt_and_render();
-      } else { // need to fetch the message from gmail api
-        if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
-          $('#pgp_block').text('Retrieving message...');
-          extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
-            $('#pgp_block').text('Decrypting...');
-            url_params.message = message_raw;
-            decrypt_and_render();
-          }, function(error_type, url_formatted_data_block) {
-            if(error_type === 'format') {
-              if(url_formatted_data_block.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
-                window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email) + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block) + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id) + '&frame_id=' + encodeURIComponent(url_params.frame_id);
-              } else {
-                render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
-              }
-            } else if(error_type === 'connection') {
-              render_error(l.connection_error, url_formatted_data_block);
+  function initialize(force_pull_message_from_api) {
+    if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
+      $('#pgp_block').text('Decrypting...');
+      decrypt_and_render();
+    } else { // need to fetch the message from gmail api
+      if(can_read_emails) {
+        $('#pgp_block').text('Retrieving message...');
+        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
+          $('#pgp_block').text('Decrypting...');
+          url_params.message = message_raw;
+          message_fetched_from_api = true;
+          decrypt_and_render();
+        }, function(error_type, url_formatted_data_block) {
+          if(error_type === 'format') {
+            if(url_formatted_data_block.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
+              window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email) + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block) + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id) + '&frame_id=' + encodeURIComponent(url_params.frame_id);
             } else {
-              alert('Unknown error type: ' + error_type);
+              render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
             }
+          } else if(error_type === 'connection') {
+            render_error(l.connection_error, url_formatted_data_block);
+          } else {
+            alert('Unknown error type: ' + error_type);
+          }
+        });
+      } else { // gmail message read auth not allowed
+        $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+        $('.auth_settings').click(function() {
+          chrome_message_send(null, 'settings', {
+            account_email: url_params.account_email,
+            page: '/chrome/settings/modules/auth_denied.htm',
           });
-        } else { // gmail message read auth not allowed
-          $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
-          $('.auth_settings').click(function() {
-            chrome_message_send(null, 'settings', {
-              account_email: url_params.account_email,
-              page: '/chrome/settings/modules/auth_denied.htm',
-            });
-          });
-        }
+        });
       }
+    }
+  }
+
+  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
+    can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+    if(storage.setup_done) {
+      initialize();
     } else {
       render_error(l.refresh_window, url_params.message || '');
     }
   });
-
 });
