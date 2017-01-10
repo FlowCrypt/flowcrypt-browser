@@ -754,7 +754,7 @@ function wait_and_callback_decrypt_errors_if_failed(message, private_keys, count
         clearInterval(wait_for_all_attempts_interval);
         callback({
           success: false,
-          signature: null, //todo
+          signature: null,
           message: message,
           counts: counts,
           encrypted_for: private_keys.encrypted_for,
@@ -846,7 +846,7 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
                   success: true,
                   content: decrypted,
                   encrypted: true,
-                  signature: null, // todo - encrypted messages might be signed
+                  signature: key.signed_by.length ? verify_message_signature(message, keys) : false,
                 });
               }
             }).catch(function(decrypt_error) {
