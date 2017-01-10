@@ -4,6 +4,12 @@ var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id', '
 
 db_open(function(db) {
 
+  if(db === db_denied) {
+    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+    setTimeout(new_message_close, 300);
+    return;
+  }
+
   var compose = init_shared_compose_js(url_params, db);
 
   function send_btn_click() {
