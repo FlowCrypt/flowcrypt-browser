@@ -189,7 +189,7 @@ body > #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
 body > #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
 body > #pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; }
 body > #pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
-body > #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 100px; float: right; }
+body > #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 200px; float: right; }
 body > #pgp_signature.neutral, body > #pgp_signature.bad, body > #pgp_signature:hover { opacity: 1; }
 body > #pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #B7B7B7; }
 body > #pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }

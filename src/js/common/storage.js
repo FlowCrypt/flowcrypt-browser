@@ -254,16 +254,22 @@ function db_denied() {
 }
 
 function db_open(callback) {
-  var open_db = indexedDB.open('cryptup');
-  open_db.onupgradeneeded = function() {
-    var contacts = open_db.result.createObjectStore('contacts', {
-      keyPath: 'email',
-    });
-    contacts.createIndex('search', 'searchable', {
-      multiEntry: true,
-    });
-    contacts.createIndex('index_has_pgp', 'has_pgp');
-    contacts.createIndex('index_pending_lookup', 'pending_lookup');
+  var open_db = indexedDB.open('cryptup', 2);
+  open_db.onupgradeneeded = function(event) {
+    if(event.oldVersion < 1) {
+      var contacts = open_db.result.createObjectStore('contacts', {
+        keyPath: 'email',
+      });
+      contacts.createIndex('search', 'searchable', {
+        multiEntry: true,
+      });
+      contacts.createIndex('index_has_pgp', 'has_pgp');
+      contacts.createIndex('index_pending_lookup', 'pending_lookup');
+    }
+    if(event.oldVersion < 2) {
+      var contacts = open_db.transaction.objectStore('contacts');
+      contacts.createIndex('index_longid', 'longid');
+    }
   };
   var handled = 0; // the indexedDB docs don't say if onblocked and onerror can happen in the same request, or if the event/exception bubbles to both
   open_db.onsuccess = Try(function() {
@@ -383,9 +389,13 @@ function db_contact_update(db, email, update, callback) {
   }
 }
 
-function db_contact_get(db, email, callback) {
-  if(typeof email !== 'object') {
-    var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email);
+function db_contact_get(db, email_or_longid, callback) {
+  if(typeof email_or_longid !== 'object') {
+    if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
+      var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
+    } else { // longid
+      var get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
+    }
     get.onsuccess = Try(function() {
       if(get.result !== undefined) {
         callback(get.result);
@@ -398,12 +408,12 @@ function db_contact_get(db, email, callback) {
       db_error_handle(get.error, stack_fill, callback);
     };
   } else {
-    var results = Array(email.length);
+    var results = Array(email_or_longid.length);
     var finished = 0;
-    $.each(email, function(i, single_email) {
-      db_contact_get(db, single_email, function(contact) {
+    $.each(email_or_longid, function(i, single_email_or_longid) {
+      db_contact_get(db, single_email_or_longid, function(contact) {
         results[i] = contact;
-        if(++finished >= email.length) {
+        if(++finished >= email_or_longid.length) {
           callback(results);
         }
       });

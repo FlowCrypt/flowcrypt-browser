@@ -86,7 +86,7 @@ db_open(function(db) {
 
   function retrieve_decrypt_and_add_forwarded_message(message_id) {
     extract_armored_message_using_gmail_api(url_params.account_email, message_id, function(armored_message) {
-      decrypt(url_params.account_email, armored_message, undefined, function(result) {
+      decrypt(db, url_params.account_email, armored_message, undefined, function(result) {
         if(result.success) {
           if(!is_mime_message(result.content.data)) {
             append_forwarded_message(format_mime_plaintext_to_display(result.content.data, armored_message));
