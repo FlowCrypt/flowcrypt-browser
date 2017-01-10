@@ -680,6 +680,7 @@ function sign(signing_prv, data, armor, callback) {
 
 function get_sorted_keys_for_message(db, account_email, message, callback) {
   var keys = {};
+  keys.verification_contacts = [];
   keys.for_verification = [];
   if(message.getEncryptionKeyIds) {
     keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(function(id) {
@@ -706,10 +707,13 @@ function get_sorted_keys_for_message(db, account_email, message, callback) {
     }
   });
   if(keys.signed_by.length) {
-    db_contact_get(db, keys.signed_by, function(keys_for_verification) {
-      keys.for_verification = keys_for_verification.filter(function(key) {
-        return key !== null;
+    db_contact_get(db, keys.signed_by, function(verification_contacts) {
+      keys.verification_contacts = verification_contacts.filter(function(contact) {
+        return contact !== null;
       });
+      keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function(contact) {
+        return openpgp.key.readArmored(contact.pubkey).keys;
+      }));
       callback(keys);
     });
   } else {
@@ -781,6 +785,23 @@ function get_decrypt_options(message, keyinfo, is_armored, one_time_message_pass
   return options
 }
 
+function verify_message_signature(message, keys) {
+  var signature = {
+    signer: null,
+    contact: keys.verification_contacts.length ? keys.verification_contacts[0] : null,
+    match: true,
+  };
+  $.each(message.verify(keys.for_verification), function(i, verify_result) {
+    if(verify_result.valid !== true) {
+      signature.match = false;
+    }
+    if(!signature.signer) {
+      signature.signer = key_longid(verify_result.keyid.bytes);
+    }
+  });
+  return signature;
+}
+
 function decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
   var armored_encrypted = encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1;
   var armored_signed_only = encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1;
@@ -807,29 +828,13 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
   get_sorted_keys_for_message(db, account_email, message, function(keys) {
     var counts = zeroed_decrypt_error_counts(keys);
     if(armored_signed_only) {
-      var keys_for_verification = [].concat.apply([], keys.for_verification.map(function(contact) {
-        return openpgp.key.readArmored(contact.pubkey).keys;
-      }));
-      var signature = {
-        signer: null,
-        contact: keys.for_verification.length ? keys.for_verification[0] : null,
-        match: true,
-      };
-      $.each(message.verify(keys_for_verification), function(i, v) {
-        if(v.valid !== true) {
-          signature.match = false;
-        }
-        if(!signature.signer) {
-          signature.signer = key_longid(v.keyid.bytes);
-        }
-      });
       callback({
         success: true,
         content: {
           data: message.text,
         },
         encrypted: false,
-        signature: signature,
+        signature: verify_message_signature(message, keys),
       });
     } else {
       $.each(keys.with_passphrases, function(i, keyinfo) {
