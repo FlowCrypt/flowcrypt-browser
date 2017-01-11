@@ -5,13 +5,28 @@ var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
-db_open(function(db) {
+var l = {
+  cant_open: 'Could not open this message with CryptUP.\n\n',
+  encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
+  single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
+  account_info_outdated: 'Some your account information is incorrect. Update it to prevent future errors. ',
+  wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
+  ask_resend: 'Please ask them to send a new message.',
+  receivers_hidden: 'We cannot tell if the message was encrypted correctly for you. ',
+  bad_format: 'Message is either badly formatted or not compatible with CryptUP. ',
+  no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
+  refresh_page: 'Refresh page to see more information.',
+  question_decryt_prompt: 'To decrypt the message, answer: ',
+  connection_error: 'Could not connect to Gmail to open the message, please refresh the page to try again. ',
+  dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
+  enter_passphrase: 'Enter passphrase',
+  to_open_message: 'to open this message.',
+  write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly. ',
+  refresh_window: 'Please refresh your Gmail window to read encrypted messages. ',
+  update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
+};
 
-  if(db === db_denied) {
-    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
-    // todo - still show the message raw, with a note that settings change is needed
-    return;
-  }
+db_open(function(db) {
 
   var ready_attachmments = [];
   var height_history = [];
@@ -20,27 +35,20 @@ db_open(function(db) {
   var missing_passprase_longids = [];
   var can_read_emails = undefined;
 
-  increment_metric('view');
-
-  var l = {
-    cant_open: 'Could not open this message with CryptUP.\n\n',
-    encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
-    single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
-    account_info_outdated: 'Some your account information is incorrect. Update it to prevent future errors. ',
-    wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
-    ask_resend: 'Please ask them to send a new message.',
-    receivers_hidden: 'We cannot tell if the message was encrypted correctly for you. ',
-    bad_format: 'Message is either badly formatted or not compatible with CryptUP. ',
-    no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
-    refresh_page: 'Refresh page to see more information.',
-    question_decryt_prompt: 'To decrypt the message, answer: ',
-    connection_error: 'Could not connect to Gmail to open the message, please refresh the page to try again. ',
-    dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
-    enter_passphrase: 'Enter passphrase',
-    to_open_message: 'to open this message.',
-    write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly.',
-    refresh_window: 'Please refresh your Gmail window to read encrypted messages.',
+  if(db === db_denied) {
+    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+    render_error(l.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function() {
+      $('.review_settings').click(function() {
+        chrome_message_send(null, 'settings', {
+          account_email: url_params.account_email,
+          page: '/chrome/texts/chrome_content_settings.htm',
+        });
+      });
+    });
+    return;
   }
+
+  increment_metric('view');
 
   function send_resize_message() {
     var new_height = $('#pgp_block').height() + 40;

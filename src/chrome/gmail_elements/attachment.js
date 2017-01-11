@@ -6,7 +6,7 @@ db_open(function(db) {
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
-    // todo - show a note that setting change is needed
+    $('body.attachment').html('Need to update chrome settings to download attachments');
     return;
   }
 
