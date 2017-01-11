@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.openpgp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.openpgp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /*! asmCrypto Lite v1.1.0, (c) 2013 Artem S Vybornov, opensource.org/licenses/MIT */
 (function ( exports, global ) {
 
@@ -2940,14 +2940,14 @@ exports.SHA256 = sha256_constructor;
 
 return exports;
 })( {}, function(){return this}() );
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
  * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
  * @license   Licensed under MIT license
  *            See https://raw.githubusercontent.com/jakearchibald/es6-promise/master/LICENSE
- * @version   3.1.2
+ * @version   3.2.1
  */
 
 (function() {
@@ -3005,7 +3005,7 @@ return exports;
     var lib$es6$promise$asap$$browserWindow = (typeof window !== 'undefined') ? window : undefined;
     var lib$es6$promise$asap$$browserGlobal = lib$es6$promise$asap$$browserWindow || {};
     var lib$es6$promise$asap$$BrowserMutationObserver = lib$es6$promise$asap$$browserGlobal.MutationObserver || lib$es6$promise$asap$$browserGlobal.WebKitMutationObserver;
-    var lib$es6$promise$asap$$isNode = typeof process !== 'undefined' && {}.toString.call(process) === '[object process]';
+    var lib$es6$promise$asap$$isNode = typeof self === 'undefined' && typeof process !== 'undefined' && {}.toString.call(process) === '[object process]';
 
     // test for web worker but not in IE10
     var lib$es6$promise$asap$$isWorker = typeof Uint8ClampedArray !== 'undefined' &&
@@ -3071,7 +3071,7 @@ return exports;
 
     function lib$es6$promise$asap$$attemptVertx() {
       try {
-        var r = require;
+        var r = _dereq_;
         var vertx = r('vertx');
         lib$es6$promise$asap$$vertxNext = vertx.runOnLoop || vertx.runOnContext;
         return lib$es6$promise$asap$$useVertxTimer();
@@ -3088,26 +3088,26 @@ return exports;
       lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useMutationObserver();
     } else if (lib$es6$promise$asap$$isWorker) {
       lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useMessageChannel();
-    } else if (lib$es6$promise$asap$$browserWindow === undefined && typeof require === 'function') {
+    } else if (lib$es6$promise$asap$$browserWindow === undefined && typeof _dereq_ === 'function') {
       lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$attemptVertx();
     } else {
       lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useSetTimeout();
     }
     function lib$es6$promise$then$$then(onFulfillment, onRejection) {
       var parent = this;
-      var state = parent._state;
-
-      if (state === lib$es6$promise$$internal$$FULFILLED && !onFulfillment || state === lib$es6$promise$$internal$$REJECTED && !onRejection) {
-        return this;
-      }
 
       var child = new this.constructor(lib$es6$promise$$internal$$noop);
-      var result = parent._result;
+
+      if (child[lib$es6$promise$$internal$$PROMISE_ID] === undefined) {
+        lib$es6$promise$$internal$$makePromise(child);
+      }
+
+      var state = parent._state;
 
       if (state) {
         var callback = arguments[state - 1];
         lib$es6$promise$asap$$asap(function(){
-          lib$es6$promise$$internal$$invokeCallback(state, child, callback, result);
+          lib$es6$promise$$internal$$invokeCallback(state, child, callback, parent._result);
         });
       } else {
         lib$es6$promise$$internal$$subscribe(parent, child, onFulfillment, onRejection);
@@ -3129,6 +3129,7 @@ return exports;
       return promise;
     }
     var lib$es6$promise$promise$resolve$$default = lib$es6$promise$promise$resolve$$resolve;
+    var lib$es6$promise$$internal$$PROMISE_ID = Math.random().toString(36).substring(16);
 
     function lib$es6$promise$$internal$$noop() {}
 
@@ -3359,6 +3360,18 @@ return exports;
       }
     }
 
+    var lib$es6$promise$$internal$$id = 0;
+    function lib$es6$promise$$internal$$nextId() {
+      return lib$es6$promise$$internal$$id++;
+    }
+
+    function lib$es6$promise$$internal$$makePromise(promise) {
+      promise[lib$es6$promise$$internal$$PROMISE_ID] = lib$es6$promise$$internal$$id++;
+      promise._state = undefined;
+      promise._result = undefined;
+      promise._subscribers = [];
+    }
+
     function lib$es6$promise$promise$all$$all(entries) {
       return new lib$es6$promise$enumerator$$default(this, entries).promise;
     }
@@ -3367,28 +3380,18 @@ return exports;
       /*jshint validthis:true */
       var Constructor = this;
 
-      var promise = new Constructor(lib$es6$promise$$internal$$noop);
-
       if (!lib$es6$promise$utils$$isArray(entries)) {
-        lib$es6$promise$$internal$$reject(promise, new TypeError('You must pass an array to race.'));
-        return promise;
+        return new Constructor(function(resolve, reject) {
+          reject(new TypeError('You must pass an array to race.'));
+        });
+      } else {
+        return new Constructor(function(resolve, reject) {
+          var length = entries.length;
+          for (var i = 0; i < length; i++) {
+            Constructor.resolve(entries[i]).then(resolve, reject);
+          }
+        });
       }
-
-      var length = entries.length;
-
-      function onFulfillment(value) {
-        lib$es6$promise$$internal$$resolve(promise, value);
-      }
-
-      function onRejection(reason) {
-        lib$es6$promise$$internal$$reject(promise, reason);
-      }
-
-      for (var i = 0; promise._state === lib$es6$promise$$internal$$PENDING && i < length; i++) {
-        lib$es6$promise$$internal$$subscribe(Constructor.resolve(entries[i]), undefined, onFulfillment, onRejection);
-      }
-
-      return promise;
     }
     var lib$es6$promise$promise$race$$default = lib$es6$promise$promise$race$$race;
     function lib$es6$promise$promise$reject$$reject(reason) {
@@ -3400,7 +3403,6 @@ return exports;
     }
     var lib$es6$promise$promise$reject$$default = lib$es6$promise$promise$reject$$reject;
 
-    var lib$es6$promise$promise$$counter = 0;
 
     function lib$es6$promise$promise$$needsResolver() {
       throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
@@ -3515,9 +3517,8 @@ return exports;
       @constructor
     */
     function lib$es6$promise$promise$$Promise(resolver) {
-      this._id = lib$es6$promise$promise$$counter++;
-      this._state = undefined;
-      this._result = undefined;
+      this[lib$es6$promise$$internal$$PROMISE_ID] = lib$es6$promise$$internal$$nextId();
+      this._result = this._state = undefined;
       this._subscribers = [];
 
       if (lib$es6$promise$$internal$$noop !== resolver) {
@@ -3768,7 +3769,11 @@ return exports;
       this._instanceConstructor = Constructor;
       this.promise = new Constructor(lib$es6$promise$$internal$$noop);
 
-      if (Array.isArray(input)) {
+      if (!this.promise[lib$es6$promise$$internal$$PROMISE_ID]) {
+        lib$es6$promise$$internal$$makePromise(this.promise);
+      }
+
+      if (lib$es6$promise$utils$$isArray(input)) {
         this._input     = input;
         this.length     = input.length;
         this._remaining = input.length;
@@ -3785,13 +3790,13 @@ return exports;
           }
         }
       } else {
-        lib$es6$promise$$internal$$reject(this.promise, this._validationError());
+        lib$es6$promise$$internal$$reject(this.promise, lib$es6$promise$enumerator$$validationError());
       }
     }
 
-    lib$es6$promise$enumerator$$Enumerator.prototype._validationError = function() {
+    function lib$es6$promise$enumerator$$validationError() {
       return new Error('Array Methods must be provided an Array');
-    };
+    }
 
     lib$es6$promise$enumerator$$Enumerator.prototype._enumerate = function() {
       var length  = this.length;
@@ -3897,17 +3902,45 @@ return exports;
 }).call(this);
 
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":3}],3:[function(require,module,exports){
+}).call(this,_dereq_('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"_process":3}],3:[function(_dereq_,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+(function () {
+  try {
+    cachedSetTimeout = setTimeout;
+  } catch (e) {
+    cachedSetTimeout = function () {
+      throw new Error('setTimeout is not defined');
+    }
+  }
+  try {
+    cachedClearTimeout = clearTimeout;
+  } catch (e) {
+    cachedClearTimeout = function () {
+      throw new Error('clearTimeout is not defined');
+    }
+  }
+} ())
 var queue = [];
 var draining = false;
 var currentQueue;
 var queueIndex = -1;
 
 function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
     draining = false;
     if (currentQueue.length) {
         queue = currentQueue.concat(queue);
@@ -3923,7 +3956,7 @@ function drainQueue() {
     if (draining) {
         return;
     }
-    var timeout = setTimeout(cleanUpNextTick);
+    var timeout = cachedSetTimeout(cleanUpNextTick);
     draining = true;
 
     var len = queue.length;
@@ -3940,7 +3973,7 @@ function drainQueue() {
     }
     currentQueue = null;
     draining = false;
-    clearTimeout(timeout);
+    cachedClearTimeout(timeout);
 }
 
 process.nextTick = function (fun) {
@@ -3952,7 +3985,7 @@ process.nextTick = function (fun) {
     }
     queue.push(new Item(fun, args));
     if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
+        cachedSetTimeout(drainQueue, 0);
     }
 };
 
@@ -3991,7 +4024,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],4:[function(require,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 (function (global){
 /*
  * Rusha, a JavaScript implementation of the Secure Hash Algorithm, SHA-1,
@@ -4407,7 +4440,7 @@ process.umask = function() { return 0; };
     }
 }());
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],5:[function(require,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -4441,19 +4474,19 @@ Object.defineProperty(exports, "__esModule", {
 exports.CleartextMessage = CleartextMessage;
 exports.readArmored = readArmored;
 
-var _config = require('./config');
+var _config = _dereq_('./config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _packet = require('./packet');
+var _packet = _dereq_('./packet');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _enums = require('./enums.js');
+var _enums = _dereq_('./enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _armor = require('./encoding/armor.js');
+var _armor = _dereq_('./encoding/armor.js');
 
 var _armor2 = _interopRequireDefault(_armor);
 
@@ -4634,7 +4667,7 @@ function verifyHeaders(headers, packetlist) {
   }
 }
 
-},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47}],6:[function(require,module,exports){
+},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47}],6:[function(_dereq_,module,exports){
 /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {'use strict';var n=void 0,u=!0,aa=this;function ba(e,d){var c=e.split("."),f=aa;!(c[0]in f)&&f.execScript&&f.execScript("var "+c[0]);for(var a;c.length&&(a=c.shift());)!c.length&&d!==n?f[a]=d:f=f[a]?f[a]:f[a]={}};var C="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function K(e,d){this.index="number"===typeof d?d:0;this.d=0;this.buffer=e instanceof(C?Uint8Array:Array)?e:new (C?Uint8Array:Array)(32768);if(2*this.buffer.length<=this.index)throw Error("invalid index");this.buffer.length<=this.index&&ca(this)}function ca(e){var d=e.buffer,c,f=d.length,a=new (C?Uint8Array:Array)(f<<1);if(C)a.set(d);else for(c=0;c<f;++c)a[c]=d[c];return e.buffer=a}
 K.prototype.a=function(e,d,c){var f=this.buffer,a=this.index,b=this.d,k=f[a],m;c&&1<d&&(e=8<d?(L[e&255]<<24|L[e>>>8&255]<<16|L[e>>>16&255]<<8|L[e>>>24&255])>>32-d:L[e]>>8-d);if(8>d+b)k=k<<d|e,b+=d;else for(m=0;m<d;++m)k=k<<1|e>>d-m-1&1,8===++b&&(b=0,f[a++]=L[k],k=0,a===f.length&&(f=ca(this)));f[a]=k;this.buffer=f;this.d=b;this.index=a};K.prototype.finish=function(){var e=this.buffer,d=this.index,c;0<this.d&&(e[d]<<=8-this.d,e[d]=L[e[d]],d++);C?c=e.subarray(0,d):(e.length=d,c=e);return c};
 var ga=new (C?Uint8Array:Array)(256),M;for(M=0;256>M;++M){for(var R=M,S=R,ha=7,R=R>>>1;R;R>>>=1)S<<=1,S|=R&1,--ha;ga[M]=(S<<ha&255)>>>0}var L=ga;function ja(e){this.buffer=new (C?Uint16Array:Array)(2*e);this.length=0}ja.prototype.getParent=function(e){return 2*((e-2)/4|0)};ja.prototype.push=function(e,d){var c,f,a=this.buffer,b;c=this.length;a[this.length++]=d;for(a[this.length++]=e;0<c;)if(f=this.getParent(c),a[c]>a[f])b=a[c],a[c]=a[f],a[f]=b,b=a[c+1],a[c+1]=a[f+1],a[f+1]=b,c=f;else break;return this.length};
@@ -4659,7 +4692,7 @@ function Ja(e,d,c){function f(a){var b=g[a][p[a]];b===d?(f(a+1),f(a+1)):--k[b];+
 1][q]=e[q],g[c-1][q]=q;for(l=0;l<c;++l)p[l]=0;1===b[c-1]&&(--k[0],++p[c-1]);for(h=c-2;0<=h;--h){t=l=0;w=p[h+1];for(q=0;q<a[h];q++)t=m[h+1][w]+m[h+1][w+1],t>e[l]?(m[h][q]=t,g[h][q]=d,w+=2):(m[h][q]=e[l],g[h][q]=l,++l);p[h]=0;1===b[h]&&f(h)}return k}
 function pa(e){var d=new (C?Uint16Array:Array)(e.length),c=[],f=[],a=0,b,k,m,g;b=0;for(k=e.length;b<k;b++)c[e[b]]=(c[e[b]]|0)+1;b=1;for(k=16;b<=k;b++)f[b]=a,a+=c[b]|0,a<<=1;b=0;for(k=e.length;b<k;b++){a=f[e[b]];f[e[b]]+=1;m=d[b]=0;for(g=e[b];m<g;m++)d[b]=d[b]<<1|a&1,a>>>=1}return d};ba("Zlib.RawDeflate",ka);ba("Zlib.RawDeflate.prototype.compress",ka.prototype.h);var Ka={NONE:0,FIXED:1,DYNAMIC:ma},V,La,$,Ma;if(Object.keys)V=Object.keys(Ka);else for(La in V=[],$=0,Ka)V[$++]=La;$=0;for(Ma=V.length;$<Ma;++$)La=V[$],ba("Zlib.RawDeflate.CompressionType."+La,Ka[La]);}).call(this); 
 
-},{}],7:[function(require,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {'use strict';var l=this;function p(b,e){var a=b.split("."),c=l;!(a[0]in c)&&c.execScript&&c.execScript("var "+a[0]);for(var d;a.length&&(d=a.shift());)!a.length&&void 0!==e?c[d]=e:c=c[d]?c[d]:c[d]={}};var q="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function t(b){var e=b.length,a=0,c=Number.POSITIVE_INFINITY,d,f,g,h,k,m,r,n,s,J;for(n=0;n<e;++n)b[n]>a&&(a=b[n]),b[n]<c&&(c=b[n]);d=1<<a;f=new (q?Uint32Array:Array)(d);g=1;h=0;for(k=2;g<=a;){for(n=0;n<e;++n)if(b[n]===g){m=0;r=h;for(s=0;s<g;++s)m=m<<1|r&1,r>>=1;J=g<<16|n;for(s=m;s<d;s+=k)f[s]=J;++h}++g;h<<=1;k<<=1}return[f,a,c]};function u(b,e){this.g=[];this.h=32768;this.c=this.f=this.d=this.k=0;this.input=q?new Uint8Array(b):b;this.l=!1;this.i=v;this.q=!1;if(e||!(e={}))e.index&&(this.d=e.index),e.bufferSize&&(this.h=e.bufferSize),e.bufferType&&(this.i=e.bufferType),e.resize&&(this.q=e.resize);switch(this.i){case w:this.a=32768;this.b=new (q?Uint8Array:Array)(32768+this.h+258);break;case v:this.a=0;this.b=new (q?Uint8Array:Array)(this.h);this.e=this.v;this.m=this.s;this.j=this.t;break;default:throw Error("invalid inflate mode");
 }}var w=0,v=1;
 u.prototype.u=function(){for(;!this.l;){var b=x(this,3);b&1&&(this.l=!0);b>>>=1;switch(b){case 0:var e=this.input,a=this.d,c=this.b,d=this.a,f=e.length,g=void 0,h=void 0,k=c.length,m=void 0;this.c=this.f=0;if(a+1>=f)throw Error("invalid uncompressed block header: LEN");g=e[a++]|e[a++]<<8;if(a+1>=f)throw Error("invalid uncompressed block header: NLEN");h=e[a++]|e[a++]<<8;if(g===~h)throw Error("invalid uncompressed block header: length verify");if(a+g>e.length)throw Error("input buffer is broken");switch(this.i){case w:for(;d+
@@ -4675,7 +4708,7 @@ u.prototype.v=function(b){var e,a=this.input.length/this.d+1|0,c,d,f,g=this.inpu
 u.prototype.m=function(){var b=0,e=this.b,a=this.g,c,d=new (q?Uint8Array:Array)(this.k+(this.a-32768)),f,g,h,k;if(0===a.length)return q?this.b.subarray(32768,this.a):this.b.slice(32768,this.a);f=0;for(g=a.length;f<g;++f){c=a[f];h=0;for(k=c.length;h<k;++h)d[b++]=c[h]}f=32768;for(g=this.a;f<g;++f)d[b++]=e[f];this.g=[];return this.buffer=d};
 u.prototype.s=function(){var b,e=this.a;q?this.q?(b=new Uint8Array(e),b.set(this.b.subarray(0,e))):b=this.b.subarray(0,e):(this.b.length>e&&(this.b.length=e),b=this.b);return this.buffer=b};p("Zlib.RawInflate",u);p("Zlib.RawInflate.prototype.decompress",u.prototype.u);var T={ADAPTIVE:v,BLOCK:w},U,V,W,X;if(Object.keys)U=Object.keys(T);else for(V in U=[],W=0,T)U[W++]=V;W=0;for(X=U.length;W<X;++W)V=U[W],p("Zlib.RawInflate.BufferType."+V,T[V]);}).call(this); 
 
-},{}],8:[function(require,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {'use strict';function l(d){throw d;}var v=void 0,x=!0,aa=this;function D(d,a){var c=d.split("."),e=aa;!(c[0]in e)&&e.execScript&&e.execScript("var "+c[0]);for(var b;c.length&&(b=c.shift());)!c.length&&a!==v?e[b]=a:e=e[b]?e[b]:e[b]={}};var F="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function H(d,a){this.index="number"===typeof a?a:0;this.i=0;this.buffer=d instanceof(F?Uint8Array:Array)?d:new (F?Uint8Array:Array)(32768);2*this.buffer.length<=this.index&&l(Error("invalid index"));this.buffer.length<=this.index&&this.f()}H.prototype.f=function(){var d=this.buffer,a,c=d.length,e=new (F?Uint8Array:Array)(c<<1);if(F)e.set(d);else for(a=0;a<c;++a)e[a]=d[a];return this.buffer=e};
 H.prototype.d=function(d,a,c){var e=this.buffer,b=this.index,f=this.i,g=e[b],h;c&&1<a&&(d=8<a?(N[d&255]<<24|N[d>>>8&255]<<16|N[d>>>16&255]<<8|N[d>>>24&255])>>32-a:N[d]>>8-a);if(8>a+f)g=g<<a|d,f+=a;else for(h=0;h<a;++h)g=g<<1|d>>a-h-1&1,8===++f&&(f=0,e[b++]=N[g],g=0,b===e.length&&(e=this.f()));e[b]=g;this.buffer=e;this.i=f;this.index=b};H.prototype.finish=function(){var d=this.buffer,a=this.index,c;0<this.i&&(d[a]<<=8-this.i,d[a]=N[d[a]],a++);F?c=d.subarray(0,a):(d.length=a,c=d);return c};
 var fa=new (F?Uint8Array:Array)(256),O;for(O=0;256>O;++O){for(var P=O,Q=P,ga=7,P=P>>>1;P;P>>>=1)Q<<=1,Q|=P&1,--ga;fa[O]=(Q<<ga&255)>>>0}var N=fa;function ha(d){this.buffer=new (F?Uint16Array:Array)(2*d);this.length=0}ha.prototype.getParent=function(d){return 2*((d-2)/4|0)};ha.prototype.push=function(d,a){var c,e,b=this.buffer,f;c=this.length;b[this.length++]=a;for(b[this.length++]=d;0<c;)if(e=this.getParent(c),b[c]>b[e])f=b[c],b[c]=b[e],b[e]=f,f=b[c+1],b[c+1]=b[e+1],b[e+1]=f,c=e;else break;return this.length};
@@ -4716,7 +4749,7 @@ kb.prototype.p=function(){var d=this.input,a,c;a=this.B.p();this.c=this.B.c;this
 mb.prototype.j=function(){var d,a,c,e,b,f,g,h=0;g=this.a;d=lb;switch(d){case lb:a=Math.LOG2E*Math.log(32768)-8;break;default:l(Error("invalid compression method"))}c=a<<4|d;g[h++]=c;switch(d){case lb:switch(this.h){case $.NONE:b=0;break;case $.r:b=1;break;case $.k:b=2;break;default:l(Error("unsupported compression type"))}break;default:l(Error("invalid compression method"))}e=b<<6|0;g[h++]=e|31-(256*c+e)%31;f=jb(this.input);this.A.b=h;g=this.A.j();h=g.length;F&&(g=new Uint8Array(g.buffer),g.length<=
 h+4&&(this.a=new Uint8Array(g.length+4),this.a.set(g),g=this.a),g=g.subarray(0,h+4));g[h++]=f>>24&255;g[h++]=f>>16&255;g[h++]=f>>8&255;g[h++]=f&255;return g};function nb(d,a){var c,e,b,f;if(Object.keys)c=Object.keys(a);else for(e in c=[],b=0,a)c[b++]=e;b=0;for(f=c.length;b<f;++b)e=c[b],D(d+"."+e,a[e])};D("Zlib.Inflate",kb);D("Zlib.Inflate.prototype.decompress",kb.prototype.p);nb("Zlib.Inflate.BufferType",{ADAPTIVE:Ba.D,BLOCK:Ba.F});D("Zlib.Deflate",mb);D("Zlib.Deflate.compress",function(d,a){return(new mb(d,a)).j()});D("Zlib.Deflate.prototype.compress",mb.prototype.j);nb("Zlib.Deflate.CompressionType",{NONE:$.NONE,FIXED:$.r,DYNAMIC:$.k});}).call(this); 
 
-},{}],9:[function(require,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -4754,7 +4787,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -4773,13 +4806,13 @@ exports.default = {
   debug: false,
   show_version: true,
   show_comment: true,
-  versionstring: "CryptUP 3.0.4 Easy Gmail Encryption https://cryptup.org",
-  commentstring: "Seamlessly send, receive and search encrypted email",
+  versionstring: "OpenPGP.js v2.3.5",
+  commentstring: "http://openpgpjs.org",
   keyserver: "https://keyserver.ubuntu.com",
   node_store: './openpgp.store'
 };
 
-},{"../enums.js":35}],10:[function(require,module,exports){
+},{"../enums.js":35}],10:[function(_dereq_,module,exports){
 /**
  * @see module:config/config
  * @module config
@@ -4791,7 +4824,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _config = require('./config.js');
+var _config = _dereq_('./config.js');
 
 Object.defineProperty(exports, 'default', {
   enumerable: true,
@@ -4802,7 +4835,7 @@ Object.defineProperty(exports, 'default', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./config.js":9}],11:[function(require,module,exports){
+},{"./config.js":9}],11:[function(_dereq_,module,exports){
 // Modified by ProtonTech AG
 
 // Modified by Recurity Labs GmbH
@@ -4833,7 +4866,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _cipher = require('./cipher');
+var _cipher = _dereq_('./cipher');
 
 var _cipher2 = _interopRequireDefault(_cipher);
 
@@ -5127,7 +5160,7 @@ exports.default = {
   }
 };
 
-},{"./cipher":16}],12:[function(require,module,exports){
+},{"./cipher":16}],12:[function(_dereq_,module,exports){
 /* Rijndael (AES) Encryption
  * Copyright 2005 Herbert Hanewinkel, www.haneWIN.de
  * version 1.1, check www.haneWIN.de for the latest version
@@ -5364,7 +5397,7 @@ exports.default = {
   256: makeClass(256)
 };
 
-},{}],13:[function(require,module,exports){
+},{}],13:[function(_dereq_,module,exports){
 /* Modified by Recurity Labs GmbH
  *
  * Originally written by nklein software (nklein.com)
@@ -5593,7 +5626,7 @@ function BF(key) {
 BF.keySize = BF.prototype.keySize = 16;
 BF.blockSize = BF.prototype.blockSize = 16;
 
-},{}],14:[function(require,module,exports){
+},{}],14:[function(_dereq_,module,exports){
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -5943,7 +5976,7 @@ function Cast5(key) {
 Cast5.blockSize = Cast5.prototype.blockSize = 8;
 Cast5.keySize = Cast5.prototype.keySize = 16;
 
-},{}],15:[function(require,module,exports){
+},{}],15:[function(_dereq_,module,exports){
 //Paul Tero, July 2001
 //http://www.tero.co.uk/des/
 //
@@ -6327,7 +6360,7 @@ exports.default = {
   originalDes: OriginalDes
 };
 
-},{}],16:[function(require,module,exports){
+},{}],16:[function(_dereq_,module,exports){
 /**
  * @requires crypto/cipher/aes
  * @requires crypto/cipher/blowfish
@@ -6342,23 +6375,23 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _aes = require('./aes.js');
+var _aes = _dereq_('./aes.js');
 
 var _aes2 = _interopRequireDefault(_aes);
 
-var _des = require('./des.js');
+var _des = _dereq_('./des.js');
 
 var _des2 = _interopRequireDefault(_des);
 
-var _cast = require('./cast5.js');
+var _cast = _dereq_('./cast5.js');
 
 var _cast2 = _interopRequireDefault(_cast);
 
-var _twofish = require('./twofish.js');
+var _twofish = _dereq_('./twofish.js');
 
 var _twofish2 = _interopRequireDefault(_twofish);
 
-var _blowfish = require('./blowfish.js');
+var _blowfish = _dereq_('./blowfish.js');
 
 var _blowfish2 = _interopRequireDefault(_blowfish);
 
@@ -6385,7 +6418,7 @@ exports.default = {
   }
 };
 
-},{"./aes.js":12,"./blowfish.js":13,"./cast5.js":14,"./des.js":15,"./twofish.js":17}],17:[function(require,module,exports){
+},{"./aes.js":12,"./blowfish.js":13,"./cast5.js":14,"./des.js":15,"./twofish.js":17}],17:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6711,7 +6744,7 @@ function toArray(typedArray) {
 TF.keySize = TF.prototype.keySize = 32;
 TF.blockSize = TF.prototype.blockSize = 16;
 
-},{}],18:[function(require,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -6745,19 +6778,19 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _random = require('./random.js');
+var _random = _dereq_('./random.js');
 
 var _random2 = _interopRequireDefault(_random);
 
-var _cipher = require('./cipher');
+var _cipher = _dereq_('./cipher');
 
 var _cipher2 = _interopRequireDefault(_cipher);
 
-var _public_key = require('./public_key');
+var _public_key = _dereq_('./public_key');
 
 var _public_key2 = _interopRequireDefault(_public_key);
 
-var _mpi = require('../type/mpi.js');
+var _mpi = _dereq_('../type/mpi.js');
 
 var _mpi2 = _interopRequireDefault(_mpi);
 
@@ -6961,7 +6994,7 @@ exports.default = {
   }
 };
 
-},{"../type/mpi.js":67,"./cipher":16,"./public_key":28,"./random.js":31}],19:[function(require,module,exports){
+},{"../type/mpi.js":67,"./cipher":16,"./public_key":28,"./random.js":31}],19:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
 //
@@ -6993,15 +7026,15 @@ exports.ivLength = undefined;
 exports.encrypt = encrypt;
 exports.decrypt = decrypt;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _config = require('../config');
+var _config = _dereq_('../config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _asmcryptoLite = require('asmcrypto-lite');
+var _asmcryptoLite = _dereq_('asmcrypto-lite');
 
 var _asmcryptoLite2 = _interopRequireDefault(_asmcryptoLite);
 
@@ -7106,7 +7139,7 @@ function nodeDecrypt(ct, key, iv) {
   return Promise.resolve(new Uint8Array(pt));
 }
 
-},{"../config":10,"../util.js":69,"asmcrypto-lite":1}],20:[function(require,module,exports){
+},{"../config":10,"../util.js":69,"asmcrypto-lite":1}],20:[function(_dereq_,module,exports){
 /**
  * @requires crypto/hash/sha
  * @requires crypto/hash/md5
@@ -7121,27 +7154,27 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _sha = require('./sha.js');
+var _sha = _dereq_('./sha.js');
 
 var _sha2 = _interopRequireDefault(_sha);
 
-var _asmcryptoLite = require('asmcrypto-lite');
+var _asmcryptoLite = _dereq_('asmcrypto-lite');
 
 var _asmcryptoLite2 = _interopRequireDefault(_asmcryptoLite);
 
-var _rusha = require('rusha');
+var _rusha = _dereq_('rusha');
 
 var _rusha2 = _interopRequireDefault(_rusha);
 
-var _md = require('./md5.js');
+var _md = _dereq_('./md5.js');
 
 var _md2 = _interopRequireDefault(_md);
 
-var _ripeMd = require('./ripe-md.js');
+var _ripeMd = _dereq_('./ripe-md.js');
 
 var _ripeMd2 = _interopRequireDefault(_ripeMd);
 
-var _util = require('../../util.js');
+var _util = _dereq_('../../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -7272,7 +7305,7 @@ exports.default = {
   }
 };
 
-},{"../../util.js":69,"./md5.js":21,"./ripe-md.js":22,"./sha.js":23,"asmcrypto-lite":1,"rusha":4}],21:[function(require,module,exports){
+},{"../../util.js":69,"./md5.js":21,"./ripe-md.js":22,"./sha.js":23,"asmcrypto-lite":1,"rusha":4}],21:[function(_dereq_,module,exports){
 /**
  * A fast MD5 JavaScript implementation
  * Copyright (c) 2012 Joseph Myers
@@ -7304,7 +7337,7 @@ exports.default = function (entree) {
   return bin;
 };
 
-var _util = require('../../util.js');
+var _util = _dereq_('../../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -7498,7 +7531,7 @@ function add32(a, b) {
   return a + b & 0xFFFFFFFF;
 }
 
-},{"../../util.js":69}],22:[function(require,module,exports){
+},{"../../util.js":69}],22:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7506,7 +7539,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = RMDstring;
 
-var _util = require("../../util.js");
+var _util = _dereq_("../../util.js");
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -7773,7 +7806,7 @@ function RMDstring(message) {
   return _util2.default.str2Uint8Array(retString);
 }
 
-},{"../../util.js":69}],23:[function(require,module,exports){
+},{"../../util.js":69}],23:[function(_dereq_,module,exports){
 /**
  * @preserve A JavaScript implementation of the SHA family of hashes, as
  * defined in FIPS PUB 180-2 as well as the corresponding HMAC implementation
@@ -9107,7 +9140,7 @@ exports.default = {
   }
 };
 
-},{}],24:[function(require,module,exports){
+},{}],24:[function(_dereq_,module,exports){
 /**
  * @see module:crypto/crypto
  * @module crypto
@@ -9119,39 +9152,39 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _cipher = require('./cipher');
+var _cipher = _dereq_('./cipher');
 
 var _cipher2 = _interopRequireDefault(_cipher);
 
-var _hash = require('./hash');
+var _hash = _dereq_('./hash');
 
 var _hash2 = _interopRequireDefault(_hash);
 
-var _cfb = require('./cfb');
+var _cfb = _dereq_('./cfb');
 
 var _cfb2 = _interopRequireDefault(_cfb);
 
-var _gcm = require('./gcm');
+var _gcm = _dereq_('./gcm');
 
 var gcm = _interopRequireWildcard(_gcm);
 
-var _public_key = require('./public_key');
+var _public_key = _dereq_('./public_key');
 
 var _public_key2 = _interopRequireDefault(_public_key);
 
-var _signature = require('./signature');
+var _signature = _dereq_('./signature');
 
 var _signature2 = _interopRequireDefault(_signature);
 
-var _random = require('./random');
+var _random = _dereq_('./random');
 
 var _random2 = _interopRequireDefault(_random);
 
-var _pkcs = require('./pkcs1');
+var _pkcs = _dereq_('./pkcs1');
 
 var _pkcs2 = _interopRequireDefault(_pkcs);
 
-var _crypto = require('./crypto.js');
+var _crypto = _dereq_('./crypto.js');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
@@ -9184,7 +9217,7 @@ for (var i in _crypto2.default) {
 
 exports.default = mod;
 
-},{"./cfb":11,"./cipher":16,"./crypto.js":18,"./gcm":19,"./hash":20,"./pkcs1":25,"./public_key":28,"./random":31,"./signature":32}],25:[function(require,module,exports){
+},{"./cfb":11,"./cipher":16,"./crypto.js":18,"./gcm":19,"./hash":20,"./pkcs1":25,"./public_key":28,"./random":31,"./signature":32}],25:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -9218,19 +9251,19 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _random = require('./random.js');
+var _random = _dereq_('./random.js');
 
 var _random2 = _interopRequireDefault(_random);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _jsbn = require('./public_key/jsbn.js');
+var _jsbn = _dereq_('./public_key/jsbn.js');
 
 var _jsbn2 = _interopRequireDefault(_jsbn);
 
-var _hash = require('./hash');
+var _hash = _dereq_('./hash');
 
 var _hash2 = _interopRequireDefault(_hash);
 
@@ -9356,7 +9389,7 @@ exports.default = {
   }
 };
 
-},{"../util.js":69,"./hash":20,"./public_key/jsbn.js":29,"./random.js":31}],26:[function(require,module,exports){
+},{"../util.js":69,"./hash":20,"./public_key/jsbn.js":29,"./random.js":31}],26:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -9391,23 +9424,23 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = DSA;
 
-var _jsbn = require('./jsbn.js');
+var _jsbn = _dereq_('./jsbn.js');
 
 var _jsbn2 = _interopRequireDefault(_jsbn);
 
-var _random = require('../random.js');
+var _random = _dereq_('../random.js');
 
 var _random2 = _interopRequireDefault(_random);
 
-var _hash = require('../hash');
+var _hash = _dereq_('../hash');
 
 var _hash2 = _interopRequireDefault(_hash);
 
-var _util = require('../../util.js');
+var _util = _dereq_('../../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _config = require('../../config');
+var _config = _dereq_('../../config');
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -9499,7 +9532,7 @@ function DSA() {
   this.verify = verify;
 }
 
-},{"../../config":10,"../../util.js":69,"../hash":20,"../random.js":31,"./jsbn.js":29}],27:[function(require,module,exports){
+},{"../../config":10,"../../util.js":69,"../hash":20,"../random.js":31,"./jsbn.js":29}],27:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -9533,15 +9566,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Elgamal;
 
-var _jsbn = require('./jsbn.js');
+var _jsbn = _dereq_('./jsbn.js');
 
 var _jsbn2 = _interopRequireDefault(_jsbn);
 
-var _random = require('../random.js');
+var _random = _dereq_('../random.js');
 
 var _random2 = _interopRequireDefault(_random);
 
-var _util = require('../../util.js');
+var _util = _dereq_('../../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -9572,7 +9605,7 @@ function Elgamal() {
   this.decrypt = decrypt;
 }
 
-},{"../../util.js":69,"../random.js":31,"./jsbn.js":29}],28:[function(require,module,exports){
+},{"../../util.js":69,"../random.js":31,"./jsbn.js":29}],28:[function(_dereq_,module,exports){
 /**
  * @requires crypto/public_key/dsa
  * @requires crypto/public_key/elgamal
@@ -9588,15 +9621,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _rsa = require('./rsa.js');
+var _rsa = _dereq_('./rsa.js');
 
 var _rsa2 = _interopRequireDefault(_rsa);
 
-var _elgamal = require('./elgamal.js');
+var _elgamal = _dereq_('./elgamal.js');
 
 var _elgamal2 = _interopRequireDefault(_elgamal);
 
-var _dsa = require('./dsa.js');
+var _dsa = _dereq_('./dsa.js');
 
 var _dsa2 = _interopRequireDefault(_dsa);
 
@@ -9610,7 +9643,7 @@ exports.default = {
 };
 /** @see module:crypto/public_key/dsa */
 
-},{"./dsa.js":26,"./elgamal.js":27,"./rsa.js":30}],29:[function(require,module,exports){
+},{"./dsa.js":26,"./elgamal.js":27,"./rsa.js":30}],29:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9618,7 +9651,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = BigInteger;
 
-var _util = require("../../util.js");
+var _util = _dereq_("../../util.js");
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -11296,7 +11329,7 @@ BigInteger.prototype.toMPI = bnToMPI;
 // JSBN-specific extension
 BigInteger.prototype.square = bnSquare;
 
-},{"../../util.js":69}],30:[function(require,module,exports){
+},{"../../util.js":69}],30:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -11330,19 +11363,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = RSA;
 
-var _jsbn = require('./jsbn.js');
+var _jsbn = _dereq_('./jsbn.js');
 
 var _jsbn2 = _interopRequireDefault(_jsbn);
 
-var _util = require('../../util.js');
+var _util = _dereq_('../../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _random = require('../random.js');
+var _random = _dereq_('../random.js');
 
 var _random2 = _interopRequireDefault(_random);
 
-var _config = require('../../config');
+var _config = _dereq_('../../config');
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -11584,7 +11617,7 @@ function RSA() {
   this.keyObject = KeyObject;
 }
 
-},{"../../config":10,"../../util.js":69,"../random.js":31,"./jsbn.js":29}],31:[function(require,module,exports){
+},{"../../config":10,"../../util.js":69,"../random.js":31,"./jsbn.js":29}],31:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -11618,17 +11651,17 @@ Object.defineProperty(exports, "__esModule", {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-var _mpi = require('../type/mpi.js');
+var _mpi = _dereq_('../type/mpi.js');
 
 var _mpi2 = _interopRequireDefault(_mpi);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var nodeCrypto = _util2.default.detectNode() && require('crypto');
+var nodeCrypto = _util2.default.detectNode() && _dereq_('crypto');
 
 exports.default = {
   /**
@@ -11792,7 +11825,7 @@ RandomBuffer.prototype.get = function (buf) {
   }
 };
 
-},{"../type/mpi.js":67,"../util.js":69,"crypto":"crypto"}],32:[function(require,module,exports){
+},{"../type/mpi.js":67,"../util.js":69,"crypto":"crypto"}],32:[function(_dereq_,module,exports){
 /**
  * @requires util
  * @requires crypto/hash
@@ -11806,15 +11839,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _util = require('../util');
+var _util = _dereq_('../util');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _public_key = require('./public_key');
+var _public_key = _dereq_('./public_key');
 
 var _public_key2 = _interopRequireDefault(_public_key);
 
-var _pkcs = require('./pkcs1.js');
+var _pkcs = _dereq_('./pkcs1.js');
 
 var _pkcs2 = _interopRequireDefault(_pkcs);
 
@@ -11921,7 +11954,7 @@ exports.default = {
   }
 };
 
-},{"../util":69,"./pkcs1.js":25,"./public_key":28}],33:[function(require,module,exports){
+},{"../util":69,"./pkcs1.js":25,"./public_key":28}],33:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -11952,15 +11985,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _base = require('./base64.js');
+var _base = _dereq_('./base64.js');
 
 var _base2 = _interopRequireDefault(_base);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _config = require('../config');
+var _config = _dereq_('../config');
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -12302,7 +12335,7 @@ exports.default = {
   decode: dearmor
 };
 
-},{"../config":10,"../enums.js":35,"./base64.js":34}],34:[function(require,module,exports){
+},{"../config":10,"../enums.js":35,"./base64.js":34}],34:[function(_dereq_,module,exports){
 /* OpenPGP radix-64/base64 string encoding/decoding
  * Copyright 2005 Herbert Hanewinkel, www.haneWIN.de
  * version 1.0, check www.haneWIN.de for the latest version
@@ -12420,7 +12453,7 @@ exports.default = {
   decode: r2s
 };
 
-},{}],35:[function(require,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -12751,7 +12784,7 @@ exports.default = {
 
 };
 
-},{}],36:[function(require,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2015 Tankred Hase
 //
@@ -12781,7 +12814,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = HKP;
 
-var _config = require('./config');
+var _config = _dereq_('./config');
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -12795,7 +12828,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 function HKP(keyServerBaseUrl) {
   this._baseUrl = keyServerBaseUrl ? keyServerBaseUrl : _config2.default.keyserver;
-  this._fetch = typeof window !== 'undefined' ? window.fetch : require('node-fetch');
+  this._fetch = typeof window !== 'undefined' ? window.fetch : _dereq_('node-fetch');
 }
 
 /**
@@ -12847,7 +12880,7 @@ HKP.prototype.upload = function (publicKeyArmored) {
   });
 };
 
-},{"./config":10,"node-fetch":"node-fetch"}],37:[function(require,module,exports){
+},{"./config":10,"node-fetch":"node-fetch"}],37:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -12863,25 +12896,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.HKP = exports.AsyncProxy = exports.Keyring = exports.crypto = exports.config = exports.enums = exports.armor = exports.Keyid = exports.S2K = exports.MPI = exports.packet = exports.util = exports.cleartext = exports.message = exports.key = undefined;
 
-var _openpgp = require('./openpgp');
+var _openpgp = _dereq_('./openpgp');
 
-var _loop = function _loop(_key3) {
-  if (_key3 === "default") return 'continue';
-  Object.defineProperty(exports, _key3, {
+Object.keys(_openpgp).forEach(function (key) {
+  if (key === "default") return;
+  Object.defineProperty(exports, key, {
     enumerable: true,
     get: function get() {
-      return _openpgp[_key3];
+      return _openpgp[key];
     }
   });
-};
+});
 
-for (var _key3 in _openpgp) {
-  var _ret = _loop(_key3);
-
-  if (_ret === 'continue') continue;
-}
-
-var _util = require('./util');
+var _util = _dereq_('./util');
 
 Object.defineProperty(exports, 'util', {
   enumerable: true,
@@ -12890,7 +12917,7 @@ Object.defineProperty(exports, 'util', {
   }
 });
 
-var _packet = require('./packet');
+var _packet = _dereq_('./packet');
 
 Object.defineProperty(exports, 'packet', {
   enumerable: true,
@@ -12899,7 +12926,7 @@ Object.defineProperty(exports, 'packet', {
   }
 });
 
-var _mpi = require('./type/mpi');
+var _mpi = _dereq_('./type/mpi');
 
 Object.defineProperty(exports, 'MPI', {
   enumerable: true,
@@ -12908,7 +12935,7 @@ Object.defineProperty(exports, 'MPI', {
   }
 });
 
-var _s2k = require('./type/s2k');
+var _s2k = _dereq_('./type/s2k');
 
 Object.defineProperty(exports, 'S2K', {
   enumerable: true,
@@ -12917,7 +12944,7 @@ Object.defineProperty(exports, 'S2K', {
   }
 });
 
-var _keyid = require('./type/keyid');
+var _keyid = _dereq_('./type/keyid');
 
 Object.defineProperty(exports, 'Keyid', {
   enumerable: true,
@@ -12926,7 +12953,7 @@ Object.defineProperty(exports, 'Keyid', {
   }
 });
 
-var _armor = require('./encoding/armor');
+var _armor = _dereq_('./encoding/armor');
 
 Object.defineProperty(exports, 'armor', {
   enumerable: true,
@@ -12935,7 +12962,7 @@ Object.defineProperty(exports, 'armor', {
   }
 });
 
-var _enums = require('./enums');
+var _enums = _dereq_('./enums');
 
 Object.defineProperty(exports, 'enums', {
   enumerable: true,
@@ -12944,7 +12971,7 @@ Object.defineProperty(exports, 'enums', {
   }
 });
 
-var _config = require('./config/config');
+var _config = _dereq_('./config/config');
 
 Object.defineProperty(exports, 'config', {
   enumerable: true,
@@ -12953,7 +12980,7 @@ Object.defineProperty(exports, 'config', {
   }
 });
 
-var _crypto = require('./crypto');
+var _crypto = _dereq_('./crypto');
 
 Object.defineProperty(exports, 'crypto', {
   enumerable: true,
@@ -12962,7 +12989,7 @@ Object.defineProperty(exports, 'crypto', {
   }
 });
 
-var _keyring = require('./keyring');
+var _keyring = _dereq_('./keyring');
 
 Object.defineProperty(exports, 'Keyring', {
   enumerable: true,
@@ -12971,7 +12998,7 @@ Object.defineProperty(exports, 'Keyring', {
   }
 });
 
-var _async_proxy = require('./worker/async_proxy');
+var _async_proxy = _dereq_('./worker/async_proxy');
 
 Object.defineProperty(exports, 'AsyncProxy', {
   enumerable: true,
@@ -12980,7 +13007,7 @@ Object.defineProperty(exports, 'AsyncProxy', {
   }
 });
 
-var _hkp = require('./hkp');
+var _hkp = _dereq_('./hkp');
 
 Object.defineProperty(exports, 'HKP', {
   enumerable: true,
@@ -12991,15 +13018,15 @@ Object.defineProperty(exports, 'HKP', {
 
 var openpgp = _interopRequireWildcard(_openpgp);
 
-var _key2 = require('./key');
+var _key = _dereq_('./key');
 
-var keyMod = _interopRequireWildcard(_key2);
+var keyMod = _interopRequireWildcard(_key);
 
-var _message = require('./message');
+var _message = _dereq_('./message');
 
 var messageMod = _interopRequireWildcard(_message);
 
-var _cleartext = require('./cleartext');
+var _cleartext = _dereq_('./cleartext');
 
 var cleartextMod = _interopRequireWildcard(_cleartext);
 
@@ -13042,7 +13069,7 @@ var cleartext = exports.cleartext = cleartextMod;
  * @name module:openpgp.util
  */
 
-},{"./cleartext":5,"./config/config":9,"./crypto":24,"./encoding/armor":33,"./enums":35,"./hkp":36,"./key":38,"./keyring":39,"./message":42,"./openpgp":43,"./packet":47,"./type/keyid":66,"./type/mpi":67,"./type/s2k":68,"./util":69,"./worker/async_proxy":70}],38:[function(require,module,exports){
+},{"./cleartext":5,"./config/config":9,"./crypto":24,"./encoding/armor":33,"./enums":35,"./hkp":36,"./key":38,"./keyring":39,"./message":42,"./openpgp":43,"./packet":47,"./type/keyid":66,"./type/mpi":67,"./type/s2k":68,"./util":69,"./worker/async_proxy":70}],38:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -13078,23 +13105,23 @@ exports.readArmored = readArmored;
 exports.generate = generate;
 exports.getPreferredSymAlgo = getPreferredSymAlgo;
 
-var _packet = require('./packet');
+var _packet = _dereq_('./packet');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _enums = require('./enums.js');
+var _enums = _dereq_('./enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _armor = require('./encoding/armor.js');
+var _armor = _dereq_('./encoding/armor.js');
 
 var _armor2 = _interopRequireDefault(_armor);
 
-var _config = require('./config');
+var _config = _dereq_('./config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _util = require('./util');
+var _util = _dereq_('./util');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -13420,6 +13447,22 @@ Key.prototype.getEncryptionKeyPacket = function () {
     return this.primaryKey;
   }
   return null;
+};
+
+/**
+ * Encrypts all secret key and subkey packets
+ * @param  {String} passphrase
+ */
+Key.prototype.encrypt = function (passphrase) {
+  if (!this.isPrivate()) {
+    throw new Error("Nothing to encrypt in a public key");
+  }
+
+  var keys = this.getAllKeyPackets();
+  for (var i = 0; i < keys.length; i++) {
+    keys[i].encrypt(passphrase);
+    keys[i].clearPrivateMPIs();
+  }
 };
 
 /**
@@ -14013,12 +14056,14 @@ function generate(options) {
       signaturePacket.hashAlgorithm = _config2.default.prefer_hash_algorithm;
       signaturePacket.keyFlags = [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data];
       signaturePacket.preferredSymmetricAlgorithms = [];
+      // prefer aes256, aes128, then aes192 (no WebCrypto support: https://www.chromium.org/blink/webcrypto#TOC-AES-support)
       signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes256);
       signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes128);
       signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes192);
       signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.cast5);
       signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.tripledes);
       signaturePacket.preferredHashAlgorithms = [];
+      // prefer fast asm.js implementations (SHA-256, SHA-1)
       signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha256);
       signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha1);
       signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha512);
@@ -14092,7 +14137,7 @@ function getPreferredSymAlgo(keys) {
   return prefAlgo.algo;
 }
 
-},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47,"./util":69}],39:[function(require,module,exports){
+},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47,"./util":69}],39:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -14104,11 +14149,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _keyring = require('./keyring.js');
+var _keyring = _dereq_('./keyring.js');
 
 var _keyring2 = _interopRequireDefault(_keyring);
 
-var _localstore = require('./localstore.js');
+var _localstore = _dereq_('./localstore.js');
 
 var _localstore2 = _interopRequireDefault(_localstore);
 
@@ -14118,7 +14163,7 @@ _keyring2.default.localstore = _localstore2.default;
 
 exports.default = _keyring2.default;
 
-},{"./keyring.js":40,"./localstore.js":41}],40:[function(require,module,exports){
+},{"./keyring.js":40,"./localstore.js":41}],40:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -14151,11 +14196,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Keyring;
 
-var _key = require('../key.js');
+var _key = _dereq_('../key.js');
 
 var keyModule = _interopRequireWildcard(_key);
 
-var _localstore = require('./localstore.js');
+var _localstore = _dereq_('./localstore.js');
 
 var _localstore2 = _interopRequireDefault(_localstore);
 
@@ -14355,7 +14400,7 @@ KeyArray.prototype.removeForId = function (keyId) {
   return null;
 };
 
-},{"../key.js":38,"./localstore.js":41}],41:[function(require,module,exports){
+},{"../key.js":38,"./localstore.js":41}],41:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -14387,15 +14432,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = LocalStore;
 
-var _config = require('../config');
+var _config = _dereq_('../config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _key = require('../key.js');
+var _key = _dereq_('../key.js');
 
 var keyModule = _interopRequireWildcard(_key);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -14410,7 +14455,7 @@ function LocalStore(prefix) {
   if (typeof window !== 'undefined' && window.localStorage) {
     this.storage = window.localStorage;
   } else {
-    this.storage = new (require('node-localstorage').LocalStorage)(_config2.default.node_store);
+    this.storage = new (_dereq_('node-localstorage').LocalStorage)(_config2.default.node_store);
   }
 }
 
@@ -14483,7 +14528,7 @@ function storeKeys(storage, itemname, keys) {
   }
 }
 
-},{"../config":10,"../key.js":38,"../util.js":69,"node-localstorage":"node-localstorage"}],42:[function(require,module,exports){
+},{"../config":10,"../key.js":38,"../util.js":69,"node-localstorage":"node-localstorage"}],42:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -14523,31 +14568,31 @@ exports.readSignedContent = readSignedContent;
 exports.fromText = fromText;
 exports.fromBinary = fromBinary;
 
-var _util = require('./util.js');
+var _util = _dereq_('./util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _packet = require('./packet');
+var _packet = _dereq_('./packet');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _enums = require('./enums.js');
+var _enums = _dereq_('./enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _armor = require('./encoding/armor.js');
+var _armor = _dereq_('./encoding/armor.js');
 
 var _armor2 = _interopRequireDefault(_armor);
 
-var _config = require('./config');
+var _config = _dereq_('./config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _crypto = require('./crypto');
+var _crypto = _dereq_('./crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _key = require('./key.js');
+var _key = _dereq_('./key.js');
 
 var keyModule = _interopRequireWildcard(_key);
 
@@ -14733,9 +14778,9 @@ Message.prototype.getText = function () {
 Message.prototype.encrypt = function (keys, passwords) {
   var _this2 = this;
 
-  var symAlgo = undefined,
-      msg = undefined,
-      symEncryptedPacket = undefined;
+  var symAlgo = void 0,
+      msg = void 0,
+      symEncryptedPacket = void 0;
   return Promise.resolve().then(function () {
     if (keys) {
       symAlgo = keyModule.getPreferredSymAlgo(keys);
@@ -14839,6 +14884,9 @@ Message.prototype.sign = function (privateKeys) {
     }
     onePassSig.publicKeyAlgorithm = signingKeyPacket.algorithm;
     onePassSig.signingKeyId = signingKeyPacket.getKeyId();
+    if (i === privateKeys.length - 1) {
+      onePassSig.flags = 1;
+    }
     packetlist.push(onePassSig);
   }
 
@@ -14999,7 +15047,7 @@ function fromBinary(bytes, filename) {
   return new Message(literalDataPacketlist);
 }
 
-},{"./config":10,"./crypto":24,"./encoding/armor.js":33,"./enums.js":35,"./key.js":38,"./packet":47,"./util.js":69}],43:[function(require,module,exports){
+},{"./config":10,"./crypto":24,"./encoding/armor.js":33,"./enums.js":35,"./key.js":38,"./packet":47,"./util.js":69}],43:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
 //
@@ -15049,31 +15097,31 @@ exports.verify = verify;
 exports.encryptSessionKey = encryptSessionKey;
 exports.decryptSessionKey = decryptSessionKey;
 
-var _message = require('./message.js');
+var _message = _dereq_('./message.js');
 
 var messageLib = _interopRequireWildcard(_message);
 
-var _cleartext = require('./cleartext.js');
+var _cleartext = _dereq_('./cleartext.js');
 
 var cleartext = _interopRequireWildcard(_cleartext);
 
-var _key = require('./key.js');
+var _key = _dereq_('./key.js');
 
 var key = _interopRequireWildcard(_key);
 
-var _config = require('./config/config.js');
+var _config = _dereq_('./config/config.js');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _util = require('./util');
+var _util = _dereq_('./util');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _async_proxy = require('./worker/async_proxy.js');
+var _async_proxy = _dereq_('./worker/async_proxy.js');
 
 var _async_proxy2 = _interopRequireDefault(_async_proxy);
 
-var _es6Promise = require('es6-promise');
+var _es6Promise = _dereq_('es6-promise');
 
 var _es6Promise2 = _interopRequireDefault(_es6Promise);
 
@@ -15089,7 +15137,7 @@ _es6Promise2.default.polyfill(); // load ES6 Promises polyfill
 //                      //
 //////////////////////////
 
-var asyncProxy = undefined; // instance of the asyncproxy
+var asyncProxy = void 0; // instance of the asyncproxy
 
 /**
  * Set the path for the web worker script and create an instance of the async proxy
@@ -15510,7 +15558,7 @@ function toArray(param) {
  * @return {Message}                  a message object
  */
 function createMessage(data, filename) {
-  var msg = undefined;
+  var msg = void 0;
   if (_util2.default.isUint8Array(data)) {
     msg = messageLib.fromBinary(data, filename);
   } else if (_util2.default.isString(data)) {
@@ -15582,7 +15630,7 @@ function nativeAEAD() {
   return _util2.default.getWebCrypto() && _config2.default.aead_protect;
 }
 
-},{"./cleartext.js":5,"./config/config.js":9,"./key.js":38,"./message.js":42,"./util":69,"./worker/async_proxy.js":70,"es6-promise":2}],44:[function(require,module,exports){
+},{"./cleartext.js":5,"./config/config.js":9,"./key.js":38,"./message.js":42,"./util":69,"./worker/async_proxy.js":70,"es6-promise":2}],44:[function(_dereq_,module,exports){
 /**
  * @requires enums
  * @module packet
@@ -15595,7 +15643,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Trust = exports.Signature = exports.SecretSubkey = exports.Userid = exports.SecretKey = exports.OnePassSignature = exports.UserAttribute = exports.PublicSubkey = exports.Marker = exports.SymmetricallyEncrypted = exports.PublicKey = exports.Literal = exports.SymEncryptedSessionKey = exports.PublicKeyEncryptedSessionKey = exports.SymEncryptedAEADProtected = exports.SymEncryptedIntegrityProtected = exports.Compressed = undefined;
 
-var _compressed = require('./compressed.js');
+var _compressed = _dereq_('./compressed.js');
 
 Object.defineProperty(exports, 'Compressed', {
   enumerable: true,
@@ -15604,7 +15652,7 @@ Object.defineProperty(exports, 'Compressed', {
   }
 });
 
-var _sym_encrypted_integrity_protected = require('./sym_encrypted_integrity_protected.js');
+var _sym_encrypted_integrity_protected = _dereq_('./sym_encrypted_integrity_protected.js');
 
 Object.defineProperty(exports, 'SymEncryptedIntegrityProtected', {
   enumerable: true,
@@ -15613,7 +15661,7 @@ Object.defineProperty(exports, 'SymEncryptedIntegrityProtected', {
   }
 });
 
-var _sym_encrypted_aead_protected = require('./sym_encrypted_aead_protected.js');
+var _sym_encrypted_aead_protected = _dereq_('./sym_encrypted_aead_protected.js');
 
 Object.defineProperty(exports, 'SymEncryptedAEADProtected', {
   enumerable: true,
@@ -15622,7 +15670,7 @@ Object.defineProperty(exports, 'SymEncryptedAEADProtected', {
   }
 });
 
-var _public_key_encrypted_session_key = require('./public_key_encrypted_session_key.js');
+var _public_key_encrypted_session_key = _dereq_('./public_key_encrypted_session_key.js');
 
 Object.defineProperty(exports, 'PublicKeyEncryptedSessionKey', {
   enumerable: true,
@@ -15631,7 +15679,7 @@ Object.defineProperty(exports, 'PublicKeyEncryptedSessionKey', {
   }
 });
 
-var _sym_encrypted_session_key = require('./sym_encrypted_session_key.js');
+var _sym_encrypted_session_key = _dereq_('./sym_encrypted_session_key.js');
 
 Object.defineProperty(exports, 'SymEncryptedSessionKey', {
   enumerable: true,
@@ -15640,7 +15688,7 @@ Object.defineProperty(exports, 'SymEncryptedSessionKey', {
   }
 });
 
-var _literal = require('./literal.js');
+var _literal = _dereq_('./literal.js');
 
 Object.defineProperty(exports, 'Literal', {
   enumerable: true,
@@ -15649,7 +15697,7 @@ Object.defineProperty(exports, 'Literal', {
   }
 });
 
-var _public_key = require('./public_key.js');
+var _public_key = _dereq_('./public_key.js');
 
 Object.defineProperty(exports, 'PublicKey', {
   enumerable: true,
@@ -15658,7 +15706,7 @@ Object.defineProperty(exports, 'PublicKey', {
   }
 });
 
-var _symmetrically_encrypted = require('./symmetrically_encrypted.js');
+var _symmetrically_encrypted = _dereq_('./symmetrically_encrypted.js');
 
 Object.defineProperty(exports, 'SymmetricallyEncrypted', {
   enumerable: true,
@@ -15667,7 +15715,7 @@ Object.defineProperty(exports, 'SymmetricallyEncrypted', {
   }
 });
 
-var _marker = require('./marker.js');
+var _marker = _dereq_('./marker.js');
 
 Object.defineProperty(exports, 'Marker', {
   enumerable: true,
@@ -15676,7 +15724,7 @@ Object.defineProperty(exports, 'Marker', {
   }
 });
 
-var _public_subkey = require('./public_subkey.js');
+var _public_subkey = _dereq_('./public_subkey.js');
 
 Object.defineProperty(exports, 'PublicSubkey', {
   enumerable: true,
@@ -15685,7 +15733,7 @@ Object.defineProperty(exports, 'PublicSubkey', {
   }
 });
 
-var _user_attribute = require('./user_attribute.js');
+var _user_attribute = _dereq_('./user_attribute.js');
 
 Object.defineProperty(exports, 'UserAttribute', {
   enumerable: true,
@@ -15694,7 +15742,7 @@ Object.defineProperty(exports, 'UserAttribute', {
   }
 });
 
-var _one_pass_signature = require('./one_pass_signature.js');
+var _one_pass_signature = _dereq_('./one_pass_signature.js');
 
 Object.defineProperty(exports, 'OnePassSignature', {
   enumerable: true,
@@ -15703,7 +15751,7 @@ Object.defineProperty(exports, 'OnePassSignature', {
   }
 });
 
-var _secret_key = require('./secret_key.js');
+var _secret_key = _dereq_('./secret_key.js');
 
 Object.defineProperty(exports, 'SecretKey', {
   enumerable: true,
@@ -15712,7 +15760,7 @@ Object.defineProperty(exports, 'SecretKey', {
   }
 });
 
-var _userid = require('./userid.js');
+var _userid = _dereq_('./userid.js');
 
 Object.defineProperty(exports, 'Userid', {
   enumerable: true,
@@ -15721,7 +15769,7 @@ Object.defineProperty(exports, 'Userid', {
   }
 });
 
-var _secret_subkey = require('./secret_subkey.js');
+var _secret_subkey = _dereq_('./secret_subkey.js');
 
 Object.defineProperty(exports, 'SecretSubkey', {
   enumerable: true,
@@ -15730,7 +15778,7 @@ Object.defineProperty(exports, 'SecretSubkey', {
   }
 });
 
-var _signature = require('./signature.js');
+var _signature = _dereq_('./signature.js');
 
 Object.defineProperty(exports, 'Signature', {
   enumerable: true,
@@ -15739,7 +15787,7 @@ Object.defineProperty(exports, 'Signature', {
   }
 });
 
-var _trust = require('./trust.js');
+var _trust = _dereq_('./trust.js');
 
 Object.defineProperty(exports, 'Trust', {
   enumerable: true,
@@ -15750,11 +15798,11 @@ Object.defineProperty(exports, 'Trust', {
 exports.newPacketFromTag = newPacketFromTag;
 exports.fromStructuredClone = fromStructuredClone;
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _all_packets = require('./all_packets.js');
+var _all_packets = _dereq_('./all_packets.js');
 
 var packets = _interopRequireWildcard(_all_packets);
 
@@ -15800,7 +15848,7 @@ function packetClassFromTagName(tag) {
   return tag.substr(0, 1).toUpperCase() + tag.substr(1);
 }
 
-},{"../enums.js":35,"./all_packets.js":44,"./compressed.js":46,"./literal.js":48,"./marker.js":49,"./one_pass_signature.js":50,"./public_key.js":53,"./public_key_encrypted_session_key.js":54,"./public_subkey.js":55,"./secret_key.js":56,"./secret_subkey.js":57,"./signature.js":58,"./sym_encrypted_aead_protected.js":59,"./sym_encrypted_integrity_protected.js":60,"./sym_encrypted_session_key.js":61,"./symmetrically_encrypted.js":62,"./trust.js":63,"./user_attribute.js":64,"./userid.js":65}],45:[function(require,module,exports){
+},{"../enums.js":35,"./all_packets.js":44,"./compressed.js":46,"./literal.js":48,"./marker.js":49,"./one_pass_signature.js":50,"./public_key.js":53,"./public_key_encrypted_session_key.js":54,"./public_subkey.js":55,"./secret_key.js":56,"./secret_subkey.js":57,"./signature.js":58,"./sym_encrypted_aead_protected.js":59,"./sym_encrypted_integrity_protected.js":60,"./sym_encrypted_session_key.js":61,"./symmetrically_encrypted.js":62,"./trust.js":63,"./user_attribute.js":64,"./userid.js":65}],45:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2015 Tankred Hase
 //
@@ -15832,23 +15880,23 @@ Object.defineProperty(exports, "__esModule", {
 exports.clonePackets = clonePackets;
 exports.parseClonedPackets = parseClonedPackets;
 
-var _key = require('../key.js');
+var _key = _dereq_('../key.js');
 
 var key = _interopRequireWildcard(_key);
 
-var _message = require('../message.js');
+var _message = _dereq_('../message.js');
 
 var message = _interopRequireWildcard(_message);
 
-var _cleartext = require('../cleartext.js');
+var _cleartext = _dereq_('../cleartext.js');
 
 var cleartext = _interopRequireWildcard(_cleartext);
 
-var _packetlist = require('./packetlist.js');
+var _packetlist = _dereq_('./packetlist.js');
 
 var _packetlist2 = _interopRequireDefault(_packetlist);
 
-var _keyid = require('../type/keyid.js');
+var _keyid = _dereq_('../type/keyid.js');
 
 var _keyid2 = _interopRequireDefault(_keyid);
 
@@ -15944,7 +15992,7 @@ function packetlistCloneToSignature(clone) {
   return clone;
 }
 
-},{"../cleartext.js":5,"../key.js":38,"../message.js":42,"../type/keyid.js":66,"./packetlist.js":52}],46:[function(require,module,exports){
+},{"../cleartext.js":5,"../key.js":38,"../message.js":42,"../type/keyid.js":66,"./packetlist.js":52}],46:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -15983,23 +16031,23 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Compressed;
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _zlibMin = require('../compression/zlib.min.js');
+var _zlibMin = _dereq_('../compression/zlib.min.js');
 
 var _zlibMin2 = _interopRequireDefault(_zlibMin);
 
-var _rawinflateMin = require('../compression/rawinflate.min.js');
+var _rawinflateMin = _dereq_('../compression/rawinflate.min.js');
 
 var _rawinflateMin2 = _interopRequireDefault(_rawinflateMin);
 
-var _rawdeflateMin = require('../compression/rawdeflate.min.js');
+var _rawdeflateMin = _dereq_('../compression/rawdeflate.min.js');
 
 var _rawdeflateMin2 = _interopRequireDefault(_rawdeflateMin);
 
@@ -16127,22 +16175,22 @@ Compressed.prototype.compress = function () {
   }
 };
 
-},{"../compression/rawdeflate.min.js":6,"../compression/rawinflate.min.js":7,"../compression/zlib.min.js":8,"../enums.js":35,"../util.js":69}],47:[function(require,module,exports){
+},{"../compression/rawdeflate.min.js":6,"../compression/rawinflate.min.js":7,"../compression/zlib.min.js":8,"../enums.js":35,"../util.js":69}],47:[function(_dereq_,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _all_packets = require('./all_packets.js');
+var _all_packets = _dereq_('./all_packets.js');
 
 var packets = _interopRequireWildcard(_all_packets);
 
-var _clone = require('./clone.js');
+var _clone = _dereq_('./clone.js');
 
 var clone = _interopRequireWildcard(_clone);
 
-var _packetlist = require('./packetlist.js');
+var _packetlist = _dereq_('./packetlist.js');
 
 var _packetlist2 = _interopRequireDefault(_packetlist);
 
@@ -16163,7 +16211,7 @@ for (var i in packets) {
 
 exports.default = mod;
 
-},{"./all_packets.js":44,"./clone.js":45,"./packetlist.js":52}],48:[function(require,module,exports){
+},{"./all_packets.js":44,"./clone.js":45,"./packetlist.js":52}],48:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16198,11 +16246,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Literal;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -16313,7 +16361,7 @@ Literal.prototype.write = function () {
   return _util2.default.concatUint8Array([format, filename_length, filename, date, data]);
 };
 
-},{"../enums.js":35,"../util.js":69}],49:[function(require,module,exports){
+},{"../enums.js":35,"../util.js":69}],49:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16351,7 +16399,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Marker;
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -16386,7 +16434,7 @@ Marker.prototype.read = function (bytes) {
   return false;
 };
 
-},{"../enums.js":35}],50:[function(require,module,exports){
+},{"../enums.js":35}],50:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16425,15 +16473,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = OnePassSignature;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _keyid = require('../type/keyid.js');
+var _keyid = _dereq_('../type/keyid.js');
 
 var _keyid2 = _interopRequireDefault(_keyid);
 
@@ -16505,7 +16553,7 @@ OnePassSignature.prototype.postCloneTypeFix = function () {
   this.signingKeyId = _keyid2.default.fromClone(this.signingKeyId);
 };
 
-},{"../enums.js":35,"../type/keyid.js":66,"../util.js":69}],51:[function(require,module,exports){
+},{"../enums.js":35,"../type/keyid.js":66,"../util.js":69}],51:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16535,7 +16583,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -16646,10 +16694,10 @@ exports.default = {
       // new format header
       tag = input[mypos] & 0x3F; // bit 5-0
     } else {
-        // old format header
-        tag = (input[mypos] & 0x3F) >> 2; // bit 5-2
-        packet_length_type = input[mypos] & 0x03; // bit 1-0
-      }
+      // old format header
+      tag = (input[mypos] & 0x3F) >> 2; // bit 5-2
+      packet_length_type = input[mypos] & 0x03; // bit 1-0
+    }
 
     // header octet parsing done
     mypos++;
@@ -16700,49 +16748,49 @@ exports.default = {
           _util2.default.print_debug("1 byte length:" + packet_length);
           // 4.2.2.2. Two-Octet Lengths
         } else if (input[mypos] >= 192 && input[mypos] < 224) {
-            packet_length = (input[mypos++] - 192 << 8) + input[mypos++] + 192;
-            _util2.default.print_debug("2 byte length:" + packet_length);
-            // 4.2.2.4. Partial Body Lengths
-          } else if (input[mypos] > 223 && input[mypos] < 255) {
-              packet_length = 1 << (input[mypos++] & 0x1F);
-              _util2.default.print_debug("4 byte length:" + packet_length);
-              // EEEK, we're reading the full data here...
-              var mypos2 = mypos + packet_length;
-              bodydata = [input.subarray(mypos, mypos + packet_length)];
-              var tmplen;
-              while (true) {
-                if (input[mypos2] < 192) {
-                  tmplen = input[mypos2++];
-                  packet_length += tmplen;
-                  bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
-                  mypos2 += tmplen;
-                  break;
-                } else if (input[mypos2] >= 192 && input[mypos2] < 224) {
-                  tmplen = (input[mypos2++] - 192 << 8) + input[mypos2++] + 192;
-                  packet_length += tmplen;
-                  bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
-                  mypos2 += tmplen;
-                  break;
-                } else if (input[mypos2] > 223 && input[mypos2] < 255) {
-                  tmplen = 1 << (input[mypos2++] & 0x1F);
-                  packet_length += tmplen;
-                  bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
-                  mypos2 += tmplen;
-                } else {
-                  mypos2++;
-                  tmplen = input[mypos2++] << 24 | input[mypos2++] << 16 | input[mypos2++] << 8 | input[mypos2++];
-                  bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
-                  packet_length += tmplen;
-                  mypos2 += tmplen;
-                  break;
-                }
-              }
-              real_packet_length = mypos2 - mypos;
-              // 4.2.2.3. Five-Octet Lengths
+          packet_length = (input[mypos++] - 192 << 8) + input[mypos++] + 192;
+          _util2.default.print_debug("2 byte length:" + packet_length);
+          // 4.2.2.4. Partial Body Lengths
+        } else if (input[mypos] > 223 && input[mypos] < 255) {
+          packet_length = 1 << (input[mypos++] & 0x1F);
+          _util2.default.print_debug("4 byte length:" + packet_length);
+          // EEEK, we're reading the full data here...
+          var mypos2 = mypos + packet_length;
+          bodydata = [input.subarray(mypos, mypos + packet_length)];
+          var tmplen;
+          while (true) {
+            if (input[mypos2] < 192) {
+              tmplen = input[mypos2++];
+              packet_length += tmplen;
+              bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
+              mypos2 += tmplen;
+              break;
+            } else if (input[mypos2] >= 192 && input[mypos2] < 224) {
+              tmplen = (input[mypos2++] - 192 << 8) + input[mypos2++] + 192;
+              packet_length += tmplen;
+              bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
+              mypos2 += tmplen;
+              break;
+            } else if (input[mypos2] > 223 && input[mypos2] < 255) {
+              tmplen = 1 << (input[mypos2++] & 0x1F);
+              packet_length += tmplen;
+              bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
+              mypos2 += tmplen;
             } else {
-                mypos++;
-                packet_length = input[mypos++] << 24 | input[mypos++] << 16 | input[mypos++] << 8 | input[mypos++];
-              }
+              mypos2++;
+              tmplen = input[mypos2++] << 24 | input[mypos2++] << 16 | input[mypos2++] << 8 | input[mypos2++];
+              bodydata.push(input.subarray(mypos2, mypos2 + tmplen));
+              packet_length += tmplen;
+              mypos2 += tmplen;
+              break;
+            }
+          }
+          real_packet_length = mypos2 - mypos;
+          // 4.2.2.3. Five-Octet Lengths
+        } else {
+          mypos++;
+          packet_length = input[mypos++] << 24 | input[mypos++] << 16 | input[mypos++] << 8 | input[mypos++];
+        }
       }
 
     // if there was'nt a partial body length: use the specified
@@ -16765,7 +16813,7 @@ exports.default = {
   }
 };
 
-},{"../util.js":69}],52:[function(require,module,exports){
+},{"../util.js":69}],52:[function(_dereq_,module,exports){
 /**
  * This class represents a list of openpgp packets.
  * Take care when iterating over it - the packets themselves
@@ -16784,19 +16832,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Packetlist;
 
-var _util = require('../util');
+var _util = _dereq_('../util');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _packet = require('./packet.js');
+var _packet = _dereq_('./packet.js');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _all_packets = require('./all_packets.js');
+var _all_packets = _dereq_('./all_packets.js');
 
 var packets = _interopRequireWildcard(_all_packets);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -16824,12 +16872,18 @@ Packetlist.prototype.read = function (bytes) {
     var parsed = _packet2.default.read(bytes, i, bytes.length - i);
     i = parsed.offset;
 
-    var tag = _enums2.default.read(_enums2.default.packet, parsed.tag);
-    var packet = packets.newPacketFromTag(tag);
-
-    this.push(packet);
-
-    packet.read(parsed.packet);
+    var pushed = false;
+    try {
+      var tag = _enums2.default.read(_enums2.default.packet, parsed.tag);
+      var packet = packets.newPacketFromTag(tag);
+      this.push(packet);
+      pushed = true;
+      packet.read(parsed.packet);
+    } catch (e) {
+      if (pushed) {
+        this.pop(); // drop unsupported packet
+      }
+    }
   }
 };
 
@@ -16863,6 +16917,22 @@ Packetlist.prototype.push = function (packet) {
 
   this[this.length] = packet;
   this.length++;
+};
+
+/**
+ * Remove a packet from the list and return it.
+ * @return {Object}   The packet that was removed
+ */
+Packetlist.prototype.pop = function () {
+  if (this.length === 0) {
+    return;
+  }
+
+  var packet = this[this.length - 1];
+  delete this[this.length - 1];
+  this.length--;
+
+  return packet;
 };
 
 /**
@@ -16996,7 +17066,7 @@ Packetlist.fromStructuredClone = function (packetlistClone) {
   return packetlist;
 };
 
-},{"../enums.js":35,"../util":69,"./all_packets.js":44,"./packet.js":51}],53:[function(require,module,exports){
+},{"../enums.js":35,"../util":69,"./all_packets.js":44,"./packet.js":51}],53:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17036,23 +17106,23 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = PublicKey;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _mpi = require('../type/mpi.js');
+var _mpi = _dereq_('../type/mpi.js');
 
 var _mpi2 = _interopRequireDefault(_mpi);
 
-var _keyid = require('../type/keyid.js');
+var _keyid = _dereq_('../type/keyid.js');
 
 var _keyid2 = _interopRequireDefault(_keyid);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
@@ -17243,7 +17313,7 @@ PublicKey.prototype.postCloneTypeFix = function () {
   }
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69}],54:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69}],54:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17290,23 +17360,23 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = PublicKeyEncryptedSessionKey;
 
-var _keyid = require('../type/keyid.js');
+var _keyid = _dereq_('../type/keyid.js');
 
 var _keyid2 = _interopRequireDefault(_keyid);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _mpi = require('../type/mpi.js');
+var _mpi = _dereq_('../type/mpi.js');
 
 var _mpi2 = _interopRequireDefault(_mpi);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
@@ -17433,7 +17503,7 @@ PublicKeyEncryptedSessionKey.prototype.postCloneTypeFix = function () {
   }
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69}],55:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69}],55:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17464,11 +17534,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = PublicSubkey;
 
-var _public_key = require('./public_key.js');
+var _public_key = _dereq_('./public_key.js');
 
 var _public_key2 = _interopRequireDefault(_public_key);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -17486,7 +17556,7 @@ function PublicSubkey() {
 PublicSubkey.prototype = new _public_key2.default();
 PublicSubkey.prototype.constructor = PublicSubkey;
 
-},{"../enums.js":35,"./public_key.js":53}],56:[function(require,module,exports){
+},{"../enums.js":35,"./public_key.js":53}],56:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17527,27 +17597,27 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = SecretKey;
 
-var _public_key = require('./public_key.js');
+var _public_key = _dereq_('./public_key.js');
 
 var _public_key2 = _interopRequireDefault(_public_key);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _mpi = require('../type/mpi.js');
+var _mpi = _dereq_('../type/mpi.js');
 
 var _mpi2 = _interopRequireDefault(_mpi);
 
-var _s2k = require('../type/s2k.js');
+var _s2k = _dereq_('../type/s2k.js');
 
 var _s2k2 = _interopRequireDefault(_s2k);
 
@@ -17772,6 +17842,7 @@ SecretKey.prototype.decrypt = function (passphrase) {
   }
   this.mpi = this.mpi.concat(parsedMPI);
   this.isDecrypted = true;
+  this.encrypted = null;
   return true;
 };
 
@@ -17795,7 +17866,7 @@ SecretKey.prototype.clearPrivateMPIs = function () {
   this.isDecrypted = false;
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/mpi.js":67,"../type/s2k.js":68,"../util.js":69,"./public_key.js":53}],57:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/mpi.js":67,"../type/s2k.js":68,"../util.js":69,"./public_key.js":53}],57:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17826,11 +17897,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = SecretSubkey;
 
-var _secret_key = require('./secret_key.js');
+var _secret_key = _dereq_('./secret_key.js');
 
 var _secret_key2 = _interopRequireDefault(_secret_key);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -17848,7 +17919,7 @@ function SecretSubkey() {
 SecretSubkey.prototype = new _secret_key2.default();
 SecretSubkey.prototype.constructor = SecretSubkey;
 
-},{"../enums.js":35,"./secret_key.js":56}],58:[function(require,module,exports){
+},{"../enums.js":35,"./secret_key.js":56}],58:[function(_dereq_,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17856,27 +17927,27 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Signature;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _packet = require('./packet.js');
+var _packet = _dereq_('./packet.js');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _mpi = require('../type/mpi.js');
+var _mpi = _dereq_('../type/mpi.js');
 
 var _mpi2 = _interopRequireDefault(_mpi);
 
-var _keyid = require('../type/keyid.js');
+var _keyid = _dereq_('../type/keyid.js');
 
 var _keyid2 = _interopRequireDefault(_keyid);
 
@@ -17972,86 +18043,96 @@ function Signature() {
  * @return {module:packet/signature} object representation
  */
 Signature.prototype.read = function (bytes) {
+  var _this = this;
+
   var i = 0;
   this.version = bytes[i++];
   // switch on version (3 and 4)
-  switch (this.version) {
-    case 3:
-      // One-octet length of following hashed material. MUST be 5.
-      if (bytes[i++] !== 5) {
-        _util2.default.print_debug("packet/signature.js\n" + 'invalid One-octet length of following hashed material.' + 'MUST be 5. @:' + (i - 1));
-      }
+  var sigpos;
+  var sigDataLength;
 
-      var sigpos = i;
-      // One-octet signature type.
-      this.signatureType = bytes[i++];
-
-      // Four-octet creation time.
-      this.created = _util2.default.readDate(bytes.subarray(i, i + 4));
-      i += 4;
-
-      // storing data appended to data which gets verified
-      this.signatureData = bytes.subarray(sigpos, i);
-
-      // Eight-octet Key ID of signer.
-      this.issuerKeyId.read(bytes.subarray(i, i + 8));
-      i += 8;
-
-      // One-octet public-key algorithm.
-      this.publicKeyAlgorithm = bytes[i++];
-
-      // One-octet hash algorithm.
-      this.hashAlgorithm = bytes[i++];
-      break;
-    case 4:
-      this.signatureType = bytes[i++];
-      this.publicKeyAlgorithm = bytes[i++];
-      this.hashAlgorithm = bytes[i++];
-
-      var subpackets = function subpackets(bytes) {
-        // Two-octet scalar octet count for following subpacket data.
-        var subpacket_length = _util2.default.readNumber(bytes.subarray(0, 2));
-
-        var i = 2;
-
-        // subpacket data set (zero or more subpackets)
-        while (i < 2 + subpacket_length) {
-
-          var len = _packet2.default.readSimpleLength(bytes.subarray(i, bytes.length));
-          i += len.offset;
-
-          this.read_sub_packet(bytes.subarray(i, i + len.len));
-
-          i += len.len;
+  (function () {
+    switch (_this.version) {
+      case 3:
+        // One-octet length of following hashed material. MUST be 5.
+        if (bytes[i++] !== 5) {
+          _util2.default.print_debug("packet/signature.js\n" + 'invalid One-octet length of following hashed material.' + 'MUST be 5. @:' + (i - 1));
         }
 
-        return i;
-      };
+        sigpos = i;
+        // One-octet signature type.
 
-      // hashed subpackets
+        _this.signatureType = bytes[i++];
+
+        // Four-octet creation time.
+        _this.created = _util2.default.readDate(bytes.subarray(i, i + 4));
+        i += 4;
+
+        // storing data appended to data which gets verified
+        _this.signatureData = bytes.subarray(sigpos, i);
+
+        // Eight-octet Key ID of signer.
+        _this.issuerKeyId.read(bytes.subarray(i, i + 8));
+        i += 8;
+
+        // One-octet public-key algorithm.
+        _this.publicKeyAlgorithm = bytes[i++];
+
+        // One-octet hash algorithm.
+        _this.hashAlgorithm = bytes[i++];
+        break;
+      case 4:
+        _this.signatureType = bytes[i++];
+        _this.publicKeyAlgorithm = bytes[i++];
+        _this.hashAlgorithm = bytes[i++];
+
+        var subpackets = function subpackets(bytes) {
+          // Two-octet scalar octet count for following subpacket data.
+          var subpacket_length = _util2.default.readNumber(bytes.subarray(0, 2));
+
+          var i = 2;
+
+          // subpacket data set (zero or more subpackets)
+          while (i < 2 + subpacket_length) {
+
+            var len = _packet2.default.readSimpleLength(bytes.subarray(i, bytes.length));
+            i += len.offset;
+
+            this.read_sub_packet(bytes.subarray(i, i + len.len));
+
+            i += len.len;
+          }
+
+          return i;
+        };
+
+        // hashed subpackets
 
 
-      i += subpackets.call(this, bytes.subarray(i, bytes.length), true);
+        i += subpackets.call(_this, bytes.subarray(i, bytes.length), true);
 
-      // A V4 signature hashes the packet body
-      // starting from its first field, the version number, through the end
-      // of the hashed subpacket data.  Thus, the fields hashed are the
-      // signature version, the signature type, the public-key algorithm, the
-      // hash algorithm, the hashed subpacket length, and the hashed
-      // subpacket body.
-      this.signatureData = bytes.subarray(0, i);
-      var sigDataLength = i;
+        // A V4 signature hashes the packet body
+        // starting from its first field, the version number, through the end
+        // of the hashed subpacket data.  Thus, the fields hashed are the
+        // signature version, the signature type, the public-key algorithm, the
+        // hash algorithm, the hashed subpacket length, and the hashed
+        // subpacket body.
+        _this.signatureData = bytes.subarray(0, i);
+        sigDataLength = i;
 
-      // unhashed subpackets
-      i += subpackets.call(this, bytes.subarray(i, bytes.length), false);
-      this.unhashedSubpackets = bytes.subarray(sigDataLength, i);
+        // unhashed subpackets
 
-      break;
-    default:
-      throw new Error('Version ' + this.version + ' of the signature is unsupported.');
-  }
+        i += subpackets.call(_this, bytes.subarray(i, bytes.length), false);
+        _this.unhashedSubpackets = bytes.subarray(sigDataLength, i);
 
-  // Two-octet field holding left 16 bits of signed hash value.
+        break;
+      default:
+        throw new Error('Version ' + _this.version + ' of the signature is unsupported.');
+    }
+
+    // Two-octet field holding left 16 bits of signed hash value.
+  })();
+
   this.signedHashValue = bytes.subarray(i, i + 2);
   i += 2;
 
@@ -18519,7 +18600,7 @@ Signature.prototype.postCloneTypeFix = function () {
   this.issuerKeyId = _keyid2.default.fromClone(this.issuerKeyId);
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69,"./packet.js":51}],59:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69,"./packet.js":51}],59:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
 //
@@ -18549,15 +18630,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = SymEncryptedAEADProtected;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -18629,7 +18710,7 @@ SymEncryptedAEADProtected.prototype.encrypt = function (sessionKeyAlgorithm, key
   });
 };
 
-},{"../crypto":24,"../enums.js":35,"../util.js":69}],60:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../util.js":69}],60:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -18671,19 +18752,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = SymEncryptedIntegrityProtected;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _asmcryptoLite = require('asmcrypto-lite');
+var _asmcryptoLite = _dereq_('asmcrypto-lite');
 
 var _asmcryptoLite2 = _interopRequireDefault(_asmcryptoLite);
 
@@ -18763,7 +18844,7 @@ SymEncryptedIntegrityProtected.prototype.encrypt = function (sessionKeyAlgorithm
  * @return {Promise}
  */
 SymEncryptedIntegrityProtected.prototype.decrypt = function (sessionKeyAlgorithm, key) {
-  var decrypted = undefined;
+  var decrypted = void 0;
   if (sessionKeyAlgorithm.substr(0, 3) === 'aes') {
     // AES optimizations. Native code for node, asmCrypto for browser.
     decrypted = aesDecrypt(sessionKeyAlgorithm, this.encrypted, key);
@@ -18805,7 +18886,7 @@ function aesEncrypt(algo, prefix, pt, key) {
 }
 
 function aesDecrypt(algo, ct, key) {
-  var pt = undefined;
+  var pt = void 0;
   if (nodeCrypto) {
     // Node crypto library.
     pt = nodeDecrypt(algo, ct, key);
@@ -18833,7 +18914,7 @@ function nodeDecrypt(algo, ct, key) {
   return new Uint8Array(pt);
 }
 
-},{"../crypto":24,"../enums.js":35,"../util.js":69,"asmcrypto-lite":1}],61:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../util.js":69,"asmcrypto-lite":1}],61:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -18879,19 +18960,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = SymEncryptedSessionKey;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _s2k = require('../type/s2k.js');
+var _s2k = _dereq_('../type/s2k.js');
 
 var _s2k2 = _interopRequireDefault(_s2k);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
@@ -19002,7 +19083,7 @@ SymEncryptedSessionKey.prototype.postCloneTypeFix = function () {
   this.s2k = _s2k2.default.fromClone(this.s2k);
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/s2k.js":68,"../util.js":69}],62:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/s2k.js":68,"../util.js":69}],62:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19040,15 +19121,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = SymmetricallyEncrypted;
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _config = require('../config');
+var _config = _dereq_('../config');
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -19102,7 +19183,7 @@ SymmetricallyEncrypted.prototype.encrypt = function (algo, key) {
   return Promise.resolve();
 };
 
-},{"../config":10,"../crypto":24,"../enums.js":35}],63:[function(require,module,exports){
+},{"../config":10,"../crypto":24,"../enums.js":35}],63:[function(_dereq_,module,exports){
 /**
  * @requires enums
  * @module packet/trust
@@ -19115,7 +19196,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Trust;
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -19135,7 +19216,7 @@ function Trust() {
  */
 Trust.prototype.read = function () {};
 
-},{"../enums.js":35}],64:[function(require,module,exports){
+},{"../enums.js":35}],64:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19181,15 +19262,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = UserAttribute;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _packet = require('./packet.js');
+var _packet = _dereq_('./packet.js');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -19245,7 +19326,7 @@ UserAttribute.prototype.equals = function (usrAttr) {
   });
 };
 
-},{"../enums.js":35,"../util.js":69,"./packet.js":51}],65:[function(require,module,exports){
+},{"../enums.js":35,"../util.js":69,"./packet.js":51}],65:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19283,11 +19364,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Userid;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
@@ -19321,7 +19402,7 @@ Userid.prototype.write = function () {
   return _util2.default.str2Uint8Array(_util2.default.encode_utf8(this.userid));
 };
 
-},{"../enums.js":35,"../util.js":69}],66:[function(require,module,exports){
+},{"../enums.js":35,"../util.js":69}],66:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19357,7 +19438,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Keyid;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -19410,7 +19491,7 @@ Keyid.fromId = function (hex) {
   return keyid;
 };
 
-},{"../util.js":69}],67:[function(require,module,exports){
+},{"../util.js":69}],67:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19454,11 +19535,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = MPI;
 
-var _jsbn = require('../crypto/public_key/jsbn.js');
+var _jsbn = _dereq_('../crypto/public_key/jsbn.js');
 
 var _jsbn2 = _interopRequireDefault(_jsbn);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
@@ -19541,7 +19622,7 @@ MPI.fromClone = function (clone) {
   return mpi;
 };
 
-},{"../crypto/public_key/jsbn.js":29,"../util.js":69}],68:[function(require,module,exports){
+},{"../crypto/public_key/jsbn.js":29,"../util.js":69}],68:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19580,15 +19661,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = S2K;
 
-var _enums = require('../enums.js');
+var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
@@ -19651,8 +19732,8 @@ S2K.prototype.read = function (bytes) {
           this.type = gnuExtType;
           // GnuPG extension mode 1001 -- don't write secret key at all
         } else {
-            throw new Error("Unknown s2k gnu protection mode.");
-          }
+          throw new Error("Unknown s2k gnu protection mode.");
+        }
       } else {
         throw new Error("Unknown s2k type.");
       }
@@ -19765,7 +19846,7 @@ S2K.fromClone = function (clone) {
   return s2k;
 };
 
-},{"../crypto":24,"../enums.js":35,"../util.js":69}],69:[function(require,module,exports){
+},{"../crypto":24,"../enums.js":35,"../util.js":69}],69:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19795,7 +19876,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _config = require('./config');
+var _config = _dereq_('./config');
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -20312,7 +20393,7 @@ exports.default = {
       return;
     }
 
-    return require('crypto');
+    return _dereq_('crypto');
   },
 
   /**
@@ -20325,12 +20406,12 @@ exports.default = {
       return;
     }
 
-    return require('buffer').Buffer;
+    return _dereq_('buffer').Buffer;
   }
 
 };
 
-},{"./config":10,"buffer":"buffer","crypto":"crypto"}],70:[function(require,module,exports){
+},{"./config":10,"buffer":"buffer","crypto":"crypto"}],70:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -20355,15 +20436,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = AsyncProxy;
 
-var _util = require('../util.js');
+var _util = _dereq_('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _crypto = require('../crypto');
+var _crypto = _dereq_('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _packet = require('../packet');
+var _packet = _dereq_('../packet');
 
 var _packet2 = _interopRequireDefault(_packet);
 
@@ -20395,12 +20476,23 @@ function AsyncProxy() {
     throw new Error('Unhandled error in openpgp worker: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
   };
   this.seedRandom(INITIAL_RANDOM_SEED);
-  // FIFO
-  this.tasks = [];
+
   if (config) {
     this.worker.postMessage({ event: 'configure', config: config });
   }
+
+  // Cannot rely on task order being maintained, use object keyed by request ID to track tasks
+  this.tasks = {};
+  this.currentID = 0;
 }
+
+/**
+ * Get new request ID
+ * @return {integer}          New unique request ID
+*/
+AsyncProxy.prototype.getID = function () {
+  return this.currentID++;
+};
 
 /**
  * Message handling
@@ -20411,11 +20503,12 @@ AsyncProxy.prototype.onMessage = function (event) {
     case 'method-return':
       if (msg.err) {
         // fail
-        this.tasks.shift().reject(new Error(msg.err));
+        this.tasks[msg.id].reject(new Error(msg.err));
       } else {
         // success
-        this.tasks.shift().resolve(msg.data);
+        this.tasks[msg.id].resolve(msg.data);
       }
+      delete this.tasks[msg.id];
       break;
     case 'request-seed':
       this.seedRandom(RANDOM_SEED_REQUEST);
@@ -20464,14 +20557,16 @@ AsyncProxy.prototype.terminate = function () {
 AsyncProxy.prototype.delegate = function (method, options) {
   var _this = this;
 
+  var id = this.getID();
+
   return new Promise(function (_resolve, reject) {
     // clone packets (for web worker structured cloning algorithm)
-    _this.worker.postMessage({ event: method, options: _packet2.default.clone.clonePackets(options) }, _util2.default.getTransferables.call(_util2.default, options));
+    _this.worker.postMessage({ id: id, event: method, options: _packet2.default.clone.clonePackets(options) }, _util2.default.getTransferables.call(_util2.default, options));
 
     // remember to handle parsing cloned packets from worker
-    _this.tasks.push({ resolve: function resolve(data) {
+    _this.tasks[id] = { resolve: function resolve(data) {
         return _resolve(_packet2.default.clone.parseClonedPackets(data, method));
-      }, reject: reject });
+      }, reject: reject };
   });
 };
 
