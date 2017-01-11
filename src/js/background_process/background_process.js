@@ -58,9 +58,11 @@ function open_settings_page_handler(message, sender, respond) {
 function get_active_tab_info(request, sender, respond) {
   chrome.tabs.query({
     active: true,
+    currentWindow: true,
     url: "*://mail.google.com/*",
   }, function(tabs) {
     if(tabs.length) {
+      console.log(tabs);
       chrome.tabs.executeScript(tabs[0].id, {
         code: 'var r = {account_email: window.account_email_global, same_world: window.same_world_global}; r'
       }, function(result) {
