@@ -182,11 +182,13 @@ function google_auth_check_email(expected_email, access_token, callback) {
 
 function google_auth_window_result_handler(auth_code_window_result, sender, close_auth_window) {
   function safe_respond(responder, response) {
-    try {
-      responder(response);
-    } catch(e) {
-      if(e.message.indexOf('Attempting to use a disconnected port object') === -1) { // ignore this message - target tab no longer exists
-        throw e;
+    if(typeof responder === 'function') {
+      try {
+        responder(response);
+      } catch(e) {
+        if(e.message.indexOf('Attempting to use a disconnected port object') === -1) { // ignore this message - target tab no longer exists
+          throw e;
+        }
       }
     }
   }
