@@ -102,8 +102,18 @@ db_open(function(db) {
     return '';
   }
 
+  function set_frame_color(c) {
+    if(c === 'red') {
+      $('body').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
+    } else if(c === 'green') {
+      $('body').removeClass('pgp_neutral').removeClass('pgp_insecure').addClass('pgp_secure');
+    } else {
+      $('body').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
+    }
+  }
+
   function render_error(error_box_content, raw_message_substitute, callback) {
-    $('body').removeClass('pgp_secure').addClass('pgp_insecure');
+    set_frame_color('red');
     render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function() {
       $('.settings.button').click(function() {
         chrome_message_send(null, 'settings', {
@@ -173,17 +183,14 @@ db_open(function(db) {
       } else {
         $('#pgp_signature').addClass('bad');
         $('#pgp_signature > .result').text('signature does not match');
+        set_frame_color('red');
       }
       $('#pgp_signature').css('block');
     }
   }
 
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature) {
-    if(is_encrypted) {
-      $('body').removeClass('pgp_insecure').removeClass('pgp_neutral').addClass('pgp_secure');
-    } else if(signature) {
-      $('body').removeClass('pgp_insecure').removeClass('pgp_secure').addClass('pgp_neutral');
-    }
+    set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature);
     if(!is_mime_message(decrypted_content)) {
       render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
