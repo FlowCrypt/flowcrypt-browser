@@ -54,19 +54,21 @@ function account_consistency_fixes(account_email) {
 function account_update_status_keyserver(account_email) { // checks which emails were registered on cryptup keyserver.
   var my_longids = private_keys_get(account_email).map(map_select('longid'));
   account_storage_get(account_email, ['addresses', 'addresses_keyserver'], function(storage) {
-    keyserver_keys_find(storage.addresses, function(success, results) {
-      if(success) {
-        var addresses_keyserver = [];
-        $.each(results.results, function(i, result) {
-          if(result && result.pubkey && my_longids.indexOf(key_longid(result.pubkey)) !== -1) {
-            addresses_keyserver.push(result.email);
-          }
-        });
-        account_storage_set(account_email, {
-          addresses_keyserver: addresses_keyserver,
-        });
-      }
-    });
+    if(storage.addresses && storage.addresses.length) {
+      keyserver_keys_find(storage.addresses, function(success, results) {
+        if(success) {
+          var addresses_keyserver = [];
+          $.each(results.results, function(i, result) {
+            if(result && result.pubkey && my_longids.indexOf(key_longid(result.pubkey)) !== -1) {
+              addresses_keyserver.push(result.email);
+            }
+          });
+          account_storage_set(account_email, {
+            addresses_keyserver: addresses_keyserver,
+          });
+        }
+      });
+    }
   });
 }
 
