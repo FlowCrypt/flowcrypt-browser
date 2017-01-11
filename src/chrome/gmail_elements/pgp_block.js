@@ -213,8 +213,8 @@ db_open(function(db) {
   function decrypt_and_render(optional_password) {
     decrypt(db, url_params.account_email, url_params.message, optional_password, function(result) {
       if(result.success) {
-        if(result.success && result.signature && !result.signature.match && can_read_emails && !message_fetched_from_api) {
-          console.log('re-fetching message from api because failed signature check - possibly gmail formatting error')
+        if(result.success && result.signature && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
+          console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
           initialize(true);
         } else {
           decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
@@ -291,10 +291,11 @@ db_open(function(db) {
     } else { // need to fetch the message from gmail api
       if(can_read_emails) {
         $('#pgp_block').text('Retrieving message...');
-        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, function(message_raw) {
+        var format = (!message_fetched_from_api) ? 'full' : 'raw';
+        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, format, function(message_raw) {
           $('#pgp_block').text('Decrypting...');
           url_params.message = message_raw;
-          message_fetched_from_api = true;
+          message_fetched_from_api = format;
           decrypt_and_render();
         }, function(error_type, url_formatted_data_block) {
           if(error_type === 'format') {

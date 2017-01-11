@@ -790,15 +790,26 @@ function verify_message_signature(message, keys) {
     signer: null,
     contact: keys.verification_contacts.length ? keys.verification_contacts[0] : null,
     match: true,
+    error: null,
   };
-  $.each(message.verify(keys.for_verification), function(i, verify_result) {
-    if(verify_result.valid !== true) {
-      signature.match = false;
+  try {
+    $.each(message.verify(keys.for_verification), function(i, verify_result) {
+      if(verify_result.valid !== true) {
+        signature.match = false;
+      }
+      if(!signature.signer) {
+        signature.signer = key_longid(verify_result.keyid.bytes);
+      }
+    });
+  } catch(verify_error) {
+    signature.match = null;
+    if(verify_error.message === 'Can only verify message with one literal data packet.') {
+      signature.error = 'CryptUP is not equipped to verify this message (err 101)';
+    } else {
+      signature.error = 'CryptUP had trouble verifying this message (' + verify_error.message + ')';
+      cryptup_error_handler_manual(verify_error);
     }
-    if(!signature.signer) {
-      signature.signer = key_longid(verify_result.keyid.bytes);
-    }
-  });
+  }
   return signature;
 }
 
@@ -828,6 +839,14 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
   get_sorted_keys_for_message(db, account_email, message, function(keys) {
     var counts = zeroed_decrypt_error_counts(keys);
     if(armored_signed_only) {
+      if(!message.text) {
+        var text = encrypted_data.match(/-----BEGIN\sPGP\sSIGNED\sMESSAGE-----\nHash:\s[A-Z0-9]+\n([^]+)\n-----BEGIN\sPGP\sSIGNATURE-----[^]+-----END\sPGP\sSIGNATURE-----/m);
+        if(text && text.length === 2) {
+          message.text = text[1];
+        } else {
+          message.text = encrypted_data;
+        }
+      }
       callback({
         success: true,
         content: {
@@ -1100,6 +1119,14 @@ function str_to_uint8(raw) {
     uint8[i] = raw.charCodeAt(i);
   }
   return uint8;
+}
+
+function utf8_from_str_with_equal_sign_notation(str) {
+  return str.replace(/(=[A-F0-9]{2})+/g, function(equal_sign_utf_part) {
+    return uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function(two_hex_digits) {
+      return parseInt(two_hex_digits, 16);
+    }));
+  });
 }
 
 function uint8_as_utf(a) { //tom

@@ -342,40 +342,59 @@ function fetch_messages_sequentially_from_list_and_extract_first_available_heade
  *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
  *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
  */
-function extract_armored_message_using_gmail_api(account_email, message_id, success_callback, error_callback) {
-  gmail_api_message_get(account_email, message_id, 'full', function(get_message_success, gmail_message_object) {
+function extract_armored_message_using_gmail_api(account_email, message_id, format, success_callback, error_callback) {
+  gmail_api_message_get(account_email, message_id, format, function(get_message_success, gmail_message_object) {
     if(get_message_success) {
-      var bodies = gmail_api_find_bodies(gmail_message_object);
-      var attachments = gmail_api_find_attachments(gmail_message_object);
-      var armored_message_from_bodies = extract_armored_message_from_text(base64url_decode(bodies['text/plain'])) || extract_armored_message_from_text(strip_pgp_armor(base64url_decode(bodies['text/html'])));
-      if(armored_message_from_bodies) {
-        success_callback(armored_message_from_bodies);
-      } else if(attachments.length) {
-        var found = false;
-        $.each(attachments, function(i, attachment_meta) {
-          if(attachment_meta.name.match(/\.asc$/)) {
-            found = true;
-            gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(fetch_attachments_success, attachment) {
-              if(fetch_attachments_success) {
-                var armored_message_text = base64url_decode(attachment[0].data);
-                var armored_message = extract_armored_message_from_text(armored_message_text);
-                if(armored_message) {
-                  success_callback(armored_message);
+      if(format === 'full') {
+        var bodies = gmail_api_find_bodies(gmail_message_object);
+        var attachments = gmail_api_find_attachments(gmail_message_object);
+        var armored_message_from_bodies = extract_armored_message_from_text(base64url_decode(bodies['text/plain'])) || extract_armored_message_from_text(strip_pgp_armor(base64url_decode(bodies['text/html'])));
+
+        // !!! hard to get the =20 version from gmail - find out how, maybe raw instead of full
+        // console.log(base64url_decode(bodies['text/plain']));
+        // utf8_from_str_with_equal_sign_notation
+        if(armored_message_from_bodies) {
+          success_callback(armored_message_from_bodies);
+        } else if(attachments.length) {
+          var found = false;
+          $.each(attachments, function(i, attachment_meta) {
+            if(attachment_meta.name.match(/\.asc$/)) {
+              found = true;
+              gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(fetch_attachments_success, attachment) {
+                if(fetch_attachments_success) {
+                  var armored_message_text = base64url_decode(attachment[0].data);
+                  var armored_message = extract_armored_message_from_text(armored_message_text);
+                  if(armored_message) {
+                    success_callback(armored_message);
+                  } else {
+                    error_callback('format', armored_message_text);
+                  }
                 } else {
-                  error_callback('format', armored_message_text);
+                  error_callback('connection');
                 }
-              } else {
-                error_callback('connection');
-              }
-            });
-            return false;
+              });
+              return false;
+            }
+          });
+          if(!found) {
+            error_callback('format', as_html_formatted_string(gmail_message_object.payload));
           }
-        });
-        if(!found) {
+        } else {
           error_callback('format', as_html_formatted_string(gmail_message_object.payload));
         }
-      } else {
-        error_callback('format', as_html_formatted_string(gmail_message_object.payload));
+      } else { // format === raw
+        parse_mime_message(base64url_decode(gmail_message_object.raw), function(success, mime_message) {
+          if(success) {
+            var armored_message = extract_armored_message_from_text(mime_message.text); // todo - the message might be in attachments
+            if(armored_message) {
+              success_callback(armored_message);
+            } else {
+              error_callback('format');
+            }
+          } else {
+            error_callback('format');
+          }
+        });
       }
     } else {
       error_callback('connection');
