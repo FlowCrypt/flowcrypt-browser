@@ -1,3 +1,10 @@
+<b>version 3.0.4 on January 11, 2017: Checking Signature</b>
+reading: verify signed messages + show a visual
+reading: attachments decrypt exception fix
+composing: replacing gmail elements exception fix
+composing: reply message exception fix
+setup: background page exceptions fix
+
 <b>version 3.0.3 on January 8, 2017: Compose Buttons</b>
 reading: added button to reply encrypted to a plain text conversation
 composing: added button to include my public key
