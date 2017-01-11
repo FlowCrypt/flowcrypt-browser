@@ -54,7 +54,7 @@ db_open(function(db) {
   $('#download').click(prevent(doubleclick(), function(self) {
     increment_metric('download');
     var original_content = $(self).html();
-    $(self).html(get_spinner())
+    $(self).html(get_spinner());
     gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function(success, attachment) {
       $(self).html(original_content);
       if(success) {
@@ -62,7 +62,7 @@ db_open(function(db) {
         decrypt(db, url_params.account_email, encrypted_data, undefined, function(result) {
           if(result.success) {
             download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
-          } else if(result.missing_passphrases.length) {
+          } else if((result.missing_passphrases || []).length) {
             missing_passprase_longids = result.missing_passphrases;
             chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
               type: 'attachment',
