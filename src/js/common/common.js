@@ -960,7 +960,7 @@ function key_longid(key_or_fingerprint_or_bytes) {
 
 function extract_armored_message_from_text(text) {
   if(text && text.indexOf('-----BEGIN') !== -1 && text.indexOf('-----END') !== -1) {
-    var match = text.match(/(-----BEGIN PGP (MESSAGE|PUBLIC KEY BLOCK|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|PUBLIC KEY BLOCK|SIGNED MESSAGE|SIGNATURE)-----)/gm);
+    var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
     return(match !== null && match.length) ? match[0] : null;
   }
 }
