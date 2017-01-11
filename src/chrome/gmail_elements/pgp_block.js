@@ -181,8 +181,8 @@ db_open(function(db) {
 
   function render_pgp_signature_check_result(signature) {
     if(signature) {
-      $('#pgp_signature > .cursive > span').text(signature.contact.name || url_params.sender_email);
-      if(signature.match && signature.signer && !signature.contact) {
+      $('#pgp_signature > .cursive > span').text(signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email);
+      if(signature.signer && !signature.contact) {
         $('#pgp_signature').addClass('neutral');
         $('#pgp_signature > .result').text('cannot verify signature');
       } else if(signature.match && signature.signer && signature.contact) {
@@ -228,7 +228,7 @@ db_open(function(db) {
   function decrypt_and_render(optional_password) {
     decrypt(db, url_params.account_email, url_params.message, optional_password, function(result) {
       if(result.success) {
-        if(result.success && result.signature && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
+        if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
           console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
           initialize(true);
         } else {
