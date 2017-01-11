@@ -80,10 +80,10 @@ function init_elements_replace_js() {
     } else {
       //todo - button below should be in factory.js
       $('div.ade').not('.appended').append('<span class="hk J-J5-Ji use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>').addClass('appended');
-      $('div.ade.appended span.use_secure_reply').click(function() {
+      $('div.ade.appended span.use_secure_reply').click(Try(function() {
         replace_reply_buttons(account_email, gmail_tab_id, true);
         replace_standard_reply_box(account_email, gmail_tab_id, true, true);
-      });
+      }));
     }
   };
 
@@ -122,10 +122,11 @@ function init_elements_replace_js() {
   window.parse_message_id_from = function(element_type, my_element) {
     var selectors = {
       'message': $(my_element).parents('div.adP.adO'),
-      'attachment': $(my_element).parent().siblings('div.adP.adO')
+      'attachment': $(my_element).parent().siblings('div.adP.adO'),
     };
     var message_id = null; // todo: maybe need to traverse through all children elements classes of the whole message to get to /^m([0-9a-f]{16})$/ - as a backup
-    var classes = [].concat(to_array(selectors[element_type].get(0).classList), to_array(selectors[element_type].children('div.a3s').get(0).classList));
+    var found = [selectors[element_type].get(0), selectors[element_type].find('div.a3s').get(0)];
+    var classes = [].concat(found[0] ? to_array(found[0].classList) : [], found[1] ? to_array(found[1].classList) : []);
     $.each(classes, function(i, message_class) {
       var match = message_class.match(/^m([0-9a-f]{16})$/);
       if(match) {
