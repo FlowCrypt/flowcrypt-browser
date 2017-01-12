@@ -134,7 +134,7 @@ function init_elements_replace_js() {
         return false;
       }
     });
-    return message_id;
+    return message_id || '';
   };
 
   window.replace_pgp_attachments = function(account_email, can_read_emails, gmail_tab_id) {
@@ -241,18 +241,18 @@ function init_elements_replace_js() {
     hide_attachments(selectors.attachments, attachments.length);
   };
 
-  window.get_conversation_params = function(account_email, callback) {
+  window.get_conversation_params = function(account_email, conversation_root_element, callback) {
     var thread_match = /\/([0-9a-f]{16})/g.exec(window.location);
     if(thread_match !== null) {
       var thread_id = thread_match[1];
       var thread_message_id = thread_match[1];
     } else { // sometimes won't work, that's why the else
       var thread_id = '';
-      var thread_message_id = parse_message_id_from('message', $('div.a3s.evaluated'));
+      var thread_message_id = parse_message_id_from('message', $(conversation_root_element).find('div.a3s.evaluated'));
     }
-    var reply_to_estimate = [$('h3.iw span[email]').last().attr('email').trim()]; // add original sender
+    var reply_to_estimate = [$(conversation_root_element).find('h3.iw span[email]').last().attr('email').trim()]; // add original sender
     var reply_to = [];
-    $('span.hb').last().find('span.g2').each(function() {
+    $(conversation_root_element).find('span.hb').last().find('span.g2').each(function() {
       reply_to_estimate.push($(this).attr('email')); // add all recipients including me
     });
     var my_email = account_email;
@@ -269,7 +269,7 @@ function init_elements_replace_js() {
         reply_to = unique(reply_to_estimate);
       }
       callback({
-        subject: $('h2.hP').text(),
+        subject: $(conversation_root_element).find('h2.hP').text(),
         reply_to: reply_to,
         addresses: storage.addresses,
         my_email: my_email,
@@ -279,27 +279,27 @@ function init_elements_replace_js() {
     });
   };
 
+  window.get_conversation_root_element = function(any_inner_element) {
+    return $(any_inner_element).closest('div.if, td.Bu').get(0);
+  }
+
   window.replace_standard_reply_box = function(account_email, gmail_tab_id, editable, force) {
-    if(($('div.AO iframe.pgp_block').length && $('h2.hP').first().text() === $('h2.hP').last().text()) || force === true) {
-      // the first() and last() prevents hidden convos not to trigger replacement (when switching between convos)
-      var reply_container_selector = 'div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)';
-      try {
-        var selected_tag = $(reply_container_selector)[0].tagName;
-      } catch(e) {}
-      if(typeof selected_tag !== 'undefined') {
-        get_conversation_params(account_email, function(params) {
-          editable = editable || selected_tag === 'TD';
+    $('div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)').filter(':visible').each(function() {
+      var reply_box = this;
+      var root_element = get_conversation_root_element(reply_box);
+      if($(root_element).find('iframe.pgp_block').filter(':visible').length || force) {
+        get_conversation_params(account_email, root_element, function(params) {
           var iframe = reply_message_iframe(account_email, gmail_tab_id, params, editable);
-          $(reply_container_selector).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
+          $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
         });
       }
-    }
+    });
   };
 
-  window.set_reply_box_editable = function(account_email, gmail_tab_id) { // for now replaces secure reply box
+  window.set_reply_box_editable = function(account_email, gmail_tab_id) {
     var reply_container_iframe_selector = '.reply_message_iframe_container > iframe';
     if($(reply_container_iframe_selector).length) {
-      get_conversation_params(account_email, function(params) {
+      get_conversation_params(account_email, get_conversation_root_element($(reply_container_iframe_selector).get(0)), function(params) {
         $(reply_container_iframe_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params, true));
       });
     } else {

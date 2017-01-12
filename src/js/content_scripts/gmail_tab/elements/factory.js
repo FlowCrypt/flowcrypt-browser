@@ -84,8 +84,8 @@ function init_elements_factory_js() {
       '&to=' + encodeURIComponent(emails.to) +
       '&from=' + encodeURIComponent(emails.from) +
       '&subject=' + encodeURIComponent(conversation_params.subject) +
-      '&thread_id=' + encodeURIComponent(conversation_params.thread_id) +
-      '&thread_message_id=' + encodeURIComponent(conversation_params.thread_message_id) +
+      '&thread_id=' + encodeURIComponent(conversation_params.thread_id || '') +
+      '&thread_message_id=' + encodeURIComponent(conversation_params.thread_message_id || '') +
       '&account_email=' + encodeURIComponent(account_email) +
       '&skip_click_prompt=' + encodeURIComponent(Number(Boolean(Number(skip_click_prompt)))) + //todo - would use some rethinking, refactoring, or at least a named function
       '&ignore_draft=' + encodeURIComponent(Number(Boolean(Number(ignore_draft)))) + //these two are to make sure to pass a "1" or "0" in url

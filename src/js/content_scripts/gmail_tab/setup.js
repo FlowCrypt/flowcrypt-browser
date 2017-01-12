@@ -5,6 +5,7 @@ function init_setup_js() {
   var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
   var account_email_interval = 1000;
+  var replace_pgp_elements_interval = 1000;
   window.account_email_global = null;
   window.same_world_global = true;
 
@@ -132,7 +133,7 @@ function init_setup_js() {
       replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
       TrySetDestryableInterval(function() {
         replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
-      }, 1000);
+      }, replace_pgp_elements_interval);
     });
   };
 

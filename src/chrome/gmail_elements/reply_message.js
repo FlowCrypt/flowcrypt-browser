@@ -31,7 +31,7 @@ db_open(function(db) {
           url_params.thread_id = gmail_message_object.threadId;
         } else {
           url_params.thread_id = url_params.thread_message_id;
-          console.log('CRYPTUP: Substituting thread_id with thread_message_id: might cause issues');
+          console.log('CRYPTUP: Substituting thread_id with thread_message_id: could cause issues');
         }
         callback();
       });
