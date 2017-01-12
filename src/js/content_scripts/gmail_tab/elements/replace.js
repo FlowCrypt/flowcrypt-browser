@@ -65,7 +65,7 @@ function init_elements_replace_js() {
   }
 
   window.replace_reply_buttons = function(account_email, gmail_tab_id, force) {
-    if($('iframe.pgp_block').length || force) { // if convo has pgp blocks
+    if($('iframe.pgp_block').filter(':visible').length || force) { // if convo has pgp blocks
       if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
         //todo - button below should be in factory.js
         var reply_button = '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
@@ -77,9 +77,9 @@ function init_elements_replace_js() {
           $(this).addClass('replaced').html('');
         });
       }
-    } else {
+    } else if(!$('div.ade:visible').is('.appended')) {
       //todo - button below should be in factory.js
-      $('div.ade').not('.appended').append('<span class="hk J-J5-Ji use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>').addClass('appended');
+      $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>');
       $('div.ade.appended span.use_secure_reply').click(Try(function() {
         replace_reply_buttons(account_email, gmail_tab_id, true);
         replace_standard_reply_box(account_email, gmail_tab_id, true, true);
@@ -248,11 +248,11 @@ function init_elements_replace_js() {
       var thread_message_id = thread_match[1];
     } else { // sometimes won't work, that's why the else
       var thread_id = '';
-      var thread_message_id = parse_message_id_from('message', $(conversation_root_element).find('div.a3s.evaluated'));
+      var thread_message_id = parse_message_id_from('message', conversation_root_element.find('div.a3s.evaluated'));
     }
-    var reply_to_estimate = [$(conversation_root_element).find('h3.iw span[email]').last().attr('email').trim()]; // add original sender
+    var reply_to_estimate = [conversation_root_element.find('h3.iw span[email]').last().attr('email').trim()]; // add original sender
     var reply_to = [];
-    $(conversation_root_element).find('span.hb').last().find('span.g2').each(function() {
+    conversation_root_element.find('span.hb').last().find('span.g2').each(function() {
       reply_to_estimate.push($(this).attr('email')); // add all recipients including me
     });
     var my_email = account_email;
@@ -280,14 +280,13 @@ function init_elements_replace_js() {
   };
 
   window.get_conversation_root_element = function(any_inner_element) {
-    return $(any_inner_element).closest('div.if, td.Bu').get(0);
+    return $(any_inner_element).closest('div.if, td.Bu').first();
   }
 
   window.replace_standard_reply_box = function(account_email, gmail_tab_id, editable, force) {
-    $('div.nr.tMHS5d:not(.reply_message_iframe_container), div.gA td.I5:not(.reply_message_iframe_container)').filter(':visible').each(function() {
-      var reply_box = this;
+    var reply_box = $('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').first().each(function(i, reply_box) {
       var root_element = get_conversation_root_element(reply_box);
-      if($(root_element).find('iframe.pgp_block').filter(':visible').length || force) {
+      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) {
         get_conversation_params(account_email, root_element, function(params) {
           var iframe = reply_message_iframe(account_email, gmail_tab_id, params, editable);
           $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
