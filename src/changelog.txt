@@ -1,5 +1,10 @@
+<b>version 3.0.6 on January 11, 2017: Better Reply Box Replacing</b>
+composing: better reply box replacing
+
 <b>version 3.0.5 on January 11, 2017: Update OpenPGP.js</b>
 setup: hopefully improved browser compatibility
+setup: active tab to be properly found among multiple windows
+reading: better behavior when missing signature contact
 
 <b>version 3.0.4 on January 11, 2017: Checking Signature</b>
 reading: verify signed messages + show a visual
