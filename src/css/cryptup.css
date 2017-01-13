@@ -204,11 +204,13 @@ table#compose td#input_addresses_container > div { width: 100%; overflow: hidden
 table#compose td#input_addresses_container > div input#input_to { vertical-align: middle; height: 25px; margin: 1px 0;}
 table#compose td#input_addresses_container > div .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative; -webkit-transition: .25s; transition: .25s;}
 table#compose td#input_addresses_container > div .recipients { height: auto; position: relative;}
-table#compose td#input_addresses_container > div .recipients span.wrong { padding: 5px 10px; background: #d14836; color: white; }
-table#compose td#input_addresses_container > div .recipients span.has_pgp { padding: 5px 10px 5px 23px;  background: #31A217; color: white; }
-table#compose td#input_addresses_container > div .recipients span.attested { padding: 5px 10px 5px 23px;  background: #31A217; color: white; }
+table#compose td#input_addresses_container > div .recipients span.wrong { padding: 5px 10px; background: #A44; color: white; }
+table#compose td#input_addresses_container > div .recipients span.has_pgp { padding: 5px 10px 5px 23px; background: #31A217; color: white; }
+table#compose td#input_addresses_container > div .recipients span.attested { padding: 5px 10px 5px 23px; background: #31A217; color: white; }
+table#compose td#input_addresses_container > div .recipients span.expired { padding: 5px 10px 5px 23px; background: #31A217; color: black; }
+table#compose td#input_addresses_container > div .recipients span.expired i.fa-clock-o { position: relative; left: -10px; font-size: 15px; }
 table#compose td#input_addresses_container > div .recipients span.no_pgp { padding: 5px 10px 5px 23px; background: #989898; color: white; }
-table#compose td#input_addresses_container > div .recipients span.failed { padding: 4px 9px 4px 10px; border: 1px dashed red; }
+table#compose td#input_addresses_container > div .recipients span.failed { padding: 4px 9px 4px 10px; border: 1px dashed #A44; }
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
 table#compose td#input_addresses_container > div .recipients span.wrong i  { color: white!important;}

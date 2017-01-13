@@ -320,7 +320,7 @@ function init_shared_compose_js(url_params, db) {
   }
 
   function evaluate_receivers() {
-    $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed').each(function() {
+    $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').each(function() {
       var email_element = this;
       var email = trim_lower($(email_element).text());
       if(is_email_valid(email)) {
@@ -670,6 +670,10 @@ function init_shared_compose_js(url_params, db) {
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
+    } else if(contact.has_pgp && is_public_key_expired_for_encryption(openpgp.key.readArmored(contact.pubkey).keys[0])) {
+      $(email_element).addClass("expired");
+      $(email_element).prepend("<i class='fa fa-clock-o'></i>");
+      $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + recipient_key_id_text(contact));
     } else if(contact.has_pgp && contact.attested) {
       $(email_element).addClass("attested");
       $(email_element).prepend("<i class='ion-locked'></i>");

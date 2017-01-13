@@ -886,6 +886,39 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
   });
 }
 
+function openpgpjs_original_isValidEncryptionKeyPacket(keyPacket, signature) {
+  return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
+}
+
+function patch_public_keys_to_ignore_expiration(keys) {
+  function ignore_expiration_isValidEncryptionKey(primaryKey) {
+    var verifyResult = this.verify(primaryKey);
+    return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
+  }
+  $.each(keys, function(i, key) {
+    $.each(key.subKeys, function(i, sub_key) {
+      sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
+    });
+  });
+}
+
+function is_public_key_expired_for_encryption(key) {
+  if(key.getEncryptionKeyPacket() !== null) {
+    return false;
+  }
+  if(key.verifyPrimaryKey() === openpgp.enums.keyStatus.expired) {
+    return true;
+  }
+  var found_expired_subkey = false;
+  $.each(key.subKeys, function(i, sub_key) {
+    if(sub_key.verify(key) === openpgp.enums.keyStatus.expired && openpgpjs_original_isValidEncryptionKeyPacket(sub_key.subKey, sub_key.bindingSignature)) {
+      found_expired_subkey = true;
+      return false;
+    }
+  });
+  return found_expired_subkey;
+}
+
 function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
   var options = {
     data: data,
@@ -897,6 +930,7 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
     $.each(armored_pubkeys, function(i, armored_pubkey) {
       options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
     });
+    patch_public_keys_to_ignore_expiration(options.publicKeys);
   }
   if(challenge && challenge.question && challenge.answer) {
     options.passwords = [challenge_answer_hash(challenge.answer)];
