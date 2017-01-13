@@ -25,8 +25,9 @@ db_open(function(db) {
     });
 
     $('.action_ok').click(prevent(doubleclick(), function() {
-      if(key_fingerprint(strip_pgp_armor($('.pubkey').val()))) {
-        db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', strip_pgp_armor($('.pubkey').val()), null, false, Date.now()), close_dialog);
+      var armored = key_normalize(strip_pgp_armor($('.pubkey').val()));
+      if(key_fingerprint(armored)) {
+        db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
       } else {
         alert('Could not recognize the format, please try again.');
         $('.pubkey').val('').focus();

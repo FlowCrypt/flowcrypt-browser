@@ -917,6 +917,19 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
   });
 }
 
+function key_normalize(armored) {
+  try {
+    if(/-----BEGIN\sPGP\sPUBLIC\sKEY\sBLOCK-----/.test(armored)) {
+      var key = openpgp.key.readArmored(armored).keys[0];
+    } else if(/-----BEGIN\sPGP\sMESSAGE-----/.test(armored)) {
+      var key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
+    }
+    return key.armor();
+  } catch(error) {
+    cryptup_error_handler_manual(error);
+  }
+}
+
 function key_fingerprint(key, formatting) {
   if(key === null || typeof key === 'undefined') {
     return null;
