@@ -101,7 +101,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set Up CryptUP');
   account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function(storage) {
     if(storage.setup_done) {
-      render_setup_done(url_params.account_email, storage.key_backup_prompt);
+      render_setup_done(url_params.account_email);
     } else {
       keyserver_keys_find(url_params.account_email, function(keyserver_success, result) {
         if(keyserver_success && result.pubkey) {

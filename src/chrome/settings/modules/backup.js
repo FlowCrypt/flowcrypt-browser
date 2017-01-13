@@ -243,7 +243,7 @@ function backup_by_print() { //todo - implement + add a non-encrypted print opti
 }
 
 function backup_refused() {
-  write_backup_done_and_render(get_future_timestamp_in_months(6), 'none');
+  write_backup_done_and_render(get_future_timestamp_in_months(3), 'none');
 }
 
 function write_backup_done_and_render(prompt, method) {
