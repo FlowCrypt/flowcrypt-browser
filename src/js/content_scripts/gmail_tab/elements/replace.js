@@ -7,10 +7,7 @@ function init_elements_replace_js() {
 
   window.replace_pgp_elements = function(account_email, addresses, can_read_emails, gmail_tab_id) {
     if(replace_armored_blocks(account_email, addresses, gmail_tab_id)) {
-      $('.adI').css('display', 'none'); //hide translate prompt
-      if(page_refresh_needed()) {
-        show_page_refresh_notification();
-      }
+      $('.adI').css('display', 'none'); //todo - this should be moved elsehwere. (hides translate prompt)
     }
     replace_pgp_attachments(account_email, can_read_emails, gmail_tab_id);
     replace_cryptup_tags(account_email, gmail_tab_id);

@@ -43,8 +43,9 @@ account_storage_get(null, 'errors', function(storage) {
 if(!localStorage.settings_seen) {
   open_settings_page('initial.htm'); // called after the very first installation of the plugin
   localStorage.settings_seen = true;
-  inject_cryptup_into_gmail_if_needed('notification_only');
 }
+
+inject_cryptup_into_gmail_if_needed();
 
 Try(check_keyserver_pubkey_fingerprints)();
 TrySetInterval(check_keyserver_pubkey_fingerprints, 1000 * 60 * 60 * 6);
@@ -62,7 +63,6 @@ function get_active_tab_info(request, sender, respond) {
     url: "*://mail.google.com/*",
   }, function(tabs) {
     if(tabs.length) {
-      console.log(tabs);
       chrome.tabs.executeScript(tabs[0].id, {
         code: 'var r = {account_email: window.account_email_global, same_world: window.same_world_global}; r'
       }, function(result) {

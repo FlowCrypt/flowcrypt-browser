@@ -5,11 +5,12 @@ Try(function() {
   window.injected = true; // background page will test if scripts are already injected, and injectif not
   window.destruction_event = chrome.runtime.id + '_destroy'
   window.destroyable_class = chrome.runtime.id + '_destroyable';
+  window.reloadable_class = chrome.runtime.id + '_reloadable';
   window.destroyable_intervals = [];
   window.destroyable_timeouts = [];
 
-  window.destroy = function() { // not used yet
-    console.log('Destroying CryptUP');
+  window.destroy = function() {
+    console.log('Updating CryptUP');
     document.removeEventListener(destruction_event, destroy);
     $.each(destroyable_intervals, function(i, id) {
       clearInterval(id);
@@ -18,6 +19,9 @@ Try(function() {
       clearTimeout(id);
     });
     $('.' + destroyable_class).remove();
+    $('.' + reloadable_class).each(function(i, reloadable_element) {
+      $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
+    });
   };
 
   window.vacant = function() {

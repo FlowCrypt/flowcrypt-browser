@@ -18,7 +18,7 @@ function init_elements_factory_js() {
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
       '&draft_id=' + encodeURIComponent(draft_id || '') +
       '&placement=gmail';
-    return '<div class="new_message" id="new_message"><iframe scrolling="no" src="' + src + '"></iframe></div>'
+    return '<div class="new_message" id="new_message"><iframe class="' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>'
   };
 
   window.passphrase_dialog = function(account_email, type, longids, gmail_tab_id) {
@@ -27,7 +27,7 @@ function init_elements_factory_js() {
       '&type=' + encodeURIComponent(type) +
       '&longids=' + encodeURIComponent((longids || []).join(',')) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<div id="cryptup_dialog"><iframe class="medium" scrolling="no" src="' + src + '"></iframe></div>';
+    return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
   window.add_pubkey_dialog = function(account_email, emails, gmail_tab_id) {
@@ -35,7 +35,7 @@ function init_elements_factory_js() {
       '?account_email=' + encodeURIComponent(account_email) +
       '&emails=' + encodeURIComponent(emails.join(',')) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<div id="cryptup_dialog"><iframe class="tall" scrolling="no" src="' + src + '"></iframe></div>';
+    return '<div id="cryptup_dialog"><iframe class="tall ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
   window.pgp_attachment_iframe = function(account_email, attachment_meta, container_classes, gmail_tab_id) {
@@ -47,7 +47,7 @@ function init_elements_factory_js() {
       '&attachment_id=' + encodeURIComponent(attachment_meta.id) +
       '&account_email=' + encodeURIComponent(account_email) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe src="' + src + '"></iframe></span>';
+    return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe class="' + reloadable_class + '" src="' + src + '"></iframe></span>';
   };
 
   window.pgp_block_iframe = function(pgp_block_text, question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id) {
@@ -61,7 +61,7 @@ function init_elements_factory_js() {
       '&sender_email=' + encodeURIComponent(sender_email) +
       '&is_outgoing=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) + //todo - improve/simplify
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
+    return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
   };
 
   window.pgp_pubkey_iframe = function(account_email, armored_pubkey, is_outgoing, gmail_tab_id) {
@@ -72,7 +72,7 @@ function init_elements_factory_js() {
       '&armored_pubkey=' + encodeURIComponent(armored_pubkey) +
       '&is_outgoing=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<iframe class="pgp_block" id="frame_' + id + '" src="' + src + '"></iframe>';
+    return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
   };
 
   window.reply_message_iframe = function(account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
@@ -90,7 +90,7 @@ function init_elements_factory_js() {
       '&skip_click_prompt=' + encodeURIComponent(Number(Boolean(Number(skip_click_prompt)))) + //todo - would use some rethinking, refactoring, or at least a named function
       '&ignore_draft=' + encodeURIComponent(Number(Boolean(Number(ignore_draft)))) + //these two are to make sure to pass a "1" or "0" in url
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<iframe class="reply_message" id="frame_' + id + '" src="' + src + '"></iframe>';
+    return '<iframe class="reply_message ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
   };
 
   window.resolve_from_to = function(secondary_emails, my_email, their_email) {

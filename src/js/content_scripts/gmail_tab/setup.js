@@ -35,7 +35,7 @@ function init_setup_js() {
   window.wait_for_account_email_then_setup = function() {
     var account_email = get_account_email();
     if(typeof account_email !== 'undefined') {
-      console.log('Loading CryptUP');
+      console.log('Loading CryptUP ' + window.chrome.runtime.getManifest().version);
       account_email_global = account_email;
       setup(account_email);
     } else {
@@ -154,27 +154,8 @@ function init_setup_js() {
     if(account_email_loading_match !== null) {
       return account_email_loading_match[0];
     } else {
-      // commented out because can cause email addresses from conversations to show as belonging to the user
-      // var account_email_title_match = document.title.match(benevolent_email_regex);
-      // if(account_email_title_match !== null) {
-      //   return account_email_title_match[0];
-      // } else {
       return undefined;
-      // }
     }
-  };
-
-  window.page_refresh_needed = function() {
-    try {
-      chrome_message_send(null, 'ping');
-      return false;
-    } catch(e) {
-      return true;
-    }
-  };
-
-  window.show_page_refresh_notification = function() {
-    gmail_notification_show('Please <a href="#" class="reload">refresh your page</a> to use encrypted functionality. <a href="#" class="close">later</a>');
   };
 
   /* ######################## MIMICKING STANDARD JS FUNCTIONS ######################### */
