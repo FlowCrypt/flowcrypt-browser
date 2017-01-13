@@ -1,3 +1,9 @@
+<b>version 3.1.0 on January 13, 2017: First Time Success</b>
+setup: gmail tab will immediatelly work after install + after update
+setup: better browser compatibility test on setup
+setup: better behavior on backup refused
+composing: notify users about expired pubkeys but use them anyway
+
 <b>version 3.0.7 on January 12, 2017: Non Standard Pubkey Messages</b>
 composing: accepting non standard pubkey messages
 
