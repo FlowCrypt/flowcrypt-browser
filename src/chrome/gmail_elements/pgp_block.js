@@ -9,7 +9,7 @@ var l = {
   cant_open: 'Could not open this message with CryptUP.\n\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
   single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
-  account_info_outdated: 'Some your account information is incorrect. Update it to prevent future errors. ',
+  account_info_outdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
   wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
   ask_resend: 'Please ask them to send a new message.',
   receivers_hidden: 'We cannot tell if the message was encrypted correctly for you. ',
