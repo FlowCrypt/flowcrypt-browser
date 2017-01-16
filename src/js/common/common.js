@@ -977,8 +977,12 @@ function key_normalize(armored) {
       var key = openpgp.key.readArmored(armored).keys[0];
     } else if(/-----BEGIN\sPGP\sMESSAGE-----/.test(armored)) {
       var key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
+    } else {
+      var key = undefined;
     }
-    return key.armor();
+    if(key) {
+      return key.armor();
+    }
   } catch(error) {
     cryptup_error_handler_manual(error);
   }
