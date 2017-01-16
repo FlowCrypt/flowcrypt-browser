@@ -4,6 +4,14 @@ var original_on_error = window.onerror;
 window.onerror = cryptup_error_handler;
 
 function cryptup_error_handler(error_message, url, line, col, error, is_manually_called, version, environment) {
+  if(typeof error === 'string') {
+    error_message = error;
+    error = {
+      name: 'thrown_string',
+      message: error_message,
+      stack: error_message,
+    };
+  }
   var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
   var ignored_errors = [
     // happens in gmail window when reloaded extension + now reloading the gmail
@@ -23,7 +31,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
   if(is_manually_called !== true && original_on_error && original_on_error !== cryptup_error_handler) {
     original_on_error.apply(this, arguments); // Call any previously assigned handler
   }
-  if(error.stack.indexOf('PRIVATE') !== -1) {
+  if((error.stack || '').indexOf('PRIVATE') !== -1) {
     return;
   }
   if(!version) {
@@ -41,9 +49,9 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       url: 'https://cryptup-keyserver.herokuapp.com/help/error',
       method: 'POST',
       data: JSON.stringify({
-        name: error.name.substring(0, 50),
-        message: error_message.substring(0, 200),
-        url: url.substring(0, 300),
+        name: (error.name || '').substring(0, 50),
+        message: (error_message || '').substring(0, 200),
+        url: (url || '').substring(0, 300),
         line: line,
         col: col,
         trace: error.stack,
@@ -75,7 +83,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       if(typeof storage.errors === 'undefined') {
         storage.errors = [];
       }
-      storage.errors.unshift(error.stack);
+      storage.errors.unshift(error.stack || error_message);
       account_storage_set(null, storage);
     });
   } catch(storage_err) {
@@ -1143,7 +1151,9 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
             handlers[request.name](request.data, sender, respond);
           } else {
             if(request.name !== '_tab_') {
-              throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+              Try(function() {
+                throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+              })();
             } else {
               // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
             }
