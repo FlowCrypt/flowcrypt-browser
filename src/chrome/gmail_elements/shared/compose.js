@@ -301,7 +301,7 @@ function init_shared_compose_js(url_params, db) {
         callback(db_contact);
       } else {
         keyserver_keys_find(email, function(success, result) {
-          if(success) {
+          if(success && result.email) {
             var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
             keyserver_lookup_results_by_email[result.email] = ks_contact;
             db_contact_save(db, ks_contact, function() {
