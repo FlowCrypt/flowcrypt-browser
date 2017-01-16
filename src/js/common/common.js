@@ -113,6 +113,22 @@ function cryptup_error_handler_manual(exception) {
   }
 }
 
+function cryptup_error_log(name, details) {
+  try {
+    throw new Error(name);
+  } catch(e) {
+    if(typeof details !== 'string') {
+      try {
+        details = JSON.stringify(details);
+      } catch(stringify_error) {
+        details = '(could not stringify details "' + String(details) + '" in cryptup_error_log because: ' + stringify_error.message + ')';
+      }
+    }
+    e.stack = e.stack + '\n\n\ndetails: ' + details;
+    cryptup_error_handler_manual(e);
+  }
+}
+
 function WrapWithTryIfContentScript(code) {
   if(get_environment() === 'content_script') {
     return Try(code);

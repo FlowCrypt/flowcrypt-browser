@@ -269,16 +269,13 @@ function init_shared_compose_js(url_params, db) {
               });
             });
           } catch(err) {
+            cryptup_error_handler_manual(err);
             $('#send_btn').html(btn_html);
             alert(err);
           }
         } else {
           $('#send_btn').html(btn_html);
         }
-        // } else {
-        //   $('#send_btn').html(btn_html);
-        //   alert('Network error, please try again.');
-        // }
       });
     } else if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
       alert('Please re-enter recipients marked in red color.');
@@ -293,8 +290,7 @@ function init_shared_compose_js(url_params, db) {
       $('#send_btn i').attr('class', '');
       alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
     } else {
-      console.log('handle_send_message_error');
-      console.log(response);
+      cryptup_error_log('gmail_api_message_send error response from gmail', response);
       alert('Error sending message, try to re-open your Gmail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }
