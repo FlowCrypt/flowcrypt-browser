@@ -25,8 +25,9 @@ function init_elements_replace_js() {
       var sender_email = $(this).closest('.gs').find('span.gD').attr('email');
       var is_outgoing = addresses.indexOf(sender_email) !== -1;
       var blocks = [];
-      if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1 && text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
-        $.each(text.match(/-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+?-----END PGP PUBLIC KEY BLOCK-----/mg), function(i, armored) {
+      if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1) {
+        var has_pubkey_end = (text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1);
+        $.each(text.match(RegExp('-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+' + ((has_pubkey_end) ? '?-----END PGP PUBLIC KEY BLOCK-----' : ''), 'mg')), function(i, armored) {
           blocks.push(pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id));
         });
       }
