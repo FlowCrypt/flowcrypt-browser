@@ -200,27 +200,16 @@ db_open(function(db) {
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature);
-    if(!is_mime_message(decrypted_content)) {
+    if(!could_be_mime_message(decrypted_content)) {
       render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
     } else {
       $('#pgp_block').text('Formatting...');
       parse_mime_message(decrypted_content, function(success, result) {
-        if(success) {
-          if(result.text || result.html) {
-            render_content(format_mime_plaintext_to_display(result.text || result.html, url_params.message), false, function() {
-              if(result.attachments.length) {
-                render_inner_attachments(result.attachments);
-              }
-            });
-          } else {
-            // this will probably show ugly MIME text to user, which would later be reported by them as a bug
-            // with each report we can extend the capabilities to recognize content of MIME messages
-            render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
+        render_content(format_mime_plaintext_to_display(result.text || result.html || decrypted_content, url_params.message), false, function() {
+          if(result.attachments.length) {
+            render_inner_attachments(result.attachments);
           }
-        } else {
-          // var "result" will contain the error message, once implemented error handling in parse_mime_message
-          render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
-        }
+        });
       });
     }
   }

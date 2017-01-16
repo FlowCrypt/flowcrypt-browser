@@ -321,13 +321,12 @@ function mime_headers_to_from(parsed_mime_message) {
   };
 }
 
-function is_mime_message(message) {
+function could_be_mime_message(message) {
   var m = message.toLowerCase();
   var has_content_type = m.match(/content-type: +[a-z\-\/]+/) !== null;
   var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null;
   var has_content_disposition = m.match(/content-disposition: +[a-z\-\/]+/) !== null;
-  var starts_with_known_header = m.indexOf('content-type:') === 0 || m.indexOf('content-transfer-encoding:') === 0 || m.indexOf('content-disposition:') === 0;
-  return has_content_type && (has_content_transfer_encoding || has_content_disposition) && starts_with_known_header;
+  return has_content_type && (has_content_transfer_encoding || has_content_disposition);
 }
 
 function format_mime_plaintext_to_display(text, full_mime_message) {
@@ -349,10 +348,12 @@ function parse_mime_message(mime_message, callback) {
   var mime_message_contents = {
     attachments: [],
     headers: {},
+    text: undefined,
+    html: undefined,
+    signature: undefined,
   };
   require(['emailjs-mime-parser'], function(MimeParser) {
     try {
-      //todo - handle mime formatting errors and such, with callback(false, 'XX went wrong');
       var parser = new MimeParser();
       var parsed = {};
       parser.onheader = function(node) {
@@ -386,14 +387,17 @@ function parse_mime_message(mime_message, callback) {
             });
           }
         });
-        callback(true, mime_message_contents);
+        Try(function() {
+          callback(true, mime_message_contents);
+        })();
       }
       parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
       parser.end();
     } catch(e) {
-      console.log(e + JSON.stringify(e)); // todo - this will catch on errors inside callback() which is not good
-      // todo - rather should only catch parse error and return through callback(false, ...)
-      throw e;
+      cryptup_error_handler_manual(e);
+      Try(function() {
+        callback(false, mime_message_contents);
+      })();
     }
   });
 }
