@@ -7,7 +7,7 @@ if(url_params.action === 'new_message') {
 } else if (url_params.action === 'settings') {
   $('#title').text('Select account to see settings')
 } else {
-  throw 'unknown action: ' + action;
+  throw new Error('unknown action: ' + action);
 }
 
 get_account_emails(function(account_emails) {

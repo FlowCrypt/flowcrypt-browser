@@ -239,7 +239,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
 }
 
 function backup_by_print() { //todo - implement + add a non-encrypted print option
-  throw 'not implemented';
+  throw new Error('not implemented');
 }
 
 function backup_refused() {

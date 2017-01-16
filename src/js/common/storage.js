@@ -50,7 +50,7 @@ function get_storage(storage_type) {
     } else if(storage_type === 'session') {
       return sessionStorage;
     } else {
-      throw 'unknown type of storage: "' + storage_type + '", use either "local" or "session"'
+      throw new Error('unknown type of storage: "' + storage_type + '", use either "local" or "session"');
     }
   } catch(error) {
     if(error.name === 'SecurityError') {
@@ -250,7 +250,7 @@ function db_error_handle(exception, error_stack, callback) {
 }
 
 function db_denied() {
-  throw 'db_denied is not callable';
+  throw new Error('db_denied is not callable');
 }
 
 function db_open(callback) {
@@ -291,7 +291,7 @@ function db_open(callback) {
 
 function db_index(has_pgp, substring) {
   if(!substring) {
-    throw 'db_index has to include substring';
+    throw new Error('db_index has to include substring');
   }
   return(has_pgp ? 't:' : 'f:') + substring;
 }
@@ -427,7 +427,7 @@ var db_query_keys = ['limit', 'substring', 'has_pgp'];
 function db_contact_search(db, query, callback) {
   $.each(query, function(key, value) {
     if(db_query_keys.indexOf(key) === -1) {
-      throw 'db_contact_search: unknown key: ' + key;
+      throw new Error('db_contact_search: unknown key: ' + key);
     }
   });
   var contacts = db.transaction('contacts', 'readonly').objectStore('contacts');

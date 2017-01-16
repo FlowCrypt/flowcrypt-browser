@@ -966,7 +966,7 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
   }
   if(!armored_pubkeys && !used_challange) {
     alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
-    throw "no-pubkeys-no-challenge";
+    throw new Error('no-pubkeys-no-challenge');
   }
   if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
     options.privateKeys = [signing_prv];
@@ -1152,7 +1152,7 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
           } else {
             if(request.name !== '_tab_') {
               Try(function() {
-                throw 'chrome_message_listen error: handler "' + request.name + '" not set';
+                throw new Error('chrome_message_listen error: handler "' + request.name + '" not set');
               })();
             } else {
               // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
