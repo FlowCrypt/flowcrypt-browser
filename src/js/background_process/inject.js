@@ -36,11 +36,12 @@ function is_content_script_injection_needed(tab_id, callback) {
 }
 
 function inject_content_scripts(tab_id, files, callback) {
+  var files_copy = files.slice();
   chrome.tabs.executeScript(tab_id, {
-    file: files.shift(),
+    file: files_copy.shift(),
   }, function(results) {
-    if(files.length) {
-      inject_content_scripts(tab_id, files, callback);
+    if(files_copy.length) {
+      inject_content_scripts(tab_id, files_copy, callback);
     } else if(callback) {
       callback();
     }
