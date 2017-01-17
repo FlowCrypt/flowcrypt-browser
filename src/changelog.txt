@@ -1,3 +1,6 @@
+<b>version 3.1.2 on January 17, 2017: Lightbox fix</b>
+setup: fixed lightbox backgrounds back to white
+
 <b>version 3.1.1 on January 16, 2017: Compatibility</b>
 reading: recognizing pubkeys clipped by gmail
 reading: Improve MIME/PGP recognition
