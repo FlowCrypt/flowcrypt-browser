@@ -1,3 +1,15 @@
+<b>version 3.1.1 on January 16, 2017: Compatibility</b>
+reading: recognizing pubkeys clipped by gmail
+reading: Improve MIME/PGP recognition
+composing: cannot add contact pubkey when sending from settings page
+composing: properly handling keyserver timeouts
+composing: properly handle compose errors
+setup: normalize public keys parsed from emails
+setup: add_pubkey.js error fix
+setup: error when updating plugin + several tabs open
+internal: some exceptions won't be handled properly
+internal: improve chrome plugin message passing
+
 <b>version 3.1.0 on January 13, 2017: First Time Success</b>
 setup: gmail tab will immediatelly work after install + after update
 setup: better browser compatibility test on setup
