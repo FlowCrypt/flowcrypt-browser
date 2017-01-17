@@ -26,6 +26,8 @@
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0px; margin-top: 0px; }
 .featherlight .featherlight-close-icon { background: none !important; }
+.featherlight .featherlight-content { background: none !important; }
+.featherlight .featherlight-content > .line { color: white; text-align: center; opacity: 0.5; }
 .good { color: #088447; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }
@@ -51,7 +53,6 @@ body#settings > div#content .separator {max-width: 550px; margin:10px auto; marg
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
 body#settings > div.profile-row .ion-person::before { margin-top: 4px; }
-body#settings > div#content .content-row-holder { position: relative; display: inline-block; min-width: 600px!important; }
 body#settings > div#content .ion-ios-arrow-left { position: absolute; left: 20px; top:22px; font-size: 30px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s ;}
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
 body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 3px; position: relative; top: 5px; width: 35px; height: 35px; border: 1px solid #ccc; border-radius: 120px; color: #ccc;}
@@ -157,8 +158,14 @@ body#settings > div#content.dialog.passphrase > input.passphrase { margin-top: 2
 body#settings > div#content.dialog.passphrase .button.long {width: 120px;}
 body#settings > div#content.dialog.add_pubkey select.email { font-size: 16px; padding: 6px; background-color: white; width: 516px; }
 body#settings > div#content.dialog.add_pubkey select.copy_from_email { font-size: 16px; padding: 6px; background-color: white; width: 260px; margin: 0 16px; }
-body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; height: 340px; font-size: 12px; padding: 8px; }
+body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; height: 340px; font-size: 10px; padding: 8px; }
 body#settings > div#content.dialog.add_pubkey .button { width: 120px; margin-left: 13px; margin-right: 14px; }
+body#settings > div#content.dialog.add_pubkey.inside_compose .action_settings { display: none; }
+body#settings > div#content.dialog.add_pubkey.inside_compose .line.copy_from { display: none; }
+body#settings > div#content.dialog.add_pubkey.inside_compose { padding: 40px 0; margin-bottom: 0px; width: 500px; }
+body#settings > div#content.dialog.add_pubkey.inside_compose select.email { width: 480px; }
+body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey { width: 462px; }
+
 
 body#settings > div#content.storage { background-color: #eaeaea; margin-top: 0px; margin-bottom: 0px; padding-top: 30px; padding-bottom: 100px;
   min-height: 100%; height: auto !important;  height: 100%; margin: 0 auto;}

@@ -32,7 +32,7 @@ chrome_message_get_tab_id(function(tab_id) {
       $('.featherlight-close').click();
       new_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
     },
-  }, tab_id_global); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+  }, tab_id); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
   initialize();
 

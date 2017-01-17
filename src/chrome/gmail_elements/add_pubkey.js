@@ -1,6 +1,6 @@
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id', 'emails']);
+var url_params = get_url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
 
 $.each(url_params.emails.split(','), function(i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');
@@ -37,13 +37,17 @@ db_open(function(db) {
   });
 });
 
-$('.action_settings').click(prevent(doubleclick(), function() {
-  chrome_message_send(null, 'settings', {
-    path: 'index.htm',
-    page: '/chrome/settings/modules/contacts.htm',
-    account_email: url_params.account_email,
-  });
-}));
+if(url_params.placement !== 'settings') {
+  $('.action_settings').click(prevent(doubleclick(), function() {
+    chrome_message_send(null, 'settings', {
+      path: 'index.htm',
+      page: '/chrome/settings/modules/contacts.htm',
+      account_email: url_params.account_email,
+    });
+  }));
+} else {
+  $('#content').addClass('inside_compose');
+}
 
 $('.action_close').click(prevent(doubleclick(), close_dialog));
 

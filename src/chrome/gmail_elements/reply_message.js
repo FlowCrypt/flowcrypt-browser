@@ -20,7 +20,6 @@ db_open(function(db) {
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
   var compose = init_shared_compose_js(url_params, db);
-  init_elements_factory_js();
 
   function recover_thread_id_if_missing(callback) {
     if(url_params.thread_id) {

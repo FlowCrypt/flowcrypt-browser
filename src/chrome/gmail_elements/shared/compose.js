@@ -34,6 +34,17 @@ function init_shared_compose_js(url_params, db) {
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUP encryption to reply to you.',
   };
 
+  init_elements_factory_js();
+
+  chrome_message_get_tab_id(function(tab_id) {
+    chrome_message_listen({
+      close_dialog: function(data) {
+        $('.featherlight.featherlight-iframe').remove();
+      },
+    }, tab_id);
+  });
+
+
   $('.icon.pubkey').attr('title', l.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
@@ -773,8 +784,12 @@ function init_shared_compose_js(url_params, db) {
         emails: get_recipients_from_dom('no_pgp'),
       });
     } else {
-      chrome_message_send(url_params.parent_tab_id, 'add_pubkey_dialog_settings', {
-        emails: get_recipients_from_dom('no_pgp'),
+      chrome_message_get_tab_id(function(compose_window_tab_id) {
+        $.featherlight({
+          iframe: add_pubkey_dialog_src(url_params.account_email, get_recipients_from_dom('no_pgp'), compose_window_tab_id, 'settings'),
+          iframeWidth: 500,
+          iframeHeight: $('html').height() - 150,
+        });
       });
     }
     clearInterval(added_pubkey_db_lookup_interval);

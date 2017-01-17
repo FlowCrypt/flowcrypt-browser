@@ -30,11 +30,16 @@ function init_elements_factory_js() {
     return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
-  window.add_pubkey_dialog = function(account_email, emails, gmail_tab_id) {
-    var src = chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm') +
+  window.add_pubkey_dialog_src = function(account_email, emails, gmail_tab_id, placement) {
+    return chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&emails=' + encodeURIComponent(emails.join(',')) +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
+      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
+      '&placement=' + encodeURIComponent(placement);
+  };
+
+  window.add_pubkey_dialog = function(account_email, emails, gmail_tab_id) {
+    var src = add_pubkey_dialog_src(account_email, emails, gmail_tab_id, 'gmail');
     return '<div id="cryptup_dialog"><iframe class="tall ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
