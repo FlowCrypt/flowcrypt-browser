@@ -162,10 +162,10 @@ body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; he
 body#settings > div#content.dialog.add_pubkey .button { width: 120px; margin-left: 13px; margin-right: 14px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose .action_settings { display: none; }
 body#settings > div#content.dialog.add_pubkey.inside_compose .line.copy_from { display: none; }
-body#settings > div#content.dialog.add_pubkey.inside_compose { padding: 40px 0; margin-bottom: 0px; width: 500px; }
+body#settings > div#content.dialog.add_pubkey.inside_compose { padding: 0; margin-bottom: 0px; width: 500px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose select.email { width: 480px; }
-body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey { width: 462px; }
-
+body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey { width: 462px; height: 250px; }
+body#settings > div#content.dialog.add_pubkey.inside_compose separator { display: none; }
 
 body#settings > div#content.storage { background-color: #eaeaea; margin-top: 0px; margin-bottom: 0px; padding-top: 30px; padding-bottom: 100px;
   min-height: 100%; height: auto !important;  height: 100%; margin: 0 auto;}

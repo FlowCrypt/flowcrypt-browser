@@ -787,8 +787,8 @@ function init_shared_compose_js(url_params, db) {
       chrome_message_get_tab_id(function(compose_window_tab_id) {
         $.featherlight({
           iframe: add_pubkey_dialog_src(url_params.account_email, get_recipients_from_dom('no_pgp'), compose_window_tab_id, 'settings'),
-          iframeWidth: 500,
-          iframeHeight: $('html').height() - 150,
+          iframeWidth: 515,
+          iframeHeight: $('html').height() - 50,
         });
       });
     }
