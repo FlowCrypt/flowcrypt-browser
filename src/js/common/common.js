@@ -347,9 +347,9 @@ function mime_headers_to_from(parsed_mime_message) {
 
 function could_be_mime_message(message) {
   var m = message.toLowerCase();
-  var has_content_type = m.match(/content-type: +[a-z\-\/]+/) !== null;
-  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[a-z\-\/]+/) !== null;
-  var has_content_disposition = m.match(/content-disposition: +[a-z\-\/]+/) !== null;
+  var has_content_type = m.match(/content-type: +[0-9a-z\-\/]+/) !== null;
+  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) !== null;
+  var has_content_disposition = m.match(/content-disposition: +[0-9a-z\-\/]+/) !== null;
   return has_content_type && (has_content_transfer_encoding || has_content_disposition);
 }
 
