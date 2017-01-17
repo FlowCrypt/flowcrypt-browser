@@ -1097,18 +1097,30 @@ function increment_metric(type, callback) {
 
 var background_script_shortcut_handlers = undefined;
 
-function chrome_message_send(tab_id, name, data, callback) {
+function chrome_message_destination_parse(destination_string) {
+  var parsed = {
+    tab: null,
+    frame: null,
+  };
+  if(destination_string) {
+    parsed.tab = Number(destination_string.split(':')[0]);
+    parsed.frame = Number(destination_string.split(':')[1]);
+  }
+  return parsed;
+}
+
+function chrome_message_send(destination_string, name, data, callback) {
   var msg = {
     name: name,
     data: data,
-    to: Number(tab_id) || null,
+    to: destination_string || null,
     respondable: (callback) ? true : false,
     uid: random_string(10),
   };
   if(background_script_shortcut_handlers && msg.to === null) {
     background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
   } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
-    chrome.tabs.sendMessage(msg.to, msg, undefined, callback);
+    chrome.tabs.sendMessage(chrome_message_destination_parse(destination_string).tab, msg, undefined, callback);
   } else {
     chrome.runtime.sendMessage(msg, callback);
   }
@@ -1132,7 +1144,7 @@ function chrome_message_background_listen(handlers) {
     };
     if(request.to) {
       request.sender = sender;
-      chrome.tabs.sendMessage(request.to, request, safe_respond);
+      chrome.tabs.sendMessage(chrome_message_destination_parse(request.to).tab, request, undefined, safe_respond);
     } else {
       handlers[request.name](request.data, sender, safe_respond);
     }
@@ -1144,7 +1156,7 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
   var processed = [];
   chrome.runtime.onMessage.addListener(function(request, sender, respond) {
     return WrapWithTryIfContentScript(function() {
-      if(!listen_for_tab_id || request.to === Number(listen_for_tab_id)) {
+      if(request.to === listen_for_tab_id) {
         if(processed.indexOf(request.uid) === -1) {
           processed.push(request.uid);
           if(typeof handlers[request.name] !== 'undefined') {

@@ -28,7 +28,7 @@ chrome_message_background_listen({
     respond(true);
   },
   _tab_: function(request, sender, respond) {
-    respond(sender.tab.id);
+    respond(sender.tab.id + ':' + sender.frameId);
   },
 });
 
