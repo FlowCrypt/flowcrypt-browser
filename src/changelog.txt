@@ -1,3 +1,11 @@
+<b>version 3.1.3 on January 18, 2017: Subkeys</b>
+reading: recognizing facebook encrypted messages
+composing: fixed errors when waiting for pubkey entry
+setup: allow easy use of subkey-only keys
+setup: toggle hide passphrase text
+setup: fixed verify passphrase link
+setup: fixed unexpected set_css call
+
 <b>version 3.1.2 on January 17, 2017: Lightbox fix</b>
 setup: fixed lightbox backgrounds back to white
 
