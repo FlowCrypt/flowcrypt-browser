@@ -28,6 +28,7 @@ function init_shared_compose_js(url_params, db) {
   var my_addresses_on_keyserver = [];
   var recipients_missing_my_key = [];
   var keyserver_lookup_results_by_email = {};
+  var is_reply_box = Boolean($('body#reply_message').length);
   var l = {
     open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUP encryption to reply to you.',
@@ -367,7 +368,7 @@ function init_shared_compose_js(url_params, db) {
         $('#send_btn').removeClass('gray').addClass('green');
       }
     }
-    if($('body#reply_message').length) {
+    if(is_reply_box) {
       if(!was_previously_visible && $("#missing_pubkey_container").css('display') === 'table-row') {
         resize_reply_box($("#missing_pubkey_container").first().height() + 20);
       } else {
@@ -397,19 +398,21 @@ function init_shared_compose_js(url_params, db) {
   }
 
   function resize_reply_box(add_extra) {
-    if(isNaN(add_extra)) {
-      add_extra = 0;
-    }
-    $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
-    var current_height = $('table#compose').height();
-    if(current_height !== last_reply_box_table_height) {
-      last_reply_box_table_height = current_height;
-      chrome_message_send(url_params.parent_tab_id, 'set_css', {
-        selector: 'iframe#' + url_params.frame_id,
-        css: {
-          height: Math.max(260, current_height + 1) + add_extra,
-        }
-      });
+    if(is_reply_box) {
+      if(isNaN(add_extra)) {
+        add_extra = 0;
+      }
+      $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
+      var current_height = $('table#compose').height();
+      if(current_height !== last_reply_box_table_height) {
+        last_reply_box_table_height = current_height;
+        chrome_message_send(url_params.parent_tab_id, 'set_css', {
+          selector: 'iframe#' + url_params.frame_id,
+          css: {
+            height: Math.max(260, current_height + 1) + add_extra,
+          }
+        });
+      }
     }
   }
 
@@ -810,7 +813,9 @@ function init_shared_compose_js(url_params, db) {
   $('.use_question').click(function() {
     $('#missing_pubkey_container').css('display', 'none');
     $('#challenge_question_container').css('display', 'table-row');
-    resize_reply_box();
+    if(is_reply_box) {
+      resize_reply_box();
+    }
   });
 
   $('.action_feedback').click(function() {
