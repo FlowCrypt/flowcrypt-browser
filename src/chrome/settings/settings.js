@@ -243,7 +243,7 @@ function show_settings_page(page, add_url_text) {
   var new_location = page + '?account_email=' + encodeURIComponent(settings_url_params.account_email) + '&placement=settings';
   new_location += '&parent_tab_id=' + encodeURIComponent(settings_url_params.parent_tab_id || settings_tab_id_global) + (add_url_text || '');
   if(settings_url_params.embedded) { //embedded on the main page
-    chrome_message_send(settings_tab_id_global, 'open_page', {
+    chrome_message_send(settings_url_params.parent_tab_id, 'open_page', {
       page: page,
       add_url_text: add_url_text,
     });
