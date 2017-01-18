@@ -4,6 +4,8 @@ var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
 var url_params = get_url_params(['account_email', 'action', 'parent_tab_id']);
 
+add_show_hide_passphrase_toggle(['password', 'password2']);
+
 account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {
   if(url_params.action === 'setup') {
     $('.back').css('display', 'none');

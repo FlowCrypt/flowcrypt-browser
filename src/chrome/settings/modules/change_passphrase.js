@@ -8,6 +8,8 @@ if(private_keys_get(url_params.account_email).length > 1) {
   $('#step_1_password #password').attr('placeholder', 'Enter a new primary key pass phrase');
 }
 
+add_show_hide_passphrase_toggle(['original_password', 'password', 'password2']);
+
 var original_passphrase = get_passphrase(url_params.account_email);
 if(original_passphrase === null) {
   display_block('step_0_enter');

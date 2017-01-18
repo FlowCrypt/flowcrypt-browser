@@ -2,6 +2,8 @@
 
 var url_params = get_url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
 
+add_show_hide_passphrase_toggle(['passphrase']);
+
 var all_private_keys = private_keys_get(url_params.account_email);
 
 if(url_params.longids) {
@@ -9,9 +11,6 @@ if(url_params.longids) {
 } else {
   var private_keys = all_private_keys;
 }
-
-console.log(url_params.longids);
-console.log(private_keys);
 
 if(all_private_keys.length > 1) {
   if(private_keys.length === 1) {

@@ -21,7 +21,9 @@
 .button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444;}
 .button.small { padding: 0 7px; margin-top: 0; }
 .button_secure.green { background:  #31A217; }
-
+.toggle_show_hide_pass_phrase { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none;
+  -ms-user-select: none; user-select: none; display: inline-block; position: absolute; width: 50px; text-align: center; padding-left: 4px;
+    margin-left: -55px; margin-top: 1px; padding-top: 7px; cursor: pointer; opacity: 0.5; background: #dadada; height: 36px; line-height: 14px; }
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0px; margin-top: 0px; }
@@ -47,8 +49,8 @@ body#settings > div#content > div#accounts a.button.has_email b { padding-right:
 body#settings > div#content p.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;padding-bottom: 0;margin-bottom: 0; opacity: .5}
 body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
-body#settings > div#content div.line label { line-height: 22px; }
-body#settings > div#content input[type=password], body#settings > div#content input[type=text] { width: 360px!important; height:45px; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px;}
+body#settings > div#content input[type=password], body#settings > div#content input[type=text] { padding: 0px; box-sizing: border-box;
+  width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px; }
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #f3f3f3; vertical-align: middle; }
@@ -78,9 +80,6 @@ body#settings > div#content.setup div.manual textarea { width: 530px; height: 30
 body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0px auto;}
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0px; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
-body#settings > div#content.setup div.manual label { padding-left: 20px;  }
-body#settings > div#content.setup div.manual .ion-android-lock { color: rgba(0,0,0,0.25); font-size: 20px; margin-right: 10px; margin-top: 4px;}
-body#settings > div#content.setup div#step_2a_manual_create .ion-android-lock { margin-right: 0px; margin-top: 0px; position: absolute; top: 24px; left: 75px; }
 body#settings > div#content.setup div.action_save_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.action_create_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; background-color: #d14836; border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447); padding: 4px 35px; margin-left: 5px; }
@@ -113,15 +112,14 @@ body#settings > div#content.backup div#step_3_manual { display: none; }
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.details td { padding-top: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px;}
-body#settings > div#content.backup .password_feedback { display: none;}
-body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left:0; right:0; margin-top: 57px;  -webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
+body#settings .password_feedback { display: none; }
+body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left:0; right:0; margin-top: 57px;
+ -webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
 body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
-body#settings > div#content.backup div.password_bar, body#settings > div#content.setup div.manual div.password_bar { width: 360px; border: none; display: inline-block;
-  border: none; margin-bottom: 14px; margin-left: -3px; }
-body#settings > div#content.backup div.password_bar > div, body#settings > div#content.setup div.manual div.password_bar > div { width: 0; height: 3px; }
-body#settings > div#content.backup #password, body#settings > div#content.backup #password2,
-
-body#settings > div#content.setup div.manual .input_password, body#settings > div#content.setup div.manual .input_password2 { width: 300px; margin-bottom: 0px;}
+body#settings div.password_bar { width: 360px; border: none; display: inline-block; border: none; margin-bottom: 14px; position: relative; left: -2px;}
+body#settings div.password_bar > div { width: 0; height: 3px; }
+body#settings #password, body#settings #password2, body#settings .input_password, body#settings .input_password2 {
+  width: 300px !important; margin-bottom: 0px !important; }
 
 body#settings > div#content h2 { font-size: 22px; font-weight: 100; color: #353535; margin-top:10px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.help #input_text { width: 80%; height: 200px; font-weight: 400; padding-top: 8px; font-size: 16px; border: 2px solid #dadada; text-indent: 7px; font-family: 'Open Sans', sans-serif; }
@@ -134,9 +132,6 @@ body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #66
 body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
-
-/*body#settings > div#content.my_key .gray { color: #999; }*/
-
 
 body#settings #edit_pubkey textarea.input_pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
 body#settings > div#content > div#changelog { width: 550px; margin: 0 auto; text-align: left; font-size: 16px; padding-bottom: 80px; }
@@ -154,7 +149,7 @@ body#settings > div#footer a { color: #666; display: inline-block; padding-top: 
 
 body#settings > div#content.dialog { width: 600px; padding: 40px 20px; background: white; z-index: 2; margin-top: 0px; }
 body#settings > div#content.dialog h1 { max-width: 500px; margin:0 auto; font-size: 28px!important;}
-body#settings > div#content.dialog.passphrase > input.passphrase { margin-top: 20px; margin-bottom: 30px; width: 350px!important;}
+body#settings > div#content.dialog.passphrase input.passphrase { margin-bottom: 30px; }
 body#settings > div#content.dialog.passphrase .button.long {width: 120px;}
 body#settings > div#content.dialog.add_pubkey select.email { font-size: 16px; padding: 6px; background-color: white; width: 516px; }
 body#settings > div#content.dialog.add_pubkey select.copy_from_email { font-size: 16px; padding: 6px; background-color: white; width: 260px; margin: 0 16px; }
@@ -171,9 +166,7 @@ body#settings > div#content.storage { background-color: #eaeaea; margin-top: 0px
   min-height: 100%; height: auto !important;  height: 100%; margin: 0 auto;}
 body#settings > div#content.storage .emails a { padding-right: 20px; }
 body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; border: 1px solid #cacaca; width: 70%; background-color: white; }
-/*body#settings > div#content.storage .error {  }*/
 
-/* body */
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0px; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }
 html {  padding:0px; margin: 0px; }
@@ -202,7 +195,6 @@ body > #pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #B7B
 body > #pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }
 body > #pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
 
-/* compose table */
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0px; border: 1px solid #31A217; background-color: #31A217; }
 table#compose td.input { height: 42px; vertical-align: middle; }
@@ -339,7 +331,6 @@ body#new_message.popup { width: 474px; height: 600px; }
 body#new_message.popup table#compose { width: 490px; border: none; }
 body#new_message.popup table#compose tr td { border-left: none; border-right: none; }
 
-/* reply elements */
 div#reply_message_table_container { display: none; }
 div#reply_message_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
 div#reply_message_prompt #reply_click_area { width: 95%; height: 50px; margin-top: 3px; position: absolute; }

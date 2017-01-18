@@ -7,8 +7,9 @@ if(url_params.account_email) {
 }
 
 $('.email-address').text(url_params.account_email);
-
 $('.back').css('visibility', 'hidden');
+add_show_hide_passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
+add_show_hide_passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
