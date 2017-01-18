@@ -804,7 +804,7 @@ function get_decrypt_options(message, keyinfo, is_armored, one_time_message_pass
   if(!one_time_message_password) {
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     if(keyinfo.passphrase !== '') {
-      prv.decrypt(keyinfo.passphrase);
+      decrypt_key(prv, keyinfo.passphrase);
     }
     options.privateKey = prv;
   } else {
@@ -839,6 +839,26 @@ function verify_message_signature(message, keys) {
     }
   }
   return signature;
+}
+
+function decrypt_key(prv, passphrase) { // returns true, false, or RETURNS a cought known exception
+  try {
+    return prv.decrypt(passphrase);
+  } catch(e) {
+    if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
+      try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
+        return prv.subKeys.length === prv.subKeys.reduce(function(successes, subkey) {
+          return successes + Number(subkey.subKey.decrypt(passphrase));
+        }, 0);
+      } catch(subkey_e) {
+        return subkey_e;
+      }
+    } else if(e.message === 'Invalid enum value.') {
+      return subkey_e;
+    } else {
+      throw e;
+    }
+  }
 }
 
 function decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {

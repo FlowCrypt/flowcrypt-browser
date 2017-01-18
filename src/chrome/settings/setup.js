@@ -406,30 +406,21 @@ function test_private_key_and_handle(account_email, key, options, success_callba
 
 $('#step_2b_manual_enter .action_save_private').click(function() {
   var prv = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
-  var prv_to_test_passphrase = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
+  var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
   if(typeof prv === 'undefined') {
     alert('Private key is not correctly formated. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
   } else if(prv.isPublic()) {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
   } else {
-    try {
-      var decrypted = prv_to_test_passphrase.decrypt($('#step_2b_manual_enter .input_passphrase').val());
-    } catch(e) {
-      if(e.message === 'Invalid enum value.' || e.message === 'Unknown s2k type.') {
-        alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (error: ' + e.message + ')');
-        return;
-      } else {
-        throw e;
-      }
-    }
-    if(decrypted === false) {
+    var decrypt_result = decrypt_key(openpgp.key.readArmored(prv.armor()).keys[0], passphrase);
+    if(decrypt_result === false) {
       alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
       $('#step_2b_manual_enter .input_passphrase').val('');
       $('#step_2b_manual_enter .input_passphrase').focus();
-    } else {
+    } else if(decrypt_result === true) {
       $('#step_2b_manual_enter .action_save_private').html(get_spinner());
       var options = {
-        passphrase: $('#step_2b_manual_enter .input_passphrase').val(),
+        passphrase: passphrase,
         setup_simple: false,
         key_backup_prompt: false,
         submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
@@ -439,6 +430,8 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
       save_key(url_params.account_email, prv, options, function() {
         finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
       });
+    } else {
+      alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.message + ')');
     }
   }
 });
