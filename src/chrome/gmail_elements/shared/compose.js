@@ -796,7 +796,7 @@ function init_shared_compose_js(url_params, db) {
     added_pubkey_db_lookup_interval = setInterval(function() {
       $.each(get_recipients_from_dom('no_pgp'), function(i, email) {
         db_contact_get(db, email, function(contact) {
-          if(contact.has_pgp) {
+          if(contact && contact.has_pgp) {
             $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
             $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
             clearInterval(added_pubkey_db_lookup_interval);
