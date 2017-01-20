@@ -174,9 +174,9 @@ function init_shared_compose_js(url_params, db) {
     if(my_passphrase !== null) {
       var private_key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key', url_params.parent_tab_id)).keys[0];
       if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-        private_key.decrypt(my_passphrase);
+        decrypt_key(private_key, my_passphrase);
       }
-      openpgp.decrypt({
+      openpgp.decrypt({ // todo: should be using common.decrypt() function
         message: openpgp.message.readArmored(encrypted_draft),
         format: 'utf8',
         privateKey: private_key,

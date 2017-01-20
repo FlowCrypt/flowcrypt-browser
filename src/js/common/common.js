@@ -244,39 +244,6 @@ function as_html_formatted_string(obj) {
   return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
 }
 
-function get_passphrase(account_email, longid) {
-  if(longid) {
-    var stored = private_storage_get('local', account_email, 'passphrase_' + longid);
-    if(stored) {
-      return stored;
-    } else {
-      var temporary = private_storage_get('session', account_email, 'passphrase_' + longid);
-      if(temporary) {
-        return temporary;
-      } else {
-        if(key_longid(private_storage_get('local', account_email, 'master_private_key')) === longid) {
-          return get_passphrase(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
-        } else {
-          return null;
-        }
-      }
-    }
-  } else { //todo - this whole part would also be unnecessary if we did a migration
-    if(private_storage_get('local', account_email, 'master_passphrase_needed') === false) {
-      return '';
-    }
-    var stored = private_storage_get('local', account_email, 'master_passphrase');
-    if(stored) {
-      return stored;
-    }
-    var temporary = private_storage_get('session', account_email, 'master_passphrase');
-    if(temporary) {
-      return temporary;
-    }
-    return null;
-  }
-}
-
 function inner_text(html_text) {
   var e = document.createElement('div');
   e.innerHTML = html_text;
@@ -1110,7 +1077,7 @@ function test_private_key(armored, passphrase, callback) {
       publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
     }).then(function(result) {
       var prv = openpgp.key.readArmored(armored).keys[0];
-      prv.decrypt(passphrase);
+      decrypt_key(prv, passphrase);
       openpgp.decrypt({
         message: openpgp.message.readArmored(result.data),
         format: 'utf8',

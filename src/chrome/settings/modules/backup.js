@@ -206,7 +206,7 @@ function is_master_private_key_encrypted(account_email) {
     return false;
   } else {
     var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
-    return key.primaryKey.isDecrypted === false && key.decrypt('') === false;
+    return key.primaryKey.isDecrypted === false && decrypt_key(key, '') === false;
   }
 }
 

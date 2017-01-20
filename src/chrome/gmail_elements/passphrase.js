@@ -47,7 +47,7 @@ $('.action_ok').click(prevent(doubleclick(), function() {
   var is_correct = false;
   $.each(private_keys, function(i, keyinfo) { // if passphrase matches more keys, it will save them all
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-    if(prv.decrypt(pass) === true) {
+    if(decrypt_key(prv, pass) === true) {
       is_correct = true;
       if($('.forget').prop('checked')) {
         save_passphrase('session', url_params.account_email, keyinfo.longid, pass);

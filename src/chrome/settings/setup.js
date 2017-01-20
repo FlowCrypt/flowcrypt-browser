@@ -296,7 +296,7 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
     var worked = false;
     $.each(recovered_keys, function(i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
-      if(recovered_key.decrypt(passphrase) === true) {
+      if(decrypt_key(recovered_key, passphrase) === true) {
         var options = {
           submit_main: false, // todo - think about submitting when recovering
           submit_all: false,

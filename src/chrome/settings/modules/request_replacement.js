@@ -27,7 +27,7 @@ keyserver_keys_find(url_params.account_email, function(success, keyserver_result
         alert('This is your current key. Look for an older one. It will look very similar.');
       } else if (key_fingerprint(old_key) !== key_fingerprint(keyserver_result.pubkey)) {
         alert('Key does not match. Please try another key if you have multiple.');
-      } else if (old_key.decrypt($('.input_passphrase').val()) === false) {
+      } else if (decrypt_key(old_key, $('.input_passphrase').val()) === false) {
         alert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
       } else {
         var request_replacement = {

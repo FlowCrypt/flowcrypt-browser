@@ -70,7 +70,7 @@ function check_email_for_attests_and_respond(account_email) {
 function process_attest_packet_text(account_email, attest_packet_text) {
   var attest = attest_packet_parse(attest_packet_text);
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
-  var decrypted = key.decrypt(get_passphrase(account_email));
+  var decrypted = decrypt_key(key, get_passphrase(account_email));
   if(decrypted) {
     var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
     var expected_email_hash = double_sha1_upper(trim_lower(account_email));

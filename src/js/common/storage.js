@@ -122,6 +122,39 @@ function save_passphrase(storage_type, account_email, longid, passphrase) {
   }
 }
 
+function get_passphrase(account_email, longid) {
+  if(longid) {
+    var stored = private_storage_get('local', account_email, 'passphrase_' + longid);
+    if(stored) {
+      return stored;
+    } else {
+      var temporary = private_storage_get('session', account_email, 'passphrase_' + longid);
+      if(temporary) {
+        return temporary;
+      } else {
+        if(key_longid(private_storage_get('local', account_email, 'master_private_key')) === longid) {
+          return get_passphrase(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+        } else {
+          return null;
+        }
+      }
+    }
+  } else { //todo - this whole part would also be unnecessary if we did a migration
+    if(private_storage_get('local', account_email, 'master_passphrase_needed') === false) {
+      return '';
+    }
+    var stored = private_storage_get('local', account_email, 'master_passphrase');
+    if(stored) {
+      return stored;
+    }
+    var temporary = private_storage_get('session', account_email, 'master_passphrase');
+    if(temporary) {
+      return temporary;
+    }
+    return null;
+  }
+}
+
 function private_keys_get(account_email, longid) {
   var keys = [];
   var private_keys = private_storage_get('local', account_email, 'private_keys');
