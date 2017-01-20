@@ -32,7 +32,7 @@ db_open(function(db) {
   var height_history = [];
   var message_fetched_from_api = false;
   var passphrase_interval = undefined;
-  var missing_passprase_longids = [];
+  var missing_or_wrong_passprases = {};
   var can_read_emails = undefined;
 
   if(db === db_denied) {
@@ -247,18 +247,21 @@ db_open(function(db) {
     });
   }
 
-  function render_passphrase_prompt(missing_passphrse_key_longids) {
-    missing_passprase_longids = missing_passphrse_key_longids;
+  function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids) {
+    missing_or_wrong_passprases = {};
+    $.each(missing_or_wrong_passphrase_key_longids, function(i, longid) {
+      missing_or_wrong_passprases[longid] = get_passphrase(url_params.account_email, longid);
+    });
     render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function() {
       clearInterval(passphrase_interval);
-      passphrase_interval = setInterval(check_passphrase_entered, 1000);
+      passphrase_interval = setInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(prevent(doubleclick(), function() {
         chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
           type: 'message',
-          longids: missing_passphrse_key_longids,
+          longids: missing_or_wrong_passphrase_key_longids,
         });
         clearInterval(passphrase_interval);
-        passphrase_interval = setInterval(check_passphrase_entered, 250);
+        passphrase_interval = setInterval(check_passphrase_changed, 250);
       }));
     });
   }
@@ -277,10 +280,10 @@ db_open(function(db) {
     });
   }
 
-  function check_passphrase_entered() {
-    $.each(missing_passprase_longids, function(i, longid) {
-      if(missing_passprase_longids && get_passphrase(url_params.account_email, longid) !== null) {
-        missing_passprase_longids = [];
+  function check_passphrase_changed() {
+    $.each(missing_or_wrong_passprases, function(i, longid) {
+      if(missing_or_wrong_passprases[longid] !== get_passphrase(url_params.account_email, longid)) {
+        missing_or_wrong_passprases = {};
         clearInterval(passphrase_interval);
         decrypt_and_render();
         return false;

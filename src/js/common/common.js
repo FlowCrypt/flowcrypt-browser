@@ -732,9 +732,16 @@ function get_sorted_keys_for_message(db, account_email, message, callback) {
   keys.with_passphrases = [];
   keys.without_passphrases = [];
   $.each(keys.potentially_matching, function(i, keyinfo) {
-    keyinfo.passphrase = get_passphrase(account_email, keyinfo.longid);
-    if(keyinfo.passphrase !== null) {
-      keys.with_passphrases.push(keyinfo);
+    var passphrase = get_passphrase(account_email, keyinfo.longid);
+    if(passphrase !== null) {
+      var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
+      var decrypted = decrypt_key(key, passphrase);
+      if(decrypted === true) {
+        keyinfo.decrypted = key;
+        keys.with_passphrases.push(keyinfo);
+      } else {
+        keys.without_passphrases.push(keyinfo);
+      }
     } else {
       keys.without_passphrases.push(keyinfo);
     }
@@ -807,11 +814,7 @@ function get_decrypt_options(message, keyinfo, is_armored, one_time_message_pass
     format: (is_armored) ? 'utf8' : 'binary',
   };
   if(!one_time_message_password) {
-    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-    if(keyinfo.passphrase !== '') {
-      decrypt_key(prv, keyinfo.passphrase);
-    }
-    options.privateKey = prv;
+    options.privateKey = keyinfo.decrypted;
   } else {
     options.password = challenge_answer_hash(one_time_message_password);
   }
