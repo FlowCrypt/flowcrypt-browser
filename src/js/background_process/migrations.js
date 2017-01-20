@@ -74,7 +74,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
 
 function account_update_status_pks(account_email) { // checks if any new emails were registered on pks lately
   var my_longids = private_keys_get(account_email).map(map_select('longid'));
-  var hkp = new openpgp.HKP('https://pgp.mit.edu');
+  var hkp = new openpgp.HKP('http://keys.gnupg.net');
   account_storage_get(account_email, ['addresses', 'addresses_pks'], function(storage) {
     var addresses_pks = storage.addresses_pks || [];
     $.each(storage.addresses || [account_email], function(i, email) {
@@ -91,6 +91,8 @@ function account_update_status_pks(account_email) { // checks if any new emails 
               });
             }
           }
+        }).catch(function(error) {
+          console.log('Error fetching keys from PKS: ' + error.message);
         });
       }
     });
