@@ -166,7 +166,7 @@ function private_keys_get(account_email, longid) {
     keys.push(keyinfo);
   });
   var primary_key_armored = private_storage_get('local', account_email, 'master_private_key');
-  if(!contains_primary && primary_key_armored) {
+  if(!contains_primary && (primary_key_armored || '').trim()) {
     keys.push({
       armored: primary_key_armored,
       primary: true,

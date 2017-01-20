@@ -12,7 +12,7 @@ get_account_emails(function(account_emails) {
   });
 });
 
-function print(obj) {
+function render(obj) {
   $('.pre').html(as_html_formatted_string(obj));
 }
 
@@ -28,7 +28,7 @@ chrome.storage.local.get(function(storage) {
       filtered['<b>' + key.replace(real_filter, '') + '</b>'] = value;
     }
   });
-  print(filtered);
+  render(filtered);
 });
 
 $('.save').click(function() {

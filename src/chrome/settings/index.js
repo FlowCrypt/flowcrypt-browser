@@ -57,10 +57,12 @@ function initialize() {
         $('.hide_if_setup_not_done').css('display', 'block');
         $('.show_if_setup_not_done').css('display', 'none');
         var private_keys = private_keys_get(url_params.account_email);
-        add_key_rows_html(private_keys);
-        if(private_keys.length > 1) {
+        if(!private_keys.length) {
+          render_storage_inconsistency_error(url_params.account_email, 'No private key found for this account');
+        } else if(private_keys.length > 1) {
           $('.add_key').css('display', 'none');
         }
+        add_key_rows_html(private_keys);
       } else {
         $('.show_if_setup_not_done').css('display', 'block');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -72,6 +74,60 @@ function initialize() {
   }
 }
 
+function render_storage_inconsistency_error(account_email, text_reason) {
+  if(!account_email) {
+    throw new Error('Missing account_email to render inconsistency for');
+  }
+  var html = '<div class="line">CryptUP is not set up correctly for ' + account_email + ':<br/><b class="bad">' + text_reason + '</b></div>';
+  html += '<div class="line">This happens when users manually change values in browser extension storage or when developers like me make a mistake.</div>';
+  html += '<div class="line">Email me at tom@cryptup.org if you think this one is on me.</div>'
+  html += '<div class="line">&nbsp;</div>'
+  html += '<div class="line"><div class="button green reset_account">Reset cryptup for ' + account_email + '</div></div>';
+  $('#settings-row').html(html);
+  $('.reset_account').click(prevent(doubleclick(), function() {
+    if(confirm('This will reset all your encryption settings for ' + account_email + '\n\nAre you sure?')) {
+      reset_cryptup_account_storages(account_email, function() {
+        window.location.reload();
+      });
+    }
+  }));
+}
+
+function reset_cryptup_account_storages(account_email, callback) {
+  if(!account_email) {
+    throw new Error('Missing account_email to reset');
+  }
+  get_account_emails(function(account_emails) {
+    if(account_emails.indexOf(account_email) === -1) {
+      throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
+    }
+    var keys_to_remove = [];
+    var filter = account_storage_key(account_email, '');
+    if(!filter) {
+      throw new Error('Filter is empty for account_email"' + account_email + '"');
+    }
+    chrome.storage.local.get(function(storage) {
+      $.each(storage, function(key, value) {
+        if(key.indexOf(filter) === 0) {
+          keys_to_remove.push(key.replace(filter, ''));
+        }
+      });
+      account_storage_remove(account_email, keys_to_remove, function() {
+        $.each(localStorage, function(key, value) {
+          if(key.indexOf(filter) === 0) {
+            private_storage_set('local', account_email, key.replace(filter, ''), undefined);
+          }
+        });
+        $.each(sessionStorage, function(key, value) {
+          if(key.indexOf(filter) === 0) {
+            private_storage_set('session', account_email, key.replace(filter, ''), undefined);
+          }
+        });
+        callback();
+      });
+    });
+  });
+}
 
 function add_key_rows_html(private_keys) {
   var html = '';
