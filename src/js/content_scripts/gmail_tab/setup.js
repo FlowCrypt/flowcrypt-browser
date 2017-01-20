@@ -149,10 +149,9 @@ function init_setup_js() {
   };
 
   window.get_account_email = function() {
-    var benevolent_email_regex = /[a-z0-9._]+@[a-z0-9._]+/gi;
-    var account_email_loading_match = $("#loading div.msg").text().match(benevolent_email_regex);
+    var account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._]+@[^…< ]+/gi);
     if(account_email_loading_match !== null) {
-      return account_email_loading_match[0];
+      return account_email_loading_match[0].replace(/^[\s\.]+|[\s\.]+$/gm, '');
     } else {
       return undefined;
     }
