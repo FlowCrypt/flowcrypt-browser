@@ -24,6 +24,7 @@ var l = {
   write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly. ',
   refresh_window: 'Please refresh your Gmail window to read encrypted messages. ',
   update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
+  not_properly_set_up: 'CryptUP is not properly set up to decrypt messages. ',
 };
 
 db_open(function(db) {
@@ -99,8 +100,8 @@ db_open(function(db) {
     });
   }
 
-  function diagnose_pubkeys_button(text, color) {
-    return '<br><div class="button settings long ' + color + '" style="margin:30px 0;" target="cryptup">' + text + '</div>';
+  function button_html(text, add_classes) {
+    return '<br><div class="button long ' + add_classes + '" style="margin:30px 0;" target="cryptup">' + text + '</div>';
   }
 
   function armored_message_as_html(raw_message_substitute) {
@@ -123,10 +124,15 @@ db_open(function(db) {
   function render_error(error_box_content, raw_message_substitute, callback) {
     set_frame_color('red');
     render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function() {
-      $('.settings.button').click(function() {
+      $('.button.settings_keyserver').click(function() {
         chrome_message_send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/keyserver.htm',
+        });
+      });
+      $('.button.settings').click(function() {
+        chrome_message_send(null, 'settings', {
+          account_email: url_params.account_email,
         });
       });
       if(callback) {
@@ -141,7 +147,7 @@ db_open(function(db) {
       render_error(l.cant_open + l.encrypted_correctly_file_bug);
     } else {
       if(msg_diagnosis.receivers === 1) {
-        render_error(l.cant_open + l.single_sender + l.ask_resend + diagnose_pubkeys_button('account settings', 'gray2'));
+        render_error(l.cant_open + l.single_sender + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
       } else {
         check_pubkeys_keyserver(account_email, function(ksrv_diagnosis) {
           if(!ksrv_diagnosis) {
@@ -149,15 +155,15 @@ db_open(function(db) {
           } else {
             if(msg_diagnosis.receivers) {
               if(ksrv_diagnosis.has_pubkey_mismatch) {
-                render_error(l.cant_open + l.account_info_outdated + diagnose_pubkeys_button('review outdated information', 'green'));
+                render_error(l.cant_open + l.account_info_outdated + button_html('review outdated information', 'green settings_keyserver'));
               } else {
-                render_error(l.cant_open + l.wrong_pubkey_used + l.ask_resend + diagnose_pubkeys_button('account settings', 'gray2'));
+                render_error(l.cant_open + l.wrong_pubkey_used + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
               }
             } else {
               if(ksrv_diagnosis.has_pubkey_mismatch) {
-                render_error(l.cant_open + l.receivers_hidden + l.account_info_outdated + diagnose_pubkeys_button('review outdated information', 'green'));
+                render_error(l.cant_open + l.receivers_hidden + l.account_info_outdated + button_html('review outdated information', 'green settings_keyserver'));
               } else {
-                render_error(l.cant_open + l.receivers_hidden + l.ask_resend + diagnose_pubkeys_button('account settings', 'gray2'));
+                render_error(l.cant_open + l.receivers_hidden + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
               }
             }
           }
@@ -228,7 +234,7 @@ db_open(function(db) {
       } else if(result.missing_passphrases.length) {
         render_passphrase_prompt(result.missing_passphrases);
       } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
-        render_error(l.refresh_window);
+        render_error(l.not_properly_set_up + button_html('cryptup settings', 'green settings'));
       } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
         if(url_params.question && !optional_password) {
           render_password_prompt();

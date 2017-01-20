@@ -79,10 +79,10 @@ function render_storage_inconsistency_error(account_email, text_reason) {
     throw new Error('Missing account_email to render inconsistency for');
   }
   var html = '<div class="line">CryptUP is not set up correctly for ' + account_email + ':<br/><b class="bad">' + text_reason + '</b></div>';
-  html += '<div class="line">This happens when users manually change values in browser extension storage or when developers like me make a mistake.</div>';
+  html += '<div class="line">This happens when users manually change values in browser extension storage or when developers (that is myself) make a mistake.</div>';
   html += '<div class="line">Email me at tom@cryptup.org if you think this one is on me.</div>'
   html += '<div class="line">&nbsp;</div>'
-  html += '<div class="line"><div class="button green reset_account">Reset cryptup for ' + account_email + '</div></div>';
+  html += '<div class="line"><div class="button red reset_account">Reset cryptup for ' + account_email + '</div></div>';
   $('#settings-row').html(html);
   $('.reset_account').click(prevent(doubleclick(), function() {
     if(confirm('This will reset all your encryption settings for ' + account_email + '\n\nAre you sure?')) {
