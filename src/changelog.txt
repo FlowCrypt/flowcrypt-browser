@@ -1,3 +1,10 @@
+<b>version 3.1.4 on January 20, 2017: Bugfixes</b>
+setup: improve behavior when changed passphrase
+setup: verify passphrase to actually test decrypting the key
+setup: option to delete account info when missing prv
+internal: background page bugfix: pks lookup fail
+internal: use new version of decrypt_key as needed
+
 <b>version 3.1.3 on January 18, 2017: Subkeys</b>
 reading: recognizing facebook encrypted messages
 composing: fixed errors when waiting for pubkey entry
