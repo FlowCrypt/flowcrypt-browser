@@ -443,8 +443,12 @@ function month_name(month_index) {
 function get_account_emails(callback) {
   account_storage_get(null, ['account_emails'], function(storage) {
     var account_emails = [];
-    if(typeof storage['account_emails'] !== 'undefined') {
-      account_emails = JSON.parse(storage['account_emails']);
+    if(typeof storage.account_emails !== 'undefined') {
+      $.each(JSON.parse(storage.account_emails), function(i, account_email) {
+        if(account_emails.indexOf(account_email.toLowerCase()) === -1) {
+          account_emails.push(account_email.toLowerCase());
+        }
+      });
     }
     callback(account_emails);
   });

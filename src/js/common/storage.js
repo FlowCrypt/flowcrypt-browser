@@ -10,7 +10,7 @@ function account_storage_key(account_key_or_list, key) {
     });
     return all_results;
   } else {
-    var prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '') + '_';
+    var prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
     if(typeof key === 'object') {
       var account_storage_keys = [];
       $.each(key, function(i, k) {
