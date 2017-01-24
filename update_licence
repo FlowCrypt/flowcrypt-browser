@@ -30,9 +30,11 @@ for source_file_path in source_file_paths:
 	with io.open(source_file_path, 'r', encoding='utf8') as fp:
 		lines = fp.readlines()
 	commented_licence_line = source_extension_patterns[extension(source_file_path)] % licence_line
-	if 0 not in lines or 'licence' in lines[0].lower() or 'license' in lines[0].lower():
+	if not len(lines) or 'licence' in lines[0].lower() or 'license' in lines[0].lower():
 		lines[0] = commented_licence_line
 	else:
 		lines.insert(0, commented_licence_line)
+	if len(lines) < 2 or lines[1].strip():  # second line is not empty
+		lines.insert(1, '\n')
 	with io.open(source_file_path, 'w', encoding='utf8') as fp:
 		fp.write(''.join(lines))
