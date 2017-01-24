@@ -45,7 +45,8 @@ db_open(function(db) {
     $('.email').text(trim_lower(pubkey.users[0].userId.userid));
     set_button_text(db);
   } else {
-    $('.add_pubkey').replaceWith('<div style="color: red;">This public key is invalid or has unknown format.</div>');
+    $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
+    $('.line.fingerprints').css('display', 'none');
     send_resize_message();
   }
 
