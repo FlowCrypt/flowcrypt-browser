@@ -40,9 +40,11 @@ div.wide.line { max-width: 850px; }
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
 body#settings > div#content {  margin-top: 120px; margin-bottom: 150px; }
 body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
+/*body#settings > div#content.page #page_back_button { display: none; position: absolute; top: 10px; left: 10px; }*/
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
 body#settings > div#content.page img.screen { border: 1px dotted #cacaca; }
 body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
+body#settings > div#content.page h1 {font-size: 24px; font-weight: 200; }
 body#settings > div#content a:hover { text-decoration: none; }
 body#settings > div#content > div#accounts a.button.has_email { width: 300px; padding: 5px 20px; text-align: left; font-weight: 100; color: #fff; }
 body#settings > div#content > div#accounts a.button.has_email b { padding-right: 10px; color: #FFF; }
@@ -128,12 +130,12 @@ body#settings > div#content.help .button.green { display: inline-block; position
 body#settings > div#content.help .separator { width: 60%;}
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
-body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; min-width: 500px; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
+body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; min-width: 500px; }
 body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
 
-body#settings #edit_pubkey textarea.input_pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
+body#settings > div#content.pubkeys #edit_contact textarea.input_pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
 body#settings > div#content > div#changelog { width: 550px; margin: 0 auto; text-align: left; font-size: 16px; padding-bottom: 80px; }
 body#settings > div#content > div#changelog b { display: inline-block; margin-top: 20px; }
 body#settings > div#content > pre#key_container { padding-bottom: 80px;}
