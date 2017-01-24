@@ -234,10 +234,8 @@ function create_save_key_pair(account_email, options) {
       });
     });
   }).catch(function(error) {
-    $('#step_2_easy_generating, #step_2a_manual_create').html('Error, thnaks for discovering it!<br/><br/>Please press CTRL+SHIFT+J, click on CONSOLE.<br/><br/>Copy messages printed there and send them to me.<br/><br/>tom@cryptup.org - thanks!');
-    console.log('--- copy message below for debugging  ---')
-    console.log(error);
-    console.log('--- thanks ---')
+    cryptup_error_handler_manual(error);
+    $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUP didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
   });
 }
 
