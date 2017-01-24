@@ -1,0 +1,38 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+import os
+import io
+
+licence_line = u'Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE'
+source_dirs = ['./src/chrome', './src/js']
+source_extension_patterns = {
+	'js': '/* %s */\n',
+	'css': '/* %s */\n',
+	'htm': '<!-- %s -->\n',
+}
+source_file_paths = ['./src/css/cryptup.css', './src/css/gmail.css']
+
+
+def extension(filename):
+	return filename.split('.')[-1]
+
+
+for source_dir in source_dirs:
+	for path, dirs, files in os.walk(source_dir):
+		for filename in files:
+			if extension(filename) in source_extension_patterns:
+				source_file_paths.append(path + '/' + filename)
+
+
+for source_file_path in source_file_paths:
+	print source_file_path,
+	with io.open(source_file_path, 'r', encoding='utf8') as fp:
+		lines = fp.readlines()
+	commented_licence_line = source_extension_patterns[extension(source_file_path)] % licence_line
+	if 0 not in lines or 'licence' in lines[0].lower() or 'license' in lines[0].lower():
+		lines[0] = commented_licence_line
+	else:
+		lines.insert(0, commented_licence_line)
+	with io.open(source_file_path, 'w', encoding='utf8') as fp:
+		fp.write(''.join(lines))
