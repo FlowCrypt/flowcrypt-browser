@@ -24,7 +24,10 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
       $('.summary').html('');
       render_diagnosis(diagnosis, storage.attests_requested, storage.attests_processed);
     } else {
-      $('.summary').html('Failed to load due to internet connection, please refresh the page.');
+      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
+      $('a.reload').click(function() {
+        window.location.reload();
+      });
     }
   });
 });
@@ -60,11 +63,11 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
         var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
         var action = '<div class="button gray2 small submit_pubkey" email="' + email + '">Request Attestation</div>';
         var color = 'red';
-      } else if (email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
+      } else if(email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
         var note = 'Re-Attestation requested. This should process shortly.';
         var action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
         var color = 'orange';
-      } else if (email === url_params.account_email && result.attested) {
+      } else if(email === url_params.account_email && result.attested) {
         var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
         var action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
         var color = 'red';
