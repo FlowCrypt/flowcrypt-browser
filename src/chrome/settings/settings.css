@@ -1,3 +1,5 @@
+/* Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE */
+
 body, html {
   font-family: 'Open Sans', Arial!important;
   position: relative;
@@ -135,8 +137,7 @@ body, html {
   position: absolute;
   z-index: 5;
 }
-#header-row .profile-img,
-#header-row .fa-user {
+#header-row .profile-img, #header-row .fa-user {
   width: 40px;
   height: 40px;
   display: inline-block;
@@ -147,15 +148,12 @@ body, html {
   text-align: center;
   font-size: 22px;
   padding-top: 7px;
-  color:#666;
+  color: #666;
 }
-
 #header-row .ion-android-person {
-text-align: center;
-margin-bottom: 0;
+  text-align: center;
+  margin-bottom: 0;
 }
-
-
 .accounts-row .alt-accounts .profile-img {
   position: absolute;
   width: 30px!important;
@@ -179,7 +177,6 @@ margin-bottom: 0;
   text-indent: 0;
   padding-left: 0!important;
 }
-
 #settings-row .my-keys-row .key_words, #settings-row .my-keys-row .key_id {
   text-align: left;
 }
@@ -260,7 +257,6 @@ margin-bottom: 0;
 #settings-row .box svg.contacts {
   margin-top: -7px;
 }
-
 #settings-row a p {
   /*font-weight: 600;*/
   margin-top: 15px;
@@ -354,7 +350,6 @@ body#settings .settings-border .key-content-row:nth-child(odd) {
     width: 100%!important;
   }
 }
-
 @media (max-width: 761px) {
   #footer-row {
     position: relative;

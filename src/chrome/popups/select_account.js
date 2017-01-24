@@ -1,10 +1,12 @@
+/* Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE */
+
 'use strict';
 
 var url_params = get_url_params(['action']);
 
 if(url_params.action === 'new_message') {
   $('#title').text('Choose account for new message')
-} else if (url_params.action === 'settings') {
+} else if(url_params.action === 'settings') {
   $('#title').text('Select account to see settings')
 } else {
   throw new Error('unknown action: ' + action);
