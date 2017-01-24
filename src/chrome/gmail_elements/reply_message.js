@@ -72,6 +72,7 @@ db_open(function(db) {
         thread_message_id_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
         thread_message_referrences_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
         if(load_last_message_for_forward) {
+          url_params.subject = 'Fwd: ' + url_params.subject;
           retrieve_decrypt_and_add_forwarded_message(thread.messages[thread.messages.length - 1].id);
         }
       }
