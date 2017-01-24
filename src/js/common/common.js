@@ -168,6 +168,11 @@ function get_environment(url) {
   }
 }
 
+if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
+  window.openpgp.config.versionstring = 'CryptUP ' + chrome.runtime.getManifest().version + ' Easy Gmail Encryption https://cryptup.org';
+  window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
+}
+
 function get_url_params(expected_keys, string) {
   var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
   var url_data = {};
