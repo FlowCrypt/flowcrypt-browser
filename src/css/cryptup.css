@@ -197,6 +197,10 @@ body > #pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #B7B
 body > #pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }
 body > #pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
 
+body > #pgp_block.pgp_pubkey { padding-top: 7px; }
+body > #pgp_block.pgp_pubkey .line { margin: 0; }
+body > #pgp_block.pgp_pubkey pre.pubkey { display: none; }
+
 table#compose { height: 100%; border-spacing: 0px; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0px; border: 1px solid #31A217; background-color: #31A217; }
 table#compose td.input { height: 42px; vertical-align: middle; }

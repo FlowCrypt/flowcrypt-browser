@@ -5,7 +5,7 @@ url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
-$('.pubkey').text(url_params.armored_pubkey);
+render();
 
 function send_resize_message() {
   chrome_message_send(url_params.parent_tab_id, 'set_css', {
@@ -19,11 +19,18 @@ function send_resize_message() {
 function set_button_text(db) {
   db_contact_get(db, $('.input_email').val(), function(contact) {
     if(contact && contact.has_pgp) {
-      $('.add_pubkey').text('update contact');
+      $('.action_add_contact').text('update contact');
     } else {
-      $('.add_pubkey').text('add to contacts');
+      $('.action_add_contact').text('add to contacts');
     }
   });
+}
+
+function render() {
+  $('.pubkey').text(url_params.armored_pubkey);
+  $('.line.fingerprints, .line.add_contact').css('display', url_params.is_outgoing ? 'none' : 'block');
+  $('.line.fingerprints .fingerprint').text(key_fingerprint(pubkey));
+  $('.line.fingerprints .keywords').text(mnemonic(key_longid(pubkey)));
 }
 
 db_open(function(db) {
@@ -42,10 +49,10 @@ db_open(function(db) {
     send_resize_message();
   }
 
-  $('.add_pubkey').click(prevent(doubleclick(), function(self) {
+  $('.action_add_contact').click(prevent(doubleclick(), function(self) {
     if(is_email_valid($('.input_email').val())) {
       db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function() {
-        $(self).replaceWith('<b style="color: green;">' + $('.input_email').val() + ' added</b>')
+        $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>')
         $('.input_email').remove();
       });
     } else {
@@ -61,15 +68,9 @@ db_open(function(db) {
 });
 
 $('.action_show_full').click(function() {
-  $('.block_pubkey_outgoing').css('display', 'none');
-  $('.block_pubkey_full').css('display', 'block');
+  $(this).css('display', 'none');
+  $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
   send_resize_message();
 });
-
-if(url_params.is_outgoing) {
-  $('.block_pubkey_outgoing').css('display', 'block');
-} else {
-  $('.block_pubkey_full').css('display', 'block');
-}
 
 send_resize_message();

@@ -7,15 +7,18 @@
 
 <body class="pgp_neutral">
 
-  <div id="pgp_block" style="padding-top: 7px;">
-    <div class="block_pubkey_outgoing">
-      This message included a Public Key for <span class="email"></span>. <a href="#" class="action_show_full">Details</a>
+  <div id="pgp_block" class="pgp_pubkey">
+    <div class="line">
+      This message includes a Public Key for <span class="email"></span>. <a href="#" class="action_show_full">Details</a>
     </div>
-    <div class="block_pubkey_full">
-      <input class="input_email" value="..." />
-      <div class="button green add_pubkey"></div>
-      <pre class="pubkey"></pre>
+    <div class="line fingerprints">
+      KeyWords: <span class="keywords good"></span><br/>
+      (Fingerprint: <span class="fingerprint gray"></span>)
     </div>
+    <div class="line add_contact">
+      <input class="input_email" value="..." /> <div class="button green action_add_contact"></div>
+    </div>
+    <pre class="pubkey good"></pre>
   </div>
 
   <script src="/lib/jquery.min.js"></script>
