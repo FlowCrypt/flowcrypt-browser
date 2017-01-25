@@ -242,16 +242,17 @@ function create_save_key_pair(account_email, options) {
 function get_and_save_userinfo(account_email, callback) {
   google_api_userinfo(account_email, function(success, response) {
     var result = {
-      full_name: response.name || '',
-      gender: response.gender,
-      locale: response.locale,
-      picture: response.picture
+      full_name: '',
     };
     if(success) {
+      result.full_name = response.name || '';
+      result.gender = response.gender;
+      result.locale = response.locale;
+      result.picture = response.picture;
       account_storage_set(account_email, result, function() {
         callback(result);
       });
-    } else { // todo - will result in missing name in pubkey, and should have better handling
+    } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
       callback(result);
     }
   });
