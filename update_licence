@@ -12,6 +12,7 @@ source_extension_patterns = {
 	'htm': '<!-- %s -->\n',
 }
 source_file_paths = ['./src/css/cryptup.css', './src/css/gmail.css']
+source_file_blacklist = ['./src/chrome/gmail_elements/shared/attach.template.htm']
 
 
 def extension(filename):
@@ -21,7 +22,7 @@ def extension(filename):
 for source_dir in source_dirs:
 	for path, dirs, files in os.walk(source_dir):
 		for filename in files:
-			if extension(filename) in source_extension_patterns:
+			if extension(filename) in source_extension_patterns and path + '/' + filename not in source_file_blacklist:
 				source_file_paths.append(path + '/' + filename)
 
 
