@@ -1,3 +1,5 @@
+<div>
+
 <b>version 3.1.6 on January 24, 2017: UpperCase in Addresses</b>
 setup: make sure to correctly use emails with upper cases in them
 
@@ -371,3 +373,5 @@ search in pgp contacts on compose
 separate prv key per account
 improved settings
 bugfixes
+
+</div>
