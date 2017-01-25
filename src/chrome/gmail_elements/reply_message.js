@@ -24,15 +24,15 @@ db_open(function(db) {
   var compose = init_shared_compose_js(url_params, db);
 
   function recover_thread_id_if_missing(callback) {
-    if(url_params.thread_id) {
+    if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id) {
       callback();
     } else {
       gmail_api_message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function(success, gmail_message_object) {
         if(success) {
           url_params.thread_id = gmail_message_object.threadId;
         } else {
-          url_params.thread_id = url_params.thread_message_id;
-          console.log('CRYPTUP: Substituting thread_id with thread_message_id: could cause issues');
+          url_params.thread_id = url_params.thread_id || url_params.thread_message_id;
+          console.log('CRYPTUP: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
         }
         callback();
       });
