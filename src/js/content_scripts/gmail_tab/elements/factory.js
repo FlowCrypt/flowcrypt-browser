@@ -54,6 +54,9 @@ function init_elements_factory_js() {
       '&attachment_id=' + encodeURIComponent(attachment_meta.id) +
       '&account_email=' + encodeURIComponent(account_email) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
+    if (typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because reply_message_iframe calls this from its context
+      var reloadable_class = '';
+    }
     return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe class="' + reloadable_class + '" src="' + src + '"></iframe></span>';
   };
 
