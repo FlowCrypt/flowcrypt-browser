@@ -11,7 +11,7 @@ function init_shared_attach_js() {
     $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function() {
       var config = {
         autoUpload: false,
-        debug: true,
+        // debug: true,
         element: $('#fineuploader').get(0),
         button: $('#fineuploader_button').get(0),
         // dragAndDrop: {
