@@ -210,7 +210,7 @@ function save_key(account_email, prv, options, callback) {
   var contacts = [];
   $.each(all_addresses, function(i, address) {
     var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== key_fingerprint(prv.toPublic().armor()));
-    contacts.push(db_contact_object(address, options.name, 'cryptup', prv.toPublic().armor(), attested, false, Date.now()));
+    contacts.push(db_contact_object(address, options.full_name, 'cryptup', prv.toPublic().armor(), attested, false, Date.now()));
   });
   db_open(function(db) {
     db_contact_save(db, contacts, callback);
@@ -221,7 +221,7 @@ function create_save_key_pair(account_email, options) {
   openpgp.generateKey({
     numBits: 4096,
     userIds: [{ // todo - add all addresses?
-      name: options.name,
+      name: options.full_name,
       email: account_email
     }],
     passphrase: options.passphrase,
@@ -272,7 +272,7 @@ $('.action_simple_setup').click(function() {
   $('h1').text('Please wait, setting up CryptUP');
   get_and_save_userinfo(url_params.account_email, function(userinfo) {
     create_save_key_pair(url_params.account_email, {
-      name: userinfo.name,
+      full_name: userinfo.full_name,
       passphrase: '',
       save_passphrase: true,
       submit_main: true,
@@ -459,7 +459,7 @@ $('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), 
     $('#step_2a_manual_create .action_create_private').html(get_spinner() + 'just a minute');
     get_and_save_userinfo(url_params.account_email, function(userinfo) {
       create_save_key_pair(url_params.account_email, {
-        name: userinfo.name,
+        full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val(),
         save_passphrase: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
         submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
