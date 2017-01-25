@@ -21,7 +21,8 @@ db_open(function(db) {
   url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
-  var compose = init_shared_compose_js(url_params, db);
+  var attach = init_shared_attach_js();
+  var compose = init_shared_compose_js(url_params, db, attach);
 
   function recover_thread_id_if_missing(callback) {
     if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id) {

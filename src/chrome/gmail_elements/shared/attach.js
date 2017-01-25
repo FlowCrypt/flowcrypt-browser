@@ -1,71 +1,82 @@
 /* Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE */
 
-var attached_files = {};
+'use strict';
 
-var uploader = undefined;
+function init_shared_attach_js() {
 
-function initialize_attach_dialog() {
-  $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function() {
-    uploader = new qq.FineUploader({
-      autoUpload: false,
-      // debug: true,
-      element: document.getElementById('fineuploader'),
-      button: document.getElementById('fineuploader_button'),
-      // dragAndDrop: {
-      //   extraDropzones: [document.getElementById('body')]
-      // },
-      callbacks: {
-        onSubmitted: process_new_attachment,
-        onCancel: cancel_attachment,
-      }
+  var attached_files = {};
+  var uploader = undefined;
+
+  function initialize_attach_dialog() {
+    $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function() {
+      var config = {
+        autoUpload: false,
+        debug: true,
+        element: $('#fineuploader').get(0),
+        button: $('#fineuploader_button').get(0),
+        // dragAndDrop: {
+        //   extraDropzones: [$('#body').get(0)]
+        // },
+        callbacks: {
+          onSubmitted: process_new_attachment,
+          onCancel: cancel_attachment,
+        },
+      };
+      uploader = new qq.FineUploader(config);
     });
-  });
-}
+  }
 
-function has_attachment() {
-  return Object.keys(attached_files).length > 0;
-}
+  function has_attachment() {
+    return Object.keys(attached_files).length > 0;
+  }
 
-function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
-  var attachments = [];
+  function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
+    var attachments = [];
 
-  function add(attachment) {
-    attachments.push(attachment);
-    if(attachments.length === Object.keys(attached_files).length) {
+    function add(attachment) {
+      attachments.push(attachment);
+      if(attachments.length === Object.keys(attached_files).length) {
+        callback(attachments);
+      }
+    }
+    if(!Object.keys(attached_files).length) {
       callback(attachments);
+    } else {
+      $.each(attached_files, function(id, file) {
+        var reader = new FileReader();
+        reader.onload = function(data) {
+          encrypt(armored_pubkeys, null, challenge, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
+            add({
+              filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
+              type: file.type,
+              content: encrypted_file_content.message.packets.write(),
+              secure: true,
+            });
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      });
     }
   }
-  if(!Object.keys(attached_files).length) {
-    callback(attachments);
-  } else {
-    $.each(attached_files, function(id, file) {
-      var reader = new FileReader();
-      reader.onload = function(data) {
-        encrypt(armored_pubkeys, null, challenge, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
-          add({
-            filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
-            type: file.type,
-            content: encrypted_file_content.message.packets.write(),
-            secure: true,
-          });
-        });
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  }
-}
 
-function process_new_attachment(id, name) {
-  increment_metric('attach');
-  var file = uploader.getFile(id);
-  if(false) { //check size
-    uploader.cancel(id);
-    alert('Attachments up to 10MB are allowed');
-    return;
+  function process_new_attachment(id, name) {
+    increment_metric('attach');
+    var file = uploader.getFile(id);
+    if(false) { //check size
+      uploader.cancel(id);
+      alert('Attachments up to 10MB are allowed');
+      return;
+    }
+    attached_files[id] = file;
   }
-  attached_files[id] = file;
-}
 
-function cancel_attachment(id, name) {
-  delete attached_files[id];
+  function cancel_attachment(id, name) {
+    delete attached_files[id];
+  }
+
+  return {
+    initialize_attach_dialog: initialize_attach_dialog,
+    has_attachment: has_attachment,
+    collect_and_encrypt_attachments: collect_and_encrypt_attachments,
+  };
 }

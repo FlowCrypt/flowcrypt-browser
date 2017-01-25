@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_shared_compose_js(url_params, db) {
+function init_shared_compose_js(url_params, db, attach_js) {
 
   var SAVE_DRAFT_FREQUENCY = 3000;
   var RENDER_SEARCH_RESULTS_LIMIT = 8;
@@ -244,7 +244,7 @@ function init_shared_compose_js(url_params, db) {
           $('#send_btn').html(btn_html);
           alert('Please add receiving email address.');
           return;
-        } else if(has_attachment() && emails_without_pubkeys.length) {
+        } else if(attach_js.has_attachment() && emails_without_pubkeys.length) {
           $('#send_btn').html(btn_html);
           alert('Sending encrypted attachments is only possible to contacts with a PGP client, such as CryptUP. Some of the recipients don\'t have PGP. Try sending the message without an attachment, or get them signed up.');
           return;
@@ -256,7 +256,7 @@ function init_shared_compose_js(url_params, db) {
           //todo - tailor for replying w/o subject
           $('#send_btn span').text('Encrypting');
           try {
-            collect_and_encrypt_attachments(armored_pubkeys, !emails_without_pubkeys.length ? null : challenge, function(attachments) {
+            attach_js.collect_and_encrypt_attachments(armored_pubkeys, !emails_without_pubkeys.length ? null : challenge, function(attachments) {
               if((attachments || []).length) {
                 var sending = 'Uploading attachments';
               } else {
@@ -745,7 +745,7 @@ function init_shared_compose_js(url_params, db) {
       return false;
     });
     resize_input_to();
-    initialize_attach_dialog();
+    attach_js.initialize_attach_dialog();
   }
 
   function should_save_draft(message_body) {
