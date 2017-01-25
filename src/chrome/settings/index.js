@@ -187,7 +187,7 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
 
 $.get('/changelog.txt', null, function(data) {
   $('.cryptup-logo-row').featherlight(data.replace(/\n/g, '<br>'));
-})
+});
 
 $('.action_send_email').click(function() {
   window.open('https://mail.google.com');
