@@ -253,9 +253,11 @@ function gmail_api_fetch_attachments(account_email, attachments, callback, resul
 }
 
 function gmail_api_find_header(gmail_api_message_object, header_name) {
-  for(var i = 0; i < gmail_api_message_object.payload.headers.length; i++) {
-    if(gmail_api_message_object.payload.headers[i].name.toLowerCase() === header_name.toLowerCase()) {
-      return gmail_api_message_object.payload.headers[i].value;
+  if(typeof gmail_api_message_object.payload.headers !== 'undefined') {
+    for(var i = 0; i < gmail_api_message_object.payload.headers.length; i++) {
+      if(gmail_api_message_object.payload.headers[i].name.toLowerCase() === header_name.toLowerCase()) {
+        return gmail_api_message_object.payload.headers[i].value;
+      }
     }
   }
   return null;
