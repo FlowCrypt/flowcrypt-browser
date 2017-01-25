@@ -93,13 +93,13 @@ body#settings > div#content.setup div.manual #addresses { color: #888; }
 body#settings > div#content.setup div#step_2_recovery { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_2_recovery div#error_text_container { display: none; }
 body#settings > div#content.setup div#step_2_recovery div#error_text {  line-height: 1.5; color: #d14836; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
-body#settings > div#content.setup .squaredFour { width: 20px; position: relative; margin: 5px auto; position: absolute; left:32px; display: inline-block; }
+body#settings > div#content.setup .squaredFour { width: 20px; position: relative; margin: 5px auto; left: 1px; display: inline-block; }
 body#settings > div#content.setup .squaredFour label { width: 20px; height: 20px; cursor: pointer; position: absolute; top: 0; left: 0; background: #fcfff4; background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); border-radius: 4px; box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);}
 body#settings > div#content.setup .squaredFour label:after { content: ''; width: 9px; height: 5px; position: absolute; top: 4px; left: 4px; border: 3px solid #333; border-top: none; border-right: none; background: transparent; opacity: 0;-webkit-transform: rotate(-45deg); transform: rotate(-45deg);  }
 body#settings > div#content.setup .squaredFour label:hover::after {  opacity: 0.5;}
 body#settings > div#content.setup .squaredFour input[type=checkbox] {visibility: hidden;}
 body#settings > div#content.setup .squaredFour input[type=checkbox]:checked + label:after {opacity: 1;}
-body#settings > div#content.setup .labelCopy { margin-top: 7px; position: absolute; left: 30px; right: 0; text-align: left; text-indent: 45px; z-index: -10;}
+body#settings > div#content.setup .labelCopy { margin-top: 7px; position: absolute; text-align: left; text-indent: 30px; z-index: -10;}
 body#settings > div#content.setup label.checkboxSquaredOne { padding-left: 0!important; }
 
 body#settings > div#content.setup div#step_3_back { display: none; }

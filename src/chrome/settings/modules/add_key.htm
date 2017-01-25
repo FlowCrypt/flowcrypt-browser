@@ -14,8 +14,7 @@
 
 <body id="settings">
   <div id="content" class="setup page">
-    <div id="step_2b_manual_enter" class="manual" style="display: block;">
-      <div class="aligncenter">
+    <div id="step_2b_manual_enter" class="manual" style="display: block;text-align: left;">
         <div class="line">
           <h1>Add Private Key</h1>
           <br/>
@@ -23,9 +22,8 @@
         <div class="line">
           <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
         </div>
-        <div class="line" style="text-align: left; padding-left: 22px;">
-          <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
-          <i class="ion-android-lock" style="padding-left: 20px;"></i>
+        <div class="line">
+          <input id="input_passphrase" class="input_passphrase" type="text" placeholder="Private Key Passphrase" />
         </div>
         <div class="line">
           <div class="squaredFour">
@@ -34,11 +32,10 @@
           </div>
           <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
         </div>
-        <div class="line" style="text-align: left;">
-          <br />&nbsp;&nbsp;&nbsp;
+        <div class="line" >
+          <br />
           <div class="button long green action_add_private_key">Add Private Key</div>
         </div>
-      </div>
     </div>
 
     <script src="/lib/jquery.min.js"></script>

@@ -4,6 +4,8 @@
 
 var url_params = get_url_params(['account_email', 'parent_tab_id']);
 
+add_show_hide_passphrase_toggle(['input_passphrase']);
+
 var private_keys = private_keys_get(url_params.account_email);
 var private_keys_long_ids = [];
 $.each(private_keys, function(i, keyinfo) {
