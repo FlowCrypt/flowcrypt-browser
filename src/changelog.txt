@@ -1,5 +1,21 @@
 <div>
 
+<b>version 3.1.7 on January 25, 2017: Contact Details</b>
+setup: add additional details next to each contact
+setup: full name to be included in key user list
+setup: missing toggle button when adding a secondary key
+setup: easier to find public key
+setup: properly handle create key errors in setup
+setup: offline cryptup settings
+composing: problem rendering attachments after a reply
+composing: make cryptup work with conversation view switched off
+composing: forwarding should include Fwd: ... in header
+reading: show received pubkeys shortened
+design: fixing changelog layout
+internal: better handling of gmail api responses
+internal: error pulling headers from gmail api
+internal: change openpgpjs versionstring through proper config
+
 <b>version 3.1.6 on January 24, 2017: UpperCase in Addresses</b>
 setup: make sure to correctly use emails with upper cases in them
 
