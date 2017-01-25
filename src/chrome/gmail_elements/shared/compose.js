@@ -299,7 +299,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function handle_send_message_error(response) {
-    if(response.status === 413) {
+    if(response && response.status === 413) {
       $('#send_btn span').text(BTN_ENCRYPT_AND_SEND);
       $('#send_btn i').attr('class', '');
       alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
