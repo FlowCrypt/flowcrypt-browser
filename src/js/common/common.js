@@ -873,7 +873,7 @@ function decrypt_key(prv, passphrase) { // returns true, false, or RETURNS a cou
         return subkey_e;
       }
     } else if(e.message === 'Invalid enum value.') {
-      return subkey_e;
+      return e;
     } else {
       throw e;
     }
