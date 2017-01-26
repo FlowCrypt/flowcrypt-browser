@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.1.8 on January 25, 2017: Error Decrypting Key</b>
+setup: fixed error working with special key types
+
 <b>version 3.1.7 on January 25, 2017: Contact Details</b>
 setup: add additional details next to each contact
 setup: full name to be included in key user list
