@@ -21,6 +21,7 @@
         "/lib/jquery.min.js",
         "/js/common/storage.js",
         "/js/common/common.js",
+        "/js/common/gmail_api.js",
         "/js/content_scripts/gmail_tab/elements/inject.js",
         "/js/content_scripts/gmail_tab/elements/notifications.js",
         "/js/content_scripts/gmail_tab/elements/factory.js",

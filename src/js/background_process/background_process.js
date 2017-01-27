@@ -91,13 +91,16 @@ function list_pgp_attachments(request, sender, respond) {
       var pgp_attachments = [];
       var pgp_messages = [];
       var pgp_signatures = [];
+      var pgp_pubkeys = [];
       var pgp_hide = [];
       $.each(attachments, function(i, attachment) {
-        if(attachment.name.match('(\.pgp)|(\.gpg)$')) {
+        if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
           pgp_attachments.push(attachment);
         } else if(attachment.name === 'signature.asc') {
           pgp_signatures.push(attachment);
-        } else if(attachment.name.match('(\.asc)$')) {
+        } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.+\.asc$/g)) { // name starts with a key id
+          pgp_pubkeys.push(attachment);
+        } else if(attachment.name.match(/\.asc$/)) {
           pgp_messages.push(attachment);
         } else if(attachment.name === '') {
           pgp_hide.push(attachment);
@@ -107,6 +110,7 @@ function list_pgp_attachments(request, sender, respond) {
         success: true,
         attachments: pgp_attachments,
         signatures: pgp_signatures,
+        pubkeys: pgp_pubkeys,
         messages: pgp_messages,
         hide: pgp_hide,
         message_id: request.message_id,
