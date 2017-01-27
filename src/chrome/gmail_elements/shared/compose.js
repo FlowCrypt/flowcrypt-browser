@@ -246,7 +246,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
           return;
         } else if(attach_js.has_attachment() && emails_without_pubkeys.length) {
           $('#send_btn').html(btn_html);
-          alert('Sending encrypted attachments is only possible to contacts with a PGP client, such as CryptUP. Some of the recipients don\'t have PGP. Try sending the message without an attachment, or get them signed up.');
+          alert('Currently, attachments cannot be sent to contacts who don\'t have encryption set up. Try sending the message without an attachment, or get them signed up.');
           return;
         } else if(emails_without_pubkeys.length && (!challenge.question || !challenge.answer)) {
           $('#send_btn').html(btn_html);
