@@ -2,7 +2,11 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'parent_tab_id']);
+var url_params = get_url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id']);
+// if(url_params.size) {
+//   url_params.size = parseInt(url_params.size);
+// }
+var original_content;
 
 db_open(function(db) {
 
@@ -53,34 +57,88 @@ db_open(function(db) {
     });
   }
 
+  // function get_url_file_size(original_url, callback) {
+  //   // will only call callback on success
+  //   if(url_params.url.indexOf('docs.googleusercontent.com/docs/securesc') !== -1) {
+  //     try {
+  //       var google_drive_file_id = original_url.split('/').pop().split('?').shift();
+  //       if(google_drive_file_id) {
+  //         var url = 'https://drive.google.com/uc?export=download&id=' + google_drive_file_id; // this one can actually give us headers properly
+  //       } else {
+  //         var url =  original_url;
+  //       }
+  //     } catch (e) {
+  //       var url =  original_url;
+  //     }
+  //   } else {
+  //     var url = original_url;
+  //   }
+  //   var xhr = new XMLHttpRequest();
+  //   xhr.open("HEAD", url, true);
+  //   xhr.onreadystatechange = function() {
+  //     if(this.readyState == this.DONE) {
+  //       var size = xhr.getResponseHeader("Content-Length");
+  //       if(size !== null) {
+  //         callback(parseInt(size));
+  //       }
+  //     }
+  //   };
+  //   xhr.send();
+  // }
+
+  function decrypt_and_download_attachment(success, encrypted_data) {
+    if(success) {
+      decrypt(db, url_params.account_email, encrypted_data, undefined, function(result) {
+        $('#download').html(original_content);
+        if(result.success) {
+          download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
+        } else if((result.missing_passphrases || []).length) {
+          missing_passprase_longids = result.missing_passphrases;
+          chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
+            type: 'attachment',
+            longids: result.missing_passphrases,
+          });
+          clearInterval(passphrase_interval);
+          passphrase_interval = setInterval(check_passphrase_entered, 1000);
+        } else {
+          delete result.message;
+          console.log(result);
+          $('body.attachment').html('Error opening file<br>Downloading original..');
+          download_file(url_params.name, url_params.type, encrypted_data);
+        }
+      });
+    } else {
+      //todo - show a retry button
+    }
+  }
+
+  // if(!url_params.size && url_params.url) { // download url of an unknown size
+  //   get_url_file_size(url_params.url, function(size) {
+  //     url_params.size = size;
+  //   });
+  // }
+
+  function render_progress(received, size) {
+    // var size = size || url_params.size;
+    // var received = received / 1024;
+    // if (size) {
+    //   console.log([received, size, Math.round((received / size) * 100)]);
+    // }
+  }
+
   $('#download').click(prevent(doubleclick(), function(self) {
     increment_metric('download');
-    var original_content = $(self).html();
+    original_content = $(self).html();
     $(self).html(get_spinner());
-    gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function(success, attachment) {
-      $(self).html(original_content);
-      if(success) {
-        var encrypted_data = base64url_decode(attachment.data);
-        decrypt(db, url_params.account_email, encrypted_data, undefined, function(result) {
-          if(result.success) {
-            download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
-          } else if((result.missing_passphrases || []).length) {
-            missing_passprase_longids = result.missing_passphrases;
-            chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
-              type: 'attachment',
-              longids: result.missing_passphrases,
-            });
-            clearInterval(passphrase_interval);
-            passphrase_interval = setInterval(check_passphrase_entered, 1000);
-          } else {
-            delete result.message;
-            console.log(result);
-            $('body.attachment').html('Error opening file<br>Downloading original..');
-            download_file(url_params.name, url_params.type, encrypted_data);
-          }
-        });
-      }
-    });
+    if(url_params.attachment_id) {
+      gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function(success, attachment) {
+        decrypt_and_download_attachment(success, success ? base64url_decode(attachment.data) : undefined);
+      });
+    } else if(url_params.url) {
+      download_as_str(url_params.url, render_progress, decrypt_and_download_attachment);
+    } else {
+      throw Error('Missing both attachment_id and url');
+    }
   }));
 
 });

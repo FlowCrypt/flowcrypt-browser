@@ -745,7 +745,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       return false;
     });
     resize_input_to();
-    attach_js.initialize_attach_dialog();
+    attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
   }
 
   function should_save_draft(message_body) {

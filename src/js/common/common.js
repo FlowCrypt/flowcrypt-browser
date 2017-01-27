@@ -257,6 +257,22 @@ function inner_text(html_text) {
   return e.innerText;
 }
 
+function download_as_str(url, progress, callback) {
+  var request = new XMLHttpRequest();
+  request.open("GET", url, true);
+  request.responseType = "arraybuffer";
+  request.onprogress = function(e) {
+    progress(e.loaded, e.total);
+  };
+  request.onerror = function(e) {
+    callback(false, e);
+  };
+  request.onload = function(e) {
+    callback(true, uint8_to_str(new Uint8Array(request.response)));
+  };
+  request.send();
+}
+
 function download_file(filename, type, data) {
   var blob = new Blob([data], {
     type: type

@@ -7,13 +7,13 @@ function init_shared_attach_js() {
   var attached_files = {};
   var uploader = undefined;
 
-  function initialize_attach_dialog() {
+  function initialize_attach_dialog(element_id, button_id) {
     $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function() {
       var config = {
         autoUpload: false,
         // debug: true,
-        element: $('#fineuploader').get(0),
-        button: $('#fineuploader_button').get(0),
+        element: $('#' + element_id).get(0),
+        button: $('#' + button_id).get(0),
         // dragAndDrop: {
         //   extraDropzones: [$('#body').get(0)]
         // },

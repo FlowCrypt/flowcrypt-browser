@@ -167,6 +167,20 @@ function init_elements_replace_js() {
                   if(response.signatures && response.signatures.length) {
                     hide_pgp_attached_signatures_and_handle(account_email, message_id, attachment_container_classes, response.signatures, gmail_tab_id);
                   }
+                  if($('.message_id_' + message_id + ' .attachment_loader').length && $('.m' + message_id + ' .gmail_drive_chip, .m' + message_id + ' a[href^="https://drive.google.com/file"]').length) {
+                    // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
+                    var google_drive_attachments = [];
+                    $('.message_id_' + message_id + ' .attachment_loader').each(function(i, loader_element) {
+                      var meta = $(loader_element).parent().attr('download_url').split(':');
+                      google_drive_attachments.push({
+                        message_id: message_id,
+                        name: meta[1],
+                        type: meta[0],
+                        url: meta[2] + ':' + meta[3],
+                      });
+                    });
+                    replace_pgp_attachments_in_message(account_email, message_id, attachment_container_classes, google_drive_attachments, gmail_tab_id);
+                  }
                 } else {
                   //todo: show button to retry
                 }

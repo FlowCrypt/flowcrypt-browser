@@ -50,8 +50,9 @@ function init_elements_factory_js() {
       '?message_id=' + encodeURIComponent(attachment_meta.message_id) +
       '&name=' + encodeURIComponent(attachment_meta.name) +
       '&type=' + encodeURIComponent(attachment_meta.type) +
-      '&size=' + encodeURIComponent(attachment_meta.size) +
-      '&attachment_id=' + encodeURIComponent(attachment_meta.id) +
+      '&size=' + encodeURIComponent(attachment_meta.size || '') +
+      '&attachment_id=' + encodeURIComponent(attachment_meta.id || '') +
+      '&url=' + encodeURIComponent(attachment_meta.url || '') +
       '&account_email=' + encodeURIComponent(account_email) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
     if (typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because reply_message_iframe calls this from its context
