@@ -4,3 +4,4 @@
 *.crx
 *.pem
 /temp/
+.DS_Store
