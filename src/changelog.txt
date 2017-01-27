@@ -1,5 +1,13 @@
 <div>
 
+<b>version 3.2.0 on January 27, 2017: Large Files</b>
+reading: decrypting large files in settings
+reading: recognizing and decrypting google drive attachments
+reading: improve pubkey attachment recognition
+composing: lowercase all recipient emails to prevent errors
+composing: option to include a public key in a reply
+composing: re-word attachment to non pgp people alert
+
 <b>version 3.1.8 on January 25, 2017: Error Decrypting Key</b>
 setup: fixed error working with special key types
 
