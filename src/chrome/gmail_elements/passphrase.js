@@ -3,7 +3,21 @@
 'use strict';
 
 var url_params = get_url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
+if(url_params.type === 'embedded') {
+  $('h1').parent().css('display', 'none');
+  $('div.separator').css('display', 'none');
+  $('body#settings > div#content.dialog').css({
+    width: 'inherit',
+    background: '#fafafa',
+  });
+  $('.line.which_key').css({
+    display: 'none',
+    position: 'absolute',
+    visibility: 'hidden',
+    left: '5000px',
+  });
 
+}
 add_show_hide_passphrase_toggle(['passphrase']);
 
 var all_private_keys = private_keys_get(url_params.account_email);

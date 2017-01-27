@@ -29,6 +29,9 @@ function init_elements_factory_js() {
       '&type=' + encodeURIComponent(type) +
       '&longids=' + encodeURIComponent((longids || []).join(',')) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
+    if(typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because settings/modules/decrypt calls this from its context
+      var reloadable_class = '';
+    }
     return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
@@ -55,7 +58,7 @@ function init_elements_factory_js() {
       '&url=' + encodeURIComponent(attachment_meta.url || '') +
       '&account_email=' + encodeURIComponent(account_email) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    if (typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because reply_message_iframe calls this from its context
+    if(typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because reply_message_iframe calls this from its context
       var reloadable_class = '';
     }
     return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe class="' + reloadable_class + '" src="' + src + '"></iframe></span>';

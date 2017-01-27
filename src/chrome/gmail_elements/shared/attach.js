@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_shared_attach_js() {
+function init_shared_attach_js(file_count_limit) {
 
   var attached_files = {};
   var uploader = undefined;
@@ -26,8 +26,30 @@ function init_shared_attach_js() {
     });
   }
 
+  function get_attachment_ids() {
+    return Object.keys(attached_files);
+  }
+
   function has_attachment() {
     return Object.keys(attached_files).length > 0;
+  }
+
+  function read_attachment_data_as_uint8(id, callback) {
+    var reader = new FileReader();
+    reader.onload = function(data) {
+      callback(new Uint8Array(data.target.result));
+    };
+    reader.readAsArrayBuffer(attached_files[id]);
+  }
+
+  function collect_attachment(id, callback) {
+    read_attachment_data_as_uint8(id, function(file_data) {
+      callback({
+        name: attached_files[id].name,
+        type: attached_files[id].type,
+        data: file_data,
+      });
+    });
   }
 
   function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
@@ -43,9 +65,8 @@ function init_shared_attach_js() {
       callback(attachments);
     } else {
       $.each(attached_files, function(id, file) {
-        var reader = new FileReader();
-        reader.onload = function(data) {
-          encrypt(armored_pubkeys, null, challenge, new Uint8Array(data.target.result), false, function(encrypted_file_content) {
+        read_attachment_data_as_uint8(id, function(file_data) {
+          encrypt(armored_pubkeys, null, challenge, file_data, false, function(encrypted_file_content) {
             add({
               filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
               type: file.type,
@@ -53,21 +74,25 @@ function init_shared_attach_js() {
               secure: true,
             });
           });
-        };
-        reader.readAsArrayBuffer(file);
+        });
       });
     }
   }
 
   function process_new_attachment(id, name) {
     increment_metric('attach');
-    var file = uploader.getFile(id);
-    if(false) { //check size
+    if(file_count_limit && Object.keys(attached_files).length >= file_count_limit) {
+      alert('Amount of attached files is limited to ' + file_count_limit);
       uploader.cancel(id);
-      alert('Attachments up to 10MB are allowed');
-      return;
+    } else {
+      var file = uploader.getFile(id);
+      if(false) { //check size
+        uploader.cancel(id);
+        alert('Attachments up to 10MB are allowed');
+        return;
+      }
+      attached_files[id] = file;
     }
-    attached_files[id] = file;
   }
 
   function cancel_attachment(id, name) {
@@ -78,5 +103,7 @@ function init_shared_attach_js() {
     initialize_attach_dialog: initialize_attach_dialog,
     has_attachment: has_attachment,
     collect_and_encrypt_attachments: collect_and_encrypt_attachments,
+    get_attachment_ids: get_attachment_ids,
+    collect_attachment: collect_attachment,
   };
 }
