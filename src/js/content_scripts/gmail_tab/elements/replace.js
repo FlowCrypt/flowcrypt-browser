@@ -294,7 +294,7 @@ function init_elements_replace_js() {
       var thread_id = '';
       var thread_message_id = parse_message_id_from('message', conversation_root_element.find('div.a3s.evaluated'));
     }
-    var reply_to_estimate = [conversation_root_element.find('h3.iw span[email]').last().attr('email').trim()]; // add original sender
+    var reply_to_estimate = [conversation_root_element.find('h3.iw span[email]').last().attr('email').trim().toLowerCase()]; // add original sender
     var reply_to = [];
     conversation_root_element.find('span.hb').last().find('span.g2').each(function() {
       reply_to_estimate.push($(this).attr('email')); // add all recipients including me
@@ -306,7 +306,7 @@ function init_elements_replace_js() {
         if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email
           my_email = email;
         } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
-          reply_to.push(email); // reply to all except my emails
+          reply_to.push(trim_lower(email)); // reply to all except my emails
         }
       });
       if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed

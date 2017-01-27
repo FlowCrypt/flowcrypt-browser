@@ -95,8 +95,8 @@ function init_elements_factory_js() {
     var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') +
       '?frame_id=frame_' + id +
       '&placement=gmail' +
-      '&to=' + encodeURIComponent(emails.to) +
-      '&from=' + encodeURIComponent(emails.from) +
+      '&to=' + encodeURIComponent((typeof emails.to === 'string' ? emails.to : emails.to.join(',')).toLowerCase()) +
+      '&from=' + encodeURIComponent(emails.from.toLowerCase()) +
       '&subject=' + encodeURIComponent(conversation_params.subject) +
       '&thread_id=' + encodeURIComponent(conversation_params.thread_id || '') +
       '&thread_message_id=' + encodeURIComponent(conversation_params.thread_message_id || '') +
