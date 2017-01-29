@@ -1127,18 +1127,35 @@ function test_private_key(armored, passphrase, callback) {
 
 /* -------------------- METRICS ----------------------------------------------------*/
 
+var known_metric_types = {
+  'compose': 'c',
+  'view': 'w',
+  'reply': 'r',
+  'attach': 'a',
+  'download': 'd',
+  'setup': 's',
+  'error': 'e',
+  'upgrade_notify_attach_nonpgp': 'unan',
+  'upgrade_notify_attach_size': 'unas',
+  'upgrade_dialog_show': 'uds',
+  'upgrade_dialog_register_click': 'udrc',
+  'upgrade_verification_embedded_show': 'uves',
+  'upgrade_done': 'ud',
+};
+
 function increment_metric(type, callback) {
-  if(['compose', 'view', 'reply', 'attach', 'download', 'setup', 'error'].indexOf(type) === -1) {
-    console.log('Unknown metric type"' + type + '"');
+  if(!known_metric_types[type]) {
+    cryptup_error_log('Unknown metric type "' + type + '"');
   }
   account_storage_get(null, ['metrics'], function(storage) {
+    var metrics_k = known_metric_types[type];
     if(!storage.metrics) {
       storage.metrics = {};
     }
-    if(!storage.metrics[type]) {
-      storage.metrics[type] = 1;
+    if(!storage.metrics[metrics_k]) {
+      storage.metrics[metrics_k] = 1;
     } else {
-      storage.metrics[type] += 1;
+      storage.metrics[metrics_k] += 1;
     }
     account_storage_set(null, {
       metrics: storage.metrics,

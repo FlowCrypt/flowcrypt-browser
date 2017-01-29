@@ -128,10 +128,12 @@ function update_uninstall_url(request, sender, respond) {
   get_account_emails(function(account_emails) {
     account_storage_get(null, ['metrics'], function(storage) {
       if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
-        chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + encodeURIComponent(JSON.stringify({
-          email: (account_emails && account_emails.length) ? account_emails[0] : null,
-          metrics: storage.metrics || null,
-        })));
+        Try(function() {
+          chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + JSON.stringify({
+            email: (account_emails && account_emails.length) ? account_emails[0] : null,
+            metrics: storage.metrics || null,
+          }));
+        })();
       }
       if(respond) {
         respond();

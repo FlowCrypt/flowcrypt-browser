@@ -10,47 +10,153 @@ function keyserver_keys_find(email, callback) {
 
 function keyserver_keys_submit(email, pubkey, attest, callback) {
   return keyserver_call('keys/submit', {
-    'email': trim_lower(email),
-    'pubkey': pubkey.trim(),
-    'attest': attest || false,
+    email: trim_lower(email),
+    pubkey: pubkey.trim(),
+    attest: attest || false,
   }, callback);
 }
 
 function keyserver_keys_check(emails, callback) {
   return keyserver_call('keys/check', {
-    'emails': emails.map(trim_lower),
+    emails: emails.map(trim_lower),
   }, callback);
 }
 
 function keyserver_keys_attest(signed_attest_packet, callback) {
   return keyserver_call('keys/attest', {
-    'packet': signed_attest_packet,
+    packet: signed_attest_packet,
   }, callback);
 }
 
 function keyserver_replace_request(email, signed_attest_packet, new_pubkey, callback) {
   return keyserver_call('replace/request', {
-    'signed_message': signed_attest_packet,
-    'new_pubkey': new_pubkey,
-    'email': email,
+    signed_message: signed_attest_packet,
+    new_pubkey: new_pubkey,
+    email: email,
   }, callback);
 }
 
 function keyserver_replace_confirm(signed_attest_packet, callback) {
   return keyserver_call('replace/confirm', {
-    'signed_message': signed_attest_packet,
+    signed_message: signed_attest_packet,
   }, callback);
 }
 
-function keyserver_call(path, data, callback) {
+function cryptup_auth_info(callback) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], function(storage) {
+    callback(storage.cryptup_account_email, storage.cryptup_account_uuid, storage.cryptup_account_verified);
+  });
+}
+
+function cryptup_subscription(callback) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], function(s) {
+    if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_verified && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
+      var active = true; // todo: check cryptup_subscription.expire
+      callback(cryptup_subscription.level, cryptup_subscription.expiration, active);
+    } else {
+      callback(null, null, false);
+    }
+  });
+}
+
+function cryptup_auth_error() {
+  throw Error('cryptup_auth_error not callable');
+}
+
+function cryptup_account_login(account_email, token, callback) {
+  cryptup_auth_info(function(registered_email, registered_uuid, already_verified) {
+    var uuid = registered_uuid || sha1(random_string(40));
+    var email = registered_email || account_email;
+    cryptup_server_call('account/login', {
+      account: email,
+      uuid: uuid,
+      token: token || null,
+    }, function(success, result) {
+      if(success) {
+        if(result.registered === true) {
+          account_storage_set(null, {
+            cryptup_account_email: email,
+            cryptup_account_uuid: uuid,
+            cryptup_account_verified: result.verified === true,
+            cryptup_account_subscription: result.subscription,
+          }, function() {
+            callback(true, result.verified === true, result.subscription);
+          });
+        } else {
+          if(typeof result.error === 'object') {
+            cryptup_error_log('account/login fail response: ' + JSON.stringify(result.error));
+            callback(false, false, null, result.error.public_msg);
+          } else {
+            callback(false, false, null, result.error);
+          }
+        }
+      } else {
+        callback(false, false, null, 'connection error');
+      }
+    });
+  });
+}
+
+function cryptup_account_subscribe(product, callback) {
+  cryptup_auth_info(function(email, uuid, verified) {
+    if(verified) {
+      cryptup_server_call('account/subscribe', {
+        account: email,
+        uuid: uuid,
+        product: product,
+      }, function(success, result) {
+        if(success) {
+          account_storage_set(null, {
+            cryptup_account_subscription: result.subscription,
+          }, function() {
+            callback(true, result.subscription, result.error);
+          });
+        } else {
+          callback(false, result.subscription, result.error);
+        }
+      });
+    } else {
+      callback(cryptup_auth_error);
+    }
+  });
+}
+
+function cryptup_account_store(data, type, role, callback) {
+  cryptup_auth_info(function(email, uuid, verified) {
+    if(verified) {
+      cryptup_server_call('account/store', {
+        account: email,
+        uuid: uuid,
+        data: data,
+        type: type,
+        role: role,
+      }, callback, 'FORM');
+    } else {
+      callback(cryptup_auth_error);
+    }
+  });
+}
+
+function keyserver_call(path, data, callback, format) {
+  if(format !== 'FORM') {
+    var data_formatted = JSON.stringify(data);
+    var content_type = 'application/json; charset=UTF-8';
+  } else {
+    var data_formatted = new FormData();
+    $.each(data, function(name, value) {
+      data_formatted.append(name, value);
+    });
+    var content_type = false;
+  }
   return $.ajax({
-    url: 'https://cryptup-keyserver.herokuapp.com/' + path,
-    // url: 'http://127.0.0.1:5000/' + path,
+    // url: 'https://cryptup-keyserver.herokuapp.com/' + path,
+    url: 'http://127.0.0.1:5000/' + path,
     method: 'POST',
-    data: JSON.stringify(data),
+    data: data_formatted,
     dataType: 'json',
     crossDomain: true,
-    contentType: 'application/json; charset=UTF-8',
+    processData: false,
+    contentType: content_type,
     async: true,
     success: function(response) {
       callback(true, response);
@@ -64,6 +170,8 @@ function keyserver_call(path, data, callback) {
     },
   });
 }
+
+var cryptup_server_call = keyserver_call; // this will be separated in the future
 
 var ATTEST_PACKET_BEGIN = '-----BEGIN ATTEST PACKET-----\n';
 var ATTEST_PACKET_END = '\n-----END ATTEST PACKET-----';

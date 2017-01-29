@@ -58,7 +58,7 @@ function check_email_for_attests_and_respond(account_email) {
               process_attest_email(account_email, message);
             });
           }
-        })
+        });
       } else {
         console.log('cannot fetch attest emails for ' + account_email);
         stop_watching(account_email);
@@ -159,7 +159,7 @@ function refresh_attest_requests_and_privileges(process_account_email_callback, 
 function get_attester_emails() {
   var emails = [];
   $.each(ATTESTERS, function(id, attester) {
-    emails.push(attester.email)
+    emails.push(attester.email);
   });
   return emails;
 }

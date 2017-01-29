@@ -104,6 +104,11 @@ function init_setup_js() {
           $('body').append(passphrase_dialog(account_email, data.type, data.longids, tab_id));
         }
       },
+      subscribe_dialog: function(data) {
+        if(!$('#cryptup_dialog').length) {
+          $('body').append(subscribe_dialog(account_email, null, false, tab_id));
+        }
+      },
       add_pubkey_dialog_gmail: function(data) {
         if(!$('#cryptup_dialog').length) {
           $('body').append(add_pubkey_dialog(account_email, data.emails, tab_id));

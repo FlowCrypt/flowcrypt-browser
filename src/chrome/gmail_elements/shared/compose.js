@@ -246,7 +246,16 @@ function init_shared_compose_js(url_params, db, attach_js) {
           return;
         } else if(attach_js.has_attachment() && emails_without_pubkeys.length) {
           $('#send_btn').html(btn_html);
-          alert('Currently, attachments cannot be sent to contacts who don\'t have encryption set up. Try sending the message without an attachment, or get them signed up.');
+          cryptup_subscription(function(level, expire, active) {
+            if(active) {
+              alert('not implemented');
+            } else {
+              increment_metric('upgrade_notify_attach_nonpgp');
+              if(confirm('Sending password encrypted attachments is possible with CryptUP Pro.\n\nIt\'s free for one year if you register now.')) {
+                chrome_message_send(url_params.parent_tab_id, 'subscribe_dialog');
+              }
+            }
+          });
           return;
         } else if(emails_without_pubkeys.length && (!challenge.question || !challenge.answer)) {
           $('#send_btn').html(btn_html);
@@ -302,7 +311,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(response && response.status === 413) {
       $('#send_btn span').text(BTN_ENCRYPT_AND_SEND);
       $('#send_btn i').attr('class', '');
-      alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
+      increment_metric('upgrade_notify_attach_size', function() {
+        alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
+      });
     } else {
       cryptup_error_log('gmail_api_message_send error response from gmail', response);
       alert('Error sending message, try to re-open your Gmail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');

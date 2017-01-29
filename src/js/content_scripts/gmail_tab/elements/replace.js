@@ -43,6 +43,9 @@ function init_elements_replace_js() {
           blocks.push('You received this attest message to confirm your email eddress. Attest message processed, no further action needed.');
         });
       }
+      if(text.indexOf('-----BEGIN CRYPTUP VERIFICATION-----') !== -1) {
+        blocks.push(subscribe_dialog(account_email, text, true, gmail_tab_id));
+      }
       if(text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1 && text.indexOf('-----END PGP SIGNATURE-----') !== -1) { //todo - what if the end was clipped by gmail
         $.each(text.match(/-----BEGIN PGP SIGNED MESSAGE-----[^]+?-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/mg), function(i, armored) {
           blocks.push(pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, sender_email, gmail_tab_id));
