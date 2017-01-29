@@ -13,15 +13,15 @@ if(!private_storage_get('local', url_params.account_email, 'master_passphrase'))
   $('#passphrase_to_open_email').prop('checked', true);
 }
 
-$('.action_change_passphrase').click(function() {
+$('.action_change_passphrase').click(function () {
   show_settings_page('/chrome/settings/modules/change_passphrase.htm');
 });
 
-$('.action_test_passphrase').click(function() {
+$('.action_test_passphrase').click(function () {
   show_settings_page('/chrome/settings/modules/test_passphrase.htm');
 });
 
-$('.confirm_passphrase_requirement_change').click(function() {
+$('.confirm_passphrase_requirement_change').click(function () {
   if($('#passphrase_to_open_email').is(':checked')) { // forget pass all phrases
     if($('input#passphrase_entry').val() === get_passphrase(url_params.account_email)) {
       private_storage_set('local', url_params.account_email, 'master_passphrase', '');
@@ -43,11 +43,11 @@ $('.confirm_passphrase_requirement_change').click(function() {
   }
 });
 
-$('.cancel_passphrase_requirement_change').click(function() {
+$('.cancel_passphrase_requirement_change').click(function () {
   window.location.reload();
 });
 
-$('#passphrase_to_open_email').change(function() {
+$('#passphrase_to_open_email').change(function () {
   $('.passhprase_checkbox_container').css('display', 'none');
   $('.passphrase_entry_container').css('display', 'block');
 });

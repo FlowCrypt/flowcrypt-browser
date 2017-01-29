@@ -5,7 +5,7 @@
 var USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
 
 function gmail_api_call(account_email, method, resource, parameters, callback, fail_on_auth) {
-  account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
+  account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
     if(method === 'GET' || method === 'DELETE') {
       var data = parameters;
     } else {
@@ -16,18 +16,16 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
         url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
         method: method,
         data: data,
-        headers: {
-          'Authorization': 'Bearer ' + auth.google_token_access
-        },
+        headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
         crossDomain: true,
         contentType: 'application/json; charset=UTF-8',
         async: true,
-        success: function(response) {
+        success: function (response) {
           if(callback) {
             callback(true, response);
           }
         },
-        error: function(response) {
+        error: function (response) {
           try {
             var error_obj = JSON.parse(response.responseText);
             if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
@@ -59,9 +57,7 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
 
 function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function) {
   if(fail_on_auth !== true) {
-    chrome_message_send(null, 'google_auth', {
-      account_email: account_email,
-    }, function(response) {
+    chrome_message_send(null, 'google_auth', { account_email: account_email, }, function (response) {
       //todo: respond with success in background script, test if response.success === true, and error handling
       base_api_function(account_email, method, resource, parameters, callback, true);
     });
@@ -77,9 +73,9 @@ function google_api_handle_auth_error(account_email, method, resource, parameter
 */
 function to_mime(account_email, body, headers, attachments, mime_message_callback) {
   set_up_require();
-  require(['emailjs-mime-builder'], function(MimeBuilder) {
+  require(['emailjs-mime-builder'], function (MimeBuilder) {
     var root_node = new MimeBuilder('multipart/mixed');
-    $.each(headers, function(key, header) {
+    $.each(headers, function (key, header) {
       root_node.addHeader(key, header);
     });
     root_node.addHeader('OpenPGP', 'id=' + key_fingerprint(private_storage_get('local', account_email, 'master_public_key')));
@@ -87,15 +83,13 @@ function to_mime(account_email, body, headers, attachments, mime_message_callbac
     if(typeof body === 'string') {
       text_node.appendChild(new MimeBuilder('text/plain').setContent(body));
     } else {
-      $.each(body, function(type, content) {
+      $.each(body, function (type, content) {
         text_node.appendChild(new MimeBuilder(type).setContent(content));
       });
     }
     root_node.appendChild(text_node);
-    $.each(attachments || [], function(i, attachment) {
-      root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.filename + '"', {
-        filename: attachment.filename
-      }).setHeader({
+    $.each(attachments || [], function (i, attachment) {
+      root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.filename + '"', { filename: attachment.filename }).setHeader({
         'Content-Disposition': 'attachment',
         'X-Attachment-Id': 'f_' + random_string(10),
         'Content-Transfer-Encoding': 'base64',
@@ -158,16 +152,14 @@ function gmail_api_message_list(account_email, q, include_deleted, callback) {
   }, callback);
 }
 
-function gmail_api_message_get(account_email, message_id, format, callback, results) {
+function gmail_api_message_get(account_email, message_id, format, callback, results) { //format: raw, full or metadata
   if(typeof message_id === 'object') { // todo: chained requests are messy and slow. parallel processing with promises would be better
     if(!results) {
       results = {};
     }
     if(message_id.length) {
       var id = message_id.pop();
-      gmail_api_call(account_email, 'GET', 'messages/' + id, {
-        format: format || 'full', //raw, full or metadata
-      }, function(success, response) {
+      gmail_api_call(account_email, 'GET', 'messages/' + id, { format: format || 'full', }, function (success, response) {
         if(success) {
           results[id] = response;
           gmail_api_message_get(account_email, message_id, format, callback, results);
@@ -179,9 +171,7 @@ function gmail_api_message_get(account_email, message_id, format, callback, resu
       callback(true, results);
     }
   } else {
-    gmail_api_call(account_email, 'GET', 'messages/' + message_id, {
-      format: format || 'full', //raw, full or metadata
-    }, callback);
+    gmail_api_call(account_email, 'GET', 'messages/' + message_id, { format: format || 'full', }, callback);
   }
 }
 
@@ -198,7 +188,7 @@ function gmail_api_find_attachments(gmail_email_object, internal_results, intern
     gmail_api_find_attachments(gmail_email_object.payload, internal_results, internal_message_id);
   }
   if(typeof gmail_email_object.parts !== 'undefined') {
-    $.each(gmail_email_object.parts, function(i, part) {
+    $.each(gmail_email_object.parts, function (i, part) {
       gmail_api_find_attachments(part, internal_results, internal_message_id);
     });
   }
@@ -222,7 +212,7 @@ function gmail_api_find_bodies(gmail_email_object, internal_results) {
     gmail_api_find_bodies(gmail_email_object.payload, internal_results);
   }
   if(typeof gmail_email_object.parts !== 'undefined') {
-    $.each(gmail_email_object.parts, function(i, part) {
+    $.each(gmail_email_object.parts, function (i, part) {
       gmail_api_find_bodies(part, internal_results);
     });
   }
@@ -237,7 +227,7 @@ function gmail_api_fetch_attachments(account_email, attachments, callback, resul
     results = [];
   }
   var attachment = attachments[results.length];
-  gmail_api_message_attachment_get(account_email, attachment.message_id, attachment.id, function(success, response) {
+  gmail_api_message_attachment_get(account_email, attachment.message_id, attachment.id, function (success, response) {
     if(success) {
       attachment['data'] = response.data;
       results.push(attachment);
@@ -273,7 +263,7 @@ function gmail_api_search_contacts(account_email, user_query, known_contacts, ca
     }
     gmail_query.push('(to:' + variations_of_to.join(' OR to:') + ')');
   }
-  $.each(known_contacts, function(i, contact) {
+  $.each(known_contacts, function (i, contact) {
     gmail_query.push('-to:"' + contact.email + '"');
   });
   gmail_api_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), callback)
@@ -281,32 +271,26 @@ function gmail_api_search_contacts(account_email, user_query, known_contacts, ca
 
 function gmail_api_loop_through_emails_to_compile_contacts(account_email, query, callback, results) {
   results = results || [];
-  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date'], function(headers) {
+  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date'], function (headers) {
     if(headers && headers.to) {
-      var result = headers.to.split(/, ?/).map(parse_email_string).map(function(r) {
+      var result = headers.to.split(/, ?/).map(parse_email_string).map(function (r) {
         r.date = headers.date;
         return r;
       });
-      var add_filter = result.map(function(email) {
+      var add_filter = result.map(function (email) {
         return ' -to:"' + email.email + '"';
       }).join('');
       results = results.concat(result);
-      callback({
-        new: result,
-        all: results,
-      });
+      callback({ new: result, all: results, });
       gmail_api_loop_through_emails_to_compile_contacts(account_email, query + add_filter, callback, results);
     } else {
-      callback({
-        new: [],
-        all: results,
-      });
+      callback({ new: [], all: results, });
     }
   });
 }
 
 function fetch_messages_based_on_query_and_extract_first_available_header(account_email, q, header_names, callback) {
-  gmail_api_message_list(account_email, q, false, function(success, message_list_response) {
+  gmail_api_message_list(account_email, q, false, function (success, message_list_response) {
     if(success && typeof message_list_response.messages !== 'undefined') {
       fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, message_list_response.messages, header_names, callback);
     } else {
@@ -318,11 +302,11 @@ function fetch_messages_based_on_query_and_extract_first_available_header(accoun
 function fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages, header_names, callback, i) {
   // this won a prize for the most precisely named function in the hostory of javascriptkind
   i = i || 0;
-  gmail_api_message_get(account_email, messages[i].id, 'metadata', function(success, message_get_response) {
+  gmail_api_message_get(account_email, messages[i].id, 'metadata', function (success, message_get_response) {
     var header_values = {};
     var missing_header = false;
     if(success) { // non-mission critical - just skip failed requests
-      $.each(header_names, function(i, header_name) {
+      $.each(header_names, function (i, header_name) {
         header_values[header_name] = gmail_api_find_header(message_get_response, header_name);
         if(!header_values[header_name]) {
           missing_header = true;
@@ -347,7 +331,7 @@ function fetch_messages_sequentially_from_list_and_extract_first_available_heade
  *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
  */
 function extract_armored_message_using_gmail_api(account_email, message_id, format, success_callback, error_callback) {
-  gmail_api_message_get(account_email, message_id, format, function(get_message_success, gmail_message_object) {
+  gmail_api_message_get(account_email, message_id, format, function (get_message_success, gmail_message_object) {
     if(get_message_success) {
       if(format === 'full') {
         var bodies = gmail_api_find_bodies(gmail_message_object);
@@ -361,10 +345,10 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
           success_callback(armored_message_from_bodies);
         } else if(attachments.length) {
           var found = false;
-          $.each(attachments, function(i, attachment_meta) {
+          $.each(attachments, function (i, attachment_meta) {
             if(attachment_meta.name.match(/\.asc$/)) {
               found = true;
-              gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function(fetch_attachments_success, attachment) {
+              gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
                 if(fetch_attachments_success) {
                   var armored_message_text = base64url_decode(attachment[0].data);
                   var armored_message = extract_armored_message_from_text(armored_message_text);
@@ -387,7 +371,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
           error_callback('format', as_html_formatted_string(gmail_message_object.payload));
         }
       } else { // format === raw
-        parse_mime_message(base64url_decode(gmail_message_object.raw), function(success, mime_message) {
+        parse_mime_message(base64url_decode(gmail_message_object.raw), function (success, mime_message) {
           if(success) {
             var armored_message = extract_armored_message_from_text(mime_message.text); // todo - the message might be in attachments
             if(armored_message) {

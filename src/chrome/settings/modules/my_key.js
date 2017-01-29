@@ -8,7 +8,7 @@ var keyinfo = undefined;
 if(url_params.longid) {
   keyinfo = private_keys_get(url_params.account_email, url_params.longid);
 } else {
-  $.each(private_keys_get(url_params.account_email), function(i, k) {
+  $.each(private_keys_get(url_params.account_email), function (i, k) {
     if(k.primary) {
       keyinfo = k;
     }
@@ -24,7 +24,7 @@ $('.key_words').text(mnemonic(keyinfo.longid));
 $('.show_when_showing_public').css('display', 'block');
 $('.show_when_showing_private').css('display', 'none');
 
-$('.action_show_other_type').click(function() {
+$('.action_show_other_type').click(function () {
   if($('.action_show_other_type').text().toLowerCase() === 'show private') {
     $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
     $('.action_show_other_type').text('show public').removeClass('bad').addClass('good');

@@ -12,14 +12,12 @@ render();
 function send_resize_message() {
   chrome_message_send(url_params.parent_tab_id, 'set_css', {
     selector: 'iframe#' + url_params.frame_id,
-    css: {
-      height: $('#pgp_block').height() + 30
-    }
+    css: { height: $('#pgp_block').height() + 30 }
   });
 }
 
 function set_button_text(db) {
-  db_contact_get(db, $('.input_email').val(), function(contact) {
+  db_contact_get(db, $('.input_email').val(), function (contact) {
     if(contact && contact.has_pgp) {
       $('.action_add_contact').text('update contact');
     } else {
@@ -35,7 +33,7 @@ function render() {
   $('.line.fingerprints .keywords').text(mnemonic(key_longid(pubkey)));
 }
 
-db_open(function(db) {
+db_open(function (db) {
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -52,9 +50,9 @@ db_open(function(db) {
     send_resize_message();
   }
 
-  $('.action_add_contact').click(prevent(doubleclick(), function(self) {
+  $('.action_add_contact').click(prevent(doubleclick(), function (self) {
     if(is_email_valid($('.input_email').val())) {
-      db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function() {
+      db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function () {
         $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>')
         $('.input_email').remove();
       });
@@ -64,13 +62,13 @@ db_open(function(db) {
     }
   }));
 
-  $('.input_email').keyup(function() {
+  $('.input_email').keyup(function () {
     set_button_text(db);
   });
 
 });
 
-$('.action_show_full').click(function() {
+$('.action_show_full').click(function () {
   $(this).css('display', 'none');
   $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
   send_resize_message();

@@ -2,7 +2,7 @@
 
 'use strict';
 
-Try(function() {
+Try(function () {
 
   window.injected = true; // background page will test if scripts are already injected, and injectif not
   window.destruction_event = chrome.runtime.id + '_destroy'
@@ -11,22 +11,22 @@ Try(function() {
   window.destroyable_intervals = [];
   window.destroyable_timeouts = [];
 
-  window.destroy = function() {
+  window.destroy = function () {
     console.log('Updating CryptUP');
     document.removeEventListener(destruction_event, destroy);
-    $.each(destroyable_intervals, function(i, id) {
+    $.each(destroyable_intervals, function (i, id) {
       clearInterval(id);
     });
-    $.each(destroyable_timeouts, function(i, id) {
+    $.each(destroyable_timeouts, function (i, id) {
       clearTimeout(id);
     });
     $('.' + destroyable_class).remove();
-    $('.' + reloadable_class).each(function(i, reloadable_element) {
+    $('.' + reloadable_class).each(function (i, reloadable_element) {
       $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
     });
   };
 
-  window.vacant = function() {
+  window.vacant = function () {
     return !$('.' + destroyable_class).length && !$('.gmail_notifications').length && !$('.new_message_button').length;
   };
 

@@ -2,15 +2,12 @@
 
 'use strict';
 
-
 function init_elements_notifications_js() {
 
-  window.show_initial_notifications = function(account_email) {
-    account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function(storage) {
+  window.show_initial_notifications = function (account_email) {
+    account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function (storage) {
       if(!storage.notification_setup_done_seen) {
-        account_storage_set(account_email, {
-          notification_setup_done_seen: true
-        }, function() {
+        account_storage_set(account_email, { notification_setup_done_seen: true }, function () {
           gmail_notification_show('CryptUP was successfully set up for this account. <a href="#" class="close">close</a>');
         });
       } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
@@ -19,18 +16,18 @@ function init_elements_notifications_js() {
     });
   };
 
-  window.gmail_notification_clear = function() {
+  window.gmail_notification_clear = function () {
     $('.gmail_notifications').html('');
   };
 
-  window.gmail_notification_show = function(text, callbacks) {
+  window.gmail_notification_show = function (text, callbacks) {
     $('.gmail_notifications').html('<div class="gmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome')) + '</div>');
     if(!callbacks) {
       callbacks = {};
     }
     if(typeof callbacks.close !== 'undefined') {
       var original_close_callback = callbacks.close;
-      callbacks.close = function() {
+      callbacks.close = function () {
         original_close_callback();
         gmail_notification_clear();
       }
@@ -38,11 +35,11 @@ function init_elements_notifications_js() {
       callbacks.close = gmail_notification_clear;
     }
     if(typeof callbacks.reload === 'undefined') {
-      callbacks.reload = function() {
+      callbacks.reload = function () {
         window.location.reload();
       };
     }
-    $.each(callbacks, function(name, callback) {
+    $.each(callbacks, function (name, callback) {
       $('.gmail_notifications a.' + name).click(Try(prevent(doubleclick(), callback)));
     });
   };

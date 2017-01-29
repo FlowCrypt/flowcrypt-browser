@@ -13,12 +13,7 @@ var l = {
 }
 if(url_params.embedded) {
   increment_metric('upgrade_verification_embedded_show');
-  $('#content').html('One moment..').css({
-    'width': '460px',
-    'padding': '30px 20px',
-    'height': '100px',
-    'margin-bottom': '0px',
-  });
+  $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px', });
   $('body').css('width', '460px');
 } else {
   increment_metric('upgrade_dialog_show');
@@ -29,9 +24,9 @@ $('#content').css('display', 'block');
 // add_show_hide_passphrase_toggle(['passphrase']);
 // $('input.passphrase').keyup(render_normal);
 
-account_storage_get(url_params.account_email, ['google_token_scopes'], function(storage) {
+account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
   can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
-  cryptup_subscription(function(level, expire, active) {
+  cryptup_subscription(function (level, expire, active) {
     if(!url_params.embedded) {
       render_dialog(level, expire, active);
     } else {
@@ -56,13 +51,13 @@ function render_dialog(level, expire, active) {
     $('#content').html('<div class="line">You have already upgraded to CryptUP Pro</div><div class="line"><div class="button green long action_close">close</div></div>');
   }
 
-  $('.action_close').click(prevent(doubleclick(), function() {
+  $('.action_close').click(prevent(doubleclick(), function () {
     console.log('a');
     console.log(url_params.parent_tab_id);
     chrome_message_send(url_params.parent_tab_id, 'close_dialog');
   }));
 
-  $('.action_ok').click(prevent(parallel(), function(self) {
+  $('.action_ok').click(prevent(parallel(), function (self) {
     original_content = $(self).html();
     increment_metric('upgrade_dialog_register_click');
     register_and_subscribe();
@@ -85,12 +80,12 @@ function wait_for_token_email(timeout, callback) {
     $('.status').text('A little while more..');
   }
   var end = Date.now() + timeout * 1000;
-  cryptup_auth_info(function(account, uuid, verified) {
-    fetch_token_emails_and_find_matching_token(account, uuid, function(success, token) {
+  cryptup_auth_info(function (account, uuid, verified) {
+    fetch_token_emails_and_find_matching_token(account, uuid, function (success, token) {
       if(success && token) {
         callback(token);
       } else if(Date.now() < end) {
-        setTimeout(function() {
+        setTimeout(function () {
           wait_for_token_email((end - Date.now()) / 1000, callback);
         }, 5000);
       } else {
@@ -109,14 +104,12 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
       callback(v1, v2);
     }
   }
-  gmail_api_message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function(list_success, response) {
+  gmail_api_message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function (list_success, response) {
     if(list_success) {
       if(response.messages) {
-        gmail_api_message_get(account_email, response.messages.map(function(m) {
-          return m.id;
-        }), 'full', function(get_success, messages) {
+        gmail_api_message_get(account_email, response.messages.map(function (m) { return m.id; }), 'full', function (get_success, messages) {
           if(get_success) {
-            $.each(messages, function(id, gmail_message_object) {
+            $.each(messages, function (id, gmail_message_object) {
               if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
                 var message_content = base64url_decode(gmail_message_object.payload.body.data);
                 var token_link_match = message_content.match(/account\/login?([^\s"<]+)/g);
@@ -162,7 +155,7 @@ function handle_login_result(registered, verified, subscription, error) {
       render_status('verifying..', true);
       if(can_read_emails) {
         $('.status').text('This may take a minute.. ');
-        wait_for_token_email(30, function(token) {
+        wait_for_token_email(30, function (token) {
           if(token) {
             cryptup_account_login(url_params.account_email, token, handle_login_result);
           } else {

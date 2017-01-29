@@ -7,14 +7,14 @@ var settings_tab_id_global = undefined;
 
 var recovery_email_subjects = ['Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
-chrome_message_get_tab_id(function(tab_id) {
+chrome_message_get_tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
 
 function fetch_all_account_addresses(account_email, callback, query, from_emails) {
   from_emails = from_emails || [];
   query = query || 'in:sent';
-  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function(headers) {
+  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
       fetch_all_account_addresses(account_email, callback, query + ' -from:"' + trim_lower(headers.from) + '"', from_emails.concat(trim_lower(headers.from)));
     } else {
@@ -51,7 +51,7 @@ function evaluate_password_strength(parent_selector, input_selector, button_sele
 }
 
 function save_attest_request(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function(storage) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if(storage.attests_requested.indexOf(attester) === -1) {
@@ -60,7 +60,7 @@ function save_attest_request(account_email, attester, callback) {
     if(typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [];
     }
-    account_storage_set(account_email, storage, function() {
+    account_storage_set(account_email, storage, function () {
       chrome_message_send(null, 'attest_requested', {
         account_email: account_email,
       }, callback);
@@ -69,7 +69,7 @@ function save_attest_request(account_email, attester, callback) {
 }
 
 function mark_as_attested(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function(storage) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if(storage.attests_requested.indexOf(attester) !== -1) {
@@ -91,14 +91,14 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
     }
     var address = addresses.pop();
     var attest = (address == settings_url_params.account_email); // only request attestation of main email
-    keyserver_keys_submit(address, pubkey, attest, function(key_submitted, response) {
+    keyserver_keys_submit(address, pubkey, attest, function (key_submitted, response) {
       if(attest && key_submitted) {
         if(!response.attested) {
-          save_attest_request(settings_url_params.account_email, 'CRYPTUP', function() {
+          save_attest_request(settings_url_params.account_email, 'CRYPTUP', function () {
             submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
           });
         } else { //previously successfully attested, the attester claims
-          mark_as_attested(settings_url_params.account_email, 'CRYPTUP', function() {
+          mark_as_attested(settings_url_params.account_email, 'CRYPTUP', function () {
             submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
           });
         }
@@ -118,22 +118,22 @@ function fetch_email_key_backups(account_email, callback) {
     '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
     '-is:spam',
   ];
-  gmail_api_message_list(account_email, q.join(' '), true, function(success, response) {
+  gmail_api_message_list(account_email, q.join(' '), true, function (success, response) {
     if(success) {
       if(response.messages) {
         var message_ids = [];
-        $.each(response.messages, function(i, message) {
+        $.each(response.messages, function (i, message) {
           message_ids.push(message.id);
         });
-        gmail_api_message_get(account_email, message_ids, 'full', function(success, messages) {
+        gmail_api_message_get(account_email, message_ids, 'full', function (success, messages) {
           if(success) {
             var attachments = [];
-            $.each(messages, function(i, message) {
+            $.each(messages, function (i, message) {
               attachments = attachments.concat(gmail_api_find_attachments(message));
             });
-            gmail_api_fetch_attachments(account_email, attachments, function(success, downloaded_attachments) {
+            gmail_api_fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
               var keys = [];
-              $.each(downloaded_attachments, function(i, downloaded_attachment) {
+              $.each(downloaded_attachments, function (i, downloaded_attachment) {
                 try {
                   var armored_key = base64url_decode(downloaded_attachment.data);
                   var key = openpgp.key.readArmored(armored_key).keys[0];
@@ -231,7 +231,7 @@ function crack_time_result(zxcvbn_result) {
 function openpgp_key_encrypt(key, passphrase) {
   if(key.isPrivate() && passphrase) {
     var keys = key.getAllKeyPackets();
-    $.each(keys, function(i, key) {
+    $.each(keys, function (i, key) {
       key.encrypt(passphrase);
     });
   } else if(!passphrase) {
@@ -259,13 +259,7 @@ function show_settings_page(page, add_url_text) {
       var variant = 'new_message_featherlight';
       var close_on_click = false;
     }
-    $.featherlight({
-      closeOnClick: close_on_click,
-      iframe: new_location,
-      iframeWidth: width,
-      iframeHeight: $('html').height() - 150,
-      variant: variant,
-    });
+    $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: $('html').height() - 150, variant: variant, });
     $('.new_message_featherlight .featherlight-content').prepend('<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
   } else { // on a sub page/module page, inside a lightbox. Just change location.
     window.location = new_location;

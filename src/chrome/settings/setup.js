@@ -20,21 +20,21 @@ var recovered_keys = undefined;
 var tab_id_global = undefined;
 var all_addresses = [url_params.account_email];
 
-chrome_message_get_tab_id(function(tab_id) {
+chrome_message_get_tab_id(function (tab_id) {
   tab_id_global = tab_id;
 
   chrome_message_listen({
-    close_page: function() {
+    close_page: function () {
       $('.featherlight-close').click();
     },
-    notification_show: function(data) {
+    notification_show: function (data) {
       alert(data.notification);
     },
   }, tab_id_global);
 });
 
 // show alternative account addresses in setup form + save them for later
-account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes'], function(storage) {
+account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes'], function (storage) {
   function show_submit_all_addresses_option(addrs) {
     if(addrs && addrs.length > 1) {
       var i = addrs.indexOf(url_params.account_email);
@@ -49,9 +49,7 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
 
   function save_and_fill_submit_option(addresses) {
     all_addresses = addresses.concat(url_params.account_email);
-    account_storage_set(url_params.account_email, {
-      addresses: addresses
-    }, function() {
+    account_storage_set(url_params.account_email, { addresses: addresses }, function () {
       show_submit_all_addresses_option(addresses);
     });
   }
@@ -79,7 +77,7 @@ function display_block(name) {
     'step_4_done'
   ];
   if(name) { //set
-    $.each(blocks, function(i, block) {
+    $.each(blocks, function (i, block) {
       $('#' + block).css('display', 'none');
     });
     $('#' + name).css('display', 'block');
@@ -90,7 +88,7 @@ function display_block(name) {
     }
   } else { //get
     var displayed = null;
-    $.each(blocks, function(i, block) {
+    $.each(blocks, function (i, block) {
       if($('#' + block).css('display') === 'block') {
         displayed = block;
         return false;
@@ -102,17 +100,17 @@ function display_block(name) {
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set Up CryptUP');
-  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function(storage) {
+  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function (storage) {
     if(storage.setup_done) {
       render_setup_done(url_params.account_email);
     } else {
-      keyserver_keys_find(url_params.account_email, function(keyserver_success, result) {
+      keyserver_keys_find(url_params.account_email, function (keyserver_success, result) {
         if(keyserver_success && result.pubkey) {
           if(result.attested) {
             account_email_attested_fingerprint = key_fingerprint(result.pubkey);
           }
           if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
-            fetch_email_key_backups(url_params.account_email, function(success, keys) {
+            fetch_email_key_backups(url_params.account_email, function (success, keys) {
               if(success && keys) {
                 display_block('step_2_recovery');
                 recovered_keys = keys;
@@ -138,7 +136,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
 
 // options: {submit_main, submit_all}
 function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
-  account_storage_get(account_email, ['addresses'], function(storage) {
+  account_storage_get(account_email, ['addresses'], function (storage) {
     if(options.submit_main) {
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
         var addresses = storage.addresses.concat(account_email);
@@ -149,7 +147,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
         // already submitted and ATTESTED another pubkey for this email
         callback();
       } else {
-        submit_pubkeys(addresses, armored_pubkey, function(success) {
+        submit_pubkeys(addresses, armored_pubkey, function (success) {
           if(success) {
             private_storage_set('local', account_email, 'master_public_key_submitted', true);
           }
@@ -157,7 +155,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
         });
       }
     } else {
-      keyserver_keys_find(account_email, function(success, result) {
+      keyserver_keys_find(account_email, function (success, result) {
         if(success && result.pubkey && key_fingerprint(result.pubkey) !== null && key_fingerprint(result.pubkey) === key_fingerprint(armored_pubkey)) {
           // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
           private_storage_set('local', account_email, 'master_public_key_submitted', true);
@@ -180,7 +178,7 @@ function render_setup_done(account_email, key_backup_prompt) {
 
 // options: {submit_main, submit_all, setup_simple, key_backup_prompt}
 function finalize_setup(account_email, armored_pubkey, options) {
-  submit_public_key_if_needed(account_email, armored_pubkey, options, function() {
+  submit_public_key_if_needed(account_email, armored_pubkey, options, function () {
     increment_metric('setup');
     var storage = {
       setup_date: Date.now(),
@@ -190,7 +188,7 @@ function finalize_setup(account_email, armored_pubkey, options) {
       key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key === true,
     };
-    account_storage_set(account_email, storage, function() {
+    account_storage_set(account_email, storage, function () {
       render_setup_done(account_email, options.key_backup_prompt);
     });
   });
@@ -208,11 +206,11 @@ function save_key(account_email, prv, options, callback) {
   private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
   var contacts = [];
-  $.each(all_addresses, function(i, address) {
+  $.each(all_addresses, function (i, address) {
     var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== key_fingerprint(prv.toPublic().armor()));
     contacts.push(db_contact_object(address, options.full_name, 'cryptup', prv.toPublic().armor(), attested, false, Date.now()));
   });
-  db_open(function(db) {
+  db_open(function (db) {
     db_contact_save(db, contacts, callback);
   });
 }
@@ -220,36 +218,31 @@ function save_key(account_email, prv, options, callback) {
 function create_save_key_pair(account_email, options) {
   openpgp.generateKey({
     numBits: 4096,
-    userIds: [{ // todo - add all addresses?
-      name: options.full_name,
-      email: account_email
-    }],
+    userIds: [{ name: options.full_name, email: account_email }], // todo - add all addresses?
     passphrase: options.passphrase,
-  }).then(function(key) {
+  }).then(function (key) {
     options.is_newly_created_key = true;
     var prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
-    test_private_key_and_handle(url_params.account_email, prv, options, function() {
-      save_key(account_email, prv, options, function() {
+    test_private_key_and_handle(url_params.account_email, prv, options, function () {
+      save_key(account_email, prv, options, function () {
         finalize_setup(account_email, key.publicKeyArmored, options);
       });
     });
-  }).catch(function(error) {
+  }).catch(function (error) {
     cryptup_error_handler_manual(error);
     $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUP didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
   });
 }
 
 function get_and_save_userinfo(account_email, callback) {
-  google_api_userinfo(account_email, function(success, response) {
-    var result = {
-      full_name: '',
-    };
+  google_api_userinfo(account_email, function (success, response) {
+    var result = { full_name: '', };
     if(success) {
       result.full_name = response.name || '';
       result.gender = response.gender;
       result.locale = response.locale;
       result.picture = response.picture;
-      account_storage_set(account_email, result, function() {
+      account_storage_set(account_email, result, function () {
         callback(result);
       });
     } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
@@ -258,11 +251,11 @@ function get_and_save_userinfo(account_email, callback) {
   });
 }
 
-$('.action_show_help').click(function() {
+$('.action_show_help').click(function () {
   show_settings_page('/chrome/settings/modules/help.htm');
 });
 
-$('.action_simple_setup').click(function() {
+$('.action_simple_setup').click(function () {
   if($(this).parents('.manual').length) {
     if(!confirm('This sets up your account automatically. Great choice for most users.')) {
       return;
@@ -270,7 +263,7 @@ $('.action_simple_setup').click(function() {
   }
   display_block('step_2_easy_generating');
   $('h1').text('Please wait, setting up CryptUP');
-  get_and_save_userinfo(url_params.account_email, function(userinfo) {
+  get_and_save_userinfo(url_params.account_email, function (userinfo) {
     create_save_key_pair(url_params.account_email, {
       full_name: userinfo.full_name,
       passphrase: '',
@@ -283,19 +276,18 @@ $('.action_simple_setup').click(function() {
   });
 });
 
-
-$('.back').off().click(function() {
+$('.back').off().click(function () {
   $('h1').text('Set Up');
   display_block('step_1_easy_or_manual');
 });
 
-$('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), function(self) {
+$('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), function (self) {
   var passphrase = $('#recovery_pasword').val();
   if(passphrase) {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
     var worked = false;
-    $.each(recovered_keys, function(i, recovered_key) {
+    $.each(recovered_keys, function (i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
       if(decrypt_key(recovered_key, passphrase) === true) {
         var options = {
@@ -306,7 +298,7 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
           setup_simple: true,
           key_backup_prompt: false,
         };
-        save_key(url_params.account_email, key_copy, options, function() {
+        save_key(url_params.account_email, key_copy, options, function () {
           finalize_setup(url_params.account_email, key_copy.toPublic().armor(), options);
         });
         worked = true;
@@ -327,75 +319,66 @@ $('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), funct
   }
 }));
 
-$('.action_skip_recovery').click(function() {
+$('.action_skip_recovery').click(function () {
   if(confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
     display_block('step_1_easy_or_manual');
   }
 });
 
-$('.action_send').click(function() {
+$('.action_send').click(function () {
   window.location = 'index.htm?page=%2Fchrome%2Fgmail_elements%2Fnew_message.htm&account_email=' + encodeURIComponent(url_params.account_email);
 });
 
-$('.action_account_settings').click(function() {
+$('.action_account_settings').click(function () {
   window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email);
 });
 
-$('.action_go_auth_denied').click(function() {
+$('.action_go_auth_denied').click(function () {
   window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&page=' + encodeURIComponent('/chrome/settings/modules/auth_denied.htm');
 });
 
-$('.input_submit_key').click(function() {
+$('.input_submit_key').click(function () {
   var input_submit_all = $(this).closest('.manual').find('.input_submit_all').first();
   if($(this).prop('checked')) {
     if(input_submit_all.closest('div.line').css('visibility') === 'visible') {
-      input_submit_all.prop({
-        checked: true,
-        disabled: false
-      });
+      input_submit_all.prop({ checked: true, disabled: false });
     }
   } else {
-    input_submit_all.prop({
-      checked: false,
-      disabled: true
-    });
+    input_submit_all.prop({ checked: false, disabled: true });
   }
 });
 
-$('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(function() {
+$('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(function () {
   display_block('step_2a_manual_create');
 });
 
-$('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(function() {
+$('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(function () {
   display_block('step_2b_manual_enter');
 });
 
-$('#step_3_test_failed .action_diagnose_browser').one('click', function() {
+$('#step_3_test_failed .action_diagnose_browser').one('click', function () {
   $(this).html('Disagnosing.. ' + get_spinner());
   openpgp.generateKey({ // create a bogus key for testing and diagnosis
     numBits: 4096,
-    userIds: [{
-      name: 'pass phrase is stockholm',
-      email: 'bad@key.com',
-    }],
+    userIds: [{ name: 'pass phrase is stockholm', email: 'bad@key.com', }],
     passphrase: 'stockholm',
-  }).then(function(key) {
+  }).then(function (key) {
     var armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
-    test_private_key(armored, 'stockholm', function(key_works, error_message) {
+    test_private_key(armored, 'stockholm', function (key_works, error_message) {
       var error = new Error(key_works ? 'Test passed' : 'Test failed with error: ' + error_message);
       error.stack = base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored);
       cryptup_error_handler(error.message, 'setup.js', 383, 23, error, true);
-      setTimeout(function() {
+      setTimeout(function () {
         $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
       }, 5000);
     });
-  }).catch(function(exception) {
+  }).catch(function (exception) {
     cryptup_error_handler_manual(exception);
   });
 });
 
 function test_private_key_and_handle(account_email, key, options, success_callback) {
-  test_private_key(key.armor(), options.passphrase, function(key_works, error) {
+  test_private_key(key.armor(), options.passphrase, function (key_works, error) {
     if(key_works) {
       success_callback();
     } else {
@@ -406,7 +389,7 @@ function test_private_key_and_handle(account_email, key, options, success_callba
   });
 }
 
-$('#step_2b_manual_enter .action_save_private').click(function() {
+$('#step_2b_manual_enter .action_save_private').click(function () {
   var prv = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
   var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
   if(typeof prv === 'undefined') {
@@ -429,7 +412,7 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
         submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
         save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
       };
-      save_key(url_params.account_email, prv, options, function() {
+      save_key(url_params.account_email, prv, options, function () {
         finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
       });
     } else {
@@ -438,11 +421,11 @@ $('#step_2b_manual_enter .action_save_private').click(function() {
   }
 });
 
-$('#step_2a_manual_create .input_password').on('keyup', prevent(spree(), function() {
+$('#step_2a_manual_create .input_password').on('keyup', prevent(spree(), function () {
   evaluate_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
 }));
 
-$('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), function() {
+$('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), function () {
   if(!$('#step_2a_manual_create .input_password').val()) {
     alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
     $('#step_2a_manual_create .input_password').focus();
@@ -457,7 +440,7 @@ $('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), 
     $('h1').text('Please wait, setting up CryptUP');
     $('#step_2a_manual_create input').prop('disabled', true);
     $('#step_2a_manual_create .action_create_private').html(get_spinner() + 'just a minute');
-    get_and_save_userinfo(url_params.account_email, function(userinfo) {
+    get_and_save_userinfo(url_params.account_email, function (userinfo) {
       create_save_key_pair(url_params.account_email, {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val(),

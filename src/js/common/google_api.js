@@ -3,7 +3,7 @@
 'use strict';
 
 function google_api_call(account_email, method, url, parameters, callback, fail_on_auth) {
-  account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function(auth) {
+  account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
     if(method === 'GET' || method === 'DELETE') {
       var data = parameters;
     } else {
@@ -14,16 +14,14 @@ function google_api_call(account_email, method, url, parameters, callback, fail_
         url: url,
         method: method,
         data: data,
-        headers: {
-          'Authorization': 'Bearer ' + auth.google_token_access
-        },
+        headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
         crossDomain: true,
         contentType: 'application/json; charset=UTF-8',
         async: true,
-        success: function(response) {
+        success: function (response) {
           callback(true, response);
         },
-        error: function(response) {
+        error: function (response) {
           try {
             var error_obj = JSON.parse(response.responseText);
             if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {

@@ -10,25 +10,25 @@ if(!url_params.use_account_email) {
 if(!url_params.account_email) {
   render_setup_done(false);
 } else {
-  account_storage_get(url_params.account_email, ['setup_done'], function(storage) {
+  account_storage_get(url_params.account_email, ['setup_done'], function (storage) {
     render_setup_done(storage.setup_done);
   });
 }
 
-$('.action_auth_proceed').click(function() {
+$('.action_auth_proceed').click(function () {
   chrome_message_send(url_params.parent_tab_id, 'open_google_auth_dialog', {
     account_email: url_params.account_email,
   });
 });
 
-$('.auth_action_limited').click(function() {
+$('.auth_action_limited').click(function () {
   chrome_message_send(url_params.parent_tab_id, 'open_google_auth_dialog', {
     omit_read_scope: true,
     account_email: url_params.account_email,
   });
 });
 
-$('.close_page').click(function() {
+$('.close_page').click(function () {
   chrome_message_send(url_params.parent_tab_id, 'close_page');
 });
 

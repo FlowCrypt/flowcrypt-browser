@@ -8,7 +8,7 @@ function init_shared_attach_js(file_count_limit) {
   var uploader = undefined;
 
   function initialize_attach_dialog(element_id, button_id) {
-    $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function() {
+    $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function () {
       var config = {
         autoUpload: false,
         // debug: true,
@@ -17,10 +17,7 @@ function init_shared_attach_js(file_count_limit) {
         // dragAndDrop: {
         //   extraDropzones: [$('#body').get(0)]
         // },
-        callbacks: {
-          onSubmitted: process_new_attachment,
-          onCancel: cancel_attachment,
-        },
+        callbacks: { onSubmitted: process_new_attachment, onCancel: cancel_attachment, },
       };
       uploader = new qq.FineUploader(config);
     });
@@ -36,19 +33,15 @@ function init_shared_attach_js(file_count_limit) {
 
   function read_attachment_data_as_uint8(id, callback) {
     var reader = new FileReader();
-    reader.onload = function(data) {
+    reader.onload = function (data) {
       callback(new Uint8Array(data.target.result));
     };
     reader.readAsArrayBuffer(attached_files[id]);
   }
 
   function collect_attachment(id, callback) {
-    read_attachment_data_as_uint8(id, function(file_data) {
-      callback({
-        name: attached_files[id].name,
-        type: attached_files[id].type,
-        data: file_data,
-      });
+    read_attachment_data_as_uint8(id, function (file_data) {
+      callback({ name: attached_files[id].name, type: attached_files[id].type, data: file_data, });
     });
   }
 
@@ -64,9 +57,9 @@ function init_shared_attach_js(file_count_limit) {
     if(!Object.keys(attached_files).length) {
       callback(attachments);
     } else {
-      $.each(attached_files, function(id, file) {
-        read_attachment_data_as_uint8(id, function(file_data) {
-          encrypt(armored_pubkeys, null, challenge, file_data, false, function(encrypted_file_content) {
+      $.each(attached_files, function (id, file) {
+        read_attachment_data_as_uint8(id, function (file_data) {
+          encrypt(armored_pubkeys, null, challenge, file_data, false, function (encrypted_file_content) {
             add({
               filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
               type: file.type,

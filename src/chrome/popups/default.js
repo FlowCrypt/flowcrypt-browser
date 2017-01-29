@@ -2,9 +2,9 @@
 
 'use strict';
 
-chrome_message_send(null, 'get_active_tab_info', {}, function(active_tab) {
+chrome_message_send(null, 'get_active_tab_info', {}, function (active_tab) {
   if(active_tab.account_email !== null) {
-    account_storage_get(active_tab.account_email, ['setup_done'], function(storage) {
+    account_storage_get(active_tab.account_email, ['setup_done'], function (storage) {
       if(storage.setup_done) {
         choose_email_or_settings_popup(active_tab.account_email);
       } else {
@@ -14,11 +14,11 @@ chrome_message_send(null, 'get_active_tab_info', {}, function(active_tab) {
   } else if(active_tab.provider !== null && active_tab.same_world === true) {
     set_up_accont_prompt_popup(active_tab.account_email);
   } else {
-    get_account_emails(function(account_emails) {
+    get_account_emails(function (account_emails) {
       if(account_emails && account_emails.length) {
-        account_storage_get(account_emails, ['setup_done'], function(account_storages) {
+        account_storage_get(account_emails, ['setup_done'], function (account_storages) {
           var functioning_accounts = 0;
-          $.each(account_storages, function(email, storage) {
+          $.each(account_storages, function (email, storage) {
             functioning_accounts += storage.setup_done === true;
           });
           if(!functioning_accounts) {
@@ -35,9 +35,7 @@ chrome_message_send(null, 'get_active_tab_info', {}, function(active_tab) {
 });
 
 function redirect_to_initial_setup(account_email) {
-  chrome_message_send(null, 'settings', {
-    account_email: account_email || '',
-  }, function() {
+  chrome_message_send(null, 'settings', { account_email: account_email || '', }, function () {
     window.close();
   });
 }
@@ -45,26 +43,26 @@ function redirect_to_initial_setup(account_email) {
 function set_up_accont_prompt_popup(active_account_email) {
   $('#set_up_account').css('display', 'block');
   $('.email').text(active_account_email);
-  $('.action_set_up_account').click(function() {
+  $('.action_set_up_account').click(function () {
     redirect_to_initial_setup(active_account_email);
   })
 }
 
 function choose_email_or_settings_popup(active_account_email) {
   $('#email_or_settings').css('display', 'block');
-  $('.action_open_settings').click(function() {
+  $('.action_open_settings').click(function () {
     if(active_account_email) {
       redirect_to_initial_setup(active_account_email);
     } else {
       window.location = 'select_account.htm?action=settings';
     }
   });
-  $('.action_send_email').click(function() {
+  $('.action_send_email').click(function () {
     if(active_account_email) {
       chrome_message_send(null, 'settings', {
         account_email: active_account_email,
         page: '/chrome/gmail_elements/new_message.htm',
-      }, function() {
+      }, function () {
         window.close();
       });
     } else {

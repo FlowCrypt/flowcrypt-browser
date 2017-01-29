@@ -14,20 +14,20 @@ $('.email-address').text(url_params.account_email);
 
 $('.summary').html('Loading from keyserver<br><br>' + get_spinner());
 
-account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], function(storage) {
+account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], function (storage) {
   var account_addresses = storage.addresses || [url_params.account_email];
   if(storage.attests_processed && storage.attests_processed.length) {
     $('.attests').html('Your email was attested by: <span class="green">' + storage.attests_processed.join(', ') + '</span>. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption.');
   } else if(storage.attests_requested && storage.attests_requested.length) {
     $('.attests').html('Attestation was requested from: ' + storage.attests_requested.join(', ') + '. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption. Check your inbox for attestation email. The records below should update shortly.');
   }
-  check_pubkeys_keyserver(url_params.account_email, function(diagnosis) {
+  check_pubkeys_keyserver(url_params.account_email, function (diagnosis) {
     if(diagnosis) {
       $('.summary').html('');
       render_diagnosis(diagnosis, storage.attests_requested, storage.attests_processed);
     } else {
       $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
-      $('a.reload').click(function() {
+      $('a.reload').click(function () {
         window.location.reload();
       });
     }
@@ -35,7 +35,7 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
 });
 
 function render_diagnosis(diagnosis, attests_requested, attests_processed) {
-  $.each(diagnosis.results, function(email, result) {
+  $.each(diagnosis.results, function (email, result) {
     if(result.pubkey === null) {
       var note = 'Missing record. Your contacts will not know you have encryption set up.';
       var action = '<div class="button gray2 small submit_pubkey" email="' + email + '">Submit public key</div>';
@@ -81,20 +81,18 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     }
     $('table#emails').append('<tr><td>' + email + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
   });
-  $('.submit_pubkey').click(prevent(doubleclick(), function(self) {
+  $('.submit_pubkey').click(prevent(doubleclick(), function (self) {
     $(self).html(get_spinner());
     submit_pubkey($(self).attr('email'));
   }));
-  $('.request_replacement').click(prevent(doubleclick(), function(self) {
+  $('.request_replacement').click(prevent(doubleclick(), function (self) {
     $(self).html(get_spinner());
     show_settings_page('/chrome/settings/modules/request_replacement.htm');
   }));
-  $('.refresh_after_attest_request').click(prevent(doubleclick(), function(self) {
+  $('.refresh_after_attest_request').click(prevent(doubleclick(), function (self) {
     $('.refresh_after_attest_request').html('Updating.. ' + get_spinner());
-    chrome_message_send(null, 'attest_requested', {
-      account_email: url_params.account_email,
-    }, function() {
-      setTimeout(function() {
+    chrome_message_send(null, 'attest_requested', { account_email: url_params.account_email, }, function () {
+      setTimeout(function () {
         window.location.reload();
       }, 10000);
     });
@@ -105,11 +103,11 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
 
 function submit_pubkey(email) {
   if(email === url_params.account_email) {
-    keyserver_keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function() {
+    keyserver_keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function () {
       window.location.reload();
     });
   } else {
-    keyserver_keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false, function() {
+    keyserver_keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false, function () {
       window.location.reload();
     });
   }

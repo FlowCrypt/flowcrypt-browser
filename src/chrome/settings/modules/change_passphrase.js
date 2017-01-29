@@ -26,13 +26,13 @@ if(original_passphrase === null) {
 
 function display_block(name) {
   var blocks = ['step_0_enter', 'step_1_password', 'step_2_confirm', 'step_3_done'];
-  $.each(blocks, function(i, block) {
+  $.each(blocks, function (i, block) {
     $('#' + block).css('display', 'none');
   });
   $('#' + name).css('display', 'block');
 }
 
-$('.action_enter').click(function() {
+$('.action_enter').click(function () {
   var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
   if(decrypt_key(key, $('#original_password').val()) === true) {
     original_passphrase = $('#original_password').val();
@@ -43,11 +43,11 @@ $('.action_enter').click(function() {
   }
 });
 
-$('#password').on('keyup', prevent(spree(), function() {
+$('#password').on('keyup', prevent(spree(), function () {
   evaluate_password_strength('#step_1_password', '#password', '.action_password');
 }));
 
-$('.action_password').click(function() {
+$('.action_password').click(function () {
   if($(this).hasClass('green')) {
     display_block('step_2_confirm');
   } else {
@@ -55,7 +55,7 @@ $('.action_password').click(function() {
   }
 });
 
-$('.action_reset_password').click(function() {
+$('.action_reset_password').click(function () {
   $('#password').val('');
   $('#password2').val('');
   display_block('step_1_password');
@@ -63,7 +63,7 @@ $('.action_reset_password').click(function() {
   $('#password').focus();
 });
 
-$('.action_change').click(prevent(doubleclick(), function(self) {
+$('.action_change').click(prevent(doubleclick(), function (self) {
   var new_passphrase = $('#password').val();
   if(new_passphrase !== $('#password2').val()) {
     alert('The two pass phrases do not match, please try again.');
@@ -85,7 +85,7 @@ $('.action_change').click(prevent(doubleclick(), function(self) {
     private_storage_set('local', url_params.account_email, 'master_private_key', prv.armor());
     // pass phrase change done in the plugin itself.
     // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
-    account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {
+    account_storage_get(url_params.account_email, ['setup_simple'], function (storage) {
       if(storage.setup_simple) {
         show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
       } else {

@@ -6,7 +6,7 @@ function init_elements_factory_js() {
 
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
-  window.get_logo_src = function(include_header, size) {
+  window.get_logo_src = function (include_header, size) {
     if(size !== 16) {
       return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
     } else {
@@ -14,7 +14,7 @@ function init_elements_factory_js() {
     }
   };
 
-  window.compose_message_iframe = function(account_email, gmail_tab_id, draft_id) {
+  window.compose_message_iframe = function (account_email, gmail_tab_id, draft_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
@@ -23,7 +23,7 @@ function init_elements_factory_js() {
     return '<div class="new_message" id="new_message"><iframe class="' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>'
   };
 
-  window.passphrase_dialog = function(account_email, type, longids, gmail_tab_id) {
+  window.passphrase_dialog = function (account_email, type, longids, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/passphrase.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&type=' + encodeURIComponent(type) +
@@ -35,7 +35,7 @@ function init_elements_factory_js() {
     return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
-  window.subscribe_dialog = function(account_email, verification_email_text, embedded, gmail_tab_id) {
+  window.subscribe_dialog = function (account_email, verification_email_text, embedded, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/subscribe.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&verification_email_text=' + encodeURIComponent(verification_email_text || '') +
@@ -48,7 +48,7 @@ function init_elements_factory_js() {
     }
   }
 
-  window.add_pubkey_dialog_src = function(account_email, emails, gmail_tab_id, placement) {
+  window.add_pubkey_dialog_src = function (account_email, emails, gmail_tab_id, placement) {
     return chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&emails=' + encodeURIComponent(emails.join(',')) +
@@ -56,12 +56,12 @@ function init_elements_factory_js() {
       '&placement=' + encodeURIComponent(placement);
   };
 
-  window.add_pubkey_dialog = function(account_email, emails, gmail_tab_id) {
+  window.add_pubkey_dialog = function (account_email, emails, gmail_tab_id) {
     var src = add_pubkey_dialog_src(account_email, emails, gmail_tab_id, 'gmail');
     return '<div id="cryptup_dialog"><iframe class="tall ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
-  window.pgp_attachment_iframe = function(account_email, attachment_meta, container_classes, gmail_tab_id) {
+  window.pgp_attachment_iframe = function (account_email, attachment_meta, container_classes, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/attachment.htm') +
       '?message_id=' + encodeURIComponent(attachment_meta.message_id) +
       '&name=' + encodeURIComponent(attachment_meta.name) +
@@ -77,7 +77,7 @@ function init_elements_factory_js() {
     return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe class="' + reloadable_class + '" src="' + src + '"></iframe></span>';
   };
 
-  window.pgp_block_iframe = function(pgp_block_text, question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id) {
+  window.pgp_block_iframe = function (pgp_block_text, question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id) {
     var id = random_string();
     var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
       '?frame_id=frame_' + id +
@@ -91,7 +91,7 @@ function init_elements_factory_js() {
     return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
   };
 
-  window.pgp_pubkey_iframe = function(account_email, armored_pubkey, is_outgoing, gmail_tab_id) {
+  window.pgp_pubkey_iframe = function (account_email, armored_pubkey, is_outgoing, gmail_tab_id) {
     var id = random_string();
     var src = chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm') +
       '?frame_id=frame_' + id +
@@ -102,7 +102,7 @@ function init_elements_factory_js() {
     return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
   };
 
-  window.reply_message_iframe = function(account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
+  window.reply_message_iframe = function (account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
     var emails = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
     var id = random_string();
     var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') +
@@ -120,22 +120,16 @@ function init_elements_factory_js() {
     return '<iframe class="reply_message ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
   };
 
-  window.resolve_from_to = function(secondary_emails, my_email, their_email) {
+  window.resolve_from_to = function (secondary_emails, my_email, their_email) {
     //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
     if(secondary_emails.indexOf(their_email) === -1) {
-      return {
-        to: their_email,
-        from: my_email
-      };
+      return { to: their_email, from: my_email };
     } else { //replying to myself
-      return {
-        from: their_email,
-        to: my_email
-      };
+      return { from: their_email, to: my_email };
     }
   };
 
-  window.open_new_message = function(account_email, tab_id) {
+  window.open_new_message = function (account_email, tab_id) {
     if($('div.new_message').length == 0) {
       $('body').append(compose_message_iframe(account_email, tab_id));
     }

@@ -6,7 +6,7 @@ var url_params = get_url_params(['account_email', 'from', 'to', 'subject', 'fram
 url_params.from = url_params.from.toLowerCase();
 url_params.to = url_params.to.toLowerCase();
 
-db_open(function(db) {
+db_open(function (db) {
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -30,7 +30,7 @@ db_open(function(db) {
     if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id) {
       callback();
     } else {
-      gmail_api_message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function(success, gmail_message_object) {
+      gmail_api_message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
         if(success) {
           url_params.thread_id = gmail_message_object.threadId;
         } else {
@@ -49,7 +49,6 @@ db_open(function(db) {
     }
   }
 
-
   function reply_message_render_table(method) {
     if(can_read_emails) {
       $('div#reply_message_prompt').css('display', 'none');
@@ -59,20 +58,20 @@ db_open(function(db) {
     } else {
       $('div#reply_message_prompt').html('CryptUP has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       $('div#reply_message_prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(function() {
+      $('.auth_settings').click(function () {
         chrome_message_send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/auth_denied.htm',
         });
       })
-      $('.new_message_button').click(function() {
+      $('.new_message_button').click(function () {
         chrome_message_send(url_params.parent_tab_id, 'open_new_message');
       });
     }
   }
 
   function reply_message_determine_header_variables(load_last_message_for_forward) {
-    gmail_api_get_thread(url_params.account_email, url_params.thread_id, 'full', function(success, thread) {
+    gmail_api_get_thread(url_params.account_email, url_params.thread_id, 'full', function (success, thread) {
       if(success && thread.messages && thread.messages.length > 0) {
         thread_message_id_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
         thread_message_referrences_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
@@ -90,13 +89,13 @@ db_open(function(db) {
   }
 
   function retrieve_decrypt_and_add_forwarded_message(message_id) {
-    extract_armored_message_using_gmail_api(url_params.account_email, message_id, 'full', function(armored_message) {
-      decrypt(db, url_params.account_email, armored_message, undefined, function(result) {
+    extract_armored_message_using_gmail_api(url_params.account_email, message_id, 'full', function (armored_message) {
+      decrypt(db, url_params.account_email, armored_message, undefined, function (result) {
         if(result.success) {
           if(!could_be_mime_message(result.content.data)) {
             append_forwarded_message(format_mime_plaintext_to_display(result.content.data, armored_message));
           } else {
-            parse_mime_message(result.content.data, function(success, mime_parse_result) {
+            parse_mime_message(result.content.data, function (success, mime_parse_result) {
               append_forwarded_message(format_mime_plaintext_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data, armored_message));
             });
           }
@@ -104,15 +103,15 @@ db_open(function(db) {
           $('#input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
         }
       });
-    }, function(error_type, url_formatted_data_block) {
+    }, function (error_type, url_formatted_data_block) {
       if(url_formatted_data_block) {
         $('#input_text').append('<br/>\n<br/>\n<br/>\n' + url_formatted_data_block);
       }
     });
   }
 
-  $('.delete_draft').click(function() {
-    compose.draft_delete(url_params.account_email, function() {
+  $('.delete_draft').click(function () {
+    compose.draft_delete(url_params.account_email, function () {
       chrome_message_send(url_params.parent_tab_id, 'close_reply_message', {
         frame_id: url_params.frame_id,
         thread_id: url_params.thread_id
@@ -135,7 +134,7 @@ db_open(function(db) {
       notification: 'Your message has been sent.'
     });
     $('#send_btn_note').text('Sent, deleting draft..');
-    compose.draft_delete(url_params.account_email, function() {
+    compose.draft_delete(url_params.account_email, function () {
       reply_message_reinsert_reply_box();
       $('.replied_body').css('width', $('table#compose').width() - 30);
       $('#reply_message_table_container').css('display', 'none');
@@ -147,11 +146,11 @@ db_open(function(db) {
       $('#reply_message_successful_container div.replied_time').text(time);
       $('#reply_message_successful_container').css('display', 'block');
       if(has_attachments) {
-        gmail_api_message_get(url_params.account_email, message_id, 'full', function(success, gmail_message_object) {
+        gmail_api_message_get(url_params.account_email, message_id, 'full', function (success, gmail_message_object) {
           if(success) {
             $('#attachments').css('display', 'block');
             var attachment_metas = gmail_api_find_attachments(gmail_message_object);
-            $.each(attachment_metas, function(i, attachment_meta) {
+            $.each(attachment_metas, function (i, attachment_meta) {
               $('#attachments').append(pgp_attachment_iframe(url_params.account_email, attachment_meta, []));
             });
           } else {
@@ -171,11 +170,11 @@ db_open(function(db) {
       'In-Reply-To': thread_message_id_last,
       'References': thread_message_referrences_last + ' ' + thread_message_id_last,
     };
-    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function(encrypted_message_text_to_send, attachments) {
-      to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function(mime_message) {
-        gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function(success, response) {
+    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments) {
+      to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function (mime_message) {
+        gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
           if(success) {
-            increment_metric('reply', function() {
+            increment_metric('reply', function () {
               reply_message_render_success(headers.To, (attachments || []).length > 0, response.id);
             });
           } else {
@@ -200,24 +199,24 @@ db_open(function(db) {
       document.getElementById("input_text").focus();
       compose.evaluate_receivers();
     }
-    setTimeout(function() { // delay automatic resizing until a second later
+    setTimeout(function () { // delay automatic resizing until a second later
       $(window).resize(prevent(spree(), compose.resize_reply_box));
       $('#input_text').keyup(compose.resize_reply_box);
     }, 1000);
     compose.resize_reply_box();
   }
 
-  recover_thread_id_if_missing(function() {
+  recover_thread_id_if_missing(function () {
     // show decrypted draft if available for this thread. Also check if GMAIL_READ_SCOPE is available.
-    account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function(storage) {
+    account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function (storage) {
       can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
       if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
         original_reply_message_prompt = $('div#reply_message_prompt').html();
         $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
-        gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function(success, response) {
+        gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
-            parse_mime_message(base64url_decode(response.message.raw), function(mime_success, parsed_message) {
+            parse_mime_message(base64url_decode(response.message.raw), function (mime_success, parsed_message) {
               if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
                 var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
                 compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
@@ -229,7 +228,7 @@ db_open(function(db) {
           } else {
             reply_message_render_table();
             if(response.status === 404) {
-              compose.draft_meta_store(false, storage.drafts_reply[url_params.thread_id], url_params.thread_id, null, null, function() {
+              compose.draft_meta_store(false, storage.drafts_reply[url_params.thread_id], url_params.thread_id, null, null, function () {
                 console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
                 window.location.reload();
               });
@@ -241,7 +240,7 @@ db_open(function(db) {
         });
       } else { //no draft available
         if(!url_params.skip_click_prompt) {
-          $('#reply_click_area, #a_reply, #a_reply_all, #a_forward').click(function() {
+          $('#reply_click_area, #a_reply, #a_reply_all, #a_forward').click(function () {
             if($(this).attr('id') === 'a_reply') {
               url_params.to = url_params.to.split(',')[0];
             } else if($(this).attr('id') === 'a_forward') {
@@ -256,7 +255,7 @@ db_open(function(db) {
     });
   });
 
-  $(document).ready(function() {
+  $(document).ready(function () {
     compose.resize_reply_box();
   });
 

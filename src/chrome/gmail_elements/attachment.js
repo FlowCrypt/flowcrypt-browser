@@ -8,7 +8,7 @@ var url_params = get_url_params(['account_email', 'message_id', 'attachment_id',
 // }
 var original_content;
 
-db_open(function(db) {
+db_open(function (db) {
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -22,7 +22,7 @@ db_open(function(db) {
   $('#type').text(url_params.type);
   $('#name').text(url_params.name);
 
-  $('img#file-format').attr('src', (function() {
+  $('img#file-format').attr('src', (function () {
     // url_params.type
     function p(name) {
       return '/img/fileformat/' + name + '.png';
@@ -30,24 +30,24 @@ db_open(function(db) {
     var name_split = url_params.name.replace(/\.(pgp|gpg)$/ig, '').split('.');
     var extension = name_split[name_split.length - 1].toLowerCase();
     switch(extension) {
-      case 'jpg':
-      case 'jpeg':
-        return p('jpg');
-      case 'xls':
-      case 'xlsx':
-        return p('excel');
-      case 'doc':
-      case 'docx':
-        return p('word');
-      case 'png':
-        return p('png');
-      default:
-        return p('generic');
+    case 'jpg':
+    case 'jpeg':
+      return p('jpg');
+    case 'xls':
+    case 'xlsx':
+      return p('excel');
+    case 'doc':
+    case 'docx':
+      return p('word');
+    case 'png':
+      return p('png');
+    default:
+      return p('generic');
     }
   })());
 
   function check_passphrase_entered() { // more or less copy-pasted from pgp_block.js, should use a common one
-    $.each(missing_passprase_longids, function(i, longid) {
+    $.each(missing_passprase_longids, function (i, longid) {
       if(missing_passprase_longids && get_passphrase(url_params.account_email, longid) !== null) {
         missing_passprase_longids = [];
         clearInterval(passphrase_interval);
@@ -88,7 +88,7 @@ db_open(function(db) {
 
   function decrypt_and_download_attachment(success, encrypted_data) {
     if(success) {
-      decrypt(db, url_params.account_email, encrypted_data, undefined, function(result) {
+      decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         $('#download').html(original_content);
         if(result.success) {
           download_file(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
@@ -126,12 +126,12 @@ db_open(function(db) {
     // }
   }
 
-  $('#download').click(prevent(doubleclick(), function(self) {
+  $('#download').click(prevent(doubleclick(), function (self) {
     increment_metric('download');
     original_content = $(self).html();
     $(self).html(get_spinner());
     if(url_params.attachment_id) {
-      gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function(success, attachment) {
+      gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
         decrypt_and_download_attachment(success, success ? base64url_decode(attachment.data) : undefined);
       });
     } else if(url_params.url) {

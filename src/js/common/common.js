@@ -8,16 +8,11 @@ window.onerror = cryptup_error_handler;
 function cryptup_error_handler(error_message, url, line, col, error, is_manually_called, version, environment) {
   if(typeof error === 'string') {
     error_message = error;
-    error = {
-      name: 'thrown_string',
-      message: error_message,
-      stack: error_message,
-    };
+    error = { name: 'thrown_string', message: error_message, stack: error_message, };
   }
   var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
   var ignored_errors = [
-    // happens in gmail window when reloaded extension + now reloading the gmail
-    'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
+    'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading the gmail
   ];
   if(!error) {
     return;
@@ -64,14 +59,14 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
       crossDomain: true,
       contentType: 'application/json; charset=UTF-8',
       async: true,
-      success: function(response) {
+      success: function (response) {
         if(response.saved === true) {
           console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
         } else {
           console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
         }
       },
-      error: function(XMLHttpRequest, status, error) {
+      error: function (XMLHttpRequest, status, error) {
         console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
       },
     });
@@ -81,7 +76,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
   }
   try {
     increment_metric('error');
-    account_storage_get(null, ['errors'], function(storage) {
+    account_storage_get(null, ['errors'], function (storage) {
       if(typeof storage.errors === 'undefined') {
         storage.errors = [];
       }
@@ -95,7 +90,7 @@ function cryptup_error_handler(error_message, url, line, col, error, is_manually
 }
 
 function Try(code) {
-  return function() {
+  return function () {
     try {
       return code();
     } catch(code_err) {
@@ -115,7 +110,7 @@ function cryptup_error_handler_manual(exception) {
     var col = 0;
   }
   try {
-    chrome_message_send(null, 'runtime', null, function(runtime) {
+    chrome_message_send(null, 'runtime', null, function (runtime) {
       cryptup_error_handler(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
     });
   } catch(message_err) {
@@ -176,7 +171,7 @@ if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'un
 function get_url_params(expected_keys, string) {
   var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
   var url_data = {};
-  $.each(raw_url_data, function(i, pair_string) {
+  $.each(raw_url_data, function (i, pair_string) {
     var pair = pair_string.split('=');
     if(expected_keys.indexOf(pair[0]) !== -1) {
       url_data[pair[0]] = decodeURIComponent(pair[1]);
@@ -191,7 +186,7 @@ function cryptup_version_integer() {
 
 function unique(array) {
   var unique = [];
-  $.each(array, function(i, v) {
+  $.each(array, function (i, v) {
     if(unique.indexOf(v) === -1) {
       unique.push(v);
     }
@@ -209,8 +204,8 @@ function to_array(obj) { // http://stackoverflow.com/questions/2735067/how-to-co
 }
 
 function wait(until_this_function_evaluates_true) {
-  return new Promise(function(success, error) {
-    var interval = setInterval(function() {
+  return new Promise(function (success, error) {
+    var interval = setInterval(function () {
       var result = until_this_function_evaluates_true();
       if(result === true) {
         clearInterval(interval);
@@ -261,13 +256,13 @@ function download_as_str(url, progress, callback) {
   var request = new XMLHttpRequest();
   request.open("GET", url, true);
   request.responseType = "arraybuffer";
-  request.onprogress = function(e) {
+  request.onprogress = function (e) {
     progress(e.loaded, e.total);
   };
-  request.onerror = function(e) {
+  request.onerror = function (e) {
     callback(false, e);
   };
-  request.onload = function(e) {
+  request.onload = function (e) {
     callback(true, uint8_to_str(new Uint8Array(request.response)));
   };
   request.send();
@@ -287,18 +282,7 @@ function download_file(filename, type, data) {
 }
 
 function key_codes() {
-  return {
-    a: 97,
-    r: 114,
-    A: 65,
-    R: 82,
-    f: 102,
-    F: 70,
-    backspace: 8,
-    tab: 9,
-    enter: 13,
-    comma: 188,
-  };
+  return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
 }
 
 function mime_node_type(node) {
@@ -323,16 +307,13 @@ function mime_headers_to_from(parsed_mime_message) {
     var header_from = parsed_mime_message.headers.from[0].address;
   }
   if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
-    $.each(parsed_mime_message.headers.to, function(i, to) {
+    $.each(parsed_mime_message.headers.to, function (i, to) {
       if(to.address) {
         header_to.push(to.address);
       }
     });
   }
-  return {
-    from: header_from,
-    to: header_to,
-  };
+  return { from: header_from, to: header_to, };
 }
 
 function could_be_mime_message(message) {
@@ -366,25 +347,25 @@ function parse_mime_message(mime_message, callback) {
     html: undefined,
     signature: undefined,
   };
-  require(['emailjs-mime-parser'], function(MimeParser) {
+  require(['emailjs-mime-parser'], function (MimeParser) {
     try {
       var parser = new MimeParser();
       var parsed = {};
-      parser.onheader = function(node) {
+      parser.onheader = function (node) {
         if(!String(node.path.join("."))) { // root node headers
-          $.each(node.headers, function(name, header) {
+          $.each(node.headers, function (name, header) {
             mime_message_contents.headers[name] = header[0].value;
           });
         }
       };
-      parser.onbody = function(node, chunk) {
+      parser.onbody = function (node, chunk) {
         var path = String(node.path.join("."));
         if(typeof parsed[path] === 'undefined') {
           parsed[path] = node;
         }
       };
-      parser.onend = function() {
-        $.each(parsed, function(path, node) {
+      parser.onend = function () {
+        $.each(parsed, function (path, node) {
           if(mime_node_type(node) === 'application/pgp-signature') {
             mime_message_contents.signature = uint8_as_utf(node.content);
           } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
@@ -401,7 +382,7 @@ function parse_mime_message(mime_message, callback) {
             });
           }
         });
-        Try(function() {
+        Try(function () {
           callback(true, mime_message_contents);
         })();
       }
@@ -409,7 +390,7 @@ function parse_mime_message(mime_message, callback) {
       parser.end();
     } catch(e) {
       cryptup_error_handler_manual(e);
-      Try(function() {
+      Try(function () {
         callback(false, mime_message_contents);
       })();
     }
@@ -449,7 +430,7 @@ function open_settings_page(path, account_email, page) {
   if(account_email) {
     window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + encodeURIComponent(account_email) + '&page=' + encodeURIComponent(page)), 'cryptup');
   } else {
-    get_account_emails(function(account_emails) {
+    get_account_emails(function (account_emails) {
       window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
     });
   }
@@ -464,10 +445,10 @@ function month_name(month_index) {
 }
 
 function get_account_emails(callback) {
-  account_storage_get(null, ['account_emails'], function(storage) {
+  account_storage_get(null, ['account_emails'], function (storage) {
     var account_emails = [];
     if(typeof storage.account_emails !== 'undefined') {
-      $.each(JSON.parse(storage.account_emails), function(i, account_email) {
+      $.each(JSON.parse(storage.account_emails), function (i, account_email) {
         if(account_emails.indexOf(account_email.toLowerCase()) === -1) {
           account_emails.push(account_email.toLowerCase());
         }
@@ -478,20 +459,18 @@ function get_account_emails(callback) {
 }
 
 function for_each_known_account_email(callback) {
-  get_account_emails(function(account_emails) {
-    $.each(account_emails, function(i, account_email) {
+  get_account_emails(function (account_emails) {
+    $.each(account_emails, function (i, account_email) {
       callback(account_emails[i]);
     });
   });
 }
 
 function add_account_email_to_list_of_accounts(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
-  get_account_emails(function(account_emails) {
+  get_account_emails(function (account_emails) {
     if(account_emails.indexOf(account_email) === -1) {
       account_emails.push(account_email);
-      account_storage_set(null, {
-        'account_emails': JSON.stringify(account_emails)
-      }, callback);
+      account_storage_set(null, { 'account_emails': JSON.stringify(account_emails) }, callback);
     } else if(typeof callback !== 'undefined') {
       callback();
     }
@@ -510,21 +489,21 @@ function strip_pgp_armor(pgp_block_text) {
   var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
   var spaces = [/&nbsp;/g];
   var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
-  $.each(newlines, function(i, newline) {
+  $.each(newlines, function (i, newline) {
     pgp_block_text = pgp_block_text.replace(newline, '\n');
   });
   if(debug) {
     console.log('pgp_block_2');
     console.log(pgp_block_text);
   }
-  $.each(removes, function(i, remove) {
+  $.each(removes, function (i, remove) {
     pgp_block_text = pgp_block_text.replace(remove, '');
   });
   if(debug) {
     console.log('pgp_block_3');
     console.log(pgp_block_text);
   }
-  $.each(spaces, function(i, space) {
+  $.each(spaces, function (i, space) {
     pgp_block_text = pgp_block_text.replace(space, ' ');
   });
   if(debug) {
@@ -561,24 +540,22 @@ function strip_pgp_armor(pgp_block_text) {
 }
 
 function check_keyserver_pubkey_fingerprints() {
-  get_account_emails(function(account_emails) {
+  get_account_emails(function (account_emails) {
     if(account_emails && account_emails.length) {
-      account_storage_get(account_emails, ['setup_done'], function(multi_storage) {
+      account_storage_get(account_emails, ['setup_done'], function (multi_storage) {
         var emails_setup_done = [];
-        $.each(multi_storage, function(account_email, storage) {
+        $.each(multi_storage, function (account_email, storage) {
           if(storage.setup_done) {
             emails_setup_done.push(account_email);
           }
         });
-        keyserver_keys_check(emails_setup_done, function(success, response) {
+        keyserver_keys_check(emails_setup_done, function (success, response) {
           if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
             var save_result = {};
-            $.each(emails_setup_done, function(i, account_email) {
+            $.each(emails_setup_done, function (i, account_email) {
               save_result[account_email] = response.fingerprints[i];
             });
-            account_storage_set(null, {
-              keyserver_fingerprints: save_result
-            });
+            account_storage_set(null, { keyserver_fingerprints: save_result });
           }
         });
       });
@@ -595,7 +572,7 @@ function get_spinner() {
 function add_show_hide_passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
   var button_hide = '<i class="fa fa-eye-slash"></i><br>hide';
   var button_show = '<i class="fa fa-eye"></i><br>show';
-  account_storage_get(null, ['hide_pass_phrases'], function(storage) {
+  account_storage_get(null, ['hide_pass_phrases'], function (storage) {
     if(force_initial_show_or_hide === 'hide') {
       var show = false;
     } else if(force_initial_show_or_hide === 'show') {
@@ -603,7 +580,7 @@ function add_show_hide_passphrase_toggle(pass_phrase_input_ids, force_initial_sh
     } else {
       var show = !storage.hide_pass_phrases;
     }
-    $.each(pass_phrase_input_ids, function(i, id) {
+    $.each(pass_phrase_input_ids, function (i, id) {
       if(show) {
         $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
         $('#' + id).attr('type', 'text');
@@ -611,19 +588,15 @@ function add_show_hide_passphrase_toggle(pass_phrase_input_ids, force_initial_sh
         $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
         $('#' + id).attr('type', 'password');
       }
-      $('#toggle_' + id).click(function() {
+      $('#toggle_' + id).click(function () {
         if($('#' + id).attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
           $(this).html(button_hide);
-          account_storage_set(null, {
-            hide_pass_phrases: false,
-          });
+          account_storage_set(null, { hide_pass_phrases: false, });
         } else {
           $('#' + id).attr('type', 'password');
           $(this).html(button_show);
-          account_storage_set(null, {
-            hide_pass_phrases: true,
-          });
+          account_storage_set(null, { hide_pass_phrases: true, });
         }
       });
     });
@@ -645,7 +618,7 @@ function array_without_key(array, i) {
 
 function array_without_value(array, without_value) {
   var result = [];
-  $.each(array, function(i, value) {
+  $.each(array, function (i, value) {
     if(value !== without_value) {
       result.push(value);
     }
@@ -658,7 +631,7 @@ function extract_key_ids(armored_pubkey) {
 }
 
 function map_select(mapped_object_key) {
-  return function(mapped_object) {
+  return function (mapped_object) {
     return mapped_object[mapped_object_key];
   };
 }
@@ -666,12 +639,9 @@ function map_select(mapped_object_key) {
 function check_pubkeys_message(account_email, message) {
   var message_key_ids = message.getEncryptionKeyIds();
   var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
-  var diagnosis = {
-    found_match: false,
-    receivers: message_key_ids.length,
-  };
-  $.each(message_key_ids, function(i, msg_k_id) {
-    $.each(local_key_ids, function(j, local_k_id) {
+  var diagnosis = { found_match: false, receivers: message_key_ids.length, };
+  $.each(message_key_ids, function (i, msg_k_id) {
+    $.each(local_key_ids, function (j, local_k_id) {
       if(msg_k_id === local_k_id) {
         diagnosis.found_match = true;
         return false;
@@ -682,22 +652,14 @@ function check_pubkeys_message(account_email, message) {
 }
 
 function check_pubkeys_keyserver(account_email, callback) {
-  var diagnosis = {
-    has_pubkey_missing: false,
-    has_pubkey_mismatch: false,
-    results: {},
-  };
-  account_storage_get(account_email, ['addresses'], function(storage) {
-    keyserver_keys_find(storage.addresses || [account_email], function(success, pubkey_search_results) {
+  var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
+  account_storage_get(account_email, ['addresses'], function (storage) {
+    keyserver_keys_find(storage.addresses || [account_email], function (success, pubkey_search_results) {
       if(success) {
-        $.each(pubkey_search_results.results, function(i, pubkey_search_result) {
+        $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
           if(!pubkey_search_result.pubkey) {
             diagnosis.has_pubkey_missing = true;
-            diagnosis.results[pubkey_search_result.email] = {
-              attested: false,
-              pubkey: null,
-              match: false,
-            }
+            diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, }
           } else {
             var match = true;
             var local_fingerprint = key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
@@ -705,11 +667,7 @@ function check_pubkeys_keyserver(account_email, callback) {
               diagnosis.has_pubkey_mismatch = true;
               match = false;
             }
-            diagnosis.results[pubkey_search_result.email] = {
-              pubkey: pubkey_search_result.pubkey,
-              attested: pubkey_search_result.attested,
-              match: match,
-            }
+            diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match, }
           }
         });
         callback(diagnosis);
@@ -720,19 +678,15 @@ function check_pubkeys_keyserver(account_email, callback) {
   });
 }
 
-RegExp.escape = function(s) {
+RegExp.escape = function (s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
 /* -------------------- CRYPTO ----------------------------------------------------*/
 
 function sign(signing_prv, data, armor, callback) {
-  var options = {
-    data: data,
-    armor: armor,
-    privateKeys: signing_prv,
-  };
-  openpgp.sign(options).then(callback, function(error) {
+  var options = { data: data, armor: armor, privateKeys: signing_prv, };
+  openpgp.sign(options).then(callback, function (error) {
     console.log(error); // todo - better handling. Alerts suck.
     alert('Error signing message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
   });
@@ -743,13 +697,13 @@ function get_sorted_keys_for_message(db, account_email, message, callback) {
   keys.verification_contacts = [];
   keys.for_verification = [];
   if(message.getEncryptionKeyIds) {
-    keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(function(id) {
+    keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(function (id) {
       return key_longid(id.bytes);
     });
   } else {
     keys.encrypted_for = [];
   }
-  keys.signed_by = (message.getSigningKeyIds() || []).map(function(id) {
+  keys.signed_by = (message.getSigningKeyIds() || []).map(function (id) {
     return key_longid(id.bytes);
   });
   keys.potentially_matching = private_keys_get(account_email, keys.encrypted_for);
@@ -758,7 +712,7 @@ function get_sorted_keys_for_message(db, account_email, message, callback) {
   }
   keys.with_passphrases = [];
   keys.without_passphrases = [];
-  $.each(keys.potentially_matching, function(i, keyinfo) {
+  $.each(keys.potentially_matching, function (i, keyinfo) {
     var passphrase = get_passphrase(account_email, keyinfo.longid);
     if(passphrase !== null) {
       var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
@@ -774,11 +728,11 @@ function get_sorted_keys_for_message(db, account_email, message, callback) {
     }
   });
   if(keys.signed_by.length) {
-    db_contact_get(db, keys.signed_by, function(verification_contacts) {
-      keys.verification_contacts = verification_contacts.filter(function(contact) {
+    db_contact_get(db, keys.signed_by, function (verification_contacts) {
+      keys.verification_contacts = verification_contacts.filter(function (contact) {
         return contact !== null;
       });
-      keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function(contact) {
+      keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
         return openpgp.key.readArmored(contact.pubkey).keys;
       }));
       callback(keys);
@@ -789,14 +743,7 @@ function get_sorted_keys_for_message(db, account_email, message, callback) {
 }
 
 function zeroed_decrypt_error_counts(keys) {
-  return {
-    decrypted: 0,
-    potentially_matching_keys: keys ? keys.potentially_matching.length : 0,
-    attempts: 0,
-    key_mismatch: 0,
-    wrong_password: 0,
-    format_error: 0,
-  };
+  return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, };
 }
 
 function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
@@ -813,7 +760,7 @@ function increment_decrypt_error_counts(counts, other_errors, one_time_message_p
 }
 
 function wait_and_callback_decrypt_errors_if_failed(message, private_keys, counts, other_errors, callback) {
-  var wait_for_all_attempts_interval = setInterval(function() { //todo - promises are better
+  var wait_for_all_attempts_interval = setInterval(function () { //todo - promises are better
     if(counts.decrypted) {
       clearInterval(wait_for_all_attempts_interval);
     } else {
@@ -825,9 +772,7 @@ function wait_and_callback_decrypt_errors_if_failed(message, private_keys, count
           message: message,
           counts: counts,
           encrypted_for: private_keys.encrypted_for,
-          missing_passphrases: private_keys.without_passphrases.map(function(keyinfo) {
-            return keyinfo.longid;
-          }),
+          missing_passphrases: private_keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; }),
           errors: other_errors,
         });
       }
@@ -836,10 +781,7 @@ function wait_and_callback_decrypt_errors_if_failed(message, private_keys, count
 }
 
 function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password) {
-  var options = {
-    message: message,
-    format: (is_armored) ? 'utf8' : 'binary',
-  };
+  var options = { message: message, format: (is_armored) ? 'utf8' : 'binary', };
   if(!one_time_message_password) {
     options.privateKey = keyinfo.decrypted;
   } else {
@@ -856,7 +798,7 @@ function verify_message_signature(message, keys) {
     error: null,
   };
   try {
-    $.each(message.verify(keys.for_verification), function(i, verify_result) {
+    $.each(message.verify(keys.for_verification), function (i, verify_result) {
       if(verify_result.valid !== true) {
         signature.match = false;
       }
@@ -882,7 +824,7 @@ function decrypt_key(prv, passphrase) { // returns true, false, or RETURNS a cou
   } catch(e) {
     if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
       try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
-        return prv.subKeys.length === prv.subKeys.reduce(function(successes, subkey) {
+        return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) {
           return successes + Number(subkey.subKey.decrypt(passphrase));
         }, 0);
       } catch(subkey_e) {
@@ -919,7 +861,7 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
     });
     return;
   }
-  get_sorted_keys_for_message(db, account_email, message, function(keys) {
+  get_sorted_keys_for_message(db, account_email, message, function (keys) {
     var counts = zeroed_decrypt_error_counts(keys);
     if(armored_signed_only) {
       if(!message.text) {
@@ -932,18 +874,16 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
       }
       callback({
         success: true,
-        content: {
-          data: message.text,
-        },
+        content: { data: message.text, },
         encrypted: false,
         signature: verify_message_signature(message, keys),
       });
     } else {
-      $.each(keys.with_passphrases, function(i, keyinfo) {
+      $.each(keys.with_passphrases, function (i, keyinfo) {
         if(!counts.decrypted) {
           try {
-            openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function(decrypted) {
-              Try(function() {
+            openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function (decrypted) {
+              Try(function () {
                 if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
                   callback({
                     success: true,
@@ -953,8 +893,8 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
                   });
                 }
               })();
-            }).catch(function(decrypt_error) {
-              Try(function() {
+            }).catch(function (decrypt_error) {
+              Try(function () {
                 increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
               })();
             });
@@ -978,8 +918,8 @@ function patch_public_keys_to_ignore_expiration(keys) {
     var verifyResult = this.verify(primaryKey);
     return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
   }
-  $.each(keys, function(i, key) {
-    $.each(key.subKeys, function(i, sub_key) {
+  $.each(keys, function (i, key) {
+    $.each(key.subKeys, function (i, sub_key) {
       sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
     });
   });
@@ -993,7 +933,7 @@ function is_public_key_expired_for_encryption(key) {
     return true;
   }
   var found_expired_subkey = false;
-  $.each(key.subKeys, function(i, sub_key) {
+  $.each(key.subKeys, function (i, sub_key) {
     if(sub_key.verify(key) === openpgp.enums.keyStatus.expired && openpgpjs_original_isValidEncryptionKeyPacket(sub_key.subKey, sub_key.bindingSignature)) {
       found_expired_subkey = true;
       return false;
@@ -1003,14 +943,11 @@ function is_public_key_expired_for_encryption(key) {
 }
 
 function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
-  var options = {
-    data: data,
-    armor: armor,
-  };
+  var options = { data: data, armor: armor, };
   var used_challange = false;
   if(armored_pubkeys) {
     options.publicKeys = [];
-    $.each(armored_pubkeys, function(i, armored_pubkey) {
+    $.each(armored_pubkeys, function (i, armored_pubkey) {
       options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
     });
     patch_public_keys_to_ignore_expiration(options.publicKeys);
@@ -1027,7 +964,7 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
     options.privateKeys = [signing_prv];
     console.log('singing oonly')
   }
-  openpgp.encrypt(options).then(callback, function(error) {
+  openpgp.encrypt(options).then(callback, function (error) {
     console.log(error);
     alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
     //todo: make the UI behave well on errors
@@ -1105,19 +1042,19 @@ function test_private_key(armored, passphrase, callback) {
       data: 'this is a test encrypt/decrypt loop to discover certain browser inabilities to create proper keys with openpgp.js',
       armor: true,
       publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
-    }).then(function(result) {
+    }).then(function (result) {
       var prv = openpgp.key.readArmored(armored).keys[0];
       decrypt_key(prv, passphrase);
       openpgp.decrypt({
         message: openpgp.message.readArmored(result.data),
         format: 'utf8',
         privateKey: prv,
-      }).then(function() {
+      }).then(function () {
         callback(true);
-      }).catch(function(error) {
+      }).catch(function (error) {
         callback(false, error.message);
       });
-    }).catch(function(error) {
+    }).catch(function (error) {
       callback(false, error.message);
     });
   } catch(error) {
@@ -1147,7 +1084,7 @@ function increment_metric(type, callback) {
   if(!known_metric_types[type]) {
     cryptup_error_log('Unknown metric type "' + type + '"');
   }
-  account_storage_get(null, ['metrics'], function(storage) {
+  account_storage_get(null, ['metrics'], function (storage) {
     var metrics_k = known_metric_types[type];
     if(!storage.metrics) {
       storage.metrics = {};
@@ -1157,9 +1094,7 @@ function increment_metric(type, callback) {
     } else {
       storage.metrics[metrics_k] += 1;
     }
-    account_storage_set(null, {
-      metrics: storage.metrics,
-    }, function() {
+    account_storage_set(null, { metrics: storage.metrics, }, function () {
       chrome_message_send(null, 'update_uninstall_url', null, callback);
     });
   });
@@ -1170,10 +1105,7 @@ function increment_metric(type, callback) {
 var background_script_shortcut_handlers = undefined;
 
 function chrome_message_destination_parse(destination_string) {
-  var parsed = {
-    tab: null,
-    frame: null,
-  };
+  var parsed = { tab: null, frame: null, };
   if(destination_string) {
     parsed.tab = Number(destination_string.split(':')[0]);
     parsed.frame = Number(destination_string.split(':')[1]);
@@ -1182,13 +1114,7 @@ function chrome_message_destination_parse(destination_string) {
 }
 
 function chrome_message_send(destination_string, name, data, callback) {
-  var msg = {
-    name: name,
-    data: data,
-    to: destination_string || null,
-    respondable: (callback) ? true : false,
-    uid: random_string(10),
-  };
+  var msg = { name: name, data: data, to: destination_string || null, respondable: (callback) ? true : false, uid: random_string(10), };
   if(background_script_shortcut_handlers && msg.to === null) {
     background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
   } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
@@ -1204,8 +1130,8 @@ function chrome_message_get_tab_id(callback) {
 
 function chrome_message_background_listen(handlers) {
   background_script_shortcut_handlers = handlers;
-  chrome.runtime.onMessage.addListener(function(request, sender, respond) {
-    var safe_respond = function(response) {
+  chrome.runtime.onMessage.addListener(function (request, sender, respond) {
+    var safe_respond = function (response) {
       try { // avoiding unnecessary errors when target tab gets closed
         respond(response);
       } catch(e) {
@@ -1226,8 +1152,8 @@ function chrome_message_background_listen(handlers) {
 
 function chrome_message_listen(handlers, listen_for_tab_id) {
   var processed = [];
-  chrome.runtime.onMessage.addListener(function(request, sender, respond) {
-    return WrapWithTryIfContentScript(function() {
+  chrome.runtime.onMessage.addListener(function (request, sender, respond) {
+    return WrapWithTryIfContentScript(function () {
       if(request.to === listen_for_tab_id) {
         if(processed.indexOf(request.uid) === -1) {
           processed.push(request.uid);
@@ -1235,7 +1161,7 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
             handlers[request.name](request.data, sender, respond);
           } else {
             if(request.name !== '_tab_') {
-              Try(function() {
+              Try(function () {
                 throw new Error('chrome_message_listen error: handler "' + request.name + '" not set');
               })();
             } else {
@@ -1288,10 +1214,8 @@ function str_to_uint8(raw) {
 }
 
 function utf8_from_str_with_equal_sign_notation(str) {
-  return str.replace(/(=[A-F0-9]{2})+/g, function(equal_sign_utf_part) {
-    return uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function(two_hex_digits) {
-      return parseInt(two_hex_digits, 16);
-    }));
+  return str.replace(/(=[A-F0-9]{2})+/g, function (equal_sign_utf_part) {
+    return uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function (two_hex_digits) { return parseInt(two_hex_digits, 16); }));
   });
 }
 
@@ -1384,28 +1308,19 @@ var SLOW_SPREE_MS = 200;
 var VERY_SLOW_SPREE_MS = 500;
 
 function doubleclick() {
-  return {
-    name: 'doubleclick',
-    id: random_string(10),
-  };
+  return { name: 'doubleclick', id: random_string(10), };
 }
 
 function parallel() {
-  return {
-    name: 'parallel',
-    id: random_string(10),
-  };
+  return { name: 'parallel', id: random_string(10), };
 }
 
 function spree(type) {
-  return {
-    name: (type || '') + 'spree',
-    id: random_string(10),
-  }
+  return { name: (type || '') + 'spree', id: random_string(10), }
 }
 
 function prevent(meta, callback) { //todo: messy + needs refactoring
-  return function() {
+  return function () {
     if(meta.name === 'spree') {
       clearTimeout(events_fired[meta.id]);
       events_fired[meta.id] = setTimeout(callback, SPREE_MS);
@@ -1437,7 +1352,7 @@ function release(id) {
   if(id in events_fired) {
     var ms_to_release = DOUBLECLICK_MS + events_fired[id] - Date.now();
     if(ms_to_release > 0) {
-      setTimeout(function() {
+      setTimeout(function () {
         delete events_fired[id];
       }, ms_to_release);
     } else {

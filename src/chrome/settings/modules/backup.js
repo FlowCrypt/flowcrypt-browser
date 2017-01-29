@@ -8,7 +8,7 @@ var url_params = get_url_params(['account_email', 'action', 'parent_tab_id']);
 
 add_show_hide_passphrase_toggle(['password', 'password2']);
 
-account_storage_get(url_params.account_email, ['setup_simple'], function(storage) {
+account_storage_get(url_params.account_email, ['setup_simple'], function (storage) {
   if(url_params.action === 'setup') {
     $('.back').css('display', 'none');
     if(storage.setup_simple) {
@@ -22,12 +22,12 @@ account_storage_get(url_params.account_email, ['setup_simple'], function(storage
     if(storage.setup_simple) {
       display_block('loading');
       var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
-      backup_key_on_gmail(url_params.account_email, armored_private_key, function(success) {
+      backup_key_on_gmail(url_params.account_email, armored_private_key, function (success) {
         if(success) {
           $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
         } else {
           $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
-          $('.reload').click(function() {
+          $('.reload').click(function () {
             window.location.reload();
           });
         }
@@ -46,13 +46,13 @@ account_storage_get(url_params.account_email, ['setup_simple'], function(storage
 
 function display_block(name) {
   var blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
-  $.each(blocks, function(i, block) {
+  $.each(blocks, function (i, block) {
     $('#' + block).css('display', 'none');
   });
   $('#' + name).css('display', 'block');
 }
 
-$('#password').on('keyup', prevent(spree(), function() {
+$('#password').on('keyup', prevent(spree(), function () {
   evaluate_password_strength('#step_1_password', '#password', '.action_password');
 }));
 
@@ -60,15 +60,15 @@ function show_status() {
   $('.hide_if_backup_done').css('display', 'none');
   $('h1').text('Key Backups');
   display_block('loading');
-  account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes'], function(storage) {
+  account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes'], function (storage) {
     if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
-      fetch_email_key_backups(url_params.account_email, function(success, keys) {
+      fetch_email_key_backups(url_params.account_email, function (success, keys) {
         if(success) {
           display_block('step_0_status');
           if(keys && keys.length) {
             $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly on Gmail.');
             $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
-            $('.action_go_manual').click(function() {
+            $('.action_go_manual').click(function () {
               display_block('step_3_manual');
               $('h1').text('Back up your private key');
             });
@@ -76,21 +76,21 @@ function show_status() {
             if(storage.key_backup_method === 'file') {
               $('.status_summary').text('You have previously backed up your key into a file.');
               $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
-              $('.action_go_manual').click(function() {
+              $('.action_go_manual').click(function () {
                 display_block('step_3_manual');
                 $('h1').text('Back up your private key');
               });
             } else if(storage.key_backup_method === 'print') {
               $('.status_summary').text('You have previously backed up your key by printing it.');
               $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
-              $('.action_go_manual').click(function() {
+              $('.action_go_manual').click(function () {
                 display_block('step_3_manual');
                 $('h1').text('Back up your private key');
               });
             } else { // gmail or other methods
               $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
               $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
-              $('.action_go_manual').click(function() {
+              $('.action_go_manual').click(function () {
                 display_block('step_3_manual');
                 $('h1').text('Back up your private key');
               });
@@ -99,18 +99,18 @@ function show_status() {
             if(storage.setup_simple) {
               $('.status_summary').text('No backups found on this account. You can store a backup of your key on Gmail. Your key will be protected by a pass phrase of your choice.');
               $('#step_0_status .container').html('<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
-              $('.action_go_backup').click(function() {
+              $('.action_go_backup').click(function () {
                 display_block('step_1_password');
                 $('h1').text('Set Backup Pass Phrase');
               });
-              $('.action_go_manual').click(function() {
+              $('.action_go_manual').click(function () {
                 display_block('step_3_manual');
                 $('h1').text('Back up your private key');
               });
             } else {
               $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
               $('#step_0_status .container').html('<div class="button long green action_go_manual">BACK UP MY KEY</div>');
-              $('.action_go_manual').click(function() {
+              $('.action_go_manual').click(function () {
                 display_block('step_3_manual');
                 $('h1').text('Back up your private key');
               });
@@ -126,11 +126,11 @@ function show_status() {
       display_block('step_0_status');
       $('.status_summary').html('CryptUP cannot check your backups because it\'s missing a Gmail permission.');
       $('#step_0_status .container').html('<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>');
-      $('.action_go_manual').click(function() {
+      $('.action_go_manual').click(function () {
         display_block('step_3_manual');
         $('h1').text('Back up your private key');
       });
-      $('.action_go_auth_denied').click(function() {
+      $('.action_go_auth_denied').click(function () {
         chrome_message_send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/auth_denied.htm',
@@ -140,7 +140,7 @@ function show_status() {
   });
 }
 
-$('.action_password').click(function() {
+$('.action_password').click(function () {
   if($(this).hasClass('green')) {
     display_block('step_2_confirm');
   } else {
@@ -148,7 +148,7 @@ $('.action_password').click(function() {
   }
 });
 
-$('.action_reset_password').click(function() {
+$('.action_reset_password').click(function () {
   $('#password').val('');
   $('#password2').val('');
   display_block('step_1_password');
@@ -157,27 +157,21 @@ $('.action_reset_password').click(function() {
 });
 
 function backup_key_on_gmail(account_email, armored_key, callback) {
-  var email_headers = {
-    From: account_email,
-    To: account_email,
-    Subject: recovery_email_subjects[0],
-  };
-  $.get('/chrome/emails/email_intro.template.htm', null, function(email_message) {
+  var email_headers = { From: account_email, To: account_email, Subject: recovery_email_subjects[0], };
+  $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
     var email_attachments = [{
       filename: 'cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key',
       type: 'text/plain',
       content: armored_key,
-        }];
-    var text = {
-      'text/html': email_message
-    };
-    to_mime(url_params.account_email, text, email_headers, email_attachments, function(mime_message) {
+    }];
+    var text = { 'text/html': email_message };
+    to_mime(url_params.account_email, text, email_headers, email_attachments, function (mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, callback);
     });
   });
 }
 
-$('.action_backup').click(prevent(doubleclick(), function(self) {
+$('.action_backup').click(prevent(doubleclick(), function (self) {
   var new_passphrase = $('#password').val();
   if(new_passphrase !== $('#password2').val()) {
     alert('The two pass phrases do not match, please try again.');
@@ -192,7 +186,7 @@ $('.action_backup').click(prevent(doubleclick(), function(self) {
     private_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
     private_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
     private_storage_set('local', url_params.account_email, 'master_private_key', prv.armor());
-    backup_key_on_gmail(url_params.account_email, prv.armor(), function(success) {
+    backup_key_on_gmail(url_params.account_email, prv.armor(), function (success) {
       if(success) {
         write_backup_done_and_render(false, 'gmail');
       } else {
@@ -219,7 +213,7 @@ function backup_on_gmail() {
     var btn_text = $(self).text();
     $(self).html(get_spinner());
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
-    backup_key_on_gmail(url_params.account_email, armored_private_key, function(success) {
+    backup_key_on_gmail(url_params.account_email, armored_private_key, function (success) {
       if(success) {
         write_backup_done_and_render(false, 'gmail');
       } else {
@@ -251,10 +245,7 @@ function backup_refused() {
 }
 
 function write_backup_done_and_render(prompt, method) {
-  account_storage_set(url_params.account_email, {
-    key_backup_prompt: prompt,
-    key_backup_method: method,
-  }, function() {
+  account_storage_set(url_params.account_email, { key_backup_prompt: prompt, key_backup_method: method, }, function () {
     if(url_params.action === 'setup') {
       window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
     } else {
@@ -263,7 +254,7 @@ function write_backup_done_and_render(prompt, method) {
   });
 }
 
-$('.action_manual_backup').click(prevent(doubleclick(), function(self) {
+$('.action_manual_backup').click(prevent(doubleclick(), function (self) {
   var selected = $('input[type=radio][name=input_backup_choice]:checked').val();
   if(selected === 'gmail') {
     backup_on_gmail();
@@ -276,11 +267,9 @@ $('.action_manual_backup').click(prevent(doubleclick(), function(self) {
   }
 }));
 
-$('.action_skip_backup').click(prevent(doubleclick(), function() {
+$('.action_skip_backup').click(prevent(doubleclick(), function () {
   if(url_params.action === 'setup') {
-    account_storage_set(url_params.account_email, {
-      key_backup_prompt: false
-    }, function() {
+    account_storage_set(url_params.account_email, { key_backup_prompt: false }, function () {
       window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
     });
   } else {
@@ -288,7 +277,7 @@ $('.action_skip_backup').click(prevent(doubleclick(), function() {
   }
 }));
 
-$('#step_3_manual input[name=input_backup_choice]').click(function() {
+$('#step_3_manual input[name=input_backup_choice]').click(function () {
   if($(this).val() === 'gmail') {
     $('.action_manual_backup').text('back up on gmail');
     $('.action_manual_backup').removeClass('red').addClass('green');

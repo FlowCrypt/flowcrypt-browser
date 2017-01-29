@@ -8,13 +8,13 @@ var auth_responders = [];
 var RESPONDED = 'RESPONDED';
 
 function google_auth(auth_request, sender, respond) {
-  account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function(storage) {
+  account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
     if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
       google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
     } else {
-      google_auth_refresh_token(storage.google_token_refresh, function(tokens_object) {
+      google_auth_refresh_token(storage.google_token_refresh, function (tokens_object) {
         if(typeof tokens_object.access_token !== 'undefined') {
-          google_auth_save_tokens(auth_request.account_email, tokens_object, storage.google_token_scopes, function() {
+          google_auth_save_tokens(auth_request.account_email, tokens_object, storage.google_token_scopes, function () {
             respond({
               success: true,
               message_id: auth_request.message_id,
@@ -45,10 +45,10 @@ function has_new_scope(new_scopes, original_scopes, omit_read_scope) {
 }
 
 var google_auth_code_request_state = {
-  pack: function(status_object) {
+  pack: function (status_object) {
     return google_oauth2.state_header + JSON.stringify(status_object);
   },
-  unpack: function(status_string) {
+  unpack: function (status_string) {
     return JSON.parse(status_string.replace(google_oauth2.state_header, '', 1));
   },
 };
@@ -57,14 +57,14 @@ function google_auth_window_show_and_respond_to_auth_request(auth_request, curre
   auth_request.auth_responder_id = random_string(20);
   auth_responders[auth_request.auth_responder_id] = respond;
   auth_request.scopes = auth_request.scopes || [];
-  $.each(google_oauth2.scopes, function(i, scope) {
+  $.each(google_oauth2.scopes, function (i, scope) {
     if(auth_request.scopes.indexOf(scope) === -1) {
       if(scope !== 'https://www.googleapis.com/auth/gmail.readonly' || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
         auth_request.scopes.push(scope);
       }
     }
   });
-  $.each(current_scopes || [], function(i, scope) {
+  $.each(current_scopes || [], function (i, scope) {
     if(auth_request.scopes.indexOf(scope) === -1) {
       auth_request.scopes.push(scope);
     }
@@ -124,15 +124,11 @@ function google_auth_get_tokens(code, callback) {
     method: 'POST',
     crossDomain: true,
     async: true,
-    success: function(response) {
+    success: function (response) {
       callback(response);
     },
-    error: function(XMLHttpRequest, status, error) {
-      callback({
-        request: XMLHttpRequest,
-        status: status,
-        error: error
-      });
+    error: function (XMLHttpRequest, status, error) {
+      callback({ request: XMLHttpRequest, status: status, error: error });
     },
   });
 }
@@ -147,15 +143,11 @@ function google_auth_refresh_token(refresh_token, callback) {
     method: 'POST',
     crossDomain: true,
     async: true,
-    success: function(response) {
+    success: function (response) {
       callback(response);
     },
-    error: function(XMLHttpRequest, status, error) {
-      callback({
-        request: XMLHttpRequest,
-        status: status,
-        error: error
-      });
+    error: function (XMLHttpRequest, status, error) {
+      callback({ request: XMLHttpRequest, status: status, error: error });
     },
   });
 }
@@ -164,16 +156,14 @@ function google_auth_check_email(expected_email, access_token, callback) {
   $.ajax({
     url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
     method: 'GET',
-    headers: {
-      'Authorization': 'Bearer ' + access_token
-    },
+    headers: { 'Authorization': 'Bearer ' + access_token },
     crossDomain: true,
     contentType: 'application/json; charset=UTF-8',
     async: true,
-    success: function(response) {
+    success: function (response) {
       callback(response.emailAddress);
     },
-    error: function(response) {
+    error: function (response) {
       console.log('google_auth_check_email error');
       console.log(expected_email);
       console.log(response);
@@ -202,41 +192,41 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
   auth_responders[state_object.auth_responder_id] = RESPONDED;
   close_auth_window();
   switch(result) {
-    case 'Success':
-      google_auth_get_tokens(params.code, function(tokens_object) {
-        if(typeof tokens_object.access_token !== 'undefined') {
-          google_auth_check_email(state_object.account_email, tokens_object.access_token, function(account_email) {
-            // if(state_object.account_email && state_object.account_email !== account_email) {
-            //   //user authorized a different account then expected
-            // }
-            google_auth_save_tokens(account_email, tokens_object, state_object.scopes, function() {
-              safe_respond(auth_responder, {
-                account_email: account_email,
-                success: true,
-                result: result.toLowerCase(),
-                message_id: state_object.message_id,
-              });
+  case 'Success':
+    google_auth_get_tokens(params.code, function (tokens_object) {
+      if(typeof tokens_object.access_token !== 'undefined') {
+        google_auth_check_email(state_object.account_email, tokens_object.access_token, function (account_email) {
+          // if(state_object.account_email && state_object.account_email !== account_email) {
+          //   //user authorized a different account then expected
+          // }
+          google_auth_save_tokens(account_email, tokens_object, state_object.scopes, function () {
+            safe_respond(auth_responder, {
+              account_email: account_email,
+              success: true,
+              result: result.toLowerCase(),
+              message_id: state_object.message_id,
             });
           });
-        } else {
-          safe_respond(auth_responder, {
-            success: false,
-            result: result.toLowerCase(),
-            account_email: state_object.account_email,
-            message_id: state_object.message_id,
-          });
-        }
-      });
-      break;
-    case 'Denied':
-    case 'Error':
-      safe_respond(auth_responder, {
-        success: false,
-        result: result.toLowerCase(),
-        error: params.error,
-        account_email: state_object.account_email,
-        message_id: state_object.message_id,
-      });
-      break;
+        });
+      } else {
+        safe_respond(auth_responder, {
+          success: false,
+          result: result.toLowerCase(),
+          account_email: state_object.account_email,
+          message_id: state_object.message_id,
+        });
+      }
+    });
+    break;
+  case 'Denied':
+  case 'Error':
+    safe_respond(auth_responder, {
+      success: false,
+      result: result.toLowerCase(),
+      error: params.error,
+      account_email: state_object.account_email,
+      message_id: state_object.message_id,
+    });
+    break;
   }
 }

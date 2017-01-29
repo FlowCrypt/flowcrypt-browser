@@ -29,7 +29,7 @@ var l = {
   not_properly_set_up: 'CryptUP is not properly set up to decrypt messages. ',
 };
 
-db_open(function(db) {
+db_open(function (db) {
 
   var ready_attachmments = [];
   var height_history = [];
@@ -40,8 +40,8 @@ db_open(function(db) {
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
-    render_error(l.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function() {
-      $('.review_settings').click(function() {
+    render_error(l.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function () {
+      $('.review_settings').click(function () {
         chrome_message_send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/texts/chrome_content_settings.htm',
@@ -71,31 +71,27 @@ db_open(function(db) {
     if(!is_infinite_resize_loop()) {
       chrome_message_send(url_params.parent_tab_id, 'set_css', {
         selector: 'iframe#' + url_params.frame_id,
-        css: {
-          height: new_height,
-        }
+        css: { height: new_height, }
       });
     }
   }
 
   function format_for_contenteditable(text_or_html) {
-    return inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function(spaces) {
+    return inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
       return '&nbsp;'.repeat(spaces.length);
     });
   }
 
   function render_content(content, is_error, callback) {
-    account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function(storage) {
+    account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function (storage) {
       if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
-        account_storage_set(url_params.account_email, {
-          successfully_received_at_leat_one_message: true
-        });
+        account_storage_set(url_params.account_email, { successfully_received_at_leat_one_message: true });
       }
       $('#pgp_block').html(is_error ? content : format_for_contenteditable(content));
       if(callback) {
         callback();
       }
-      setTimeout(function() {
+      setTimeout(function () {
         $(window).resize(prevent(spree(), send_resize_message));
       }, 1000);
       send_resize_message();
@@ -125,14 +121,14 @@ db_open(function(db) {
 
   function render_error(error_box_content, raw_message_substitute, callback) {
     set_frame_color('red');
-    render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function() {
-      $('.button.settings_keyserver').click(function() {
+    render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function () {
+      $('.button.settings_keyserver').click(function () {
         chrome_message_send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/keyserver.htm',
         });
       });
-      $('.button.settings').click(function() {
+      $('.button.settings').click(function () {
         chrome_message_send(null, 'settings', {
           account_email: url_params.account_email,
         });
@@ -151,7 +147,7 @@ db_open(function(db) {
       if(msg_diagnosis.receivers === 1) {
         render_error(l.cant_open + l.single_sender + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
       } else {
-        check_pubkeys_keyserver(account_email, function(ksrv_diagnosis) {
+        check_pubkeys_keyserver(account_email, function (ksrv_diagnosis) {
           if(!ksrv_diagnosis) {
             render_error(l.cant_open + l.refresh_page);
           } else {
@@ -177,11 +173,11 @@ db_open(function(db) {
   function render_inner_attachments(attachments) {
     $('#pgp_block').append('<div id="attachments"></div>');
     ready_attachmments = attachments;
-    $.each(ready_attachmments, function(i, attachment) {
+    $.each(ready_attachmments, function (i, attachment) {
       $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
     });
     send_resize_message();
-    $('div.attachment').click(prevent(doubleclick(), function(self) {
+    $('div.attachment').click(prevent(doubleclick(), function (self) {
       var attachment = ready_attachmments[$(self).attr('index')];
       download_file(attachment.name, attachment.type, str_to_uint8(attachment.data));
     }));
@@ -212,8 +208,8 @@ db_open(function(db) {
       render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
     } else {
       $('#pgp_block').text('Formatting...');
-      parse_mime_message(decrypted_content, function(success, result) {
-        render_content(format_mime_plaintext_to_display(result.text || result.html || decrypted_content, url_params.message), false, function() {
+      parse_mime_message(decrypted_content, function (success, result) {
+        render_content(format_mime_plaintext_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
             render_inner_attachments(result.attachments);
           }
@@ -223,7 +219,7 @@ db_open(function(db) {
   }
 
   function decrypt_and_render(optional_password) {
-    decrypt(db, url_params.account_email, url_params.message, optional_password, function(result) {
+    decrypt(db, url_params.account_email, url_params.message, optional_password, function (result) {
       if(result.success) {
         if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
           console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
@@ -257,13 +253,13 @@ db_open(function(db) {
 
   function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids) {
     missing_or_wrong_passprases = {};
-    $.each(missing_or_wrong_passphrase_key_longids, function(i, longid) {
+    $.each(missing_or_wrong_passphrase_key_longids, function (i, longid) {
       missing_or_wrong_passprases[longid] = get_passphrase(url_params.account_email, longid);
     });
-    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function() {
+    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function () {
       clearInterval(passphrase_interval);
       passphrase_interval = setInterval(check_passphrase_changed, 1000);
-      $('.enter_passphrase').click(prevent(doubleclick(), function() {
+      $('.enter_passphrase').click(prevent(doubleclick(), function () {
         chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
           type: 'message',
           longids: missing_or_wrong_passphrase_key_longids,
@@ -278,10 +274,10 @@ db_open(function(db) {
     var prompt = '<p>' + l.question_decryt_prompt + '"' + url_params.question + '" </p>';
     prompt += '<p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
-    render_content(prompt, true, function() {
-      $('.button.decrypt').click(prevent(doubleclick(), function(self) {
+    render_content(prompt, true, function () {
+      $('.button.decrypt').click(prevent(doubleclick(), function (self) {
         $(self).html('Opening');
-        setTimeout(function() {
+        setTimeout(function () {
           decrypt_and_render($('#answer').val());
         }, 50);
       }));
@@ -289,7 +285,7 @@ db_open(function(db) {
   }
 
   function check_passphrase_changed() {
-    $.each(missing_or_wrong_passprases, function(i, longid) {
+    $.each(missing_or_wrong_passprases, function (i, longid) {
       if(missing_or_wrong_passprases[longid] !== get_passphrase(url_params.account_email, longid)) {
         missing_or_wrong_passprases = {};
         clearInterval(passphrase_interval);
@@ -307,12 +303,12 @@ db_open(function(db) {
       if(can_read_emails) {
         $('#pgp_block').text('Retrieving message...');
         var format = (!message_fetched_from_api) ? 'full' : 'raw';
-        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, format, function(message_raw) {
+        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, format, function (message_raw) {
           $('#pgp_block').text('Decrypting...');
           url_params.message = message_raw;
           message_fetched_from_api = format;
           decrypt_and_render();
-        }, function(error_type, url_formatted_data_block) {
+        }, function (error_type, url_formatted_data_block) {
           if(error_type === 'format') {
             if(url_formatted_data_block.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
               window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email) + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block) + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id) + '&frame_id=' + encodeURIComponent(url_params.frame_id);
@@ -327,7 +323,7 @@ db_open(function(db) {
         });
       } else { // gmail message read auth not allowed
         $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
-        $('.auth_settings').click(function() {
+        $('.auth_settings').click(function () {
           chrome_message_send(null, 'settings', {
             account_email: url_params.account_email,
             page: '/chrome/settings/modules/auth_denied.htm',
@@ -337,7 +333,7 @@ db_open(function(db) {
     }
   }
 
-  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function(storage) {
+  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
     can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
     if(storage.setup_done) {
       initialize();

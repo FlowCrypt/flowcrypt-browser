@@ -43,13 +43,13 @@ function keyserver_replace_confirm(signed_attest_packet, callback) {
 }
 
 function cryptup_auth_info(callback) {
-  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], function(storage) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], function (storage) {
     callback(storage.cryptup_account_email, storage.cryptup_account_uuid, storage.cryptup_account_verified);
   });
 }
 
 function cryptup_subscription(callback) {
-  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], function(s) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], function (s) {
     if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_verified && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       var active = true; // todo: check cryptup_subscription.expire
       callback(cryptup_subscription.level, cryptup_subscription.expiration, active);
@@ -64,22 +64,13 @@ function cryptup_auth_error() {
 }
 
 function cryptup_account_login(account_email, token, callback) {
-  cryptup_auth_info(function(registered_email, registered_uuid, already_verified) {
+  cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
     var uuid = registered_uuid || sha1(random_string(40));
     var email = registered_email || account_email;
-    cryptup_server_call('account/login', {
-      account: email,
-      uuid: uuid,
-      token: token || null,
-    }, function(success, result) {
+    cryptup_server_call('account/login', { account: email, uuid: uuid, token: token || null, }, function (success, result) {
       if(success) {
         if(result.registered === true) {
-          account_storage_set(null, {
-            cryptup_account_email: email,
-            cryptup_account_uuid: uuid,
-            cryptup_account_verified: result.verified === true,
-            cryptup_account_subscription: result.subscription,
-          }, function() {
+          account_storage_set(null, { cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: result.verified === true, cryptup_account_subscription: result.subscription, }, function () {
             callback(true, result.verified === true, result.subscription);
           });
         } else {
@@ -98,17 +89,15 @@ function cryptup_account_login(account_email, token, callback) {
 }
 
 function cryptup_account_subscribe(product, callback) {
-  cryptup_auth_info(function(email, uuid, verified) {
+  cryptup_auth_info(function (email, uuid, verified) {
     if(verified) {
       cryptup_server_call('account/subscribe', {
         account: email,
         uuid: uuid,
         product: product,
-      }, function(success, result) {
+      }, function (success, result) {
         if(success) {
-          account_storage_set(null, {
-            cryptup_account_subscription: result.subscription,
-          }, function() {
+          account_storage_set(null, { cryptup_account_subscription: result.subscription, }, function () {
             callback(true, result.subscription, result.error);
           });
         } else {
@@ -122,7 +111,7 @@ function cryptup_account_subscribe(product, callback) {
 }
 
 function cryptup_account_store(data, type, role, callback) {
-  cryptup_auth_info(function(email, uuid, verified) {
+  cryptup_auth_info(function (email, uuid, verified) {
     if(verified) {
       cryptup_server_call('account/store', {
         account: email,
@@ -143,11 +132,12 @@ function keyserver_call(path, data, callback, format) {
     var content_type = 'application/json; charset=UTF-8';
   } else {
     var data_formatted = new FormData();
-    $.each(data, function(name, value) {
+    $.each(data, function (name, value) {
       data_formatted.append(name, value);
     });
     var content_type = false;
   }
+  cryptup_error_log('replace_to_prod_server');
   return $.ajax({
     // url: 'https://cryptup-keyserver.herokuapp.com/' + path,
     url: 'http://127.0.0.1:5000/' + path,
@@ -158,15 +148,11 @@ function keyserver_call(path, data, callback, format) {
     processData: false,
     contentType: content_type,
     async: true,
-    success: function(response) {
+    success: function (response) {
       callback(true, response);
     },
-    error: function(XMLHttpRequest, status, error) {
-      callback(false, {
-        request: XMLHttpRequest,
-        status: status,
-        error: error
-      });
+    error: function (XMLHttpRequest, status, error) {
+      callback(false, { request: XMLHttpRequest, status: status, error: error });
     },
   });
 }
@@ -182,7 +168,7 @@ function attest_packet_armor(content_text) {
 
 function attest_packet_create_sign(values, decrypted_prv, callback) {
   var lines = [];
-  $.each(values, function(key, value) {
+  $.each(values, function (key, value) {
     lines.push(key + ':' + value);
   });
   var content_text = lines.join('\n');
@@ -190,7 +176,7 @@ function attest_packet_create_sign(values, decrypted_prv, callback) {
   if(packet.success !== true) {
     callback(false, packet.error);
   } else {
-    sign(decrypted_prv, content_text, true, function(signed_attest_packet) {
+    sign(decrypted_prv, content_text, true, function (signed_attest_packet) {
       callback(true, signed_attest_packet.data);
     });
   }
@@ -215,7 +201,7 @@ function attest_packet_parse(text) {
   if(matches && matches[1]) {
     result.text = matches[1].replace(/^\s+|\s+$/g, '');
     var lines = result.text.split('\n');
-    $.each(lines, function(i, line) {
+    $.each(lines, function (i, line) {
       var line_parts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
       if(line_parts.length !== 2) {
         result.error = 'Wrong content line format';
