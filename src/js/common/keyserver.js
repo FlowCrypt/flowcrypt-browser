@@ -116,7 +116,7 @@ function cryptup_account_store_attachment(attachment, callback) {
       cryptup_server_call('account/store', {
         account: email,
         uuid: uuid,
-        data: attachment,
+        content: attachment,
         type: attachment.type,
         role: 'attachment',
       }, callback, 'FORM');
@@ -126,17 +126,17 @@ function cryptup_account_store_attachment(attachment, callback) {
   });
 }
 
-function keyserver_call(path, data, callback, format) {
+function keyserver_call(path, values, callback, format) {
   if(format !== 'FORM') {
-    var data_formatted = JSON.stringify(data);
+    var formatted_values = JSON.stringify(values);
     var content_type = 'application/json; charset=UTF-8';
   } else {
-    var data_formatted = new FormData();
-    $.each(data, function (name, value) {
+    var formatted_values = new FormData();
+    $.each(values, function (name, value) {
       if(typeof value === 'object' && value.name && value.content && value.type) {
-        data_formatted.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp?
+        formatted_values.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
       } else {
-        data_formatted.append(name, value);
+        formatted_values.append(name, value);
       }
     });
     var content_type = false;
@@ -146,7 +146,7 @@ function keyserver_call(path, data, callback, format) {
     // url: 'https://cryptup-keyserver.herokuapp.com/' + path,
     url: 'http://127.0.0.1:5000/' + path,
     method: 'POST',
-    data: data_formatted,
+    data: formatted_values,
     dataType: 'json',
     crossDomain: true,
     processData: false,
