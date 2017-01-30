@@ -315,7 +315,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
       var size_mb = result.attachment.size / (1024 * 1024);
       var size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
       var link_text = 'Attachment: ' + result.attachment.name + ' (' + result.attachment.type + ')' + size_text;
-      plaintext += '<a href="' + upload_results.url + '" class="cryptup_file">' + link_text + '</a>\n';
+      var cryptup_data = html_attribute_encode({size: result.attachment.size, type: result.attachment.type, name: result.attachment.name});
+      plaintext += '<a href="' + result.url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
     });
     return plaintext;
   }

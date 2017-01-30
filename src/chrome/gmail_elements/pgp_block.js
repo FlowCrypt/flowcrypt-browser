@@ -31,7 +31,7 @@ var l = {
 
 db_open(function (db) {
 
-  var ready_attachmments = [];
+  var included_attachments = [];
   var height_history = [];
   var message_fetched_from_api = false;
   var passphrase_interval = undefined;
@@ -170,16 +170,42 @@ db_open(function (db) {
     }
   }
 
+  function decrypt_and_save_attachment_to_downloads(success, encrypted_data, name, type) {
+    //todo - more or less copy/pasted from attachment.js, should use a common function
+    //todo - or even better, stop showing attachments as inner part of messages, instead show them through attachment.htm. Test performance.
+    if(success) {
+      decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
+        if(result.success) {
+          save_file_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data);
+        } else {
+          delete result.message;
+          console.log(result);
+          alert('There was a problem decrypting this file. Downloading encrypted original. Write me at tom@cryptup.org if this happens repeatedly.');
+          save_file_to_downloads(name, type, encrypted_data);
+        }
+      });
+    } else {
+      alert('Could not download file, please try again.');
+    }
+  }
+
+
   function render_inner_attachments(attachments) {
     $('#pgp_block').append('<div id="attachments"></div>');
-    ready_attachmments = attachments;
-    $.each(ready_attachmments, function (i, attachment) {
+    included_attachments = attachments;
+    $.each(attachments, function (i, attachment) {
       $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
     });
     send_resize_message();
     $('div.attachment').click(prevent(doubleclick(), function (self) {
-      var attachment = ready_attachmments[$(self).attr('index')];
-      download_file(attachment.name, attachment.type, str_to_uint8(attachment.data));
+      var attachment = included_attachments[$(self).attr('index')];
+      if(attachment.content) {
+        save_file_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? str_to_uint8(attachment.content) : attachment.content);
+      } else {
+        download_as_uint8(attachment.url, /* progress function */ null, function(success, downloaded) {
+          decrypt_and_save_attachment_to_downloads(success, uint8_to_str(downloaded), attachment.name, attachment.type);
+        });
+      }
     }));
   }
 
@@ -205,13 +231,30 @@ db_open(function (db) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature);
     if(!could_be_mime_message(decrypted_content)) {
-      render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message));
+      var cryptup_file_link_elements = [];
+      if(decrypted_content.indexOf('cryptup_file') !== -1) {
+        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function(found_link) {
+          cryptup_file_link_elements.push(found_link);
+          return '';
+        });
+      }
+      render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message), false, function() {
+        if(cryptup_file_link_elements.length) {
+          render_inner_attachments(cryptup_file_link_elements.map(function (link_element_string) {
+            var element = $(link_element_string);
+            var attachment_data = html_attribute_decode(element.attr('cryptup-data'));
+            return attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href'));
+          }));
+        }
+      });
     } else {
       $('#pgp_block').text('Formatting...');
       parse_mime_message(decrypted_content, function (success, result) {
         render_content(format_mime_plaintext_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
-            render_inner_attachments(result.attachments);
+            render_inner_attachments(result.attachments.map(function(mime_attachment) {
+              return attachment(mime_attachment.name, mime_attachment.type, mime_attachment.data, mime_attachment.size);
+            }));
           }
         });
       });

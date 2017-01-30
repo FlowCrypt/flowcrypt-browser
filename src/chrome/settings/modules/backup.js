@@ -227,7 +227,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
     var btn_text = $(self).text();
     $(self).html(get_spinner());
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
-    download_file('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
+    save_file_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');
   }
 }

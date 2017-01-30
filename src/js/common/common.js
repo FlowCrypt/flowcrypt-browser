@@ -252,23 +252,25 @@ function inner_text(html_text) {
   return e.innerText;
 }
 
-function download_as_str(url, progress, callback) {
+function download_as_uint8(url, progress, callback) {
   var request = new XMLHttpRequest();
   request.open("GET", url, true);
   request.responseType = "arraybuffer";
-  request.onprogress = function (e) {
-    progress(e.loaded, e.total);
-  };
+  if(typeof progress === 'function') {
+    request.onprogress = function (e) {
+        progress(e.loaded, e.total);
+    };
+  }
   request.onerror = function (e) {
     callback(false, e);
   };
   request.onload = function (e) {
-    callback(true, uint8_to_str(new Uint8Array(request.response)));
+    callback(true, new Uint8Array(request.response));
   };
   request.send();
 }
 
-function download_file(name, type, content) {
+function save_file_to_downloads(name, type, content) {
   var blob = new Blob([content], { type: type });
   var a = document.createElement('a');
   var url = window.URL.createObjectURL(blob);
@@ -383,7 +385,7 @@ function parse_mime_message(mime_message, callback) {
         Try(function () {
           callback(true, mime_message_contents);
         })();
-      }
+      };
       parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
       parser.end();
     } catch(e) {
@@ -960,7 +962,11 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
     options.privateKeys = [signing_prv];
     console.log('singing oonly')
   }
-  openpgp.encrypt(options).then(callback, function (error) {
+  openpgp.encrypt(options).then(function(result) {
+    Try(function() { // todo - this is very awkward, should create a Try wrapper with a better api
+      callback(result);
+    })();
+  }, function (error) {
     console.log(error);
     alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
     //todo: make the UI behave well on errors
@@ -984,8 +990,14 @@ function key_normalize(armored) {
   }
 }
 
-function attachment(name, type, content, size, secure) {
-  return { name: name, type: type, content: content, size: size || content.length, secure: secure };
+function attachment(name, type, content, size, url) {
+  return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
+    name: name,
+    type: type,
+    content: content,
+    size: size || content.length,
+    url: url || null,
+  };
 }
 
 function key_fingerprint(key, formatting) {
@@ -1180,6 +1192,14 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
 }
 
 /******************************************* STRINGS **********************************/
+
+function html_attribute_encode(values) {
+  return base64url_encode(JSON.stringify(values));
+}
+
+function html_attribute_decode(encoded) {
+  return JSON.parse(base64url_decode(encoded));
+}
 
 function base64url_encode(str) {
   if(typeof str === 'undefined') {
