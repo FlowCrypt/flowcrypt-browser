@@ -269,9 +269,7 @@ function download_as_str(url, progress, callback) {
 }
 
 function download_file(filename, type, data) {
-  var blob = new Blob([data], {
-    type: type
-  });
+  var blob = new Blob([data], { type: type });
   var a = document.createElement('a');
   var url = window.URL.createObjectURL(blob);
   a.style.display = 'none';
@@ -824,9 +822,7 @@ function decrypt_key(prv, passphrase) { // returns true, false, or RETURNS a cou
   } catch(e) {
     if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
       try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
-        return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) {
-          return successes + Number(subkey.subKey.decrypt(passphrase));
-        }, 0);
+        return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) { return successes + Number(subkey.subKey.decrypt(passphrase)); }, 0);
       } catch(subkey_e) {
         return subkey_e;
       }

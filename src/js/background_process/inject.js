@@ -28,14 +28,14 @@ function get_content_script_tab_ids(matches, callback) {
 }
 
 function is_content_script_injection_needed(tab_id, callback) {
-  chrome.tabs.executeScript(tab_id, { code: 'Boolean(window.injected)', }, function (results) {
+  chrome.tabs.executeScript(tab_id, { code: 'Boolean(window.injected)' }, function (results) {
     callback(results[0]);
   });
 }
 
 function inject_content_scripts(tab_id, files, callback) {
   var files_copy = files.slice();
-  chrome.tabs.executeScript(tab_id, { file: files_copy.shift(), }, function (results) {
+  chrome.tabs.executeScript(tab_id, { file: files_copy.shift() }, function (results) {
     if(files_copy.length) {
       inject_content_scripts(tab_id, files_copy, callback);
     } else if(callback) {

@@ -145,7 +145,7 @@ db_open(function (db) {
       var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
       $('#reply_message_successful_container div.replied_time').text(time);
       $('#reply_message_successful_container').css('display', 'block');
-      if(has_attachments) {
+      if(has_attachments) { // todo - will not work with cryptup uploaded attachments. Why extra request, anyway?
         gmail_api_message_get(url_params.account_email, message_id, 'full', function (success, gmail_message_object) {
           if(success) {
             $('#attachments').css('display', 'block');
@@ -170,12 +170,12 @@ db_open(function (db) {
       'In-Reply-To': thread_message_id_last,
       'References': thread_message_referrences_last + ' ' + thread_message_id_last,
     };
-    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments) {
-      to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attachments, function (mime_message) {
+    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments, attach_files) {
+      to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
         gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
           if(success) {
             increment_metric('reply', function () {
-              reply_message_render_success(headers.To, (attachments || []).length > 0, response.id);
+              reply_message_render_success(headers.To, (attachments || []).length, response.id);
             });
           } else {
             compose.handle_send_message_error(response);
