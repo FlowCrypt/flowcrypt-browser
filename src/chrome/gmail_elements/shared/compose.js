@@ -312,9 +312,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function add_uploaded_file_links_to_message_body(plaintext, upload_results) {
     plaintext += '\n\n';
     $.each(upload_results, function (i, result) {
-      var size_mb = result.attachment.content.length / (1024 * 1024);
+      var size_mb = result.attachment.size / (1024 * 1024);
       var size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
-      var link_text = 'Attachment: ' + result.attachment.filename + ' (' + result.attachment.type + ')' + size_text;
+      var link_text = 'Attachment: ' + result.attachment.name + ' (' + result.attachment.type + ')' + size_text;
       plaintext += '<a href="' + upload_results.url + '" class="cryptup_file">' + link_text + '</a>\n';
     });
     return plaintext;

@@ -69,7 +69,7 @@ function google_api_handle_auth_error(account_email, method, resource, parameter
 /*
   body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
   headers: at least {To, From, Subject}
-  attachments: [{filename: 'some.txt', type: 'text/plain', content: }]
+  attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
 */
 function to_mime(account_email, body, headers, attachments, mime_message_callback) {
   set_up_require();
@@ -89,7 +89,7 @@ function to_mime(account_email, body, headers, attachments, mime_message_callbac
     }
     root_node.appendChild(text_node);
     $.each(attachments || [], function (i, attachment) {
-      root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.filename + '"', { filename: attachment.filename }).setHeader({
+      root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
         'Content-Disposition': 'attachment',
         'X-Attachment-Id': 'f_' + random_string(10),
         'Content-Transfer-Encoding': 'base64',

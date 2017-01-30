@@ -60,12 +60,7 @@ function init_shared_attach_js(file_count_limit) {
       $.each(attached_files, function (id, file) {
         read_attachment_data_as_uint8(id, function (file_data) {
           encrypt(armored_pubkeys, null, challenge, file_data, false, function (encrypted_file_content) {
-            add({
-              filename: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp',
-              type: file.type,
-              content: encrypted_file_content.message.packets.write(),
-              secure: true,
-            });
+            add(attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted_file_content.message.packets.write(), null, true));
           });
         });
       });
@@ -79,7 +74,7 @@ function init_shared_attach_js(file_count_limit) {
       uploader.cancel(id);
     } else {
       var file = uploader.getFile(id);
-      if(false) { //check size
+      if(false) { //todo - check size
         uploader.cancel(id);
         alert('Attachments up to 10MB are allowed');
         return;

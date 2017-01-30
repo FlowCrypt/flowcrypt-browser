@@ -268,13 +268,13 @@ function download_as_str(url, progress, callback) {
   request.send();
 }
 
-function download_file(filename, type, data) {
-  var blob = new Blob([data], { type: type });
+function download_file(name, type, content) {
+  var blob = new Blob([content], { type: type });
   var a = document.createElement('a');
   var url = window.URL.createObjectURL(blob);
   a.style.display = 'none';
   a.href = url;
-  a.download = filename;
+  a.download = name;
   a.click();
   window.URL.revokeObjectURL(url);
 }
@@ -984,6 +984,10 @@ function key_normalize(armored) {
   }
 }
 
+function attachment(name, type, content, size, secure) {
+  return { name: name, type: type, content: content, size: size || content.length, secure: secure };
+}
+
 function key_fingerprint(key, formatting) {
   if(key === null || typeof key === 'undefined') {
     return null;
@@ -1110,7 +1114,7 @@ function chrome_message_destination_parse(destination_string) {
 }
 
 function chrome_message_send(destination_string, name, data, callback) {
-  var msg = { name: name, data: data, to: destination_string || null, respondable: (callback) ? true : false, uid: random_string(10), };
+  var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: random_string(10), };
   if(background_script_shortcut_handlers && msg.to === null) {
     background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
   } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {

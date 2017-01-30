@@ -111,16 +111,12 @@ function cryptup_account_subscribe(product, callback) {
 }
 
 function cryptup_account_store_attachment(attachment, callback) {
-  console.log(attachment);
   cryptup_auth_info(function (email, uuid, verified) {
     if(verified) {
       cryptup_server_call('account/store', {
         account: email,
         uuid: uuid,
-        data: {
-          blob: new Blob([attachment.content], { type: attachment.type }), // todo - type should be just app/pgp?
-          name: attachment.filename, // todo - just change to name
-        },
+        data: attachment,
         type: attachment.type,
         role: 'attachment',
       }, callback, 'FORM');
@@ -137,8 +133,8 @@ function keyserver_call(path, data, callback, format) {
   } else {
     var data_formatted = new FormData();
     $.each(data, function (name, value) {
-      if(typeof value === 'object' && value.blob) {
-        data_formatted.append(name, value.blob, value.name);
+      if(typeof value === 'object' && value.name && value.content && value.type) {
+        data_formatted.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp?
       } else {
         data_formatted.append(name, value);
       }
