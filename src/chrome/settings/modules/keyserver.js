@@ -21,7 +21,7 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
   } else if(storage.attests_requested && storage.attests_requested.length) {
     $('.attests').html('Attestation was requested from: ' + storage.attests_requested.join(', ') + '. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption. Check your inbox for attestation email. The records below should update shortly.');
   }
-  check_pubkeys_keyserver(url_params.account_email, function (diagnosis) {
+  tool.diagnose.keyserver_pubkeys(url_params.account_email, function (diagnosis) {
     if(diagnosis) {
       $('.summary').html('');
       render_diagnosis(diagnosis, storage.attests_requested, storage.attests_processed);

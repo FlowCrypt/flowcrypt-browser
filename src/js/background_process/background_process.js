@@ -44,8 +44,8 @@ if(!localStorage.settings_seen) {
 
 inject_cryptup_into_gmail_if_needed();
 
-catcher.try(check_keyserver_pubkey_fingerprints)();
-setInterval(catcher.try(check_keyserver_pubkey_fingerprints), 1000 * 60 * 60 * 6);
+catcher.try(tool.diagnose.keyserver_fingerprints)();
+setInterval(catcher.try(tool.diagnose.keyserver_fingerprints), 1000 * 60 * 60 * 6);
 
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);

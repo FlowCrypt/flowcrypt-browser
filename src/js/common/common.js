@@ -2,7 +2,7 @@
 
 'use strict';
 
-// 	crypt:
+// 	crypto:
 // 		armor:
 // 			strip_pgp_armor
 // 			extract_armored_message_from_text
@@ -18,7 +18,6 @@
 // 			key_longid
 // 			test_private_key
 // 		message:
-// 			check_pubkeys_message
 // 			sign
 // 			zeroed_decrypt_error_counts
 // 			increment_decrypt_error_counts
@@ -33,14 +32,10 @@
 // 			sha256
 // 			sha256_loop
 // 			challenge_answer_hash
-//
 
 // 	keep original (move to storage)
 // 		open_settings_page
-// 		get_account_emails
-// 		add_account_email_to_list_of_accounts
-// 		check_keyserver_pubkey_fingerprints
-// 		check_pubkeys_keyserver
+
 
 
 
@@ -285,6 +280,11 @@
         listen: listen,
         listen_background: listen_background,
       },
+    },
+    diagnose: {
+      message_pubkeys: message_pubkeys,
+      keyserver_fingerprints: keyserver_fingerprints,
+      keyserver_pubkeys: keyserver_pubkeys,
     },
   };
 
@@ -925,6 +925,74 @@
     });
   }
 
+  /* tool.diagnose */
+
+  function message_pubkeys(account_email, message) {
+    var message_key_ids = message.getEncryptionKeyIds();
+    var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
+    var diagnosis = { found_match: false, receivers: message_key_ids.length, };
+    $.each(message_key_ids, function (i, msg_k_id) {
+      $.each(local_key_ids, function (j, local_k_id) {
+        if(msg_k_id === local_k_id) {
+          diagnosis.found_match = true;
+          return false;
+        }
+      });
+    });
+    return diagnosis;
+  }
+
+  function keyserver_pubkeys(account_email, callback) {
+    var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
+    account_storage_get(account_email, ['addresses'], function (storage) {
+      keyserver_keys_find(storage.addresses || [account_email], function (success, pubkey_search_results) {
+        if(success) {
+          $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
+            if(!pubkey_search_result.pubkey) {
+              diagnosis.has_pubkey_missing = true;
+              diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, }
+            } else {
+              var match = true;
+              var local_fingerprint = key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
+              if(key_fingerprint(pubkey_search_result.pubkey) !== local_fingerprint) {
+                diagnosis.has_pubkey_mismatch = true;
+                match = false;
+              }
+              diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match, }
+            }
+          });
+          callback(diagnosis);
+        } else {
+          callback();
+        }
+      });
+    });
+  }
+
+  function keyserver_fingerprints() {
+    get_account_emails(function (account_emails) {
+      if(account_emails && account_emails.length) {
+        account_storage_get(account_emails, ['setup_done'], function (multi_storage) {
+          var emails_setup_done = [];
+          $.each(multi_storage, function (account_email, storage) {
+            if(storage.setup_done) {
+              emails_setup_done.push(account_email);
+            }
+          });
+          keyserver_keys_check(emails_setup_done, function (success, response) {
+            if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
+              var save_result = {};
+              $.each(emails_setup_done, function (i, account_email) {
+                save_result[account_email] = response.fingerprints[i];
+              });
+              account_storage_set(null, { keyserver_fingerprints: save_result });
+            }
+          });
+        });
+      }
+    });
+  }
+
 
 })();
 
@@ -990,75 +1058,10 @@ function strip_pgp_armor(pgp_block_text) {
   return pgp_block_text;
 }
 
-function check_keyserver_pubkey_fingerprints() {
-  get_account_emails(function (account_emails) {
-    if(account_emails && account_emails.length) {
-      account_storage_get(account_emails, ['setup_done'], function (multi_storage) {
-        var emails_setup_done = [];
-        $.each(multi_storage, function (account_email, storage) {
-          if(storage.setup_done) {
-            emails_setup_done.push(account_email);
-          }
-        });
-        keyserver_keys_check(emails_setup_done, function (success, response) {
-          if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
-            var save_result = {};
-            $.each(emails_setup_done, function (i, account_email) {
-              save_result[account_email] = response.fingerprints[i];
-            });
-            account_storage_set(null, { keyserver_fingerprints: save_result });
-          }
-        });
-      });
-    }
-  });
-}
-
 function extract_key_ids(armored_pubkey) {
   return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
 }
 
-function check_pubkeys_message(account_email, message) {
-  var message_key_ids = message.getEncryptionKeyIds();
-  var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
-  var diagnosis = { found_match: false, receivers: message_key_ids.length, };
-  $.each(message_key_ids, function (i, msg_k_id) {
-    $.each(local_key_ids, function (j, local_k_id) {
-      if(msg_k_id === local_k_id) {
-        diagnosis.found_match = true;
-        return false;
-      }
-    });
-  });
-  return diagnosis;
-}
-
-function check_pubkeys_keyserver(account_email, callback) {
-  var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
-  account_storage_get(account_email, ['addresses'], function (storage) {
-    keyserver_keys_find(storage.addresses || [account_email], function (success, pubkey_search_results) {
-      if(success) {
-        $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
-          if(!pubkey_search_result.pubkey) {
-            diagnosis.has_pubkey_missing = true;
-            diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, }
-          } else {
-            var match = true;
-            var local_fingerprint = key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
-            if(key_fingerprint(pubkey_search_result.pubkey) !== local_fingerprint) {
-              diagnosis.has_pubkey_mismatch = true;
-              match = false;
-            }
-            diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match, }
-          }
-        });
-        callback(diagnosis);
-      } else {
-        callback();
-      }
-    });
-  });
-}
 
 /* -------------------- CRYPTO ----------------------------------------------------*/
 

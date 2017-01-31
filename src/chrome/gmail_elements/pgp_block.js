@@ -140,14 +140,14 @@ db_open(function (db) {
   }
 
   function handle_private_key_mismatch(account_email, message) { //todo - make it work for multiple stored keys
-    var msg_diagnosis = check_pubkeys_message(account_email, message);
+    var msg_diagnosis = tool.diagnose.message_pubkeys(account_email, message);
     if(msg_diagnosis.found_match) {
       render_error(l.cant_open + l.encrypted_correctly_file_bug);
     } else {
       if(msg_diagnosis.receivers === 1) {
         render_error(l.cant_open + l.single_sender + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
       } else {
-        check_pubkeys_keyserver(account_email, function (ksrv_diagnosis) {
+        tool.diagnose.keyserver_pubkeys(account_email, function (ksrv_diagnosis) {
           if(!ksrv_diagnosis) {
             render_error(l.cant_open + l.refresh_page);
           } else {
