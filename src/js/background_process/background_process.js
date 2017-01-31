@@ -8,7 +8,7 @@ migrate_global(function () {
   account_storage_set(null, { version: tool.env.cryptup_version_integer(), });
 });
 
-chrome_message_background_listen({
+tool.browser.message.listen_background({
   migrate_account: migrate_account,
   google_auth: google_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
@@ -45,7 +45,7 @@ if(!localStorage.settings_seen) {
 inject_cryptup_into_gmail_if_needed();
 
 catcher.try(check_keyserver_pubkey_fingerprints)();
-TrySetInterval(check_keyserver_pubkey_fingerprints, 1000 * 60 * 60 * 6);
+setInterval(catcher.try(check_keyserver_pubkey_fingerprints), 1000 * 60 * 60 * 6);
 
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);

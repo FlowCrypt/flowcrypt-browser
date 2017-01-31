@@ -2,7 +2,7 @@
 
 'use strict';
 
-chrome_message_send(null, 'get_active_tab_info', {}, function (active_tab) {
+tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab) {
   if(active_tab.account_email !== null) {
     account_storage_get(active_tab.account_email, ['setup_done'], function (storage) {
       if(storage.setup_done) {
@@ -35,7 +35,7 @@ chrome_message_send(null, 'get_active_tab_info', {}, function (active_tab) {
 });
 
 function redirect_to_initial_setup(account_email) {
-  chrome_message_send(null, 'settings', { account_email: account_email || '', }, function () {
+  tool.browser.message.send(null, 'settings', { account_email: account_email || '', }, function () {
     window.close();
   });
 }
@@ -59,7 +59,7 @@ function choose_email_or_settings_popup(active_account_email) {
   });
   $('.action_send_email').click(function () {
     if(active_account_email) {
-      chrome_message_send(null, 'settings', {
+      tool.browser.message.send(null, 'settings', {
         account_email: active_account_email,
         page: '/chrome/gmail_elements/new_message.htm',
       }, function () {

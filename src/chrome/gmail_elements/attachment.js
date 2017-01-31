@@ -94,7 +94,7 @@ db_open(function (db) {
           tool.file.save_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
-          chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
+          tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {
             type: 'attachment',
             longids: result.missing_passphrases,
           });

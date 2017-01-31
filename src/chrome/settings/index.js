@@ -9,10 +9,10 @@ $('span#v').text(chrome.runtime.getManifest().version);
 var tab_id_global = undefined;
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
-chrome_message_get_tab_id(function (tab_id) {
+tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
 
-  chrome_message_listen({
+  tool.browser.message.listen({
     open_page: function (data, sender, respond) {
       show_settings_page(data.page, data.add_url_text);
     },
@@ -34,7 +34,7 @@ chrome_message_get_tab_id(function (tab_id) {
       $('.featherlight-close').click();
       new_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
     },
-  }, tab_id); // adding tab_id_global to chrome_message_listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+  }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
   initialize();
 
@@ -156,7 +156,7 @@ function add_key_rows_html(private_keys) {
 
 function new_account_authentication_prompt(account_email, omit_read_scope) {
   account_email = account_email || '';
-  chrome_message_send(null, 'google_auth', {
+  tool.browser.message.send(null, 'google_auth', {
     account_email: account_email,
     omit_read_scope: omit_read_scope,
   }, function (response) {

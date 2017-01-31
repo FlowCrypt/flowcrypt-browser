@@ -13,7 +13,7 @@ $('.action_send_feedback').click(function () {
       if(success && response.sent === true) {
         $(button).text('sent!');
         alert('Message sent! You will find your response in ' + url_params.account_email + ', check your email later. Thanks!');
-        chrome_message_send(url_params.parent_tab_id, 'close_page');
+        tool.browser.message.send(url_params.parent_tab_id, 'close_page');
       } else {
         $(button).text(original_button_text);
         if(success && response.sent === false) {

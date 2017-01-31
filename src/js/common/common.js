@@ -2,15 +2,6 @@
 
 'use strict';
 
-
-// tool
-// 	str
-// 	env
-// 	arr
-// 	time
-// 	file
-// 	mime
-// 	ui:
 // 	crypt:
 // 		armor:
 // 			strip_pgp_armor
@@ -42,21 +33,7 @@
 // 			sha256
 // 			sha256_loop
 // 			challenge_answer_hash
-// 	chrome:
-// 		chrome_message_destination_parse
-// 		chrome_message_send
-// 		chrome_message_get_tab_id
-// 		chrome_message_background_listen
-// 		chrome_message_listen
 //
-//
-// background_script_shortcut_handlers
-// events_fired
-// DOUBLECLICK_MS
-// SPREE_MS
-// SLOW_SPREE_MS
-// VERY_SLOW_SPREE_MS
-
 
 // 	keep original (move to storage)
 // 		open_settings_page
@@ -177,7 +154,7 @@
       var col = 0;
     }
     try {
-      chrome_message_send(null, 'runtime', null, function (runtime) {
+      tool.browser.message.send(null, 'runtime', null, function (runtime) {
         handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
       });
     } catch(message_err) {
@@ -299,6 +276,14 @@
         spree: spree,
         prevent: prevent,
         release: release, // todo - I may have forgot to use this somwhere, used only parallel() - if that's how it works
+      },
+    },
+    browser: {
+      message: {
+        send: send,
+        tab_id: tab_id,
+        listen: listen,
+        listen_background: listen_background,
       },
     },
   };
@@ -537,7 +522,7 @@
         storage.metrics[metrics_k] += 1;
       }
       account_storage_set(null, { metrics: storage.metrics, }, function () {
-        chrome_message_send(null, 'update_uninstall_url', null, callback);
+        send(null, 'update_uninstall_url', null, callback);
       });
     });
   }
@@ -858,6 +843,85 @@
           }
         });
       });
+    });
+  }
+
+  /* tools.browser.message */
+
+  var background_script_shortcut_handlers = undefined;
+
+  function destination_parse(destination_string) {
+    var parsed = { tab: null, frame: null, };
+    if(destination_string) {
+      parsed.tab = Number(destination_string.split(':')[0]);
+      parsed.frame = Number(destination_string.split(':')[1]);
+    }
+    return parsed;
+  }
+
+  function send(destination_string, name, data, callback) {
+    var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), };
+    if(background_script_shortcut_handlers && msg.to === null) {
+      background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
+    } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
+      chrome.tabs.sendMessage(destination_parse(destination_string).tab, msg, undefined, callback);
+    } else {
+      chrome.runtime.sendMessage(msg, callback);
+    }
+  }
+
+  function tab_id(callback) {
+    send(null, '_tab_', null, callback);
+  }
+
+  function listen_background(handlers) {
+    background_script_shortcut_handlers = handlers;
+    chrome.runtime.onMessage.addListener(function (request, sender, respond) {
+      var safe_respond = function (response) {
+        try { // avoiding unnecessary errors when target tab gets closed
+          respond(response);
+        } catch(e) {
+          if(e.message !== 'Attempting to use a disconnected port object') {
+            throw e;
+          }
+        }
+      };
+      if(request.to) {
+        request.sender = sender;
+        chrome.tabs.sendMessage(destination_parse(request.to).tab, request, undefined, safe_respond);
+      } else {
+        handlers[request.name](request.data, sender, safe_respond);
+      }
+      return request.respondable === true;
+    });
+  }
+
+  function listen(handlers, listen_for_tab_id) {
+    var processed = [];
+    chrome.runtime.onMessage.addListener(function (request, sender, respond) {
+      return catcher.try(function () {
+        if(request.to === listen_for_tab_id) {
+          if(processed.indexOf(request.uid) === -1) {
+            processed.push(request.uid);
+            if(typeof handlers[request.name] !== 'undefined') {
+              handlers[request.name](request.data, sender, respond);
+            } else {
+              if(request.name !== '_tab_') {
+                catcher.try(function () {
+                  throw new Error('tool.browser.message.listen error: handler "' + request.name + '" not set');
+                })();
+              } else {
+                // console.log('tool.browser.message.listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
+              }
+            }
+          } else {
+            // console.log('tool.browser.message.listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
+          }
+        } else {
+          // console.log('tool.browser.message.listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
+        }
+        return request.respondable === true;
+      })();
     });
   }
 
@@ -1377,87 +1441,6 @@ function test_private_key(armored, passphrase, callback) {
     callback(false, error.message);
   }
 }
-
-/* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */
-
-var background_script_shortcut_handlers = undefined;
-
-function chrome_message_destination_parse(destination_string) {
-  var parsed = { tab: null, frame: null, };
-  if(destination_string) {
-    parsed.tab = Number(destination_string.split(':')[0]);
-    parsed.frame = Number(destination_string.split(':')[1]);
-  }
-  return parsed;
-}
-
-function chrome_message_send(destination_string, name, data, callback) {
-  var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), };
-  if(background_script_shortcut_handlers && msg.to === null) {
-    background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
-  } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
-    chrome.tabs.sendMessage(chrome_message_destination_parse(destination_string).tab, msg, undefined, callback);
-  } else {
-    chrome.runtime.sendMessage(msg, callback);
-  }
-}
-
-function chrome_message_get_tab_id(callback) {
-  chrome_message_send(null, '_tab_', null, callback);
-}
-
-function chrome_message_background_listen(handlers) {
-  background_script_shortcut_handlers = handlers;
-  chrome.runtime.onMessage.addListener(function (request, sender, respond) {
-    var safe_respond = function (response) {
-      try { // avoiding unnecessary errors when target tab gets closed
-        respond(response);
-      } catch(e) {
-        if(e.message !== 'Attempting to use a disconnected port object') {
-          throw e;
-        }
-      }
-    };
-    if(request.to) {
-      request.sender = sender;
-      chrome.tabs.sendMessage(chrome_message_destination_parse(request.to).tab, request, undefined, safe_respond);
-    } else {
-      handlers[request.name](request.data, sender, safe_respond);
-    }
-    return request.respondable === true;
-  });
-}
-
-function chrome_message_listen(handlers, listen_for_tab_id) {
-  var processed = [];
-  chrome.runtime.onMessage.addListener(function (request, sender, respond) {
-    return catcher.try(function () {
-      if(request.to === listen_for_tab_id) {
-        if(processed.indexOf(request.uid) === -1) {
-          processed.push(request.uid);
-          if(typeof handlers[request.name] !== 'undefined') {
-            handlers[request.name](request.data, sender, respond);
-          } else {
-            if(request.name !== '_tab_') {
-              catcher.try(function () {
-                throw new Error('chrome_message_listen error: handler "' + request.name + '" not set');
-              })();
-            } else {
-              // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
-            }
-          }
-        } else {
-          // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
-        }
-      } else {
-        // console.log('chrome_message_listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
-      }
-      return request.respondable === true;
-    })();
-  });
-}
-
-/******************************************* STRINGS **********************************/
 
 
 function sha1(string) {

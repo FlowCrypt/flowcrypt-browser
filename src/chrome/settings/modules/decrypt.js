@@ -5,7 +5,7 @@
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 db_open(function (db) {
-  chrome_message_get_tab_id(function (tab_id) {
+  tool.browser.message.tab_id(function (tab_id) {
 
     var original_content;
     var missing_passprase_longids = [];
@@ -14,7 +14,7 @@ db_open(function (db) {
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button')
     init_elements_factory_js();
 
-    chrome_message_listen({
+    tool.browser.message.listen({
       close_dialog: function () {
         $('.passphrase_dialog').html('');
         $.each(missing_passprase_longids, function (i, longid) {

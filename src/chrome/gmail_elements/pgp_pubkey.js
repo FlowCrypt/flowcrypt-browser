@@ -10,7 +10,7 @@ var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 render();
 
 function send_resize_message() {
-  chrome_message_send(url_params.parent_tab_id, 'set_css', {
+  tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
     selector: 'iframe#' + url_params.frame_id,
     css: { height: $('#pgp_block').height() + 30 }
   });

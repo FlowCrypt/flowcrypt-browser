@@ -131,7 +131,7 @@ function show_status() {
         $('h1').text('Back up your private key');
       });
       $('.action_go_auth_denied').click(function () {
-        chrome_message_send(null, 'settings', {
+        tool.browser.message.send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/auth_denied.htm',
         });
@@ -269,7 +269,7 @@ $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), fun
       window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
     });
   } else {
-    chrome_message_send(url_params.parent_tab_id, 'close_page');
+    tool.browser.message.send(url_params.parent_tab_id, 'close_page');
   }
 }));
 

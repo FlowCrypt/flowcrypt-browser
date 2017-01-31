@@ -34,7 +34,7 @@ function init_elements_replace_js() {
       }
       if(text.indexOf('-----BEGIN ATTEST PACKET-----') !== -1 && text.indexOf('-----END ATTEST PACKET-----') !== -1) {
         $.each(text.match(/-----BEGIN ATTEST PACKET-----[^]+?-----END ATTEST PACKET-----/mg), function (i, armored) {
-          chrome_message_send(null, 'attest_packet_received', {
+          tool.browser.message.send(null, 'attest_packet_received', {
             account_email: account_email,
             packet: armored,
           });
@@ -151,7 +151,7 @@ function init_elements_replace_js() {
           if(can_read_emails) {
             $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + tool.ui.spinner() + '</div>');
             $(this).addClass('message_id_' + message_id);
-            chrome_message_send(null, 'list_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
+            tool.browser.message.send(null, 'list_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
               catcher.try(function () {
                 if(response.success) {
                   // todo - too much clutter. All attachments should be just received in one array, each with an attribute that differentiates the type
@@ -187,7 +187,7 @@ function init_elements_replace_js() {
           } else {
             $(new_pgp_messages).prepend('<div class="attachment_loader">Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>');
             $('.auth_settings').click(catcher.try(function () {
-              chrome_message_send(null, 'settings', {
+              tool.browser.message.send(null, 'settings', {
                 account_email: account_email,
                 page: '/chrome/settings/modules/auth_denied.htm',
               });

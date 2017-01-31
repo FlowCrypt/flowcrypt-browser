@@ -59,13 +59,13 @@ db_open(function (db) {
       $('div#reply_message_prompt').html('CryptUP has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       $('div#reply_message_prompt').attr('style', 'border:none !important');
       $('.auth_settings').click(function () {
-        chrome_message_send(null, 'settings', {
+        tool.browser.message.send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/auth_denied.htm',
         });
       })
       $('.new_message_button').click(function () {
-        chrome_message_send(url_params.parent_tab_id, 'open_new_message');
+        tool.browser.message.send(url_params.parent_tab_id, 'open_new_message');
       });
     }
   }
@@ -112,7 +112,7 @@ db_open(function (db) {
 
   $('.delete_draft').click(function () {
     compose.draft_delete(url_params.account_email, function () {
-      chrome_message_send(url_params.parent_tab_id, 'close_reply_message', {
+      tool.browser.message.send(url_params.parent_tab_id, 'close_reply_message', {
         frame_id: url_params.frame_id,
         thread_id: url_params.thread_id
       });
@@ -120,7 +120,7 @@ db_open(function (db) {
   });
 
   function reply_message_reinsert_reply_box() {
-    chrome_message_send(url_params.parent_tab_id, 'reinsert_reply_box', {
+    tool.browser.message.send(url_params.parent_tab_id, 'reinsert_reply_box', {
       account_email: url_params.account_email,
       my_email: url_params.from,
       subject: url_params.subject,
@@ -130,7 +130,7 @@ db_open(function (db) {
   }
 
   function reply_message_render_success(to, has_attachments, message_id) {
-    chrome_message_send(url_params.parent_tab_id, 'notification_show', {
+    tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
       notification: 'Your message has been sent.'
     });
     $('#send_btn_note').text('Sent, deleting draft..');

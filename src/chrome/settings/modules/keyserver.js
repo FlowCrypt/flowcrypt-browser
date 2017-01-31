@@ -91,7 +91,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
   }));
   $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     $('.refresh_after_attest_request').html('Updating.. ' + tool.ui.spinner());
-    chrome_message_send(null, 'attest_requested', { account_email: url_params.account_email, }, function () {
+    tool.browser.message.send(null, 'attest_requested', { account_email: url_params.account_email, }, function () {
       setTimeout(function () {
         window.location.reload();
       }, 10000);

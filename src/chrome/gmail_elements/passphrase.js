@@ -46,7 +46,7 @@ function render_normal() {
 }
 
 $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+  tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
 }));
 
 $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
@@ -61,7 +61,7 @@ $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () 
       } else {
         save_passphrase('local', url_params.account_email, keyinfo.longid, pass);
       }
-      chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+      tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
     }
   });
   if(!is_correct) {

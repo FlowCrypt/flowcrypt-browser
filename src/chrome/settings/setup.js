@@ -5,7 +5,7 @@
 var url_params = tool.env.url_params(['account_email']);
 
 if(url_params.account_email) {
-  chrome_message_send(null, 'update_uninstall_url');
+  tool.browser.message.send(null, 'update_uninstall_url');
 }
 
 $('.email-address').text(url_params.account_email);
@@ -20,10 +20,10 @@ var recovered_keys = undefined;
 var tab_id_global = undefined;
 var all_addresses = [url_params.account_email];
 
-chrome_message_get_tab_id(function (tab_id) {
+tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
 
-  chrome_message_listen({
+  tool.browser.message.listen({
     close_page: function () {
       $('.featherlight-close').click();
     },

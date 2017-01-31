@@ -36,7 +36,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
         } else {
           save_passphrase('session', url_params.account_email, new_key_longid, passphrase);
         }
-        chrome_message_send(url_params.parent_tab_id, 'reload', {
+        tool.browser.message.send(url_params.parent_tab_id, 'reload', {
           advanced: true,
         });
       } else {

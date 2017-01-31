@@ -39,8 +39,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   init_elements_factory_js();
 
-  chrome_message_get_tab_id(function (tab_id) {
-    chrome_message_listen({
+  tool.browser.message.tab_id(function (tab_id) {
+    tool.browser.message.listen({
       close_dialog: function (data) {
         $('.featherlight.featherlight-iframe').remove();
       },
@@ -235,7 +235,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
       tool.env.increment('upgrade_notify_attach_nonpgp', function () {
         if(confirm('Sending password encrypted attachments is possible with CryptUP Pro.\n\nIt\'s free for one year if you register now.')) {
-          chrome_message_send(url_params.parent_tab_id, 'subscribe_dialog');
+          tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
         }
       });
       return false;
@@ -272,7 +272,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
                     } else if(all_good === cryptup_auth_error) {
                       $('#send_btn').html(original_btn_html);
                       if(confirm('Your CryptUP account information is outdated, please review your account settings.')) {
-                        chrome_message_send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+                        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
                       }
                     } else {
                       alert('Failed to upload attachments, please try again.');
@@ -462,7 +462,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       var current_height = $('table#compose').height();
       if(current_height !== last_reply_box_table_height) {
         last_reply_box_table_height = current_height;
-        chrome_message_send(url_params.parent_tab_id, 'set_css', {
+        tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
           selector: 'iframe#' + url_params.frame_id,
           css: { height: Math.max(260, current_height + 1) + add_extra, }
         });
@@ -517,7 +517,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function auth_drafts() {
-    chrome_message_send(null, 'google_auth', { account_email: url_params.account_email, scopes: [GMAIL_COMPOSE_SCOPE], }, function (google_auth_response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: [GMAIL_COMPOSE_SCOPE], }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         $('#send_btn_note').text('');
         can_save_drafts = true;
@@ -536,7 +536,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function auth_contacts(account_email) {
     $('#input_to').val($('.recipients span').last().text());
     $('.recipients span').last().remove();
-    chrome_message_send(null, 'google_auth', { account_email: account_email, scopes: [GMAIL_READ_SCOPE], }, function (google_auth_response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: [GMAIL_READ_SCOPE], }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         can_read_emails = true;
         search_contacts();
@@ -825,11 +825,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   $('.add_pubkey').click(function () {
     if(url_params.placement !== 'settings') {
-      chrome_message_send(url_params.parent_tab_id, 'add_pubkey_dialog_gmail', {
+      tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog_gmail', {
         emails: get_recipients_from_dom('no_pgp'),
       });
     } else {
-      chrome_message_get_tab_id(function (compose_window_tab_id) {
+      tool.browser.message.tab_id(function (compose_window_tab_id) {
         $.featherlight({
           iframe: add_pubkey_dialog_src(url_params.account_email, get_recipients_from_dom('no_pgp'), compose_window_tab_id, 'settings'),
           iframeWidth: 515,
@@ -861,7 +861,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   });
 
   $('.action_feedback').click(function () {
-    chrome_message_send(null, 'settings', {
+    tool.browser.message.send(null, 'settings', {
       account_email: url_params.account_email,
       page: '/chrome/settings/modules/help.htm',
     });

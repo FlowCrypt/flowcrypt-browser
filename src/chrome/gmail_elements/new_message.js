@@ -22,7 +22,7 @@ db_open(function (db) {
       to_mime(url_params.account_email, encrypted_message_body, headers, attach_files ? attachments : null, function (mime_message) {
         gmail_api_message_send(url_params.account_email, mime_message, null, function (success, response) {
           if(success) {
-            chrome_message_send(url_params.parent_tab_id, 'notification_show', {
+            tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
               notification: 'Your message has been sent.'
             });
             compose.draft_delete(url_params.account_email, tool.env.increment('compose', new_message_close));
@@ -91,10 +91,10 @@ db_open(function (db) {
 
 function new_message_close() {
   if(url_params.placement === 'settings') {
-    chrome_message_send(url_params.parent_tab_id, 'close_page');
+    tool.browser.message.send(url_params.parent_tab_id, 'close_page');
   } else if(url_params.placement === 'popup') {
     window.close();
   } else {
-    chrome_message_send(url_params.parent_tab_id, 'close_new_message');
+    tool.browser.message.send(url_params.parent_tab_id, 'close_new_message');
   }
 }

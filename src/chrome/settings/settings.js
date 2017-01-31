@@ -7,7 +7,7 @@ var settings_tab_id_global = undefined;
 
 var recovery_email_subjects = ['Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
-chrome_message_get_tab_id(function (tab_id) {
+tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
 
@@ -61,7 +61,7 @@ function save_attest_request(account_email, attester, callback) {
       storage.attests_processed = [];
     }
     account_storage_set(account_email, storage, function () {
-      chrome_message_send(null, 'attest_requested', {
+      tool.browser.message.send(null, 'attest_requested', {
         account_email: account_email,
       }, callback);
     });
@@ -245,7 +245,7 @@ function show_settings_page(page, add_url_text) {
   var new_location = page + '?account_email=' + encodeURIComponent(settings_url_params.account_email) + '&placement=settings';
   new_location += '&parent_tab_id=' + encodeURIComponent(settings_url_params.parent_tab_id || settings_tab_id_global) + (add_url_text || '');
   if(settings_url_params.embedded) { //embedded on the main page
-    chrome_message_send(settings_url_params.parent_tab_id, 'open_page', {
+    tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', {
       page: page,
       add_url_text: add_url_text,
     });

@@ -47,7 +47,7 @@ function init_setup_js() {
 
   // called by wait_for_account_email_then_setup
   window.setup = function (account_email) {
-    chrome_message_get_tab_id(function (tab_id) {
+    tool.browser.message.tab_id(function (tab_id) {
       catcher.try(function () {
         hijack_gmail_hotkeys(account_email, tab_id);
         inject_meta(destroyable_class);
@@ -79,7 +79,7 @@ function init_setup_js() {
 
   // called by setup
   window.initialize = function (account_email, tab_id) {
-    chrome_message_listen({
+    tool.browser.message.listen({
       open_new_message: function (data) {
         open_new_message(account_email, tab_id);
       },
@@ -119,7 +119,7 @@ function init_setup_js() {
       },
     }, tab_id);
 
-    chrome_message_send(null, 'migrate_account', { account_email: account_email, }, catcher.try(function () {
+    tool.browser.message.send(null, 'migrate_account', { account_email: account_email, }, catcher.try(function () {
       start(account_email, tab_id);
     }));
   };

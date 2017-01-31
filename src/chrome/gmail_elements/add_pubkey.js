@@ -41,7 +41,7 @@ db_open(function (db) {
 
 if(url_params.placement !== 'settings') {
   $('.action_settings').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-    chrome_message_send(null, 'settings', {
+    tool.browser.message.send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',
       account_email: url_params.account_email,
@@ -55,7 +55,7 @@ $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), close_dia
 
 function close_dialog() {
   if(url_params.parent_tab_id) {
-    chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
   } else {
     window.close();
   }

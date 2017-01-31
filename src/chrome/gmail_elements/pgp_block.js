@@ -42,7 +42,7 @@ db_open(function (db) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
     render_error(l.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function () {
       $('.review_settings').click(function () {
-        chrome_message_send(null, 'settings', {
+        tool.browser.message.send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/texts/chrome_content_settings.htm',
         });
@@ -69,7 +69,7 @@ db_open(function (db) {
     }
 
     if(!is_infinite_resize_loop()) {
-      chrome_message_send(url_params.parent_tab_id, 'set_css', {
+      tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
         selector: 'iframe#' + url_params.frame_id,
         css: { height: new_height, }
       });
@@ -123,13 +123,13 @@ db_open(function (db) {
     set_frame_color('red');
     render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function () {
       $('.button.settings_keyserver').click(function () {
-        chrome_message_send(null, 'settings', {
+        tool.browser.message.send(null, 'settings', {
           account_email: url_params.account_email,
           page: '/chrome/settings/modules/keyserver.htm',
         });
       });
       $('.button.settings').click(function () {
-        chrome_message_send(null, 'settings', {
+        tool.browser.message.send(null, 'settings', {
           account_email: url_params.account_email,
         });
       });
@@ -303,7 +303,7 @@ db_open(function (db) {
       clearInterval(passphrase_interval);
       passphrase_interval = setInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-        chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
+        tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {
           type: 'message',
           longids: missing_or_wrong_passphrase_key_longids,
         });
@@ -367,7 +367,7 @@ db_open(function (db) {
       } else { // gmail message read auth not allowed
         $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
         $('.auth_settings').click(function () {
-          chrome_message_send(null, 'settings', {
+          tool.browser.message.send(null, 'settings', {
             account_email: url_params.account_email,
             page: '/chrome/settings/modules/auth_denied.htm',
           });

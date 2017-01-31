@@ -57,7 +57,7 @@ function gmail_api_call(account_email, method, resource, parameters, callback, f
 
 function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function) {
   if(fail_on_auth !== true) {
-    chrome_message_send(null, 'google_auth', { account_email: account_email, }, function (response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: account_email, }, function (response) {
       //todo: respond with success in background script, test if response.success === true, and error handling
       base_api_function(account_email, method, resource, parameters, callback, true);
     });

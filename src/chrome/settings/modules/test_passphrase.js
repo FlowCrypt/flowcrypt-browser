@@ -17,7 +17,7 @@ $('.action_verify').click(function () {
   if(decrypt_key(key, $('#password').val()) === true) {
     $('#content').html('<div class="line">Your pass phrase matches. Good job! You\'re all set.</div><div class="line"><div class="button green close">close</div></div>');
     $('.close').click(function () {
-      chrome_message_send(url_params.parent_tab_id, 'close_page');
+      tool.browser.message.send(url_params.parent_tab_id, 'close_page');
     });
   } else {
     alert('Pass phrase did not match. Please try again. If you are not able to recover your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');

@@ -65,7 +65,7 @@ function render_dialog(level, expire, active) {
   }
 
   $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-    chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
   }));
 
   $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self) {
@@ -205,10 +205,10 @@ function handle_subscribe_result(success, response) {
 function notify_upgraded_and_close() {
   tool.env.increment('upgrade_done');
   if(!url_params.embedded) {
-    chrome_message_send(url_params.parent_tab_id, 'notification_show', {
+    tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
       notification: 'Successfully upgraded to CryptUP Pro.',
     });
-    chrome_message_send(url_params.parent_tab_id, 'close_dialog');
+    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
   } else {
     render_status(l.welcome);
   }
