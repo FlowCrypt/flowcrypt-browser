@@ -10,12 +10,6 @@
 // 	time
 // 	file
 // 	mime
-// 		mime_node_type
-// 		mime_node_filename
-// 		mime_headers_to_from
-// 		could_be_mime_message
-// 		format_mime_plaintext_to_display
-// 		parse_mime_message
 // 	ui:
 // 		get_spinner
 // 		add_show_hide_passphrase_toggle
@@ -296,6 +290,12 @@
       download_as_uint8: download_as_uint8,
       save_to_downloads: save_to_downloads,
       attachment: attachment,
+    },
+    mime: {
+      headers_to_from: headers_to_from,
+      resembles_message: resembles_message,
+      format_content_to_display: format_content_to_display, // todo - should be refactored into two
+      parse: parse,
     },
   };
 
@@ -641,119 +641,122 @@
     };
   }
 
-})();
+  /* tool.mime */
 
-function mime_node_type(node) {
-  if(node.headers['content-type'] && node.headers['content-type'][0]) {
-    return node.headers['content-type'][0].value;
+  function node_type(node) {
+    if(node.headers['content-type'] && node.headers['content-type'][0]) {
+      return node.headers['content-type'][0].value;
+    }
   }
-}
 
-function mime_node_filename(node) {
-  if(node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
-    return node.headers['content-disposition'][0].params.filename;
+  function node_filename(node) {
+    if(node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
+      return node.headers['content-disposition'][0].params.filename;
+    }
+    if(node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
+      return node.headers['content-disposition'][0].params.name;
+    }
   }
-  if(node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
-    return node.headers['content-disposition'][0].params.name;
-  }
-}
 
-function mime_headers_to_from(parsed_mime_message) {
-  var header_to = [];
-  var header_from = undefined;
-  if(parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
-    var header_from = parsed_mime_message.headers.from[0].address;
+  function headers_to_from(parsed_mime_message) {
+    var header_to = [];
+    var header_from = undefined;
+    if(parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
+      var header_from = parsed_mime_message.headers.from[0].address;
+    }
+    if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
+      $.each(parsed_mime_message.headers.to, function (i, to) {
+        if(to.address) {
+          header_to.push(to.address);
+        }
+      });
+    }
+    return { from: header_from, to: header_to, };
   }
-  if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
-    $.each(parsed_mime_message.headers.to, function (i, to) {
-      if(to.address) {
-        header_to.push(to.address);
+
+  function resembles_message(message) {
+    var m = message.toLowerCase();
+    var has_content_type = m.match(/content-type: +[0-9a-z\-\/]+/) !== null;
+    var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) !== null;
+    var has_content_disposition = m.match(/content-disposition: +[0-9a-z\-\/]+/) !== null;
+    return has_content_type && (has_content_transfer_encoding || has_content_disposition);
+  }
+
+  function format_content_to_display(text, full_mime_message) {
+    // todo - this function is very confusing, and should be split into two:
+    // ---> format_mime_plaintext_to_display(text, charset)
+    // ---> get_charset(full_mime_message)
+    if(/<((br)|(div)|p) ?\/?>/.test(text)) {
+      return text;
+    }
+    text = (text || '').replace(/\n/g, '<br>\n');
+    if(text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
+      return window.iso88592.decode(text);
+    }
+    return text;
+  }
+
+  function parse(mime_message, callback) {
+    tool.env.set_up_require();
+    var mime_message_contents = {
+      attachments: [],
+      headers: {},
+      text: undefined,
+      html: undefined,
+      signature: undefined,
+    };
+    require(['emailjs-mime-parser'], function (MimeParser) {
+      try {
+        var parser = new MimeParser();
+        var parsed = {};
+        parser.onheader = function (node) {
+          if(!String(node.path.join("."))) { // root node headers
+            $.each(node.headers, function (name, header) {
+              mime_message_contents.headers[name] = header[0].value;
+            });
+          }
+        };
+        parser.onbody = function (node, chunk) {
+          var path = String(node.path.join("."));
+          if(typeof parsed[path] === 'undefined') {
+            parsed[path] = node;
+          }
+        };
+        parser.onend = function () {
+          $.each(parsed, function (path, node) {
+            if(node_type(node) === 'application/pgp-signature') {
+              mime_message_contents.signature = tool.str.uint8_as_utf(node.content);
+            } else if(node_type(node) === 'text/html' && !node_filename(node)) {
+              mime_message_contents.html = tool.str.uint8_as_utf(node.content);
+            } else if(node_type(node) === 'text/plain' && !node_filename(node)) {
+              mime_message_contents.text = tool.str.uint8_as_utf(node.content);
+            } else {
+              var node_content = tool.str.from_uint8(node.content);
+              mime_message_contents.attachments.push({
+                name: node_filename(node),
+                size: node_content.length,
+                type: node_type(node),
+                data: node_content,
+              });
+            }
+          });
+          catcher.try(function () {
+            callback(true, mime_message_contents);
+          })();
+        };
+        parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
+        parser.end();
+      } catch(e) {
+        catcher.handle_exception(e);
+        catcher.try(function () {
+          callback(false, mime_message_contents);
+        })();
       }
     });
   }
-  return { from: header_from, to: header_to, };
-}
 
-function could_be_mime_message(message) {
-  var m = message.toLowerCase();
-  var has_content_type = m.match(/content-type: +[0-9a-z\-\/]+/) !== null;
-  var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) !== null;
-  var has_content_disposition = m.match(/content-disposition: +[0-9a-z\-\/]+/) !== null;
-  return has_content_type && (has_content_transfer_encoding || has_content_disposition);
-}
 
-function format_mime_plaintext_to_display(text, full_mime_message) {
-  // todo - this function is very confusing, and should be split into two:
-  // ---> format_mime_plaintext_to_display(text, charset)
-  // ---> get_charset(full_mime_message)
-  if(/<((br)|(div)|p) ?\/?>/.test(text)) {
-    return text;
-  }
-  text = (text || '').replace(/\n/g, '<br>\n');
-  if(text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
-    return window.iso88592.decode(text);
-  }
-  return text;
-}
-
-function parse_mime_message(mime_message, callback) {
-  tool.env.set_up_require();
-  var mime_message_contents = {
-    attachments: [],
-    headers: {},
-    text: undefined,
-    html: undefined,
-    signature: undefined,
-  };
-  require(['emailjs-mime-parser'], function (MimeParser) {
-    try {
-      var parser = new MimeParser();
-      var parsed = {};
-      parser.onheader = function (node) {
-        if(!String(node.path.join("."))) { // root node headers
-          $.each(node.headers, function (name, header) {
-            mime_message_contents.headers[name] = header[0].value;
-          });
-        }
-      };
-      parser.onbody = function (node, chunk) {
-        var path = String(node.path.join("."));
-        if(typeof parsed[path] === 'undefined') {
-          parsed[path] = node;
-        }
-      };
-      parser.onend = function () {
-        $.each(parsed, function (path, node) {
-          if(mime_node_type(node) === 'application/pgp-signature') {
-            mime_message_contents.signature = tool.str.uint8_as_utf(node.content);
-          } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
-            mime_message_contents.html = tool.str.uint8_as_utf(node.content);
-          } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
-            mime_message_contents.text = tool.str.uint8_as_utf(node.content);
-          } else {
-            var node_content = tool.str.from_uint8(node.content);
-            mime_message_contents.attachments.push({
-              name: mime_node_filename(node),
-              size: node_content.length,
-              type: mime_node_type(node),
-              data: node_content,
-            });
-          }
-        });
-        catcher.try(function () {
-          callback(true, mime_message_contents);
-        })();
-      };
-      parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
-      parser.end();
-    } catch(e) {
-      catcher.handle_exception(e);
-      catcher.try(function () {
-        callback(false, mime_message_contents);
-      })();
-    }
-  });
-}
+})();
 
 function open_settings_page(path, account_email, page) {
   if(account_email) {

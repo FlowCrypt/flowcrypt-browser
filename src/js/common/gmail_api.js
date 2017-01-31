@@ -367,7 +367,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
           error_callback('format', tool.str.pretty_print(gmail_message_object.payload));
         }
       } else { // format === raw
-        parse_mime_message(tool.str.base64url_decode(gmail_message_object.raw), function (success, mime_message) {
+        tool.mime.parse(tool.str.base64url_decode(gmail_message_object.raw), function (success, mime_message) {
           if(success) {
             var armored_message = extract_armored_message_from_text(mime_message.text); // todo - the message might be in attachments
             if(armored_message) {

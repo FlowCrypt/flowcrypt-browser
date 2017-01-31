@@ -230,7 +230,7 @@ db_open(function (db) {
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature);
-    if(!could_be_mime_message(decrypted_content)) {
+    if(!tool.mime.resembles_message(decrypted_content)) {
       var cryptup_file_link_elements = [];
       if(decrypted_content.indexOf('cryptup_file') !== -1) {
         decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function(found_link) {
@@ -238,7 +238,7 @@ db_open(function (db) {
           return '';
         });
       }
-      render_content(format_mime_plaintext_to_display(decrypted_content, url_params.message), false, function() {
+      render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message), false, function() {
         if(cryptup_file_link_elements.length) {
           render_inner_attachments(cryptup_file_link_elements.map(function (link_element_string) {
             var element = $(link_element_string);
@@ -249,8 +249,8 @@ db_open(function (db) {
       });
     } else {
       $('#pgp_block').text('Formatting...');
-      parse_mime_message(decrypted_content, function (success, result) {
-        render_content(format_mime_plaintext_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
+      tool.mime.parse(decrypted_content, function (success, result) {
+        render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
             render_inner_attachments(result.attachments.map(function(mime_attachment) {
               return tool.file.attachment(mime_attachment.name, mime_attachment.type, mime_attachment.data, mime_attachment.size);

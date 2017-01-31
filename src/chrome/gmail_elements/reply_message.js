@@ -92,11 +92,11 @@ db_open(function (db) {
     extract_armored_message_using_gmail_api(url_params.account_email, message_id, 'full', function (armored_message) {
       decrypt(db, url_params.account_email, armored_message, undefined, function (result) {
         if(result.success) {
-          if(!could_be_mime_message(result.content.data)) {
-            append_forwarded_message(format_mime_plaintext_to_display(result.content.data, armored_message));
+          if(!tool.mime.resembles_message(result.content.data)) {
+            append_forwarded_message(tool.mime.format_content_to_display(result.content.data, armored_message));
           } else {
-            parse_mime_message(result.content.data, function (success, mime_parse_result) {
-              append_forwarded_message(format_mime_plaintext_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data, armored_message));
+            tool.mime.parse(result.content.data, function (success, mime_parse_result) {
+              append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data, armored_message));
             });
           }
         } else {
@@ -216,12 +216,12 @@ db_open(function (db) {
         gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
-            parse_mime_message(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
+            tool.mime.parse(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
               if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
                 var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
                 compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
               } else {
-                console.log('gmail_api_draft_get parse_mime_message else {}');
+                console.log('gmail_api_draft_get tool.mime.parse else {}');
                 reply_message_render_table();
               }
             });
