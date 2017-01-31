@@ -7,10 +7,7 @@
 // 	str
 // 	env
 // 	arr
-//
 // 	time
-// 		wait
-// 		get_future_timestamp_in_months
 // 	file
 // 		download_as_uint8
 // 		save_file_to_downloads
@@ -294,6 +291,11 @@
 		  without_value: without_value,
 		  map_select: map_select,
     },
+    time: {
+      wait: wait,
+      get_future_timestamp_in_months: get_future_timestamp_in_months,
+
+    },
   };
 
   /* tool.str */
@@ -576,26 +578,28 @@
     };
   }
 
+  /* tools.time */
+
+  function wait(until_this_function_evaluates_true) {
+    return new Promise(function (success, error) {
+      var interval = setInterval(function () {
+        var result = until_this_function_evaluates_true();
+        if(result === true) {
+          clearInterval(interval);
+          success();
+        } else if(result === false) {
+          clearInterval(interval);
+          error();
+        }
+      }, 50);
+    });
+  }
+
+  function get_future_timestamp_in_months(months_to_add) {
+    return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
+  }
+
 })();
-
-function wait(until_this_function_evaluates_true) {
-  return new Promise(function (success, error) {
-    var interval = setInterval(function () {
-      var result = until_this_function_evaluates_true();
-      if(result === true) {
-        clearInterval(interval);
-        success();
-      } else if(result === false) {
-        clearInterval(interval);
-        error();
-      }
-    }, 50);
-  });
-}
-
-function get_future_timestamp_in_months(months_to_add) {
-  return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
-}
 
 function download_as_uint8(url, progress, callback) {
   var request = new XMLHttpRequest();

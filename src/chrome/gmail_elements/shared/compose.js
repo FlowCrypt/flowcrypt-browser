@@ -143,7 +143,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function draft_delete(account_email, callback) {
     clearInterval(save_draft_interval);
-    wait(function () {
+    tool.time.wait(function () {
       if(!save_draft_in_process) {
         return true;
       }
