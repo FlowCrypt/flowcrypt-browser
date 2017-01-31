@@ -265,10 +265,15 @@ function init_shared_compose_js(url_params, db, attach_js) {
                 if(attachments.length && challenge) { // these will be password encrypted attachments
                   $('#send_btn span').text('Uploading attachments');
                   upload_attachments_to_cryptup(attachments, function (all_good, upload_results) {
-                    if(all_good) {
+                    if(all_good === true) {
                       $('#send_btn span').text('Encrypting email');
                       plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                       do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
+                    } else if(all_good === cryptup_auth_error) {
+                      $('#send_btn').html(original_btn_html);
+                      if(confirm('Your CryptUP account information is outdated, please review your account settings.')) {
+                        chrome_message_send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+                      }
                     } else {
                       alert('Failed to upload attachments, please try again.');
                       $('#send_btn').html(original_btn_html); // todo - retry only failed attachments
@@ -296,15 +301,23 @@ function init_shared_compose_js(url_params, db, attach_js) {
     _results = _results || [];
     if(attachments[_i]) {
       cryptup_account_store_attachment(attachments[_i], function (success, server_result) {
-        if(success && server_result && server_result.id && server_result.url) {
+        if(success === true && server_result && server_result.id && server_result.url) {
           _results[_i] = { attachment: attachments[_i], url: server_result.url };
+        } else if(success === cryptup_auth_error) {
+          _results[_i] = { attachment: attachments[_i], error: cryptup_auth_error };
         } else {
           _results[_i] = { attachment: attachments[_i], error: server_result && server_result.error ? server_result.error : server_result };
         }
         upload_attachments_to_cryptup(attachments, callback, _results, ++_i);
       });
     } else {
-      var all_good = _results.reduce(function (no_errors, result) { return no_errors && typeof result.error === 'undefined'; }, true);
+      var all_good = _results.reduce(function (reduced, result) {
+        if(typeof result.error === 'function' && result.error === cryptup_auth_error) {
+          return cryptup_auth_error;
+        } else {
+          return reduced && typeof result.error === 'undefined';
+        }
+      }, true);
       callback(all_good, _results);
     }
   }

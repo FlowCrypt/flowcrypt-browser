@@ -36,7 +36,7 @@ function init_setup_js() {
     var account_email = get_account_email();
     if(typeof account_email !== 'undefined') {
       console.log('Loading CryptUP ' + window.chrome.runtime.getManifest().version);
-      account_email_global = account_email;
+      window.account_email_global = account_email;
       setup(account_email);
     } else {
       console.log('Cannot load CryptUP yet. Page: ' + window.location + ' (' + document.title + ')');
@@ -102,7 +102,7 @@ function init_setup_js() {
       },
       subscribe_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(subscribe_dialog(account_email, null, false, tab_id));
+          $('body').append(subscribe_dialog(account_email, null, false, data.source, tab_id));
         }
       },
       add_pubkey_dialog_gmail: function (data) {
@@ -164,12 +164,12 @@ function init_setup_js() {
     var id = TrySetInterval(code, ms);
     destroyable_intervals.push(id);
     return id;
-  }
+  };
 
   window.TrySetDestryableTimeout = function (code, ms) {
     var id = TrySetTimeout(code, ms);
     destroyable_timeouts.push(id);
     return id;
-  }
+  };
 
 }

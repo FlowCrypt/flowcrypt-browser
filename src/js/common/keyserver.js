@@ -88,6 +88,16 @@ function cryptup_account_login(account_email, token, callback) {
   });
 }
 
+function cryptup_response_formatter(callback) {
+  return function(success, response) {
+    if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
+      callback(cryptup_auth_error);
+    } else {
+      callback(success, response);
+    }
+  }
+}
+
 function cryptup_account_subscribe(product, callback) {
   cryptup_auth_info(function (email, uuid, verified) {
     if(verified) {
@@ -95,15 +105,17 @@ function cryptup_account_subscribe(product, callback) {
         account: email,
         uuid: uuid,
         product: product,
-      }, function (success, result) {
-        if(success) {
+      }, cryptup_response_formatter(function(success_or_auth_error, result) {
+        if(success_or_auth_error === true) {
           account_storage_set(null, { cryptup_account_subscription: result.subscription, }, function () {
-            callback(true, result.subscription, result.error);
+            callback(true, result);
           });
+        } else if(success_or_auth_error === false) {
+          callback(false, result);
         } else {
-          callback(false, result.subscription, result.error);
+          callback(success_or_auth_error);
         }
-      });
+      }));
     } else {
       callback(cryptup_auth_error);
     }
@@ -119,7 +131,7 @@ function cryptup_account_store_attachment(attachment, callback) {
         content: attachment,
         type: attachment.type,
         role: 'attachment',
-      }, callback, 'FORM');
+      }, cryptup_response_formatter(callback), 'FORM');
     } else {
       callback(cryptup_auth_error);
     }
@@ -141,10 +153,9 @@ function keyserver_call(path, values, callback, format) {
     });
     var content_type = false;
   }
-  console.log('replace_to_prod_server');
   return $.ajax({
-    // url: 'https://cryptup-keyserver.herokuapp.com/' + path,
-    url: 'http://127.0.0.1:5000/' + path,
+    url: 'https://cryptup-keyserver.herokuapp.com/' + path,
+    // url: 'http://127.0.0.1:5000/' + path,
     method: 'POST',
     data: formatted_values,
     dataType: 'json',

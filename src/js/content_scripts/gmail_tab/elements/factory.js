@@ -35,11 +35,12 @@ function init_elements_factory_js() {
     return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
-  window.subscribe_dialog = function (account_email, verification_email_text, embedded, gmail_tab_id) {
+  window.subscribe_dialog = function (account_email, verification_email_text, embedded, source, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/subscribe.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&verification_email_text=' + encodeURIComponent(verification_email_text || '') +
       '&embedded=' + encodeURIComponent(embedded || '') +
+      '&source=' + encodeURIComponent(source || '') +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
     if(embedded) {
       return '<iframe class="embedded ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe>';

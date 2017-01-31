@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'verification_email_text', 'embedded', 'parent_tab_id']);
+var url_params = get_url_params(['account_email', 'verification_email_text', 'embedded', 'source', 'parent_tab_id']);
 var original_content;
 var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
@@ -10,7 +10,7 @@ var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var can_read_emails;
 var l = {
   welcome: 'Welcome to CryptUP Pro.<br/><br/>You can now send encrypted attachments to anyone.',
-}
+};
 if(url_params.embedded) {
   increment_metric('upgrade_verification_embedded_show');
   $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px', });
@@ -35,6 +35,13 @@ account_storage_get(url_params.account_email, ['google_token_scopes'], function 
   });
 });
 
+function repair_auth_error_get_new_installation() {
+  account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false, }, function() {
+    render_status('checking..', true);
+    cryptup_account_login(url_params.account_email, null, handle_login_result);
+  });
+}
+
 function render_embedded(level, expire, active) {
   $('#content').html('<div class="line status"></div>');
   if(active) {
@@ -48,21 +55,31 @@ function render_embedded(level, expire, active) {
 
 function render_dialog(level, expire, active) {
   if(active) {
-    $('#content').html('<div class="line">You have already upgraded to CryptUP Pro</div><div class="line"><div class="button green long action_close">close</div></div>');
+    if(url_params.source !== 'auth_error') {
+      $('#content').html('<div class="line">You have already upgraded to CryptUP Pro</div><div class="line"><div class="button green long action_close">close</div></div>');
+    } else {
+      $('h1').text('CryptUP Account');
+      $('.status').text('Your account information seems outdated.');
+      $('.action_ok').text('Update account info');
+    }
   }
 
   $('.action_close').click(prevent(doubleclick(), function () {
-    console.log('a');
-    console.log(url_params.parent_tab_id);
     chrome_message_send(url_params.parent_tab_id, 'close_dialog');
   }));
 
-  $('.action_ok').click(prevent(parallel(), function (self) {
-    original_content = $(self).html();
-    increment_metric('upgrade_dialog_register_click');
-    register_and_subscribe();
+  $('.action_ok').click(prevent(parallel(), function(self) {
+      original_content = $(self).html();
+      increment_metric('upgrade_dialog_register_click');
+      if(active && url_params.source === 'auth_error') {
+        repair_auth_error_get_new_installation();
+      } else {
+        register_and_subscribe();
+      }
   }));
 }
+
+
 
 function render_status(content, spinner) {
   $(url_params.embedded ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + get_spinner() : ''));
@@ -176,11 +193,11 @@ function handle_login_result(registered, verified, subscription, error) {
   }
 }
 
-function handle_subscribe_result(success, subscription, error) {
-  if(success && subscription && subscription.level) {
+function handle_subscribe_result(success, response) {
+  if(success && response && response.subscription && response.subscription.level) {
     notify_upgraded_and_close();
   } else {
-    alert('There was a problem upgrading CryptUP (' + error + '). Please try again. Write me at tom@cryptup.org if this persists.');
+    alert('There was a problem upgrading CryptUP (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
     window.location.reload();
   }
 }
