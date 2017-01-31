@@ -91,7 +91,7 @@ db_open(function (db) {
       decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         $('#download').html(original_content);
         if(result.success) {
-          save_file_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
+          tool.file.save_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
           chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
@@ -104,7 +104,7 @@ db_open(function (db) {
           delete result.message;
           console.log(result);
           $('body.attachment').html('Error opening file<br>Downloading original..');
-          save_file_to_downloads(url_params.name, url_params.type, encrypted_data);
+          tool.file.save_to_downloads(url_params.name, url_params.type, encrypted_data);
         }
       });
     } else {
@@ -135,7 +135,7 @@ db_open(function (db) {
         decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
       });
     } else if(url_params.url) {
-      download_as_uint8(url_params.url, render_progress, function(data) {
+      tool.file.download_as_uint8(url_params.url, render_progress, function(data) {
         decrypt_and_save_attachment_to_downloads(tool.str.from_uint8(data)); //toto - have to convert to uint8 because decrypt() cannot deal with uint8 directly yet
       });
     } else {

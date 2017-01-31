@@ -9,9 +9,6 @@
 // 	arr
 // 	time
 // 	file
-// 		download_as_uint8
-// 		save_file_to_downloads
-// 		attachment
 // 	mime
 // 		mime_node_type
 // 		mime_node_filename
@@ -294,7 +291,11 @@
     time: {
       wait: wait,
       get_future_timestamp_in_months: get_future_timestamp_in_months,
-
+    },
+    file: {
+      download_as_uint8: download_as_uint8,
+      save_to_downloads: save_to_downloads,
+      attachment: attachment,
     },
   };
 
@@ -599,36 +600,48 @@
     return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
   }
 
-})();
+  /* tools.file */
 
-function download_as_uint8(url, progress, callback) {
-  var request = new XMLHttpRequest();
-  request.open("GET", url, true);
-  request.responseType = "arraybuffer";
-  if(typeof progress === 'function') {
-    request.onprogress = function (e) {
-        progress(e.loaded, e.total);
+  function download_as_uint8(url, progress, callback) {
+    var request = new XMLHttpRequest();
+    request.open("GET", url, true);
+    request.responseType = "arraybuffer";
+    if(typeof progress === 'function') {
+      request.onprogress = function (e) {
+          progress(e.loaded, e.total);
+      };
+    }
+    request.onerror = function (e) {
+      callback(false, e);
+    };
+    request.onload = function (e) {
+      callback(true, new Uint8Array(request.response));
+    };
+    request.send();
+  }
+
+  function save_to_downloads(name, type, content) {
+    var blob = new Blob([content], { type: type });
+    var a = document.createElement('a');
+    var url = window.URL.createObjectURL(blob);
+    a.style.display = 'none';
+    a.href = url;
+    a.download = name;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  function attachment(name, type, content, size, url) {
+    return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
+      name: name,
+      type: type,
+      content: content,
+      size: size || content.length,
+      url: url || null,
     };
   }
-  request.onerror = function (e) {
-    callback(false, e);
-  };
-  request.onload = function (e) {
-    callback(true, new Uint8Array(request.response));
-  };
-  request.send();
-}
 
-function save_file_to_downloads(name, type, content) {
-  var blob = new Blob([content], { type: type });
-  var a = document.createElement('a');
-  var url = window.URL.createObjectURL(blob);
-  a.style.display = 'none';
-  a.href = url;
-  a.download = name;
-  a.click();
-  window.URL.revokeObjectURL(url);
-}
+})();
 
 function mime_node_type(node) {
   if(node.headers['content-type'] && node.headers['content-type'][0]) {
@@ -1255,16 +1268,6 @@ function key_normalize(armored) {
   } catch(error) {
     catcher.handle_exception(error);
   }
-}
-
-function attachment(name, type, content, size, url) {
-  return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
-    name: name,
-    type: type,
-    content: content,
-    size: size || content.length,
-    url: url || null,
-  };
 }
 
 function key_fingerprint(key, formatting) {

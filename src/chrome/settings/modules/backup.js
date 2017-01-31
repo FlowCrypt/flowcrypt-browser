@@ -159,7 +159,7 @@ $('.action_reset_password').click(function () {
 function backup_key_on_gmail(account_email, armored_key, callback) {
   var email_headers = { From: account_email, To: account_email, Subject: recovery_email_subjects[0], };
   $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
-    var email_attachments = [attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
+    var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
     var text = { 'text/html': email_message };
     to_mime(url_params.account_email, text, email_headers, email_attachments, function (mime_message) {
       gmail_api_message_send(url_params.account_email, mime_message, null, callback);
@@ -227,7 +227,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
     var btn_text = $(self).text();
     $(self).html(get_spinner());
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
-    save_file_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
+    tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');
   }
 }

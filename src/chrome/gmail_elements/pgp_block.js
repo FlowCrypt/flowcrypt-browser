@@ -176,12 +176,12 @@ db_open(function (db) {
     if(success) {
       decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         if(result.success) {
-          save_file_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data);
+          tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data);
         } else {
           delete result.message;
           console.log(result);
           alert('There was a problem decrypting this file. Downloading encrypted original. Write me at tom@cryptup.org if this happens repeatedly.');
-          save_file_to_downloads(name, type, encrypted_data);
+          tool.file.save_to_downloads(name, type, encrypted_data);
         }
       });
     } else {
@@ -200,9 +200,9 @@ db_open(function (db) {
     $('div.attachment').click(prevent(doubleclick(), function (self) {
       var attachment = included_attachments[$(self).attr('index')];
       if(attachment.content) {
-        save_file_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
+        tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
       } else {
-        download_as_uint8(attachment.url, /* progress function */ null, function(success, downloaded) {
+        tool.file.download_as_uint8(attachment.url, /* progress function */ null, function(success, downloaded) {
           decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
         });
       }
@@ -243,7 +243,7 @@ db_open(function (db) {
           render_inner_attachments(cryptup_file_link_elements.map(function (link_element_string) {
             var element = $(link_element_string);
             var attachment_data = tool.str.html_attribute_decode(element.attr('cryptup-data'));
-            return attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href'));
+            return tool.file.attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href'));
           }));
         }
       });
@@ -253,7 +253,7 @@ db_open(function (db) {
         render_content(format_mime_plaintext_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
             render_inner_attachments(result.attachments.map(function(mime_attachment) {
-              return attachment(mime_attachment.name, mime_attachment.type, mime_attachment.data, mime_attachment.size);
+              return tool.file.attachment(mime_attachment.name, mime_attachment.type, mime_attachment.data, mime_attachment.size);
             }));
           }
         });

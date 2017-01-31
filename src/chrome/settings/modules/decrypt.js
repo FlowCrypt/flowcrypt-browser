@@ -44,7 +44,7 @@ db_open(function (db) {
     function decrypt_and_download(encrypted_file) { // todo - this is more or less copy-pasted from attachment.js, should use common function
       decrypt(db, url_params.account_email, tool.str.from_uint8(encrypted_file.data), undefined, function (result) {
         if(result.success) {
-          save_file_to_downloads(encrypted_file.name.replace(/(\.pgp)|(\.gpg)$/, ''), encrypted_file.type, result.content.data);
+          tool.file.save_to_downloads(encrypted_file.name.replace(/(\.pgp)|(\.gpg)$/, ''), encrypted_file.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
           $('.passphrase_dialog').html(passphrase_dialog(url_params.account_email, 'embedded', missing_passprase_longids, tab_id));
