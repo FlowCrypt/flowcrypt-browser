@@ -75,7 +75,7 @@ function cryptup_account_login(account_email, token, callback) {
           });
         } else {
           if(typeof result.error === 'object') {
-            cryptup_error_log('account/login fail response: ' + JSON.stringify(result.error));
+            catcher.log('account/login fail response: ' + JSON.stringify(result.error));
             callback(false, false, null, result.error.public_msg);
           } else {
             callback(false, false, null, result.error);

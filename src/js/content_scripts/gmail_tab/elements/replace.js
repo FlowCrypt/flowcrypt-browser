@@ -71,7 +71,7 @@ function init_elements_replace_js() {
       if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
         //todo - button below should be in factory.js
         var reply_button = '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
-        $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(Try(function () {
+        $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(catcher.try(function () {
           set_reply_box_editable(account_email, gmail_tab_id);
         }));
       } else { // all others get removed
@@ -82,7 +82,7 @@ function init_elements_replace_js() {
     } else if(!$('div.ade:visible').is('.appended')) {
       //todo - button below should be in factory.js
       $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>');
-      $('div.ade.appended span.use_secure_reply').click(Try(function () {
+      $('div.ade.appended span.use_secure_reply').click(catcher.try(function () {
         replace_reply_buttons(account_email, gmail_tab_id, true);
         replace_standard_reply_box(account_email, gmail_tab_id, true, true);
       }));
@@ -106,7 +106,7 @@ function init_elements_replace_js() {
         }
       });
       $(this).replaceWith(button);
-      $('a.open_draft').click(Try(function () {
+      $('a.open_draft').click(catcher.try(function () {
         $('div.new_message').remove();
         $('body').append(compose_message_iframe(account_email, gmail_tab_id, button_href_id));
       }));
@@ -152,7 +152,7 @@ function init_elements_replace_js() {
             $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
             $(this).addClass('message_id_' + message_id);
             chrome_message_send(null, 'list_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
-              Try(function () {
+              catcher.try(function () {
                 if(response.success) {
                   // todo - too much clutter. All attachments should be just received in one array, each with an attribute that differentiates the type
                   if(response.attachments && response.attachments.length) {
@@ -186,7 +186,7 @@ function init_elements_replace_js() {
             });
           } else {
             $(new_pgp_messages).prepend('<div class="attachment_loader">Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>');
-            $('.auth_settings').click(Try(function () {
+            $('.auth_settings').click(catcher.try(function () {
               chrome_message_send(null, 'settings', {
                 account_email: account_email,
                 page: '/chrome/settings/modules/auth_denied.htm',
@@ -232,10 +232,10 @@ function init_elements_replace_js() {
     var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
     var is_outgoing = addresses.indexOf(sender_email) !== -1;
     gmail_api_fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
-      Try(function () {
+      catcher.try(function () {
         if(success) {
           $.each(downloaded_attachments, function (i, downloaded_attachment) {
-            Try(function () {
+            catcher.try(function () {
               var armored_key = base64url_decode(downloaded_attachment.data);
               var selector = get_attachments_selectors(message_id, [downloaded_attachment.name]).attachments;
               if(armored_key.indexOf('-----BEGIN') !== -1) {

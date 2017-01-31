@@ -18,7 +18,7 @@ function init_elements_inject_js() {
     } else {
       if($('div.new_message_button').length === 0) {
         $('div.aic').prepend('<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>');
-        $('div.new_message_button').click(Try(function () {
+        $('div.new_message_button').click(catcher.try(function () {
           open_new_message(account_email, tab_id);
         }));
       }

@@ -49,7 +49,7 @@ function render_embedded(level, expire, active) {
   } else if(url_params.verification_email_text) {
     cryptup_account_login(url_params.account_email, null, handle_login_result)
   } else { // not really tested or expected
-    cryptup_error_log('embedded subscribe.htm but has no verification_email_text');
+    catcher.log('embedded subscribe.htm but has no verification_email_text');
   }
 }
 

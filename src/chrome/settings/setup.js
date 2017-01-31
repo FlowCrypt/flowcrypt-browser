@@ -229,7 +229,7 @@ function create_save_key_pair(account_email, options) {
       });
     });
   }).catch(function (error) {
-    cryptup_error_handler_manual(error);
+    catcher.handle_exception(error);
     $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUP didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
   });
 }
@@ -365,15 +365,13 @@ $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
   }).then(function (key) {
     var armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
     test_private_key(armored, 'stockholm', function (key_works, error_message) {
-      var error = new Error(key_works ? 'Test passed' : 'Test failed with error: ' + error_message);
-      error.stack = base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored);
-      cryptup_error_handler(error.message, 'setup.js', 383, 23, error, true);
+      catcher.log(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
       setTimeout(function () {
         $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
       }, 5000);
     });
   }).catch(function (exception) {
-    cryptup_error_handler_manual(exception);
+    catcher.handle_exception(exception);
   });
 });
 

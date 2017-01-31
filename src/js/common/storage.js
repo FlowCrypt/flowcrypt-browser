@@ -235,7 +235,7 @@ function account_storage_set(gmail_account_email, values, callback) {
     storage_update[account_storage_key(gmail_account_email, key)] = value;
   });
   chrome.storage.local.set(storage_update, function () {
-    Try(function () {
+    catcher.try(function () {
       if(typeof callback !== 'undefined') {
         callback();
       }
@@ -248,7 +248,7 @@ function account_storage_get(account_or_accounts, keys, callback) {
     account_or_accounts = global_storage_scope;
   }
   chrome.storage.local.get(account_storage_key(account_or_accounts, keys), function (storage_object) {
-    Try(function () {
+    catcher.try(function () {
       callback(account_storage_object_keys_to_original(account_or_accounts, storage_object));
     })();
   });
@@ -259,7 +259,7 @@ function account_storage_remove(gmail_account_email, key_or_keys, callback) {
     gmail_account_email = global_storage_scope;
   }
   chrome.storage.local.remove(account_storage_key(gmail_account_email, key_or_keys), function () {
-    Try(function () {
+    catcher.try(function () {
       if(typeof callback !== 'undefined') {
         callback();
       }
@@ -273,7 +273,7 @@ function normalize_string(str) {
 
 function db_error_handle(exception, error_stack, callback) {
   exception.stack = error_stack.replace(/^Error/, String(exception));
-  cryptup_error_handler_manual(exception);
+  catcher.handle_exception(exception);
   if(typeof callback === 'function') {
     callback();
   }
@@ -298,15 +298,15 @@ function db_open(callback) {
     }
   };
   var handled = 0; // the indexedDB docs don't say if onblocked and onerror can happen in the same request, or if the event/exception bubbles to both
-  open_db.onsuccess = Try(function () {
+  open_db.onsuccess = catcher.try(function () {
     handled++;
     callback(open_db.result);
   });
   var stack_fill = (new Error()).stack;
-  open_db.onblocked = Try(function () {
+  open_db.onblocked = catcher.try(function () {
     db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
   });
-  open_db.onerror = Try(function () {
+  open_db.onerror = catcher.try(function () {
     if(open_db.error.message === 'The user denied permission to access the database.') {
       callback(db_denied);
     } else {
@@ -375,9 +375,9 @@ function db_contact_save(db, contact, callback) {
     var tx = db.transaction('contacts', 'readwrite');
     var contacts = tx.objectStore('contacts');
     contacts.put(contact);
-    tx.oncomplete = Try(callback);
+    tx.oncomplete = catcher.try(callback);
     var stack_fill = (new Error()).stack;
-    tx.onabort = Try(function () {
+    tx.onabort = catcher.try(function () {
       db_error_handle(tx.error, stack_fill, callback);
     });
   }
@@ -406,9 +406,9 @@ function db_contact_update(db, email, update, callback) {
       var tx = db.transaction('contacts', 'readwrite');
       var contacts = tx.objectStore('contacts');
       contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
-      tx.oncomplete = Try(callback);
+      tx.oncomplete = catcher.try(callback);
       var stack_fill = (new Error()).stack;
-      tx.onabort = Try(function () {
+      tx.onabort = catcher.try(function () {
         db_error_handle(tx.error, stack_fill, callback);
       });
     });
@@ -422,7 +422,7 @@ function db_contact_get(db, email_or_longid, callback) {
     } else { // longid
       var get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
     }
-    get.onsuccess = Try(function () {
+    get.onsuccess = catcher.try(function () {
       if(get.result !== undefined) {
         callback(get.result);
       } else {
@@ -481,7 +481,7 @@ function db_contact_search(db, query, callback) {
   }
   if(typeof search !== 'undefined') {
     var found = [];
-    search.onsuccess = Try(function () {
+    search.onsuccess = catcher.try(function () {
       var cursor = search.result;
       if(!cursor || found.length === query.limit) {
         callback(found);
@@ -491,7 +491,7 @@ function db_contact_search(db, query, callback) {
       }
     });
     var stack_fill = (new Error()).stack;
-    search.onerror = Try(function () {
+    search.onerror = catcher.try(function () {
       db_error_handle(search.error, stack_fill, callback);
     });
   }

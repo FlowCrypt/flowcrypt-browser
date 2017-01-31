@@ -19,7 +19,7 @@ chrome_message_background_listen({
   update_uninstall_url: update_uninstall_url,
   get_active_tab_info: get_active_tab_info,
   runtime: function (message, sender, respond) {
-    respond({ environment: get_environment(), version: chrome.runtime.getManifest().version, });
+    respond({ environment: catcher.environment(), version: chrome.runtime.getManifest().version, });
   },
   ping: function (message, sender, respond) {
     respond(true);
@@ -44,7 +44,7 @@ if(!localStorage.settings_seen) {
 
 inject_cryptup_into_gmail_if_needed();
 
-Try(check_keyserver_pubkey_fingerprints)();
+catcher.try(check_keyserver_pubkey_fingerprints)();
 TrySetInterval(check_keyserver_pubkey_fingerprints, 1000 * 60 * 60 * 6);
 
 function open_settings_page_handler(message, sender, respond) {
@@ -108,7 +108,7 @@ function update_uninstall_url(request, sender, respond) {
   get_account_emails(function (account_emails) {
     account_storage_get(null, ['metrics'], function (storage) {
       if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
-        Try(function () {
+        catcher.try(function () {
           chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + JSON.stringify({
             email: (account_emails && account_emails.length) ? account_emails[0] : null,
             metrics: storage.metrics || null,

@@ -284,7 +284,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
                 }
               });
             } catch(err) {
-              cryptup_error_handler_manual(err);
+              catcher.handle_exception(err);
               $('#send_btn').html(original_btn_html);
               alert(err);
             }
@@ -358,7 +358,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
     } else {
-      cryptup_error_log('gmail_api_message_send error response from gmail', response);
+      catcher.log('gmail_api_message_send error response from gmail', response);
       alert('Error sending message, try to re-open your Gmail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }

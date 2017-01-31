@@ -2,166 +2,279 @@
 
 'use strict';
 
-var original_on_error = window.onerror;
-window.onerror = cryptup_error_handler;
 
-function cryptup_error_handler(error_message, url, line, col, error, is_manually_called, version, environment) {
-  if(typeof error === 'string') {
-    error_message = error;
-    error = { name: 'thrown_string', message: error_message, stack: error_message, };
-  }
-  var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
-  var ignored_errors = [
-    'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading the gmail
-  ];
-  if(!error) {
-    return;
-  }
-  if(ignored_errors.indexOf(error.message) !== -1) {
+
+// original_on_error, onerror
+//
+// extensions
+// 	RegExp
+//
+// tools
+// 	strings
+// 		trim_lower
+// 		parse_email_string
+// 		as_html_formatted_string
+// 		inner_text
+// 		number_format
+// 		is_email_valid
+// 		month_name
+// 		random_string
+// 		html_attribute_encode
+// 		html_attribute_decode
+// 		base64url_encode
+// 		base64url_decode
+// 		uint8_to_str
+// 		str_to_uint8
+// 		utf8_from_str_with_equal_sign_notation
+// 		uint8_as_utf
+// 		bin_to_hex
+// 	env
+// 		get_url_params
+// 		cryptup_version_integer
+// 		key_codes
+// 		set_up_require
+// 		increment_metric, known_metric_types
+// 	array
+// 		unique
+// 		to_array
+// 		array_without_key
+// 		array_without_value
+// 		map_select
+// 	time
+// 		wait
+// 		get_future_timestamp_in_months
+// 	files
+// 		download_as_uint8
+// 		save_file_to_downloads
+// 		attachment
+// 	mime
+// 		mime_node_type
+// 		mime_node_filename
+// 		mime_headers_to_from
+// 		could_be_mime_message
+// 		format_mime_plaintext_to_display
+// 		parse_mime_message
+// 	cryptup
+// 		open_settings_page
+// 		get_account_emails
+// 		add_account_email_to_list_of_accounts
+// 		check_keyserver_pubkey_fingerprints
+// 		check_pubkeys_keyserver
+// 	ui:
+// 		get_spinner
+// 		add_show_hide_passphrase_toggle
+// 		doubleclick
+// 		parallel
+// 		spree
+// 		prevent
+// 		release
+// 	crypto:
+// 		armor:
+// 			strip_pgp_armor
+// 			extract_armored_message_from_text
+// 		key:
+// 			extract_key_ids
+// 			get_sorted_keys_for_message
+// 			decrypt_key
+// 			patch_public_keys_to_ignore_expiration
+// 			openpgpjs_original_isValidEncryptionKeyPacket
+// 			is_public_key_expired_for_encryption
+// 			key_normalize
+// 			key_fingerprint
+// 			key_longid
+// 			test_private_key
+// 		message:
+// 			check_pubkeys_message
+// 			sign
+// 			zeroed_decrypt_error_counts
+// 			increment_decrypt_error_counts
+// 			wait_and_callback_decrypt_errors_if_failed
+// 			get_decrypt_options
+// 			verify_message_signature
+// 			decrypt
+// 			encrypt
+// 		hash:
+// 			sha1
+// 			double_sha1_upper
+// 			sha256
+// 			sha256_loop
+// 			challenge_answer_hash
+// 	chrome:
+// 		chrome_message_destination_parse
+// 		chrome_message_send
+// 		chrome_message_get_tab_id
+// 		chrome_message_background_listen
+// 		chrome_message_listen
+//
+//
+// background_script_shortcut_handlers
+// events_fired
+// DOUBLECLICK_MS
+// SPREE_MS
+// SLOW_SPREE_MS
+// VERY_SLOW_SPREE_MS
+
+
+
+
+
+(function() {
+
+  var original_on_error = window.onerror;
+  window.onerror = handle_error;
+
+  function handle_error(error_message, url, line, col, error, is_manually_called, version, env) {
+    if(typeof error === 'string') {
+      error_message = error;
+      error = { name: 'thrown_string', message: error_message, stack: error_message, };
+    }
+    var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
+    var ignored_errors = [
+      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading the gmail
+    ];
+    if(!error) {
+      return;
+    }
+    if(ignored_errors.indexOf(error.message) !== -1) {
+      return true;
+    }
+    if(error.stack) {
+      console.log('%c' + error.stack, 'color: #F00; font-weight: bold;');
+    } else {
+      console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
+    }
+    if(is_manually_called !== true && original_on_error && original_on_error !== handle_error) {
+      original_on_error.apply(this, arguments); // Call any previously assigned handler
+    }
+    if((error.stack || '').indexOf('PRIVATE') !== -1) {
+      return;
+    }
+    if(!version) {
+      if(chrome.runtime.getManifest) {
+        version = chrome.runtime.getManifest().version;
+      } else {
+        version = 'unknown';
+      }
+    }
+    if(!env) {
+      env = environment();
+    }
+    try {
+      $.ajax({
+        url: 'https://cryptup-keyserver.herokuapp.com/help/error',
+        method: 'POST',
+        data: JSON.stringify({
+          name: (error.name || '').substring(0, 50),
+          message: (error_message || '').substring(0, 200),
+          url: (url || '').substring(0, 300),
+          line: line,
+          col: col,
+          trace: error.stack,
+          version: version,
+          environment: env,
+        }),
+        dataType: 'json',
+        crossDomain: true,
+        contentType: 'application/json; charset=UTF-8',
+        async: true,
+        success: function (response) {
+          if(response.saved === true) {
+            console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
+          } else {
+            console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
+          }
+        },
+        error: function (XMLHttpRequest, status, error) {
+          console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
+        },
+      });
+    } catch(ajax_err) {
+      console.log(ajax_err.message);
+      console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
+    }
+    try {
+      increment_metric('error');
+      account_storage_get(null, ['errors'], function (storage) {
+        if(typeof storage.errors === 'undefined') {
+          storage.errors = [];
+        }
+        storage.errors.unshift(error.stack || error_message);
+        account_storage_set(null, storage);
+      });
+    } catch(storage_err) {
+
+    }
     return true;
   }
-  if(error.stack) {
-    console.log('%c' + error.stack, 'color: #F00; font-weight: bold;');
-  } else {
-    console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
-  }
-  if(is_manually_called !== true && original_on_error && original_on_error !== cryptup_error_handler) {
-    original_on_error.apply(this, arguments); // Call any previously assigned handler
-  }
-  if((error.stack || '').indexOf('PRIVATE') !== -1) {
-    return;
-  }
-  if(!version) {
-    if(chrome.runtime.getManifest) {
-      version = chrome.runtime.getManifest().version;
-    } else {
-      version = 'unknown';
-    }
-  }
-  if(!environment) {
-    environment = get_environment();
-  }
-  try {
-    $.ajax({
-      url: 'https://cryptup-keyserver.herokuapp.com/help/error',
-      method: 'POST',
-      data: JSON.stringify({
-        name: (error.name || '').substring(0, 50),
-        message: (error_message || '').substring(0, 200),
-        url: (url || '').substring(0, 300),
-        line: line,
-        col: col,
-        trace: error.stack,
-        version: version,
-        environment: environment,
-      }),
-      dataType: 'json',
-      crossDomain: true,
-      contentType: 'application/json; charset=UTF-8',
-      async: true,
-      success: function (response) {
-        if(response.saved === true) {
-          console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
-        } else {
-          console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
-        }
-      },
-      error: function (XMLHttpRequest, status, error) {
-        console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
-      },
-    });
-  } catch(ajax_err) {
-    console.log(ajax_err.message);
-    console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
-  }
-  try {
-    increment_metric('error');
-    account_storage_get(null, ['errors'], function (storage) {
-      if(typeof storage.errors === 'undefined') {
-        storage.errors = [];
-      }
-      storage.errors.unshift(error.stack || error_message);
-      account_storage_set(null, storage);
-    });
-  } catch(storage_err) {
 
-  }
-  return true;
-}
-
-function Try(code) {
-  return function () {
-    try {
-      return code();
-    } catch(code_err) {
-      cryptup_error_handler_manual(code_err);
-    }
-  };
-}
-
-function cryptup_error_handler_manual(exception) {
-  try {
-    var caller_line = exception.stack.split('\n')[1];
-    var matched = caller_line.match(/\.js\:([0-9]+)\:([0-9]+)\)?/);
-    var line = Number(matched[1]);
-    var col = Number(matched[2]);
-  } catch(line_err) {
-    var line = 0;
-    var col = 0;
-  }
-  try {
-    chrome_message_send(null, 'runtime', null, function (runtime) {
-      cryptup_error_handler(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
-    });
-  } catch(message_err) {
-    cryptup_error_handler(exception.message, window.location.href, line, col, exception, true);
-  }
-}
-
-function cryptup_error_log(name, details) {
-  try {
-    throw new Error(name);
-  } catch(e) {
-    if(typeof details !== 'string') {
+  function try_wrapper(code) {
+    return function () {
       try {
-        details = JSON.stringify(details);
-      } catch(stringify_error) {
-        details = '(could not stringify details "' + String(details) + '" in cryptup_error_log because: ' + stringify_error.message + ')';
+        return code();
+      } catch(code_err) {
+        handle_exception(code_err);
       }
+    };
+  }
+
+  function handle_exception(exception) {
+    try {
+      var caller_line = exception.stack.split('\n')[1];
+      var matched = caller_line.match(/\.js\:([0-9]+)\:([0-9]+)\)?/);
+      var line = Number(matched[1]);
+      var col = Number(matched[2]);
+    } catch(line_err) {
+      var line = 0;
+      var col = 0;
     }
-    e.stack = e.stack + '\n\n\ndetails: ' + details;
-    cryptup_error_handler_manual(e);
+    try {
+      chrome_message_send(null, 'runtime', null, function (runtime) {
+        handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
+      });
+    } catch(message_err) {
+      handle_error(exception.message, window.location.href, line, col, exception, true);
+    }
   }
-}
 
-function WrapWithTryIfContentScript(code) {
-  if(get_environment() === 'content_script') {
-    return Try(code);
-  } else {
-    return code;
+  function log(name, details) {
+    try {
+      throw new Error(name);
+    } catch(e) {
+      if(typeof details !== 'string') {
+        try {
+          details = JSON.stringify(details);
+        } catch(stringify_error) {
+          details = '(could not stringify details "' + String(details) + '" in catcher.log because: ' + stringify_error.message + ')';
+        }
+      }
+      e.stack = e.stack + '\n\n\ndetails: ' + details;
+      handle_exception(e);
+    }
   }
-}
 
-function TrySetTimeout(code, delay) {
-  return setTimeout(Try(code), delay);
-}
-
-function TrySetInterval(code, delay) {
-  return setInterval(Try(code), delay);
-}
-
-function get_environment(url) {
-  if(!url) {
-    url = window.location.href;
+  function environment(url) {
+    if(!url) {
+      url = window.location.href;
+    }
+    if(url.indexOf('bnjglocicd') !== -1) {
+      return 'prod';
+    } else if(url.indexOf('nmelpmhpel') !== -1) {
+      return 'dev';
+    } else {
+      return 'content_script';
+    }
   }
-  if(url.indexOf('bnjglocicd') !== -1) {
-    return 'prod';
-  } else if(url.indexOf('nmelpmhpel') !== -1) {
-    return 'dev';
-  } else {
-    return 'content_script';
-  }
-}
+
+  window.catcher = {
+    handle_error: handle_error,
+    handle_exception: handle_exception,
+    log: log,
+    try: try_wrapper,
+    environment: environment,
+  };
+
+})();
+
 
 if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
   window.openpgp.config.versionstring = 'CryptUP ' + chrome.runtime.getManifest().version + ' Easy Gmail Encryption https://cryptup.org';
@@ -382,15 +495,15 @@ function parse_mime_message(mime_message, callback) {
             });
           }
         });
-        Try(function () {
+        catcher.try(function () {
           callback(true, mime_message_contents);
         })();
       };
       parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
       parser.end();
     } catch(e) {
-      cryptup_error_handler_manual(e);
-      Try(function () {
+      catcher.handle_exception(e);
+      catcher.try(function () {
         callback(false, mime_message_contents);
       })();
     }
@@ -455,14 +568,6 @@ function get_account_emails(callback) {
       });
     }
     callback(account_emails);
-  });
-}
-
-function for_each_known_account_email(callback) {
-  get_account_emails(function (account_emails) {
-    $.each(account_emails, function (i, account_email) {
-      callback(account_emails[i]);
-    });
   });
 }
 
@@ -812,7 +917,7 @@ function verify_message_signature(message, keys) {
       signature.error = 'CryptUP is not equipped to verify this message (err 101)';
     } else {
       signature.error = 'CryptUP had trouble verifying this message (' + verify_error.message + ')';
-      cryptup_error_handler_manual(verify_error);
+      catcher.handle_exception(verify_error);
     }
   }
   return signature;
@@ -881,7 +986,7 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
         if(!counts.decrypted) {
           try {
             openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function (decrypted) {
-              Try(function () {
+              catcher.try(function () {
                 if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
                   callback({
                     success: true,
@@ -892,7 +997,7 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
                 }
               })();
             }).catch(function (decrypt_error) {
-              Try(function () {
+              catcher.try(function () {
                 increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
               })();
             });
@@ -963,7 +1068,7 @@ function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback)
     console.log('singing oonly')
   }
   openpgp.encrypt(options).then(function(result) {
-    Try(function() { // todo - this is very awkward, should create a Try wrapper with a better api
+    catcher.try(function() { // todo - this is very awkward, should create a Try wrapper with a better api
       callback(result);
     })();
   }, function (error) {
@@ -986,7 +1091,7 @@ function key_normalize(armored) {
       return key.armor();
     }
   } catch(error) {
-    cryptup_error_handler_manual(error);
+    catcher.handle_exception(error);
   }
 }
 
@@ -1094,7 +1199,7 @@ var known_metric_types = {
 
 function increment_metric(type, callback) {
   if(!known_metric_types[type]) {
-    cryptup_error_log('Unknown metric type "' + type + '"');
+    catcher.log('Unknown metric type "' + type + '"');
   }
   account_storage_get(null, ['metrics'], function (storage) {
     var metrics_k = known_metric_types[type];
@@ -1165,7 +1270,7 @@ function chrome_message_background_listen(handlers) {
 function chrome_message_listen(handlers, listen_for_tab_id) {
   var processed = [];
   chrome.runtime.onMessage.addListener(function (request, sender, respond) {
-    return WrapWithTryIfContentScript(function () {
+    return catcher.try(function () {
       if(request.to === listen_for_tab_id) {
         if(processed.indexOf(request.uid) === -1) {
           processed.push(request.uid);
@@ -1173,7 +1278,7 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
             handlers[request.name](request.data, sender, respond);
           } else {
             if(request.name !== '_tab_') {
-              Try(function () {
+              catcher.try(function () {
                 throw new Error('chrome_message_listen error: handler "' + request.name + '" not set');
               })();
             } else {

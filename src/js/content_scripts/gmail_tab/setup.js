@@ -48,7 +48,7 @@ function init_setup_js() {
   // called by wait_for_account_email_then_setup
   window.setup = function (account_email) {
     chrome_message_get_tab_id(function (tab_id) {
-      Try(function () {
+      catcher.try(function () {
         hijack_gmail_hotkeys(account_email, tab_id);
         inject_meta(destroyable_class);
         add_account_email_to_list_of_accounts(account_email);
@@ -112,14 +112,14 @@ function init_setup_js() {
       },
       notification_show: function (data) {
         gmail_notification_show(data.notification, data.callbacks);
-        $('body').one('click', Try(gmail_notification_clear));
+        $('body').one('click', catcher.try(gmail_notification_clear));
       },
       close_dialog: function (data) {
         $('#cryptup_dialog').remove();
       },
     }, tab_id);
 
-    chrome_message_send(null, 'migrate_account', { account_email: account_email, }, Try(function () {
+    chrome_message_send(null, 'migrate_account', { account_email: account_email, }, catcher.try(function () {
       start(account_email, tab_id);
     }));
   };
@@ -161,13 +161,13 @@ function init_setup_js() {
   /* ######################## MIMICKING STANDARD JS FUNCTIONS ######################### */
 
   window.TrySetDestryableInterval = function (code, ms) {
-    var id = TrySetInterval(code, ms);
+    var id = setInterval(window.catcher.try(code), ms);
     destroyable_intervals.push(id);
     return id;
   };
 
   window.TrySetDestryableTimeout = function (code, ms) {
-    var id = TrySetTimeout(code, ms);
+    var id = setTimeout(window.catcher.try(code), ms);
     destroyable_timeouts.push(id);
     return id;
   };

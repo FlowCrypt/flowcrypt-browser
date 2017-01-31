@@ -2,7 +2,7 @@
 
 'use strict';
 
-Try(function () {
+catcher.try(function () {
 
   window.injected = true; // background page will test if scripts are already injected, and injectif not
   window.destruction_event = chrome.runtime.id + '_destroy'
