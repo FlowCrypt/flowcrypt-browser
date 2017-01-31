@@ -79,7 +79,7 @@ function init_elements_factory_js() {
   };
 
   window.pgp_block_iframe = function (pgp_block_text, question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id) {
-    var id = random_string();
+    var id = tool.str.random();
     var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
       '?frame_id=frame_' + id +
       '&question=' + encodeURIComponent(question || '') +
@@ -93,7 +93,7 @@ function init_elements_factory_js() {
   };
 
   window.pgp_pubkey_iframe = function (account_email, armored_pubkey, is_outgoing, gmail_tab_id) {
-    var id = random_string();
+    var id = tool.str.random();
     var src = chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm') +
       '?frame_id=frame_' + id +
       '&account_email=' + encodeURIComponent(account_email) +
@@ -105,7 +105,7 @@ function init_elements_factory_js() {
 
   window.reply_message_iframe = function (account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
     var emails = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
-    var id = random_string();
+    var id = tool.str.random();
     var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') +
       '?frame_id=frame_' + id +
       '&placement=gmail' +

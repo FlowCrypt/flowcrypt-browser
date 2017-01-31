@@ -128,7 +128,7 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
           if(get_success) {
             $.each(messages, function (id, gmail_message_object) {
               if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-                var message_content = base64url_decode(gmail_message_object.payload.body.data);
+                var message_content = tool.str.base64url_decode(gmail_message_object.payload.body.data);
                 var token_link_match = message_content.match(/account\/login?([^\s"<]+)/g);
                 if(token_link_match !== null) {
                   var token_link_params = get_url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);

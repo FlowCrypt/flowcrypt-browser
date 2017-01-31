@@ -4,13 +4,13 @@
 
 function keyserver_keys_find(email, callback) {
   return keyserver_call('keys/find', {
-    email: (typeof email === 'string') ? trim_lower(email) : email.map(trim_lower),
+    email: (typeof email === 'string') ? tool.str.trim_lower(email) : email.map(tool.str.trim_lower),
   }, callback);
 }
 
 function keyserver_keys_submit(email, pubkey, attest, callback) {
   return keyserver_call('keys/submit', {
-    email: trim_lower(email),
+    email: tool.str.trim_lower(email),
     pubkey: pubkey.trim(),
     attest: attest || false,
   }, callback);
@@ -18,7 +18,7 @@ function keyserver_keys_submit(email, pubkey, attest, callback) {
 
 function keyserver_keys_check(emails, callback) {
   return keyserver_call('keys/check', {
-    emails: emails.map(trim_lower),
+    emails: emails.map(tool.str.trim_lower),
   }, callback);
 }
 
@@ -65,7 +65,7 @@ function cryptup_auth_error() {
 
 function cryptup_account_login(account_email, token, callback) {
   cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
-    var uuid = registered_uuid || sha1(random_string(40));
+    var uuid = registered_uuid || sha1(tool.str.random(40));
     var email = registered_email || account_email;
     cryptup_server_call('account/login', { account: email, uuid: uuid, token: token || null, }, function (success, result) {
       if(success) {

@@ -42,7 +42,7 @@ db_open(function (db) {
     }));
 
     function decrypt_and_download(encrypted_file) { // todo - this is more or less copy-pasted from attachment.js, should use common function
-      decrypt(db, url_params.account_email, uint8_to_str(encrypted_file.data), undefined, function (result) {
+      decrypt(db, url_params.account_email, tool.str.from_uint8(encrypted_file.data), undefined, function (result) {
         if(result.success) {
           save_file_to_downloads(encrypted_file.name.replace(/(\.pgp)|(\.gpg)$/, ''), encrypted_file.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {

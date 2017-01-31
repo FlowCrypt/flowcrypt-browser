@@ -41,8 +41,8 @@ db_open(function (db) {
   }
 
   if(typeof pubkey !== 'undefined') {
-    $('.input_email').val(trim_lower(pubkey.users[0].userId.userid));
-    $('.email').text(trim_lower(pubkey.users[0].userId.userid));
+    $('.input_email').val(tool.str.trim_lower(pubkey.users[0].userId.userid));
+    $('.email').text(tool.str.trim_lower(pubkey.users[0].userId.userid));
     set_button_text(db);
   } else {
     $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
@@ -51,7 +51,7 @@ db_open(function (db) {
   }
 
   $('.action_add_contact').click(prevent(doubleclick(), function (self) {
-    if(is_email_valid($('.input_email').val())) {
+    if(tool.str.is_email_valid($('.input_email').val())) {
       db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function () {
         $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>')
         $('.input_email').remove();

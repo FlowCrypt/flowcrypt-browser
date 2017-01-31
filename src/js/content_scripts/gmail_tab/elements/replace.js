@@ -117,7 +117,7 @@ function init_elements_replace_js() {
     var re_pgp_question = /<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>/m;
     var question_match = message_html.match(re_pgp_question);
     if(question_match !== null) {
-      return inner_text(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
+      return tool.str.inner_text(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
     }
   };
 
@@ -236,7 +236,7 @@ function init_elements_replace_js() {
         if(success) {
           $.each(downloaded_attachments, function (i, downloaded_attachment) {
             catcher.try(function () {
-              var armored_key = base64url_decode(downloaded_attachment.data);
+              var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
               var selector = get_attachments_selectors(message_id, [downloaded_attachment.name]).attachments;
               if(armored_key.indexOf('-----BEGIN') !== -1) {
                 //todo - this approach below is what should be done in every similar function - hide them by exact names, one by one
@@ -294,10 +294,10 @@ function init_elements_replace_js() {
     account_storage_get(account_email, ['addresses'], function (storage) {
       $.each(reply_to_estimate, function (i, email) {
         storage.addresses = storage.addresses || [account_email];
-        if(storage.addresses.indexOf(trim_lower(email)) !== -1) { // my email
+        if(storage.addresses.indexOf(tool.str.trim_lower(email)) !== -1) { // my email
           my_email = email;
-        } else if(reply_to.indexOf(trim_lower(email)) === -1) { // skip duplicates
-          reply_to.push(trim_lower(email)); // reply to all except my emails
+        } else if(reply_to.indexOf(tool.str.trim_lower(email)) === -1) { // skip duplicates
+          reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
         }
       });
       if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed

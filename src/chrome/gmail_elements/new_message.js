@@ -51,7 +51,7 @@ db_open(function (db) {
     gmail_api_draft_get(url_params.account_email, url_params.draft_id, 'raw', function (success, response) {
       if(success) {
         compose.draft_set_id(url_params.draft_id);
-        parse_mime_message(base64url_decode(response.message.raw), function (mime_success, parsed_message) {
+        parse_mime_message(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
           if(success) {
             var draft_headers = mime_headers_to_from(parsed_message);
             if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {

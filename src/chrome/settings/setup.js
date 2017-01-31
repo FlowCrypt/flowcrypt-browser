@@ -365,7 +365,7 @@ $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
   }).then(function (key) {
     var armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
     test_private_key(armored, 'stockholm', function (key_works, error_message) {
-      catcher.log(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
+      catcher.log(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
       setTimeout(function () {
         $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
       }, 5000);

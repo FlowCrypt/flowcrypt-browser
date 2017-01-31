@@ -216,7 +216,7 @@ db_open(function (db) {
         gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
-            parse_mime_message(base64url_decode(response.message.raw), function (mime_success, parsed_message) {
+            parse_mime_message(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
               if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
                 var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
                 compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping

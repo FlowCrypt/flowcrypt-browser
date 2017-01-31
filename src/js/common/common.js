@@ -3,38 +3,15 @@
 'use strict';
 
 
-
-// original_on_error, onerror
-//
-// extensions
-// 	RegExp
-//
-// tools
-// 	strings
-// 		trim_lower
-// 		parse_email_string
-// 		as_html_formatted_string
-// 		inner_text
-// 		number_format
-// 		is_email_valid
-// 		month_name
-// 		random_string
-// 		html_attribute_encode
-// 		html_attribute_decode
-// 		base64url_encode
-// 		base64url_decode
-// 		uint8_to_str
-// 		str_to_uint8
-// 		utf8_from_str_with_equal_sign_notation
-// 		uint8_as_utf
-// 		bin_to_hex
+// tool
+// 	str
 // 	env
 // 		get_url_params
 // 		cryptup_version_integer
 // 		key_codes
 // 		set_up_require
 // 		increment_metric, known_metric_types
-// 	array
+// 	arr
 // 		unique
 // 		to_array
 // 		array_without_key
@@ -43,7 +20,7 @@
 // 	time
 // 		wait
 // 		get_future_timestamp_in_months
-// 	files
+// 	file
 // 		download_as_uint8
 // 		save_file_to_downloads
 // 		attachment
@@ -54,12 +31,6 @@
 // 		could_be_mime_message
 // 		format_mime_plaintext_to_display
 // 		parse_mime_message
-// 	cryptup
-// 		open_settings_page
-// 		get_account_emails
-// 		add_account_email_to_list_of_accounts
-// 		check_keyserver_pubkey_fingerprints
-// 		check_pubkeys_keyserver
 // 	ui:
 // 		get_spinner
 // 		add_show_hide_passphrase_toggle
@@ -68,7 +39,7 @@
 // 		spree
 // 		prevent
 // 		release
-// 	crypto:
+// 	crypt:
 // 		armor:
 // 			strip_pgp_armor
 // 			extract_armored_message_from_text
@@ -115,10 +86,16 @@
 // VERY_SLOW_SPREE_MS
 
 
+// 	keep original (move to storage)
+// 		open_settings_page
+// 		get_account_emails
+// 		add_account_email_to_list_of_accounts
+// 		check_keyserver_pubkey_fingerprints
+// 		check_pubkeys_keyserver
 
 
 
-(function() {
+(function(/* ERROR HANDLING */) {
 
   var original_on_error = window.onerror;
   window.onerror = handle_error;
@@ -276,10 +253,209 @@
 })();
 
 
-if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
-  window.openpgp.config.versionstring = 'CryptUP ' + chrome.runtime.getManifest().version + ' Easy Gmail Encryption https://cryptup.org';
-  window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
-}
+(function(/* EXTENSIONS AND CONFIG */) {
+
+  if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
+    window.openpgp.config.versionstring = 'CryptUP ' + chrome.runtime.getManifest().version + ' Easy Gmail Encryption https://cryptup.org';
+    window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
+  }
+
+  RegExp.escape = function (s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  };
+
+})();
+
+
+(function(/* ALL TOOLS */) {
+
+  window.tool = {
+    str: {
+      trim_lower: trim_lower, //todo - deprecate in favor of parse_email
+      parse_email: parse_email,
+      pretty_print: pretty_print, //as_html_formatted_string
+      inner_text: inner_text,
+      number_format: number_format,
+      is_email_valid: is_email_valid,
+      month_name: month_name,
+      random: random,
+      html_attribute_encode: html_attribute_encode,
+      html_attribute_decode: html_attribute_decode,
+      base64url_encode: base64url_encode,
+      base64url_decode: base64url_decode,
+      from_uint8: from_uint8,
+      to_unit8: to_unit8,
+      from_equal_sign_notation_as_utf: from_equal_sign_notation_as_utf,
+      uint8_as_utf: uint8_as_utf,
+      to_hex: to_hex,
+    },
+  };
+
+  /* tool.str */
+
+  function trim_lower(email) {
+    if(email.indexOf('<') !== -1 && email.indexOf('>') !== -1) {
+      email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
+    }
+    return email.trim().toLowerCase();
+  }
+
+  function parse_email(email_string) {
+    if(email_string.indexOf('<') !== -1 && email_string.indexOf('>') !== -1) {
+      return {
+        email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
+        name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
+      };
+    }
+    return {
+      email: email_string.replace(/["']/g, '').trim().toLowerCase(),
+      name: null,
+    };
+  }
+
+  function pretty_print(obj) {
+    return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
+  }
+
+  function inner_text(html_text) {
+    var e = document.createElement('div');
+    e.innerHTML = html_text;
+    return e.innerText;
+  }
+
+  function number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
+    nStr += '';
+    var x = nStr.split('.');
+    var x1 = x[0];
+    var x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while(rgx.test(x1)) {
+      x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
+  }
+
+  function is_email_valid(email) {
+    return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
+  }
+
+  function month_name(month_index) {
+    return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month_index];
+  }
+
+  function random(length) {
+    var id = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    for(var i = 0; i < (length || 5); i++) {
+      id += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return id;
+  }
+
+  function html_attribute_encode(values) {
+    return base64url_encode(JSON.stringify(values));
+  }
+
+  function html_attribute_decode(encoded) {
+    return JSON.parse(base64url_decode(encoded));
+  }
+
+  function base64url_encode(str) {
+    if(typeof str === 'undefined') {
+      return str;
+    }
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function base64url_decode(str) {
+    if(typeof str === 'undefined') {
+      return str;
+    }
+    return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  }
+
+  function from_uint8(u8a) {
+    var CHUNK_SZ = 0x8000;
+    var c = [];
+    for(var i = 0; i < u8a.length; i += CHUNK_SZ) {
+      c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
+    }
+    return c.join("");
+  }
+
+  function to_unit8(raw) {
+    var rawLength = raw.length;
+    var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
+    for(var i = 0; i < rawLength; i++) {
+      uint8[i] = raw.charCodeAt(i);
+    }
+    return uint8;
+  }
+
+  function from_equal_sign_notation_as_utf(str) {
+    return str.replace(/(=[A-F0-9]{2})+/g, function (equal_sign_utf_part) {
+      return uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function (two_hex_digits) { return parseInt(two_hex_digits, 16); }));
+    });
+  }
+
+  function uint8_as_utf(a) { //tom
+    var length = a.length;
+    var bytes_left_in_char = 0;
+    var utf8_string = '';
+    var binary_char = '';
+    for(var i = 0; i < length; i++) {
+      if(a[i] < 128) {
+        if(bytes_left_in_char) {
+          console.log('uint8_to_utf_str: utf-8 continuation byte missing, multi-byte character cut short and omitted');
+        }
+        bytes_left_in_char = 0;
+        binary_char = '';
+        utf8_string += String.fromCharCode(a[i]);
+      } else {
+        if(!bytes_left_in_char) { // beginning of new multi-byte character
+          if(a[i] >= 192 && a[i] < 224) { //110x xxxx
+            bytes_left_in_char = 1;
+            binary_char = a[i].toString(2).substr(3);
+          } else if(a[i] >= 224 && a[i] < 240) { //1110 xxxx
+            bytes_left_in_char = 2;
+            binary_char = a[i].toString(2).substr(4);
+          } else if(a[i] >= 240 && a[i] < 248) { //1111 0xxx
+            bytes_left_in_char = 3;
+            binary_char = a[i].toString(2).substr(5);
+          } else if(a[i] >= 248 && a[i] < 252) { //1111 10xx
+            bytes_left_in_char = 4;
+            binary_char = a[i].toString(2).substr(6);
+          } else if(a[i] >= 252 && a[i] < 254) { //1111 110x
+            bytes_left_in_char = 5;
+            binary_char = a[i].toString(2).substr(7);
+          } else {
+            console.log('uint8_to_utf_str: invalid utf-8 character beginning byte: ' + a[i]);
+          }
+        } else { // continuation of a multi-byte character
+          binary_char += a[i].toString(2).substr(2);
+          bytes_left_in_char--;
+        }
+        if(binary_char && !bytes_left_in_char) {
+          utf8_string += String.fromCharCode(parseInt(binary_char, 2));
+          binary_char = '';
+        }
+      }
+    }
+    return utf8_string;
+  }
+
+  function to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
+    var i, l, o = '',
+      n;
+    s += '';
+    for(i = 0, l = s.length; i < l; i++) {
+      n = s.charCodeAt(i).toString(16);
+      o += n.length < 2 ? '0' + n : n;
+    }
+    return o;
+  }
+
+})();
 
 function get_url_params(expected_keys, string) {
   var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
@@ -331,38 +507,8 @@ function wait(until_this_function_evaluates_true) {
   });
 }
 
-function trim_lower(email) {
-  if(email.indexOf('<') !== -1 && email.indexOf('>') !== -1) {
-    email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
-  }
-  return email.trim().toLowerCase();
-}
-
-function parse_email_string(email_string) {
-  if(email_string.indexOf('<') !== -1 && email_string.indexOf('>') !== -1) {
-    return {
-      email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
-      name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
-    };
-  }
-  return {
-    email: email_string.replace(/["']/g, '').trim().toLowerCase(),
-    name: null,
-  };
-}
-
 function get_future_timestamp_in_months(months_to_add) {
   return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
-}
-
-function as_html_formatted_string(obj) {
-  return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
-}
-
-function inner_text(html_text) {
-  var e = document.createElement('div');
-  e.innerHTML = html_text;
-  return e.innerText;
 }
 
 function download_as_uint8(url, progress, callback) {
@@ -480,13 +626,13 @@ function parse_mime_message(mime_message, callback) {
       parser.onend = function () {
         $.each(parsed, function (path, node) {
           if(mime_node_type(node) === 'application/pgp-signature') {
-            mime_message_contents.signature = uint8_as_utf(node.content);
+            mime_message_contents.signature = tool.str.uint8_as_utf(node.content);
           } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
-            mime_message_contents.html = uint8_as_utf(node.content);
+            mime_message_contents.html = tool.str.uint8_as_utf(node.content);
           } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
-            mime_message_contents.text = uint8_as_utf(node.content);
+            mime_message_contents.text = tool.str.uint8_as_utf(node.content);
           } else {
-            var node_content = uint8_to_str(node.content);
+            var node_content = tool.str.from_uint8(node.content);
             mime_message_contents.attachments.push({
               name: mime_node_filename(node),
               size: node_content.length,
@@ -508,18 +654,6 @@ function parse_mime_message(mime_message, callback) {
       })();
     }
   });
-}
-
-function number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
-  nStr += '';
-  var x = nStr.split('.');
-  var x1 = x[0];
-  var x2 = x.length > 1 ? '.' + x[1] : '';
-  var rgx = /(\d+)(\d{3})/;
-  while(rgx.test(x1)) {
-    x1 = x1.replace(rgx, '$1' + ',' + '$2');
-  }
-  return x1 + x2;
 }
 
 function set_up_require() {
@@ -547,14 +681,6 @@ function open_settings_page(path, account_email, page) {
       window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
     });
   }
-}
-
-function is_email_valid(email) {
-  return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
-}
-
-function month_name(month_index) {
-  return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month_index];
 }
 
 function get_account_emails(callback) {
@@ -708,15 +834,6 @@ function add_show_hide_passphrase_toggle(pass_phrase_input_ids, force_initial_sh
   });
 }
 
-function random_string(length) {
-  var id = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  for(var i = 0; i < (length || 5); i++) {
-    id += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return id;
-}
-
 function array_without_key(array, i) {
   return array.splice(0, i).concat(array.splice(i + 1, array.length));
 }
@@ -782,10 +899,6 @@ function check_pubkeys_keyserver(account_email, callback) {
     });
   });
 }
-
-RegExp.escape = function (s) {
-  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
 
 /* -------------------- CRYPTO ----------------------------------------------------*/
 
@@ -951,7 +1064,7 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
     } else if(armored_signed_only) {
       var message = openpgp.cleartext.readArmored(encrypted_data);
     } else {
-      var message = openpgp.message.read(str_to_uint8(encrypted_data));
+      var message = openpgp.message.read(tool.str.str_to_uint8(encrypted_data));
     }
   } catch(format_error) {
     callback({
@@ -1136,7 +1249,7 @@ function key_longid(key_or_fingerprint_or_bytes) {
   if(key_or_fingerprint_or_bytes === null || typeof key_or_fingerprint_or_bytes === 'undefined') {
     return null;
   } else if(key_or_fingerprint_or_bytes.length === 8) {
-    return bin_to_hex(key_or_fingerprint_or_bytes).toUpperCase();
+    return tool.str.to_hex(key_or_fingerprint_or_bytes).toUpperCase();
   } else if(key_or_fingerprint_or_bytes.length === 40) {
     return key_or_fingerprint_or_bytes.substr(-16);
   } else if(key_or_fingerprint_or_bytes.length === 49) {
@@ -1231,7 +1344,7 @@ function chrome_message_destination_parse(destination_string) {
 }
 
 function chrome_message_send(destination_string, name, data, callback) {
-  var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: random_string(10), };
+  var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), };
   if(background_script_shortcut_handlers && msg.to === null) {
     background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
   } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
@@ -1298,111 +1411,9 @@ function chrome_message_listen(handlers, listen_for_tab_id) {
 
 /******************************************* STRINGS **********************************/
 
-function html_attribute_encode(values) {
-  return base64url_encode(JSON.stringify(values));
-}
-
-function html_attribute_decode(encoded) {
-  return JSON.parse(base64url_decode(encoded));
-}
-
-function base64url_encode(str) {
-  if(typeof str === 'undefined') {
-    return str;
-  }
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function base64url_decode(str) {
-  if(typeof str === 'undefined') {
-    return str;
-  }
-  return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
-}
-
-function uint8_to_str(u8a) {
-  var CHUNK_SZ = 0x8000;
-  var c = [];
-  for(var i = 0; i < u8a.length; i += CHUNK_SZ) {
-    c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
-  }
-  return c.join("");
-}
-
-function str_to_uint8(raw) {
-  var rawLength = raw.length;
-  var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
-  for(var i = 0; i < rawLength; i++) {
-    uint8[i] = raw.charCodeAt(i);
-  }
-  return uint8;
-}
-
-function utf8_from_str_with_equal_sign_notation(str) {
-  return str.replace(/(=[A-F0-9]{2})+/g, function (equal_sign_utf_part) {
-    return uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function (two_hex_digits) { return parseInt(two_hex_digits, 16); }));
-  });
-}
-
-function uint8_as_utf(a) { //tom
-  var length = a.length;
-  var bytes_left_in_char = 0;
-  var utf8_string = '';
-  var binary_char = '';
-  for(var i = 0; i < length; i++) {
-    if(a[i] < 128) {
-      if(bytes_left_in_char) {
-        console.log('uint8_to_utf_str: utf-8 continuation byte missing, multi-byte character cut short and omitted');
-      }
-      bytes_left_in_char = 0;
-      binary_char = '';
-      utf8_string += String.fromCharCode(a[i]);
-    } else {
-      if(!bytes_left_in_char) { // beginning of new multi-byte character
-        if(a[i] >= 192 && a[i] < 224) { //110x xxxx
-          bytes_left_in_char = 1;
-          binary_char = a[i].toString(2).substr(3);
-        } else if(a[i] >= 224 && a[i] < 240) { //1110 xxxx
-          bytes_left_in_char = 2;
-          binary_char = a[i].toString(2).substr(4);
-        } else if(a[i] >= 240 && a[i] < 248) { //1111 0xxx
-          bytes_left_in_char = 3;
-          binary_char = a[i].toString(2).substr(5);
-        } else if(a[i] >= 248 && a[i] < 252) { //1111 10xx
-          bytes_left_in_char = 4;
-          binary_char = a[i].toString(2).substr(6);
-        } else if(a[i] >= 252 && a[i] < 254) { //1111 110x
-          bytes_left_in_char = 5;
-          binary_char = a[i].toString(2).substr(7);
-        } else {
-          console.log('uint8_to_utf_str: invalid utf-8 character beginning byte: ' + a[i]);
-        }
-      } else { // continuation of a multi-byte character
-        binary_char += a[i].toString(2).substr(2);
-        bytes_left_in_char--;
-      }
-      if(binary_char && !bytes_left_in_char) {
-        utf8_string += String.fromCharCode(parseInt(binary_char, 2));
-        binary_char = '';
-      }
-    }
-  }
-  return utf8_string;
-}
-
-function bin_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
-  var i, l, o = '',
-    n;
-  s += '';
-  for(i = 0, l = s.length; i < l; i++) {
-    n = s.charCodeAt(i).toString(16);
-    o += n.length < 2 ? '0' + n : n;
-  }
-  return o;
-}
 
 function sha1(string) {
-  return bin_to_hex(uint8_to_str(openpgp.crypto.hash.sha1(string)));
+  return tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.sha1(string)));
 }
 
 function double_sha1_upper(string) {
@@ -1410,7 +1421,7 @@ function double_sha1_upper(string) {
 }
 
 function sha256(string) {
-  return bin_to_hex(uint8_to_str(openpgp.crypto.hash.sha256(string)));
+  return tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.sha256(string)));
 }
 
 function sha256_loop(string, times) {
@@ -1433,15 +1444,15 @@ var SLOW_SPREE_MS = 200;
 var VERY_SLOW_SPREE_MS = 500;
 
 function doubleclick() {
-  return { name: 'doubleclick', id: random_string(10), };
+  return { name: 'doubleclick', id: tool.str.random(10), };
 }
 
 function parallel() {
-  return { name: 'parallel', id: random_string(10), };
+  return { name: 'parallel', id: tool.str.random(10), };
 }
 
 function spree(type) {
-  return { name: (type || '') + 'spree', id: random_string(10), }
+  return { name: (type || '') + 'spree', id: tool.str.random(10), }
 }
 
 function prevent(meta, callback) { //todo: messy + needs refactoring

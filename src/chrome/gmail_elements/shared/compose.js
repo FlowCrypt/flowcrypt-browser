@@ -328,7 +328,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       var size_mb = result.attachment.size / (1024 * 1024);
       var size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
       var link_text = 'Attachment: ' + result.attachment.name + ' (' + result.attachment.type + ')' + size_text;
-      var cryptup_data = html_attribute_encode({size: result.attachment.size, type: result.attachment.type, name: result.attachment.name});
+      var cryptup_data = tool.str.html_attribute_encode({size: result.attachment.size, type: result.attachment.type, name: result.attachment.name});
       plaintext += '<a href="' + result.url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
     });
     return plaintext;
@@ -386,8 +386,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function evaluate_receivers() {
     $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').each(function () {
       var email_element = this;
-      var email = trim_lower($(email_element).text());
-      if(is_email_valid(email)) {
+      var email = tool.str.trim_lower($(email_element).text());
+      if(tool.str.is_email_valid(email)) {
         $("#send_btn span").text(BTN_WAIT);
         $("#send_btn_note").text("Checking email addresses");
         lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, function (pubkey_lookup_result) {
@@ -497,7 +497,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       $('.recipients span').last().remove();
     }
     $('#input_to').focus();
-    $('#input_to').val(trim_lower(email));
+    $('#input_to').val(tool.str.trim_lower(email));
     hide_contacts();
     $('#input_to').blur();
     $('#input_to').focus();
@@ -606,7 +606,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function search_contacts(db_only) {
-    var query = { substring: trim_lower($('#input_to').val()) };
+    var query = { substring: tool.str.trim_lower($('#input_to').val()) };
     if(query.substring !== '') {
       db_contact_search(db, query, function (contacts) {
         if(db_only) {
@@ -648,7 +648,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(their_email, callback) {
-    their_email = trim_lower(their_email);
+    their_email = tool.str.trim_lower(their_email);
     account_storage_get(url_params.account_email, ['pubkey_sent_to'], function (storage) {
       if(storage.pubkey_sent_to && storage.pubkey_sent_to.indexOf(their_email) !== -1) {
         callback(true);
@@ -874,7 +874,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   $('#input_text').get(0).onpaste = function (e) {
     if(e.clipboardData.getData('text/html')) {
-      simulate_ctrl_v(inner_text(e.clipboardData.getData('text/html')).replace(/\n/g, '<br>'));
+      simulate_ctrl_v(tool.str.inner_text(e.clipboardData.getData('text/html')).replace(/\n/g, '<br>'));
       return false;
     }
   };

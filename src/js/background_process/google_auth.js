@@ -54,7 +54,7 @@ var google_auth_code_request_state = {
 };
 
 function google_auth_window_show_and_respond_to_auth_request(auth_request, current_scopes, respond) {
-  auth_request.auth_responder_id = random_string(20);
+  auth_request.auth_responder_id = tool.str.random(20);
   auth_responders[auth_request.auth_responder_id] = respond;
   auth_request.scopes = auth_request.scopes || [];
   $.each(google_oauth2.scopes, function (i, scope) {

@@ -91,7 +91,7 @@ function to_mime(account_email, body, headers, attachments, mime_message_callbac
     $.each(attachments || [], function (i, attachment) {
       root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
         'Content-Disposition': 'attachment',
-        'X-Attachment-Id': 'f_' + random_string(10),
+        'X-Attachment-Id': 'f_' + tool.str.random(10),
         'Content-Transfer-Encoding': 'base64',
       }).setContent(attachment.content));
     });
@@ -108,7 +108,7 @@ function gmail_api_get_thread(account_email, thread_id, format, get_thread_callb
 function gmail_api_draft_create(account_email, mime_message, thread_id, callback) {
   gmail_api_call(account_email, 'POST', 'drafts', {
     message: {
-      raw: base64url_encode(mime_message),
+      raw: tool.str.base64url_encode(mime_message),
       threadId: thread_id || null,
     },
   }, callback);
@@ -121,7 +121,7 @@ function gmail_api_draft_delete(account_email, id, callback) {
 function gmail_api_draft_update(account_email, id, mime_message, callback) {
   gmail_api_call(account_email, 'PUT', 'drafts/' + id, {
     message: {
-      raw: base64url_encode(mime_message),
+      raw: tool.str.base64url_encode(mime_message),
     },
   }, callback);
 }
@@ -140,7 +140,7 @@ function gmail_api_draft_send(account_email, id, callback) {
 
 function gmail_api_message_send(account_email, mime_message, thread_id, callback) {
   gmail_api_call(account_email, 'POST', 'messages/send', {
-    raw: base64url_encode(mime_message),
+    raw: tool.str.base64url_encode(mime_message),
     threadId: thread_id || null,
   }, callback);
 }
@@ -273,7 +273,7 @@ function gmail_api_loop_through_emails_to_compile_contacts(account_email, query,
   results = results || [];
   fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date'], function (headers) {
     if(headers && headers.to) {
-      var result = headers.to.split(/, ?/).map(parse_email_string).map(function (r) {
+      var result = headers.to.split(/, ?/).map(tool.str.parse_email).map(function (r) {
         r.date = headers.date;
         return r;
       });
@@ -336,11 +336,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
       if(format === 'full') {
         var bodies = gmail_api_find_bodies(gmail_message_object);
         var attachments = gmail_api_find_attachments(gmail_message_object);
-        var armored_message_from_bodies = extract_armored_message_from_text(base64url_decode(bodies['text/plain'])) || extract_armored_message_from_text(strip_pgp_armor(base64url_decode(bodies['text/html'])));
-
-        // !!! hard to get the =20 version from gmail - find out how, maybe raw instead of full
-        // console.log(base64url_decode(bodies['text/plain']));
-        // utf8_from_str_with_equal_sign_notation
+        var armored_message_from_bodies = extract_armored_message_from_text(tool.str.base64url_decode(bodies['text/plain'])) || extract_armored_message_from_text(strip_pgp_armor(tool.str.base64url_decode(bodies['text/html'])));
         if(armored_message_from_bodies) {
           success_callback(armored_message_from_bodies);
         } else if(attachments.length) {
@@ -350,7 +346,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
               found = true;
               gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
                 if(fetch_attachments_success) {
-                  var armored_message_text = base64url_decode(attachment[0].data);
+                  var armored_message_text = tool.str.base64url_decode(attachment[0].data);
                   var armored_message = extract_armored_message_from_text(armored_message_text);
                   if(armored_message) {
                     success_callback(armored_message);
@@ -365,13 +361,13 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
             }
           });
           if(!found) {
-            error_callback('format', as_html_formatted_string(gmail_message_object.payload));
+            error_callback('format', tool.str.pretty_print(gmail_message_object.payload));
           }
         } else {
-          error_callback('format', as_html_formatted_string(gmail_message_object.payload));
+          error_callback('format', tool.str.pretty_print(gmail_message_object.payload));
         }
       } else { // format === raw
-        parse_mime_message(base64url_decode(gmail_message_object.raw), function (success, mime_message) {
+        parse_mime_message(tool.str.base64url_decode(gmail_message_object.raw), function (success, mime_message) {
           if(success) {
             var armored_message = extract_armored_message_from_text(mime_message.text); // todo - the message might be in attachments
             if(armored_message) {

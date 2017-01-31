@@ -77,7 +77,7 @@ db_open(function (db) {
   }
 
   function format_for_contenteditable(text_or_html) {
-    return inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
+    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
       return '&nbsp;'.repeat(spaces.length);
     });
   }
@@ -194,16 +194,16 @@ db_open(function (db) {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
     $.each(attachments, function (i, attachment) {
-      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
+      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
     });
     send_resize_message();
     $('div.attachment').click(prevent(doubleclick(), function (self) {
       var attachment = included_attachments[$(self).attr('index')];
       if(attachment.content) {
-        save_file_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? str_to_uint8(attachment.content) : attachment.content);
+        save_file_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.str_to_uint8(attachment.content) : attachment.content);
       } else {
         download_as_uint8(attachment.url, /* progress function */ null, function(success, downloaded) {
-          decrypt_and_save_attachment_to_downloads(success, uint8_to_str(downloaded), attachment.name, attachment.type);
+          decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
         });
       }
     }));
@@ -242,7 +242,7 @@ db_open(function (db) {
         if(cryptup_file_link_elements.length) {
           render_inner_attachments(cryptup_file_link_elements.map(function (link_element_string) {
             var element = $(link_element_string);
-            var attachment_data = html_attribute_decode(element.attr('cryptup-data'));
+            var attachment_data = tool.str.html_attribute_decode(element.attr('cryptup-data'));
             return attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href'));
           }));
         }

@@ -16,7 +16,7 @@ function fetch_all_account_addresses(account_email, callback, query, from_emails
   query = query || 'in:sent';
   fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
-      fetch_all_account_addresses(account_email, callback, query + ' -from:"' + trim_lower(headers.from) + '"', from_emails.concat(trim_lower(headers.from)));
+      fetch_all_account_addresses(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
     } else {
       callback(from_emails);
     }
@@ -135,7 +135,7 @@ function fetch_email_key_backups(account_email, callback) {
               var keys = [];
               $.each(downloaded_attachments, function (i, downloaded_attachment) {
                 try {
-                  var armored_key = base64url_decode(downloaded_attachment.data);
+                  var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
                   var key = openpgp.key.readArmored(armored_key).keys[0];
                   if(key.isPrivate()) {
                     keys.push(key);

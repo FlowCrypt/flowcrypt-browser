@@ -15,7 +15,7 @@ get_account_emails(function (account_emails) {
 });
 
 function render(obj) {
-  $('.pre').html(as_html_formatted_string(obj));
+  $('.pre').html(tool.str.pretty_print(obj));
 }
 
 chrome.storage.local.get(function (storage) {

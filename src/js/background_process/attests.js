@@ -71,7 +71,7 @@ function process_attest_packet_text(account_email, attest_packet_text) {
   var decrypted = decrypt_key(key, get_passphrase(account_email));
   if(decrypted) {
     var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-    var expected_email_hash = double_sha1_upper(trim_lower(account_email));
+    var expected_email_hash = double_sha1_upper(tool.str.trim_lower(account_email));
     if(attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
       is_already_attested(account_email, attest.attester, function (is_attested) {
         if(!is_attested) {
@@ -107,7 +107,7 @@ function process_attest_packet_text(account_email, attest_packet_text) {
 
 function process_attest_email(account_email, gmail_message_object) {
   if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-    process_attest_packet_text(account_email, base64url_decode(gmail_message_object.payload.body.data));
+    process_attest_packet_text(account_email, tool.str.base64url_decode(gmail_message_object.payload.body.data));
   }
 }
 

@@ -132,11 +132,11 @@ db_open(function (db) {
     $(self).html(get_spinner());
     if(url_params.attachment_id) {
       gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
-        decrypt_and_save_attachment_to_downloads(success, success ? base64url_decode(attachment.data) : undefined);
+        decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
       });
     } else if(url_params.url) {
       download_as_uint8(url_params.url, render_progress, function(data) {
-        decrypt_and_save_attachment_to_downloads(uint8_to_str(data)); //toto - have to convert to uint8 because decrypt() cannot deal with uint8 directly yet
+        decrypt_and_save_attachment_to_downloads(tool.str.from_uint8(data)); //toto - have to convert to uint8 because decrypt() cannot deal with uint8 directly yet
       });
     } else {
       throw Error('Missing both attachment_id and url');
