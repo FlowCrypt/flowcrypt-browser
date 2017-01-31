@@ -1478,28 +1478,3 @@ function open_settings_page(path, account_email, page) {
     });
   }
 }
-
-function get_account_emails(callback) {
-  account_storage_get(null, ['account_emails'], function (storage) {
-    var account_emails = [];
-    if(typeof storage.account_emails !== 'undefined') {
-      $.each(JSON.parse(storage.account_emails), function (i, account_email) {
-        if(account_emails.indexOf(account_email.toLowerCase()) === -1) {
-          account_emails.push(account_email.toLowerCase());
-        }
-      });
-    }
-    callback(account_emails);
-  });
-}
-
-function add_account_email_to_list_of_accounts(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
-  get_account_emails(function (account_emails) {
-    if(account_emails.indexOf(account_email) === -1) {
-      account_emails.push(account_email);
-      account_storage_set(null, { 'account_emails': JSON.stringify(account_emails) }, callback);
-    } else if(typeof callback !== 'undefined') {
-      callback();
-    }
-  });
-}
