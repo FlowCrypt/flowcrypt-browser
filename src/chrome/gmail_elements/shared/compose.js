@@ -190,7 +190,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       });
     } else {
       if($('div#reply_message_prompt').length) { // todo - will only work for reply box, not compose box
-        $('div#reply_message_prompt').html(get_spinner() + ' Waiting for pass phrase to open previous draft..');
+        $('div#reply_message_prompt').html(tool.ui.spinner() + ' Waiting for pass phrase to open previous draft..');
         clearInterval(passphrase_interval);
         passphrase_interval = setInterval(function () {
           check_passphrase_entered(encrypted_draft);
@@ -253,7 +253,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(is_compose_form_rendered_as_ready()) {
       var original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
-      $('#send_btn i').replaceWith(get_spinner());
+      $('#send_btn i').replaceWith(tool.ui.spinner());
       cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_question').val(), answer: $('#input_answer').val(), };
@@ -771,7 +771,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function on_render() {
     $('#input_to').keydown(respond_to_input_hotkeys);
     $('#input_to').keyup(render_receivers);
-    $('#input_to').keyup(prevent(spree('veryslow'), search_contacts));
+    $('#input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
     $('#input_to').blur(render_receivers);
     $('#input_text').keyup(function () {
       $('#send_btn_note').text('');
@@ -815,7 +815,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     return result;
   }
 
-  $('#input_question, #input_answer').keyup(prevent(spree(), function () {
+  $('#input_question, #input_answer').keyup(tool.ui.event.prevent(tool.ui.event.spree(), function () {
     if($('#input_question').val() && $('#input_answer').val()) {
       $('#send_btn').removeClass('gray').addClass('green');
     } else {

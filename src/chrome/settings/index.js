@@ -86,7 +86,7 @@ function render_storage_inconsistency_error(account_email, text_reason) {
   html += '<div class="line">&nbsp;</div>'
   html += '<div class="line"><div class="button red reset_account">Reset cryptup for ' + account_email + '</div></div>';
   $('#settings-row').html(html);
-  $('.reset_account').click(prevent(doubleclick(), function () {
+  $('.reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     if(confirm('This will reset all your encryption settings for ' + account_email + '\n\nAre you sure?')) {
       reset_cryptup_account_storages(account_email, function () {
         window.location.reload();

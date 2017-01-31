@@ -11,13 +11,6 @@
 // 	file
 // 	mime
 // 	ui:
-// 		get_spinner
-// 		add_show_hide_passphrase_toggle
-// 		doubleclick
-// 		parallel
-// 		spree
-// 		prevent
-// 		release
 // 	crypt:
 // 		armor:
 // 			strip_pgp_armor
@@ -296,6 +289,17 @@
       resembles_message: resembles_message,
       format_content_to_display: format_content_to_display, // todo - should be refactored into two
       parse: parse,
+    },
+    ui: {
+      spinner: spinner,
+   		passphrase_toggle: passphrase_toggle,
+      event: {
+        double: double,
+        parallel: parallel,
+        spree: spree,
+        prevent: prevent,
+        release: release, // todo - I may have forgot to use this somwhere, used only parallel() - if that's how it works
+      },
     },
   };
 
@@ -755,43 +759,110 @@
     });
   }
 
+  /* tools.ui */
 
-})();
+  var events_fired = {};
+  var DOUBLE_MS = 1000;
+  var SPREE_MS = 50;
+  var SLOW_SPREE_MS = 200;
+  var VERY_SLOW_SPREE_MS = 500;
 
-function open_settings_page(path, account_email, page) {
-  if(account_email) {
-    window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + encodeURIComponent(account_email) + '&page=' + encodeURIComponent(page)), 'cryptup');
-  } else {
-    get_account_emails(function (account_emails) {
-      window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
+  function double() {
+    return { name: 'double', id: tool.str.random(10), };
+  }
+
+  function parallel() {
+    return { name: 'parallel', id: tool.str.random(10), };
+  }
+
+  function spree(type) {
+    return { name: (type || '') + 'spree', id: tool.str.random(10), }
+  }
+
+  function prevent(meta, callback) { //todo: messy + needs refactoring
+    return function () {
+      if(meta.name === 'spree') {
+        clearTimeout(events_fired[meta.id]);
+        events_fired[meta.id] = setTimeout(callback, SPREE_MS);
+      } else if(meta.name === 'slowspree') {
+        clearTimeout(events_fired[meta.id]);
+        events_fired[meta.id] = setTimeout(callback, SLOW_SPREE_MS);
+      } else if(meta.name === 'veryslowspree') {
+        clearTimeout(events_fired[meta.id]);
+        events_fired[meta.id] = setTimeout(callback, VERY_SLOW_SPREE_MS);
+      } else {
+        if(meta.id in events_fired) {
+          if(meta.name === 'parallel') {
+            return; // id was found - means the event handling is still being processed. Do not call back
+          } else if(meta.name === 'double') {
+            if(Date.now() - events_fired[meta.id] > DOUBLE_MS) {
+              events_fired[meta.id] = Date.now();
+              callback(this, meta.id);
+            }
+          }
+        } else {
+          events_fired[meta.id] = Date.now();
+          callback(this, meta.id);
+        }
+      }
+    }
+  }
+
+  function release(id) {
+    if(id in events_fired) {
+      var ms_to_release = DOUBLE_MS + events_fired[id] - Date.now();
+      if(ms_to_release > 0) {
+        setTimeout(function () {
+          delete events_fired[id];
+        }, ms_to_release);
+      } else {
+        delete events_fired[id];
+      }
+    }
+  }
+
+  function spinner() {
+    return '&nbsp;<i class="fa fa-spinner fa-spin"></i>&nbsp;';
+    // Updated spinner still broken.
+    // return '&nbsp;<div class="inline_loader" title="0"><svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve"><path opacity="0.1" fill="#088447" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z" /><path fill="#088447" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0C22.32,8.481,24.301,9.057,26.013,10.047z"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.5s" repeatCount="indefinite" /></path></svg></div>&nbsp;';
+  }
+
+  function passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
+    var button_hide = '<i class="fa fa-eye-slash"></i><br>hide';
+    var button_show = '<i class="fa fa-eye"></i><br>show';
+    account_storage_get(null, ['hide_pass_phrases'], function (storage) {
+      if(force_initial_show_or_hide === 'hide') {
+        var show = false;
+      } else if(force_initial_show_or_hide === 'show') {
+        var show = true;
+      } else {
+        var show = !storage.hide_pass_phrases;
+      }
+      $.each(pass_phrase_input_ids, function (i, id) {
+        if(show) {
+          $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
+          $('#' + id).attr('type', 'text');
+        } else {
+          $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
+          $('#' + id).attr('type', 'password');
+        }
+        $('#toggle_' + id).click(function () {
+          if($('#' + id).attr('type') === 'password') {
+            $('#' + id).attr('type', 'text');
+            $(this).html(button_hide);
+            account_storage_set(null, { hide_pass_phrases: false, });
+          } else {
+            $('#' + id).attr('type', 'password');
+            $(this).html(button_show);
+            account_storage_set(null, { hide_pass_phrases: true, });
+          }
+        });
+      });
     });
   }
-}
 
-function get_account_emails(callback) {
-  account_storage_get(null, ['account_emails'], function (storage) {
-    var account_emails = [];
-    if(typeof storage.account_emails !== 'undefined') {
-      $.each(JSON.parse(storage.account_emails), function (i, account_email) {
-        if(account_emails.indexOf(account_email.toLowerCase()) === -1) {
-          account_emails.push(account_email.toLowerCase());
-        }
-      });
-    }
-    callback(account_emails);
-  });
-}
 
-function add_account_email_to_list_of_accounts(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
-  get_account_emails(function (account_emails) {
-    if(account_emails.indexOf(account_email) === -1) {
-      account_emails.push(account_email);
-      account_storage_set(null, { 'account_emails': JSON.stringify(account_emails) }, callback);
-    } else if(typeof callback !== 'undefined') {
-      callback();
-    }
-  });
-}
+})();
 
 function strip_pgp_armor(pgp_block_text) {
   if(!pgp_block_text) {
@@ -876,46 +947,6 @@ function check_keyserver_pubkey_fingerprints() {
         });
       });
     }
-  });
-}
-
-function get_spinner() {
-  return '&nbsp;<i class="fa fa-spinner fa-spin"></i>&nbsp;';
-  // Updated spinner still broken.
-  // return '&nbsp;<div class="inline_loader" title="0"><svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve"><path opacity="0.1" fill="#088447" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z" /><path fill="#088447" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0C22.32,8.481,24.301,9.057,26.013,10.047z"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.5s" repeatCount="indefinite" /></path></svg></div>&nbsp;';
-}
-
-function add_show_hide_passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
-  var button_hide = '<i class="fa fa-eye-slash"></i><br>hide';
-  var button_show = '<i class="fa fa-eye"></i><br>show';
-  account_storage_get(null, ['hide_pass_phrases'], function (storage) {
-    if(force_initial_show_or_hide === 'hide') {
-      var show = false;
-    } else if(force_initial_show_or_hide === 'show') {
-      var show = true;
-    } else {
-      var show = !storage.hide_pass_phrases;
-    }
-    $.each(pass_phrase_input_ids, function (i, id) {
-      if(show) {
-        $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
-        $('#' + id).attr('type', 'text');
-      } else {
-        $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
-        $('#' + id).attr('type', 'password');
-      }
-      $('#toggle_' + id).click(function () {
-        if($('#' + id).attr('type') === 'password') {
-          $('#' + id).attr('type', 'text');
-          $(this).html(button_hide);
-          account_storage_set(null, { hide_pass_phrases: false, });
-        } else {
-          $('#' + id).attr('type', 'password');
-          $(this).html(button_show);
-          account_storage_set(null, { hide_pass_phrases: true, });
-        }
-      });
-    });
   });
 }
 
@@ -1452,64 +1483,40 @@ function challenge_answer_hash(answer) {
   return sha256_loop(answer);
 }
 
-/* -------------------- DOUBLE CLICK/PARALLEL PROTECTION FOR JQUERY ----------------------------------- */
 
-var events_fired = {};
-var DOUBLECLICK_MS = 1000;
-var SPREE_MS = 50;
-var SLOW_SPREE_MS = 200;
-var VERY_SLOW_SPREE_MS = 500;
+// storage
 
-function doubleclick() {
-  return { name: 'doubleclick', id: tool.str.random(10), };
+function open_settings_page(path, account_email, page) {
+  if(account_email) {
+    window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + encodeURIComponent(account_email) + '&page=' + encodeURIComponent(page)), 'cryptup');
+  } else {
+    get_account_emails(function (account_emails) {
+      window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
+    });
+  }
 }
 
-function parallel() {
-  return { name: 'parallel', id: tool.str.random(10), };
-}
-
-function spree(type) {
-  return { name: (type || '') + 'spree', id: tool.str.random(10), }
-}
-
-function prevent(meta, callback) { //todo: messy + needs refactoring
-  return function () {
-    if(meta.name === 'spree') {
-      clearTimeout(events_fired[meta.id]);
-      events_fired[meta.id] = setTimeout(callback, SPREE_MS);
-    } else if(meta.name === 'slowspree') {
-      clearTimeout(events_fired[meta.id]);
-      events_fired[meta.id] = setTimeout(callback, SLOW_SPREE_MS);
-    } else if(meta.name === 'veryslowspree') {
-      clearTimeout(events_fired[meta.id]);
-      events_fired[meta.id] = setTimeout(callback, VERY_SLOW_SPREE_MS);
-    } else {
-      if(meta.id in events_fired) {
-        if(meta.name === 'parallel') {
-          return; // id was found - means the event handling is still being processed. Do not call back
-        } else if(meta.name === 'doubleclick') {
-          if(Date.now() - events_fired[meta.id] > DOUBLECLICK_MS) {
-            events_fired[meta.id] = Date.now();
-            callback(this, meta.id);
-          }
+function get_account_emails(callback) {
+  account_storage_get(null, ['account_emails'], function (storage) {
+    var account_emails = [];
+    if(typeof storage.account_emails !== 'undefined') {
+      $.each(JSON.parse(storage.account_emails), function (i, account_email) {
+        if(account_emails.indexOf(account_email.toLowerCase()) === -1) {
+          account_emails.push(account_email.toLowerCase());
         }
-      } else {
-        events_fired[meta.id] = Date.now();
-        callback(this, meta.id);
-      }
+      });
     }
-  }
+    callback(account_emails);
+  });
 }
 
-function release(id) {
-  if(id in events_fired) {
-    var ms_to_release = DOUBLECLICK_MS + events_fired[id] - Date.now();
-    if(ms_to_release > 0) {
-      setTimeout(function () {
-        delete events_fired[id];
-      }, ms_to_release);
-    } else {
-      delete events_fired[id];
+function add_account_email_to_list_of_accounts(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
+  get_account_emails(function (account_emails) {
+    if(account_emails.indexOf(account_email) === -1) {
+      account_emails.push(account_email);
+      account_storage_set(null, { 'account_emails': JSON.stringify(account_emails) }, callback);
+    } else if(typeof callback !== 'undefined') {
+      callback();
     }
-  }
+  });
 }

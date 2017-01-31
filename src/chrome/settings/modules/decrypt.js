@@ -30,11 +30,11 @@ db_open(function (db) {
       },
     }, tab_id);
 
-    $('.action_decrypt_and_download').click(prevent(doubleclick(), function (self) {
+    $('.action_decrypt_and_download').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       var ids = attach_js.get_attachment_ids();
       if(ids.length === 1) {
         original_content = $(self).html();
-        $(self).html('Decrypting.. ' + get_spinner());
+        $(self).html('Decrypting.. ' + tool.ui.spinner());
         attach_js.collect_attachment(ids[0], decrypt_and_download);
       } else {
         alert('Please add a file to decrypt');

@@ -12,7 +12,7 @@ var url_params = tool.env.url_params(['account_email']);
 
 $('.email-address').text(url_params.account_email);
 
-$('.summary').html('Loading from keyserver<br><br>' + get_spinner());
+$('.summary').html('Loading from keyserver<br><br>' + tool.ui.spinner());
 
 account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], function (storage) {
   var account_addresses = storage.addresses || [url_params.account_email];
@@ -81,16 +81,16 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     }
     $('table#emails').append('<tr><td>' + email + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
   });
-  $('.submit_pubkey').click(prevent(doubleclick(), function (self) {
-    $(self).html(get_spinner());
+  $('.submit_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $(self).html(tool.ui.spinner());
     submit_pubkey($(self).attr('email'));
   }));
-  $('.request_replacement').click(prevent(doubleclick(), function (self) {
-    $(self).html(get_spinner());
+  $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $(self).html(tool.ui.spinner());
     show_settings_page('/chrome/settings/modules/request_replacement.htm');
   }));
-  $('.refresh_after_attest_request').click(prevent(doubleclick(), function (self) {
-    $('.refresh_after_attest_request').html('Updating.. ' + get_spinner());
+  $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.refresh_after_attest_request').html('Updating.. ' + tool.ui.spinner());
     chrome_message_send(null, 'attest_requested', { account_email: url_params.account_email, }, function () {
       setTimeout(function () {
         window.location.reload();

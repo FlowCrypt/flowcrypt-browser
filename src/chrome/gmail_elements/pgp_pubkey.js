@@ -50,7 +50,7 @@ db_open(function (db) {
     send_resize_message();
   }
 
-  $('.action_add_contact').click(prevent(doubleclick(), function (self) {
+  $('.action_add_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     if(tool.str.is_email_valid($('.input_email').val())) {
       db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function () {
         $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>')

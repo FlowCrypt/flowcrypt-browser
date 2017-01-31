@@ -40,7 +40,7 @@ function init_elements_notifications_js() {
       };
     }
     $.each(callbacks, function (name, callback) {
-      $('.gmail_notifications a.' + name).click(catcher.try(prevent(doubleclick(), callback)));
+      $('.gmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
     });
   };
 

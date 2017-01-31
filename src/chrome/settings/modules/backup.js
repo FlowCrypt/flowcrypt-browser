@@ -6,7 +6,7 @@ var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
 var url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
 
-add_show_hide_passphrase_toggle(['password', 'password2']);
+tool.ui.passphrase_toggle(['password', 'password2']);
 
 account_storage_get(url_params.account_email, ['setup_simple'], function (storage) {
   if(url_params.action === 'setup') {
@@ -52,7 +52,7 @@ function display_block(name) {
   $('#' + name).css('display', 'block');
 }
 
-$('#password').on('keyup', prevent(spree(), function () {
+$('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
   evaluate_password_strength('#step_1_password', '#password', '.action_password');
 }));
 
@@ -119,7 +119,7 @@ function show_status() {
         } else {
           $('.status_summary').text('Could not start searching for backups, possibly due to a network failure. Refresh to try again.');
           $('#step_0_status .container').html('<div class="button long green action_refresh">REFRESH</div>');
-          $('.action_refresh').click(prevent(doubleclick(), show_status));
+          $('.action_refresh').click(tool.ui.event.prevent(tool.ui.event.double(), show_status));
         }
       });
     } else { // gmail read permission not granted - cannot check for backups
@@ -167,7 +167,7 @@ function backup_key_on_gmail(account_email, armored_key, callback) {
   });
 }
 
-$('.action_backup').click(prevent(doubleclick(), function (self) {
+$('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var new_passphrase = $('#password').val();
   if(new_passphrase !== $('#password2').val()) {
     alert('The two pass phrases do not match, please try again.');
@@ -175,7 +175,7 @@ $('.action_backup').click(prevent(doubleclick(), function (self) {
     $('#password2').focus();
   } else {
     var btn_text = $(self).text();
-    $(self).html(get_spinner());
+    $(self).html(tool.ui.spinner());
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     var prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, new_passphrase);
@@ -207,7 +207,7 @@ function backup_on_gmail() {
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
     var btn_text = $(self).text();
-    $(self).html(get_spinner());
+    $(self).html(tool.ui.spinner());
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     backup_key_on_gmail(url_params.account_email, armored_private_key, function (success) {
       if(success) {
@@ -225,7 +225,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
     var btn_text = $(self).text();
-    $(self).html(get_spinner());
+    $(self).html(tool.ui.spinner());
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');
@@ -250,7 +250,7 @@ function write_backup_done_and_render(prompt, method) {
   });
 }
 
-$('.action_manual_backup').click(prevent(doubleclick(), function (self) {
+$('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var selected = $('input[type=radio][name=input_backup_choice]:checked').val();
   if(selected === 'gmail') {
     backup_on_gmail();
@@ -263,7 +263,7 @@ $('.action_manual_backup').click(prevent(doubleclick(), function (self) {
   }
 }));
 
-$('.action_skip_backup').click(prevent(doubleclick(), function () {
+$('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   if(url_params.action === 'setup') {
     account_storage_set(url_params.account_email, { key_backup_prompt: false }, function () {
       window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);

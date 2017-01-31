@@ -149,7 +149,7 @@ function init_elements_replace_js() {
         var message_id = parse_message_id_from('attachment', this);
         if(message_id) {
           if(can_read_emails) {
-            $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + get_spinner() + '</div>');
+            $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + tool.ui.spinner() + '</div>');
             $(this).addClass('message_id_' + message_id);
             chrome_message_send(null, 'list_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
               catcher.try(function () {

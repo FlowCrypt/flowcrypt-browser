@@ -10,8 +10,8 @@ if(url_params.account_email) {
 
 $('.email-address').text(url_params.account_email);
 $('.back').css('visibility', 'hidden');
-add_show_hide_passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
-add_show_hide_passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
+tool.ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
+tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
@@ -281,11 +281,11 @@ $('.back').off().click(function () {
   display_block('step_1_easy_or_manual');
 });
 
-$('#step_2_recovery .action_recover_account').click(prevent(doubleclick(), function (self) {
+$('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var passphrase = $('#recovery_pasword').val();
   if(passphrase) {
     var btn_text = $(self).text();
-    $(self).html(get_spinner());
+    $(self).html(tool.ui.spinner());
     var worked = false;
     $.each(recovered_keys, function (i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
@@ -357,7 +357,7 @@ $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_ma
 });
 
 $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
-  $(this).html('Disagnosing.. ' + get_spinner());
+  $(this).html('Disagnosing.. ' + tool.ui.spinner());
   openpgp.generateKey({ // create a bogus key for testing and diagnosis
     numBits: 4096,
     userIds: [{ name: 'pass phrase is stockholm', email: 'bad@key.com', }],
@@ -401,7 +401,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
       $('#step_2b_manual_enter .input_passphrase').val('');
       $('#step_2b_manual_enter .input_passphrase').focus();
     } else if(decrypt_result === true) {
-      $('#step_2b_manual_enter .action_save_private').html(get_spinner());
+      $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner());
       var options = {
         passphrase: passphrase,
         setup_simple: false,
@@ -419,11 +419,11 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
   }
 });
 
-$('#step_2a_manual_create .input_password').on('keyup', prevent(spree(), function () {
+$('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
   evaluate_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
 }));
 
-$('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), function () {
+$('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   if(!$('#step_2a_manual_create .input_password').val()) {
     alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
     $('#step_2a_manual_create .input_password').focus();
@@ -437,7 +437,7 @@ $('#step_2a_manual_create .action_create_private').click(prevent(doubleclick(), 
   } else {
     $('h1').text('Please wait, setting up CryptUP');
     $('#step_2a_manual_create input').prop('disabled', true);
-    $('#step_2a_manual_create .action_create_private').html(get_spinner() + 'just a minute');
+    $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner() + 'just a minute');
     get_and_save_userinfo(url_params.account_email, function (userinfo) {
       create_save_key_pair(url_params.account_email, {
         full_name: userinfo.full_name,

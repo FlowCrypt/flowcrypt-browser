@@ -10,7 +10,7 @@ if(private_keys_get(url_params.account_email).length > 1) {
   $('#step_1_password #password').attr('placeholder', 'Enter a new primary key pass phrase');
 }
 
-add_show_hide_passphrase_toggle(['original_password', 'password', 'password2']);
+tool.ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
 var original_passphrase = get_passphrase(url_params.account_email);
 if(original_passphrase === null) {
@@ -43,7 +43,7 @@ $('.action_enter').click(function () {
   }
 });
 
-$('#password').on('keyup', prevent(spree(), function () {
+$('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
   evaluate_password_strength('#step_1_password', '#password', '.action_password');
 }));
 
@@ -63,7 +63,7 @@ $('.action_reset_password').click(function () {
   $('#password').focus();
 });
 
-$('.action_change').click(prevent(doubleclick(), function (self) {
+$('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var new_passphrase = $('#password').val();
   if(new_passphrase !== $('#password2').val()) {
     alert('The two pass phrases do not match, please try again.');

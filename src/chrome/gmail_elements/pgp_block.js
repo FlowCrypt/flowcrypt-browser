@@ -92,7 +92,7 @@ db_open(function (db) {
         callback();
       }
       setTimeout(function () {
-        $(window).resize(prevent(spree(), send_resize_message));
+        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
       }, 1000);
       send_resize_message();
     });
@@ -197,7 +197,7 @@ db_open(function (db) {
       $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
     });
     send_resize_message();
-    $('div.attachment').click(prevent(doubleclick(), function (self) {
+    $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       var attachment = included_attachments[$(self).attr('index')];
       if(attachment.content) {
         tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
@@ -302,7 +302,7 @@ db_open(function (db) {
     render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function () {
       clearInterval(passphrase_interval);
       passphrase_interval = setInterval(check_passphrase_changed, 1000);
-      $('.enter_passphrase').click(prevent(doubleclick(), function () {
+      $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
         chrome_message_send(url_params.parent_tab_id, 'passphrase_dialog', {
           type: 'message',
           longids: missing_or_wrong_passphrase_key_longids,
@@ -318,7 +318,7 @@ db_open(function (db) {
     prompt += '<p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
     render_content(prompt, true, function () {
-      $('.button.decrypt').click(prevent(doubleclick(), function (self) {
+      $('.button.decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
         $(self).html('Opening');
         setTimeout(function () {
           decrypt_and_render($('#answer').val());

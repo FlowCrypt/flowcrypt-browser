@@ -3,7 +3,7 @@
 var url_params = tool.env.url_params(['account_email', 'embedded', 'parent_tab_id']);
 url_params.embedded = Boolean(Number(url_params.embedded));
 
-add_show_hide_passphrase_toggle(['passphrase_entry']);
+tool.ui.passphrase_toggle(['passphrase_entry']);
 
 if(url_params.embedded) {
   $('.change_passhrase_container').css('display', 'none');

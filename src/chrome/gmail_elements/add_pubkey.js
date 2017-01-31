@@ -26,7 +26,7 @@ db_open(function (db) {
       }
     });
 
-    $('.action_ok').click(prevent(doubleclick(), function () {
+    $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
       var armored = key_normalize(strip_pgp_armor($('.pubkey').val()));
       if(key_fingerprint(armored)) {
         db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
@@ -40,7 +40,7 @@ db_open(function (db) {
 });
 
 if(url_params.placement !== 'settings') {
-  $('.action_settings').click(prevent(doubleclick(), function () {
+  $('.action_settings').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     chrome_message_send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',
@@ -51,7 +51,7 @@ if(url_params.placement !== 'settings') {
   $('#content').addClass('inside_compose');
 }
 
-$('.action_close').click(prevent(doubleclick(), close_dialog));
+$('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), close_dialog));
 
 function close_dialog() {
   if(url_params.parent_tab_id) {

@@ -21,7 +21,7 @@ if(url_params.embedded) {
 
 $('#content').css('display', 'block');
 
-// add_show_hide_passphrase_toggle(['passphrase']);
+// tool.ui.passphrase_toggle(['passphrase']);
 // $('input.passphrase').keyup(render_normal);
 
 account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
@@ -64,11 +64,11 @@ function render_dialog(level, expire, active) {
     }
   }
 
-  $('.action_close').click(prevent(doubleclick(), function () {
+  $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     chrome_message_send(url_params.parent_tab_id, 'close_dialog');
   }));
 
-  $('.action_ok').click(prevent(parallel(), function(self) {
+  $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self) {
       original_content = $(self).html();
       tool.env.increment('upgrade_dialog_register_click');
       if(active && url_params.source === 'auth_error') {
@@ -82,7 +82,7 @@ function render_dialog(level, expire, active) {
 
 
 function render_status(content, spinner) {
-  $(url_params.embedded ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + get_spinner() : ''));
+  $(url_params.embedded ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner() : ''));
 }
 
 function register_and_subscribe() {

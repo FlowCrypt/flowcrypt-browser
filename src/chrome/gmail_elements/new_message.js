@@ -74,7 +74,7 @@ db_open(function (db) {
   }
 
   compose.on_render();
-  $('#send_btn').click(prevent(doubleclick(), send_btn_click));
+  $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click));
   $('.close_new_message').click(new_message_close);
   account_storage_get(url_params.account_email, ['addresses'], function (storage) { // add send-from addresses
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {

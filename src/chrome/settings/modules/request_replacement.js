@@ -4,7 +4,7 @@
 
 var url_params = tool.env.url_params(['account_email']);
 
-$('#status').html('Loading from keyserver<br/><br/><br/>' + get_spinner());
+$('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner());
 
 var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key')
 
@@ -19,7 +19,7 @@ keyserver_keys_find(url_params.account_email, function (success, keyserver_resul
   } else { // email previously attested, and there indeed is a pubkey mismatch
     $('#status').html('Original key KeyWords:<br/><span class="good">' + mnemonic(key_longid(keyserver_result.pubkey)) + '<br/>' + key_fingerprint(keyserver_result.pubkey, 'spaced') + '</span>');
     $('#step_2b_manual_enter').css('display', 'block');
-    $('.action_request_replacement').click(prevent(doubleclick(), function () {
+    $('.action_request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
       var old_key = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
       if(typeof old_key === 'undefined') {
         alert('Private key is not properly formatted. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.');

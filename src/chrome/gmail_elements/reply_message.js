@@ -193,14 +193,14 @@ db_open(function (db) {
     }
     compose.on_render();
     $("#input_to").focus();
-    $('#send_btn').click(prevent(doubleclick(), send_btn_click));
+    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click));
     if(url_params.to) {
       $('#input_text').focus();
       document.getElementById("input_text").focus();
       compose.evaluate_receivers();
     }
     setTimeout(function () { // delay automatic resizing until a second later
-      $(window).resize(prevent(spree(), compose.resize_reply_box));
+      $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), compose.resize_reply_box));
       $('#input_text').keyup(compose.resize_reply_box);
     }, 1000);
     compose.resize_reply_box();
@@ -212,7 +212,7 @@ db_open(function (db) {
       can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
       if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
         original_reply_message_prompt = $('div#reply_message_prompt').html();
-        $('div#reply_message_prompt').html(get_spinner() + ' Loading draft');
+        $('div#reply_message_prompt').html(tool.ui.spinner() + ' Loading draft');
         gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);

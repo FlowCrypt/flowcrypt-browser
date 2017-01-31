@@ -7,7 +7,7 @@ var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 $('.action_send_feedback').click(function () {
   var original_button_text = $(this).text();
   var button = this;
-  $(this).html(get_spinner());
+  $(this).html(tool.ui.spinner());
   setTimeout(function () { // this is so that spinner starts spinning before a potential failed connection alert shows up
     keyserver_call('help/feedback', { email: url_params.account_email, message: $('#input_text').val(), }, function (success, response) {
       if(success && response.sent === true) {

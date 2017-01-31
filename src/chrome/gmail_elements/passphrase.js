@@ -9,7 +9,7 @@ if(url_params.type === 'embedded') {
   $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
   $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
 }
-add_show_hide_passphrase_toggle(['passphrase']);
+tool.ui.passphrase_toggle(['passphrase']);
 
 var all_private_keys = private_keys_get(url_params.account_email);
 
@@ -45,11 +45,11 @@ function render_normal() {
   $('input.passphrase').focus();
 }
 
-$('.action_close').click(prevent(doubleclick(), function () {
+$('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   chrome_message_send(url_params.parent_tab_id, 'close_dialog');
 }));
 
-$('.action_ok').click(prevent(doubleclick(), function () {
+$('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   var pass = $('input.passphrase').val();
   var is_correct = false;
   $.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all

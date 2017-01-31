@@ -4,7 +4,7 @@
 
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
-add_show_hide_passphrase_toggle(['input_passphrase']);
+tool.ui.passphrase_toggle(['input_passphrase']);
 
 var private_keys = private_keys_get(url_params.account_email);
 var private_keys_long_ids = [];
@@ -12,7 +12,7 @@ $.each(private_keys, function (i, keyinfo) {
   private_keys_long_ids.push(keyinfo.longid);
 });
 
-$('.action_add_private_key').click(prevent(doubleclick(), function () {
+$('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   var new_key = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
   var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
   if(typeof new_key === 'undefined') {

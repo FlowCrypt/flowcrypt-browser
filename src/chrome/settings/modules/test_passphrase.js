@@ -4,7 +4,7 @@
 
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
-add_show_hide_passphrase_toggle(['password']);
+tool.ui.passphrase_toggle(['password']);
 
 var key;
 $.each(private_keys_get(url_params.account_email), function (i, keyinfo) {
