@@ -117,7 +117,7 @@ function init_elements_replace_js() {
     var re_pgp_question = /<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>/m;
     var question_match = message_html.match(re_pgp_question);
     if(question_match !== null) {
-      return tool.str.inner_text(get_url_params(['question'], question_match[1].split('?', 2)[1]).question);
+      return tool.str.inner_text(tool.env.url_params(['question'], question_match[1].split('?', 2)[1]).question);
     }
   };
 

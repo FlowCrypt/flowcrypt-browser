@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['filter']);
+var url_params = tool.env.url_params(['filter']);
 
 get_account_emails(function (account_emails) {
   $('.emails').append('<a href="storage.htm">all</a>');

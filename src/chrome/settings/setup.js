@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email']);
+var url_params = tool.env.url_params(['account_email']);
 
 if(url_params.account_email) {
   chrome_message_send(null, 'update_uninstall_url');
@@ -179,7 +179,7 @@ function render_setup_done(account_email, key_backup_prompt) {
 // options: {submit_main, submit_all, setup_simple, key_backup_prompt}
 function finalize_setup(account_email, armored_pubkey, options) {
   submit_public_key_if_needed(account_email, armored_pubkey, options, function () {
-    increment_metric('setup');
+    tool.env.increment('setup');
     var storage = {
       setup_date: Date.now(),
       setup_done: true,

@@ -4,7 +4,7 @@
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
-var url_params = get_url_params(['account_email', 'action', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
 
 add_show_hide_passphrase_toggle(['password', 'password2']);
 

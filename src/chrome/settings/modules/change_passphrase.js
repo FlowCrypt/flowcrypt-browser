@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email']);
+var url_params = tool.env.url_params(['account_email']);
 
 if(private_keys_get(url_params.account_email).length > 1) {
   $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');

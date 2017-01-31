@@ -4,7 +4,7 @@
 
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
-var url_params = get_url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
+var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var l = {
@@ -51,7 +51,7 @@ db_open(function (db) {
     return;
   }
 
-  increment_metric('view');
+  tool.env.increment('view');
 
   function send_resize_message() {
     var new_height = $('#pgp_block').height() + 40;
@@ -200,7 +200,7 @@ db_open(function (db) {
     $('div.attachment').click(prevent(doubleclick(), function (self) {
       var attachment = included_attachments[$(self).attr('index')];
       if(attachment.content) {
-        save_file_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.str_to_uint8(attachment.content) : attachment.content);
+        save_file_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
       } else {
         download_as_uint8(attachment.url, /* progress function */ null, function(success, downloaded) {
           decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);

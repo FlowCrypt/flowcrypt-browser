@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 add_show_hide_passphrase_toggle(['input_passphrase']);
 

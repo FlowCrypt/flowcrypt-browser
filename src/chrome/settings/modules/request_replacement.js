@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email']);
+var url_params = tool.env.url_params(['account_email']);
 
 $('#status').html('Loading from keyserver<br/><br/><br/>' + get_spinner());
 

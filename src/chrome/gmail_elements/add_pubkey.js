@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
+var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
 
 $.each(url_params.emails.split(','), function (i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');

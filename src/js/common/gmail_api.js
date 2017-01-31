@@ -72,7 +72,7 @@ function google_api_handle_auth_error(account_email, method, resource, parameter
   attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
 */
 function to_mime(account_email, body, headers, attachments, mime_message_callback) {
-  set_up_require();
+  tool.env.set_up_require();
   require(['emailjs-mime-builder'], function (MimeBuilder) {
     var root_node = new MimeBuilder('multipart/mixed');
     $.each(headers, function (key, header) {

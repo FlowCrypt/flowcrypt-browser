@@ -2,7 +2,7 @@
 
 'use strict';
 
-var settings_url_params = get_url_params(['account_email', 'parent_tab_id', 'embedded']);
+var settings_url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'embedded']);
 var settings_tab_id_global = undefined;
 
 var recovery_email_subjects = ['Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];

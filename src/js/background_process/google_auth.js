@@ -186,7 +186,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
   }
   var parts = auth_code_window_result.title.split(' ', 2);
   var result = parts[0];
-  var params = get_url_params(['code', 'state', 'error'], parts[1]);
+  var params = tool.env.url_params(['code', 'state', 'error'], parts[1]);
   var state_object = google_auth_code_request_state.unpack(params.state);
   var auth_responder = auth_responders[state_object.auth_responder_id];
   auth_responders[state_object.auth_responder_id] = RESPONDED;

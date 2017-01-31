@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id']);
 // if(url_params.size) {
 //   url_params.size = parseInt(url_params.size);
 // }
@@ -127,7 +127,7 @@ db_open(function (db) {
   }
 
   $('#download').click(prevent(doubleclick(), function (self) {
-    increment_metric('download');
+    tool.env.increment('download');
     original_content = $(self).html();
     $(self).html(get_spinner());
     if(url_params.attachment_id) {

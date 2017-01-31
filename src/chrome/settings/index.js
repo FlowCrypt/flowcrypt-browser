@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'page', 'advanced']);
+var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 
 $('span#v').text(chrome.runtime.getManifest().version);
 

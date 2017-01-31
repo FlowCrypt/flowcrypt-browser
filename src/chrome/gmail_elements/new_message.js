@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id']);
+var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id']);
 
 db_open(function (db) {
 
@@ -25,7 +25,7 @@ db_open(function (db) {
             chrome_message_send(url_params.parent_tab_id, 'notification_show', {
               notification: 'Your message has been sent.'
             });
-            compose.draft_delete(url_params.account_email, increment_metric('compose', new_message_close));
+            compose.draft_delete(url_params.account_email, tool.env.increment('compose', new_message_close));
           } else {
             compose.handle_send_message_error(response);
           }

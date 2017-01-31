@@ -6,11 +6,6 @@
 // tool
 // 	str
 // 	env
-// 		get_url_params
-// 		cryptup_version_integer
-// 		key_codes
-// 		set_up_require
-// 		increment_metric, known_metric_types
 // 	arr
 // 		unique
 // 		to_array
@@ -170,7 +165,7 @@
       console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
     }
     try {
-      increment_metric('error');
+      tool.env.increment('error');
       account_storage_get(null, ['errors'], function (storage) {
         if(typeof storage.errors === 'undefined') {
           storage.errors = [];
@@ -284,10 +279,17 @@
       base64url_encode: base64url_encode,
       base64url_decode: base64url_decode,
       from_uint8: from_uint8,
-      to_unit8: to_unit8,
+      to_uint8: to_uint8,
       from_equal_sign_notation_as_utf: from_equal_sign_notation_as_utf,
       uint8_as_utf: uint8_as_utf,
       to_hex: to_hex,
+    },
+    env: {
+      url_params: url_params,
+		  cryptup_version_integer: cryptup_version_integer,
+		  key_codes: key_codes,
+		  set_up_require: set_up_require,
+		  increment: increment,
     },
   };
 
@@ -383,7 +385,7 @@
     return c.join("");
   }
 
-  function to_unit8(raw) {
+  function to_uint8(raw) {
     var rawLength = raw.length;
     var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
     for(var i = 0; i < rawLength; i++) {
@@ -455,23 +457,83 @@
     return o;
   }
 
+  /* tool.env */
+
+  function url_params(expected_keys, string) {
+    var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
+    var url_data = {};
+    $.each(raw_url_data, function (i, pair_string) {
+      var pair = pair_string.split('=');
+      if(expected_keys.indexOf(pair[0]) !== -1) {
+        url_data[pair[0]] = decodeURIComponent(pair[1]);
+      }
+    });
+    return url_data;
+  }
+
+  function cryptup_version_integer() {
+    return Number(chrome.runtime.getManifest().version.replace(/\./g, ''));
+  }
+
+  function key_codes() {
+    return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
+  }
+
+  function set_up_require() {
+    require.config({
+      baseUrl: '/lib',
+      paths: {
+        'emailjs-addressparser': './emailjs/emailjs-addressparser',
+        'emailjs-mime-builder': './emailjs/emailjs-mime-builder',
+        'emailjs-mime-codec': './emailjs/emailjs-mime-codec',
+        'emailjs-mime-parser': './emailjs/emailjs-mime-parser',
+        'emailjs-mime-types': './emailjs/emailjs-mime-types',
+        'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
+        'punycode': './emailjs/punycode',
+        'sinon': './emailjs/sinon',
+        'quoted-printable': './emailjs/quoted-printable',
+      }
+    });
+  }
+
+  var known_metric_types = {
+    'compose': 'c',
+    'view': 'w',
+    'reply': 'r',
+    'attach': 'a',
+    'download': 'd',
+    'setup': 's',
+    'error': 'e',
+    'upgrade_notify_attach_nonpgp': 'unan',
+    'upgrade_notify_attach_size': 'unas',
+    'upgrade_dialog_show': 'uds',
+    'upgrade_dialog_register_click': 'udrc',
+    'upgrade_verification_embedded_show': 'uves',
+    'upgrade_done': 'ud',
+  };
+
+  function increment(type, callback) {
+    if(!known_metric_types[type]) {
+      catcher.log('Unknown metric type "' + type + '"');
+    }
+    account_storage_get(null, ['metrics'], function (storage) {
+      var metrics_k = known_metric_types[type];
+      if(!storage.metrics) {
+        storage.metrics = {};
+      }
+      if(!storage.metrics[metrics_k]) {
+        storage.metrics[metrics_k] = 1;
+      } else {
+        storage.metrics[metrics_k] += 1;
+      }
+      account_storage_set(null, { metrics: storage.metrics, }, function () {
+        chrome_message_send(null, 'update_uninstall_url', null, callback);
+      });
+    });
+  }
+
 })();
 
-function get_url_params(expected_keys, string) {
-  var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
-  var url_data = {};
-  $.each(raw_url_data, function (i, pair_string) {
-    var pair = pair_string.split('=');
-    if(expected_keys.indexOf(pair[0]) !== -1) {
-      url_data[pair[0]] = decodeURIComponent(pair[1]);
-    }
-  });
-  return url_data;
-}
-
-function cryptup_version_integer() {
-  return Number(chrome.runtime.getManifest().version.replace(/\./g, ''));
-}
 
 function unique(array) {
   var unique = [];
@@ -540,10 +602,6 @@ function save_file_to_downloads(name, type, content) {
   window.URL.revokeObjectURL(url);
 }
 
-function key_codes() {
-  return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
-}
-
 function mime_node_type(node) {
   if(node.headers['content-type'] && node.headers['content-type'][0]) {
     return node.headers['content-type'][0].value;
@@ -598,7 +656,7 @@ function format_mime_plaintext_to_display(text, full_mime_message) {
 }
 
 function parse_mime_message(mime_message, callback) {
-  set_up_require();
+  tool.env.set_up_require();
   var mime_message_contents = {
     attachments: [],
     headers: {},
@@ -652,23 +710,6 @@ function parse_mime_message(mime_message, callback) {
       catcher.try(function () {
         callback(false, mime_message_contents);
       })();
-    }
-  });
-}
-
-function set_up_require() {
-  require.config({
-    baseUrl: '/lib',
-    paths: {
-      'emailjs-addressparser': './emailjs/emailjs-addressparser',
-      'emailjs-mime-builder': './emailjs/emailjs-mime-builder',
-      'emailjs-mime-codec': './emailjs/emailjs-mime-codec',
-      'emailjs-mime-parser': './emailjs/emailjs-mime-parser',
-      'emailjs-mime-types': './emailjs/emailjs-mime-types',
-      'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
-      'punycode': './emailjs/punycode',
-      'sinon': './emailjs/sinon',
-      'quoted-printable': './emailjs/quoted-printable',
     }
   });
 }
@@ -1064,7 +1105,7 @@ function decrypt(db, account_email, encrypted_data, one_time_message_password, c
     } else if(armored_signed_only) {
       var message = openpgp.cleartext.readArmored(encrypted_data);
     } else {
-      var message = openpgp.message.read(tool.str.str_to_uint8(encrypted_data));
+      var message = openpgp.message.read(tool.str.to_uint8(encrypted_data));
     }
   } catch(format_error) {
     callback({
@@ -1290,44 +1331,6 @@ function test_private_key(armored, passphrase, callback) {
   } catch(error) {
     callback(false, error.message);
   }
-}
-
-/* -------------------- METRICS ----------------------------------------------------*/
-
-var known_metric_types = {
-  'compose': 'c',
-  'view': 'w',
-  'reply': 'r',
-  'attach': 'a',
-  'download': 'd',
-  'setup': 's',
-  'error': 'e',
-  'upgrade_notify_attach_nonpgp': 'unan',
-  'upgrade_notify_attach_size': 'unas',
-  'upgrade_dialog_show': 'uds',
-  'upgrade_dialog_register_click': 'udrc',
-  'upgrade_verification_embedded_show': 'uves',
-  'upgrade_done': 'ud',
-};
-
-function increment_metric(type, callback) {
-  if(!known_metric_types[type]) {
-    catcher.log('Unknown metric type "' + type + '"');
-  }
-  account_storage_get(null, ['metrics'], function (storage) {
-    var metrics_k = known_metric_types[type];
-    if(!storage.metrics) {
-      storage.metrics = {};
-    }
-    if(!storage.metrics[metrics_k]) {
-      storage.metrics[metrics_k] = 1;
-    } else {
-      storage.metrics[metrics_k] += 1;
-    }
-    account_storage_set(null, { metrics: storage.metrics, }, function () {
-      chrome_message_send(null, 'update_uninstall_url', null, callback);
-    });
-  });
 }
 
 /* -------------------- CHROME PLUGIN MESSAGING ----------------------------------- */

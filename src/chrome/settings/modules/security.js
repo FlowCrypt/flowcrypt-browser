@@ -1,6 +1,6 @@
 /* Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE */
 
-var url_params = get_url_params(['account_email', 'embedded', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'embedded', 'parent_tab_id']);
 url_params.embedded = Boolean(Number(url_params.embedded));
 
 add_show_hide_passphrase_toggle(['passphrase_entry']);

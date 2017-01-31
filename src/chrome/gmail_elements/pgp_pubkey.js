@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'is_outgoing', 'frame_id']);
+var url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'is_outgoing', 'frame_id']);
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];

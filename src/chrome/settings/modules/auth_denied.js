@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'use_account_email', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'use_account_email', 'parent_tab_id']);
 if(!url_params.use_account_email) {
   url_params.account_email = undefined;
 }

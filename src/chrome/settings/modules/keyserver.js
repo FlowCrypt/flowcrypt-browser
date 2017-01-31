@@ -8,7 +8,7 @@ var l = {
   missing: 'Some receiving emails are not registered for encryption, and your contancts will not know they can send you encrypted email. ',
 }
 
-var url_params = get_url_params(['account_email']);
+var url_params = tool.env.url_params(['account_email']);
 
 $('.email-address').text(url_params.account_email);
 

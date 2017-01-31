@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
+var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
 if(url_params.type === 'embedded') {
   $('h1').parent().css('display', 'none');
   $('div.separator').css('display', 'none');

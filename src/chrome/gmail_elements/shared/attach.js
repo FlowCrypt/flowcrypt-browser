@@ -68,7 +68,7 @@ function init_shared_attach_js(file_count_limit) {
   }
 
   function process_new_attachment(id, name) {
-    increment_metric('attach');
+    tool.env.increment('attach');
     if(file_count_limit && Object.keys(attached_files).length >= file_count_limit) {
       alert('Amount of attached files is limited to ' + file_count_limit);
       uploader.cancel(id);

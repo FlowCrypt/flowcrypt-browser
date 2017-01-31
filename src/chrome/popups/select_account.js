@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['action']);
+var url_params = tool.env.url_params(['action']);
 
 if(url_params.action === 'new_message') {
   $('#title').text('Choose account for new message')

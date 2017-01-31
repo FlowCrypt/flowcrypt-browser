@@ -139,7 +139,7 @@ function init_setup_js() {
   };
 
   window.hijack_gmail_hotkeys = function (account_email, tab_id) {
-    var keys = key_codes();
+    var keys = tool.env.key_codes();
     $(document).keypress(function (e) {
       var causes_unsecure_reply = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F].indexOf(e.which) !== -1;
       if(causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {

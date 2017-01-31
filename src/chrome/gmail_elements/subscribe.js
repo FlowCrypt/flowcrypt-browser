@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'verification_email_text', 'embedded', 'source', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'embedded', 'source', 'parent_tab_id']);
 var original_content;
 var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
@@ -12,11 +12,11 @@ var l = {
   welcome: 'Welcome to CryptUP Pro.<br/><br/>You can now send encrypted attachments to anyone.',
 };
 if(url_params.embedded) {
-  increment_metric('upgrade_verification_embedded_show');
+  tool.env.increment('upgrade_verification_embedded_show');
   $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px', });
   $('body').css('width', '460px');
 } else {
-  increment_metric('upgrade_dialog_show');
+  tool.env.increment('upgrade_dialog_show');
 }
 
 $('#content').css('display', 'block');
@@ -70,7 +70,7 @@ function render_dialog(level, expire, active) {
 
   $('.action_ok').click(prevent(parallel(), function(self) {
       original_content = $(self).html();
-      increment_metric('upgrade_dialog_register_click');
+      tool.env.increment('upgrade_dialog_register_click');
       if(active && url_params.source === 'auth_error') {
         repair_auth_error_get_new_installation();
       } else {
@@ -131,7 +131,7 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
                 var message_content = tool.str.base64url_decode(gmail_message_object.payload.body.data);
                 var token_link_match = message_content.match(/account\/login?([^\s"<]+)/g);
                 if(token_link_match !== null) {
-                  var token_link_params = get_url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
+                  var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
                   if(token_link_params.uuid === uuid && token_link_params.token) {
                     callback_once(true, token_link_params.token);
                     return false;
@@ -203,7 +203,7 @@ function handle_subscribe_result(success, response) {
 }
 
 function notify_upgraded_and_close() {
-  increment_metric('upgrade_done');
+  tool.env.increment('upgrade_done');
   if(!url_params.embedded) {
     chrome_message_send(url_params.parent_tab_id, 'notification_show', {
       notification: 'Successfully upgraded to CryptUP Pro.',

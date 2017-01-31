@@ -233,7 +233,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       alert('Please add receiving email address.');
       return false;
     } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
-      increment_metric('upgrade_notify_attach_nonpgp', function () {
+      tool.env.increment('upgrade_notify_attach_nonpgp', function () {
         if(confirm('Sending password encrypted attachments is possible with CryptUP Pro.\n\nIt\'s free for one year if you register now.')) {
           chrome_message_send(url_params.parent_tab_id, 'subscribe_dialog');
         }
@@ -354,7 +354,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(response && response.status === 413) {
       $('#send_btn span').text(BTN_ENCRYPT_AND_SEND);
       $('#send_btn i').attr('class', '');
-      increment_metric('upgrade_notify_attach_size', function () {
+      tool.env.increment('upgrade_notify_attach_size', function () {
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
     } else {
@@ -435,7 +435,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function respond_to_input_hotkeys(input_to_keydown_event) {
     var value = $('#input_to').val();
-    var keys = key_codes();
+    var keys = tool.env.key_codes();
     if(!value && input_to_keydown_event.which === keys.backspace) {
       $('.recipients span').last().remove();
     } else if(value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {

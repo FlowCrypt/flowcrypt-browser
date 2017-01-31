@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = get_url_params(['account_email', 'longid']);
+var url_params = tool.env.url_params(['account_email', 'longid']);
 var keyinfo = undefined;
 
 if(url_params.longid) {
