@@ -217,8 +217,8 @@ db_open(function (db) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
             tool.mime.parse(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
-              if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
-                var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
+              if((parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
+                var stripped_text = parsed_message.text || tool.crypto.armor.strip(parsed_message.html);
                 compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
               } else {
                 console.log('gmail_api_draft_get tool.mime.parse else {}');

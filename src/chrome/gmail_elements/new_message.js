@@ -54,8 +54,8 @@ db_open(function (db) {
         tool.mime.parse(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
           if(success) {
             var draft_headers = tool.mime.headers_to_from(parsed_message);
-            if((parsed_message.text || strip_pgp_armor(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
-              var stripped_text = parsed_message.text || strip_pgp_armor(parsed_message.html);
+            if((parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
+              var stripped_text = parsed_message.text || tool.crypto.armor.strip(parsed_message.html);
               $('#input_subject').val(parsed_message.headers.subject || '');
               compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), undefined, draft_headers);
             } else {

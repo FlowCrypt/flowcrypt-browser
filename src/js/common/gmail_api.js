@@ -336,7 +336,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
       if(format === 'full') {
         var bodies = gmail_api_find_bodies(gmail_message_object);
         var attachments = gmail_api_find_attachments(gmail_message_object);
-        var armored_message_from_bodies = extract_armored_message_from_text(tool.str.base64url_decode(bodies['text/plain'])) || extract_armored_message_from_text(strip_pgp_armor(tool.str.base64url_decode(bodies['text/html'])));
+        var armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'])) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'])));
         if(armored_message_from_bodies) {
           success_callback(armored_message_from_bodies);
         } else if(attachments.length) {
@@ -347,7 +347,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
               gmail_api_fetch_attachments(url_params.account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
                 if(fetch_attachments_success) {
                   var armored_message_text = tool.str.base64url_decode(attachment[0].data);
-                  var armored_message = extract_armored_message_from_text(armored_message_text);
+                  var armored_message = tool.crypto.armor.clip(armored_message_text);
                   if(armored_message) {
                     success_callback(armored_message);
                   } else {
@@ -369,7 +369,7 @@ function extract_armored_message_using_gmail_api(account_email, message_id, form
       } else { // format === raw
         tool.mime.parse(tool.str.base64url_decode(gmail_message_object.raw), function (success, mime_message) {
           if(success) {
-            var armored_message = extract_armored_message_from_text(mime_message.text); // todo - the message might be in attachments
+            var armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
             if(armored_message) {
               success_callback(armored_message);
             } else {

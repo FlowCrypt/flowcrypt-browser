@@ -27,7 +27,7 @@ db_open(function (db) {
     });
 
     $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-      var armored = key_normalize(strip_pgp_armor($('.pubkey').val()));
+      var armored = key_normalize(tool.crypto.armor.strip($('.pubkey').val()));
       if(key_fingerprint(armored)) {
         db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
       } else {

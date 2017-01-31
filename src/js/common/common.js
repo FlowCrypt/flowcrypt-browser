@@ -2,10 +2,7 @@
 
 'use strict';
 
-// 	crypto:
-// 		armor:
-// 			strip_pgp_armor
-// 			extract_armored_message_from_text
+
 // 		key:
 // 			extract_key_ids
 // 			get_sorted_keys_for_message
@@ -286,6 +283,12 @@
       keyserver_fingerprints: keyserver_fingerprints,
       keyserver_pubkeys: keyserver_pubkeys,
     },
+    crypto: {
+      armor: {
+        strip: crypto_armor_strip,
+        clip: crypto_armor_clip,
+      },
+    }
   };
 
   /* tool.str */
@@ -993,70 +996,79 @@
     });
   }
 
+  /* tool.crypto.armor */
+
+  function crypto_armor_strip(pgp_block_text) {
+    if(!pgp_block_text) {
+      return pgp_block_text;
+    }
+    var debug = false;
+    if(debug) {
+      console.log('pgp_block_1');
+      console.log(pgp_block_text);
+    }
+    var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
+    var spaces = [/&nbsp;/g];
+    var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
+    $.each(newlines, function (i, newline) {
+      pgp_block_text = pgp_block_text.replace(newline, '\n');
+    });
+    if(debug) {
+      console.log('pgp_block_2');
+      console.log(pgp_block_text);
+    }
+    $.each(removes, function (i, remove) {
+      pgp_block_text = pgp_block_text.replace(remove, '');
+    });
+    if(debug) {
+      console.log('pgp_block_3');
+      console.log(pgp_block_text);
+    }
+    $.each(spaces, function (i, space) {
+      pgp_block_text = pgp_block_text.replace(space, ' ');
+    });
+    if(debug) {
+      console.log('pgp_block_4');
+      console.log(pgp_block_text);
+    }
+    pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
+    if(debug) {
+      console.log('pgp_block_5');
+      console.log(pgp_block_text);
+    }
+    pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
+    if(debug) {
+      console.log('pgp_block_6');
+      console.log(pgp_block_text);
+    }
+    var double_newlines = pgp_block_text.match(/\n\n/g);
+    if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
+      pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
+      if(debug) {
+        console.log('pgp_block_removed_doubles');
+      }
+    }
+    if(debug) {
+      console.log('pgp_block_7');
+      console.log(pgp_block_text);
+    }
+    pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
+    if(debug) {
+      console.log('pgp_block_final');
+      console.log(pgp_block_text);
+    }
+    return pgp_block_text;
+  }
+
+  function crypto_armor_clip(text) {
+    if(text && text.indexOf('-----BEGIN') !== -1 && text.indexOf('-----END') !== -1) {
+      var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
+      return(match !== null && match.length) ? match[0] : null;
+    }
+  }
 
 })();
 
-function strip_pgp_armor(pgp_block_text) {
-  if(!pgp_block_text) {
-    return pgp_block_text;
-  }
-  var debug = false;
-  if(debug) {
-    console.log('pgp_block_1');
-    console.log(pgp_block_text);
-  }
-  var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
-  var spaces = [/&nbsp;/g];
-  var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
-  $.each(newlines, function (i, newline) {
-    pgp_block_text = pgp_block_text.replace(newline, '\n');
-  });
-  if(debug) {
-    console.log('pgp_block_2');
-    console.log(pgp_block_text);
-  }
-  $.each(removes, function (i, remove) {
-    pgp_block_text = pgp_block_text.replace(remove, '');
-  });
-  if(debug) {
-    console.log('pgp_block_3');
-    console.log(pgp_block_text);
-  }
-  $.each(spaces, function (i, space) {
-    pgp_block_text = pgp_block_text.replace(space, ' ');
-  });
-  if(debug) {
-    console.log('pgp_block_4');
-    console.log(pgp_block_text);
-  }
-  pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
-  if(debug) {
-    console.log('pgp_block_5');
-    console.log(pgp_block_text);
-  }
-  pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
-  if(debug) {
-    console.log('pgp_block_6');
-    console.log(pgp_block_text);
-  }
-  var double_newlines = pgp_block_text.match(/\n\n/g);
-  if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
-    pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
-    if(debug) {
-      console.log('pgp_block_removed_doubles');
-    }
-  }
-  if(debug) {
-    console.log('pgp_block_7');
-    console.log(pgp_block_text);
-  }
-  pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
-  if(debug) {
-    console.log('pgp_block_final');
-    console.log(pgp_block_text);
-  }
-  return pgp_block_text;
-}
 
 function extract_key_ids(armored_pubkey) {
   return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
@@ -1409,13 +1421,6 @@ function key_longid(key_or_fingerprint_or_bytes) {
     return key_or_fingerprint_or_bytes.replace(/ /g, '').substr(-16);
   } else {
     return key_longid(key_fingerprint(key_or_fingerprint_or_bytes));
-  }
-}
-
-function extract_armored_message_from_text(text) {
-  if(text && text.indexOf('-----BEGIN') !== -1 && text.indexOf('-----END') !== -1) {
-    var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
-    return(match !== null && match.length) ? match[0] : null;
   }
 }
 
