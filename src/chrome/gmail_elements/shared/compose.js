@@ -509,7 +509,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function remove_receiver() {
-    recipients_missing_my_key = array_without_value(recipients_missing_my_key, $(this).parent().text());
+    recipients_missing_my_key = tool.arr.without_value(recipients_missing_my_key, $(this).parent().text());
     $(this).parent().remove();
     resize_input_to();
     show_hide_missing_pubkey_container_and_color_send_button();

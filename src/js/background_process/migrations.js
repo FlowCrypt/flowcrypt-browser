@@ -52,7 +52,7 @@ function account_consistency_fixes(account_email) {
 }
 
 function account_update_status_keyserver(account_email) { // checks which emails were registered on cryptup keyserver.
-  var my_longids = private_keys_get(account_email).map(map_select('longid'));
+  var my_longids = private_keys_get(account_email).map(tool.arr.map_select('longid'));
   account_storage_get(account_email, ['addresses', 'addresses_keyserver'], function (storage) {
     if(storage.addresses && storage.addresses.length) {
       keyserver_keys_find(storage.addresses, function (success, results) {
@@ -71,7 +71,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
 }
 
 function account_update_status_pks(account_email) { // checks if any new emails were registered on pks lately
-  var my_longids = private_keys_get(account_email).map(map_select('longid'));
+  var my_longids = private_keys_get(account_email).map(tool.arr.map_select('longid'));
   var hkp = new openpgp.HKP('http://keys.gnupg.net');
   account_storage_get(account_email, ['addresses', 'addresses_pks'], function (storage) {
     var addresses_pks = storage.addresses_pks || [];

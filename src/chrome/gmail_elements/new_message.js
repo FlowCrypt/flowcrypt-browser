@@ -35,7 +35,7 @@ db_open(function (db) {
   }
 
   function order_addresses(account_email, addresses) {
-    return [account_email].concat(array_without_value(addresses, account_email)); //places main account email as first
+    return [account_email].concat(tool.arr.without_value(addresses, account_email)); //places main account email as first
   }
 
   if(url_params.placement === 'popup') {

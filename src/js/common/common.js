@@ -7,11 +7,7 @@
 // 	str
 // 	env
 // 	arr
-// 		unique
-// 		to_array
-// 		array_without_key
-// 		array_without_value
-// 		map_select
+//
 // 	time
 // 		wait
 // 		get_future_timestamp_in_months
@@ -291,6 +287,13 @@
 		  set_up_require: set_up_require,
 		  increment: increment,
     },
+    arr: {
+      unique: unique,
+		  from_dome_node_list: from_dome_node_list,
+		  without_key: without_key,
+		  without_value: without_value,
+		  map_select: map_select,
+    },
   };
 
   /* tool.str */
@@ -532,27 +535,48 @@
     });
   }
 
-})();
+  /* tool.arr */
 
-
-function unique(array) {
-  var unique = [];
-  $.each(array, function (i, v) {
-    if(unique.indexOf(v) === -1) {
-      unique.push(v);
-    }
-  });
-  return unique;
-}
-
-function to_array(obj) { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
-  var array = [];
-  // iterate backwards ensuring that length is an UInt32
-  for(var i = obj.length >>> 0; i--;) {
-    array[i] = obj[i];
+  function unique(array) {
+    var unique = [];
+    $.each(array, function (i, v) {
+      if(unique.indexOf(v) === -1) {
+        unique.push(v);
+      }
+    });
+    return unique;
   }
-  return array;
-}
+
+  function from_dome_node_list(obj) { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+    var array = [];
+    // iterate backwards ensuring that length is an UInt32
+    for(var i = obj.length >>> 0; i--;) {
+      array[i] = obj[i];
+    }
+    return array;
+  }
+
+  function without_key(array, i) {
+    return array.splice(0, i).concat(array.splice(i + 1, array.length));
+  }
+
+  function without_value(array, without_value) {
+    var result = [];
+    $.each(array, function (i, value) {
+      if(value !== without_value) {
+        result.push(value);
+      }
+    });
+    return result;
+  }
+
+  function map_select(mapped_object_key) {
+    return function (mapped_object) {
+      return mapped_object[mapped_object_key];
+    };
+  }
+
+})();
 
 function wait(until_this_function_evaluates_true) {
   return new Promise(function (success, error) {
@@ -875,28 +899,8 @@ function add_show_hide_passphrase_toggle(pass_phrase_input_ids, force_initial_sh
   });
 }
 
-function array_without_key(array, i) {
-  return array.splice(0, i).concat(array.splice(i + 1, array.length));
-}
-
-function array_without_value(array, without_value) {
-  var result = [];
-  $.each(array, function (i, value) {
-    if(value !== without_value) {
-      result.push(value);
-    }
-  });
-  return result;
-}
-
 function extract_key_ids(armored_pubkey) {
   return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
-}
-
-function map_select(mapped_object_key) {
-  return function (mapped_object) {
-    return mapped_object[mapped_object_key];
-  };
 }
 
 function check_pubkeys_message(account_email, message) {

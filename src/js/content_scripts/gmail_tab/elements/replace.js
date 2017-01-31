@@ -128,7 +128,7 @@ function init_elements_replace_js() {
     };
     var message_id = null; // todo: maybe need to traverse through all children elements classes of the whole message to get to /^m([0-9a-f]{16})$/ - as a backup
     var found = [selectors[element_type].get(0), selectors[element_type].find('div.a3s').get(0)];
-    var classes = [].concat(found[0] ? to_array(found[0].classList) : [], found[1] ? to_array(found[1].classList) : []);
+    var classes = [].concat(found[0] ? tool.arr.from_dome_node_list(found[0].classList) : [], found[1] ? tool.arr.from_dome_node_list(found[1].classList) : []);
     $.each(classes, function (i, message_class) {
       var match = message_class.match(/^m([0-9a-f]{16})$/);
       if(match) {
@@ -301,7 +301,7 @@ function init_elements_replace_js() {
         }
       });
       if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-        reply_to = unique(reply_to_estimate);
+        reply_to = tool.arr.unique(reply_to_estimate);
       }
       callback({
         subject: $(conversation_root_element).find('h2.hP').text(),
