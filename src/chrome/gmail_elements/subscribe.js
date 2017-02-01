@@ -95,7 +95,7 @@ function wait_for_token_email(timeout, callback) {
     $('.status').text('A little while more..');
   }
   var end = Date.now() + timeout * 1000;
-  cryptup_auth_info(function (account, uuid, verified) {
+  storage_cryptup_auth_info(function (account, uuid, verified) {
     fetch_token_emails_and_find_matching_token(account, uuid, function (success, token) {
       if(success && token) {
         callback(token);
