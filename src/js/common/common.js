@@ -1515,7 +1515,7 @@
   }
 
   function crypto_message_format_text(text_or_html) {
-    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
+    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/^(<br>)+|(<br>)+$/, '').replace(/ {2,}/g, function (spaces) {
       return '&nbsp;'.repeat(spaces.length);
     });
   }
