@@ -121,10 +121,10 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
       callback(v1, v2);
     }
   }
-  gmail_api_message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function (list_success, response) {
+  tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function (list_success, response) {
     if(list_success) {
       if(response.messages) {
-        gmail_api_message_get(account_email, response.messages.map(function (m) { return m.id; }), 'full', function (get_success, messages) {
+        tool.api.gmail.message_get(account_email, response.messages.map(function (m) { return m.id; }), 'full', function (get_success, messages) {
           if(get_success) {
             $.each(messages, function (id, gmail_message_object) {
               if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {

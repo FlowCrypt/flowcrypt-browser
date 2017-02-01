@@ -114,9 +114,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
         } else {
           var body = encrypted.data;
         }
-        to_mime(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: $('#input_subject').val() || url_params.subject || 'CryptUP draft', }, [], function (mime_message) {
+        tool.mime.encode(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: $('#input_subject').val() || url_params.subject || 'CryptUP draft', }, [], function (mime_message) {
           if(!draft_id) {
-            gmail_api_draft_create(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
+            tool.api.gmail.draft_create(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
               set_note(success);
               if(success) {
                 draft_id = response.id;
@@ -131,7 +131,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
               }
             });
           } else {
-            gmail_api_draft_update(url_params.account_email, draft_id, mime_message, function (success, response) {
+            tool.api.gmail.draft_update(url_params.account_email, draft_id, mime_message, function (success, response) {
               set_note(success);
               save_draft_in_process = false;
             });
@@ -150,7 +150,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }).then(function () {
       if(draft_id) {
         draft_meta_store(false, draft_id, url_params.thread_id, null, null, function () {
-          gmail_api_draft_delete(account_email, draft_id, callback);
+          tool.api.gmail.draft_delete(account_email, draft_id, callback);
         });
       } else {
         if(callback) {
@@ -358,7 +358,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
     } else {
-      catcher.log('gmail_api_message_send error response from gmail', response);
+      catcher.log('tool.api.gmail.message_send error response from gmail', response);
       alert('Error sending message, try to re-open your Gmail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }
@@ -614,7 +614,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         } else {
           contact_search_in_progress = true;
           render_search_results(contacts, query);
-          gmail_api_search_contacts(url_params.account_email, query.substring, contacts, function (gmail_contact_results) {
+          tool.api.gmail.search_contacts(url_params.account_email, query.substring, contacts, function (gmail_contact_results) {
             var re_rendering_needed = false;
             if(gmail_contact_results.new.length) {
               $.each(gmail_contact_results.new, function (i, contact) {
@@ -657,7 +657,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       } else {
         var q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
         var q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
-        gmail_api_message_list(url_params.account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response) {
+        tool.api.gmail.message_list(url_params.account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response) {
           if(success && response.messages) {
             account_storage_set(url_params.account_email, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email), }, function () {
               callback(true);

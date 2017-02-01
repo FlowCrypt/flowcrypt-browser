@@ -161,8 +161,8 @@ function backup_key_on_gmail(account_email, armored_key, callback) {
   $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
     var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
     var text = { 'text/html': email_message };
-    to_mime(url_params.account_email, text, email_headers, email_attachments, function (mime_message) {
-      gmail_api_message_send(url_params.account_email, mime_message, null, callback);
+    tool.mime.encode(url_params.account_email, text, email_headers, email_attachments, function (mime_message) {
+      tool.api.gmail.message_send(url_params.account_email, mime_message, null, callback);
     });
   });
 }

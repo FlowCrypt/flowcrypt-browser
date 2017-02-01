@@ -131,7 +131,7 @@ db_open(function (db) {
     original_content = $(self).html();
     $(self).html(tool.ui.spinner());
     if(url_params.attachment_id) {
-      gmail_api_message_attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
+      tool.api.gmail.attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
         decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
       });
     } else if(url_params.url) {

@@ -19,8 +19,8 @@ db_open(function (db) {
     var recipients = compose.get_recipients_from_dom();
     var headers = { To: recipients.join(', '), Subject: $('#input_subject').val(), From: compose.get_sender_from_dom(), };
     compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_body, attachments, attach_files) {
-      to_mime(url_params.account_email, encrypted_message_body, headers, attach_files ? attachments : null, function (mime_message) {
-        gmail_api_message_send(url_params.account_email, mime_message, null, function (success, response) {
+      tool.mime.encode(url_params.account_email, encrypted_message_body, headers, attach_files ? attachments : null, function (mime_message) {
+        tool.api.gmail.message_send(url_params.account_email, mime_message, null, function (success, response) {
           if(success) {
             tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
               notification: 'Your message has been sent.'
@@ -48,10 +48,10 @@ db_open(function (db) {
 
   if(url_params.draft_id) {
     // todo - this is mostly copy/pasted from reply_message, would deserve a common function
-    gmail_api_draft_get(url_params.account_email, url_params.draft_id, 'raw', function (success, response) {
+    tool.api.gmail.draft_get(url_params.account_email, url_params.draft_id, 'raw', function (success, response) {
       if(success) {
         compose.draft_set_id(url_params.draft_id);
-        tool.mime.parse(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
+        tool.mime.decode(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
           if(success) {
             var draft_headers = tool.mime.headers_to_from(parsed_message);
             if((parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
@@ -59,15 +59,15 @@ db_open(function (db) {
               $('#input_subject').val(parsed_message.headers.subject || '');
               compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), undefined, draft_headers);
             } else {
-              console.log('gmail_api_draft_get tool.mime.parse else {}');
+              console.log('tool.api.gmail.draft_get tool.mime.decode else {}');
             }
           } else {
-            console.log('gmail_api_draft_get tool.mime.parse success===false');
+            console.log('tool.api.gmail.draft_get tool.mime.decode success===false');
             console.log(parsed_message);
           }
         });
       } else {
-        console.log('gmail_api_draft_get success===false');
+        console.log('tool.api.gmail.draft_get success===false');
         console.log(response);
       }
     });

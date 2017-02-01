@@ -65,9 +65,9 @@ function get_active_tab_info(request, sender, respond) {
 }
 
 function list_pgp_attachments(request, sender, respond) {
-  gmail_api_message_get(request.account_email, request.message_id, 'full', function (success, message) {
+  tool.api.gmail.message_get(request.account_email, request.message_id, 'full', function (success, message) {
     if(success) {
-      var attachments = gmail_api_find_attachments(message);
+      var attachments = tool.api.gmail.find_attachments(message);
       var pgp_attachments = [];
       var pgp_messages = [];
       var pgp_signatures = [];

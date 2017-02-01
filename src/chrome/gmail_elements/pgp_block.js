@@ -249,7 +249,7 @@ db_open(function (db) {
       });
     } else {
       $('#pgp_block').text('Formatting...');
-      tool.mime.parse(decrypted_content, function (success, result) {
+      tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
             render_inner_attachments(result.attachments.map(function(mime_attachment) {
@@ -346,7 +346,7 @@ db_open(function (db) {
       if(can_read_emails) {
         $('#pgp_block').text('Retrieving message...');
         var format = (!message_fetched_from_api) ? 'full' : 'raw';
-        extract_armored_message_using_gmail_api(url_params.account_email, url_params.message_id, format, function (message_raw) {
+        tool.api.gmail.extract_armored_message(url_params.account_email, url_params.message_id, format, function (message_raw) {
           $('#pgp_block').text('Decrypting...');
           url_params.message = message_raw;
           message_fetched_from_api = format;

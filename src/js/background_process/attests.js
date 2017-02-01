@@ -119,14 +119,14 @@ function fetch_attest_emails(account_email, callback) {
     '"-----BEGIN ATTEST PACKET-----"',
     '"-----END ATTEST PACKET-----"',
   ];
-  gmail_api_message_list(account_email, q.join(' '), true, function (success, response) {
+  tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
     if(success) {
       if(response.messages) {
         var message_ids = [];
         $.each(response.messages, function (i, message) {
           message_ids.push(message.id);
         });
-        gmail_api_message_get(account_email, message_ids, 'full', callback);
+        tool.api.gmail.message_get(account_email, message_ids, 'full', callback);
       } else {
         callback(true, null);
       }

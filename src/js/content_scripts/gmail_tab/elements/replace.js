@@ -231,7 +231,7 @@ function init_elements_replace_js() {
   window.hide_pgp_attached_pubkey_and_append_to_text = function (account_email, message_id, classes, attachments, addresses, gmail_tab_id) {
     var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
     var is_outgoing = addresses.indexOf(sender_email) !== -1;
-    gmail_api_fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
+    tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
       catcher.try(function () {
         if(success) {
           $.each(downloaded_attachments, function (i, downloaded_attachment) {

@@ -30,7 +30,7 @@ db_open(function (db) {
     if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id) {
       callback();
     } else {
-      gmail_api_message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
+      tool.api.gmail.message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
         if(success) {
           url_params.thread_id = gmail_message_object.threadId;
         } else {
@@ -71,10 +71,10 @@ db_open(function (db) {
   }
 
   function reply_message_determine_header_variables(load_last_message_for_forward) {
-    gmail_api_get_thread(url_params.account_email, url_params.thread_id, 'full', function (success, thread) {
+    tool.api.gmail.thread_get(url_params.account_email, url_params.thread_id, 'full', function (success, thread) {
       if(success && thread.messages && thread.messages.length > 0) {
-        thread_message_id_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-        thread_message_referrences_last = gmail_api_find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+        thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+        thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
         if(load_last_message_for_forward) {
           url_params.subject = 'Fwd: ' + url_params.subject;
           retrieve_decrypt_and_add_forwarded_message(thread.messages[thread.messages.length - 1].id);
@@ -89,13 +89,13 @@ db_open(function (db) {
   }
 
   function retrieve_decrypt_and_add_forwarded_message(message_id) {
-    extract_armored_message_using_gmail_api(url_params.account_email, message_id, 'full', function (armored_message) {
+    tool.api.gmail.extract_armored_message(url_params.account_email, message_id, 'full', function (armored_message) {
       tool.crypto.message.decrypt(db, url_params.account_email, armored_message, undefined, function (result) {
         if(result.success) {
           if(!tool.mime.resembles_message(result.content.data)) {
             append_forwarded_message(tool.mime.format_content_to_display(result.content.data, armored_message));
           } else {
-            tool.mime.parse(result.content.data, function (success, mime_parse_result) {
+            tool.mime.decode(result.content.data, function (success, mime_parse_result) {
               append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data, armored_message));
             });
           }
@@ -146,10 +146,10 @@ db_open(function (db) {
       $('#reply_message_successful_container div.replied_time').text(time);
       $('#reply_message_successful_container').css('display', 'block');
       if(has_attachments) { // todo - will not work with cryptup uploaded attachments. Why extra request, anyway?
-        gmail_api_message_get(url_params.account_email, message_id, 'full', function (success, gmail_message_object) {
+        tool.api.gmail.message_get(url_params.account_email, message_id, 'full', function (success, gmail_message_object) {
           if(success) {
             $('#attachments').css('display', 'block');
-            var attachment_metas = gmail_api_find_attachments(gmail_message_object);
+            var attachment_metas = tool.api.gmail.find_attachments(gmail_message_object);
             $.each(attachment_metas, function (i, attachment_meta) {
               $('#attachments').append(pgp_attachment_iframe(url_params.account_email, attachment_meta, []));
             });
@@ -171,8 +171,8 @@ db_open(function (db) {
       'References': thread_message_referrences_last + ' ' + thread_message_id_last,
     };
     compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments, attach_files) {
-      to_mime(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
-        gmail_api_message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
+      tool.mime.encode(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
+        tool.api.gmail.message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
           if(success) {
             tool.env.increment('reply', function () {
               reply_message_render_success(headers.To, (attachments || []).length, response.id);
@@ -213,15 +213,15 @@ db_open(function (db) {
       if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
         original_reply_message_prompt = $('div#reply_message_prompt').html();
         $('div#reply_message_prompt').html(tool.ui.spinner() + ' Loading draft');
-        gmail_api_draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
+        tool.api.gmail.draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
-            tool.mime.parse(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
+            tool.mime.decode(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
               if((parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
                 var stripped_text = parsed_message.text || tool.crypto.armor.strip(parsed_message.html);
                 compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf('-----BEGIN PGP MESSAGE-----')), reply_message_render_table); // todo - regex is better than random clipping
               } else {
-                console.log('gmail_api_draft_get tool.mime.parse else {}');
+                console.log('tool.api.gmail.draft_get tool.mime.decode else {}');
                 reply_message_render_table();
               }
             });
@@ -233,7 +233,7 @@ db_open(function (db) {
                 window.location.reload();
               });
             } else {
-              console.log('gmail_api_draft_get success===false');
+              console.log('tool.api.gmail.draft_get success===false');
               console.log(response);
             }
           }

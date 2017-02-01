@@ -118,20 +118,20 @@ function fetch_email_key_backups(account_email, callback) {
     '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
     '-is:spam',
   ];
-  gmail_api_message_list(account_email, q.join(' '), true, function (success, response) {
+  tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
     if(success) {
       if(response.messages) {
         var message_ids = [];
         $.each(response.messages, function (i, message) {
           message_ids.push(message.id);
         });
-        gmail_api_message_get(account_email, message_ids, 'full', function (success, messages) {
+        tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
           if(success) {
             var attachments = [];
             $.each(messages, function (i, message) {
-              attachments = attachments.concat(gmail_api_find_attachments(message));
+              attachments = attachments.concat(tool.api.gmail.find_attachments(message));
             });
-            gmail_api_fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
+            tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
               var keys = [];
               $.each(downloaded_attachments, function (i, downloaded_attachment) {
                 try {
