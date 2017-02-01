@@ -2,7 +2,7 @@
 
 'use strict';
 
-(function(/* ERROR HANDLING */) {
+(function ( /* ERROR HANDLING */ ) {
 
   var original_on_error = window.onerror;
   window.onerror = handle_error;
@@ -159,8 +159,7 @@
 
 })();
 
-
-(function(/* EXTENSIONS AND CONFIG */) {
+(function ( /* EXTENSIONS AND CONFIG */ ) {
 
   if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
     window.openpgp.config.versionstring = 'CryptUP ' + chrome.runtime.getManifest().version + ' Easy Gmail Encryption https://cryptup.org';
@@ -173,14 +172,13 @@
 
 })();
 
-
-(function(/* ALL TOOLS */) {
+(function ( /* ALL TOOLS */ ) {
 
   window.tool = {
     str: {
       trim_lower: trim_lower, //todo - deprecate in favor of parse_email
       parse_email: parse_email,
-      pretty_print: pretty_print, //as_html_formatted_string
+      pretty_print: pretty_print,
       inner_text: inner_text,
       number_format: number_format,
       is_email_valid: is_email_valid,
@@ -198,17 +196,17 @@
     },
     env: {
       url_params: url_params,
-		  cryptup_version_integer: cryptup_version_integer,
-		  key_codes: key_codes,
-		  set_up_require: set_up_require,
-		  increment: increment,
+      cryptup_version_integer: cryptup_version_integer,
+      key_codes: key_codes,
+      set_up_require: set_up_require,
+      increment: increment,
     },
     arr: {
       unique: unique,
-		  from_dome_node_list: from_dome_node_list,
-		  without_key: without_key,
-		  without_value: without_value,
-		  map_select: map_select,
+      from_dome_node_list: from_dome_node_list,
+      without_key: without_key,
+      without_value: without_value,
+      map_select: map_select,
     },
     time: {
       wait: wait,
@@ -228,7 +226,7 @@
     },
     ui: {
       spinner: spinner,
-   		passphrase_toggle: passphrase_toggle,
+      passphrase_toggle: passphrase_toggle,
       event: {
         double: double,
         parallel: parallel,
@@ -316,7 +314,7 @@
         account_subscribe: api_cryptup_account_subscribe,
         account_store_attachment: api_cryptup_account_store_attachment,
       },
-    }
+    },
   };
 
   /* tool.str */
@@ -628,7 +626,7 @@
     request.responseType = "arraybuffer";
     if(typeof progress === 'function') {
       request.onprogress = function (e) {
-          progress(e.loaded, e.total);
+        progress(e.loaded, e.total);
       };
     }
     request.onerror = function (e) {
@@ -680,9 +678,9 @@
 
   function headers_to_from(parsed_mime_message) {
     var header_to = [];
-    var header_from = undefined;
+    var header_from;
     if(parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
-      var header_from = parsed_mime_message.headers.from[0].address;
+      header_from = parsed_mime_message.headers.from[0].address;
     }
     if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
       $.each(parsed_mime_message.headers.to, function (i, to) {
@@ -792,7 +790,7 @@
   }
 
   function spree(type) {
-    return { name: (type || '') + 'spree', id: tool.str.random(10), }
+    return { name: (type || '') + 'spree', id: tool.str.random(10), };
   }
 
   function prevent(meta, callback) { //todo: messy + needs refactoring
@@ -821,7 +819,7 @@
           callback(this, meta.id);
         }
       }
-    }
+    };
   }
 
   function release(id) {
@@ -879,7 +877,7 @@
 
   /* tools.browser.message */
 
-  var background_script_shortcut_handlers = undefined;
+  var background_script_shortcut_handlers;
 
   function destination_parse(destination_string) {
     var parsed = { tab: null, frame: null, };
@@ -981,7 +979,7 @@
           $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
               diagnosis.has_pubkey_missing = true;
-              diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, }
+              diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, };
             } else {
               var match = true;
               var local_fingerprint = crypto_key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
@@ -989,7 +987,7 @@
                 diagnosis.has_pubkey_mismatch = true;
                 match = false;
               }
-              diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match, }
+              diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match, };
             }
           });
           callback(diagnosis);
@@ -1350,7 +1348,7 @@
     } else {
       options.password = crypto_hash_challenge_answer(one_time_message_password);
     }
-    return options
+    return options;
   }
 
   function crypto_message_verify_signature(message, keys) {
@@ -1488,10 +1486,10 @@
     }
     if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
       options.privateKeys = [signing_prv];
-      console.log('singing oonly')
+      console.log('singing oonly');
     }
-    openpgp.encrypt(options).then(function(result) {
-      catcher.try(function() { // todo - this is very awkward, should create a Try wrapper with a better api
+    openpgp.encrypt(options).then(function (result) {
+      catcher.try(function () { // todo - this is very awkward, should create a Try wrapper with a better api
         callback(result);
       })();
     }, function (error) {
@@ -1783,7 +1781,7 @@
     var attachment = attachments[results.length];
     api_gmail_message_attachment_get(account_email, attachment.message_id, attachment.id, function (success, response) {
       if(success) {
-        attachment['data'] = response.data;
+        attachment.data = response.data;
         results.push(attachment);
         if(results.length === attachments.length) {
           callback(true, results);
@@ -1820,7 +1818,7 @@
     $.each(known_contacts, function (i, contact) {
       gmail_query.push('-to:"' + contact.email + '"');
     });
-    api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), callback)
+    api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), callback);
   }
 
   function api_gmail_loop_through_emails_to_compile_contacts(account_email, query, callback, results) {
@@ -2154,13 +2152,13 @@
   }
 
   function api_cryptup_response_formatter(callback) {
-    return function(success, response) {
+    return function (success, response) {
       if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
         callback(api_cryptup_auth_error);
       } else {
         callback(success, response);
       }
-    }
+    };
   }
 
   function api_cryptup_account_subscribe(product, callback) {
@@ -2170,7 +2168,7 @@
           account: email,
           uuid: uuid,
           product: product,
-        }, api_cryptup_response_formatter(function(success_or_auth_error, result) {
+        }, api_cryptup_response_formatter(function (success_or_auth_error, result) {
           if(success_or_auth_error === true) {
             account_storage_set(null, { cryptup_account_subscription: result.subscription, }, function () {
               callback(true, result);

@@ -189,7 +189,6 @@ db_open(function (db) {
     }
   }
 
-
   function render_inner_attachments(attachments) {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
@@ -202,7 +201,7 @@ db_open(function (db) {
       if(attachment.content) {
         tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
       } else {
-        tool.file.download_as_uint8(attachment.url, /* progress function */ null, function(success, downloaded) {
+        tool.file.download_as_uint8(attachment.url, /* progress function */ null, function (success, downloaded) {
           decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
         });
       }
@@ -233,12 +232,12 @@ db_open(function (db) {
     if(!tool.mime.resembles_message(decrypted_content)) {
       var cryptup_file_link_elements = [];
       if(decrypted_content.indexOf('cryptup_file') !== -1) {
-        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function(found_link) {
+        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
           cryptup_file_link_elements.push(found_link);
           return '';
         });
       }
-      render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message), false, function() {
+      render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message), false, function () {
         if(cryptup_file_link_elements.length) {
           render_inner_attachments(cryptup_file_link_elements.map(function (link_element_string) {
             var element = $(link_element_string);
@@ -252,7 +251,7 @@ db_open(function (db) {
       tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
-            render_inner_attachments(result.attachments.map(function(mime_attachment) {
+            render_inner_attachments(result.attachments.map(function (mime_attachment) {
               return tool.file.attachment(mime_attachment.name, mime_attachment.type, mime_attachment.data, mime_attachment.size);
             }));
           }

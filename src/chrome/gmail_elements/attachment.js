@@ -135,7 +135,7 @@ db_open(function (db) {
         decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
       });
     } else if(url_params.url) {
-      tool.file.download_as_uint8(url_params.url, render_progress, function(data) {
+      tool.file.download_as_uint8(url_params.url, render_progress, function (data) {
         decrypt_and_save_attachment_to_downloads(tool.str.from_uint8(data)); //toto - have to convert to uint8 because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
       });
     } else {
