@@ -68,14 +68,14 @@ function check_email_for_attests_and_respond(account_email) {
 function process_attest_packet_text(account_email, attest_packet_text) {
   var attest = attest_packet_parse(attest_packet_text);
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
-  var decrypted = decrypt_key(key, get_passphrase(account_email));
+  var decrypted = tool.crypto.key.decrypt(key, get_passphrase(account_email));
   if(decrypted) {
     var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-    var expected_email_hash = double_sha1_upper(tool.str.trim_lower(account_email));
+    var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.trim_lower(account_email));
     if(attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
       is_already_attested(account_email, attest.attester, function (is_attested) {
         if(!is_attested) {
-          sign(key, attest.text, true, function (signed_attest_packet) {
+          tool.crypto.message.sign(key, attest.text, true, function (signed_attest_packet) {
             if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
               var keyserver_api_endpoint = keyserver_keys_attest;
             } else {

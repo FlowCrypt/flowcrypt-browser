@@ -174,7 +174,7 @@ db_open(function (db) {
     //todo - more or less copy/pasted from attachment.js, should use a common function
     //todo - or even better, stop showing attachments as inner part of messages, instead show them through attachment.htm. Test performance.
     if(success) {
-      decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
+      tool.crypto.message.decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         if(result.success) {
           tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data);
         } else {
@@ -262,7 +262,7 @@ db_open(function (db) {
   }
 
   function decrypt_and_render(optional_password) {
-    decrypt(db, url_params.account_email, url_params.message, optional_password, function (result) {
+    tool.crypto.message.decrypt(db, url_params.account_email, url_params.message, optional_password, function (result) {
       if(result.success) {
         if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
           console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));

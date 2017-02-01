@@ -50,7 +50,7 @@ db_open(function (db) {
         var email = $('#edit_contact .input_pubkey').attr('email');
         if(!armored_pubkey || !email) {
           alert('No public key entered');
-        } else if(key_fingerprint(armored_pubkey) !== null) {
+        } else if(tool.crypto.key.fingerprint(armored_pubkey) !== null) {
           db_contact_save(db, db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()), render_contact_list);
         } else {
           alert('Cannot recognize a valid public key, please try again. Let me know at tom@cryptup.org if you need help.');

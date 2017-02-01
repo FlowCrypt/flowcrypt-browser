@@ -115,7 +115,7 @@ function private_storage_set(storage_type, account_email, key, value) {
 }
 
 function save_passphrase(storage_type, account_email, longid, passphrase) {
-  var master_prv_longid = key_longid(private_storage_get('local', account_email, 'master_public_key')); //todo - migration needed
+  var master_prv_longid = tool.crypto.key.longid(private_storage_get('local', account_email, 'master_public_key')); //todo - migration needed
   if(longid && longid !== master_prv_longid) {
     private_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
   } else {
@@ -133,7 +133,7 @@ function get_passphrase(account_email, longid) {
       if(temporary) {
         return temporary;
       } else {
-        if(key_longid(private_storage_get('local', account_email, 'master_private_key')) === longid) {
+        if(tool.crypto.key.longid(private_storage_get('local', account_email, 'master_private_key')) === longid) {
           return get_passphrase(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
         } else {
           return null;
@@ -171,7 +171,7 @@ function private_keys_get(account_email, longid) {
     keys.push({
       armored: primary_key_armored,
       primary: true,
-      longid: key_longid(primary_key_armored),
+      longid: tool.crypto.key.longid(primary_key_armored),
     });
   }
   if(typeof longid !== 'undefined') { // looking for a specific key(s)
@@ -199,7 +199,7 @@ function private_keys_get(account_email, longid) {
 function private_keys_add(account_email, new_key_armored) {
   var private_keys = private_keys_get(account_email);
   var do_add = true;
-  var new_key_longid = key_longid(new_key_armored);
+  var new_key_longid = tool.crypto.key.longid(new_key_armored);
   if(new_key_longid) {
     $.each(private_keys, function (i, keyinfo) {
       if(new_key_longid === keyinfo.longid) {
@@ -380,9 +380,9 @@ function db_contact_object(email, name, client, pubkey, attested, pending_lookup
     searchable: db_create_search_index_list(email, name, Boolean(pubkey)),
     client: pubkey ? client : null,
     attested: pubkey ? Boolean(attested) : null,
-    fingerprint: pubkey ? key_fingerprint(pubkey) : null,
-    longid: pubkey ? key_longid(pubkey) : null,
-    keywords: pubkey ? mnemonic(key_longid(pubkey)) : null,
+    fingerprint: pubkey ? tool.crypto.key.fingerprint(pubkey) : null,
+    longid: pubkey ? tool.crypto.key.longid(pubkey) : null,
+    keywords: pubkey ? mnemonic(tool.crypto.key.longid(pubkey)) : null,
     pending_lookup: pubkey ? 0 : Number(Boolean(pending_lookup)),
     last_use: last_use || null,
   };

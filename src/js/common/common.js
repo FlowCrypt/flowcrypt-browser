@@ -2,40 +2,6 @@
 
 'use strict';
 
-
-// 		key:
-// 			extract_key_ids
-// 			get_sorted_keys_for_message
-// 			decrypt_key
-// 			patch_public_keys_to_ignore_expiration
-// 			openpgpjs_original_isValidEncryptionKeyPacket
-// 			is_public_key_expired_for_encryption
-// 			key_normalize
-// 			key_fingerprint
-// 			key_longid
-// 			test_private_key
-// 		message:
-// 			sign
-// 			zeroed_decrypt_error_counts
-// 			increment_decrypt_error_counts
-// 			wait_and_callback_decrypt_errors_if_failed
-// 			get_decrypt_options
-// 			verify_message_signature
-// 			decrypt
-// 			encrypt
-// 		hash:
-// 			sha1
-// 			double_sha1_upper
-// 			sha256
-// 			sha256_loop
-// 			challenge_answer_hash
-
-// 	keep original (move to storage)
-// 		open_settings_page
-
-
-
-
 (function(/* ERROR HANDLING */) {
 
   var original_on_error = window.onerror;
@@ -288,7 +254,27 @@
         strip: crypto_armor_strip,
         clip: crypto_armor_clip,
       },
-    }
+      hash: {
+        sha1: crypto_hash_sha1,
+        double_sha1_upper: crypto_hash_double_sha1_upper,
+        sha256: crypto_hash_sha256,
+        challenge_answer: crypto_hash_challenge_answer,
+      },
+      key: {
+        decrypt: crypto_key_decrypt,
+        expired_for_encryption: crypto_key_expired_for_encryption,
+        normalize: crypto_key_normalize,
+        fingerprint: crypto_key_fingerprint,
+        longid: crypto_key_longid,
+        test: crypto_key_test,
+      },
+      message: {
+        sign: crypto_message_sign,
+        verify: crypto_message_verify_signature,
+        decrypt: crypto_message_decrypt,
+        encrypt: crypto_message_encrypt,
+      },
+    },
   };
 
   /* tool.str */
@@ -747,7 +733,7 @@
     });
   }
 
-  /* tools.ui */
+  /* tool.ui */
 
   var events_fired = {};
   var DOUBLE_MS = 1000;
@@ -932,7 +918,7 @@
 
   function message_pubkeys(account_email, message) {
     var message_key_ids = message.getEncryptionKeyIds();
-    var local_key_ids = extract_key_ids(private_storage_get('local', account_email, 'master_public_key'));
+    var local_key_ids = crypto_key_ids(private_storage_get('local', account_email, 'master_public_key'));
     var diagnosis = { found_match: false, receivers: message_key_ids.length, };
     $.each(message_key_ids, function (i, msg_k_id) {
       $.each(local_key_ids, function (j, local_k_id) {
@@ -956,8 +942,8 @@
               diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, }
             } else {
               var match = true;
-              var local_fingerprint = key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
-              if(key_fingerprint(pubkey_search_result.pubkey) !== local_fingerprint) {
+              var local_fingerprint = crypto_key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
+              if(crypto_key_fingerprint(pubkey_search_result.pubkey) !== local_fingerprint) {
                 diagnosis.has_pubkey_mismatch = true;
                 match = false;
               }
@@ -1067,422 +1053,410 @@
     }
   }
 
-})();
+  /* tool.crypto.hash */
 
-
-function extract_key_ids(armored_pubkey) {
-  return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
-}
-
-
-/* -------------------- CRYPTO ----------------------------------------------------*/
-
-function sign(signing_prv, data, armor, callback) {
-  var options = { data: data, armor: armor, privateKeys: signing_prv, };
-  openpgp.sign(options).then(callback, function (error) {
-    console.log(error); // todo - better handling. Alerts suck.
-    alert('Error signing message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
-  });
-}
-
-function get_sorted_keys_for_message(db, account_email, message, callback) {
-  var keys = {};
-  keys.verification_contacts = [];
-  keys.for_verification = [];
-  if(message.getEncryptionKeyIds) {
-    keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(function (id) {
-      return key_longid(id.bytes);
-    });
-  } else {
-    keys.encrypted_for = [];
+  function crypto_hash_sha1(string) {
+    return tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.sha1(string)));
   }
-  keys.signed_by = (message.getSigningKeyIds() || []).map(function (id) {
-    return key_longid(id.bytes);
-  });
-  keys.potentially_matching = private_keys_get(account_email, keys.encrypted_for);
-  if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
-    keys.potentially_matching = private_keys_get(account_email);
+
+  function crypto_hash_double_sha1_upper(string) {
+    return crypto_hash_sha1(crypto_hash_sha1(string)).toUpperCase();
   }
-  keys.with_passphrases = [];
-  keys.without_passphrases = [];
-  $.each(keys.potentially_matching, function (i, keyinfo) {
-    var passphrase = get_passphrase(account_email, keyinfo.longid);
-    if(passphrase !== null) {
-      var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
-      var decrypted = decrypt_key(key, passphrase);
-      if(decrypted === true) {
-        keyinfo.decrypted = key;
-        keys.with_passphrases.push(keyinfo);
+
+  function crypto_hash_sha256(string) {
+    return tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.sha256(string)));
+  }
+
+  function crypto_hash_sha256_loop(string, times) {
+    for(var i = 0; i < (times || 100000); i++) {
+      string = crypto_hash_sha256(string);
+    }
+    return string;
+  }
+
+  function crypto_hash_challenge_answer(answer) {
+    return crypto_hash_sha256_loop(answer);
+  }
+
+  /* tool.crypto.key */
+
+  function crypto_key_ids(armored_pubkey) {
+    return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
+  }
+
+  function crypto_key_decrypt(prv, passphrase) { // returns true, false, or RETURNS a caught known exception
+    try {
+      return prv.decrypt(passphrase);
+    } catch(e) {
+      if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
+        try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
+          return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) { return successes + Number(subkey.subKey.decrypt(passphrase)); }, 0);
+        } catch(subkey_e) {
+          return subkey_e;
+        }
+      } else if(e.message === 'Invalid enum value.') {
+        return e;
       } else {
-        keys.without_passphrases.push(keyinfo);
-      }
-    } else {
-      keys.without_passphrases.push(keyinfo);
-    }
-  });
-  if(keys.signed_by.length) {
-    db_contact_get(db, keys.signed_by, function (verification_contacts) {
-      keys.verification_contacts = verification_contacts.filter(function (contact) {
-        return contact !== null;
-      });
-      keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
-        return openpgp.key.readArmored(contact.pubkey).keys;
-      }));
-      callback(keys);
-    });
-  } else {
-    callback(keys);
-  }
-}
-
-function zeroed_decrypt_error_counts(keys) {
-  return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, };
-}
-
-function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
-  if(String(decrypt_error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && !one_time_message_password) {
-    counts.key_mismatch++; // wrong private key
-  } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
-    counts.key_mismatch++; // attempted opening password only message with key
-  } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid enum value.' && one_time_message_password) {
-    counts.wrong_password++; // wrong password
-  } else {
-    other_errors.push(String(decrypt_error));
-  }
-  counts.attempts++;
-}
-
-function wait_and_callback_decrypt_errors_if_failed(message, private_keys, counts, other_errors, callback) {
-  var wait_for_all_attempts_interval = setInterval(function () { //todo - promises are better
-    if(counts.decrypted) {
-      clearInterval(wait_for_all_attempts_interval);
-    } else {
-      if(counts.attempts === private_keys.with_passphrases.length) { // decrypting attempted with all keys, no need to wait longer - can evaluate result now, otherwise wait
-        clearInterval(wait_for_all_attempts_interval);
-        callback({
-          success: false,
-          signature: null,
-          message: message,
-          counts: counts,
-          encrypted_for: private_keys.encrypted_for,
-          missing_passphrases: private_keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; }),
-          errors: other_errors,
-        });
+        throw e;
       }
     }
-  }, 100);
-}
-
-function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password) {
-  var options = { message: message, format: (is_armored) ? 'utf8' : 'binary', };
-  if(!one_time_message_password) {
-    options.privateKey = keyinfo.decrypted;
-  } else {
-    options.password = challenge_answer_hash(one_time_message_password);
   }
-  return options
-}
 
-function verify_message_signature(message, keys) {
-  var signature = {
-    signer: null,
-    contact: keys.verification_contacts.length ? keys.verification_contacts[0] : null,
-    match: true,
-    error: null,
-  };
-  try {
-    $.each(message.verify(keys.for_verification), function (i, verify_result) {
-      if(verify_result.valid !== true) {
-        signature.match = false;
-      }
-      if(!signature.signer) {
-        signature.signer = key_longid(verify_result.keyid.bytes);
-      }
-    });
-  } catch(verify_error) {
-    signature.match = null;
-    if(verify_error.message === 'Can only verify message with one literal data packet.') {
-      signature.error = 'CryptUP is not equipped to verify this message (err 101)';
-    } else {
-      signature.error = 'CryptUP had trouble verifying this message (' + verify_error.message + ')';
-      catcher.handle_exception(verify_error);
-    }
-  }
-  return signature;
-}
-
-function decrypt_key(prv, passphrase) { // returns true, false, or RETURNS a cought known exception
-  try {
-    return prv.decrypt(passphrase);
-  } catch(e) {
-    if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
-      try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
-        return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) { return successes + Number(subkey.subKey.decrypt(passphrase)); }, 0);
-      } catch(subkey_e) {
-        return subkey_e;
-      }
-    } else if(e.message === 'Invalid enum value.') {
-      return e;
-    } else {
-      throw e;
-    }
-  }
-}
-
-function decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
-  var armored_encrypted = encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1;
-  var armored_signed_only = encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1;
-  var other_errors = [];
-  try {
-    if(armored_encrypted) {
-      var message = openpgp.message.readArmored(encrypted_data);
-    } else if(armored_signed_only) {
-      var message = openpgp.cleartext.readArmored(encrypted_data);
-    } else {
-      var message = openpgp.message.read(tool.str.to_uint8(encrypted_data));
-    }
-  } catch(format_error) {
-    callback({
-      success: false,
-      counts: zeroed_decrypt_error_counts(),
-      format_error: format_error.message,
-      errors: other_errors,
-      encrypted: null,
-      signature: null,
-    });
-    return;
-  }
-  get_sorted_keys_for_message(db, account_email, message, function (keys) {
-    var counts = zeroed_decrypt_error_counts(keys);
-    if(armored_signed_only) {
-      if(!message.text) {
-        var text = encrypted_data.match(/-----BEGIN\sPGP\sSIGNED\sMESSAGE-----\nHash:\s[A-Z0-9]+\n([^]+)\n-----BEGIN\sPGP\sSIGNATURE-----[^]+-----END\sPGP\sSIGNATURE-----/m);
-        if(text && text.length === 2) {
-          message.text = text[1];
-        } else {
-          message.text = encrypted_data;
-        }
-      }
-      callback({
-        success: true,
-        content: { data: message.text, },
-        encrypted: false,
-        signature: verify_message_signature(message, keys),
-      });
-    } else {
-      $.each(keys.with_passphrases, function (i, keyinfo) {
-        if(!counts.decrypted) {
-          try {
-            openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function (decrypted) {
-              catcher.try(function () {
-                if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                  callback({
-                    success: true,
-                    content: decrypted,
-                    encrypted: true,
-                    signature: keys.signed_by.length ? verify_message_signature(message, keys) : false,
-                  });
-                }
-              })();
-            }).catch(function (decrypt_error) {
-              catcher.try(function () {
-                increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
-              })();
-            });
-          } catch(decrypt_exception) {
-            other_errors.push(String(decrypt_exception));
-            counts.attempts++;
-          }
-        }
-      });
-      wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback);
-    }
-  });
-}
-
-function openpgpjs_original_isValidEncryptionKeyPacket(keyPacket, signature) {
-  return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
-}
-
-function patch_public_keys_to_ignore_expiration(keys) {
-  function ignore_expiration_isValidEncryptionKey(primaryKey) {
-    var verifyResult = this.verify(primaryKey);
-    return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
-  }
-  $.each(keys, function (i, key) {
-    $.each(key.subKeys, function (i, sub_key) {
-      sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
-    });
-  });
-}
-
-function is_public_key_expired_for_encryption(key) {
-  if(key.getEncryptionKeyPacket() !== null) {
-    return false;
-  }
-  if(key.verifyPrimaryKey() === openpgp.enums.keyStatus.expired) {
-    return true;
-  }
-  var found_expired_subkey = false;
-  $.each(key.subKeys, function (i, sub_key) {
-    if(sub_key.verify(key) === openpgp.enums.keyStatus.expired && openpgpjs_original_isValidEncryptionKeyPacket(sub_key.subKey, sub_key.bindingSignature)) {
-      found_expired_subkey = true;
+  function crypto_key_expired_for_encryption(key) {
+    if(key.getEncryptionKeyPacket() !== null) {
       return false;
     }
-  });
-  return found_expired_subkey;
-}
-
-function encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
-  var options = { data: data, armor: armor, };
-  var used_challange = false;
-  if(armored_pubkeys) {
-    options.publicKeys = [];
-    $.each(armored_pubkeys, function (i, armored_pubkey) {
-      options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
-    });
-    patch_public_keys_to_ignore_expiration(options.publicKeys);
-  }
-  if(challenge && challenge.question && challenge.answer) {
-    options.passwords = [challenge_answer_hash(challenge.answer)];
-    used_challange = true;
-  }
-  if(!armored_pubkeys && !used_challange) {
-    alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
-    throw new Error('no-pubkeys-no-challenge');
-  }
-  if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
-    options.privateKeys = [signing_prv];
-    console.log('singing oonly')
-  }
-  openpgp.encrypt(options).then(function(result) {
-    catcher.try(function() { // todo - this is very awkward, should create a Try wrapper with a better api
-      callback(result);
-    })();
-  }, function (error) {
-    console.log(error);
-    alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
-    //todo: make the UI behave well on errors
-  });
-}
-
-function key_normalize(armored) {
-  try {
-    if(/-----BEGIN\sPGP\sPUBLIC\sKEY\sBLOCK-----/.test(armored)) {
-      var key = openpgp.key.readArmored(armored).keys[0];
-    } else if(/-----BEGIN\sPGP\sMESSAGE-----/.test(armored)) {
-      var key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
-    } else {
-      var key = undefined;
+    if(key.verifyPrimaryKey() === openpgp.enums.keyStatus.expired) {
+      return true;
     }
-    if(key) {
-      return key.armor();
-    }
-  } catch(error) {
-    catcher.handle_exception(error);
-  }
-}
-
-function key_fingerprint(key, formatting) {
-  if(key === null || typeof key === 'undefined') {
-    return null;
-  } else if(typeof key.primaryKey !== 'undefined') {
-    if(key.primaryKey.fingerprint === null) {
-      return null;
-    }
-    try {
-      var fp = key.primaryKey.fingerprint.toUpperCase();
-      if(formatting === 'spaced') {
-        return fp.replace(/(.{4})/g, "$1 ");
+    var found_expired_subkey = false;
+    $.each(key.subKeys, function (i, sub_key) {
+      if(sub_key.verify(key) === openpgp.enums.keyStatus.expired && openpgpjs_original_isValidEncryptionKeyPacket(sub_key.subKey, sub_key.bindingSignature)) {
+        found_expired_subkey = true;
+        return false;
       }
-      return fp;
-    } catch(error) {
-      console.log(error);
-      return null;
-    }
-  } else {
+    });
+    return found_expired_subkey;
+  }
+
+  function crypto_key_normalize(armored) {
     try {
-      return key_fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
+      if(/-----BEGIN\sPGP\sPUBLIC\sKEY\sBLOCK-----/.test(armored)) {
+        var key = openpgp.key.readArmored(armored).keys[0];
+      } else if(/-----BEGIN\sPGP\sMESSAGE-----/.test(armored)) {
+        var key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
+      } else {
+        var key = undefined;
+      }
+      if(key) {
+        return key.armor();
+      }
     } catch(error) {
-      console.log(error);
-      return null;
+      catcher.handle_exception(error);
     }
   }
-}
 
-function key_longid(key_or_fingerprint_or_bytes) {
-  if(key_or_fingerprint_or_bytes === null || typeof key_or_fingerprint_or_bytes === 'undefined') {
-    return null;
-  } else if(key_or_fingerprint_or_bytes.length === 8) {
-    return tool.str.to_hex(key_or_fingerprint_or_bytes).toUpperCase();
-  } else if(key_or_fingerprint_or_bytes.length === 40) {
-    return key_or_fingerprint_or_bytes.substr(-16);
-  } else if(key_or_fingerprint_or_bytes.length === 49) {
-    return key_or_fingerprint_or_bytes.replace(/ /g, '').substr(-16);
-  } else {
-    return key_longid(key_fingerprint(key_or_fingerprint_or_bytes));
+  function crypto_key_fingerprint(key, formatting) {
+    if(key === null || typeof key === 'undefined') {
+      return null;
+    } else if(typeof key.primaryKey !== 'undefined') {
+      if(key.primaryKey.fingerprint === null) {
+        return null;
+      }
+      try {
+        var fp = key.primaryKey.fingerprint.toUpperCase();
+        if(formatting === 'spaced') {
+          return fp.replace(/(.{4})/g, "$1 ");
+        }
+        return fp;
+      } catch(error) {
+        console.log(error);
+        return null;
+      }
+    } else {
+      try {
+        return crypto_key_fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
+      } catch(error) {
+        console.log(error);
+        return null;
+      }
+    }
   }
-}
 
-function test_private_key(armored, passphrase, callback) {
-  try {
-    openpgp.encrypt({
-      data: 'this is a test encrypt/decrypt loop to discover certain browser inabilities to create proper keys with openpgp.js',
-      armor: true,
-      publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
-    }).then(function (result) {
-      var prv = openpgp.key.readArmored(armored).keys[0];
-      decrypt_key(prv, passphrase);
-      openpgp.decrypt({
-        message: openpgp.message.readArmored(result.data),
-        format: 'utf8',
-        privateKey: prv,
-      }).then(function () {
-        callback(true);
+  function crypto_key_longid(key_or_fingerprint_or_bytes) {
+    if(key_or_fingerprint_or_bytes === null || typeof key_or_fingerprint_or_bytes === 'undefined') {
+      return null;
+    } else if(key_or_fingerprint_or_bytes.length === 8) {
+      return tool.str.to_hex(key_or_fingerprint_or_bytes).toUpperCase();
+    } else if(key_or_fingerprint_or_bytes.length === 40) {
+      return key_or_fingerprint_or_bytes.substr(-16);
+    } else if(key_or_fingerprint_or_bytes.length === 49) {
+      return key_or_fingerprint_or_bytes.replace(/ /g, '').substr(-16);
+    } else {
+      return crypto_key_longid(crypto_key_fingerprint(key_or_fingerprint_or_bytes));
+    }
+  }
+
+  function crypto_key_test(armored, passphrase, callback) {
+    try {
+      openpgp.encrypt({
+        data: 'this is a test encrypt/decrypt loop to discover certain browser inabilities to create proper keys with openpgp.js',
+        armor: true,
+        publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
+      }).then(function (result) {
+        var prv = openpgp.key.readArmored(armored).keys[0];
+        crypto_key_decrypt(prv, passphrase);
+        openpgp.decrypt({
+          message: openpgp.message.readArmored(result.data),
+          format: 'utf8',
+          privateKey: prv,
+        }).then(function () {
+          callback(true);
+        }).catch(function (error) {
+          callback(false, error.message);
+        });
       }).catch(function (error) {
         callback(false, error.message);
       });
-    }).catch(function (error) {
+    } catch(error) {
       callback(false, error.message);
-    });
-  } catch(error) {
-    callback(false, error.message);
+    }
   }
-}
 
+  /* tool.crypo.message */
 
-function sha1(string) {
-  return tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.sha1(string)));
-}
-
-function double_sha1_upper(string) {
-  return sha1(sha1(string)).toUpperCase();
-}
-
-function sha256(string) {
-  return tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.sha256(string)));
-}
-
-function sha256_loop(string, times) {
-  for(var i = 0; i < (times || 100000); i++) {
-    string = sha256(string);
-  }
-  return string;
-}
-
-function challenge_answer_hash(answer) {
-  return sha256_loop(answer);
-}
-
-
-// storage
-
-function open_settings_page(path, account_email, page) {
-  if(account_email) {
-    window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + encodeURIComponent(account_email) + '&page=' + encodeURIComponent(page)), 'cryptup');
-  } else {
-    get_account_emails(function (account_emails) {
-      window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
+  function crypto_message_sign(signing_prv, data, armor, callback) {
+    var options = { data: data, armor: armor, privateKeys: signing_prv, };
+    openpgp.sign(options).then(callback, function (error) {
+      console.log(error); // todo - better handling. Alerts suck.
+      alert('Error signing message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
     });
   }
-}
+
+  function get_sorted_keys_for_message(db, account_email, message, callback) {
+    var keys = {};
+    keys.verification_contacts = [];
+    keys.for_verification = [];
+    if(message.getEncryptionKeyIds) {
+      keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(function (id) {
+        return crypto_key_longid(id.bytes);
+      });
+    } else {
+      keys.encrypted_for = [];
+    }
+    keys.signed_by = (message.getSigningKeyIds() || []).map(function (id) {
+      return crypto_key_longid(id.bytes);
+    });
+    keys.potentially_matching = private_keys_get(account_email, keys.encrypted_for);
+    if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
+      keys.potentially_matching = private_keys_get(account_email);
+    }
+    keys.with_passphrases = [];
+    keys.without_passphrases = [];
+    $.each(keys.potentially_matching, function (i, keyinfo) {
+      var passphrase = get_passphrase(account_email, keyinfo.longid);
+      if(passphrase !== null) {
+        var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
+        var decrypted = crypto_key_decrypt(key, passphrase);
+        if(decrypted === true) {
+          keyinfo.decrypted = key;
+          keys.with_passphrases.push(keyinfo);
+        } else {
+          keys.without_passphrases.push(keyinfo);
+        }
+      } else {
+        keys.without_passphrases.push(keyinfo);
+      }
+    });
+    if(keys.signed_by.length) {
+      db_contact_get(db, keys.signed_by, function (verification_contacts) {
+        keys.verification_contacts = verification_contacts.filter(function (contact) {
+          return contact !== null;
+        });
+        keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
+          return openpgp.key.readArmored(contact.pubkey).keys;
+        }));
+        callback(keys);
+      });
+    } else {
+      callback(keys);
+    }
+  }
+
+  function zeroed_decrypt_error_counts(keys) {
+    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, };
+  }
+
+  function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
+    if(String(decrypt_error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && !one_time_message_password) {
+      counts.key_mismatch++; // wrong private key
+    } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
+      counts.key_mismatch++; // attempted opening password only message with key
+    } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid enum value.' && one_time_message_password) {
+      counts.wrong_password++; // wrong password
+    } else {
+      other_errors.push(String(decrypt_error));
+    }
+    counts.attempts++;
+  }
+
+  function wait_and_callback_decrypt_errors_if_failed(message, private_keys, counts, other_errors, callback) {
+    var wait_for_all_attempts_interval = setInterval(function () { //todo - promises are better
+      if(counts.decrypted) {
+        clearInterval(wait_for_all_attempts_interval);
+      } else {
+        if(counts.attempts === private_keys.with_passphrases.length) { // decrypting attempted with all keys, no need to wait longer - can evaluate result now, otherwise wait
+          clearInterval(wait_for_all_attempts_interval);
+          callback({
+            success: false,
+            signature: null,
+            message: message,
+            counts: counts,
+            encrypted_for: private_keys.encrypted_for,
+            missing_passphrases: private_keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; }),
+            errors: other_errors,
+          });
+        }
+      }
+    }, 100);
+  }
+
+  function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password) {
+    var options = { message: message, format: (is_armored) ? 'utf8' : 'binary', };
+    if(!one_time_message_password) {
+      options.privateKey = keyinfo.decrypted;
+    } else {
+      options.password = crypto_hash_challenge_answer(one_time_message_password);
+    }
+    return options
+  }
+
+  function crypto_message_verify_signature(message, keys) {
+    var signature = {
+      signer: null,
+      contact: keys.verification_contacts.length ? keys.verification_contacts[0] : null,
+      match: true,
+      error: null,
+    };
+    try {
+      $.each(message.verify(keys.for_verification), function (i, verify_result) {
+        if(verify_result.valid !== true) {
+          signature.match = false;
+        }
+        if(!signature.signer) {
+          signature.signer = crypto_key_longid(verify_result.keyid.bytes);
+        }
+      });
+    } catch(verify_error) {
+      signature.match = null;
+      if(verify_error.message === 'Can only verify message with one literal data packet.') {
+        signature.error = 'CryptUP is not equipped to verify this message (err 101)';
+      } else {
+        signature.error = 'CryptUP had trouble verifying this message (' + verify_error.message + ')';
+        catcher.handle_exception(verify_error);
+      }
+    }
+    return signature;
+  }
+
+  function crypto_message_decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
+    var armored_encrypted = encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1;
+    var armored_signed_only = encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1;
+    var other_errors = [];
+    try {
+      if(armored_encrypted) {
+        var message = openpgp.message.readArmored(encrypted_data);
+      } else if(armored_signed_only) {
+        var message = openpgp.cleartext.readArmored(encrypted_data);
+      } else {
+        var message = openpgp.message.read(tool.str.to_uint8(encrypted_data));
+      }
+    } catch(format_error) {
+      callback({
+        success: false,
+        counts: zeroed_decrypt_error_counts(),
+        format_error: format_error.message,
+        errors: other_errors,
+        encrypted: null,
+        signature: null,
+      });
+      return;
+    }
+    get_sorted_keys_for_message(db, account_email, message, function (keys) {
+      var counts = zeroed_decrypt_error_counts(keys);
+      if(armored_signed_only) {
+        if(!message.text) {
+          var text = encrypted_data.match(/-----BEGIN\sPGP\sSIGNED\sMESSAGE-----\nHash:\s[A-Z0-9]+\n([^]+)\n-----BEGIN\sPGP\sSIGNATURE-----[^]+-----END\sPGP\sSIGNATURE-----/m);
+          if(text && text.length === 2) {
+            message.text = text[1];
+          } else {
+            message.text = encrypted_data;
+          }
+        }
+        callback({
+          success: true,
+          content: { data: message.text, },
+          encrypted: false,
+          signature: crypto_message_verify_signature(message, keys),
+        });
+      } else {
+        $.each(keys.with_passphrases, function (i, keyinfo) {
+          if(!counts.decrypted) {
+            try {
+              openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function (decrypted) {
+                catcher.try(function () {
+                  if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
+                    callback({
+                      success: true,
+                      content: decrypted,
+                      encrypted: true,
+                      signature: keys.signed_by.length ? crypto_message_verify_signature(message, keys) : false,
+                    });
+                  }
+                })();
+              }).catch(function (decrypt_error) {
+                catcher.try(function () {
+                  increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
+                })();
+              });
+            } catch(decrypt_exception) {
+              other_errors.push(String(decrypt_exception));
+              counts.attempts++;
+            }
+          }
+        });
+        wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback);
+      }
+    });
+  }
+
+  function openpgpjs_original_isValidEncryptionKeyPacket(keyPacket, signature) {
+    return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
+  }
+
+  function patch_public_keys_to_ignore_expiration(keys) {
+    function ignore_expiration_isValidEncryptionKey(primaryKey) {
+      var verifyResult = this.verify(primaryKey);
+      return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
+    }
+    $.each(keys, function (i, key) {
+      $.each(key.subKeys, function (i, sub_key) {
+        sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
+      });
+    });
+  }
+
+  function crypto_message_encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
+    var options = { data: data, armor: armor, };
+    var used_challange = false;
+    if(armored_pubkeys) {
+      options.publicKeys = [];
+      $.each(armored_pubkeys, function (i, armored_pubkey) {
+        options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
+      });
+      patch_public_keys_to_ignore_expiration(options.publicKeys);
+    }
+    if(challenge && challenge.question && challenge.answer) {
+      options.passwords = [crypto_hash_challenge_answer(challenge.answer)];
+      used_challange = true;
+    }
+    if(!armored_pubkeys && !used_challange) {
+      alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
+      throw new Error('no-pubkeys-no-challenge');
+    }
+    if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
+      options.privateKeys = [signing_prv];
+      console.log('singing oonly')
+    }
+    openpgp.encrypt(options).then(function(result) {
+      catcher.try(function() { // todo - this is very awkward, should create a Try wrapper with a better api
+        callback(result);
+      })();
+    }, function (error) {
+      console.log(error);
+      alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
+      //todo: make the UI behave well on errors
+    });
+  }
+
+})();

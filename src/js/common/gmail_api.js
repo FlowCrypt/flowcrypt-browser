@@ -78,7 +78,7 @@ function to_mime(account_email, body, headers, attachments, mime_message_callbac
     $.each(headers, function (key, header) {
       root_node.addHeader(key, header);
     });
-    root_node.addHeader('OpenPGP', 'id=' + key_fingerprint(private_storage_get('local', account_email, 'master_public_key')));
+    root_node.addHeader('OpenPGP', 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key')));
     var text_node = new MimeBuilder('multipart/alternative');
     if(typeof body === 'string') {
       text_node.appendChild(new MimeBuilder('text/plain').setContent(body));

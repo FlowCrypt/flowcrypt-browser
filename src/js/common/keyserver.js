@@ -65,7 +65,7 @@ function cryptup_auth_error() {
 
 function cryptup_account_login(account_email, token, callback) {
   cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
-    var uuid = registered_uuid || sha1(tool.str.random(40));
+    var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
     var email = registered_email || account_email;
     cryptup_server_call('account/login', { account: email, uuid: uuid, token: token || null, }, function (success, result) {
       if(success) {
@@ -191,7 +191,7 @@ function attest_packet_create_sign(values, decrypted_prv, callback) {
   if(packet.success !== true) {
     callback(false, packet.error);
   } else {
-    sign(decrypted_prv, content_text, true, function (signed_attest_packet) {
+    tool.crypto.message.sign(decrypted_prv, content_text, true, function (signed_attest_packet) {
       callback(true, signed_attest_packet.data);
     });
   }

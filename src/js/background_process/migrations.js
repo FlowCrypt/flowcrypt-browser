@@ -59,7 +59,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
         if(success) {
           var addresses_keyserver = [];
           $.each(results.results, function (i, result) {
-            if(result && result.pubkey && my_longids.indexOf(key_longid(result.pubkey)) !== -1) {
+            if(result && result.pubkey && my_longids.indexOf(tool.crypto.key.longid(result.pubkey)) !== -1) {
               addresses_keyserver.push(result.email);
             }
           });
@@ -79,7 +79,7 @@ function account_update_status_pks(account_email) { // checks if any new emails 
       if(addresses_pks.indexOf(email) === -1) {
         hkp.lookup({ query: email }).then(function (pubkey) {
           if(typeof pubkey !== 'undefined') {
-            if(my_longids.indexOf(key_longid(pubkey)) !== -1) {
+            if(my_longids.indexOf(tool.crypto.key.longid(pubkey)) !== -1) {
               addresses_pks.push(email);
               console.log(email + ' newly found matching pubkey on PKS');
               account_storage_set(account_email, { addresses_pks: addresses_pks, });

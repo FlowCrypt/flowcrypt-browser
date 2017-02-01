@@ -18,7 +18,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
   if(typeof new_key === 'undefined') {
     alert('Private key is not properly formatted. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
   } else {
-    var new_key_longid = key_longid(new_key);
+    var new_key_longid = tool.crypto.key.longid(new_key);
     if(new_key.isPublic()) {
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
     } else if(!new_key_longid) {
@@ -26,7 +26,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
     } else if(private_keys_long_ids.indexOf(new_key_longid) !== -1) {
       alert('This is one of your current keys.');
     } else {
-      var decrypt_result = decrypt_key(new_key, passphrase);
+      var decrypt_result = tool.crypto.key.decrypt(new_key, passphrase);
       if(decrypt_result === false) {
         alert('The pass phrase does not match. Please try a different pass phrase.');
       } else if(decrypt_result === true) {

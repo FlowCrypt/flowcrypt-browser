@@ -106,7 +106,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       save_draft_in_process = true;
       $('#send_btn_note').text('Saving');
       var armored_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
-      encrypt([armored_pubkey], null, null, $('#input_text')[0].innerText, true, function (encrypted) {
+      tool.crypto.message.encrypt([armored_pubkey], null, null, $('#input_text')[0].innerText, true, function (encrypted) {
         if(url_params.thread_id) { // replied message
           var body = '[cryptup:link:draft_reply:' + url_params.thread_id + ']\n\n' + encrypted.data;
         } else if(draft_id) {
@@ -165,9 +165,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(my_passphrase !== null) {
       var private_key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key', url_params.parent_tab_id)).keys[0];
       if(typeof my_passphrase !== 'undefined' && my_passphrase !== '') {
-        decrypt_key(private_key, my_passphrase);
+        tool.crypto.key.decrypt(private_key, my_passphrase);
       }
-      // todo: should be using common.decrypt() function
+      // todo: should be using tool.crypto.message.decrypt() function
       openpgp.decrypt({ message: openpgp.message.readArmored(encrypted_draft), format: 'utf8', privateKey: private_key, }).then(function (plaintext) {
         $('#input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
         if(headers && headers.to && headers.to.length) {
@@ -335,7 +335,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
-    encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
+    tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
       if($('.bottom .icon.pubkey').length && $('.bottom .icon.pubkey').is('.active')) {
         encrypted.data += '\n\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
@@ -722,7 +722,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
-    } else if(contact.has_pgp && is_public_key_expired_for_encryption(openpgp.key.readArmored(contact.pubkey).keys[0])) {
+    } else if(contact.has_pgp && tool.crypto.key.expired_for_encryption(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
       $(email_element).prepend("<i class='fa fa-clock-o'></i>");
       $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + recipient_key_id_text(contact));

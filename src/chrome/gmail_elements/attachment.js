@@ -88,7 +88,7 @@ db_open(function (db) {
 
   function decrypt_and_save_attachment_to_downloads(success, encrypted_data) {
     if(success) {
-      decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
+      tool.crypto.message.decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         $('#download').html(original_content);
         if(result.success) {
           tool.file.save_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
@@ -136,7 +136,7 @@ db_open(function (db) {
       });
     } else if(url_params.url) {
       tool.file.download_as_uint8(url_params.url, render_progress, function(data) {
-        decrypt_and_save_attachment_to_downloads(tool.str.from_uint8(data)); //toto - have to convert to uint8 because decrypt() cannot deal with uint8 directly yet
+        decrypt_and_save_attachment_to_downloads(tool.str.from_uint8(data)); //toto - have to convert to uint8 because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
       });
     } else {
       throw Error('Missing both attachment_id and url');

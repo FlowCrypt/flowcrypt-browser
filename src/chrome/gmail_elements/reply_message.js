@@ -90,7 +90,7 @@ db_open(function (db) {
 
   function retrieve_decrypt_and_add_forwarded_message(message_id) {
     extract_armored_message_using_gmail_api(url_params.account_email, message_id, 'full', function (armored_message) {
-      decrypt(db, url_params.account_email, armored_message, undefined, function (result) {
+      tool.crypto.message.decrypt(db, url_params.account_email, armored_message, undefined, function (result) {
         if(result.success) {
           if(!tool.mime.resembles_message(result.content.data)) {
             append_forwarded_message(tool.mime.format_content_to_display(result.content.data, armored_message));

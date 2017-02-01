@@ -107,7 +107,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
       keyserver_keys_find(url_params.account_email, function (keyserver_success, result) {
         if(keyserver_success && result.pubkey) {
           if(result.attested) {
-            account_email_attested_fingerprint = key_fingerprint(result.pubkey);
+            account_email_attested_fingerprint = tool.crypto.key.fingerprint(result.pubkey);
           }
           if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
             fetch_email_key_backups(url_params.account_email, function (success, keys) {
@@ -143,7 +143,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
       } else {
         var addresses = [account_email];
       }
-      if(account_email_attested_fingerprint && account_email_attested_fingerprint !== key_fingerprint(armored_pubkey)) {
+      if(account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(armored_pubkey)) {
         // already submitted and ATTESTED another pubkey for this email
         callback();
       } else {
@@ -156,7 +156,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
       }
     } else {
       keyserver_keys_find(account_email, function (success, result) {
-        if(success && result.pubkey && key_fingerprint(result.pubkey) !== null && key_fingerprint(result.pubkey) === key_fingerprint(armored_pubkey)) {
+        if(success && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
           // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
           private_storage_set('local', account_email, 'master_public_key_submitted', true);
         }
@@ -207,7 +207,7 @@ function save_key(account_email, prv, options, callback) {
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
   var contacts = [];
   $.each(all_addresses, function (i, address) {
-    var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== key_fingerprint(prv.toPublic().armor()));
+    var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prv.toPublic().armor()));
     contacts.push(db_contact_object(address, options.full_name, 'cryptup', prv.toPublic().armor(), attested, false, Date.now()));
   });
   db_open(function (db) {
@@ -289,7 +289,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
     var worked = false;
     $.each(recovered_keys, function (i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
-      if(decrypt_key(recovered_key, passphrase) === true) {
+      if(tool.crypto.key.decrypt(recovered_key, passphrase) === true) {
         var options = {
           submit_main: false, // todo - think about submitting when recovering
           submit_all: false,
@@ -364,7 +364,7 @@ $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
     passphrase: 'stockholm',
   }).then(function (key) {
     var armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
-    test_private_key(armored, 'stockholm', function (key_works, error_message) {
+    tool.crypto.key.test(armored, 'stockholm', function (key_works, error_message) {
       catcher.log(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
       setTimeout(function () {
         $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
@@ -376,7 +376,7 @@ $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
 });
 
 function test_private_key_and_handle(account_email, key, options, success_callback) {
-  test_private_key(key.armor(), options.passphrase, function (key_works, error) {
+  tool.crypto.key.test(key.armor(), options.passphrase, function (key_works, error) {
     if(key_works) {
       success_callback();
     } else {
@@ -395,7 +395,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
   } else if(prv.isPublic()) {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
   } else {
-    var decrypt_result = decrypt_key(openpgp.key.readArmored(prv.armor()).keys[0], passphrase);
+    var decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(prv.armor()).keys[0], passphrase);
     if(decrypt_result === false) {
       alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
       $('#step_2b_manual_enter .input_passphrase').val('');

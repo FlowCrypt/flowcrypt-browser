@@ -19,7 +19,7 @@ var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
 
 $('.email').text(url_params.account_email);
 $('.key_dump').text(key.toPublic().armor());
-$('.key_fingerprint').text(key_fingerprint(key, 'spaced'));
+$('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced'));
 $('.key_words').text(mnemonic(keyinfo.longid));
 $('.show_when_showing_public').css('display', 'block');
 $('.show_when_showing_private').css('display', 'none');

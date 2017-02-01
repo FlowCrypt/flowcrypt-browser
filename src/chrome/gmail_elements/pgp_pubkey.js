@@ -29,8 +29,8 @@ function set_button_text(db) {
 function render() {
   $('.pubkey').text(url_params.armored_pubkey);
   $('.line.fingerprints, .line.add_contact').css('display', url_params.is_outgoing ? 'none' : 'block');
-  $('.line.fingerprints .fingerprint').text(key_fingerprint(pubkey));
-  $('.line.fingerprints .keywords').text(mnemonic(key_longid(pubkey)));
+  $('.line.fingerprints .fingerprint').text(tool.crypto.key.fingerprint(pubkey));
+  $('.line.fingerprints .keywords').text(mnemonic(tool.crypto.key.longid(pubkey)));
 }
 
 db_open(function (db) {
