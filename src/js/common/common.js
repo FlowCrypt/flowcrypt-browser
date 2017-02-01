@@ -34,7 +34,7 @@
       return;
     }
     if(!version) {
-      if(chrome.runtime.getManifest) {
+      if(window.chrome && chrome.runtime && chrome.runtime.getManifest) {
         version = chrome.runtime.getManifest().version;
       } else {
         version = 'unknown';
