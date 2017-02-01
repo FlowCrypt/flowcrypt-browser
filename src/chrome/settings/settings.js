@@ -14,7 +14,7 @@ tool.browser.message.tab_id(function (tab_id) {
 function fetch_all_account_addresses(account_email, callback, query, from_emails) {
   from_emails = from_emails || [];
   query = query || 'in:sent';
-  fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
+  tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
       fetch_all_account_addresses(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
     } else {

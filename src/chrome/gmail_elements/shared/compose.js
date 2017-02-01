@@ -254,7 +254,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       var original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
       $('#send_btn i').replaceWith(tool.ui.spinner());
-      cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
+      storage_cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_question').val(), answer: $('#input_answer').val(), };
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, subscription_active)) {

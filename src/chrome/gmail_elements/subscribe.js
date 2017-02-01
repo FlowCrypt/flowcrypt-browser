@@ -26,7 +26,7 @@ $('#content').css('display', 'block');
 
 account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
   can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
-  cryptup_subscription(function (level, expire, active) {
+  storage_cryptup_subscription(function (level, expire, active) {
     if(!url_params.embedded) {
       render_dialog(level, expire, active);
     } else {
