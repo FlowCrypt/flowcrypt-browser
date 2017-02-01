@@ -269,7 +269,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
                       $('#send_btn span').text('Encrypting email');
                       plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                       do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
-                    } else if(all_good === cryptup_auth_error) {
+                    } else if(all_good === tool.api.cryptup.auth_error) {
                       $('#send_btn').html(original_btn_html);
                       if(confirm('Your CryptUP account information is outdated, please review your account settings.')) {
                         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
@@ -300,11 +300,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
     _i = _i || 0;
     _results = _results || [];
     if(attachments[_i]) {
-      cryptup_account_store_attachment(attachments[_i], function (success, server_result) {
+      tool.api.cryptup.account_store_attachment(attachments[_i], function (success, server_result) {
         if(success === true && server_result && server_result.id && server_result.url) {
           _results[_i] = { attachment: attachments[_i], url: server_result.url };
-        } else if(success === cryptup_auth_error) {
-          _results[_i] = { attachment: attachments[_i], error: cryptup_auth_error };
+        } else if(success === tool.api.cryptup.auth_error) {
+          _results[_i] = { attachment: attachments[_i], error: tool.api.cryptup.auth_error };
         } else {
           _results[_i] = { attachment: attachments[_i], error: server_result && server_result.error ? server_result.error : server_result };
         }
@@ -312,8 +312,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
       });
     } else {
       var all_good = _results.reduce(function (reduced, result) {
-        if(typeof result.error === 'function' && result.error === cryptup_auth_error) {
-          return cryptup_auth_error;
+        if(typeof result.error === 'function' && result.error === tool.api.cryptup.auth_error) {
+          return tool.api.cryptup.auth_error;
         } else {
           return reduced && typeof result.error === 'undefined';
         }
@@ -368,7 +368,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       if(db_contact && db_contact.has_pgp) {
         callback(db_contact);
       } else {
-        keyserver_keys_find(email, function (success, result) {
+        tool.api.attester.keys_find(email, function (success, result) {
           if(success && result.email) {
             var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
             keyserver_lookup_results_by_email[result.email] = ks_contact;

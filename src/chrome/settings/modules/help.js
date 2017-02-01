@@ -9,7 +9,7 @@ $('.action_send_feedback').click(function () {
   var button = this;
   $(this).html(tool.ui.spinner());
   setTimeout(function () { // this is so that spinner starts spinning before a potential failed connection alert shows up
-    keyserver_call('help/feedback', { email: url_params.account_email, message: $('#input_text').val(), }, function (success, response) {
+    tool.api.cryptup.call('help/feedback', { email: url_params.account_email, message: $('#input_text').val(), }, function (success, response) { // todo - add a function to common.js
       if(success && response.sent === true) {
         $(button).text('sent!');
         alert('Message sent! You will find your response in ' + url_params.account_email + ', check your email later. Thanks!');

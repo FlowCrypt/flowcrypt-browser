@@ -292,6 +292,23 @@ function add_account_email_to_list_of_accounts(account_email, callback) { //todo
   });
 }
 
+function storage_cryptup_auth_info(callback) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], function (storage) {
+    callback(storage.cryptup_account_email, storage.cryptup_account_uuid, storage.cryptup_account_verified);
+  });
+}
+
+function storage_cryptup_subscription(callback) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], function (s) {
+    if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_verified && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
+      var active = true; // todo: check cryptup_subscription.expire
+      callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, active);
+    } else {
+      callback(null, null, false);
+    }
+  });
+}
+
 /* db */
 
 function normalize_string(str) {

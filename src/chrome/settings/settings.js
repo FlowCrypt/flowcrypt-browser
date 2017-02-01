@@ -91,7 +91,7 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
     }
     var address = addresses.pop();
     var attest = (address == settings_url_params.account_email); // only request attestation of main email
-    keyserver_keys_submit(address, pubkey, attest, function (key_submitted, response) {
+    tool.api.attester.keys_submit(address, pubkey, attest, function (key_submitted, response) {
       if(attest && key_submitted) {
         if(!response.attested) {
           save_attest_request(settings_url_params.account_email, 'CRYPTUP', function () {

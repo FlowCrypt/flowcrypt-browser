@@ -103,11 +103,11 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
 
 function submit_pubkey(email) {
   if(email === url_params.account_email) {
-    keyserver_keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function () {
+    tool.api.attester.keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function () {
       window.location.reload();
     });
   } else {
-    keyserver_keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false, function () {
+    tool.api.attester.keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false, function () {
       window.location.reload();
     });
   }

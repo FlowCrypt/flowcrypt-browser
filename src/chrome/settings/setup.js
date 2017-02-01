@@ -104,7 +104,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     if(storage.setup_done) {
       render_setup_done(url_params.account_email);
     } else {
-      keyserver_keys_find(url_params.account_email, function (keyserver_success, result) {
+      tool.api.attester.keys_find(url_params.account_email, function (keyserver_success, result) {
         if(keyserver_success && result.pubkey) {
           if(result.attested) {
             account_email_attested_fingerprint = tool.crypto.key.fingerprint(result.pubkey);
@@ -155,7 +155,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
         });
       }
     } else {
-      keyserver_keys_find(account_email, function (success, result) {
+      tool.api.attester.keys_find(account_email, function (success, result) {
         if(success && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
           // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
           private_storage_set('local', account_email, 'master_public_key_submitted', true);

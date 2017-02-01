@@ -298,6 +298,24 @@
         extract_armored_message: gmail_api_extract_armored_message,
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
       },
+      attester: {
+        keys_find: api_attester_keys_find,
+        keys_submit: api_attester_keys_submit,
+        keys_attest: api_attester_keys_attest,
+        replace_request: api_attester_replace_request,
+        replace_confirm: api_attester_replace_confirm,
+        packet: {
+          create_sign: api_attester_packet_create_sign,
+          parse: api_attester_packet_parse,
+        },
+      },
+      cryptup: {
+        call: api_cryptup_call, // todo - should be removed once help.js has its own function to call
+        auth_error: api_cryptup_auth_error,
+        account_login: api_cryptup_account_login,
+        account_subscribe: api_cryptup_account_subscribe,
+        account_store_attachment: api_cryptup_account_store_attachment,
+      },
     }
   };
 
@@ -958,7 +976,7 @@
   function keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
     account_storage_get(account_email, ['addresses'], function (storage) {
-      keyserver_keys_find(storage.addresses || [account_email], function (success, pubkey_search_results) {
+      api_attester_keys_find(storage.addresses || [account_email], function (success, pubkey_search_results) {
         if(success) {
           $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
@@ -992,7 +1010,7 @@
               emails_setup_done.push(account_email);
             }
           });
-          keyserver_keys_check(emails_setup_done, function (success, response) {
+          api_attester_keys_check(emails_setup_done, function (success, response) {
             if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
               var save_result = {};
               $.each(emails_setup_done, function (i, account_email) {
@@ -1922,6 +1940,267 @@
     });
   }
 
+  /* tool.api.attester */
 
+  function api_attester_call(path, values, callback, format) {
+    if(format !== 'FORM') {
+      var formatted_values = JSON.stringify(values);
+      var content_type = 'application/json; charset=UTF-8';
+    } else {
+      var formatted_values = new FormData();
+      $.each(values, function (name, value) {
+        if(typeof value === 'object' && value.name && value.content && value.type) {
+          formatted_values.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
+        } else {
+          formatted_values.append(name, value);
+        }
+      });
+      var content_type = false;
+    }
+    return $.ajax({
+      url: 'https://cryptup-keyserver.herokuapp.com/' + path,
+      // url: 'http://127.0.0.1:5000/' + path,
+      method: 'POST',
+      data: formatted_values,
+      dataType: 'json',
+      crossDomain: true,
+      processData: false,
+      contentType: content_type,
+      async: true,
+      success: function (response) {
+        callback(true, response);
+      },
+      error: function (XMLHttpRequest, status, error) {
+        callback(false, { request: XMLHttpRequest, status: status, error: error });
+      },
+    });
+  }
+
+  function api_attester_keys_find(email, callback) {
+    return api_attester_call('keys/find', {
+      email: (typeof email === 'string') ? tool.str.trim_lower(email) : email.map(tool.str.trim_lower),
+    }, callback);
+  }
+
+  function api_attester_keys_submit(email, pubkey, attest, callback) {
+    return api_attester_call('keys/submit', {
+      email: tool.str.trim_lower(email),
+      pubkey: pubkey.trim(),
+      attest: attest || false,
+    }, callback);
+  }
+
+  function api_attester_keys_check(emails, callback) {
+    return api_attester_call('keys/check', {
+      emails: emails.map(tool.str.trim_lower),
+    }, callback);
+  }
+
+  function api_attester_keys_attest(signed_attest_packet, callback) {
+    return api_attester_call('keys/attest', {
+      packet: signed_attest_packet,
+    }, callback);
+  }
+
+  function api_attester_replace_request(email, signed_attest_packet, new_pubkey, callback) {
+    return api_attester_call('replace/request', {
+      signed_message: signed_attest_packet,
+      new_pubkey: new_pubkey,
+      email: email,
+    }, callback);
+  }
+
+  function api_attester_replace_confirm(signed_attest_packet, callback) {
+    return api_attester_call('replace/confirm', {
+      signed_message: signed_attest_packet,
+    }, callback);
+  }
+
+  var ATTEST_PACKET_BEGIN = '-----BEGIN ATTEST PACKET-----\n';
+  var ATTEST_PACKET_END = '\n-----END ATTEST PACKET-----';
+
+  function api_attester_packet_armor(content_text) {
+    return ATTEST_PACKET_BEGIN + content_text + ATTEST_PACKET_END;
+  }
+
+  function api_attester_packet_create_sign(values, decrypted_prv, callback) {
+    var lines = [];
+    $.each(values, function (key, value) {
+      lines.push(key + ':' + value);
+    });
+    var content_text = lines.join('\n');
+    var packet = api_attester_packet_parse(api_attester_packet_armor(content_text));
+    if(packet.success !== true) {
+      callback(false, packet.error);
+    } else {
+      tool.crypto.message.sign(decrypted_prv, content_text, true, function (signed_attest_packet) {
+        callback(true, signed_attest_packet.data);
+      });
+    }
+  }
+
+  function api_attester_packet_parse(text) {
+    var accepted_values = {
+      'ACT': 'action',
+      'ATT': 'attester',
+      'ADD': 'email_hash',
+      'PUB': 'fingerprint',
+      'OLD': 'fingerprint_old',
+      'RAN': 'random',
+    };
+    var result = {
+      success: false,
+      content: {},
+      error: null,
+      text: null,
+    };
+    var matches = text.match(/-----BEGIN ATTEST PACKET-----([^]+)-----END ATTEST PACKET-----/m);
+    if(matches && matches[1]) {
+      result.text = matches[1].replace(/^\s+|\s+$/g, '');
+      var lines = result.text.split('\n');
+      $.each(lines, function (i, line) {
+        var line_parts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
+        if(line_parts.length !== 2) {
+          result.error = 'Wrong content line format';
+          return false;
+        }
+        if(!accepted_values[line_parts[0]]) {
+          result.error = 'Unknown line key';
+          return false;
+        }
+        if(result.content[accepted_values[line_parts[0]]]) {
+          result.error = 'Duplicate line key';
+          return false;
+        }
+        result.content[accepted_values[line_parts[0]]] = line_parts[1];
+      });
+      if(result.error !== null) {
+        result.content = {};
+        return result;
+      } else {
+        if(result.content.fingerprint && result.content.fingerprint.length !== 40) { //todo - we should use regex here, everywhere
+          result.error = 'Wrong PUB line value format';
+          result.content = {};
+          return result;
+        }
+        if(result.content.email_hash && result.content.email_hash.length !== 40) {
+          result.error = 'Wrong ADD line value format';
+          result.content = {};
+          return result;
+        }
+        if(result.content.random && result.content.random.length !== 40) {
+          result.error = 'Wrong RAN line value format';
+          result.content = {};
+          return result;
+        }
+        if(result.content.fingerprint_old && result.content.fingerprint_old.length !== 40) {
+          result.error = 'Wrong OLD line value format';
+          result.content = {};
+          return result;
+        }
+        if(result.content.action && ['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'].indexOf(result.content.action) === -1) {
+          result.error = 'Wrong ACT line value format';
+          result.content = {};
+          return result;
+        }
+        if(result.content.attester && ['CRYPTUP'].indexOf(result.content.attester) === -1) {
+          result.error = 'Wrong ATT line value format';
+          result.content = {};
+          return result;
+        }
+        result.success = true;
+        return result;
+      }
+    } else {
+      result.error = 'Could not locate packet headers';
+      result.content = {};
+      return result;
+    }
+  }
+
+  /* tool.api.cryptup */
+
+  function api_cryptup_call(path, values, callback, format) {
+    return api_attester_call(path, values, callback, format); // this will be separated in the future
+  }
+
+  function api_cryptup_auth_error() {
+    throw Error('tool.api.cryptup.auth_error not callable');
+  }
+
+  function api_cryptup_account_login(account_email, token, callback) {
+    storage_cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
+      var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
+      var email = registered_email || account_email;
+      api_cryptup_call('account/login', { account: email, uuid: uuid, token: token || null, }, function (success, result) {
+        if(success) {
+          if(result.registered === true) {
+            account_storage_set(null, { cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: result.verified === true, cryptup_account_subscription: result.subscription, }, function () {
+              callback(true, result.verified === true, result.subscription);
+            });
+          } else {
+            if(typeof result.error === 'object') {
+              catcher.log('account/login fail response: ' + JSON.stringify(result.error));
+              callback(false, false, null, result.error.public_msg);
+            } else {
+              callback(false, false, null, result.error);
+            }
+          }
+        } else {
+          callback(false, false, null, 'connection error');
+        }
+      });
+    });
+  }
+
+  function api_cryptup_response_formatter(callback) {
+    return function(success, response) {
+      if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
+        callback(api_cryptup_auth_error);
+      } else {
+        callback(success, response);
+      }
+    }
+  }
+
+  function api_cryptup_account_subscribe(product, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('account/subscribe', {
+          account: email,
+          uuid: uuid,
+          product: product,
+        }, api_cryptup_response_formatter(function(success_or_auth_error, result) {
+          if(success_or_auth_error === true) {
+            account_storage_set(null, { cryptup_account_subscription: result.subscription, }, function () {
+              callback(true, result);
+            });
+          } else if(success_or_auth_error === false) {
+            callback(false, result);
+          } else {
+            callback(success_or_auth_error);
+          }
+        }));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
+
+  function api_cryptup_account_store_attachment(attachment, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('account/store', {
+          account: email,
+          uuid: uuid,
+          content: attachment,
+          type: attachment.type,
+          role: 'attachment',
+        }, api_cryptup_response_formatter(callback), 'FORM');
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
 
 })();

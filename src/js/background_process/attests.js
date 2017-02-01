@@ -66,7 +66,7 @@ function check_email_for_attests_and_respond(account_email) {
 }
 
 function process_attest_packet_text(account_email, attest_packet_text) {
-  var attest = attest_packet_parse(attest_packet_text);
+  var attest = tool.api.attester.packet.parse(attest_packet_text);
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
   var decrypted = tool.crypto.key.decrypt(key, get_passphrase(account_email));
   if(decrypted) {
@@ -77,9 +77,9 @@ function process_attest_packet_text(account_email, attest_packet_text) {
         if(!is_attested) {
           tool.crypto.message.sign(key, attest.text, true, function (signed_attest_packet) {
             if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
-              var keyserver_api_endpoint = keyserver_keys_attest;
+              var keyserver_api_endpoint = tool.api.attester.keys_attest;
             } else {
-              var keyserver_api_endpoint = keyserver_replace_confirm;
+              var keyserver_api_endpoint = tool.api.attester.replace_confirm;
             }
             keyserver_api_endpoint(signed_attest_packet.data, function (success, response) {
               if(success && response && response.attested) {

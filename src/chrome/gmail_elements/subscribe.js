@@ -38,7 +38,7 @@ account_storage_get(url_params.account_email, ['google_token_scopes'], function 
 function repair_auth_error_get_new_installation() {
   account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false, }, function() {
     render_status('checking..', true);
-    cryptup_account_login(url_params.account_email, null, handle_login_result);
+    tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
   });
 }
 
@@ -47,7 +47,7 @@ function render_embedded(level, expire, active) {
   if(active) {
     render_status(l.welcome);
   } else if(url_params.verification_email_text) {
-    cryptup_account_login(url_params.account_email, null, handle_login_result)
+    tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result)
   } else { // not really tested or expected
     catcher.log('embedded subscribe.htm but has no verification_email_text');
   }
@@ -87,7 +87,7 @@ function render_status(content, spinner) {
 
 function register_and_subscribe() {
   render_status('registering..', true);
-  cryptup_account_login(url_params.account_email, null, handle_login_result);
+  tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
 }
 
 function wait_for_token_email(timeout, callback) {
@@ -166,7 +166,7 @@ function handle_login_result(registered, verified, subscription, error) {
         notify_upgraded_and_close();
       } else {
         render_status('upgrading cryptup..', true);
-        cryptup_account_subscribe(product, handle_subscribe_result);
+        tool.api.cryptup.account_subscribe(product, handle_subscribe_result);
       }
     } else {
       render_status('verifying..', true);
@@ -174,7 +174,7 @@ function handle_login_result(registered, verified, subscription, error) {
         $('.status').text('This may take a minute.. ');
         wait_for_token_email(30, function (token) {
           if(token) {
-            cryptup_account_login(url_params.account_email, token, handle_login_result);
+            tool.api.cryptup.account_login(url_params.account_email, token, handle_login_result);
           } else {
             render_open_verification_email_message();
           }

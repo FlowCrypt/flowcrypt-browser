@@ -8,7 +8,7 @@ $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner());
 
 var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key')
 
-keyserver_keys_find(url_params.account_email, function (success, keyserver_result) {
+tool.api.attester.keys_find(url_params.account_email, function (success, keyserver_result) {
   if(!success) {
     $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>');
     $('.reload').click(function () {
@@ -39,9 +39,9 @@ keyserver_keys_find(url_params.account_email, function (success, keyserver_resul
           'OLD': tool.crypto.key.fingerprint(old_key),
           'PUB': tool.crypto.key.fingerprint(my_pubkey),
         };
-        attest_packet_create_sign(request_replacement, old_key, function (sign_success, sign_result) {
+        tool.api.attester.packet.create_sign(request_replacement, old_key, function (sign_success, sign_result) {
           if(sign_success) {
-            keyserver_replace_request(url_params.account_email, sign_result, my_pubkey, function (request_success, request_result) {
+            tool.api.attester.replace_request(url_params.account_email, sign_result, my_pubkey, function (request_success, request_result) {
               if(request_success && request_result.saved) {
                 save_attest_request(url_params.account_email, 'CRYPTUP', function () { //todo - should be the original attester
                   alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
