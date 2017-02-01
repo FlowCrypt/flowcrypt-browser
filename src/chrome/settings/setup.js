@@ -235,7 +235,7 @@ function create_save_key_pair(account_email, options) {
 }
 
 function get_and_save_userinfo(account_email, callback) {
-  google_api_userinfo(account_email, function (success, response) {
+  tool.api.google.user_info(account_email, function (success, response) {
     var result = { full_name: '', };
     if(success) {
       result.full_name = response.name || '';
