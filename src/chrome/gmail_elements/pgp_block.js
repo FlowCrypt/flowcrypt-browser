@@ -230,20 +230,11 @@ db_open(function (db) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature);
     if(!tool.mime.resembles_message(decrypted_content)) {
-      var cryptup_file_link_elements = [];
-      if(decrypted_content.indexOf('cryptup_file') !== -1) {
-        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
-          cryptup_file_link_elements.push(found_link);
-          return '';
-        });
-      }
+      var cryptup_attachments = [];
+      decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
       render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message), false, function () {
-        if(cryptup_file_link_elements.length) {
-          render_inner_attachments(cryptup_file_link_elements.map(function (link_element_string) {
-            var element = $(link_element_string);
-            var attachment_data = tool.str.html_attribute_decode(element.attr('cryptup-data'));
-            return tool.file.attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href'));
-          }));
+        if(cryptup_attachments.length) {
+          render_inner_attachments(cryptup_attachments);
         }
       });
     } else {

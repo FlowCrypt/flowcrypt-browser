@@ -194,6 +194,7 @@
       from_equal_sign_notation_as_utf: from_equal_sign_notation_as_utf,
       uint8_as_utf: uint8_as_utf,
       to_hex: to_hex,
+      extract_cryptup_attachments: str_extract_cryptup_attachments,
     },
     env: {
       url_params: url_params,
@@ -480,6 +481,18 @@
       o += n.length < 2 ? '0' + n : n;
     }
     return o;
+  }
+
+  function str_extract_cryptup_attachments(decrypted_content, cryptup_attachments) {
+    if(decrypted_content.indexOf('cryptup_file') !== -1) {
+      decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
+        var element = $(found_link);
+        var attachment_data = html_attribute_decode(element.attr('cryptup-data'));
+        cryptup_attachments.push(attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));
+        return '';
+      });
+    }
+    return decrypted_content;
   }
 
   /* tool.env */
