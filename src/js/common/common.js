@@ -274,6 +274,7 @@
         verify: crypto_message_verify_signature,
         decrypt: crypto_message_decrypt,
         encrypt: crypto_message_encrypt,
+        format_text: crypto_message_format_text,
       },
     },
     api: {
@@ -1510,6 +1511,12 @@
       console.log(error);
       alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
       //todo: make the UI behave well on errors
+    });
+  }
+
+  function crypto_message_format_text(text_or_html) {
+    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
+      return '&nbsp;'.repeat(spaces.length);
     });
   }
 
