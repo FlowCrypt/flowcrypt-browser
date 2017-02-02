@@ -252,6 +252,7 @@ table#compose td.text div#input_text { padding-top:8px; padding-left:8px; outlin
   -moz-box-shadow: none !important; box-shadow: none !important; height:100%; word-wrap: break-word; max-width: 525px; background-image: url(/img/lock-seamless-bg-alpha.png);
   overflow-y: auto; padding-bottom: 16px; }
 #reply_message table#compose td.text div#input_text { overflow-y: visible; }
+#new_message table#compose td.text div#input_text { overflow-x: hidden; }
 table#compose td.text { border-bottom: none; position: relative;}
 table#compose .fa-close { font-size: 20px; margin-top: -1px; }
 table#compose #send_btn i { font-size: 20px; }
