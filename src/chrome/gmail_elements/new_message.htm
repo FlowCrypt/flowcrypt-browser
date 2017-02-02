@@ -54,21 +54,16 @@
     <tr id="missing_pubkey_container">
       <td>
         <div class="choice-row">
-          <div class="missing_pubkey_container_sencence">All marked in Grey don't use CryptUP. Tell them to download it! Alternatively,</div>
-          <div class="button use_question">
-            <i class="ion-help-circled"></i>
-            <span class="challenge-question-copy">Use a challenge
-                <br> question
-              </span>
-          </div>
-          <div class="button add_pubkey">
-            <span class="circle">
-              <i class="ion-key"></i>
+          <div class="missing_pubkey_container_sencence">Recipients in Grey don't use encryption. Tell them to get CryptUP! Alternatively,</div>
+          <div class="block_button use_question">
+            <span class="challenge-question-copy">
+              <div class="large-copy">ADD A password</div>
+              <div class="small-copy">to protect the message</div>
             </span>
+          </div><div class="block_button add_pubkey">
             <span class="pubkey-copy">
-              add their pubkey
-              <br>
-              <span class="small-copy">if they have PGP enabled</span>
+              <div class="large-copy">add their pubkey</div>
+              <div class="small-copy">if they have PGP enabled</div>
             </span>
           </div>
           <div class="or-copy">or</div>
@@ -77,20 +72,10 @@
     </tr>
     <tr id="challenge_question_container">
       <td>
-        <div class="question-row">
-          <span class="circle">
-              <i class="ion-ios-locked"></i>
-            </span>
-          <div class="question-copy">
-            <p>
-              All marked in Grey don't use PGP encryption and will need to <b>answer a challenge question</b> to decrypt your messages.
-              <br/>If they use other PGP software, <a href="#" class="add_pubkey">add their public key</a> to skip this.</p>
-          </div>
-        </div>
-        <input id="input_question" placeholder="Enter a question they can answer" /><span class="end">?</span>
-        <span style="display: inline-block; width: 33px;">&nbsp;</span>
-        <span class="start">"</span>
-        <input id="input_answer" placeholder="Answer" /><span class="end">"</span>
+        <span class="start">"</span><input id="input_answer" placeholder="Password" /><span class="end">"</span>
+        <span style="display: inline-block; width: 15px;">&nbsp;</span>
+        <input id="input_question" placeholder="Password hint (required)" />
+        <div class="question_copy">If they use encryption other then CryptUP, <a href="#" class="add_pubkey">add their public key</a> to skip this.</div>
       </td>
     </tr>
     <tr class="bottom">

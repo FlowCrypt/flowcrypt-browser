@@ -302,46 +302,28 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: 
   margin-left: 11px; margin-right: 7px;}
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 table#compose #fineuploader .ion-android-close {font-size: 22px; position: absolute; top:7px; bottom:0;}
-table#compose tr#missing_pubkey_container { display: none; margin: 15px 0; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
-table#compose tr#missing_pubkey_container td { text-align: center; height: 109px; font-size: 15px; line-height: 1.6;}
 
-table#compose tr#missing_pubkey_container .use_question {width: 43.5%; display: inline; position: relative;}
-table#compose tr#missing_pubkey_container .add_pubkey {width: 44%; display: inline; position: relative;}
-table#compose tr#missing_pubkey_container .use_question .ion-help-circled { font-size: 45px; color: #31A217; position: absolute; left:16px; top:11px; z-index: 20;}
-table#compose tr#missing_pubkey_container .add_pubkey { border-left:2px solid #ccc;}
-table#compose tr#missing_pubkey_container .add_pubkey .ion-key {position: absolute; -ms-transform: rotate(180deg); -webkit-transform: rotate(180deg);
-  transform: rotate(180deg); font-size: 30px; right:0; left:0; margin:0 auto; text-align: center; top: 5px; color: #f3f3f3; }
-table#compose tr#missing_pubkey_container .add_pubkey span.circle {position: absolute; left:20px; background: #31A217; height: 25px; width: 40px; border-radius: 120px;
-  padding-top:15px; top:12px;}
-table#compose tr#missing_pubkey_container .add_pubkey span { position: absolute; width: 140px; font-size: 17px; text-align: left; left:75px; top:11px; bottom:0;
-  line-height: 1.3; color: gray;}
-table#compose tr#missing_pubkey_container .add_pubkey span.small-copy {font-size:13px; left:0; margin-top: 12px; text-transform:none; }
-table#compose tr#missing_pubkey_container .use_question .challenge-question-copy { position: absolute; width: 140px; font-size: 17px; text-align: left; left:67px; top:12px;
-  line-height: 1.3; color: gray;}
+table#compose tr#missing_pubkey_container { display: none; margin: 15px 0; -webkit-animation: fadeInUp .7s; animation: fadeInUp .7s;}
+table#compose tr#missing_pubkey_container td { text-align: center; height: 82px; font-size: 15px; line-height: 1.6;}
+table#compose tr#missing_pubkey_container .block_button { cursor: pointer; width: 50%; background: #f3f3f3; color:#353535; border-top: 1px solid #ccc;
+  display: inline-block; padding: 5px 0; height: 45px; }
+table#compose tr#missing_pubkey_container .block_button:hover { background: #ddd; }
+table#compose tr#missing_pubkey_container .use_question {  }
+table#compose tr#missing_pubkey_container .add_pubkey { margin-left: -1px; border-left: 1px solid #ccc; }
+table#compose tr#missing_pubkey_container .block_button div.large-copy { text-transform: uppercase; }
+table#compose tr#missing_pubkey_container .block_button div.small-copy { font-size:12.8px; }
 table#compose tr#missing_pubkey_container div.or-copy { position: absolute; width: 20px; background: #f3f3f3; height:20px; padding-bottom: 5px;
-  left:-6px; right:0; margin:0 auto; text-align: center; top:60px; z-index: 0; }
-table#compose tr#missing_pubkey_container div.missing_pubkey_container_sencence { padding: 10px 0; }
+  left:-2px; right:0; margin:0 auto; text-align: center; top:40px; z-index: 0; }
 table#compose tr#missing_pubkey_container div.choice-row {clear: both; position: relative;}
-table#compose tr#missing_pubkey_container div.choice-row .button {border-radius: 0;}
-table#compose tr#missing_pubkey_container div.choice-row .button:hover { background: #ddd;}
-table#compose tr#missing_pubkey_container div.choice-row .use_question { width: 50%;background: #f3f3f3; height: 50px; color: #353535; border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc; display: inline; position: absolute; left:0; padding: 10px 0;}
-table#compose tr#missing_pubkey_container div.choice-row .add_pubkey { width: 50%; background: #f3f3f3; height: 50px; color: #353535; border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc; display: inline; position: absolute; right:0; padding: 10px 0;}
 
 table#compose tr#challenge_question_container { display: none; }
-table#compose tr#challenge_question_container td { height: 84px; padding: 12px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s;}
+table#compose tr#challenge_question_container td { height: 66px; padding: 5px 14px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s; }
 table#compose tr#challenge_question_container td ::-webkit-input-placeholder { color: #d14836; }
 table#compose tr#challenge_question_container td input { padding-left: 3px; padding-right: 3px; border-bottom: 1px solid #cacaca; font-family: 'Open Sans', Arial; color: black; }
-table#compose tr#challenge_question_container td input#input_question { width: 300px; }
-table#compose tr#challenge_question_container td input#input_answer { width: 150px; margin-left: 10px; margin-right: 10px; color: #d14836; }
-table#compose tr#challenge_question_container td p { padding-left: 3px; }
-table#compose tr#challenge_question_container .question-row { margin:0 auto; position: relative; padding-bottom: 20px; }
-table#compose tr#challenge_question_container .question-row i.ion-ios-locked {display: inline-block; height: 50px; font-size: 40px; color: #989898; position: absolute; top:8px; left:0; bottom:0; right:0;}
-table#compose tr#challenge_question_container .question-row span.circle { border: 5px solid #989898; display: inline-block; border-radius: 120px; text-align: center; width: 60px; height: 60px; position: relative; margin-left: 20px; margin-right: -20px;}
-table#compose tr#challenge_question_container .question-row  p { display: inline-block; line-height: 1.8; margin-left: 25px; margin-top: 4px; }
-table#compose tr#challenge_question_container .question-row .question-copy {width: 79%; display: inline-block; position: absolute; top:-2px; margin-left: 10px;}
-span.start, span.end { font-weight: 900; position: absolute; margin-top: 5px; font-size: 16px; font-family: 'Open Sans', Arial; }
+table#compose tr#challenge_question_container td input#input_question { width: 285px; padding-left: 5px; }
+table#compose tr#challenge_question_container td input#input_answer { width: 200px; color: #d14836; padding-left: 20px; padding-right: 20px; }
+table#compose tr#challenge_question_container td .question_copy { margin-top: 8px; }
+span.start, span.end { font-weight: 900; position: absolute; margin-top: 8px; font-size: 16px; font-family: 'Open Sans', Arial; }
 span.end { margin-left: -10px; }
 
 body#new_message.popup { width: 474px; height: 600px; }
