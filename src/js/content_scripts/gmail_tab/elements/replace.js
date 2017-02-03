@@ -43,7 +43,7 @@ function init_elements_replace_js() {
         });
       }
       if(text.indexOf('-----BEGIN CRYPTUP VERIFICATION-----') !== -1) {
-        blocks.push(subscribe_dialog(account_email, text, true, null, gmail_tab_id));
+        blocks.push(subscribe_dialog(account_email, text, 'embedded', null, gmail_tab_id));
       }
       if(text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1 && text.indexOf('-----END PGP SIGNATURE-----') !== -1) { //todo - what if the end was clipped by gmail
         $.each(text.match(/-----BEGIN PGP SIGNED MESSAGE-----[^]+?-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/mg), function (i, armored) {

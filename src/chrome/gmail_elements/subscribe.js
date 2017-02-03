@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'embedded', 'source', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id']);
 var original_content;
 var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
@@ -11,14 +11,14 @@ var can_read_emails;
 var l = {
   welcome: 'Welcome to CryptUP Pro.<br/><br/>You can now send encrypted attachments to anyone.',
 };
-if(url_params.embedded) {
+if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
   $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px', });
   $('body').css('width', '460px');
 } else {
   tool.env.increment('upgrade_dialog_show');
 }
-
+$('body').css('overflow', 'hidden');
 $('#content').css('display', 'block');
 
 // tool.ui.passphrase_toggle(['passphrase']);
@@ -27,7 +27,7 @@ $('#content').css('display', 'block');
 account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
   can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
   storage_cryptup_subscription(function (level, expire, active) {
-    if(!url_params.embedded) {
+    if(url_params.placement !== 'embedded') {
       render_dialog(level, expire, active);
     } else {
       render_embedded(level, expire, active);
@@ -64,9 +64,7 @@ function render_dialog(level, expire, active) {
     }
   }
 
-  $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
-  }));
+  $('.action_close').click(close_dialog);
 
   $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
     original_content = $(self).html();
@@ -80,7 +78,7 @@ function render_dialog(level, expire, active) {
 }
 
 function render_status(content, spinner) {
-  $(url_params.embedded ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner() : ''));
+  $(url_params.placement === 'embedded' ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner() : ''));
 }
 
 function register_and_subscribe() {
@@ -182,7 +180,7 @@ function handle_login_result(registered, verified, subscription, error) {
       }
     }
   } else {
-    if(!url_params.embedded) {
+    if(url_params.placement !== 'embedded') {
       alert('There was a problem registering (' + error + '). Write me at tom@cryptup.org if this persists.');
       window.location.reload();
     } else {
@@ -202,12 +200,21 @@ function handle_subscribe_result(success, response) {
 
 function notify_upgraded_and_close() {
   tool.env.increment('upgrade_done');
-  if(!url_params.embedded) {
+  if(url_params.placement !== 'embedded') {
     tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
       notification: 'Successfully upgraded to CryptUP Pro.',
     });
-    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
+    close_dialog();
   } else {
     render_status(l.welcome);
   }
+}
+
+function close_dialog() {
+  if(url_params.placement !== 'settings') {
+    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
+  } else {
+    window.close();
+  }
+
 }

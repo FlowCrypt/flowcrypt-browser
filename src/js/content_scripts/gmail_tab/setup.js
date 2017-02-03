@@ -102,7 +102,7 @@ function init_setup_js() {
       },
       subscribe_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(subscribe_dialog(account_email, null, false, data.source, tab_id));
+          $('body').append(subscribe_dialog(account_email, null, 'dialog', data ? data.source : null, tab_id));
         }
       },
       add_pubkey_dialog_gmail: function (data) {

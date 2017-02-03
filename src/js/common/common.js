@@ -1327,7 +1327,7 @@
       counts.key_mismatch++; // wrong private key
     } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
       counts.key_mismatch++; // attempted opening password only message with key
-    } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid enum value.' && one_time_message_password) {
+    } else if(one_time_message_password && ['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'].indexOf(String(decrypt_error)) > 0) {
       counts.wrong_password++; // wrong password
     } else {
       other_errors.push(String(decrypt_error));

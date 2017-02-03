@@ -35,19 +35,22 @@ function init_elements_factory_js() {
     return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
-  window.subscribe_dialog = function (account_email, verification_email_text, embedded, source, gmail_tab_id) {
+  window.subscribe_dialog = function (account_email, verification_email_text, placement, source, gmail_tab_id) {
     var src = chrome.extension.getURL('chrome/gmail_elements/subscribe.htm') +
       '?account_email=' + encodeURIComponent(account_email) +
       '&verification_email_text=' + encodeURIComponent(verification_email_text || '') +
-      '&embedded=' + encodeURIComponent(embedded || '') +
+      '&placement=' + encodeURIComponent(placement) +
       '&source=' + encodeURIComponent(source || '') +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    if(embedded) {
+    if(typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because settings/index calls this from its context
+      var reloadable_class = '';
+    }
+    if(placement === 'embedded') {
       return '<iframe class="embedded ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe>';
     } else {
       return '<div id="cryptup_dialog"><iframe class="short ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
     }
-  }
+  };
 
   window.add_pubkey_dialog_src = function (account_email, emails, gmail_tab_id, placement) {
     return chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm') +

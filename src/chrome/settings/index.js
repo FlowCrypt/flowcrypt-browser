@@ -8,6 +8,7 @@ $('span#v').text(chrome.runtime.getManifest().version);
 
 var tab_id_global = undefined;
 var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+init_elements_factory_js();
 
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
@@ -26,6 +27,10 @@ tool.browser.message.tab_id(function (tab_id) {
     add_pubkey_dialog: function (data, sender, respond) {
       var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(data.emails);
       window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+    },
+    subscribe_dialog: function (data) {
+      var src = $(subscribe_dialog(url_params.account_email, null, 'settings', null, tab_id)).find('iframe').attr('src');
+      window.open(src, '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: function (data) {
       alert(data.notification);

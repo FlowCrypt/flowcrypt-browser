@@ -240,19 +240,19 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(!recipients.length) {
       alert('Please add receiving email address.');
       return false;
-    } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
-      tool.env.increment('upgrade_notify_attach_nonpgp', function () {
-        if(confirm('Sending password encrypted attachments is possible with CryptUP Pro.\n\nIt\'s free for one year if you register now.')) {
-          tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
-        }
-      });
-      return false;
     } else if(emails_without_pubkeys.length && (!challenge.question || !challenge.answer)) {
       if(!challenge.answer) {
         alert('Some recipients don\'t have encryption set up. Please add a password.');
       } else {
         alert('Password hint is required when messaging recipients who don\'t have encryption set up.');
       }
+      return false;
+    } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
+      tool.env.increment('upgrade_notify_attach_nonpgp', function () {
+        if(confirm('Sending password encrypted attachments is possible with CryptUP Pro.\n\nIt\'s free for one year if you register now.')) {
+          tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
+        }
+      });
       return false;
     } else if((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?'))) {
       return true; //todo - tailor for replying w/o subject
