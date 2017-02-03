@@ -1,6 +1,6 @@
 /**
  * Featherlight - ultra slim jQuery lightbox
- * Version 1.4.0 - http://noelboss.github.io/featherlight/
+ * Version 1.7.0 - http://noelboss.github.io/featherlight/
  *
  * Copyright 2016, Noël Raoul Bossart (http://www.noelboss.com)
  * MIT Licensed.
@@ -54,20 +54,38 @@
 			return opened;
 		};
 
-	// structure({iframeMinHeight: 44, foo: 0}, 'iframe')
-	//   #=> {min-height: 44}
-	var structure = function(obj, prefix) {
-		var result = {},
+	// Removes keys of `set` from `obj` and returns the removed key/values.
+	function slice(obj, set) {
+		var r = {};
+		for (var key in obj) {
+			if (key in set) {
+				r[key] = obj[key];
+				delete obj[key];
+			}
+		}
+		return r;
+	}
+
+	// NOTE: List of available [iframe attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe).
+	var iFrameAttributeSet = {
+		allowfullscreen: 1, frameborder: 1, height: 1, longdesc: 1, marginheight: 1, marginwidth: 1,
+		name: 1, referrerpolicy: 1, scrolling: 1, sandbox: 1, src: 1, srcdoc: 1, width: 1
+	};
+
+	// Converts camelCased attributes to dasherized versions for given prefix:
+	//   parseAttrs({hello: 1, hellFrozeOver: 2}, 'hell') => {froze-over: 2}
+	function parseAttrs(obj, prefix) {
+		var attrs = {},
 			regex = new RegExp('^' + prefix + '([A-Z])(.*)');
 		for (var key in obj) {
 			var match = key.match(regex);
 			if (match) {
 				var dasherized = (match[1] + match[2].replace(/([A-Z])/g, '-$1')).toLowerCase();
-				result[dasherized] = obj[key];
+				attrs[dasherized] = obj[key];
 			}
 		}
-		return result;
-	};
+		return attrs;
+	}
 
 	/* document wide key handler */
 	var eventMap = { keyup: 'onKeyUp', resize: 'onResize' };
@@ -136,9 +154,9 @@
 				$background = $(self.background || [
 					'<div class="'+css+'-loading '+css+'">',
 						'<div class="'+css+'-content">',
-							'<span class="'+css+'-close-icon '+ self.namespace + '-close">',
+							'<button class="'+css+'-close-icon '+ self.namespace + '-close" aria-label="Close">',
 								self.closeIcon,
-							'</span>',
+							'</button>',
 							'<div class="'+self.namespace+'-inner">' + self.loading + '</div>',
 						'</div>',
 					'</div>'].join('')),
@@ -305,11 +323,13 @@
 				/* Reset apparent image size first so container grows */
 				this.$content.css('width', '').css('height', '');
 				/* Calculate the worst ratio so that dimensions fit */
+				 /* Note: -1 to avoid rounding errors */
 				var ratio = Math.max(
-					w  / parseInt(this.$content.parent().css('width'),10),
-					h / parseInt(this.$content.parent().css('height'),10));
+					w  / (parseInt(this.$content.parent().css('width'),10)-1),
+					h / (parseInt(this.$content.parent().css('height'),10)-1));
 				/* Resize content */
 				if (ratio > 1) {
+					ratio = h / Math.floor(h / ratio); /* Round ratio down so height calc works */
 					this.$content.css('width', '' + w / ratio + 'px').css('height', '' + h / ratio + 'px');
 				}
 			}
@@ -379,10 +399,13 @@
 			iframe: {
 				process: function(url) {
 					var deferred = new $.Deferred();
-					var $content = $('<iframe/>')
-						.hide()
+					var $content = $('<iframe/>');
+					var css = parseAttrs(this, 'iframe');
+					var attrs = slice(css, iFrameAttributeSet);
+					$content.hide()
 						.attr('src', url)
-						.css(structure(this, 'iframe'))
+						.attr(attrs)
+						.css(css)
 						.on('load', function() { deferred.resolve($content.show()); })
 						// We can't move an <iframe> and avoid reloading it,
 						// so let's put it in place ourselves right now:
@@ -412,7 +435,7 @@
 						if ($.inArray(name, Klass.functionAttributes) >= 0) {  /* jshint -W054 */
 							val = new Function(val);                           /* jshint +W054 */
 						} else {
-							try { val = $.parseJSON(val); }
+							try { val = JSON.parse(val); }
 							catch(e) {}
 						}
 						config[name] = val;
@@ -532,6 +555,38 @@
 				}
 			},
 
+			beforeOpen: function(_super, event) {
+				// Remember focus:
+				this._previouslyActive = document.activeElement;
+
+				// Disable tabbing:
+				// See http://stackoverflow.com/questions/1599660/which-html-elements-can-receive-focus
+				this._$previouslyTabbable = $("a, input, select, textarea, iframe, button, iframe, [contentEditable=true]")
+					.not('[tabindex]')
+					.not(this.$instance.find('button'));
+
+				this._$previouslyWithTabIndex = $('[tabindex]').not('[tabindex="-1"]');
+				this._previousWithTabIndices = this._$previouslyWithTabIndex.map(function(_i, elem) {
+					return $(elem).attr('tabindex');
+				});
+
+				this._$previouslyWithTabIndex.add(this._$previouslyTabbable).attr('tabindex', -1);
+
+				document.activeElement.blur();
+				return _super(event);
+			},
+
+			afterClose: function(_super, event) {
+				var r = _super(event);
+				var self = this;
+				this._$previouslyTabbable.removeAttr('tabindex');
+				this._$previouslyWithTabIndex.each(function(i, elem) {
+					$(elem).attr('tabindex', self._previousWithTabIndices[i]);
+				});
+				this._previouslyActive.focus();
+				return r;
+			},
+
 			onResize: function(_super, event){
 				this.resize(this.$content.naturalWidth, this.$content.naturalHeight);
 				return _super(event);
@@ -539,6 +594,7 @@
 
 			afterContent: function(_super, event){
 				var r = _super(event);
+				this.$instance.find('[autofocus]:not([disabled])').focus();
 				this.onResize(event);
 				return r;
 			}
