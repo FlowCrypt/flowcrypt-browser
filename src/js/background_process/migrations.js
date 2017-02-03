@@ -79,17 +79,21 @@ function account_update_status_pks(account_email) { // checks if any new emails 
     var addresses_pks = storage.addresses_pks || [];
     $.each(storage.addresses || [account_email], function (i, email) {
       if(addresses_pks.indexOf(email) === -1) {
-        hkp.lookup({ query: email }).then(function (pubkey) {
-          if(typeof pubkey !== 'undefined') {
-            if(my_longids.indexOf(tool.crypto.key.longid(pubkey)) !== -1) {
-              addresses_pks.push(email);
-              console.log(email + ' newly found matching pubkey on PKS');
-              account_storage_set(account_email, { addresses_pks: addresses_pks, });
+        try {
+          hkp.lookup({ query: email }).then(function (pubkey) {
+            if(typeof pubkey !== 'undefined') {
+              if(my_longids.indexOf(tool.crypto.key.longid(pubkey)) !== -1) {
+                addresses_pks.push(email);
+                console.log(email + ' newly found matching pubkey on PKS');
+                account_storage_set(account_email, { addresses_pks: addresses_pks, });
+              }
             }
-          }
-        }).catch(function (error) {
-          console.log('Error fetching keys from PKS: ' + error.message);
-        });
+          }).catch(function (error) {
+            console.log('Error fetching keys from PKS: ' + error.message);
+          });
+        } catch(error) {
+          console.log('Error2 fetching keys from PKS: ' + error.message);
+        }
       }
     });
   });
