@@ -388,7 +388,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, callback) {
     db_contact_get(db, email, function (db_contact) {
-      if(db_contact && db_contact.has_pgp) {
+      if(db_contact && db_contact.has_pgp && db_contact.pubkey) {
         callback(db_contact);
       } else {
         tool.api.attester.keys_find(email, function (success, result) {
