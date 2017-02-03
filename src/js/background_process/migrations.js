@@ -28,7 +28,9 @@ function global_migrate_v_300(callback) {
     var tx = db.transaction('contacts', 'readwrite');
     var contacts = tx.objectStore('contacts');
     $.each(JSON.parse(localStorage.pubkey_cache || '{}'), function (email, contact) {
-      contacts.put(db_contact_object(email, null, contact.has_cryptup ? 'cryptup' : 'pgp', contact.pubkey, contact.attested, false, Date.now()));
+      if(typeof email === 'string') {
+        contacts.put(db_contact_object(email, null, contact.has_cryptup ? 'cryptup' : 'pgp', contact.pubkey, contact.attested, false, Date.now()));
+      }
     });
     tx.oncomplete = function () {
       delete localStorage.pubkey_cache;
