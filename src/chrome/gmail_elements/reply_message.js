@@ -18,7 +18,6 @@ db_open(function (db) {
   var original_reply_message_prompt = undefined;
   var thread_message_id_last = '';
   var thread_message_referrences_last = '';
-  var passphrase_interval = undefined;
   var can_read_emails = undefined;
   url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
