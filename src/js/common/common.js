@@ -144,6 +144,10 @@
       return 'prod';
     } else if(url.indexOf('nmelpmhpel') !== -1) {
       return 'dev';
+    } else if (url.indexOf('l.cryptup.org') !== -1) {
+      return 'local'
+    } else if (url.indexOf('cryptup.org') !== -1) {
+      return 'web'
     } else {
       return 'content_script';
     }
