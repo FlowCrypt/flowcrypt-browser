@@ -10,8 +10,8 @@ db_open(function (db) {
     var original_content;
     var missing_passprase_longids = [];
 
-    var attach_js = init_shared_attach_js(1);
-    attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button')
+    var attach_js = init_shared_attach_js(100, 1);
+    attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     init_elements_factory_js();
 
     tool.browser.message.listen({
@@ -41,10 +41,10 @@ db_open(function (db) {
       }
     }));
 
-    function decrypt_and_download(encrypted_file) { // todo - this is more or less copy-pasted from attachment.js, should use common function
-      tool.crypto.message.decrypt(db, url_params.account_email, tool.str.from_uint8(encrypted_file.data), undefined, function (result) {
+    function decrypt_and_download(attachment) { // todo - this is more or less copy-pasted from attachment.js, should use common function
+      tool.crypto.message.decrypt(db, url_params.account_email, tool.str.from_uint8(attachment.data), undefined, function (result) { // todo - don't convert to str once decrypt() can handle uint8
         if(result.success) {
-          tool.file.save_to_downloads(encrypted_file.name.replace(/(\.pgp)|(\.gpg)$/, ''), encrypted_file.type, result.content.data);
+          tool.file.save_to_downloads(attachment.name.replace(/(\.pgp)|(\.gpg)$/, ''), attachment.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
           $('.passphrase_dialog').html(passphrase_dialog(url_params.account_email, 'embedded', missing_passprase_longids, tab_id));

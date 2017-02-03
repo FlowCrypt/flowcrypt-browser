@@ -46,7 +46,7 @@ db_open(function (db) {
     }
   })());
 
-  function check_passphrase_entered() { // more or less copy-pasted from pgp_block.js, should use a common one
+  function check_passphrase_entered() { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
     $.each(missing_passprase_longids, function (i, longid) {
       if(missing_passprase_longids && get_passphrase(url_params.account_email, longid) !== null) {
         missing_passprase_longids = [];

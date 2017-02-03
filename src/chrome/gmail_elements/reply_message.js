@@ -23,7 +23,7 @@ db_open(function (db) {
   url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
-  var attach = init_shared_attach_js();
+  var attach = init_shared_attach_js(5, 10);
   var compose = init_shared_compose_js(url_params, db, attach);
 
   function recover_thread_id_if_missing(callback) {
@@ -39,13 +39,6 @@ db_open(function (db) {
         }
         callback();
       });
-    }
-  }
-
-  function check_passphrase_entered(encrypted_draft) {
-    if(get_passphrase(url_params.account_email) !== null) {
-      clearInterval(passphrase_interval);
-      compose.decrypt_and_render_draft(url_params.account_email, encrypted_draft, reply_message_render_table);
     }
   }
 

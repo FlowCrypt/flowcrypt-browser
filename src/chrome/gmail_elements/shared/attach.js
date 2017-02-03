@@ -2,10 +2,11 @@
 
 'use strict';
 
-function init_shared_attach_js(file_count_limit) {
+function init_shared_attach_js(file_size_limit_mb, file_count_limit) {
 
   var attached_files = {};
   var uploader = undefined;
+  var size_limit = file_size_limit_mb ? file_size_limit_mb * 1024 * 1024 : null;
 
   function initialize_attach_dialog(element_id, button_id) {
     $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function () {
@@ -41,7 +42,7 @@ function init_shared_attach_js(file_count_limit) {
 
   function collect_attachment(id, callback) {
     read_attachment_data_as_uint8(id, function (file_data) {
-      callback({ name: attached_files[id].name, type: attached_files[id].type, data: file_data, });
+      callback(tool.file.attachment(attached_files[id].name, attached_files[id].type, file_data));
     });
   }
 
@@ -74,12 +75,12 @@ function init_shared_attach_js(file_count_limit) {
       uploader.cancel(id);
     } else {
       var file = uploader.getFile(id);
-      if(false) { //todo - check size
+      if(size_limit && file.size > size_limit) {
         uploader.cancel(id);
-        alert('Attachments up to 10MB are allowed');
+        alert('Currently, attachment size is limited to ' + file_size_limit_mb + 'MB. Larger files will be supported soon.');
         return;
       }
-      attached_files[id] = file;
+      attached_files[id] = uploader.getFile(id);
     }
   }
 

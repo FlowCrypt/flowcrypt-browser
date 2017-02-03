@@ -25,6 +25,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   var added_pubkey_db_lookup_interval;
   var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
   var save_draft_in_process = false;
+  var passphrase_interval;
   var include_pubkey_toggled_manually = false;
   var my_addresses_on_pks = [];
   var my_addresses_on_keyserver = [];
@@ -199,6 +200,13 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
+  function check_passphrase_entered(encrypted_draft) {
+    if(get_passphrase(url_params.account_email) !== null) {
+      clearInterval(passphrase_interval);
+      compose.decrypt_and_render_draft(url_params.account_email, encrypted_draft, reply_message_render_table);
+    }
+  }
+
   function collect_all_available_public_keys(account_email, recipients, callback) {
     db_contact_get(db, recipients, function (contacts) {
       var armored_pubkeys = [private_storage_get('local', account_email, 'master_public_key', url_params.parent_tab_id)];
@@ -240,7 +248,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
       });
       return false;
     } else if(emails_without_pubkeys.length && (!challenge.question || !challenge.answer)) {
-      alert('Because one or more of recipients don\'t have CryptUP or other PGP app, a question and answer is needed for encryption. The answer will work as a password to open the message.');
+      if(!challenge.answer) {
+        alert('Some recipients don\'t have encryption set up. Please add a password.');
+      } else {
+        alert('Password hint is required when messaging recipients who don\'t have encryption set up.');
+      }
       return false;
     } else if((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?'))) {
       return true; //todo - tailor for replying w/o subject
@@ -269,14 +281,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
                       $('#send_btn span').text('Encrypting email');
                       plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                       do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
-                    } else if(all_good === tool.api.cryptup.auth_error) {
-                      $('#send_btn').html(original_btn_html);
-                      if(confirm('Your CryptUP account information is outdated, please review your account settings.')) {
-                        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
-                      }
                     } else {
-                      alert('Failed to upload attachments, please try again.');
-                      $('#send_btn').html(original_btn_html); // todo - retry only failed attachments
+                      handle_upload_attachments_to_cryptup_error(all_good, upload_results);
+                      $('#send_btn').html(original_btn_html);
                     }
                   });
                 } else {
@@ -293,6 +300,22 @@ function init_shared_compose_js(url_params, db, attach_js) {
           }
         });
       });
+    }
+  }
+
+  function handle_upload_attachments_to_cryptup_error(result_summary, upload_results) {
+    if(result_summary === tool.api.cryptup.auth_error) {
+      if(confirm('Your CryptUP account information is outdated, please review your account settings.')) {
+        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+      }
+    } else { // todo - offer to retry only failed attachments
+      alert('Failed to upload attachments, please try again. Encountered errors:\n' + upload_results.map(function (result) {
+        if(result && result.id && result.url) {
+          return '\n' + (upload_results.indexOf(result) + 1) + ': no error';
+        } else {
+          return '\n' + (upload_results.indexOf(result) + 1) + ': ' + ((result && result.error) ? result.error : 'unknown');
+        }
+      }));
     }
   }
 
