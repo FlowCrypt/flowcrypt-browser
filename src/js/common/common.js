@@ -1205,7 +1205,7 @@
       try {
         var fp = key.primaryKey.fingerprint.toUpperCase();
         if(formatting === 'spaced') {
-          return fp.replace(/(.{4})/g, "$1 ");
+          return fp.replace(/(.{4})/g, "$1 ").trim();
         }
         return fp;
       } catch(error) {
