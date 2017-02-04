@@ -30,7 +30,7 @@
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
-.featherlight .featherlight-close-icon { background: none !important; }
+.featherlight .featherlight-close-icon { background: none !important; border: none !important; }
 .featherlight.new_message_featherlight .featherlight-content { background: none !important; }
 .featherlight .featherlight-content > .line { color: white; text-align: center; opacity: 0.5; }
 .good { color: #088447; }
