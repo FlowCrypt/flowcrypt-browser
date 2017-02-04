@@ -68,6 +68,9 @@ function init_elements_replace_js() {
         return pgp_block_iframe(has_end ? armored : '', question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id);
       });
       if(processed_text !== original_text) {
+        if(question) {
+          processed_text = processed_text.replace("This message is encrypted. If you can't read it, visit the following link: read message\n\n", '');
+        }
         $(this).html(processed_text.replace(/\n/g, '<br>'));
       }
     });
