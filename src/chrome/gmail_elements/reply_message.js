@@ -125,7 +125,7 @@ db_open(function (db) {
     $('#send_btn_note').text('Deleting draft..');
     compose.draft_delete(url_params.account_email, function () {
       tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-        notification: 'Your message has been sent.'
+        notification: 'Your encrypted message has been sent.'
       });
       reply_message_reinsert_reply_box();
       $('.replied_body').css('width', $('table#compose').width() - 30);

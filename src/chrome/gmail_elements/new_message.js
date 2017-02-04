@@ -23,7 +23,7 @@ db_open(function (db) {
         tool.api.gmail.message_send(url_params.account_email, mime_message, null, function (success, response) {
           if(success) {
             tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-              notification: 'Your message has been sent.'
+              notification: 'Your encrypted message has been sent.'
             });
             compose.draft_delete(url_params.account_email, function () {
               tool.env.increment('compose', new_message_close);
