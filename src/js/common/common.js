@@ -1216,6 +1216,9 @@
       try {
         return crypto_key_fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
       } catch(error) {
+        if(error.message === 'openpgp is not defined') {
+          catcher.handle_exception(error);
+        }
         console.log(error);
         return null;
       }

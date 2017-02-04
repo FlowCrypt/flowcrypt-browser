@@ -267,3 +267,39 @@ function show_settings_page(page, add_url_text) {
     window.location = new_location;
   }
 }
+
+function reset_cryptup_account_storages(account_email, callback) {
+  if(!account_email) {
+    throw new Error('Missing account_email to reset');
+  }
+  get_account_emails(function (account_emails) {
+    if(account_emails.indexOf(account_email) === -1) {
+      throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
+    }
+    var keys_to_remove = [];
+    var filter = account_storage_key(account_email, '');
+    if(!filter) {
+      throw new Error('Filter is empty for account_email"' + account_email + '"');
+    }
+    chrome.storage.local.get(function (storage) {
+      $.each(storage, function (key, value) {
+        if(key.indexOf(filter) === 0) {
+          keys_to_remove.push(key.replace(filter, ''));
+        }
+      });
+      account_storage_remove(account_email, keys_to_remove, function () {
+        $.each(localStorage, function (key, value) {
+          if(key.indexOf(filter) === 0) {
+            private_storage_set('local', account_email, key.replace(filter, ''), undefined);
+          }
+        });
+        $.each(sessionStorage, function (key, value) {
+          if(key.indexOf(filter) === 0) {
+            private_storage_set('session', account_email, key.replace(filter, ''), undefined);
+          }
+        });
+        callback();
+      });
+    });
+  });
+}
