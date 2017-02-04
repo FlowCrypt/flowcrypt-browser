@@ -1,5 +1,20 @@
 <div>
 
+<b>version 3.3.0 on February 4, 2017: Attachments for Anyone</b>
+composing: send attachments to non-pgp people
+composing: no drafts left behind
+composing: rename a challenge question to a password + hint
+composing: horizontal scroller showing in compose box
+composing: fixed issue searching/rendering contacts on compose
+composing: change message sent notification copy
+reading: plaintext content of encrypted messages should also show
+setup: fingerprint leaves a space at the end
+setup: error fetching from PKS
+setup: v300 migrations issue with contacts fixed
+internal: refactor common.js as a module with structure
+internal: recognize web and local environments
+internal: featherlight naturalWidth issue
+
 <b>version 3.2.0 on January 27, 2017: Large Files</b>
 reading: decrypting large files in settings
 reading: recognizing and decrypting google drive attachments
