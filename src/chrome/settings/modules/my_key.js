@@ -21,8 +21,12 @@ $('.email').text(url_params.account_email);
 $('.key_dump').text(key.toPublic().armor());
 $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced'));
 $('.key_words').text(mnemonic(keyinfo.longid));
-$('.show_when_showing_public').css('display', 'block');
+$('.show_when_showing_public').css('display', '');
 $('.show_when_showing_private').css('display', 'none');
+
+$('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+  tool.file.save_to_downloads('0x' + keyinfo.longid + '.asc', 'text/plain', key.toPublic().armor());
+}));
 
 $('.action_show_other_type').click(function () {
   if($('.action_show_other_type').text().toLowerCase() === 'show private') {
@@ -30,12 +34,12 @@ $('.action_show_other_type').click(function () {
     $('.action_show_other_type').text('show public').removeClass('bad').addClass('good');
     $('.key_type').text('Master Private Key');
     $('.show_when_showing_public').css('display', 'none');
-    $('.show_when_showing_private').css('display', 'block');
+    $('.show_when_showing_private').css('display', '');
   } else {
     $('.key_dump').text(key.toPublic().armor()).removeClass('bad').addClass('good');
     $('.action_show_other_type').text('show private').removeClass('good').addClass('bad');
     $('.key_type').text('Master Public Key Info');
-    $('.show_when_showing_public').css('display', 'block');
+    $('.show_when_showing_public').css('display', '');
     $('.show_when_showing_private').css('display', 'none');
   }
 });
