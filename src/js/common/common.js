@@ -1582,6 +1582,9 @@
   var USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
 
   function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth) {
+    if(!account_email) {
+      throw new Error('missing account_email in api_gmail_call');
+    }
     account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
       if(method === 'GET' || method === 'DELETE') {
         var data = parameters;
@@ -1921,7 +1924,7 @@
             $.each(attachments, function (i, attachment_meta) {
               if(attachment_meta.name.match(/\.asc$/)) {
                 found = true;
-                api_gmail_fetch_attachments(url_params.account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
+                api_gmail_fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
                   if(fetch_attachments_success) {
                     var armored_message_text = tool.str.base64url_decode(attachment[0].data);
                     var armored_message = tool.crypto.armor.clip(armored_message_text);
