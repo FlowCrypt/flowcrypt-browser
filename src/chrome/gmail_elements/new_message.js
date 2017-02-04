@@ -25,7 +25,9 @@ db_open(function (db) {
             tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
               notification: 'Your message has been sent.'
             });
-            compose.draft_delete(url_params.account_email, tool.env.increment('compose', new_message_close));
+            compose.draft_delete(url_params.account_email, function () {
+              tool.env.increment('compose', new_message_close);
+            });
           } else {
             compose.handle_send_message_error(response);
           }
