@@ -7,13 +7,31 @@ function init_elements_replace_js() {
   var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
   window.replace_pgp_elements = function (account_email, addresses, can_read_emails, gmail_tab_id) {
-    if(replace_armored_blocks(account_email, addresses, gmail_tab_id)) {
-      $('.adI').css('display', 'none'); //todo - this should be moved elsehwere. (hides translate prompt)
-    }
+    replace_armored_blocks(account_email, addresses, gmail_tab_id);
     replace_pgp_attachments(account_email, addresses, can_read_emails, gmail_tab_id);
     replace_cryptup_tags(account_email, gmail_tab_id);
     replace_reply_buttons(account_email, gmail_tab_id);
     replace_standard_reply_box(account_email, gmail_tab_id);
+  };
+
+  window.replace_armored_block_type = function(text, begin, end, end_required, block_processor, optional_search_after_index) {
+    var begin_index = text.indexOf(begin, optional_search_after_index);
+    if(begin_index < 0) {
+      return text;
+    }
+    var end_found = text.indexOf(end, begin_index);
+    if(end_found < 0) {
+      if(end_required) {
+        return text;
+      } else {
+        var end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
+      }
+    } else {
+      var end_index = end_found + end.length;
+    }
+    var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
+    var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length - 1);
+    return replace_armored_block_type(text_with_replaced_block, begin, end, end_required, block_processor, begin_index + block_replacement.length);
   };
 
   window.replace_armored_blocks = function (account_email, addresses, gmail_tab_id) { // todo - most of this could be optimized by using .indexOf instead of RegExp, but it might result in ugly code
@@ -21,50 +39,39 @@ function init_elements_replace_js() {
     $("div.adP.adO div.a3s:contains('-----BEGIN')").not('.evaluated').each(function () { // for each email that contains PGP block
       $(this).addClass('evaluated');
       var html = $(this).html();
-      var text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
+      var original_text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
+      var processed_text = original_text;
       var message_id = parse_message_id_from('message', this);
       var sender_email = $(this).closest('.gs').find('span.gD').attr('email');
       var is_outgoing = addresses.indexOf(sender_email) !== -1;
-      var blocks = [];
-      if(text.indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1) {
-        var has_pubkey_end = (text.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1);
-        $.each(text.match(RegExp('-----BEGIN PGP PUBLIC KEY BLOCK-----[^]+' + ((has_pubkey_end) ? '?-----END PGP PUBLIC KEY BLOCK-----' : ''), 'mg')), function (i, armored) {
-          blocks.push(pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id));
-        });
-      }
-      if(text.indexOf('-----BEGIN ATTEST PACKET-----') !== -1 && text.indexOf('-----END ATTEST PACKET-----') !== -1) {
-        $.each(text.match(/-----BEGIN ATTEST PACKET-----[^]+?-----END ATTEST PACKET-----/mg), function (i, armored) {
-          tool.browser.message.send(null, 'attest_packet_received', {
-            account_email: account_email,
-            packet: armored,
-          });
-          //todo - can show result of attestation iframe
-          blocks.push('You received this attest message to confirm your email eddress. Attest message processed, no further action needed.');
-        });
-      }
-      if(text.indexOf('-----BEGIN CRYPTUP VERIFICATION-----') !== -1) {
-        blocks.push(subscribe_dialog(account_email, text, 'embedded', null, gmail_tab_id));
-      }
-      if(text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1 && text.indexOf('-----END PGP SIGNATURE-----') !== -1) { //todo - what if the end was clipped by gmail
-        $.each(text.match(/-----BEGIN PGP SIGNED MESSAGE-----[^]+?-----BEGIN PGP SIGNATURE-----[^]+-----END PGP SIGNATURE-----/mg), function (i, armored) {
-          blocks.push(pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, sender_email, gmail_tab_id));
-        });
-      }
-      var has_pgp_end = text.indexOf('-----END PGP MESSAGE-----') !== -1;
-      var has_gmail_crop = html.indexOf('<a class="vem"') !== -1;
-      if(text.indexOf('-----BEGIN PGP MESSAGE-----') !== -1 && (has_pgp_end || has_gmail_crop)) {
-        var question = extract_pgp_question(html);
-        $.each(text.match(RegExp('-----BEGIN PGP MESSAGE-----[^]+' + ((has_pgp_end) ? '?-----END PGP MESSAGE-----' : ''), 'mg')), function (i, armored) {
-          blocks.push(pgp_block_iframe((armored.indexOf('-----END PGP MESSAGE-----') !== -1) ? armored : '', question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id));
-        });
-        conversation_has_new_pgp_message = true;
-      }
-      if(blocks.length) {
-        $(this).html(blocks.join('<br/><br/><br/>'));
+      var question;
+      processed_text = replace_armored_block_type(processed_text, '-----BEGIN PGP PUBLIC KEY BLOCK-----', '-----END PGP PUBLIC KEY BLOCK-----', false, function(armored) {
+        return pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id);
+      });
+      processed_text = replace_armored_block_type(processed_text, '-----BEGIN ATTEST PACKET-----', '-----END ATTEST PACKET-----', true, function(armored) {
+        tool.browser.message.send(null, 'attest_packet_received', { account_email: account_email, packet: armored, });
+        //todo - show attestation result iframe
+        return '';
+      });
+      processed_text = replace_armored_block_type(processed_text, '-----BEGIN CRYPTUP VERIFICATION-----', '-----END CRYPTUP VERIFICATION-----', false, function(armored) {
+        return subscribe_dialog(account_email, armored, 'embedded', null, gmail_tab_id);
+      });
+      processed_text = replace_armored_block_type(processed_text, '-----BEGIN PGP SIGNED MESSAGE-----', '-----END PGP SIGNATURE-----', true, function(armored) {
+        //todo - for now doesn't work with clipped signed messages because not tested yet
+        return pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, sender_email, gmail_tab_id);
+      });
+      processed_text = replace_armored_block_type(processed_text, '-----BEGIN PGP MESSAGE-----', '-----END PGP MESSAGE-----', false, function(armored, has_end) {
+        if(typeof question === 'undefined') {
+          question = extract_pgp_question(html);
+        }
+        $('.adI').css('display', 'none'); // hide translate prompt
+        return pgp_block_iframe(has_end ? armored : '', question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id);
+      });
+      if(processed_text !== original_text) {
+        $(this).html(processed_text.replace(/\n/g, '<br>'));
       }
     });
-    return conversation_has_new_pgp_message;
-  }
+  };
 
   window.replace_reply_buttons = function (account_email, gmail_tab_id, force) {
     if($('iframe.pgp_block').filter(':visible').length || force) { // if convo has pgp blocks
@@ -114,11 +121,14 @@ function init_elements_replace_js() {
   };
 
   window.extract_pgp_question = function (message_html) {
-    var re_pgp_question = /<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>/m;
-    var question_match = message_html.match(re_pgp_question);
-    if(question_match !== null) {
-      return tool.str.inner_text(tool.env.url_params(['question'], question_match[1].split('?', 2)[1]).question);
+    var link_start_index = message_html.indexOf('<a href="https://cryptup.org/decrypt');
+    if(link_start_index > 0) {
+      var question_match = message_html.substr(link_start_index, message_html.length - 1).match(/<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>/m);
+      if(question_match !== null) {
+        return tool.str.inner_text(tool.env.url_params(['question'], question_match[1].split('?', 2)[1]).question);
+      }
     }
+    return null;
   };
 
   window.parse_message_id_from = function (element_type, my_element) {
