@@ -2,8 +2,8 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'is_outgoing', 'frame_id']);
-url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
+var url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'frame_id']);
+url_params.minimized = Boolean(Number(url_params.minimized || ''));
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
@@ -18,17 +18,13 @@ function send_resize_message() {
 
 function set_button_text(db) {
   db_contact_get(db, $('.input_email').val(), function (contact) {
-    if(contact && contact.has_pgp) {
-      $('.action_add_contact').text('update contact');
-    } else {
-      $('.action_add_contact').text('add to contacts');
-    }
+    $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
   });
 }
 
 function render() {
   $('.pubkey').text(url_params.armored_pubkey);
-  $('.line.fingerprints, .line.add_contact').css('display', url_params.is_outgoing ? 'none' : 'block');
+  $('.line.fingerprints, .line.add_contact').css('display', url_params.minimized ? 'none' : 'block');
   $('.line.fingerprints .fingerprint').text(tool.crypto.key.fingerprint(pubkey));
   $('.line.fingerprints .keywords').text(mnemonic(tool.crypto.key.longid(pubkey)));
 }
@@ -45,8 +41,20 @@ db_open(function (db) {
     $('.email').text(tool.str.trim_lower(pubkey.users[0].userId.userid));
     set_button_text(db);
   } else {
-    $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
-    $('.line.fingerprints').css('display', 'none');
+    var unquoted = url_params.armored_pubkey;
+    while(/\n> |\n>\n/.test(unquoted)) {
+      unquoted = unquoted.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
+    }
+    if(unquoted !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
+      window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email)
+        + '&armored_pubkey=' + encodeURIComponent(unquoted)
+        + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id)
+        + '&frame_id=' + encodeURIComponent(url_params.frame_id)
+        + '&minimized=1';
+    } else {
+      $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
+      $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
+    }
     send_resize_message();
   }
 

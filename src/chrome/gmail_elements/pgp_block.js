@@ -336,7 +336,11 @@ db_open(function (db) {
         }, function (error_type, url_formatted_data_block) {
           if(error_type === 'format') {
             if(tool.value(tool.crypto.armor.headers('public_key').end).in(url_formatted_data_block)) {
-              window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email) + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block) + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id) + '&frame_id=' + encodeURIComponent(url_params.frame_id);
+              window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email)
+                + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block)
+                + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id)
+                + '&frame_id=' + encodeURIComponent(url_params.frame_id)
+                + '&minimized=' + encodeURIComponent(Number(Boolean(Number(url_params.is_outgoing)))); // todo - this is ugly, wrap it, everywhere
             } else {
               render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
             }

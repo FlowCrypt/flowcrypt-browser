@@ -101,7 +101,7 @@ function init_elements_factory_js() {
       '?frame_id=frame_' + id +
       '&account_email=' + encodeURIComponent(account_email) +
       '&armored_pubkey=' + encodeURIComponent(armored_pubkey) +
-      '&is_outgoing=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) +
+      '&minimized=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) +
       '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
     return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
   };
