@@ -25,7 +25,7 @@ function init_elements_replace_js() {
         var end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
       }
     } else {
-      var end_index = end_found + end.length;
+      var end_index = end_found + block_headers.end.length;
     }
     var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
     var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length - 1);

@@ -34,7 +34,7 @@
       return;
     }
     if(!version) {
-      if(window.chrome && chrome.runtime && chrome.runtime.getManifest) {
+      if(window.chrome && chrome.runtime && typeof chrome.runtime.getManifest === 'function' && typeof chrome.runtime.getManifest() === 'object') {
         version = chrome.runtime.getManifest().version;
       } else {
         version = 'unknown';
@@ -1390,7 +1390,7 @@
       counts.key_mismatch++; // wrong private key
     } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
       counts.key_mismatch++; // attempted opening password only message with key
-    } else if(one_time_message_password && tool.this(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
+    } else if(one_time_message_password && tool.value(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
       counts.wrong_password++; // wrong password
     } else {
       other_errors.push(String(decrypt_error));
@@ -2194,12 +2194,12 @@
           result.content = {};
           return result;
         }
-        if(result.content.action && !tool.this(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
+        if(result.content.action && !tool.value(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
           result.error = 'Wrong ACT line value format';
           result.content = {};
           return result;
         }
-        if(result.content.attester && !tool.this(result.content.attester).in(['CRYPTUP'])) {
+        if(result.content.attester && !tool.value(result.content.attester).in(['CRYPTUP'])) {
           result.error = 'Wrong ATT line value format';
           result.content = {};
           return result;
