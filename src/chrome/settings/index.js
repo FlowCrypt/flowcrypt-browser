@@ -84,7 +84,7 @@ function render_storage_inconsistency_error(account_email, text_reason) {
   if(!account_email) {
     throw new Error('Missing account_email to render inconsistency for');
   }
-  var html = '<div class="line">CryptUP is not set up correctly for ' + account_email + ':<br/><b class="bad">' + text_reason + '</b></div>';
+  var html = '<div class="line">CryptUp is not set up correctly for ' + account_email + ':<br/><b class="bad">' + text_reason + '</b></div>';
   html += '<div class="line">This happens when users manually change values in browser extension storage or when developers (that is myself) make a mistake.</div>';
   html += '<div class="line">Email me at tom@cryptup.org if you think this one is on me.</div>'
   html += '<div class="line">&nbsp;</div>'

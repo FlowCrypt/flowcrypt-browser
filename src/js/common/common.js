@@ -167,7 +167,7 @@
 
   if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
     var v = (window.chrome && window.chrome.runtime && window.chrome.runtime.getManifest) ? window.chrome.runtime.getManifest().version : '';
-    window.openpgp.config.versionstring = 'CryptUP ' + v + ' Easy Gmail Encryption https://cryptup.org';
+    window.openpgp.config.versionstring = 'CryptUp ' + v + ' Easy Gmail Encryption https://cryptup.org';
     window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
   }
 
@@ -1448,9 +1448,9 @@
     } catch(verify_error) {
       signature.match = null;
       if(verify_error.message === 'Can only verify message with one literal data packet.') {
-        signature.error = 'CryptUP is not equipped to verify this message (err 101)';
+        signature.error = 'CryptUp is not equipped to verify this message (err 101)';
       } else {
-        signature.error = 'CryptUP had trouble verifying this message (' + verify_error.message + ')';
+        signature.error = 'CryptUp had trouble verifying this message (' + verify_error.message + ')';
         catcher.handle_exception(verify_error);
       }
     }

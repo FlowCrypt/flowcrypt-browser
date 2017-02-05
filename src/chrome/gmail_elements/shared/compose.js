@@ -32,8 +32,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
   var is_reply_box = Boolean($('body#reply_message').length);
   var l = {
     open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
-    include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUP encryption to reply to you.',
-    include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUP encryption to reply to you.',
+    include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
+    include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
   };
 
   init_elements_factory_js();
@@ -108,7 +108,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         } else {
           var body = encrypted.data;
         }
-        tool.mime.encode(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: $('#input_subject').val() || url_params.subject || 'CryptUP draft', }, [], function (mime_message) {
+        tool.mime.encode(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: $('#input_subject').val() || url_params.subject || 'CryptUp draft', }, [], function (mime_message) {
           if(!draft_id) {
             tool.api.gmail.draft_create(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
               set_note(success);
@@ -242,7 +242,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       return false;
     } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
       tool.env.increment('upgrade_notify_attach_nonpgp', function () {
-        if(confirm('Sending password encrypted attachments is possible with CryptUP Pro.\n\nIt\'s free for one year if you register now.')) {
+        if(confirm('Sending password encrypted attachments is possible with CryptUp Pro.\n\nIt\'s free for one year if you register now.')) {
           tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
         }
       });
@@ -298,7 +298,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function handle_upload_attachments_to_cryptup_error(result_summary, upload_results) {
     if(result_summary === tool.api.cryptup.auth_error) {
-      if(confirm('Your CryptUP account information is outdated, please review your account settings.')) {
+      if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       }
     } else { // todo - offer to retry only failed attachments
@@ -541,7 +541,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         draft_save();
         setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
       } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
-        alert('CryptUP needs this permission save your encrypted drafts automatically.');
+        alert('CryptUp needs this permission save your encrypted drafts automatically.');
       } else {
         console.log(google_auth_response);
         alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
@@ -557,7 +557,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         can_read_emails = true;
         search_contacts();
       } else if(google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
-        alert('CryptUP needs this permission to search your contacts on Gmail. Without it, CryptUP will keep a separate contact list.');
+        alert('CryptUp needs this permission to search your contacts on Gmail. Without it, CryptUp will keep a separate contact list.');
       } else {
         console.log(google_auth_response);
         alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');

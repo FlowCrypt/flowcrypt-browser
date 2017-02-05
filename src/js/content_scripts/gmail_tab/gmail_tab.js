@@ -12,7 +12,7 @@ catcher.try(function () {
   window.destroyable_timeouts = [];
 
   window.destroy = function () {
-    console.log('Updating CryptUP');
+    console.log('Updating CryptUp');
     document.removeEventListener(destruction_event, destroy);
     $.each(destroyable_intervals, function (i, id) {
       clearInterval(id);

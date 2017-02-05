@@ -46,7 +46,7 @@ db_open(function (db) {
       reply_message_on_render();
       reply_message_determine_header_variables(method === 'forward');
     } else {
-      $('div#reply_message_prompt').html('CryptUP has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
+      $('div#reply_message_prompt').html('CryptUp has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       $('div#reply_message_prompt').attr('style', 'border:none !important');
       $('.auth_settings').click(function () {
         tool.browser.message.send(null, 'settings', {

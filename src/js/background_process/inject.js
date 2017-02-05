@@ -10,7 +10,7 @@ function inject_cryptup_into_gmail_if_needed() {
       $.each(tab_ids, function (i, tab_id) {
         is_content_script_injection_needed(tab_id, function (already_injected) {
           if(!already_injected) {
-            console.log("Injecting CryptUP into tab " + tab_id);
+            console.log("Injecting CryptUp into tab " + tab_id);
             inject_content_scripts(tab_id, group.js);
           }
         });

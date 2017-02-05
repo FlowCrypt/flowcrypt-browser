@@ -122,7 +122,7 @@ function show_status() {
       });
     } else { // gmail read permission not granted - cannot check for backups
       display_block('step_0_status');
-      $('.status_summary').html('CryptUP cannot check your backups because it\'s missing a Gmail permission.');
+      $('.status_summary').html('CryptUp cannot check your backups because it\'s missing a Gmail permission.');
       $('#step_0_status .container').html('<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>');
       $('.action_go_manual').click(function () {
         display_block('step_3_manual');

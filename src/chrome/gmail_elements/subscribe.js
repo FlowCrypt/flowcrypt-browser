@@ -8,7 +8,7 @@ var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
 var l = {
-  welcome: 'Welcome to CryptUP Pro.<br/><br/>You can now send encrypted attachments to anyone.',
+  welcome: 'Welcome to CryptUp Pro.<br/><br/>You can now send encrypted attachments to anyone.',
 };
 if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
@@ -55,9 +55,9 @@ function render_embedded(level, expire, active) {
 function render_dialog(level, expire, active) {
   if(active) {
     if(url_params.source !== 'auth_error') {
-      $('#content').html('<div class="line">You have already upgraded to CryptUP Pro</div><div class="line"><div class="button green long action_close">close</div></div>');
+      $('#content').html('<div class="line">You have already upgraded to CryptUp Pro</div><div class="line"><div class="button green long action_close">close</div></div>');
     } else {
-      $('h1').text('CryptUP Account');
+      $('h1').text('CryptUp Account');
       $('.status').text('Your account information seems outdated.');
       $('.action_ok').text('Update account info');
     }
@@ -192,7 +192,7 @@ function handle_subscribe_result(success, response) {
   if(success && response && response.subscription && response.subscription.level) {
     notify_upgraded_and_close();
   } else {
-    alert('There was a problem upgrading CryptUP (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
+    alert('There was a problem upgrading CryptUp (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
     window.location.reload();
   }
 }
@@ -201,7 +201,7 @@ function notify_upgraded_and_close() {
   tool.env.increment('upgrade_done');
   if(url_params.placement !== 'embedded') {
     tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-      notification: 'Successfully upgraded to CryptUP Pro.',
+      notification: 'Successfully upgraded to CryptUp Pro.',
     });
     close_dialog();
   } else {

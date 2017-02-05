@@ -97,7 +97,7 @@ function display_block(name) {
 }
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
-  $('h1').text('Set Up CryptUP');
+  $('h1').text('Set Up CryptUp');
   account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function (storage) {
     if(storage.setup_done) {
       render_setup_done(url_params.account_email);
@@ -119,7 +119,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
           } else { // cannot read gmail to find a backup
             if(result.has_cryptup) {
               display_block('step_2b_manual_enter');
-              $('#step_2b_manual_enter').prepend('<div class="line red">Because of missing Gmail permission, CryptUP can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUP Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+              $('#step_2b_manual_enter').prepend('<div class="line red">Because of missing Gmail permission, CryptUp can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUp Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
             } else {
               display_block('step_1_easy_or_manual');
             }
@@ -228,7 +228,7 @@ function create_save_key_pair(account_email, options) {
     });
   }).catch(function (error) {
     catcher.handle_exception(error);
-    $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUP didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
+    $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUp didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
   });
 }
 
@@ -260,7 +260,7 @@ $('.action_simple_setup').click(function () {
     }
   }
   display_block('step_2_easy_generating');
-  $('h1').text('Please wait, setting up CryptUP');
+  $('h1').text('Please wait, setting up CryptUp');
   get_and_save_userinfo(url_params.account_email, function (userinfo) {
     create_save_key_pair(url_params.account_email, {
       full_name: userinfo.full_name,
@@ -313,7 +313,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
       $('.line_skip_recovery').css('display', 'block');
     }
   } else {
-    alert('Please enter the password you used when you first set up CryptUP, so that we can recover your original keys.');
+    alert('Please enter the password you used when you first set up CryptUp, so that we can recover your original keys.');
   }
 }));
 
@@ -413,7 +413,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
         finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
       });
     } else {
-      alert('This key type may not be supported by CryptUP. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.message + ')');
+      alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.message + ')');
     }
   }
 });
@@ -434,7 +434,7 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
     $('#step_2a_manual_create .input_password2').val('');
     $('#step_2a_manual_create .input_password2').focus();
   } else {
-    $('h1').text('Please wait, setting up CryptUP');
+    $('h1').text('Please wait, setting up CryptUp');
     $('#step_2a_manual_create input').prop('disabled', true);
     $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner() + 'just a minute');
     get_and_save_userinfo(url_params.account_email, function (userinfo) {

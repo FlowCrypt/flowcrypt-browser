@@ -6,14 +6,14 @@ var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'q
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var l = {
-  cant_open: 'Could not open this message with CryptUP.\n\n',
+  cant_open: 'Could not open this message with CryptUp.\n\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
   single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
   account_info_outdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
   wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
   ask_resend: 'Please ask them to send a new message.',
   receivers_hidden: 'We cannot tell if the message was encrypted correctly for you. ',
-  bad_format: 'Message is either badly formatted or not compatible with CryptUP. ',
+  bad_format: 'Message is either badly formatted or not compatible with CryptUp. ',
   no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
   refresh_page: 'Refresh page to see more information.',
   question_decryt_prompt: 'To decrypt the message, answer: ',
@@ -24,7 +24,7 @@ var l = {
   write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly. ',
   refresh_window: 'Please refresh your Gmail window to read encrypted messages. ',
   update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
-  not_properly_set_up: 'CryptUP is not properly set up to decrypt messages. ',
+  not_properly_set_up: 'CryptUp is not properly set up to decrypt messages. ',
 };
 
 db_open(function (db) {

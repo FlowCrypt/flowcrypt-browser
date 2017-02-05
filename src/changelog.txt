@@ -129,7 +129,7 @@ setup: fixing broken manual key create
 <b>version 2.9.3 on January 3, 2017: Browser Incompatibility Test</b>
 setup: do a test during setup to see if the created key is usable
 setup: error on entering ECC keys - notify user
-setup: better behavior when closing CryptUP tabs
+setup: better behavior when closing CryptUp tabs
 reading: match multiple PGP blocks in a message
 reading: properly catch PGP message format errors when decrypting
 sending: more robust key fingerprints
@@ -146,7 +146,7 @@ setup: improved extension browser button behavior
 setup: handling errors while fetching alternative addresses
 
 <b>version 2.9.0 on December 31, 2016: Permission Update</b>
-setup: allowing CryptUP to work with any webmail in future (Yahoo etc)
+setup: allowing CryptUp to work with any webmail in future (Yahoo etc)
 setup: gmail notification that page needs refresh after install
 setup: fingerprint check exception fix
 composing: more robust reply box replacing
@@ -166,7 +166,7 @@ reading: more robust and faster pgp block replacing
 
 <b>version 2.8.3 on December 29, 2016: Composing and Reading Bugfixes</b>
 composing: inform and offer to retry failed pubkey lookups
-setup: safer CryptUP content script loading
+setup: safer CryptUp content script loading
 
 <b>version 2.8.2 on December 29, 2016: Setup Bugfixes</b>
 setup: background page was failing repeatedly for some users

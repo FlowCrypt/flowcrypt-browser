@@ -33,11 +33,11 @@ function init_setup_js() {
   window.wait_for_account_email_then_setup = function () {
     var account_email = get_account_email();
     if(typeof account_email !== 'undefined') {
-      console.log('Loading CryptUP ' + window.chrome.runtime.getManifest().version);
+      console.log('Loading CryptUp ' + window.chrome.runtime.getManifest().version);
       window.account_email_global = account_email;
       setup(account_email);
     } else {
-      console.log('Cannot load CryptUP yet. Page: ' + window.location + ' (' + document.title + ')');
+      console.log('Cannot load CryptUp yet. Page: ' + window.location + ' (' + document.title + ')');
       account_email_interval += 1000;
       TrySetDestryableTimeout(wait_for_account_email_then_setup, account_email_interval);
     }
@@ -59,7 +59,7 @@ function init_setup_js() {
               initialize(account_email, tab_id);
               clearInterval(wait_for_setup_interval);
             } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-              var set_up_notification = '<a href="_PLUGIN/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '" target="cryptup">Set up CryptUP</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+              var set_up_notification = '<a href="_PLUGIN/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
               gmail_notification_show(set_up_notification, {
                 notification_setup_needed_dismiss: function () {
                   account_storage_set(account_email, { notification_setup_needed_dismissed: true }, gmail_notification_clear);
