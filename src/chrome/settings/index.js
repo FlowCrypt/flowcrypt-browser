@@ -7,7 +7,6 @@ var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 $('span#v').text(chrome.runtime.getManifest().version);
 
 var tab_id_global = undefined;
-var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 init_elements_factory_js();
 
 tool.browser.message.tab_id(function (tab_id) {
@@ -58,7 +57,7 @@ function initialize() {
     $('#security_module').attr('src', 'modules/security.htm?embedded=1&account_email=' + encodeURIComponent(url_params.account_email) + '&parent_tab_id=' + tab_id_global);
     account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
       if(storage.setup_done) {
-        if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) === -1) {
+        if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
           $('.auth_denied_warning').css('display', 'block');
         }
         $('.hide_if_setup_not_done').css('display', 'block');

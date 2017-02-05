@@ -2,8 +2,6 @@
 
 'use strict';
 
-var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-
 var url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
 
 tool.ui.passphrase_toggle(['password', 'password2']);
@@ -61,7 +59,7 @@ function show_status() {
   $('h1').text('Key Backups');
   display_block('loading');
   account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes'], function (storage) {
-    if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+    if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
       fetch_email_key_backups(url_params.account_email, function (success, keys) {
         if(success) {
           display_block('step_0_status');

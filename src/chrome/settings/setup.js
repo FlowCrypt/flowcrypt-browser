@@ -13,8 +13,6 @@ $('.back').css('visibility', 'hidden');
 tool.ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
 tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-
 var account_email_attested_fingerprint = undefined;
 var recovered_keys = undefined;
 var tab_id_global = undefined;
@@ -53,11 +51,11 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
       show_submit_all_addresses_option(addresses);
     });
   }
-  if(typeof storage.google_token_scopes === 'undefined' || storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) === -1) {
+  if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
     $('.auth_denied_warning').css('display', 'block');
   }
   if(typeof storage.addresses === 'undefined') {
-    if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+    if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
       fetch_all_account_addresses(url_params.account_email, save_and_fill_submit_option);
     } else { // cannot read emails, don't fetch alternative addresses
       save_and_fill_submit_option([url_params.account_email]);
@@ -109,7 +107,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
           if(result.attested) {
             account_email_attested_fingerprint = tool.crypto.key.fingerprint(result.pubkey);
           }
-          if(typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1) {
+          if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
             fetch_email_key_backups(url_params.account_email, function (success, keys) {
               if(success && keys) {
                 display_block('step_2_recovery');

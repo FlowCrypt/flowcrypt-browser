@@ -291,6 +291,8 @@
         user_info: api_google_user_info,
       },
       gmail: {
+        scope: api_gmail_scope,
+        has_scope: api_gmail_has_scope,
         thread_get: api_gmail_thread_get,
         draft_create: api_gmail_draft_create,
         draft_delete: api_gmail_draft_delete,
@@ -1628,6 +1630,18 @@
   /* tool.api.gmail */
 
   var USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
+  var api_gmail_scope_dict = {
+      read: 'https://www.googleapis.com/auth/gmail.readonly',
+      compose: 'https://www.googleapis.com/auth/gmail.compose',
+  };
+
+  function api_gmail_scope(scope) {
+    return (typeof scope === 'string') ? api_gmail_scope_dict[scope] : scope.map(api_gmail_scope);
+  }
+
+  function api_gmail_has_scope(scopes, scope) {
+    return scopes && scopes.indexOf(api_gmail_scope_dict[scope]) !== -1
+  }
 
   function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth) {
     if(!account_email) {

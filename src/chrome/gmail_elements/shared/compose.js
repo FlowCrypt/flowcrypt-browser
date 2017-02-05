@@ -6,8 +6,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   var SAVE_DRAFT_FREQUENCY = 3000;
   var RENDER_SEARCH_RESULTS_LIMIT = 8;
-  var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-  var GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 
   var PUBKEY_LOOKUP_RESULT_WRONG = 'wrong';
   var PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
@@ -54,13 +52,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
   account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function (storage) {
     my_addresses_on_pks = storage.addresses_pks || [];
     my_addresses_on_keyserver = storage.addresses_keyserver || [];
-    if(typeof storage.google_token_scopes === 'undefined') {
-      can_save_drafts = false;
-      can_read_emails = false;
-    } else {
-      can_save_drafts = (storage.google_token_scopes.indexOf(GMAIL_COMPOSE_SCOPE) !== -1);
-      can_read_emails = (storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
-    }
+    can_save_drafts = tool.api.gmail.has_scope(storage.google_token_scopes, 'compose');
+    can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     if(!can_save_drafts) {
       $('#send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
       $('#send_btn_note a.auth_drafts').click(auth_drafts);
@@ -540,7 +533,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function auth_drafts() {
-    tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: [GMAIL_COMPOSE_SCOPE], }, function (google_auth_response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: tool.api.gmail.scope(['compose']), }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         $('#send_btn_note').text('');
         can_save_drafts = true;
@@ -559,7 +552,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function auth_contacts(account_email) {
     $('#input_to').val($('.recipients span').last().text());
     $('.recipients span').last().remove();
-    tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: [GMAIL_READ_SCOPE], }, function (google_auth_response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: tool.api.gmail.scope(['read']), }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         can_read_emails = true;
         search_contacts();

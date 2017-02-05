@@ -2,8 +2,6 @@
 
 'use strict';
 
-var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-
 var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
 url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
@@ -361,7 +359,7 @@ db_open(function (db) {
   }
 
   account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
-    can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+    can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     if(storage.setup_done) {
       initialize();
     } else {

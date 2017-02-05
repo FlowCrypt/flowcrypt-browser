@@ -59,7 +59,7 @@ function google_auth_window_show_and_respond_to_auth_request(auth_request, curre
   auth_request.scopes = auth_request.scopes || [];
   $.each(google_oauth2.scopes, function (i, scope) {
     if(auth_request.scopes.indexOf(scope) === -1) {
-      if(scope !== 'https://www.googleapis.com/auth/gmail.readonly' || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
+      if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
         auth_request.scopes.push(scope);
       }
     }

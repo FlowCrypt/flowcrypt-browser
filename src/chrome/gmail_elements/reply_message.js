@@ -13,8 +13,6 @@ db_open(function (db) {
     return;
   }
 
-  var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-
   var original_reply_message_prompt = undefined;
   var thread_message_id_last = '';
   var thread_message_referrences_last = '';
@@ -199,9 +197,9 @@ db_open(function (db) {
   }
 
   recover_thread_id_if_missing(function () {
-    // show decrypted draft if available for this thread. Also check if GMAIL_READ_SCOPE is available.
+    // show decrypted draft if available for this thread. Also check if read scope is available.
     account_storage_get(url_params.account_email, ['drafts_reply', 'google_token_scopes'], function (storage) {
-      can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+      can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
         original_reply_message_prompt = $('div#reply_message_prompt').html();
         $('div#reply_message_prompt').html(tool.ui.spinner() + ' Loading draft');

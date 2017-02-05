@@ -4,8 +4,6 @@
 
 function init_elements_replace_js() {
 
-  var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-
   window.replace_pgp_elements = function (account_email, addresses, can_read_emails, gmail_tab_id) {
     replace_armored_blocks(account_email, addresses, gmail_tab_id);
     replace_pgp_attachments(account_email, addresses, can_read_emails, gmail_tab_id);

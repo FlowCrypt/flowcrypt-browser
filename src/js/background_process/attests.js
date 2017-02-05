@@ -2,7 +2,6 @@
 
 'use strict';
 
-var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
 var CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
 var ATTESTERS = {
@@ -141,7 +140,7 @@ function refresh_attest_requests_and_privileges(process_account_email_callback, 
   get_account_emails(function (account_emails) {
     account_storage_get(account_emails, ['attests_requested', 'google_token_scopes'], function (multi_storage) {
       $.each(multi_storage, function (account_email, storage) {
-        can_read_emails[account_email] = (storage.google_token_scopes && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+        can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
         if(process_account_email_callback) {
           process_account_email_callback(account_email, storage.attests_requested);
         }

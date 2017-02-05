@@ -4,8 +4,6 @@
 
 function init_setup_js() {
 
-  var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-
   var account_email_interval = 1000;
   var replace_pgp_elements_interval = 1000;
   window.account_email_global = null;
@@ -128,7 +126,7 @@ function init_setup_js() {
   window.start = function (account_email, tab_id) {
     account_storage_get(account_email, ['addresses', 'google_token_scopes'], function (storage) {
       var addresses = storage.addresses || [account_email];
-      var can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+      var can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       inject_buttons(account_email, destroyable_class, tab_id);
       show_initial_notifications(account_email);
       replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);

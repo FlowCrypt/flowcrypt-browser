@@ -6,7 +6,6 @@ var url_params = tool.env.url_params(['account_email', 'verification_email_text'
 var original_content;
 var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
-var GMAIL_READ_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 var can_read_emails;
 var l = {
   welcome: 'Welcome to CryptUP Pro.<br/><br/>You can now send encrypted attachments to anyone.',
@@ -25,7 +24,7 @@ $('#content').css('display', 'block');
 // $('input.passphrase').keyup(render_normal);
 
 account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
-  can_read_emails = (typeof storage.google_token_scopes !== 'undefined' && storage.google_token_scopes.indexOf(GMAIL_READ_SCOPE) !== -1);
+  can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
   storage_cryptup_subscription(function (level, expire, active) {
     if(url_params.placement !== 'embedded') {
       render_dialog(level, expire, active);
