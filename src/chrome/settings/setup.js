@@ -390,10 +390,11 @@ function test_private_key_and_handle(account_email, key, options, success_callba
 $('#step_2b_manual_enter .action_save_private').click(function () {
   var prv = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
   var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
+  var prv_headers = tool.crypto.armor.headers('private_key');
   if(typeof prv === 'undefined') {
-    alert('Private key is not correctly formated. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
+    alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
   } else if(prv.isPublic()) {
-    alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
+    alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
   } else {
     var decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(prv.armor()).keys[0], passphrase);
     if(decrypt_result === false) {

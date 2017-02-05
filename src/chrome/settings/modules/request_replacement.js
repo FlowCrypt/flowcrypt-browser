@@ -7,6 +7,7 @@ var url_params = tool.env.url_params(['account_email']);
 $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner());
 
 var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key')
+var prv_headers = tool.crypto.armor.headers('private_key');
 
 tool.api.attester.keys_find(url_params.account_email, function (success, keyserver_result) {
   if(!success) {
@@ -22,9 +23,9 @@ tool.api.attester.keys_find(url_params.account_email, function (success, keyserv
     $('.action_request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
       var old_key = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
       if(typeof old_key === 'undefined') {
-        alert('Private key is not properly formatted. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.');
+        alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.');
       } else if(old_key.isPublic()) {
-        alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
+        alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
       } else if(tool.crypto.key.fingerprint(old_key) === tool.crypto.key.fingerprint(my_pubkey)) {
         alert('This is your current key. Look for an older one. It will look very similar.');
       } else if(tool.crypto.key.fingerprint(old_key) !== tool.crypto.key.fingerprint(keyserver_result.pubkey)) {

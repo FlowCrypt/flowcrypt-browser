@@ -214,6 +214,9 @@
       without_value: without_value,
       map_select: map_select,
     },
+    obj: {
+      map: obj_map,
+    },
     time: {
       wait: wait,
       get_future_timestamp_in_months: get_future_timestamp_in_months,
@@ -259,6 +262,7 @@
       armor: {
         strip: crypto_armor_strip,
         clip: crypto_armor_clip,
+        headers: crypto_armor_headers,
       },
       hash: {
         sha1: crypto_hash_sha1,
@@ -617,7 +621,17 @@
     };
   }
 
-  /* tools.time */
+  /* tool.obj */
+
+  function obj_map(original_obj, f) {
+    var mapped = {};
+    $.each(original_obj, function(k, v) {
+      mapped[k] = f(v);
+    });
+    return mapped;
+  }
+
+  /* tool.time */
 
   function wait(until_this_function_evaluates_true) {
     return new Promise(function (success, error) {
@@ -1114,8 +1128,29 @@
     return pgp_block_text;
   }
 
+  var crypto_armor_headers_dict = {
+      null: { begin: '-----BEGIN', end: '-----END' },
+      public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----' },
+      private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----' },
+      attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----' },
+      cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----' },
+      signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
+      signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
+      message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----' },
+  };
+
+  function crypto_armor_headers(block_type, format) {
+    if(format === 're') {
+      return obj_map(crypto_armor_headers_dict[block_type || null], function (header_value) {
+        return header_value.replace(/ /g, '\\\s'); // regexp match friendly
+      });
+    } else {
+      return crypto_armor_headers_dict[block_type || null];
+    }
+  }
+
   function crypto_armor_clip(text) {
-    if(text && text.indexOf('-----BEGIN') !== -1 && text.indexOf('-----END') !== -1) {
+    if(text && text.indexOf(crypto_armor_headers_dict[null].begin) !== -1 && text.indexOf(crypto_armor_headers_dict[null].end) !== -1) {
       var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
       return(match !== null && match.length) ? match[0] : null;
     }
@@ -1189,9 +1224,9 @@
 
   function crypto_key_normalize(armored) {
     try {
-      if(/-----BEGIN\sPGP\sPUBLIC\sKEY\sBLOCK-----/.test(armored)) {
+      if(RegExp(crypto_armor_headers('public_key', 're').begin).test(armored)) {
         var key = openpgp.key.readArmored(armored).keys[0];
-      } else if(/-----BEGIN\sPGP\sMESSAGE-----/.test(armored)) {
+      } else if(RegExp(crypto_armor_headers('message', 're').begin).test(armored)) {
         var key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
       } else {
         var key = undefined;
@@ -1411,8 +1446,8 @@
   }
 
   function crypto_message_decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
-    var armored_encrypted = encrypted_data.indexOf('-----BEGIN PGP MESSAGE-----') !== -1;
-    var armored_signed_only = encrypted_data.indexOf('-----BEGIN PGP SIGNED MESSAGE-----') !== -1;
+    var armored_encrypted = encrypted_data.indexOf(crypto_armor_headers('message').begin) !== -1;
+    var armored_signed_only = encrypted_data.indexOf(crypto_armor_headers('signed_message').begin) !== -1;
     var other_errors = [];
     try {
       if(armored_encrypted) {
@@ -1437,7 +1472,8 @@
       var counts = zeroed_decrypt_error_counts(keys);
       if(armored_signed_only) {
         if(!message.text) {
-          var text = encrypted_data.match(/-----BEGIN\sPGP\sSIGNED\sMESSAGE-----\nHash:\s[A-Z0-9]+\n([^]+)\n-----BEGIN\sPGP\sSIGNATURE-----[^]+-----END\sPGP\sSIGNATURE-----/m);
+          var sm_headers = crypto_armor_headers('signed_message', 're');
+          var text = encrypted_data.match(RegExp(sm_headers.begin + '\nHash:\s[A-Z0-9]+\n([^]+)\n' + sm_headers.middle + '[^]+' + sm_headers.end, 'm'));
           if(text && text.length === 2) {
             message.text = text[1];
           } else {
@@ -2054,11 +2090,8 @@
     }, callback);
   }
 
-  var ATTEST_PACKET_BEGIN = '-----BEGIN ATTEST PACKET-----\n';
-  var ATTEST_PACKET_END = '\n-----END ATTEST PACKET-----';
-
   function api_attester_packet_armor(content_text) {
-    return ATTEST_PACKET_BEGIN + content_text + ATTEST_PACKET_END;
+    return crypto_armor_headers('attest_packet').begin + '\n' + content_text + '\n' + crypto_armor_headers('attest_packet').end;
   }
 
   function api_attester_packet_create_sign(values, decrypted_prv, callback) {
@@ -2092,7 +2125,8 @@
       error: null,
       text: null,
     };
-    var matches = text.match(/-----BEGIN ATTEST PACKET-----([^]+)-----END ATTEST PACKET-----/m);
+    var packet_headers = crypto_armor_headers('attest_packet', 're');
+    var matches = text.match(RegExp(packet_headers.begin + '([^]+)' + packet_headers.end, 'm'));
     if(matches && matches[1]) {
       result.text = matches[1].replace(/^\s+|\s+$/g, '');
       var lines = result.text.split('\n');

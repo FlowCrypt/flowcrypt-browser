@@ -11,6 +11,7 @@ var ATTESTERS = {
 
 var currently_watching = {};
 var can_read_emails = {};
+var packet_headers = tool.crypto.armor.headers('attest_packet');
 
 refresh_attest_requests_and_privileges(function (account_email, attests_requested) {
   if(attests_requested && attests_requested.length && can_read_emails[account_email]) {
@@ -116,8 +117,8 @@ function fetch_attest_emails(account_email, callback) {
     '(from:"' + get_attester_emails().join('" OR from: "') + '")',
     'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.
     'in:anywhere',
-    '"-----BEGIN ATTEST PACKET-----"',
-    '"-----END ATTEST PACKET-----"',
+    '"' + packet_headers.begin + '"',
+    '"' + packet_headers.end + '"',
   ];
   tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
     if(success) {

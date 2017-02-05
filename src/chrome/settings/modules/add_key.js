@@ -15,12 +15,13 @@ $.each(private_keys, function (i, keyinfo) {
 $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   var new_key = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
   var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
+  var prv_headers = tool.crypto.armor.headers('private_key');
   if(typeof new_key === 'undefined') {
-    alert('Private key is not properly formatted. Please insert complete key, including "-----BEGIN PGP PRIVATE KEY BLOCK-----" and "-----END PGP PRIVATE KEY BLOCK-----"');
+    alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
   } else {
     var new_key_longid = tool.crypto.key.longid(new_key);
     if(new_key.isPublic()) {
-      alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "-----BEGIN PGP PRIVATE KEY BLOCK-----"');
+      alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
     } else if(!new_key_longid) {
       alert('This key may not be compatible. Please write me at tom@cryptup.org and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
     } else if(private_keys_long_ids.indexOf(new_key_longid) !== -1) {

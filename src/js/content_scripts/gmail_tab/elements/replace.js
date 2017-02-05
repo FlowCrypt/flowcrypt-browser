@@ -14,12 +14,12 @@ function init_elements_replace_js() {
     replace_standard_reply_box(account_email, gmail_tab_id);
   };
 
-  window.replace_armored_block_type = function(text, begin, end, end_required, block_processor, optional_search_after_index) {
-    var begin_index = text.indexOf(begin, optional_search_after_index);
+  window.replace_armored_block_type = function(text, block_headers, end_required, block_processor, optional_search_after_index) {
+    var begin_index = text.indexOf(block_headers.begin, optional_search_after_index);
     if(begin_index < 0) {
       return text;
     }
-    var end_found = text.indexOf(end, begin_index);
+    var end_found = text.indexOf(block_headers.end, begin_index);
     if(end_found < 0) {
       if(end_required) {
         return text;
@@ -31,12 +31,12 @@ function init_elements_replace_js() {
     }
     var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
     var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length - 1);
-    return replace_armored_block_type(text_with_replaced_block, begin, end, end_required, block_processor, begin_index + block_replacement.length);
+    return replace_armored_block_type(text_with_replaced_block, block_headers, end_required, block_processor, begin_index + block_replacement.length);
   };
 
   window.replace_armored_blocks = function (account_email, addresses, gmail_tab_id) { // todo - most of this could be optimized by using .indexOf instead of RegExp, but it might result in ugly code
     var conversation_has_new_pgp_message = false;
-    $("div.adP.adO div.a3s:contains('-----BEGIN')").not('.evaluated').each(function () { // for each email that contains PGP block
+    $("div.adP.adO div.a3s:contains('" + tool.crypto.armor.headers().begin + "')").not('.evaluated').each(function () { // for each email that contains PGP block
       $(this).addClass('evaluated');
       var html = $(this).html();
       var original_text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
@@ -45,22 +45,22 @@ function init_elements_replace_js() {
       var sender_email = $(this).closest('.gs').find('span.gD').attr('email');
       var is_outgoing = addresses.indexOf(sender_email) !== -1;
       var question;
-      processed_text = replace_armored_block_type(processed_text, '-----BEGIN PGP PUBLIC KEY BLOCK-----', '-----END PGP PUBLIC KEY BLOCK-----', false, function(armored) {
+      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
         return pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id);
       });
-      processed_text = replace_armored_block_type(processed_text, '-----BEGIN ATTEST PACKET-----', '-----END ATTEST PACKET-----', true, function(armored) {
+      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('attest_packet'), true, function(armored) {
         tool.browser.message.send(null, 'attest_packet_received', { account_email: account_email, packet: armored, });
         //todo - show attestation result iframe
         return '';
       });
-      processed_text = replace_armored_block_type(processed_text, '-----BEGIN CRYPTUP VERIFICATION-----', '-----END CRYPTUP VERIFICATION-----', false, function(armored) {
+      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('cryptup_verification'), false, function(armored) {
         return subscribe_dialog(account_email, armored, 'embedded', null, gmail_tab_id);
       });
-      processed_text = replace_armored_block_type(processed_text, '-----BEGIN PGP SIGNED MESSAGE-----', '-----END PGP SIGNATURE-----', true, function(armored) {
+      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('signed_message'), true, function(armored) {
         //todo - for now doesn't work with clipped signed messages because not tested yet
         return pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, sender_email, gmail_tab_id);
       });
-      processed_text = replace_armored_block_type(processed_text, '-----BEGIN PGP MESSAGE-----', '-----END PGP MESSAGE-----', false, function(armored, has_end) {
+      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('message'), false, function(armored, has_end) {
         if(typeof question === 'undefined') {
           question = extract_pgp_question(html);
         }
@@ -251,7 +251,7 @@ function init_elements_replace_js() {
             catcher.try(function () {
               var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
               var selector = get_attachments_selectors(message_id, [downloaded_attachment.name]).attachments;
-              if(armored_key.indexOf('-----BEGIN') !== -1) {
+              if(armored_key.indexOf(tool.crypto.armor.headers().begin) !== -1) {
                 //todo - this approach below is what should be done in every similar function - hide them by exact names, one by one
                 hide_attachments(selector, 1);
                 $('div.a3s.m' + message_id).append(pgp_pubkey_iframe(account_email, armored_key, is_outgoing, gmail_tab_id));
