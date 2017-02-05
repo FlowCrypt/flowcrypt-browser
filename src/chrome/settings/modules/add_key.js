@@ -24,7 +24,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
     } else if(!new_key_longid) {
       alert('This key may not be compatible. Please write me at tom@cryptup.org and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
-    } else if(private_keys_long_ids.indexOf(new_key_longid) !== -1) {
+    } else if(tool.value(new_key_longid).in(private_keys_long_ids)) {
       alert('This is one of your current keys.');
     } else {
       var decrypt_result = tool.crypto.key.decrypt(new_key, passphrase);

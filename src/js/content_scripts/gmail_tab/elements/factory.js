@@ -126,7 +126,7 @@ function init_elements_factory_js() {
 
   window.resolve_from_to = function (secondary_emails, my_email, their_email) {
     //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-    if(secondary_emails.indexOf(their_email) === -1) {
+    if(!tool.value(their_email).in(secondary_emails)) {
       return { to: their_email, from: my_email };
     } else { //replying to myself
       return { from: their_email, to: my_email };

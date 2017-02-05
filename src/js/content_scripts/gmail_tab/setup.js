@@ -138,8 +138,9 @@ function init_setup_js() {
 
   window.hijack_gmail_hotkeys = function (account_email, tab_id) {
     var keys = tool.env.key_codes();
+    var unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
     $(document).keypress(function (e) {
-      var causes_unsecure_reply = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F].indexOf(e.which) !== -1;
+      var causes_unsecure_reply = tool.this(e.which).in(unsecure_reply_key_shortcuts);
       if(causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
         e.stopImmediatePropagation();
         set_reply_box_editable(account_email, tab_id);

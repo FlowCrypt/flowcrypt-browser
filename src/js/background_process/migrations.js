@@ -54,14 +54,14 @@ function account_consistency_fixes(account_email) {
 }
 
 function account_update_status_keyserver(account_email) { // checks which emails were registered on cryptup keyserver.
-  var my_longids = private_keys_get(account_email).map(tool.arr.map_select('longid'));
+  var my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
   account_storage_get(account_email, ['addresses', 'addresses_keyserver'], function (storage) {
     if(storage.addresses && storage.addresses.length) {
       tool.api.attester.keys_find(storage.addresses, function (success, results) {
         if(success) {
           var addresses_keyserver = [];
           $.each(results.results, function (i, result) {
-            if(result && result.pubkey && my_longids.indexOf(tool.crypto.key.longid(result.pubkey)) !== -1) {
+            if(result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
               addresses_keyserver.push(result.email);
             }
           });
@@ -73,16 +73,16 @@ function account_update_status_keyserver(account_email) { // checks which emails
 }
 
 function account_update_status_pks(account_email) { // checks if any new emails were registered on pks lately
-  var my_longids = private_keys_get(account_email).map(tool.arr.map_select('longid'));
+  var my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
   var hkp = new openpgp.HKP('http://keys.gnupg.net');
   account_storage_get(account_email, ['addresses', 'addresses_pks'], function (storage) {
     var addresses_pks = storage.addresses_pks || [];
     $.each(storage.addresses || [account_email], function (i, email) {
-      if(addresses_pks.indexOf(email) === -1) {
+      if(!tool.value(email).in(addresses_pks)) {
         try {
           hkp.lookup({ query: email }).then(function (pubkey) {
             if(typeof pubkey !== 'undefined') {
-              if(my_longids.indexOf(tool.crypto.key.longid(pubkey)) !== -1) {
+              if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
                 addresses_pks.push(email);
                 console.log(email + ' newly found matching pubkey on PKS');
                 account_storage_set(account_email, { addresses_pks: addresses_pks, });

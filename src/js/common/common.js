@@ -208,11 +208,12 @@
       increment: increment,
     },
     arr: {
-      unique: unique,
-      from_dome_node_list: from_dome_node_list,
-      without_key: without_key,
-      without_value: without_value,
-      map_select: map_select,
+      unique: arr_unique,
+      from_dome_node_list: arr_from_dome_node_list,
+      without_key: arr_without_key,
+      without_value: arr_without_value,
+      select: arr_select,
+      contains: arr_contains,
     },
     obj: {
       map: obj_map,
@@ -329,19 +330,24 @@
         account_store_attachment: api_cryptup_account_store_attachment,
       },
     },
+    value: function(v) {
+      return {
+        in: function(array_or_str) { return arr_contains(array_or_str, v); } // tool.value(v).in(array_or_string)
+      };
+    },
   };
 
   /* tool.str */
 
   function trim_lower(email) {
-    if(email.indexOf('<') !== -1 && email.indexOf('>') !== -1) {
+    if(tool.value('<').in(email) && tool.value('>').in(email)) {
       email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
     }
     return email.trim().toLowerCase();
   }
 
   function parse_email(email_string) {
-    if(email_string.indexOf('<') !== -1 && email_string.indexOf('>') !== -1) {
+    if(tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
       return {
         email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
         name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
@@ -496,7 +502,7 @@
   }
 
   function str_extract_cryptup_attachments(decrypted_content, cryptup_attachments) {
-    if(decrypted_content.indexOf('cryptup_file') !== -1) {
+    if(tool.value('cryptup_file').in(decrypted_content)) {
       decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
         var element = $(found_link);
         var attachment_data = html_attribute_decode(element.attr('cryptup-data'));
@@ -514,7 +520,7 @@
     var url_data = {};
     $.each(raw_url_data, function (i, pair_string) {
       var pair = pair_string.split('=');
-      if(expected_keys.indexOf(pair[0]) !== -1) {
+      if(tool.value(pair[0]).in(expected_keys)) {
         url_data[pair[0]] = decodeURIComponent(pair[1]);
       }
     });
@@ -584,17 +590,17 @@
 
   /* tool.arr */
 
-  function unique(array) {
+  function arr_unique(array) {
     var unique = [];
     $.each(array, function (i, v) {
-      if(unique.indexOf(v) === -1) {
+      if(!tool.value(v).in(unique)) {
         unique.push(v);
       }
     });
     return unique;
   }
 
-  function from_dome_node_list(obj) { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+  function arr_from_dome_node_list(obj) { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
     var array = [];
     // iterate backwards ensuring that length is an UInt32
     for(var i = obj.length >>> 0; i--;) {
@@ -603,11 +609,11 @@
     return array;
   }
 
-  function without_key(array, i) {
+  function arr_without_key(array, i) {
     return array.splice(0, i).concat(array.splice(i + 1, array.length));
   }
 
-  function without_value(array, without_value) {
+  function arr_without_value(array, without_value) {
     var result = [];
     $.each(array, function (i, value) {
       if(value !== without_value) {
@@ -617,10 +623,14 @@
     return result;
   }
 
-  function map_select(mapped_object_key) {
-    return function (mapped_object) {
-      return mapped_object[mapped_object_key];
-    };
+  function arr_select(array, mapped_object_key) {
+    return array.map(function(obj) {
+      return obj[mapped_object_key];
+    });
+  }
+
+  function arr_contains(arr, value) {
+    return typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1;
   }
 
   /* tool.obj */
@@ -936,7 +946,7 @@
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), };
     if(background_script_shortcut_handlers && msg.to === null) {
       background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
-    } else if(window.location.href.indexOf('_generated_background_page.html') !== -1) {
+    } else if(tool.value('_generated_background_page.html').in(window.location.href)) {
       chrome.tabs.sendMessage(destination_parse(destination_string).tab, msg, undefined, callback);
     } else {
       chrome.runtime.sendMessage(msg, callback);
@@ -974,7 +984,7 @@
     chrome.runtime.onMessage.addListener(function (request, sender, respond) {
       return catcher.try(function () {
         if(request.to === listen_for_tab_id) {
-          if(processed.indexOf(request.uid) === -1) {
+          if(!tool.value(request.uid).in(processed)) {
             processed.push(request.uid);
             if(typeof handlers[request.name] !== 'undefined') {
               handlers[request.name](request.data, sender, respond);
@@ -1152,7 +1162,7 @@
   }
 
   function crypto_armor_clip(text) {
-    if(text && text.indexOf(crypto_armor_headers_dict[null].begin) !== -1 && text.indexOf(crypto_armor_headers_dict[null].end) !== -1) {
+    if(text && tool.value(crypto_armor_headers_dict[null].begin).in(text) && tool.value(crypto_armor_headers_dict[null].end).in(text)) {
       var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
       return(match !== null && match.length) ? match[0] : null;
     }
@@ -1380,7 +1390,7 @@
       counts.key_mismatch++; // wrong private key
     } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
       counts.key_mismatch++; // attempted opening password only message with key
-    } else if(one_time_message_password && ['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'].indexOf(String(decrypt_error)) > 0) {
+    } else if(one_time_message_password && tool.this(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
       counts.wrong_password++; // wrong password
     } else {
       other_errors.push(String(decrypt_error));
@@ -1448,8 +1458,8 @@
   }
 
   function crypto_message_decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
-    var armored_encrypted = encrypted_data.indexOf(crypto_armor_headers('message').begin) !== -1;
-    var armored_signed_only = encrypted_data.indexOf(crypto_armor_headers('signed_message').begin) !== -1;
+    var armored_encrypted = tool.value(crypto_armor_headers('message').begin).in(encrypted_data);
+    var armored_signed_only = tool.value(crypto_armor_headers('signed_message').begin).in(encrypted_data);
     var other_errors = [];
     try {
       if(armored_encrypted) {
@@ -1640,7 +1650,7 @@
   }
 
   function api_gmail_has_scope(scopes, scope) {
-    return scopes && scopes.indexOf(api_gmail_scope_dict[scope]) !== -1
+    return scopes && tool.value(api_gmail_scope_dict[scope]).in(scopes)
   }
 
   function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth) {
@@ -1900,7 +1910,7 @@
     if(user_query) {
       gmail_query.push();
       var variations_of_to = user_query.split(/[ \.]/g);
-      if(variations_of_to.indexOf(user_query) === -1) {
+      if(!tool.value(user_query).in(variations_of_to)) {
         variations_of_to.push(user_query);
       }
       gmail_query.push('(to:' + variations_of_to.join(' OR to:') + ')');
@@ -2184,12 +2194,12 @@
           result.content = {};
           return result;
         }
-        if(result.content.action && ['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'].indexOf(result.content.action) === -1) {
+        if(result.content.action && !tool.this(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
           result.error = 'Wrong ACT line value format';
           result.content = {};
           return result;
         }
-        if(result.content.attester && ['CRYPTUP'].indexOf(result.content.attester) === -1) {
+        if(result.content.attester && !tool.this(result.content.attester).in(['CRYPTUP'])) {
           result.error = 'Wrong ATT line value format';
           result.content = {};
           return result;

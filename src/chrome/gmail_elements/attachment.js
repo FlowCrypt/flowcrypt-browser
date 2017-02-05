@@ -59,7 +59,7 @@ db_open(function (db) {
 
   // function get_url_file_size(original_url, callback) {
   //   // will only call callback on success
-  //   if(url_params.url.indexOf('docs.googleusercontent.com/docs/securesc') !== -1) {
+  //   if(tool.value('docs.googleusercontent.com/docs/securesc').in(url_params.url)) {
   //     try {
   //       var google_drive_file_id = original_url.split('/').pop().split('?').shift();
   //       if(google_drive_file_id) {

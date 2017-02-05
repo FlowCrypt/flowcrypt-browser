@@ -37,7 +37,7 @@ function has_new_scope(new_scopes, original_scopes, omit_read_scope) {
     return(original_scopes.length === 2 && !omit_read_scope); // however, previously there were only two of three scopes, and third was not omitted this time
   }
   for(var i = 0; i < new_scopes.length; i++) {
-    if(original_scopes.indexOf(new_scopes[i]) === -1) {
+    if(!tool.value(new_scopes[i]).in(original_scopes)) {
       return true; // found a new scope
     }
   }
@@ -58,14 +58,14 @@ function google_auth_window_show_and_respond_to_auth_request(auth_request, curre
   auth_responders[auth_request.auth_responder_id] = respond;
   auth_request.scopes = auth_request.scopes || [];
   $.each(google_oauth2.scopes, function (i, scope) {
-    if(auth_request.scopes.indexOf(scope) === -1) {
+    if(!tool.value(scope).in(auth_request.scopes)) {
       if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
         auth_request.scopes.push(scope);
       }
     }
   });
   $.each(current_scopes || [], function (i, scope) {
-    if(auth_request.scopes.indexOf(scope) === -1) {
+    if(!tool.value(scope).in(auth_request.scopes)) {
       auth_request.scopes.push(scope);
     }
   });
@@ -178,7 +178,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
       try {
         responder(response);
       } catch(e) {
-        if(e.message.indexOf('Attempting to use a disconnected port object') === -1) { // ignore this message - target tab no longer exists
+        if(!tool.value('Attempting to use a disconnected port object').in(e.message)) { // ignore this message - target tab no longer exists
           throw e;
         }
       }

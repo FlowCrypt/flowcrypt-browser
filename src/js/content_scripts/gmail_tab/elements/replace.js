@@ -41,7 +41,7 @@ function init_elements_replace_js() {
       var processed_text = original_text;
       var message_id = parse_message_id_from('message', this);
       var sender_email = $(this).closest('.gs').find('span.gD').attr('email');
-      var is_outgoing = addresses.indexOf(sender_email) !== -1;
+      var is_outgoing = tool.value(sender_email).in(addresses);
       var question;
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
         return pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id);
@@ -241,7 +241,7 @@ function init_elements_replace_js() {
 
   window.hide_pgp_attached_pubkey_and_append_to_text = function (account_email, message_id, classes, attachments, addresses, gmail_tab_id) {
     var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
-    var is_outgoing = addresses.indexOf(sender_email) !== -1;
+    var is_outgoing = tool.value(sender_email).in(addresses);
     tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
       catcher.try(function () {
         if(success) {
@@ -249,7 +249,7 @@ function init_elements_replace_js() {
             catcher.try(function () {
               var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
               var selector = get_attachments_selectors(message_id, [downloaded_attachment.name]).attachments;
-              if(armored_key.indexOf(tool.crypto.armor.headers().begin) !== -1) {
+              if(tool.value(tool.crypto.armor.headers().begin).in(armored_key)) {
                 //todo - this approach below is what should be done in every similar function - hide them by exact names, one by one
                 hide_attachments(selector, 1);
                 $('div.a3s.m' + message_id).append(pgp_pubkey_iframe(account_email, armored_key, is_outgoing, gmail_tab_id));
@@ -305,9 +305,9 @@ function init_elements_replace_js() {
     account_storage_get(account_email, ['addresses'], function (storage) {
       $.each(reply_to_estimate, function (i, email) {
         storage.addresses = storage.addresses || [account_email];
-        if(storage.addresses.indexOf(tool.str.trim_lower(email)) !== -1) { // my email
+        if(tool.value(tool.str.trim_lower(email)).in(storage.addresses)) { // my email
           my_email = email;
-        } else if(reply_to.indexOf(tool.str.trim_lower(email)) === -1) { // skip duplicates
+        } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
           reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
         }
       });

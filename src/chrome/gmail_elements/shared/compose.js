@@ -666,7 +666,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(their_email, callback) {
     their_email = tool.str.trim_lower(their_email);
     account_storage_get(url_params.account_email, ['pubkey_sent_to'], function (storage) {
-      if(storage.pubkey_sent_to && storage.pubkey_sent_to.indexOf(their_email) !== -1) {
+      if(tool.value(their_email).in(storage.pubkey_sent_to)) {
         callback(true);
       } else if(!can_read_emails) {
         callback(undefined);
@@ -689,7 +689,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function rerender_include_pubkey_icon(include) {
     if(include === null || typeof include === 'undefined') { // decide if pubkey should be included
       if(!include_pubkey_toggled_manually) { // leave it as is if toggled manually beforeconsole.log('a');
-        rerender_include_pubkey_icon(recipients_missing_my_key.length && my_addresses_on_pks.indexOf(get_sender_from_dom()) === -1);
+        rerender_include_pubkey_icon(recipients_missing_my_key.length && !tool.value(get_sender_from_dom().in(my_addresses_on_pks)));
       }
     } else { // set icon to specific state
       if(include) {
@@ -713,8 +713,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function render_pubkey_result(email_element, email, contact) {
     if($('body#new_message').length) {
       if(typeof contact === 'object' && contact.has_pgp) {
-        var sending_address_on_pks = (my_addresses_on_pks.indexOf(get_sender_from_dom()) !== -1);
-        var sending_address_on_keyserver = (my_addresses_on_keyserver.indexOf(get_sender_from_dom()) !== -1);
+        var sending_address_on_pks = tool.value(get_sender_from_dom()).in(my_addresses_on_pks);
+        var sending_address_on_keyserver = tool.value(get_sender_from_dom()).in(my_addresses_on_keyserver);
         if((contact.client === 'cryptup' && !sending_address_on_keyserver) || (contact.client !== 'cryptup' && !sending_address_on_pks)) {
           // new message, and my key is not uploaded where the recipient would look for it
           did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(email, function (pubkey_sent) {

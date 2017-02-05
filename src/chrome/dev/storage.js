@@ -26,7 +26,7 @@ chrome.storage.local.get(function (storage) {
   }
   var filtered = {};
   $.each(storage, function (key, value) {
-    if(key.indexOf(real_filter) !== -1) {
+    if(tool.value(real_filter).in(key)) {
       filtered['<b>' + key.replace(real_filter, '') + '</b>'] = value;
     }
   });

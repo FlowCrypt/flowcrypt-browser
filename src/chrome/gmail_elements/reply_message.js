@@ -207,7 +207,7 @@ db_open(function (db) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
             tool.mime.decode(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
-              if((parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '').indexOf('-----END PGP MESSAGE-----') !== -1) {
+              if(tool.value(tool.crypto.armor.headers('message').end).in(parsed_message.text || tool.crypto.armor.strip(parsed_message.html))) {
                 var stripped_text = parsed_message.text || tool.crypto.armor.strip(parsed_message.html);
                 compose.decrypt_and_render_draft(url_params.account_email, stripped_text.substr(stripped_text.indexOf(tool.crypto.armor.headers('message').begin)), reply_message_render_table); // todo - regex is better than random clipping
               } else {

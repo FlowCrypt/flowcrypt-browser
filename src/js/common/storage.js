@@ -178,7 +178,7 @@ function private_keys_get(account_email, longid) {
     if(typeof longid === 'object') { // looking for an array of keys
       var found = [];
       $.each(keys, function (i, keyinfo) {
-        if(longid.indexOf(keyinfo.longid) !== -1) {
+        if(tool.value(keyinfo.longid).in(longid)) {
           found.push(keyinfo);
         }
       });
@@ -272,7 +272,7 @@ function get_account_emails(callback) {
     var account_emails = [];
     if(typeof storage.account_emails !== 'undefined') {
       $.each(JSON.parse(storage.account_emails), function (i, account_email) {
-        if(account_emails.indexOf(account_email.toLowerCase()) === -1) {
+        if(!tool.value(account_email.toLowerCase()).in(account_emails)) {
           account_emails.push(account_email.toLowerCase());
         }
       });
@@ -283,7 +283,7 @@ function get_account_emails(callback) {
 
 function add_account_email_to_list_of_accounts(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
   get_account_emails(function (account_emails) {
-    if(account_emails.indexOf(account_email) === -1) {
+    if(!tool.value(account_email).in(account_emails)) {
       account_emails.push(account_email);
       account_storage_set(null, { account_emails: JSON.stringify(account_emails) }, callback);
     } else if(typeof callback !== 'undefined') {
@@ -379,7 +379,7 @@ function db_create_search_index_list(email, name, has_pgp) {
       $.each(part.split(''), function (i, letter) {
         substring += letter;
         var normalized = normalize_string(substring);
-        if(index.indexOf(normalized) === -1) {
+        if(!tool.value(normalized).in(index)) {
           index.push(db_index(has_pgp, normalized));
         }
       });
@@ -496,7 +496,7 @@ var db_query_keys = ['limit', 'substring', 'has_pgp'];
 // query: substring, has_pgp, limit. All voluntary
 function db_contact_search(db, query, callback) {
   $.each(query, function (key, value) {
-    if(db_query_keys.indexOf(key) === -1) {
+    if(!tool.value(key).in(db_query_keys)) {
       throw new Error('db_contact_search: unknown key: ' + key);
     }
   });

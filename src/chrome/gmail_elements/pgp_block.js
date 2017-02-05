@@ -335,7 +335,7 @@ db_open(function (db) {
           decrypt_and_render();
         }, function (error_type, url_formatted_data_block) {
           if(error_type === 'format') {
-            if(url_formatted_data_block.indexOf('-----END PGP PUBLIC KEY BLOCK-----') !== -1) {
+            if(tool.value(tool.crypto.armor.headers('public_key').end).in(url_formatted_data_block)) {
               window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email) + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block) + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id) + '&frame_id=' + encodeURIComponent(url_params.frame_id);
             } else {
               render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);

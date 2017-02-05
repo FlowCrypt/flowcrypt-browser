@@ -162,19 +162,19 @@ function get_attester_emails() {
 
 function is_already_attested(account_email, attester, callback) {
   account_storage_get(account_email, ['attests_processed'], function (storage) {
-    callback(storage.attests_processed && storage.attests_processed.length && storage.attests_processed.indexOf(attester) !== -1);
+    callback(tool.value(attester).in(storage.attests_processed));
   });
 }
 
 function account_storage_mark_as_attested(account_email, attester, callback) {
   stop_watching(account_email);
   account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
-    if(storage.attests_requested && storage.attests_requested.length && storage.attests_requested.indexOf(attester) !== -1) {
+    if(tool.value(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
       if(typeof storage.attests_processed === 'undefined') {
         storage.attests_processed = [];
       }
-      if(storage.attests_processed.indexOf(attester) === -1) {
+      if(!tool.value(attester).in(storage.attests_processed)) {
         storage.attests_processed.push(attester); //add attester as processed if not already there
       }
       account_storage_set(account_email, storage, callback);

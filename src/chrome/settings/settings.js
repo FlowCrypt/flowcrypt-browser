@@ -54,7 +54,7 @@ function save_attest_request(account_email, attester, callback) {
   account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
-    } else if(storage.attests_requested.indexOf(attester) === -1) {
+    } else if(!tool.value(attester).in(storage.attests_requested)) {
       storage.attests_requested.push(attester); // insert into requests if not already there
     }
     if(typeof storage.attests_processed === 'undefined') {
@@ -72,12 +72,12 @@ function mark_as_attested(account_email, attester, callback) {
   account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
-    } else if(storage.attests_requested.indexOf(attester) !== -1) {
+    } else if(tool.value(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
     }
     if(typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [attester];
-    } else if(storage.attests_processed.indexOf(attester) === -1) {
+    } else if(!tool.value(attester).in(storage.attests_processed)) {
       storage.attests_processed.push(attester); //add attester as processed if not already there
     }
     account_storage_set(account_email, storage, callback);
@@ -214,7 +214,7 @@ function crack_time_result(zxcvbn_result) {
   var time_to_crack = zxcvbn_result.guesses / guesses_per_second;
   for(var i = 0; i < crack_time_words.length; i++) {
     var readable_time = readable_crack_time(time_to_crack);
-    if(readable_time.indexOf(crack_time_words[i][0]) !== -1) {
+    if(tool.value(crack_time_words[i][0]).in(readable_time)) {
       return {
         word: crack_time_words[i][1],
         bar: crack_time_words[i][2],
@@ -273,7 +273,7 @@ function reset_cryptup_account_storages(account_email, callback) {
     throw new Error('Missing account_email to reset');
   }
   get_account_emails(function (account_emails) {
-    if(account_emails.indexOf(account_email) === -1) {
+    if(!tool.value(account_email).in(account_emails)) {
       throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
     }
     var keys_to_remove = [];
