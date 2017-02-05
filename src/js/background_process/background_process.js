@@ -4,6 +4,15 @@
 
 console.log('background_process.js starting');
 
+var background_process_start_reason = 'browser_start';
+chrome.runtime.onInstalled.addListener(function(event){
+  console.log('found reason:' + event.reason);
+  background_process_start_reason = event.reason;
+});
+function get_background_process_start_reason() {
+  return background_process_start_reason;
+}
+
 migrate_global(function () {
   account_storage_set(null, { version: tool.env.cryptup_version_integer(), });
 });
@@ -40,12 +49,12 @@ account_storage_get(null, 'errors', function (storage) {
 if(!localStorage.settings_seen) {
   open_settings_page('initial.htm'); // called after the very first installation of the plugin
   localStorage.settings_seen = true;
+  catcher.try(tool.diagnose.keyserver_fingerprints)();
 }
 
 inject_cryptup_into_gmail_if_needed();
 
-catcher.try(tool.diagnose.keyserver_fingerprints)();
-setInterval(catcher.try(tool.diagnose.keyserver_fingerprints), 1000 * 60 * 60 * 6);
+schedule_keyserver_fingerprint_check();
 
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);

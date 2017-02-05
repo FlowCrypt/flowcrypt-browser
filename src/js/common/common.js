@@ -217,6 +217,7 @@
     time: {
       wait: wait,
       get_future_timestamp_in_months: get_future_timestamp_in_months,
+      hours: time_hours,
     },
     file: {
       download_as_uint8: download_as_uint8,
@@ -624,10 +625,14 @@
         var result = until_this_function_evaluates_true();
         if(result === true) {
           clearInterval(interval);
-          success();
+          if(success) {
+            success();
+          }
         } else if(result === false) {
           clearInterval(interval);
-          error();
+          if(error) {
+            error();
+          }
         }
       }, 50);
     });
@@ -635,6 +640,10 @@
 
   function get_future_timestamp_in_months(months_to_add) {
     return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
+  }
+
+  function time_hours(h) {
+    return h * 1000 * 60 * 60; // hours in miliseconds
   }
 
   /* tools.file */
