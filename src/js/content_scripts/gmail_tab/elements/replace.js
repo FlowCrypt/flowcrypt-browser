@@ -87,9 +87,17 @@ function init_elements_replace_js() {
           $(this).addClass('replaced').html('');
         });
       }
+
+      if(!$('div.ade:visible').is('.appended')) {
+        //todo - button below should be in factory.js
+        $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + get_logo_src(true, 16) + '" /></span>');
+        $('div.ade.appended span.show_original_conversation').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
+          $('div.ade.appended .gZ').click();
+        }));
+      }
     } else if(!$('div.ade:visible').is('.appended')) {
       //todo - button below should be in factory.js
-      $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>');
+      $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>');
       $('div.ade.appended span.use_secure_reply').click(catcher.try(function () {
         replace_reply_buttons(account_email, gmail_tab_id, true);
         replace_standard_reply_box(account_email, gmail_tab_id, true, true);
