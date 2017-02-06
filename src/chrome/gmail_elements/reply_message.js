@@ -3,8 +3,6 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
-url_params.from = url_params.from.toLowerCase();
-url_params.to = url_params.to.toLowerCase();
 
 db_open(function (db) {
 

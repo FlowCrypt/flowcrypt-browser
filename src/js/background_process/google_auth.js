@@ -69,14 +69,15 @@ function google_auth_window_show_and_respond_to_auth_request(auth_request, curre
       auth_request.scopes.push(scope);
     }
   });
-  var auth_code_url = google_oauth2.url_code +
-    '?client_id=' + encodeURIComponent(google_oauth2.client_id) +
-    '&response_type=code' +
-    '&access_type=offline' +
-    '&state=' + encodeURIComponent(google_auth_code_request_state.pack(auth_request)) +
-    '&redirect_uri=' + encodeURIComponent(google_oauth2.url_redirect) +
-    '&scope=' + encodeURIComponent(auth_request.scopes.join(' ')) +
-    '&login_hint=' + encodeURIComponent(auth_request.account_email);
+  var auth_code_url = tool.env.url_create(google_oauth2.url_code, {
+    client_id: google_oauth2.client_id,
+    response_type: 'code',
+    access_type: 'offline',
+    state: google_auth_code_request_state.pack(auth_request),
+    redirect_uri: google_oauth2.url_redirect,
+    scope: auth_request.scopes.join(' '),
+    login_hint: auth_request.account_email,
+  });
   var auth_code_window = window.open(auth_code_url, '_blank', 'height=550,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
   // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
   // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
@@ -114,13 +115,8 @@ function google_auth_save_tokens(account_email, tokens_object, scopes, callback)
 }
 
 function google_auth_get_tokens(code, callback) {
-  var get_tokens_url = google_oauth2.url_tokens +
-    '?grant_type=authorization_code' +
-    '&code=' + encodeURIComponent(code) +
-    '&client_id=' + encodeURIComponent(google_oauth2.client_id) +
-    '&redirect_uri=' + encodeURIComponent(google_oauth2.url_redirect);
   $.ajax({
-    url: get_tokens_url,
+    url: tool.env.url_create(google_oauth2.url_tokens, { grant_type: 'authorization_code', code: code, client_id: google_oauth2.client_id, redirect_uri: google_oauth2.url_redirect }),
     method: 'POST',
     crossDomain: true,
     async: true,
@@ -134,12 +130,8 @@ function google_auth_get_tokens(code, callback) {
 }
 
 function google_auth_refresh_token(refresh_token, callback) {
-  var get_refresh_token_url = google_oauth2.url_tokens +
-    '?grant_type=refresh_token' +
-    '&refresh_token=' + encodeURIComponent(refresh_token) +
-    '&client_id=' + encodeURIComponent(google_oauth2.client_id);
   $.ajax({
-    url: get_refresh_token_url,
+    url: tool.env.url_create(google_oauth2.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: google_oauth2.client_id }),
     method: 'POST',
     crossDomain: true,
     async: true,

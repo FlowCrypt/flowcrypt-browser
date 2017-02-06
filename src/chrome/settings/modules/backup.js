@@ -241,7 +241,7 @@ function backup_refused() {
 function write_backup_done_and_render(prompt, method) {
   account_storage_set(url_params.account_email, { key_backup_prompt: prompt, key_backup_method: method, }, function () {
     if(url_params.action === 'setup') {
-      window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
+      window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
       show_status();
     }
@@ -264,7 +264,7 @@ $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), f
 $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   if(url_params.action === 'setup') {
     account_storage_set(url_params.account_email, { key_backup_prompt: false }, function () {
-      window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(url_params.account_email);
+      window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     });
   } else {
     tool.browser.message.send(url_params.parent_tab_id, 'close_page');

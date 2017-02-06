@@ -148,7 +148,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
 
 function render_setup_done(account_email, key_backup_prompt) {
   if(key_backup_prompt) {
-    window.location = '../settings/modules/backup.htm?action=setup&account_email=' + encodeURIComponent(account_email);
+    window.location = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
   } else {
     display_block('step_4_done');
     $('h1').text('Setup done!');
@@ -306,15 +306,15 @@ $('.action_skip_recovery').click(function () {
 });
 
 $('.action_send').click(function () {
-  window.location = 'index.htm?page=%2Fchrome%2Fgmail_elements%2Fnew_message.htm&account_email=' + encodeURIComponent(url_params.account_email);
+  window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email, page: '/chrome/gmail_elements/new_message.htm' });
 });
 
 $('.action_account_settings').click(function () {
-  window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email);
+  window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
 });
 
 $('.action_go_auth_denied').click(function () {
-  window.location = 'index.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&page=' + encodeURIComponent('/chrome/settings/modules/auth_denied.htm');
+  window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
 });
 
 $('.input_submit_key').click(function () {

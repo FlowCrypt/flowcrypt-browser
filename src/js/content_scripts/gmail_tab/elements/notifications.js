@@ -11,7 +11,8 @@ function init_elements_notifications_js() {
           gmail_notification_show('CryptUp was successfully set up for this account. <a href="#" class="close">close</a>');
         });
       } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
-        gmail_notification_show('<a href="_PLUGIN/settings/modules/backup.htm?account_email=' + encodeURIComponent(account_email) + '">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
+        var backup_url = tool.env.url_create('_PLUGIN/settings/modules/backup.htm', { account_email: account_email });
+        gmail_notification_show('<a href="' + backup_url + '">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
       }
     });
   };

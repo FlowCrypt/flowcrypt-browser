@@ -201,7 +201,8 @@
       extract_cryptup_attachments: str_extract_cryptup_attachments,
     },
     env: {
-      url_params: url_params,
+      url_params: env_url_params,
+      url_create: env_url_create,
       cryptup_version_integer: cryptup_version_integer,
       key_codes: key_codes,
       set_up_require: set_up_require,
@@ -217,6 +218,7 @@
     },
     obj: {
       map: obj_map,
+      key_by_value: obj_key_by_value,
     },
     time: {
       wait: wait,
@@ -515,16 +517,30 @@
 
   /* tool.env */
 
-  function url_params(expected_keys, string) {
+  var env_url_param_decode_dict = {
+    '___cu_true___': true,
+    '___cu_false___': false,
+    '___cu_null___': null,
+  };
+
+  function env_url_params(expected_keys, string) {
     var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
     var url_data = {};
     $.each(raw_url_data, function (i, pair_string) {
       var pair = pair_string.split('=');
       if(tool.value(pair[0]).in(expected_keys)) {
-        url_data[pair[0]] = decodeURIComponent(pair[1]);
+        url_data[pair[0]] = typeof env_url_param_decode_dict[pair[1]] !== 'undefined' ? env_url_param_decode_dict[pair[1]] : decodeURIComponent(pair[1]);
       }
     });
     return url_data;
+  }
+
+  function env_url_create(link, params) {
+    $.each(Object.keys(params), function(i, key) {
+      var transformed = obj_key_by_value(env_url_param_decode_dict, params[key]);
+      link += (i ? '&' : '?') + key + '=' + encodeURIComponent(typeof transformed !== 'undefined' ? transformed : params[key]);
+    });
+    return link;
   }
 
   function cryptup_version_integer() {
@@ -641,6 +657,14 @@
       mapped[k] = f(v);
     });
     return mapped;
+  }
+
+  function obj_key_by_value(obj, v) {
+    for(var k in obj) {
+      if(obj.hasOwnProperty(k) && obj[k] === v) {
+        return k;
+      }
+    }
   }
 
   /* tool.time */

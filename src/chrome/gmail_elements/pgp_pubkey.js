@@ -3,7 +3,6 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'frame_id']);
-url_params.minimized = Boolean(Number(url_params.minimized || ''));
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
@@ -41,16 +40,12 @@ db_open(function (db) {
     $('.email').text(tool.str.trim_lower(pubkey.users[0].userId.userid));
     set_button_text(db);
   } else {
-    var unquoted = url_params.armored_pubkey;
-    while(/\n> |\n>\n/.test(unquoted)) {
-      unquoted = unquoted.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
+    var fixed = url_params.armored_pubkey;
+    while(/\n> |\n>\n/.test(fixed)) {
+      fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
     }
-    if(unquoted !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-      window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email)
-        + '&armored_pubkey=' + encodeURIComponent(unquoted)
-        + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id)
-        + '&frame_id=' + encodeURIComponent(url_params.frame_id)
-        + '&minimized=1';
+    if(fixed !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
+      window.location = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
     } else {
       $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
       $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });

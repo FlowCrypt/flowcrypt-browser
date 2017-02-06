@@ -3,7 +3,6 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
-url_params.is_outgoing = Boolean(Number(url_params.is_outgoing || ''));
 
 var l = {
   cant_open: 'Could not open this message with CryptUp.\n\n',
@@ -336,11 +335,7 @@ db_open(function (db) {
         }, function (error_type, url_formatted_data_block) {
           if(error_type === 'format') {
             if(tool.value(tool.crypto.armor.headers('public_key').end).in(url_formatted_data_block)) {
-              window.location = 'pgp_pubkey.htm?account_email' + encodeURIComponent(url_params.account_email)
-                + '&armored_pubkey=' + encodeURIComponent(url_formatted_data_block)
-                + '&parent_tab_id=' + encodeURIComponent(url_params.parent_tab_id)
-                + '&frame_id=' + encodeURIComponent(url_params.frame_id)
-                + '&minimized=' + encodeURIComponent(Number(Boolean(Number(url_params.is_outgoing)))); // todo - this is ugly, wrap it, everywhere
+              window.location = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: url_formatted_data_block, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
             } else {
               render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
             }

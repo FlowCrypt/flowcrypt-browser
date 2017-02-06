@@ -6,6 +6,10 @@ function init_elements_factory_js() {
 
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
+  if(typeof reloadable_class === 'undefined') { // todo - needs a better solution through DI
+    var reloadable_class = '';
+  }
+
   window.get_logo_src = function (include_header, size) {
     if(size !== 16) {
       return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
@@ -15,36 +19,20 @@ function init_elements_factory_js() {
   };
 
   window.compose_message_iframe = function (account_email, gmail_tab_id, draft_id) {
-    var src = chrome.extension.getURL('chrome/gmail_elements/new_message.htm') +
-      '?account_email=' + encodeURIComponent(account_email) +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
-      '&draft_id=' + encodeURIComponent(draft_id || '') +
-      '&placement=gmail';
+    var params = { account_email: account_email, parent_tab_id: gmail_tab_id, draft_id: draft_id, placement: 'gmail' };
+    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/new_message.htm'), params);
     return '<div class="new_message" id="new_message"><iframe class="' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>'
   };
 
   window.passphrase_dialog = function (account_email, type, longids, gmail_tab_id) {
-    var src = chrome.extension.getURL('chrome/gmail_elements/passphrase.htm') +
-      '?account_email=' + encodeURIComponent(account_email) +
-      '&type=' + encodeURIComponent(type) +
-      '&longids=' + encodeURIComponent((longids || []).join(',')) +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    if(typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because settings/modules/decrypt calls this from its context
-      var reloadable_class = '';
-    }
+    var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: gmail_tab_id };
+    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/passphrase.htm'), params);
     return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
   };
 
   window.subscribe_dialog = function (account_email, verification_email_text, placement, source, gmail_tab_id) {
-    var src = chrome.extension.getURL('chrome/gmail_elements/subscribe.htm') +
-      '?account_email=' + encodeURIComponent(account_email) +
-      '&verification_email_text=' + encodeURIComponent(verification_email_text || '') +
-      '&placement=' + encodeURIComponent(placement) +
-      '&source=' + encodeURIComponent(source || '') +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    if(typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because settings/index calls this from its context
-      var reloadable_class = '';
-    }
+    var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: gmail_tab_id };
+    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/subscribe.htm'), params);
     if(placement === 'embedded') {
       return '<iframe class="embedded ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe>';
     } else {
@@ -53,84 +41,55 @@ function init_elements_factory_js() {
   };
 
   window.add_pubkey_dialog_src = function (account_email, emails, gmail_tab_id, placement) {
-    return chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm') +
-      '?account_email=' + encodeURIComponent(account_email) +
-      '&emails=' + encodeURIComponent(emails.join(',')) +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id) +
-      '&placement=' + encodeURIComponent(placement);
+    var params = { account_email: account_email, emails: emails, parent_tab_id: gmail_tab_id, placement: placement };
+    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
   };
 
   window.add_pubkey_dialog = function (account_email, emails, gmail_tab_id) {
-    var src = add_pubkey_dialog_src(account_email, emails, gmail_tab_id, 'gmail');
-    return '<div id="cryptup_dialog"><iframe class="tall ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
+    return '<div id="cryptup_dialog"><iframe class="tall ' + reloadable_class + '" scrolling="no" src="' + add_pubkey_dialog_src(account_email, emails, gmail_tab_id, 'gmail') + '"></iframe></div>';
   };
 
-  window.pgp_attachment_iframe = function (account_email, attachment_meta, container_classes, gmail_tab_id) {
-    var src = chrome.extension.getURL('chrome/gmail_elements/attachment.htm') +
-      '?message_id=' + encodeURIComponent(attachment_meta.message_id) +
-      '&name=' + encodeURIComponent(attachment_meta.name) +
-      '&type=' + encodeURIComponent(attachment_meta.type) +
-      '&size=' + encodeURIComponent(attachment_meta.size || '') +
-      '&attachment_id=' + encodeURIComponent(attachment_meta.id || '') +
-      '&url=' + encodeURIComponent(attachment_meta.url || '') +
-      '&account_email=' + encodeURIComponent(account_email) +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    if(typeof reloadable_class === 'undefined') { // todo - needs a better solution. This is because reply_message_iframe calls this from its context
-      var reloadable_class = '';
-    }
+  window.pgp_attachment_iframe = function (account_email, meta, container_classes, gmail_tab_id) {
+    var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: gmail_tab_id };
+    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attachment.htm'), params);
     return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe class="' + reloadable_class + '" src="' + src + '"></iframe></span>';
   };
 
-  window.pgp_block_iframe = function (pgp_block_text, question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id) {
-    var id = tool.str.random();
-    var src = chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm') +
-      '?frame_id=frame_' + id +
-      '&question=' + encodeURIComponent(question || '') +
-      '&message=' + encodeURIComponent(pgp_block_text) +
-      '&account_email=' + encodeURIComponent(account_email) +
-      '&message_id=' + encodeURIComponent(message_id) +
-      '&sender_email=' + encodeURIComponent(sender_email) +
-      '&is_outgoing=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) + //todo - improve/simplify
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
+  window.pgp_block_iframe = function (armored, question, account_email, message_id, is_outgoing, sender, gmail_tab_id) {
+    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), question: question, message: armored, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: gmail_tab_id };
+    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm'), params);
+    return '<iframe class="pgp_block ' + reloadable_class + '" id="' + params.frame_id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
   };
 
   window.pgp_pubkey_iframe = function (account_email, armored_pubkey, is_outgoing, gmail_tab_id) {
-    var id = tool.str.random();
-    var src = chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm') +
-      '?frame_id=frame_' + id +
-      '&account_email=' + encodeURIComponent(account_email) +
-      '&armored_pubkey=' + encodeURIComponent(armored_pubkey) +
-      '&minimized=' + encodeURIComponent(Number(Boolean(Number(is_outgoing)))) +
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<iframe class="pgp_block ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
+    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: gmail_tab_id };
+    return '<iframe class="pgp_block ' + reloadable_class + '" id="' + params.frame_id + '" src="' + tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm'), params) + '"></iframe>';
   };
 
   window.reply_message_iframe = function (account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
-    var emails = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
-    var id = tool.str.random();
-    var src = chrome.extension.getURL('chrome/gmail_elements/reply_message.htm') +
-      '?frame_id=frame_' + id +
-      '&placement=gmail' +
-      '&to=' + encodeURIComponent((typeof emails.to === 'string' ? emails.to : emails.to.join(',')).toLowerCase()) +
-      '&from=' + encodeURIComponent(emails.from.toLowerCase()) +
-      '&subject=' + encodeURIComponent(conversation_params.subject) +
-      '&thread_id=' + encodeURIComponent(conversation_params.thread_id || '') +
-      '&thread_message_id=' + encodeURIComponent(conversation_params.thread_message_id || '') +
-      '&account_email=' + encodeURIComponent(account_email) +
-      '&skip_click_prompt=' + encodeURIComponent(Number(Boolean(Number(skip_click_prompt)))) + //todo - would use some rethinking, refactoring, or at least a named function
-      '&ignore_draft=' + encodeURIComponent(Number(Boolean(Number(ignore_draft)))) + //these two are to make sure to pass a "1" or "0" in url
-      '&parent_tab_id=' + encodeURIComponent(gmail_tab_id);
-    return '<iframe class="reply_message ' + reloadable_class + '" id="frame_' + id + '" src="' + src + '"></iframe>';
+    var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
+    var params = {
+      account_email: account_email,
+      frame_id: 'frame_' + tool.str.random(),
+      placement: 'gmail',
+      to: headers.to,
+      from: headers.from,
+      subject: conversation_params.subject,
+      thread_id: conversation_params.thread_id,
+      thread_message_id: conversation_params.thread_message_id,
+      skip_click_prompt: Boolean(skip_click_prompt),
+      ignore_draft: Boolean(ignore_draft),
+      parent_tab_id: gmail_tab_id,
+    };
+    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/reply_message.htm'), params);
+    return '<iframe class="reply_message ' + reloadable_class + '" id="' + params.frame_id + '" src="' + src + '"></iframe>';
   };
 
-  window.resolve_from_to = function (secondary_emails, my_email, their_email) {
-    //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-    if(!tool.value(their_email).in(secondary_emails)) {
-      return { to: their_email, from: my_email };
-    } else { //replying to myself
-      return { from: their_email, to: my_email };
+  window.resolve_from_to = function (secondary_emails, my_email, their_emails) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
+    if(their_emails.length === 1 && tool.value(their_emails[0]).in(secondary_emails)) {
+      return { from: their_emails[0], to: my_email }; //replying to myself, reverse the values to actually write to them
     }
+    return { to: their_emails, from: my_email };
   };
 
   window.open_new_message = function (account_email, tab_id) {

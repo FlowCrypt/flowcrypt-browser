@@ -59,7 +59,8 @@ function init_setup_js() {
               initialize(account_email, tab_id);
               clearInterval(wait_for_setup_interval);
             } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-              var set_up_notification = '<a href="_PLUGIN/settings/index.htm?account_email=' + encodeURIComponent(account_email) + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+              var set_up_link = tool.env.url_create('_PLUGIN/settings/index.htm', { account_email: account_email });
+              var set_up_notification = '<a href="' + set_up_link + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
               gmail_notification_show(set_up_notification, {
                 notification_setup_needed_dismiss: function () {
                   account_storage_set(account_email, { notification_setup_needed_dismissed: true }, gmail_notification_clear);

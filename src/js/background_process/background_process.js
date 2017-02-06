@@ -132,11 +132,12 @@ function update_uninstall_url(request, sender, respond) {
 }
 
 function open_settings_page(path, account_email, page) { // todo - put directly into open_settings_page_handler
+  var base_path = chrome.extension.getURL('chrome/settings/' + (path || 'index.htm'));
   if(account_email) {
-    window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + encodeURIComponent(account_email) + '&page=' + encodeURIComponent(page)), 'cryptup');
+    window.open(tool.env.url_create(base_path, { account_email: account_email, page: page }), 'cryptup');
   } else {
     get_account_emails(function (account_emails) {
-      window.open(chrome.extension.getURL('chrome/settings/' + (path || 'index.htm') + '?account_email=' + (account_emails[0] || '') + '&page=' + encodeURIComponent(page)), 'cryptup');
+      window.open(tool.env.url_create(base_path, { account_email: account_emails[0] || '', page: page }), 'cryptup');
     });
   }
 }

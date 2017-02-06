@@ -24,7 +24,7 @@ tool.browser.message.tab_id(function (tab_id) {
       reload(data.advanced);
     },
     add_pubkey_dialog: function (data, sender, respond) {
-      var src = '/chrome/gmail_elements/add_pubkey.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&emails=' + encodeURIComponent(data.emails);
+      var src = tool.env.url_create('/chrome/gmail_elements/add_pubkey.htm', { account_email: url_params.account_email, emails: data.emails });
       window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: function (data) {
@@ -54,7 +54,7 @@ tool.browser.message.tab_id(function (tab_id) {
 function initialize() {
   if(url_params.account_email) {
     $('.email-address').text(url_params.account_email);
-    $('#security_module').attr('src', 'modules/security.htm?embedded=1&account_email=' + encodeURIComponent(url_params.account_email) + '&parent_tab_id=' + tab_id_global);
+    $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
     account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
       if(storage.setup_done) {
         if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
@@ -133,9 +133,9 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
         account_storage_get(response.account_email, ['setup_done'], function (storage) {
           if(storage.setup_done) { // this was just an additional permission
             alert('You\'re all set.');
-            window.location = '/chrome/settings/index.htm?account_email=' + encodeURIComponent(response.account_email);
+            window.location = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
           } else {
-            window.location = '/chrome/settings/setup.htm?account_email=' + encodeURIComponent(response.account_email);
+            window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
           }
         });
       });
@@ -203,13 +203,13 @@ get_account_emails(function (account_emails) {
     $('#alt-accounts').prepend(menu_account_html(email));
   });
   $('.action_select_account').click(function () {
-    window.location = 'index.htm?account_email=' + encodeURIComponent($(this).find('.contains_email').text());
+    window.location = tool.env.url_create('index.htm', { account_email: $(this).find('.contains_email').text() });
   });
 });
 
 function reload(advanced) {
   if(advanced) {
-    window.location = '/chrome/settings/index.htm?account_email=' + encodeURIComponent(url_params.account_email) + '&advanced=1';
+    window.location = tool.env.url_create('/chrome/settings/index.htm', { account_email: url_params.account_email, advanced: true });
   } else {
     window.location.reload();
   }

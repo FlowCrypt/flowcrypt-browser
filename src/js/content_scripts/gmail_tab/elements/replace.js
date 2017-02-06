@@ -40,7 +40,7 @@ function init_elements_replace_js() {
       var original_text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
       var processed_text = original_text;
       var message_id = parse_message_id_from('message', this);
-      var sender_email = $(this).closest('.gs').find('span.gD').attr('email');
+      var sender_email = $(this).closest('.gs').find('span.gD').attr('email').toLowerCase();
       var is_outgoing = tool.value(sender_email).in(addresses);
       var question;
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
@@ -271,7 +271,7 @@ function init_elements_replace_js() {
     if($('div.a3s.m' + message_id + ' iframe').length === 0) {
       $('span.aVW').css('display', 'none');
       $('div.a3s.m' + message_id).css('display', 'block');
-      var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
+      var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email').toLowerCase();
       $('div.a3s.m' + message_id).append(pgp_block_iframe('', null, account_email, message_id, false, sender_email, gmail_tab_id));
     }
   };
@@ -299,7 +299,7 @@ function init_elements_replace_js() {
     var reply_to_estimate = [conversation_root_element.find('h3.iw span[email]').last().attr('email').trim().toLowerCase()]; // add original sender
     var reply_to = [];
     conversation_root_element.find('span.hb').last().find('span.g2').each(function () {
-      reply_to_estimate.push($(this).attr('email')); // add all recipients including me
+      reply_to_estimate.push($(this).attr('email').toLowerCase()); // add all recipients including me
     });
     var my_email = account_email;
     account_storage_get(account_email, ['addresses'], function (storage) {

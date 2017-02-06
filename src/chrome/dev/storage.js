@@ -9,7 +9,7 @@ get_account_emails(function (account_emails) {
   $('.emails').append('<a href="storage.htm?filter=global">global</a>');
   $('.namespace').append('<option value="global">global</option>');
   $.each(account_emails, function (i, account_email) {
-    $('.emails').append('<a href="storage.htm?filter=' + encodeURIComponent(account_email) + '">' + account_email + '</a>');
+    $('.emails').append('<a href="' + tool.env.url_create('storage.htm', { filter: account_email }) + '">' + account_email + '</a>');
     $('.namespace').append('<option value="' + encodeURIComponent(account_email) + '">' + account_email + '</option>');
   });
 });

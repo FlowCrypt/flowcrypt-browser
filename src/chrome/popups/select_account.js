@@ -17,9 +17,10 @@ get_account_emails(function (account_emails) {
     account_storage_get(account_emails, ['setup_done'], function (account_storages) {
       if(account_storages[email]['setup_done'] === true) {
         if(url_params.action === 'new_message') {
-          $('ul.emails').prepend('<li><a target="cryptup" href="/chrome/settings/index.htm?account_email=' + encodeURIComponent(email) + '&page=' + encodeURIComponent('/chrome/gmail_elements/new_message.htm') + '">' + email + '</a></li>');
+          var new_message_link = tool.env.url_create('/chrome/settings/index.htm', { account_email: email, page: '/chrome/gmail_elements/new_message.htm' });
+          $('ul.emails').prepend('<li><a target="cryptup" href="' + new_message_link + '">' + email + '</a></li>');
         } else {
-          $('ul.emails').prepend('<li><a target="cryptup" href="/chrome/settings/index.htm?account_email=' + encodeURIComponent(email) + '">' + email + '</a></li>');
+          $('ul.emails').prepend('<li><a target="cryptup" href="' + tool.env.url_create('/chrome/settings/index.htm', { account_email: email }) + '">' + email + '</a></li>');
         }
         $('a').click(function () {
           window.close();

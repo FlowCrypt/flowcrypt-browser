@@ -242,13 +242,9 @@ function openpgp_key_encrypt(key, passphrase) {
 }
 
 function show_settings_page(page, add_url_text) {
-  var new_location = page + '?account_email=' + encodeURIComponent(settings_url_params.account_email) + '&placement=settings';
-  new_location += '&parent_tab_id=' + encodeURIComponent(settings_url_params.parent_tab_id || settings_tab_id_global) + (add_url_text || '');
+  var new_location = tool.env.url_create(page, { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global }) + (add_url_text || '');
   if(settings_url_params.embedded) { //embedded on the main page
-    tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', {
-      page: page,
-      add_url_text: add_url_text,
-    });
+    tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', { page: page, add_url_text: add_url_text });
   } else if(!settings_url_params.parent_tab_id) { // on a main page
     if(page !== '/chrome/gmail_elements/new_message.htm') {
       var width = Math.min(800, $('body').width() - 200);

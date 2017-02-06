@@ -813,22 +813,12 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
-  function format_challenge_question_email(question, body) {
-    var result = {};
-    result['text/plain'] = [
-      l.open_challenge_message,
-      'https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(body['text/plain']),
-      '',
-      body['text/plain'],
-    ].join('\n');
-    if(body['text/html']) {
-      result['text/html'] = [
-        l.open_challenge_message.replace(/ /g, '&nbsp;') + '&nbsp;<a href="https://cryptup.org/decrypt.htm?question=' + encodeURIComponent(question) + '&message=' + encodeURIComponent(body['text/plain']) + '">read&nbsp;message</a>',
-        '',
-        body['text/html'],
-      ].join('<br>\n');
-    }
-    return result;
+  function format_challenge_question_email(question, bodies) {
+    var online_decrypt_url = tool.env.url_create('https://cryptup.org/decrypt.htm', { question: question, message: bodies['text/plain'] });
+    return {
+      'text/plain': [l.open_challenge_message, online_decrypt_url, '', bodies['text/plain']].join('\n'),
+      'text/html': [l.open_challenge_message.replace(/ /g, '&nbsp;') + '&nbsp;<a href="' + online_decrypt_url + '">read&nbsp;message</a>', '', bodies['text/html']].join('<br>\n'),
+    };
   }
 
   $('#input_question, #input_answer').keyup(tool.ui.event.prevent(tool.ui.event.spree(), function () {
