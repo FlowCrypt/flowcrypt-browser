@@ -75,8 +75,14 @@ function initialize() {
       }
     });
   } else {
-    $('.show_if_setup_not_done').css('display', 'block');
-    $('.hide_if_setup_not_done').css('display', 'none');
+    get_account_emails(function (account_emails) {
+      if(account_emails && account_emails[0]) {
+        window.location = tool.env.url_create('index.htm', { account_email: account_emails[0] });
+      } else {
+        $('.show_if_setup_not_done').css('display', 'block');
+        $('.hide_if_setup_not_done').css('display', 'none');
+      }
+    });
   }
 }
 

@@ -80,6 +80,9 @@ function display_block(name) {
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
   $('h1').text('Set Up CryptUp');
+  if(!url_params.account_email) {
+    window.location = 'index.htm';
+  }
   account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function (storage) {
     if(storage.setup_done) {
       render_setup_done(url_params.account_email);
