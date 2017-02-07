@@ -536,9 +536,11 @@
   }
 
   function env_url_create(link, params) {
-    $.each(Object.keys(params), function(i, key) {
-      var transformed = obj_key_by_value(env_url_param_decode_dict, params[key]);
-      link += (i ? '&' : '?') + key + '=' + encodeURIComponent(typeof transformed !== 'undefined' ? transformed : params[key]);
+    $.each(params, function(key, value) {
+      if(typeof value !== 'undefined') {
+        var transformed = obj_key_by_value(env_url_param_decode_dict, value);
+        link += (!tool.value('?').in(link) ? '?' : '&') + key + '=' + encodeURIComponent(typeof transformed !== 'undefined' ? transformed : value);
+      }
     });
     return link;
   }

@@ -6,7 +6,6 @@ console.log('background_process.js starting');
 
 var background_process_start_reason = 'browser_start';
 chrome.runtime.onInstalled.addListener(function(event){
-  console.log('found reason:' + event.reason);
   background_process_start_reason = event.reason;
 });
 function get_background_process_start_reason() {
@@ -137,7 +136,7 @@ function open_settings_page(path, account_email, page) { // todo - put directly 
     window.open(tool.env.url_create(base_path, { account_email: account_email, page: page }), 'cryptup');
   } else {
     get_account_emails(function (account_emails) {
-      window.open(tool.env.url_create(base_path, { account_email: account_emails[0] || '', page: page }), 'cryptup');
+      window.open(tool.env.url_create(base_path, { account_email: account_emails[0], page: page }), 'cryptup');
     });
   }
 }

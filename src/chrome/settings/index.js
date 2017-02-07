@@ -169,13 +169,13 @@ $('.action_go_auth_denied').click(function () {
   show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
 });
 
-$('.action_add_account').click(function () {
+$('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   new_account_authentication_prompt();
-});
+}));
 
-$('.action_set_up_account').click(function () {
+$('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   new_account_authentication_prompt(url_params.account_email);
-});
+}));
 
 $('body').click(function () {
   $("#alt-accounts").removeClass("active");

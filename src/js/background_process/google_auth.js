@@ -78,7 +78,7 @@ function google_auth_window_show_and_respond_to_auth_request(auth_request, curre
     scope: auth_request.scopes.join(' '),
     login_hint: auth_request.account_email,
   });
-  var auth_code_window = window.open(auth_code_url, '_blank', 'height=550,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+  var auth_code_window = window.open(auth_code_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
   // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
   // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
   var window_closed_timer = setInterval(window_closed_watcher, 200);

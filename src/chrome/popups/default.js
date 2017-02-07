@@ -35,7 +35,7 @@ tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab)
 });
 
 function redirect_to_initial_setup(account_email) {
-  tool.browser.message.send(null, 'settings', { account_email: account_email || '', }, function () {
+  tool.browser.message.send(null, 'settings', { account_email: account_email, }, function () {
     window.close();
   });
 }
@@ -43,9 +43,9 @@ function redirect_to_initial_setup(account_email) {
 function set_up_accont_prompt_popup(active_account_email) {
   $('#set_up_account').css('display', 'block');
   $('.email').text(active_account_email);
-  $('.action_set_up_account').click(function () {
+  $('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     redirect_to_initial_setup(active_account_email);
-  })
+  }));
 }
 
 function choose_email_or_settings_popup(active_account_email) {
