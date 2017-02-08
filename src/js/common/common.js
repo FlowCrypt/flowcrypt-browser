@@ -145,6 +145,8 @@
       return 'prod';
     } else if(url.indexOf('nmelpmhpel') !== -1) {
       return 'dev';
+    } else if(url.indexOf('himcfccebk') !== -1) {
+      return 'test';
     } else if (url.indexOf('l.cryptup.org') !== -1) {
       return 'local'
     } else if (url.indexOf('cryptup.org') !== -1) {
