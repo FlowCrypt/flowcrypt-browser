@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.3.4 on February 8, 2017: Pubkey Button Fix II</b>
+composing: fixed error re-rendering pubkey button
+
 <b>version 3.3.3 on February 7, 2017: Pubkey Button</b>
 composing: fixed issue rendering pubkey button
 
