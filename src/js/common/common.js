@@ -154,12 +154,17 @@
     }
   }
 
+  function test() {
+    this_will_fail();
+  }
+
   window.catcher = {
     handle_error: handle_error,
     handle_exception: handle_exception,
     log: log,
     try: try_wrapper,
     environment: environment,
+    test: test,
   };
 
 })();

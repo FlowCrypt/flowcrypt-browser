@@ -54,7 +54,7 @@ if(url_params.account_email) {
   });
 
   $('.action_exception').click(function() {
-    purposefully_generated_exception();
+    catcher.test();
   });
 
   $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
