@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.3.5 on February 8, 2017: Password Encrypted Messages</b>
+composing: fixed password encrypted messages web browser incompatibility
+
 <b>version 3.3.4 on February 8, 2017: Pubkey Button Fix II</b>
 composing: fixed error re-rendering pubkey button
 
