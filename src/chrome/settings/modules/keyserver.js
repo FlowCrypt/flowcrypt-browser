@@ -6,7 +6,7 @@ var l = {
   all_good: 'Your account is well set up. If you cannot open some of your received email, please inform your contacts to update their information about your public key. ',
   mismatch: 'There is at least one incorrect pubkey record. Your encrypted email might be unreadable as a result. ',
   missing: 'Some receiving emails are not registered for encryption, and your contancts will not know they can send you encrypted email. ',
-}
+};
 
 var url_params = tool.env.url_params(['account_email']);
 

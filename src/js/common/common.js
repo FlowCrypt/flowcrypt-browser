@@ -1054,7 +1054,7 @@
   function keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
     account_storage_get(account_email, ['addresses'], function (storage) {
-      api_attester_keys_find(storage.addresses || [account_email], function (success, pubkey_search_results) {
+      api_attester_keys_find(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
         if(success) {
           $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
