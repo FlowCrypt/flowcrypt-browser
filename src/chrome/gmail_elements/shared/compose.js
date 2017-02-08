@@ -689,7 +689,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function rerender_include_pubkey_icon(include) {
     if(include === null || typeof include === 'undefined') { // decide if pubkey should be included
       if(!include_pubkey_toggled_manually) { // leave it as is if toggled manually beforeconsole.log('a');
-        rerender_include_pubkey_icon(recipients_missing_my_key.length && !tool.value(get_sender_from_dom().in(my_addresses_on_pks)));
+        rerender_include_pubkey_icon(recipients_missing_my_key.length && !tool.value(get_sender_from_dom()).in(my_addresses_on_pks));
       }
     } else { // set icon to specific state
       if(include) {
