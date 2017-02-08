@@ -648,7 +648,7 @@
   }
 
   function arr_contains(arr, value) {
-    return typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1;
+    return arr && typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1;
   }
 
   /* tool.obj */
