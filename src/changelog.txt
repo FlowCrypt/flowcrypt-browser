@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.3.3 on February 7, 2017: Pubkey Button</b>
+composing: fixed issue rendering pubkey button
+
 <b>version 3.3.2 on February 7, 2017: Bugfixes</b>
 reading: show icon to disable CryptUp for the convo
 reading: show quoted pubkeys properly
