@@ -14,7 +14,8 @@
     }
     var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
     var ignored_errors = [
-      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading the gmail
+      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
     ];
     if(!error) {
       return;
