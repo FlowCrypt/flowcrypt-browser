@@ -5,7 +5,6 @@
 function init_shared_compose_js(url_params, db, attach_js) {
 
   var SAVE_DRAFT_FREQUENCY = 3000;
-  var RENDER_SEARCH_RESULTS_LIMIT = 8;
 
   var PUBKEY_LOOKUP_RESULT_WRONG = 'wrong';
   var PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
@@ -30,6 +29,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   var recipients_missing_my_key = [];
   var keyserver_lookup_results_by_email = {};
   var is_reply_box = Boolean($('body#reply_message').length);
+  var original_btn_html;
   var l = {
     open_challenge_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
@@ -256,7 +256,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function encrypt_and_send(account_email, recipients, subject, plaintext, send_email) {
     if(is_compose_form_rendered_as_ready()) {
-      var original_btn_html = $('#send_btn').html();
+      original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
       $('#send_btn i').replaceWith(tool.ui.spinner());
       storage_cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
@@ -350,18 +350,48 @@ function init_shared_compose_js(url_params, db, attach_js) {
     return plaintext;
   }
 
+  function upload_encrypted_message_to_cryptup(encrypted_data, callback) {
+    $('#send_btn span').text('Uploading');
+    // this is used when sending encrypted messages to people without encryption plugin
+    // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
+    // the encrypted data goes through CryptUp and recipients get a link. They also get the encrypted data in message body.
+    tool.api.cryptup.account_store_message(encrypted_data, function(success, response) {
+      if (success && response && response.url) {
+        callback(response.url);
+      } else if(response && response.error) {
+        try {
+          var err = JSON.stringify(response.error);
+        } catch(e) {
+          var err = String(response.error);
+        }
+        callback(null, typeof response.error === 'object' && response.error.internal_msg ? response.error.internal_msg : err);
+      } else {
+        callback(null, 'internet dropped');
+      }
+    });
+  }
+
   function do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
       if($('.bottom .icon.pubkey').length && $('.bottom .icon.pubkey').is('.active')) {
         encrypted.data += '\n\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
       var body = { 'text/plain': encrypted.data, 'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'), };
-      if(challenge) {
-        body = format_challenge_question_email(challenge.question, body);
-      }
       $('#send_btn span').text(((attachments || []).length) && attach_files_to_email ? 'Uploading attachments' : 'Sending');
       db_contact_update(db, recipients, { last_use: Date.now(), }, function () {
-        send_email(body, attachments, attach_files_to_email);
+        if(challenge) {
+          upload_encrypted_message_to_cryptup(encrypted.data, function(encrypted_data_link, error) {
+            if(encrypted_data_link) {
+              body = format_challenge_question_email(challenge.question, encrypted_data_link, body);
+              send_email(body, attachments, attach_files_to_email);
+            } else {
+              alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+              $('#send_btn').html(original_btn_html);
+            }
+          });
+        } else {
+          send_email(body, attachments, attach_files_to_email);
+        }
       });
     });
   }
@@ -813,8 +843,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
-  function format_challenge_question_email(question, bodies) {
-    var online_decrypt_url = tool.env.url_create('https://cryptup.org/decrypt.htm', { question: question, message: bodies['text/plain'] });
+  function format_challenge_question_email(question, encrypted_data_link, bodies) {
+    var online_decrypt_url = tool.env.url_create('https://cryptup.org/decrypt.htm', { question: question, url: encrypted_data_link });
     return {
       'text/plain': [l.open_challenge_message, online_decrypt_url, '', bodies['text/plain']].join('\n'),
       'text/html': [l.open_challenge_message.replace(/ /g, '&nbsp;') + '&nbsp;<a href="' + online_decrypt_url + '">read&nbsp;message</a>', '', bodies['text/html']].join('<br>\n'),

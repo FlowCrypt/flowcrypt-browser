@@ -228,7 +228,7 @@
     file: {
       download_as_uint8: download_as_uint8,
       save_to_downloads: save_to_downloads,
-      attachment: attachment,
+      attachment: file_attachment,
     },
     mime: {
       headers_to_from: headers_to_from,
@@ -330,6 +330,7 @@
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
         account_store_attachment: api_cryptup_account_store_attachment,
+        account_store_message: api_cryptup_account_store_message,
       },
     },
     value: function(v) {
@@ -508,7 +509,7 @@
       decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
         var element = $(found_link);
         var attachment_data = html_attribute_decode(element.attr('cryptup-data'));
-        cryptup_attachments.push(attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));
+        cryptup_attachments.push(file_attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));
         return '';
       });
     }
@@ -729,7 +730,7 @@
     window.URL.revokeObjectURL(url);
   }
 
-  function attachment(name, type, content, size, url) {
+  function file_attachment(name, type, content, size, url) {
     return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
       name: name,
       type: type,
@@ -2323,6 +2324,18 @@
         callback(api_cryptup_auth_error);
       }
     });
+  }
+
+  function api_cryptup_account_store_message(encrypted_data_armored, callback) {
+    if(encrypted_data_armored.length > 100000) {
+      callback(false, {error: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
+    } else {
+      api_cryptup_call('account/store', {
+        content: file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored),
+        type: 'text/plain',
+        role: 'message',
+      }, api_cryptup_response_formatter(callback), 'FORM');
+    }
   }
 
 })();
