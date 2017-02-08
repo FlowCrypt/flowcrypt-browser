@@ -741,7 +741,7 @@
   function file_attachment(name, type, content, size, url) {
     return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
       name: name,
-      type: type,
+      type: type || 'application/octet-stream',
       content: content,
       size: size || content.length,
       url: url || null,
