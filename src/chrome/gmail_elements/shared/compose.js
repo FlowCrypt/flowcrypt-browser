@@ -303,10 +303,10 @@ function init_shared_compose_js(url_params, db, attach_js) {
       }
     } else { // todo - offer to retry only failed attachments
       alert('Failed to upload attachments, please try again. Encountered errors:\n' + upload_results.map(function (result) {
-        if(result && result.id && result.url) {
+        if(result && result.url) {
           return '\n' + (upload_results.indexOf(result) + 1) + ': no error';
         } else {
-          return '\n' + (upload_results.indexOf(result) + 1) + ': ' + ((result && result.error) ? result.error : 'unknown');
+          return '\n' + (upload_results.indexOf(result) + 1) + ': ' + result.error;
         }
       }));
     }
@@ -317,12 +317,21 @@ function init_shared_compose_js(url_params, db, attach_js) {
     _results = _results || [];
     if(attachments[_i]) {
       tool.api.cryptup.account_store_attachment(attachments[_i], function (success, server_result) {
-        if(success === true && server_result && server_result.id && server_result.url) {
+        if(success === true && server_result && server_result.url) {
           _results[_i] = { attachment: attachments[_i], url: server_result.url };
         } else if(success === tool.api.cryptup.auth_error) {
           _results[_i] = { attachment: attachments[_i], error: tool.api.cryptup.auth_error };
         } else {
-          _results[_i] = { attachment: attachments[_i], error: server_result && server_result.error ? server_result.error : server_result };
+          if(server_result && server_result.error) {
+            if(typeof server_result.error === 'object' && (server_result.error.internal_msg || server_result.error.public_msg)) {
+              var str_err = String(server_result.error.public_msg) + ' (' + server_result.error.internal_msg + ')';
+            } else {
+              var str_err = String(server_result.error);
+            }
+          } else {
+            var str_err = success ? 'unknown' : 'internet connection dropped';
+          }
+          _results[_i] = { attachment: attachments[_i], error: str_err };
         }
         upload_attachments_to_cryptup(attachments, callback, _results, ++_i);
       });
