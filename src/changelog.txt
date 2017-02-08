@@ -1,5 +1,17 @@
 <div>
 
+<b>version 3.3.2 on February 7, 2017: Bugfixes</b>
+reading: show icon to disable CryptUp for the convo
+reading: show quoted pubkeys properly
+setup: cannot uncheck submit email aliases on setup
+setup: experimental decrypt file page fixed
+setup: attestation fixed on Servers page
+setup: keyserver page sometimes stayed empty
+setup: redirect settings/setup setup page when missing account email
+internal: basic automated testing
+internal: common function to create urls + fixed indexOf + static vars
+design: rename CryptUP -> CryptUp
+
 <b>version 3.3.1 on February 4, 2017: Experimental</b>
 setup: download pubkey as a file
 setup: experimental: download a backup
