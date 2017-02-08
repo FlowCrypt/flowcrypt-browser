@@ -12,15 +12,9 @@ var url_params = tool.env.url_params(['account_email']);
 
 $('.email-address').text(url_params.account_email);
 
-$('.summary').html('Loading from keyserver<br><br>' + tool.ui.spinner());
+$('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner());
 
 account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], function (storage) {
-  var account_addresses = storage.addresses || [url_params.account_email];
-  if(storage.attests_processed && storage.attests_processed.length) {
-    $('.attests').html('Your email was attested by: <span class="green">' + storage.attests_processed.join(', ') + '</span>. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption.');
-  } else if(storage.attests_requested && storage.attests_requested.length) {
-    $('.attests').html('Attestation was requested from: ' + storage.attests_requested.join(', ') + '. Attesters icrease the security of your communication by helping your contacts use the right public key for encryption. Check your inbox for attestation email. The records below should update shortly.');
-  }
   tool.diagnose.keyserver_pubkeys(url_params.account_email, function (diagnosis) {
     if(diagnosis) {
       $('.summary').html('');
@@ -38,7 +32,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
   $.each(diagnosis.results, function (email, result) {
     if(result.pubkey === null) {
       var note = 'Missing record. Your contacts will not know you have encryption set up.';
-      var action = '<div class="button gray2 small submit_pubkey" email="' + email + '">Submit public key</div>';
+      var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';
       var color = 'orange';
     } else if(result.match) {
       if(email === url_params.account_email && !result.attested) {
@@ -48,7 +42,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
           var color = 'orange';
         } else {
           var note = 'Submitted, but not attested.';
-          var action = '<div class="button gray2 small submit_pubkey" email="' + email + '">Request Attestation</div>';
+          var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
           var color = 'orange';
         }
       } else if(email === url_params.account_email && result.attested) {
@@ -63,7 +57,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     } else {
       if(email === url_params.account_email && !result.attested) {
         var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
-        var action = '<div class="button gray2 small submit_pubkey" email="' + email + '">Request Attestation</div>';
+        var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
         var color = 'red';
       } else if(email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
         var note = 'Re-Attestation requested. This should process shortly.';
@@ -81,9 +75,9 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     }
     $('table#emails').append('<tr><td>' + email + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
   });
-  $('.submit_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+  $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     $(self).html(tool.ui.spinner());
-    submit_pubkey($(self).attr('email'));
+    action_submit_or_request_attestation($(self).attr('email'));
   }));
   $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     $(self).html(tool.ui.spinner());
@@ -101,12 +95,14 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
   var pubkey = openpgp.key.readArmored(armored_pubkey);
 }
 
-function submit_pubkey(email) {
-  if(email === url_params.account_email) {
-    tool.api.attester.keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function () {
-      window.location.reload();
+function action_submit_or_request_attestation(email) {
+  if(email === url_params.account_email) { // request attestation
+    save_attest_request(url_params.account_email, 'CRYPTUP', function () {
+      tool.api.attester.keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function () {
+        window.location.reload();
+      });
     });
-  } else {
+  } else { // submit only
     tool.api.attester.keys_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false, function () {
       window.location.reload();
     });
