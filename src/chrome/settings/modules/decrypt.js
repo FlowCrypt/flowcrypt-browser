@@ -42,7 +42,7 @@ db_open(function (db) {
     }));
 
     function decrypt_and_download(attachment) { // todo - this is more or less copy-pasted from attachment.js, should use common function
-      tool.crypto.message.decrypt(db, url_params.account_email, tool.str.from_uint8(attachment.data), undefined, function (result) { // todo - don't convert to str once decrypt() can handle uint8
+      tool.crypto.message.decrypt(db, url_params.account_email, tool.str.from_uint8(attachment.content), undefined, function (result) { // todo - don't convert to str once decrypt() can handle uint8
         if(result.success) {
           tool.file.save_to_downloads(attachment.name.replace(/(\.pgp)|(\.gpg)$/, ''), attachment.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {

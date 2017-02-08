@@ -34,8 +34,8 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit) {
 
   function read_attachment_data_as_uint8(id, callback) {
     var reader = new FileReader();
-    reader.onload = function (data) {
-      callback(new Uint8Array(data.target.result));
+    reader.onload = function () {
+      callback(new Uint8Array(reader.result));
     };
     reader.readAsArrayBuffer(attached_files[id]);
   }
