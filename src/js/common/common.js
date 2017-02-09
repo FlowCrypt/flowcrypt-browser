@@ -10,7 +10,10 @@
   function handle_error(error_message, url, line, col, error, is_manually_called, version, env) {
     if(typeof error === 'string') {
       error_message = error;
-      error = { name: 'thrown_string', message: error_message, stack: error_message, };
+      error = { name: 'thrown_string', message: error_message, stack: error_message };
+    }
+    if(error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called && !version && !env) { // safari has limited support
+      error = { name: 'safari_error', message: error_message, stack: error_message };
     }
     var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
     var ignored_errors = [
@@ -34,12 +37,6 @@
     if((error.stack || '').indexOf('PRIVATE') !== -1) {
       return;
     }
-    if(!version) {
-      version = cryptup_version() || 'unknown';
-    }
-    if(!env) {
-      env = environment();
-    }
     try {
       $.ajax({
         url: 'https://cryptup-keyserver.herokuapp.com/help/error',
@@ -48,11 +45,11 @@
           name: (error.name || '').substring(0, 50),
           message: (error_message || '').substring(0, 200),
           url: (url || '').substring(0, 300),
-          line: line,
-          col: col,
-          trace: error.stack,
-          version: version,
-          environment: env,
+          line: line || 0,
+          col: col || 0,
+          trace: error.stack || '',
+          version: version || cryptup_version() || 'unknown',
+          environment: env || environment(),
         }),
         dataType: 'json',
         crossDomain: true,
