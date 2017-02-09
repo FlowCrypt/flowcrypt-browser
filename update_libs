@@ -10,6 +10,7 @@ LIBS = [
     {'name': 'require.js', 'url': 'https://raw.githubusercontent.com/requirejs/requirejs/master/require.js', 'v': r'version ?= ?\'([^\']+)\''},
     {'name': 'zxcvbn.js', 'url': 'https://raw.githubusercontent.com/dropbox/zxcvbn/master/dist/zxcvbn.js', 'v': USE_GIT, 'license': '// MIT-style Copyright (c) 2012-2016 Dan Wheeler and Dropbox, Inc. https://github.com/dropbox/zxcvbn/blob/master/LICENSE.txt'},
     {'name': 'iso-8859-2.js', 'url': 'https://raw.githubusercontent.com/mathiasbynens/iso-8859-2/master/iso-8859-2.js', 'v': r'/\*! https://mths\.be/iso-8859-2 v([^ ]+) by @mathias \| MIT license \*/'},
+    {'name': 'blob.js', 'url': 'https://raw.githubusercontent.com/eligrey/Blob.js/master/Blob.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-addressparser.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-addressparser/master/src/emailjs-addressparser.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-mime-builder.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-builder/master/src/emailjs-mime-builder.js', 'v': USE_GIT},
     {'name': 'emailjs/emailjs-mime-codec.js', 'url': 'https://raw.githubusercontent.com/emailjs/emailjs-mime-codec/master/src/emailjs-mime-codec.js', 'v': USE_GIT},
