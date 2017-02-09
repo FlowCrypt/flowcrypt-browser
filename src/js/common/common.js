@@ -161,9 +161,7 @@
       } else {
         return v;
       }
-    } catch(err) {
-      console.log(err);
-    }
+    } catch(err) {}
   }
 
   window.catcher = {
