@@ -733,13 +733,17 @@
 
   function save_to_downloads(name, type, content) {
     var blob = new Blob([content], { type: type });
-    var a = document.createElement('a');
-    var url = window.URL.createObjectURL(blob);
-    a.style.display = 'none';
-    a.href = url;
-    a.download = name;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    if(window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveBlob(blob, name);
+    } else {
+      var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(a.href);
+    }
   }
 
   function file_attachment(name, type, content, size, url) {
