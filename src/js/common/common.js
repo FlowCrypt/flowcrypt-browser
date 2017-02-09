@@ -35,11 +35,7 @@
       return;
     }
     if(!version) {
-      if(window.chrome && chrome.runtime && typeof chrome.runtime.getManifest === 'function' && typeof chrome.runtime.getManifest() === 'object') {
-        version = chrome.runtime.getManifest().version;
-      } else {
-        version = 'unknown';
-      }
+      version = cryptup_version() || 'unknown';
     }
     if(!env) {
       env = environment();
@@ -160,10 +156,24 @@
     this_will_fail();
   }
 
+  function cryptup_version(format) {
+    try {
+      var v = window.chrome.runtime.getManifest().version;
+      if(format === 'int') {
+        return Number(v.replace(/\./g, ''));
+      } else {
+        return v;
+      }
+    } catch(err) {
+      console.log(err);
+    }
+  }
+
   window.catcher = {
     handle_error: handle_error,
     handle_exception: handle_exception,
     log: log,
+    version: cryptup_version,
     try: try_wrapper,
     environment: environment,
     test: test,
@@ -174,8 +184,7 @@
 (function ( /* EXTENSIONS AND CONFIG */ ) {
 
   if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
-    var v = (window.chrome && window.chrome.runtime && window.chrome.runtime.getManifest) ? window.chrome.runtime.getManifest().version : '';
-    window.openpgp.config.versionstring = 'CryptUp ' + v + ' Easy Gmail Encryption https://cryptup.org';
+    window.openpgp.config.versionstring = 'CryptUp ' + (catcher.version() || '') + ' Easy Gmail Encryption https://cryptup.org';
     window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
   }
 
@@ -211,7 +220,6 @@
     env: {
       url_params: env_url_params,
       url_create: env_url_create,
-      cryptup_version_integer: cryptup_version_integer,
       key_codes: key_codes,
       set_up_require: set_up_require,
       increment: increment,
@@ -552,10 +560,6 @@
       }
     });
     return link;
-  }
-
-  function cryptup_version_integer() {
-    return Number(chrome.runtime.getManifest().version.replace(/\./g, ''));
   }
 
   function key_codes() {

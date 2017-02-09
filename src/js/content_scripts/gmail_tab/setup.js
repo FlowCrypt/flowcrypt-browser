@@ -33,7 +33,7 @@ function init_setup_js() {
   window.wait_for_account_email_then_setup = function () {
     var account_email = get_account_email();
     if(typeof account_email !== 'undefined') {
-      console.log('Loading CryptUp ' + window.chrome.runtime.getManifest().version);
+      console.log('Loading CryptUp ' + catcher.version());
       window.account_email_global = account_email;
       setup(account_email);
     } else {

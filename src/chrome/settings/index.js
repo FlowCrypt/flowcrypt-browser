@@ -4,7 +4,7 @@
 
 var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 
-$('span#v').text(chrome.runtime.getManifest().version);
+$('span#v').text(catcher.version());
 
 var tab_id_global = undefined;
 init_elements_factory_js();

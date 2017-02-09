@@ -13,7 +13,7 @@ function get_background_process_start_reason() {
 }
 
 migrate_global(function () {
-  account_storage_set(null, { version: tool.env.cryptup_version_integer(), });
+  account_storage_set(null, { version: catcher.version('int') });
 });
 
 tool.browser.message.listen_background({
@@ -27,7 +27,7 @@ tool.browser.message.listen_background({
   update_uninstall_url: update_uninstall_url,
   get_active_tab_info: get_active_tab_info,
   runtime: function (message, sender, respond) {
-    respond({ environment: catcher.environment(), version: chrome.runtime.getManifest().version, });
+    respond({ environment: catcher.environment(), version: catcher.version() });
   },
   ping: function (message, sender, respond) {
     respond(true);

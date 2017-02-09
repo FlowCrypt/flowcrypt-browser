@@ -5,7 +5,7 @@
 function migrate_account(data, sender, respond_done) {
   account_storage_get(data.account_email, ['version'], function (account_storage) {
     // if account_storage.version < ....
-    account_storage_set(data.account_email, { version: tool.env.cryptup_version_integer(), }, respond_done);
+    account_storage_set(data.account_email, { version: catcher.version('int') }, respond_done);
     account_consistency_fixes(data.account_email);
     account_update_status_pks(data.account_email);
     account_update_status_keyserver(data.account_email);
