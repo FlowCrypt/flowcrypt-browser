@@ -1,5 +1,13 @@
 <div>
 
+<b>version 3.3.6 on February 8, 2017: Attachment Handling Fixes</b>
+composing: binary files can now be attached as well
+composing: surfacing file upload errors to user
+reading: fixed problem with attachments containing pgp messages
+setup: add a version number along with help/feedback message
+internal: simplify browser testing
+internal: ignore errors during extension update
+
 <b>version 3.3.5 on February 8, 2017: Password Encrypted Messages</b>
 composing: fixed password encrypted messages web browser incompatibility
 
