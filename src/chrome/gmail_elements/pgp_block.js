@@ -201,7 +201,8 @@ db_open(function (db) {
 
   function render_pgp_signature_check_result(signature) {
     if(signature) {
-      $('#pgp_signature > .cursive > span').text(signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email);
+      var signer_email = signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email;
+      $('#pgp_signature > .cursive > span').text(signer_email || 'Unknown Signer');
       if(signature.signer && !signature.contact) {
         $('#pgp_signature').addClass('neutral');
         $('#pgp_signature > .result').text('cannot verify signature');

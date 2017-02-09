@@ -279,7 +279,7 @@ function init_elements_replace_js() {
     if($('div.a3s.m' + message_id + ' iframe').length === 0) {
       $('span.aVW').css('display', 'none');
       $('div.a3s.m' + message_id).css('display', 'block');
-      var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email').toLowerCase();
+      var sender_email = ($('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
       $('div.a3s.m' + message_id).append(pgp_block_iframe('', null, account_email, message_id, false, sender_email, gmail_tab_id));
     }
   };
