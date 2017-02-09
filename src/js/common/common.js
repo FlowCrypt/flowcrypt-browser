@@ -735,6 +735,13 @@
       a.href = window.URL.createObjectURL(blob);
       a.download = name;
       document.body.appendChild(a);
+      if(typeof a.click === 'function') {
+        a.click();
+      } else { // safari
+        var e = document.createEvent('MouseEvents');
+        e.initMouseEvent('click', true, true, window);
+        a.dispatchEvent(e);
+      }
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(a.href);
