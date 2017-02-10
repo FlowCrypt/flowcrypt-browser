@@ -856,7 +856,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     var online_decrypt_url = tool.env.url_create('https://cryptup.org/decrypt.htm', { question: question, url: encrypted_data_link });
     return {
       'text/plain': [l.open_challenge_message, online_decrypt_url, '', bodies['text/plain']].join('\n'),
-      'text/html': [l.open_challenge_message.replace(/ /g, '&nbsp;') + '&nbsp;<a href="' + online_decrypt_url + '">read&nbsp;message</a>', '', bodies['text/html']].join('<br>\n'),
+      'text/html': [l.open_challenge_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(online_decrypt_url) + '">' + tool.str.html_escape(online_decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n'),
     };
   }
 

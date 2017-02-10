@@ -244,6 +244,8 @@
       random: random,
       html_attribute_encode: html_attribute_encode,
       html_attribute_decode: html_attribute_decode,
+      html_escape: str_html_escape,
+      html_unescape: str_html_unescape,
       base64url_encode: base64url_encode,
       base64url_decode: base64url_decode,
       from_uint8: from_uint8,
@@ -451,6 +453,14 @@
       id += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return id;
+  }
+
+  function str_html_escape(str) { // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function str_html_unescape(str){
+    return str.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
   function html_attribute_encode(values) {

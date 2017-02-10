@@ -67,7 +67,7 @@ function init_elements_replace_js() {
       });
       if(processed_text !== original_text) {
         if(question) {
-          processed_text = processed_text.replace("This message is encrypted. If you can't read it, visit the following link: read message\n\n", '');
+          processed_text = processed_text.replace(/This message is encrypted\. If you can't read it, visit the following link: .+\n\n/m, '');
         }
         $(this).html(processed_text.replace(/\n/g, '<br>'));
       }
