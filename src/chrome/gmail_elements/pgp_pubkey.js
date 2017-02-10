@@ -24,7 +24,7 @@ function set_button_text(db) {
 function render() {
   $('.pubkey').text(url_params.armored_pubkey);
   $('.line.fingerprints, .line.add_contact').css('display', url_params.minimized ? 'none' : 'block');
-  $('.line.fingerprints .fingerprint').text(tool.crypto.key.fingerprint(pubkey));
+  $('.line.fingerprints .fingerprint').text(tool.crypto.key.fingerprint(pubkey, 'spaced'));
   $('.line.fingerprints .keywords').text(mnemonic(tool.crypto.key.longid(pubkey)));
 }
 
