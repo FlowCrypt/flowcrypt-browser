@@ -422,6 +422,13 @@ function init_shared_compose_js(url_params, db, attach_js) {
       } else {
         tool.api.attester.keys_find(email, function (success, result) {
           if(success && result.email) {
+            if(result.pubkey) {
+              var parsed = openpgp.key.readArmored(result.pubkey);
+              if(!parsed.keys[0]) {
+                catcher.log('Dropping found but incompatible public key', {for: result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null });
+                result.pubkey = null;
+              }
+            }
             var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
             keyserver_lookup_results_by_email[result.email] = ks_contact;
             db_contact_save(db, ks_contact, function () {
