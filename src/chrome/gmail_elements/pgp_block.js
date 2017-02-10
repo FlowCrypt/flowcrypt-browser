@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'question', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email']);
+var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password']);
 
 var l = {
   cant_open: 'Could not open this message with CryptUp.\n\n',
@@ -15,7 +15,7 @@ var l = {
   bad_format: 'Message is either badly formatted or not compatible with CryptUp. ',
   no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
   refresh_page: 'Refresh page to see more information.',
-  question_decryt_prompt: 'To decrypt the message, answer: ',
+  question_decryt_prompt: 'Please enter password to decrypt the message',
   connection_error: 'Could not connect to Gmail to open the message, please refresh the page to try again. ',
   dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
   enter_passphrase: 'Enter passphrase',
@@ -259,7 +259,7 @@ db_open(function (db) {
       } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
         render_error(l.not_properly_set_up + button_html('cryptup settings', 'green settings'));
       } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
-        if(url_params.question && !optional_password) {
+        if(url_params.has_password && !optional_password) {
           render_password_prompt();
         } else {
           handle_private_key_mismatch(url_params.account_email, result.message);
@@ -296,8 +296,8 @@ db_open(function (db) {
   }
 
   function render_password_prompt() {
-    var prompt = '<p>' + l.question_decryt_prompt + '"' + url_params.question + '" </p>';
-    prompt += '<p><input id="answer" placeholder="Answer"></p><p><div class="button green long decrypt">decrypt message</div></p>';
+    var prompt = '<p>' + l.question_decryt_prompt + '</p>';
+    prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
     render_content(prompt, true, function () {
       $('.button.decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {

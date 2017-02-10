@@ -4,6 +4,8 @@
 
 function init_elements_replace_js() {
 
+  var password_sentence = 'This message is encrypted. If you can\'t read it, visit the following link: '; // todo - should be in a common place as the code that generated it
+
   window.replace_pgp_elements = function (account_email, addresses, can_read_emails, gmail_tab_id) {
     replace_armored_blocks(account_email, addresses, gmail_tab_id);
     replace_pgp_attachments(account_email, addresses, can_read_emails, gmail_tab_id);
@@ -42,7 +44,7 @@ function init_elements_replace_js() {
       var message_id = parse_message_id_from('message', this);
       var sender_email = $(this).closest('.gs').find('span.gD').attr('email').toLowerCase();
       var is_outgoing = tool.value(sender_email).in(addresses);
-      var question;
+      var has_password;
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
         return pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id);
       });
@@ -56,18 +58,18 @@ function init_elements_replace_js() {
       });
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('signed_message'), true, function(armored) {
         //todo - for now doesn't work with clipped signed messages because not tested yet
-        return pgp_block_iframe(armored, '', account_email, message_id, is_outgoing, sender_email, gmail_tab_id);
+        return pgp_block_iframe(armored, account_email, message_id, is_outgoing, sender_email, false, gmail_tab_id);
       });
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('message'), false, function(armored, has_end) {
-        if(typeof question === 'undefined') {
-          question = extract_pgp_question(html);
-        }
         $('.adI').css('display', 'none'); // hide translate prompt
-        return pgp_block_iframe(has_end ? armored : '', question, account_email, message_id, is_outgoing, sender_email, gmail_tab_id);
+        if(typeof has_password === 'undefined') {
+          has_password = tool.value(password_sentence).in(original_text);
+        }
+        return pgp_block_iframe(has_end ? armored : '', account_email, message_id, is_outgoing, sender_email, has_password || false, gmail_tab_id);
       });
       if(processed_text !== original_text) {
-        if(question) {
-          processed_text = processed_text.replace(/This message is encrypted\. If you can't read it, visit the following link: .+\n\n/m, '');
+        if(has_password) {
+          processed_text = processed_text.replace(RegExp(RegExp.escape(password_sentence) + '.+\n\n', 'm'), '');
         }
         $(this).html(processed_text.replace(/\n/g, '<br>'));
       }
@@ -127,17 +129,6 @@ function init_elements_replace_js() {
         $('body').append(compose_message_iframe(account_email, gmail_tab_id, button_href_id));
       }));
     });
-  };
-
-  window.extract_pgp_question = function (message_html) {
-    var link_start_index = message_html.indexOf('<a href="https://cryptup.org/decrypt');
-    if(link_start_index > 0) {
-      var question_match = message_html.substr(link_start_index, message_html.length - 1).match(/<a href="(https\:\/\/cryptup\.org\/decrypt[^"]+)"[^>]+>.+<\/a>/m);
-      if(question_match !== null) {
-        return tool.str.inner_text(tool.env.url_params(['question'], question_match[1].split('?', 2)[1]).question);
-      }
-    }
-    return null;
   };
 
   window.parse_message_id_from = function (element_type, my_element) {
@@ -280,7 +271,7 @@ function init_elements_replace_js() {
       $('span.aVW').css('display', 'none');
       $('div.a3s.m' + message_id).css('display', 'block');
       var sender_email = ($('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-      $('div.a3s.m' + message_id).append(pgp_block_iframe('', null, account_email, message_id, false, sender_email, gmail_tab_id));
+      $('div.a3s.m' + message_id).append(pgp_block_iframe('', account_email, message_id, false, sender_email, false, gmail_tab_id));
     }
   };
 

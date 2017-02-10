@@ -46,31 +46,11 @@
           <div id="fineuploader"></div>
         </td>
       </tr>
-      <tr id="missing_pubkey_container">
+      <tr id="password_or_pubkey_container">
         <td>
-          <div class="choice-row">
-            <div class="missing_pubkey_container_sencence">Emails in Grey don't use encryption. They should get CryptUp! Alternatively,</div>
-            <div class="block_button use_question">
-              <span class="challenge-question-copy">
-                <div class="large-copy">ADD A password</div>
-                <div class="small-copy">to protect the message</div>
-              </span>
-            </div><div class="block_button add_pubkey">
-              <span class="pubkey-copy">
-                <div class="large-copy">add their pubkey</div>
-                <div class="small-copy">if they have PGP enabled</div>
-              </span>
-            </div>
-            <div class="or-copy">or</div>
-          </div>
-        </td>
-      </tr>
-      <tr id="challenge_question_container">
-        <td>
-          <span class="start">"</span><input id="input_answer" placeholder="Password" /><span class="end">"</span>
-          <span style="display: inline-block; width: 15px;">&nbsp;</span>
-          <input id="input_question" placeholder="Password hint (required)" />
-          <div class="question_copy">If they use encryption other then CryptUp, <a href="#" class="add_pubkey">add their public key</a> to skip this.</div>
+          A&nbsp;&nbsp;<span class="label_password">password protection</span><span class="start">"</span><input id="input_password" placeholder="one time password" /><span class="end">"</span>&nbsp;
+          is needed because emails <span class="grey">in grey</span> don't use encryption.
+          <div class="question_copy">If they use other plugin,  <a href="#" class="add_pubkey">add their public key</a> instead. Else ask them to get CryptUp!</div>
         </td>
       </tr>
       <tr class="bottom">

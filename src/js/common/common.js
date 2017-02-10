@@ -1651,7 +1651,7 @@
       });
       patch_public_keys_to_ignore_expiration(options.publicKeys);
     }
-    if(challenge && challenge.question && challenge.answer) {
+    if(challenge && challenge.answer) {
       options.passwords = [crypto_hash_challenge_answer(challenge.answer)];
       used_challange = true;
     }
