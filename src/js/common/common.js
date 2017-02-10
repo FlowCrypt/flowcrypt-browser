@@ -39,7 +39,7 @@
     }
     try {
       $.ajax({
-        url: 'https://cryptup-keyserver.herokuapp.com/help/error',
+        url: 'https://cryptup.herokuapp.com/help/error',
         method: 'POST',
         data: JSON.stringify({
           name: (error.name || '').substring(0, 50),
@@ -377,12 +377,12 @@
         },
       },
       cryptup: {
-        call: api_cryptup_call, // todo - should be removed once help.js has its own function to call
         auth_error: api_cryptup_auth_error,
+        help_feedback: api_cryptup_help_feedback,
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
-        account_store_attachment: api_cryptup_account_store_attachment,
-        account_store_message: api_cryptup_account_store_message,
+        message_upload: api_cryptup_message_upload,
+        message_upload_attachment: api_cryptup_message_upload_attachment,
       },
     },
     value: function(v) {
@@ -1670,6 +1670,43 @@
     });
   }
 
+  /* tool.api */
+
+  function api_call(base_url, path, values, callback, format) {
+    if(format === 'JSON') {
+      var formatted_values = JSON.stringify(values);
+      var content_type = 'application/json; charset=UTF-8';
+    } else if(format === 'FORM') {
+      var formatted_values = new FormData();
+      $.each(values, function (name, value) {
+        if(typeof value === 'object' && value.name && value.content && value.type) {
+          formatted_values.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
+        } else {
+          formatted_values.append(name, value);
+        }
+      });
+      var content_type = false;
+    } else {
+      throw Error('unknown format:' + String(format));
+    }
+    return $.ajax({
+      url: base_url + path,
+      method: 'POST',
+      data: formatted_values,
+      dataType: 'json',
+      crossDomain: true,
+      processData: false,
+      contentType: content_type,
+      async: true,
+      success: function (response) {
+        callback(true, response);
+      },
+      error: function (XMLHttpRequest, status, error) {
+        callback(false, { request: XMLHttpRequest, status: status, error: error });
+      },
+    });
+  }
+
   /* tool.api.google */
 
   function api_google_call(account_email, method, url, parameters, callback, fail_on_auth) {
@@ -2127,37 +2164,8 @@
   /* tool.api.attester */
 
   function api_attester_call(path, values, callback, format) {
-    if(format !== 'FORM') {
-      var formatted_values = JSON.stringify(values);
-      var content_type = 'application/json; charset=UTF-8';
-    } else {
-      var formatted_values = new FormData();
-      $.each(values, function (name, value) {
-        if(typeof value === 'object' && value.name && value.content && value.type) {
-          formatted_values.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
-        } else {
-          formatted_values.append(name, value);
-        }
-      });
-      var content_type = false;
-    }
-    return $.ajax({
-      url: 'https://cryptup-keyserver.herokuapp.com/' + path,
-      // url: 'http://127.0.0.1:5000/' + path,
-      method: 'POST',
-      data: formatted_values,
-      dataType: 'json',
-      crossDomain: true,
-      processData: false,
-      contentType: content_type,
-      async: true,
-      success: function (response) {
-        callback(true, response);
-      },
-      error: function (XMLHttpRequest, status, error) {
-        callback(false, { request: XMLHttpRequest, status: status, error: error });
-      },
-    });
+    api_call('https://cryptup-keyserver.herokuapp.com/', path, values, callback, format || 'JSON');
+    // api_call('http://127.0.0.1:5000/', path, values, callback, format || 'JSON');
   }
 
   function api_attester_keys_find(email, callback) {
@@ -2303,11 +2311,29 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    return api_attester_call(path, values, callback, format); // this will be separated in the future
+    api_call('https://cryptup.herokuapp.com/', path, values, callback, format || 'JSON');
+    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
   }
 
   function api_cryptup_auth_error() {
     throw Error('tool.api.cryptup.auth_error not callable');
+  }
+
+  function api_cryptup_response_formatter(callback) {
+    return function (success, response) {
+      if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
+        callback(api_cryptup_auth_error);
+      } else {
+        callback(success, response);
+      }
+    };
+  }
+
+  function api_cryptup_help_feedback(account_email, message, callback) {
+    return api_attester_call('help/feedback', {
+      email: account_email,
+      message: message,
+    }, api_cryptup_response_formatter(callback));
   }
 
   function api_cryptup_account_login(account_email, token, callback) {
@@ -2335,16 +2361,6 @@
     });
   }
 
-  function api_cryptup_response_formatter(callback) {
-    return function (success, response) {
-      if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
-        callback(api_cryptup_auth_error);
-      } else {
-        callback(success, response);
-      }
-    };
-  }
-
   function api_cryptup_account_subscribe(product, callback) {
     storage_cryptup_auth_info(function (email, uuid, verified) {
       if(verified) {
@@ -2369,10 +2385,10 @@
     });
   }
 
-  function api_cryptup_account_store_attachment(attachment, callback) {
+  function api_cryptup_message_upload_attachment(attachment, callback) {
     storage_cryptup_auth_info(function (email, uuid, verified) {
       if(verified) {
-        api_cryptup_call('account/store', {
+        api_cryptup_call('message/upload', {
           account: email,
           uuid: uuid,
           content: attachment,
@@ -2385,11 +2401,11 @@
     });
   }
 
-  function api_cryptup_account_store_message(encrypted_data_armored, callback) {
+  function api_cryptup_message_upload(encrypted_data_armored, callback) {
     if(encrypted_data_armored.length > 100000) {
       callback(false, {error: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
     } else {
-      api_cryptup_call('account/store', {
+      api_cryptup_call('message/upload', {
         content: file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored),
         type: 'text/plain',
         role: 'message',

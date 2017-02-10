@@ -316,7 +316,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     _i = _i || 0;
     _results = _results || [];
     if(attachments[_i]) {
-      tool.api.cryptup.account_store_attachment(attachments[_i], function (success, server_result) {
+      tool.api.cryptup.message_upload_attachment(attachments[_i], function (success, server_result) {
         if(success === true && server_result && server_result.url) {
           _results[_i] = { attachment: attachments[_i], url: server_result.url };
         } else if(success === tool.api.cryptup.auth_error) {
@@ -364,7 +364,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through CryptUp and recipients get a link. They also get the encrypted data in message body.
-    tool.api.cryptup.account_store_message(encrypted_data, function(success, response) {
+    tool.api.cryptup.message_upload(encrypted_data, function(success, response) {
       if (success && response && response.url) {
         callback(response.url);
       } else if(response && response.error) {
