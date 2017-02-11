@@ -1,5 +1,14 @@
 <div>
 
+<b>version 3.3.7 on February 11, 2017: Short Urls</b>
+composing: use link shortening for password encrypted messages
+composing: don't save incompatible pubkeys from keyserver
+composing: straight to password prompt on missing pubkey
+composing: fix ms office incompatibilities
+reading: browser crash fix on file download
+reading: fingeprint shown in gmail element pubkey block should be spaced
+internal: separate keyserver and cryptup urls
+
 <b>version 3.3.6 on February 8, 2017: Attachment Handling Fixes</b>
 composing: binary files can now be attached as well
 composing: surfacing file upload errors to user
