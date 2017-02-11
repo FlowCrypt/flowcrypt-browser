@@ -256,6 +256,7 @@
       extract_cryptup_attachments: str_extract_cryptup_attachments,
     },
     env: {
+      browser: env_browser,
       url_params: env_url_params,
       url_create: env_url_create,
       key_codes: key_codes,
@@ -581,6 +582,22 @@
 
   /* tool.env */
 
+  function env_browser() {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+    if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'firefox', v: Number(RegExp.$1)};
+    } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
+      return {name: 'ie', v: Number(RegExp.$1)};
+    } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'chrome', v: Number(RegExp.$1)};
+    } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'opera', v: Number(RegExp.$1)};
+    } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'safari', v: Number(RegExp.$1)};
+    } else {
+      return {name: 'unknown', v: null};
+    }
+  }
+
   var env_url_param_decode_dict = {
     '___cu_true___': true,
     '___cu_false___': false,
@@ -786,7 +803,9 @@
       var a = window.document.createElement('a');
       a.href = window.URL.createObjectURL(blob);
       a.download = name;
-      document.body.appendChild(a);
+      if(env_browser().name === 'firefox') {
+        document.body.appendChild(a);
+      }
       if(typeof a.click === 'function') {
         a.click();
       } else { // safari
@@ -794,8 +813,9 @@
         e.initMouseEvent('click', true, true, window);
         a.dispatchEvent(e);
       }
-      a.click();
-      document.body.removeChild(a);
+      if(env_browser().name === 'firefox') {
+        document.body.removeChild(a);
+      }
       window.URL.revokeObjectURL(a.href);
     }
   }
