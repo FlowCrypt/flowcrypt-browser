@@ -362,8 +362,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through CryptUp and recipients get a link. They also get the encrypted data in message body.
     tool.api.cryptup.message_upload(encrypted_data, function(success, response) {
-      if (success && response && response.url) {
-        callback(response.url);
+      if (success && response && response.short) {
+        callback(response.short);
       } else if(response && response.error) {
         try {
           var err = JSON.stringify(response.error);
@@ -386,9 +386,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
       $('#send_btn span').text(((attachments || []).length) && attach_files_to_email ? 'Uploading attachments' : 'Sending');
       db_contact_update(db, recipients, { last_use: Date.now(), }, function () {
         if(challenge) {
-          upload_encrypted_message_to_cryptup(encrypted.data, function(encrypted_data_link, error) {
-            if(encrypted_data_link) {
-              body = format_challenge_question_email(challenge.question, encrypted_data_link, body);
+          upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
+            if(short_id) {
+              body = format_password_protected_email(short_id, body);
               send_email(body, attachments, attach_files_to_email);
             } else {
               alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
@@ -869,11 +869,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
-  function format_challenge_question_email(question, encrypted_data_link, bodies) {
-    var online_decrypt_url = tool.env.url_create('https://cryptup.org/decrypt.htm', { url: encrypted_data_link });
+  function format_password_protected_email(short_id, bodies) {
+    var decrypt_url = 'https://cryptup.org/' + short_id;
     return {
-      'text/plain': [l.open_password_protected_message, online_decrypt_url, '', bodies['text/plain']].join('\n'),
-      'text/html': [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(online_decrypt_url) + '">' + tool.str.html_escape(online_decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n'),
+      'text/plain': [l.open_password_protected_message, decrypt_url, '', bodies['text/plain']].join('\n'),
+      'text/html': [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n'),
     };
   }
 
