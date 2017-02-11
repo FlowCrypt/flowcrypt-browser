@@ -385,6 +385,7 @@
         account_subscribe: api_cryptup_account_subscribe,
         message_upload: api_cryptup_message_upload,
         message_upload_attachment: api_cryptup_message_upload_attachment,
+        link_message: api_cryptup_link_message,
       },
     },
     value: function(v) {
@@ -2340,7 +2341,7 @@
   }
 
   function api_cryptup_help_feedback(account_email, message, callback) {
-    return api_attester_call('help/feedback', {
+    return api_cryptup_call('help/feedback', {
       email: account_email,
       message: message,
     }, api_cryptup_response_formatter(callback));
@@ -2421,6 +2422,12 @@
         role: 'message',
       }, api_cryptup_response_formatter(callback), 'FORM');
     }
+  }
+
+  function api_cryptup_link_message(short, callback) {
+    return api_cryptup_call('link/message', {
+      short: short,
+    }, api_cryptup_response_formatter(callback));
   }
 
 })();
