@@ -382,7 +382,10 @@ function init_shared_compose_js(url_params, db, attach_js) {
       if($('.bottom .icon.pubkey').length && $('.bottom .icon.pubkey').is('.active')) {
         encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
-      var body = { 'text/plain': encrypted.data, 'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'), };
+      var body = {
+        'text/plain': encrypted.data,
+        // 'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'),
+      };
       $('#send_btn span').text(((attachments || []).length) && attach_files_to_email ? 'Uploading attachments' : 'Sending');
       db_contact_update(db, recipients, { last_use: Date.now(), }, function () {
         if(challenge) {
@@ -871,10 +874,12 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function format_password_protected_email(short_id, bodies) {
     var decrypt_url = 'https://cryptup.org/' + short_id;
-    return {
+    var new_bodies = {
       'text/plain': [l.open_password_protected_message, decrypt_url, '', bodies['text/plain']].join('\n'),
-      'text/html': [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n'),
     };
+    if(bodies['text/html']) {
+      bodies['text/html'] = [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n');
+    }
   }
 
   $('#input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));
