@@ -181,7 +181,7 @@ db_open(function (db) {
     }
     compose.on_render();
     $("#input_to").focus();
-    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click));
+    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click)).keypress(tool.ui.enter(send_btn_click));;
     if(url_params.to) {
       $('#input_text').focus();
       document.getElementById("input_text").focus();

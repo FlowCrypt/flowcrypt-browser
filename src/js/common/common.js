@@ -295,6 +295,7 @@
     ui: {
       spinner: spinner,
       passphrase_toggle: passphrase_toggle,
+      enter: ui_enter,
       event: {
         double: double,
         parallel: parallel,
@@ -1044,6 +1045,14 @@
         });
       });
     });
+  }
+
+  function ui_enter(callback) {
+    return function(e) {
+      if (e.which == key_codes().enter) {
+        callback();
+      }
+    };
   }
 
   /* tools.browser.message */
