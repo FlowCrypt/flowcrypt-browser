@@ -28,11 +28,14 @@ db_open(function (db) {
 
     $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
       var armored = tool.crypto.key.normalize(tool.crypto.armor.strip($('.pubkey').val()));
-      if(tool.crypto.key.fingerprint(armored)) {
-        db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
-      } else {
+      if(!tool.crypto.key.fingerprint(armored)) {
         alert('Could not recognize the format, please try again.');
         $('.pubkey').val('').focus();
+      } else if (openpgp.key.readArmored(armored).keys[0].getEncryptionKeyPacket() === null) {
+        alert('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
+        $('.pubkey').val('').focus();
+      } else {
+        db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
       }
     }));
 

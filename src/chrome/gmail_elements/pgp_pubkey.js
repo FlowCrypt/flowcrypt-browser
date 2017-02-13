@@ -36,7 +36,8 @@ db_open(function (db) {
   }
 
   if(typeof pubkey !== 'undefined') {
-    if (pubkey.getEncryptionKeyPacket() === null && pubkey.getSigningKeyPacket() === null) { // todo - people may still get errors if this is signing only key and they try to encrypt
+    if (pubkey.getEncryptionKeyPacket() === null && pubkey.getSigningKeyPacket() === null) {
+      // todo - people may still get errors if this is signing only key and they try to encrypt, but I'm leaving it here in case they just want to verify signatures
       $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
       $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
     } else {
