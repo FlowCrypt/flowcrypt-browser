@@ -872,14 +872,13 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
-  function format_password_protected_email(short_id, bodies) {
+  function format_password_protected_email(short_id, original_bodies) {
     var decrypt_url = 'https://cryptup.org/' + short_id;
-    var new_bodies = {
-      'text/plain': [l.open_password_protected_message, decrypt_url, '', bodies['text/plain']].join('\n'),
-    };
-    if(bodies['text/html']) {
-      bodies['text/html'] = [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n');
+    var new_bodies = { 'text/plain': [l.open_password_protected_message + ' ' + decrypt_url, '', original_bodies['text/plain']].join('\n') };
+    if(original_bodies['text/html']) {
+      new_bodies['text/html'] = [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', original_bodies['text/html']].join('<br>\n');
     }
+    return new_bodies;
   }
 
   $('#input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));
