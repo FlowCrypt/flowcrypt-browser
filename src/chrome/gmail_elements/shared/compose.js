@@ -430,6 +430,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
               if(!parsed.keys[0]) {
                 catcher.log('Dropping found but incompatible public key', {for: result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null });
                 result.pubkey = null;
+              } else if (parsed.keys[0].getEncryptionKeyPacket() === null) {
+                catcher.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: result.email, fingerprint: tool.crypto.key.fingerprint(parsed.keys[0]) });
+                result.pubkey = null;
               }
             }
             var ks_contact = db_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
