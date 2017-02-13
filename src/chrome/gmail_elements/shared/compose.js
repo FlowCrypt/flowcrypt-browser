@@ -217,14 +217,17 @@ function init_shared_compose_js(url_params, db, attach_js) {
     });
   }
 
-  function is_compose_form_rendered_as_ready() {
-    if($('#send_btn span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND) {
+  function is_compose_form_rendered_as_ready(recipients) {
+    if($('#send_btn span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND && recipients && recipients.length) {
       return true;
-    } else if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
-      alert('Please re-enter recipients marked in red color.');
-      return false;
     } else {
-      alert('Please wait, information about recipients is still loading.');
+      if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
+        alert('Please re-enter recipients marked in red color.');
+      } else if(!recipients || !recipients.length) {
+        alert('Please add a recipient first');
+      } else {
+        alert('Please wait, information about recipients is still loading.');
+      }
       return false;
     }
   }
@@ -252,7 +255,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function encrypt_and_send(account_email, recipients, subject, plaintext, send_email) {
-    if(is_compose_form_rendered_as_ready()) {
+    if(is_compose_form_rendered_as_ready(recipients)) {
       original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
       $('#send_btn i').replaceWith(tool.ui.spinner());
