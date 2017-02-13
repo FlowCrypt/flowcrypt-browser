@@ -385,18 +385,22 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
       $('#step_2b_manual_enter .input_passphrase').val('');
       $('#step_2b_manual_enter .input_passphrase').focus();
     } else if(decrypt_result === true) {
-      $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner());
-      var options = {
-        passphrase: passphrase,
-        setup_simple: false,
-        key_backup_prompt: false,
-        submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
-        submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-        save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
-      };
-      save_key(url_params.account_email, prv, options, function () {
-        finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
-      });
+      if(prv.getEncryptionKeyPacket() !== null) {
+        $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner());
+        var options = {
+          passphrase: passphrase,
+          setup_simple: false,
+          key_backup_prompt: false,
+          submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+          submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
+          save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+        };
+        save_key(url_params.account_email, prv, options, function () {
+          finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
+        });
+      } else {
+        alert('This looks like a valid key but it cannot be used for encryption. Please write me at tom@cryptup.org to see why is that. I\'m VERY prompt to respond.');
+      }
     } else {
       alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.message + ')');
     }
