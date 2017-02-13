@@ -1319,17 +1319,30 @@
   function crypto_key_decrypt(prv, passphrase) { // returns true, false, or RETURNS a caught known exception
     try {
       return prv.decrypt(passphrase);
-    } catch(e) {
-      if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
-        try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
-          return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) { return successes + Number(subkey.subKey.decrypt(passphrase)); }, 0);
-        } catch(subkey_e) {
-          return subkey_e;
+    } catch(primary_e) {
+      if(!tool.value(primary_e.message).in(['Unknown s2k type.', 'Invalid enum value.'])) {
+        return new Error('primary decrypt error: "' + primary_e.message + '"'); // unknown exception for master key
+      } else if(prv.subKeys.length) {
+        var subkes_succeeded = 0;
+        var subkeys_unusable = 0;
+        var unknown_exception;
+        $.each(prv.subKeys, function(i, subkey) {
+          try {
+            subkes_succeeded += subkey.subKey.decrypt(passphrase);
+          } catch(subkey_e) {
+            subkeys_unusable++;
+            if(!tool.value(subkey_e.message).in(['Key packet is required for this signature.', 'Unknown s2k type.', 'Invalid enum value.'])) {
+              unknown_exception = subkey_e;
+              return false;
+            }
+          }
+        });
+        if(unknown_exception) {
+          return new Error('subkey decrypt error: "' + unknown_exception.message + '"');
         }
-      } else if(e.message === 'Invalid enum value.') {
-        return e;
+        return subkes_succeeded > 0 && (subkes_succeeded + subkeys_unusable) === prv.subKeys.length;
       } else {
-        throw e;
+        return new Error('primary decrypt error and no subkeys to try: "' + primary_e.message + '"');
       }
     }
   }

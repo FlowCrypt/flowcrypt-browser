@@ -398,7 +398,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
         finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
       });
     } else {
-      alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.message + ')');
+      alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.message + ')');
     }
   }
 });
