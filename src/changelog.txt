@@ -1,5 +1,14 @@
 <div>
 
+<b>version 3.3.8 on February 13, 2017: Compatibility</b>
+composing: fixed misbehaving send button on empty form
+composing: tab+enter should allow hitting the send button
+composing: sending all emails as plain-text only (compatibility)
+composing: check key can be encrypted for before adding to contacts
+setup: work better with incompatible master or sub prv keys
+setup: check key can be encrypted for on setup
+setup: refresh aliases
+
 <b>version 3.3.7 on February 11, 2017: Short Urls</b>
 composing: use link shortening for password encrypted messages
 composing: don't save incompatible pubkeys from keyserver
