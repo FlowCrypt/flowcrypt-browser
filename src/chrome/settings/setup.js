@@ -41,9 +41,9 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
   }
 
   function save_and_fill_submit_option(addresses) {
-    all_addresses = addresses.concat(url_params.account_email);
-    account_storage_set(url_params.account_email, { addresses: addresses }, function () {
-      show_submit_all_addresses_option(addresses);
+    all_addresses = tool.arr.unique(addresses.concat(url_params.account_email));
+    account_storage_set(url_params.account_email, { addresses: all_addresses }, function () {
+      show_submit_all_addresses_option(all_addresses);
     });
   }
   if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
@@ -51,7 +51,7 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
   }
   if(typeof storage.addresses === 'undefined') {
     if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-      fetch_all_account_addresses(url_params.account_email, save_and_fill_submit_option);
+      fetch_account_aliases(url_params.account_email, save_and_fill_submit_option);
     } else { // cannot read emails, don't fetch alternative addresses
       save_and_fill_submit_option([url_params.account_email]);
     }

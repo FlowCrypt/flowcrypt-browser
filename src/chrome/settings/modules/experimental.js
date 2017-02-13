@@ -53,13 +53,24 @@ if(url_params.account_email) {
     show_settings_page('/chrome/settings/modules/decrypt.htm');
   });
 
-  $('.action_exception').click(function() {
-    catcher.test();
-  });
-
   $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     collect_info_and_download_backup_file(url_params.account_email);
   }));
+
+  $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
+    $(self).html(tool.ui.spinner());
+    fetch_account_aliases(url_params.account_email, function(addresses) {
+      var all = tool.arr.unique(addresses.concat(url_params.account_email));
+      account_storage_set(url_params.account_email, { addresses: all }, function () {
+        alert('Updated to: ' + all.join(', '));
+        window.location.reload();
+      });
+    });
+  }));
+
+  $('.action_exception').click(function() {
+    catcher.test();
+  });
 
   $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     if(confirm('This will remove all your CryptUp settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
