@@ -382,13 +382,18 @@
       },
       cryptup: {
         auth_error: api_cryptup_auth_error,
+        error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
+        presign_files: api_cryptup_message_presign_files,
+        confirm_files: api_cryptup_message_confirm_files,
         message_upload: api_cryptup_message_upload,
-        message_upload_attachment: api_cryptup_message_upload_attachment,
         link_message: api_cryptup_link_message,
       },
+      aws: {
+        s3_upload: api_aws_s3_upload, // ([{base_url, fields, attachment}, ...], cb)
+      }
     },
     value: function(v) {
       return {
@@ -821,7 +826,7 @@
     }
   }
 
-  function file_attachment(name, type, content, size, url) {
+  function file_attachment(name, type, content, size, url) { // todo - refactor as (content, name, type, LENGTH, url), making all but content voluntary
     return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
       name: name,
       type: type || 'application/octet-stream',
@@ -2364,12 +2369,34 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    api_call('https://cryptup.herokuapp.com/', path, values, callback, format || 'JSON');
-    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
+    // api_call('https://cryptup.herokuapp.com/', path, values, callback, format || 'JSON');
+    api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
   }
 
   function api_cryptup_auth_error() {
     throw Error('tool.api.cryptup.auth_error not callable');
+  }
+
+  function api_cryptup_error_text(server_call_response) {
+    if(server_call_response instanceof Array) {
+      var results;
+      $.each(server_call_response, function(i, v) {
+        results += (i + 1) + ': ' + api_cryptup_error_text(v) + '\n';
+      });
+      return results.trim();
+    } else {
+      if(server_call_response && server_call_response.error) {
+        if(typeof server_call_response.error === 'object' && (server_call_response.error.internal_msg || server_call_response.error.public_msg)) {
+          return String(server_call_response.error.public_msg) + ' (' + server_call_response.error.internal_msg + ')';
+        } else {
+          return String(server_call_response.error);
+        }
+      } else if(server_call_response) {
+        return 'unknown';
+      } else {
+        return 'Internet connection problem, please try again';
+      }
+    }
   }
 
   function api_cryptup_response_formatter(callback) {
@@ -2423,7 +2450,7 @@
           product: product,
         }, api_cryptup_response_formatter(function (success_or_auth_error, result) {
           if(success_or_auth_error === true) {
-            account_storage_set(null, { cryptup_account_subscription: result.subscription, }, function () {
+            account_storage_set(null, { cryptup_account_subscription: result.subscription }, function () {
               callback(true, result);
             });
           } else if(success_or_auth_error === false) {
@@ -2438,16 +2465,28 @@
     });
   }
 
-  function api_cryptup_message_upload_attachment(attachment, callback) {
+  function api_cryptup_message_presign_files(attachments, callback) {
     storage_cryptup_auth_info(function (email, uuid, verified) {
       if(verified) {
-        api_cryptup_call('message/upload', {
+        api_cryptup_call('message/presign_files', {
           account: email,
           uuid: uuid,
-          content: attachment,
-          type: attachment.type,
-          role: 'attachment',
-        }, api_cryptup_response_formatter(callback), 'FORM');
+          lengths: attachments.map(function(a) { return a.size; }),
+        }, api_cryptup_response_formatter(callback));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
+
+  function api_cryptup_message_confirm_files(identifiers, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('message/confirm_files', {
+          account: email,
+          uuid: uuid,
+          identifiers: identifiers,
+        }, api_cryptup_response_formatter(callback));
       } else {
         callback(api_cryptup_auth_error);
       }
@@ -2470,6 +2509,26 @@
     return api_cryptup_call('link/message', {
       short: short,
     }, api_cryptup_response_formatter(callback));
+  }
+
+  /* tool.api.aws */
+
+  function api_aws_s3_upload(items, callback) {
+    if (!items.length) {
+      callback(false);
+      return;
+    }
+    var results = new Array(items.length);
+    $.each(items, function (i, item) {
+      var values = item.fields;
+      values.file = file_attachment('encrpted_attachment', 'application/octet-stream', item.attachment.content);
+      api_call(item.base_url, '', values, function(success) {
+        results[i] = success;
+        if(results.reduce(function(sum, r) { return sum + (typeof r !== 'undefined') }, 0) === results.length) { // no undefined left
+          callback(results.reduce(function(s, v) { return s + v; }, 0) === results.length, results); // callback(all_good, results);
+        }
+      }, 'FORM');
+    });
   }
 
 })();
