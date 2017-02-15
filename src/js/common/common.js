@@ -2369,8 +2369,8 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    // api_call('https://cryptup.herokuapp.com/', path, values, callback, format || 'JSON');
-    api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
+    api_call('https://cryptup.herokuapp.com/', path, values, callback, format || 'JSON');
+    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
   }
 
   function api_cryptup_auth_error() {
