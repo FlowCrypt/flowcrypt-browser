@@ -6,6 +6,14 @@ function init_elements_replace_js() {
 
   var password_sentence = 'This message is encrypted. If you can\'t read it, visit the following link: '; // todo - should be in a common place as the code that generated it
 
+  var _factory;
+  function factory() { //todo - this should be done through DI
+    if(!_factory) {
+      _factory = get_factory();
+    }
+    return _factory;
+  }
+
   window.replace_pgp_elements = function (account_email, addresses, can_read_emails, gmail_tab_id) {
     replace_armored_blocks(account_email, addresses, gmail_tab_id);
     replace_pgp_attachments(account_email, addresses, can_read_emails, gmail_tab_id);
@@ -46,7 +54,7 @@ function init_elements_replace_js() {
       var is_outgoing = tool.value(sender_email).in(addresses);
       var has_password;
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
-        return pgp_pubkey_iframe(account_email, armored, is_outgoing, gmail_tab_id);
+        return factory().embedded.pubkey(account_email, armored, is_outgoing, gmail_tab_id);
       });
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('attest_packet'), true, function(armored) {
         tool.browser.message.send(null, 'attest_packet_received', { account_email: account_email, packet: armored, });
@@ -54,18 +62,18 @@ function init_elements_replace_js() {
         return '';
       });
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('cryptup_verification'), false, function(armored) {
-        return subscribe_dialog(account_email, armored, 'embedded', null, gmail_tab_id);
+        return factory().embedded.subscribe(armored, 'embedded', null);
       });
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('signed_message'), true, function(armored) {
         //todo - for now doesn't work with clipped signed messages because not tested yet
-        return pgp_block_iframe(armored, account_email, message_id, is_outgoing, sender_email, false, gmail_tab_id);
+        return factory().embedded.message(armored, account_email, message_id, is_outgoing, sender_email, false, gmail_tab_id);
       });
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('message'), false, function(armored, has_end) {
         $('.adI').css('display', 'none'); // hide translate prompt
         if(typeof has_password === 'undefined') {
           has_password = tool.value(password_sentence).in(original_text);
         }
-        return pgp_block_iframe(has_end ? armored : '', account_email, message_id, is_outgoing, sender_email, has_password || false, gmail_tab_id);
+        return factory().embedded.message(has_end ? armored : '', account_email, message_id, is_outgoing, sender_email, has_password || false, gmail_tab_id);
       });
       if(processed_text !== original_text) {
         if(has_password) {
@@ -92,14 +100,14 @@ function init_elements_replace_js() {
 
       if(!$('div.ade:visible').is('.appended')) {
         //todo - button below should be in factory.js
-        $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + get_logo_src(true, 16) + '" /></span>');
+        $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + factory().src.logo(true, 16) + '" /></span>');
         $('div.ade.appended span.show_original_conversation').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
           $('div.ade.appended .gZ').click();
         }));
       }
     } else if(!$('div.ade:visible').is('.appended')) {
       //todo - button below should be in factory.js
-      $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + get_logo_src(true, 16) + '"/></span>');
+      $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + factory().src.logo(true, 16) + '"/></span>');
       $('div.ade.appended span.use_secure_reply').click(catcher.try(function () {
         replace_reply_buttons(account_email, gmail_tab_id, true);
         replace_standard_reply_box(account_email, gmail_tab_id, true, true);
@@ -126,7 +134,7 @@ function init_elements_replace_js() {
       $(this).replaceWith(button);
       $('a.open_draft').click(catcher.try(function () {
         $('div.new_message').remove();
-        $('body').append(compose_message_iframe(account_email, gmail_tab_id, button_href_id));
+        $('body').append(factory().embedded.compose(button_href_id));
       }));
     });
   };
@@ -155,7 +163,7 @@ function init_elements_replace_js() {
       var new_pgp_messages = $(this).children(selectors.attachments).not('.evaluated');
       if(new_pgp_messages.length) {
         new_pgp_messages.addClass('evaluated');
-        var attachment_container_classes = new_pgp_messages.get(0).classList;
+        var attachment_container_classes = tool.arr.from_dome_node_list(new_pgp_messages.get(0).classList);
         var message_id = parse_message_id_from('attachment', this);
         if(message_id) {
           if(can_read_emails) {
@@ -234,7 +242,7 @@ function init_elements_replace_js() {
     var selectors = get_attachments_selectors(message_id, ['.pgp', '.gpg']);
     hide_attachments(selectors.attachments, attachments.length);
     $.each(attachments, function (i, attachment) {
-      $(selectors.container).prepend(pgp_attachment_iframe(account_email, attachment, classes, gmail_tab_id));
+      $(selectors.container).prepend(factory().embedded.attachment(attachment, classes));
     });
   };
 
@@ -251,7 +259,7 @@ function init_elements_replace_js() {
               if(tool.value(tool.crypto.armor.headers().begin).in(armored_key)) {
                 //todo - this approach below is what should be done in every similar function - hide them by exact names, one by one
                 hide_attachments(selector, 1);
-                $('div.a3s.m' + message_id).append(pgp_pubkey_iframe(account_email, armored_key, is_outgoing, gmail_tab_id));
+                $('div.a3s.m' + message_id).append(factory().embedded.pubkey(armored_key, is_outgoing));
               } else {
                 $(selector).children('.attachment_loader').text('Unknown encryption format');
               }
@@ -271,7 +279,7 @@ function init_elements_replace_js() {
       $('span.aVW').css('display', 'none');
       $('div.a3s.m' + message_id).css('display', 'block');
       var sender_email = ($('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-      $('div.a3s.m' + message_id).append(pgp_block_iframe('', account_email, message_id, false, sender_email, false, gmail_tab_id));
+      $('div.a3s.m' + message_id).append(factory().embedded.message('', message_id, false, sender_email, false));
     }
   };
 
@@ -333,7 +341,7 @@ function init_elements_replace_js() {
       var root_element = get_conversation_root_element(reply_box);
       if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) {
         get_conversation_params(account_email, root_element, function (params) {
-          var iframe = reply_message_iframe(account_email, gmail_tab_id, params, editable);
+          var iframe = factory().embedded.reply(params, editable);
           $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
         });
       }
@@ -344,7 +352,7 @@ function init_elements_replace_js() {
     var reply_container_iframe_selector = '.reply_message_iframe_container > iframe';
     if($(reply_container_iframe_selector).length) {
       get_conversation_params(account_email, get_conversation_root_element($(reply_container_iframe_selector).get(0)), function (params) {
-        $(reply_container_iframe_selector).replaceWith(reply_message_iframe(account_email, gmail_tab_id, params, true));
+        $(reply_container_iframe_selector).replaceWith(factory().embedded.reply(params, true));
       });
     } else {
       replace_standard_reply_box(account_email, gmail_tab_id, true);
@@ -361,7 +369,7 @@ function init_elements_replace_js() {
         thread_id: thread_id,
         thread_message_id: thread_id,
       };
-      $('.reply_message_iframe_container').append(reply_message_iframe(account_email, gmail_tab_id, conversation_params, false, true));
+      $('.reply_message_iframe_container').append(factory().embedded.reply(conversation_params, false, true));
     });
   };
 

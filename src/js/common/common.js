@@ -400,6 +400,9 @@
         in: function(array_or_str) { return arr_contains(array_or_str, v); } // tool.value(v).in(array_or_string)
       };
     },
+    e: function(name, attrs) {
+      return $('<' + name + ' />', attrs)[0].outerHTML;
+    },
   };
 
   /* tool.str */

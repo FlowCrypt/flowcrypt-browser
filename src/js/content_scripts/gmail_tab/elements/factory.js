@@ -2,100 +2,122 @@
 
 'use strict';
 
-function init_elements_factory_js() {
+function init_elements_factory_js(account_email, parent_tab_id, reloadable_class) {
 
+  reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
-  if(typeof reloadable_class === 'undefined') { // todo - needs a better solution through DI
-    var reloadable_class = '';
-  }
-
-  window.get_logo_src = function (include_header, size) {
-    if(size !== 16) {
-      return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
-    } else {
-      return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVNnVFPpFj333vRCS4iAlEtvUhUIIFJCi4AUkSYqIQkQSoghodkVUcERRUUEG8igiAOOjoCMFVEsDIoK2AfkIaKOg6OIisr74Xuja9a89+bN/rXXPues852zzwfACAyWSDNRNYAMqUIeEeCDx8TG4eQuQIEKJHAAEAizZCFz/SMBAPh+PDwrIsAHvgABeNMLCADATZvAMByH/w/qQplcAYCEAcB0kThLCIAUAEB6jkKmAEBGAYCdmCZTAKAEAGDLY2LjAFAtAGAnf+bTAICd+Jl7AQBblCEVAaCRACATZYhEAGg7AKzPVopFAFgwABRmS8Q5ANgtADBJV2ZIALC3AMDOEAuyAAgMADBRiIUpAAR7AGDIIyN4AISZABRG8lc88SuuEOcqAAB4mbI8uSQ5RYFbCC1xB1dXLh4ozkkXKxQ2YQJhmkAuwnmZGTKBNA/g88wAAKCRFRHgg/P9eM4Ors7ONo62Dl8t6r8G/yJiYuP+5c+rcEAAAOF0ftH+LC+zGoA7BoBt/qIl7gRoXgugdfeLZrIPQLUAoOnaV/Nw+H48PEWhkLnZ2eXk5NhKxEJbYcpXff5nwl/AV/1s+X48/Pf14L7iJIEyXYFHBPjgwsz0TKUcz5IJhGLc5o9H/LcL//wd0yLESWK5WCoU41EScY5EmozzMqUiiUKSKcUl0v9k4t8s+wM+3zUAsGo+AXuRLahdYwP2SycQWHTA4vcAAPK7b8HUKAgDgGiD4c93/+8//UegJQCAZkmScQAAXkQkLlTKsz/HCAAARKCBKrBBG/TBGCzABhzBBdzBC/xgNoRCJMTCQhBCCmSAHHJgKayCQiiGzbAdKmAv1EAdNMBRaIaTcA4uwlW4Dj1wD/phCJ7BKLyBCQRByAgTYSHaiAFiilgjjggXmYX4IcFIBBKLJCDJiBRRIkuRNUgxUopUIFVIHfI9cgI5h1xGupE7yAAygvyGvEcxlIGyUT3UDLVDuag3GoRGogvQZHQxmo8WoJvQcrQaPYw2oefQq2gP2o8+Q8cwwOgYBzPEbDAuxsNCsTgsCZNjy7EirAyrxhqwVqwDu4n1Y8+xdwQSgUXACTYEd0IgYR5BSFhMWE7YSKggHCQ0EdoJNwkDhFHCJyKTqEu0JroR+cQYYjIxh1hILCPWEo8TLxB7iEPENyQSiUMyJ7mQAkmxpFTSEtJG0m5SI+ksqZs0SBojk8naZGuyBzmULCAryIXkneTD5DPkG+Qh8lsKnWJAcaT4U+IoUspqShnlEOU05QZlmDJBVaOaUt2ooVQRNY9aQq2htlKvUYeoEzR1mjnNgxZJS6WtopXTGmgXaPdpr+h0uhHdlR5Ol9BX0svpR+iX6AP0dwwNhhWDx4hnKBmbGAcYZxl3GK+YTKYZ04sZx1QwNzHrmOeZD5lvVVgqtip8FZHKCpVKlSaVGyovVKmqpqreqgtV81XLVI+pXlN9rkZVM1PjqQnUlqtVqp1Q61MbU2epO6iHqmeob1Q/pH5Z/YkGWcNMw09DpFGgsV/jvMYgC2MZs3gsIWsNq4Z1gTXEJrHN2Xx2KruY/R27iz2qqaE5QzNKM1ezUvOUZj8H45hx+Jx0TgnnKKeX836K3hTvKeIpG6Y0TLkxZVxrqpaXllirSKtRq0frvTau7aedpr1Fu1n7gQ5Bx0onXCdHZ4/OBZ3nU9lT3acKpxZNPTr1ri6qa6UbobtEd79up+6Ynr5egJ5Mb6feeb3n+hx9L/1U/W36p/VHDFgGswwkBtsMzhg8xTVxbzwdL8fb8VFDXcNAQ6VhlWGX4YSRudE8o9VGjUYPjGnGXOMk423GbcajJgYmISZLTepN7ppSTbmmKaY7TDtMx83MzaLN1pk1mz0x1zLnm+eb15vft2BaeFostqi2uGVJsuRaplnutrxuhVo5WaVYVVpds0atna0l1rutu6cRp7lOk06rntZnw7Dxtsm2qbcZsOXYBtuutm22fWFnYhdnt8Wuw+6TvZN9un2N/T0HDYfZDqsdWh1+c7RyFDpWOt6azpzuP33F9JbpL2dYzxDP2DPjthPLKcRpnVOb00dnF2e5c4PziIuJS4LLLpc+Lpsbxt3IveRKdPVxXeF60vWdm7Obwu2o26/uNu5p7ofcn8w0nymeWTNz0MPIQ+BR5dE/C5+VMGvfrH5PQ0+BZ7XnIy9jL5FXrdewt6V3qvdh7xc+9j5yn+M+4zw33jLeWV/MN8C3yLfLT8Nvnl+F30N/I/9k/3r/0QCngCUBZwOJgUGBWwL7+Hp8Ib+OPzrbZfay2e1BjKC5QRVBj4KtguXBrSFoyOyQrSH355jOkc5pDoVQfujW0Adh5mGLw34MJ4WHhVeGP45wiFga0TGXNXfR3ENz30T6RJZE3ptnMU85ry1KNSo+qi5qPNo3ujS6P8YuZlnM1VidWElsSxw5LiquNm5svt/87fOH4p3iC+N7F5gvyF1weaHOwvSFpxapLhIsOpZATIhOOJTwQRAqqBaMJfITdyWOCnnCHcJnIi/RNtGI2ENcKh5O8kgqTXqS7JG8NXkkxTOlLOW5hCepkLxMDUzdmzqeFpp2IG0yPTq9MYOSkZBxQqohTZO2Z+pn5mZ2y6xlhbL+xW6Lty8elQfJa7OQrAVZLQq2QqboVFoo1yoHsmdlV2a/zYnKOZarnivN7cyzytuQN5zvn//tEsIS4ZK2pYZLVy0dWOa9rGo5sjxxedsK4xUFK4ZWBqw8uIq2Km3VT6vtV5eufr0mek1rgV7ByoLBtQFr6wtVCuWFfevc1+1dT1gvWd+1YfqGnRs+FYmKrhTbF5cVf9go3HjlG4dvyr+Z3JS0qavEuWTPZtJm6ebeLZ5bDpaql+aXDm4N2dq0Dd9WtO319kXbL5fNKNu7g7ZDuaO/PLi8ZafJzs07P1SkVPRU+lQ27tLdtWHX+G7R7ht7vPY07NXbW7z3/T7JvttVAVVN1WbVZftJ+7P3P66Jqun4lvttXa1ObXHtxwPSA/0HIw6217nU1R3SPVRSj9Yr60cOxx++/p3vdy0NNg1VjZzG4iNwRHnk6fcJ3/ceDTradox7rOEH0x92HWcdL2pCmvKaRptTmvtbYlu6T8w+0dbq3nr8R9sfD5w0PFl5SvNUyWna6YLTk2fyz4ydlZ19fi753GDborZ752PO32oPb++6EHTh0kX/i+c7vDvOXPK4dPKy2+UTV7hXmq86X23qdOo8/pPTT8e7nLuarrlca7nuer21e2b36RueN87d9L158Rb/1tWeOT3dvfN6b/fF9/XfFt1+cif9zsu72Xcn7q28T7xf9EDtQdlD3YfVP1v+3Njv3H9qwHeg89HcR/cGhYPP/pH1jw9DBY+Zj8uGDYbrnjg+OTniP3L96fynQ89kzyaeF/6i/suuFxYvfvjV69fO0ZjRoZfyl5O/bXyl/erA6xmv28bCxh6+yXgzMV70VvvtwXfcdx3vo98PT+R8IH8o/2j5sfVT0Kf7kxmTk/8EA5jz/GMzLdsAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAAHsIAAB7CAW7QdT4AAAAHdElNRQfgBRoDHBtDgKNBAAAAUUlEQVQoz2M0XCTOQApgYiARsDAwMJyLfcHAwGC0WAIrGxkYLZYg2QbCGnQWSugslCDfD2R5Gj+4Ev+CxjZAgnhAPI0Zr8gAngJItoGR5qkVAGjIFOA2sMXYAAAAAElFTkSuQmCC';
-    }
-  };
-
-  window.compose_message_iframe = function (account_email, gmail_tab_id, draft_id) {
-    var params = { account_email: account_email, parent_tab_id: gmail_tab_id, draft_id: draft_id, placement: 'gmail' };
-    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/new_message.htm'), params);
-    return '<div class="new_message" id="new_message"><iframe class="' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>'
-  };
-
-  window.passphrase_dialog = function (account_email, type, longids, gmail_tab_id) {
-    var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: gmail_tab_id };
-    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/passphrase.htm'), params);
-    return '<div id="cryptup_dialog"><iframe class="medium ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
-  };
-
-  window.subscribe_dialog = function (account_email, verification_email_text, placement, source, gmail_tab_id) {
-    var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: gmail_tab_id };
-    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/subscribe.htm'), params);
-    if(placement === 'embedded') {
-      return '<iframe class="embedded ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe>';
-    } else {
-      return '<div id="cryptup_dialog"><iframe class="short ' + reloadable_class + '" scrolling="no" src="' + src + '"></iframe></div>';
-    }
-  };
-
-  window.add_pubkey_dialog_src = function (account_email, emails, gmail_tab_id, placement) {
-    var params = { account_email: account_email, emails: emails, parent_tab_id: gmail_tab_id, placement: placement };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
-  };
-
-  window.add_pubkey_dialog = function (account_email, emails, gmail_tab_id) {
-    return '<div id="cryptup_dialog"><iframe class="tall ' + reloadable_class + '" scrolling="no" src="' + add_pubkey_dialog_src(account_email, emails, gmail_tab_id, 'gmail') + '"></iframe></div>';
-  };
-
-  window.pgp_attachment_iframe = function (account_email, meta, container_classes, gmail_tab_id) {
-    var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: gmail_tab_id };
-    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attachment.htm'), params);
-    return '<span class="pgp_attachment ' + Array.prototype.join.call(container_classes, ' ') + '"><iframe class="' + reloadable_class + '" src="' + src + '"></iframe></span>';
-  };
-
-  window.pgp_block_iframe = function (armored, account_email, message_id, is_outgoing, sender, has_password, gmail_tab_id) {
-    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: gmail_tab_id };
-    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm'), params);
-    return '<iframe class="pgp_block ' + reloadable_class + '" id="' + params.frame_id + '" src="' + src + '"></iframe>' + hide_gmail_new_message_in_thread_notification;
-  };
-
-  window.pgp_pubkey_iframe = function (account_email, armored_pubkey, is_outgoing, gmail_tab_id) {
-    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: gmail_tab_id };
-    return '<iframe class="pgp_block ' + reloadable_class + '" id="' + params.frame_id + '" src="' + tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm'), params) + '"></iframe>';
-  };
-
-  window.reply_message_iframe = function (account_email, gmail_tab_id, conversation_params, skip_click_prompt, ignore_draft) {
-    var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
-    var params = {
-      account_email: account_email,
-      frame_id: 'frame_' + tool.str.random(),
-      placement: 'gmail',
-      to: headers.to,
-      from: headers.from,
-      subject: conversation_params.subject,
-      thread_id: conversation_params.thread_id,
-      thread_message_id: conversation_params.thread_message_id,
-      skip_click_prompt: Boolean(skip_click_prompt),
-      ignore_draft: Boolean(ignore_draft),
-      parent_tab_id: gmail_tab_id,
-    };
-    var src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/reply_message.htm'), params);
-    return '<iframe class="reply_message ' + reloadable_class + '" id="' + params.frame_id + '" src="' + src + '"></iframe>';
-  };
-
-  window.resolve_from_to = function (secondary_emails, my_email, their_emails) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
+  function resolve_from_to(secondary_emails, my_email, their_emails) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
     if(their_emails.length === 1 && tool.value(their_emails[0]).in(secondary_emails)) {
       return { from: their_emails[0], to: my_email }; //replying to myself, reverse the values to actually write to them
     }
     return { to: their_emails, from: my_email };
-  };
+  }
 
-  window.open_new_message = function (account_email, tab_id) {
-    if($('div.new_message').length == 0) {
-      $('body').append(compose_message_iframe(account_email, tab_id));
+  var src = {
+    logo: function (include_header, size) {
+      if(size !== 16) {
+        return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
+      } else {
+        return(include_header ? 'data:image/png;base64,' : '') + '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';
+      }
+    },
+    compose_message: function (draft_id) {
+      var params = { account_email: account_email, parent_tab_id: parent_tab_id, draft_id: draft_id, placement: 'gmail' };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/new_message.htm'), params);
+    },
+    passphrase_dialog: function (type, longids) {
+      var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: parent_tab_id };
+      return src = tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/passphrase.htm'), params);
+    },
+    subscribe_dialog: function (verification_email_text, placement, source) {
+      var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: parent_tab_id };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/subscribe.htm'), params);
+    },
+    add_pubkey_dialog: function (emails, placement) {
+      var params = { account_email: account_email, emails: emails, parent_tab_id: parent_tab_id, placement: placement };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
+    },
+    pgp_attachment_iframe: function (meta) {
+      var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attachment.htm'), params);
+    },
+    pgp_block_iframe: function (armored, message_id, is_outgoing, sender, has_password) {
+      var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm'), params);
+    },
+    pgp_pubkey_iframe: function (armored_pubkey, is_outgoing) {
+      var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm'), params);
+    },
+    reply_message_iframe: function (conversation_params, skip_click_prompt, ignore_draft) {
+      var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
+      var params = {
+        account_email: account_email,
+        frame_id: 'frame_' + tool.str.random(),
+        placement: 'gmail',
+        to: headers.to,
+        from: headers.from,
+        subject: conversation_params.subject,
+        thread_id: conversation_params.thread_id,
+        thread_message_id: conversation_params.thread_message_id,
+        skip_click_prompt: Boolean(skip_click_prompt),
+        ignore_draft: Boolean(ignore_draft),
+        parent_tab_id: parent_tab_id,
+      };
+      return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/reply_message.htm'), params);
     }
   };
 
+  function iframe(src, classes, additional_attributes) {
+    var attributes = { id: tool.env.url_params(['frame_id'], src).frame_id, class: (classes || []).concat(reloadable_class).join(' '), src: src };
+    $.each(additional_attributes, function(a, v) {
+      attributes[a] = v;
+    });
+    return tool.e('iframe', attributes);
+  }
+
+  function dialog(content) {
+    return tool.e('div', { id: 'cryptup_dialog', html: content });
+  }
+
+  return {
+    src: src,
+    dialog: {
+      passphrase: function(longids) {
+        // todo - confirm that type is supposed to be "dialog"
+        return dialog(iframe(src.passphrase_dialog('dialog', longids), ['medium'], {scrolling: 'no'}))
+      },
+      subscribe: function(verification_email_text, source) {
+        // todo - double check that the placement was actually called dialog
+        return dialog(iframe(src.subscribe_dialog(verification_email_text, 'dialog', source), ['short'], {scrolling: 'no'}));
+      },
+      add_pubkey: function(emails) {
+        return dialog(iframe(src.add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
+      },
+    },
+    embedded: {
+      compose: function(draft_id) {
+        return tool.e('div', {id: 'new_message', class: 'new_message', html: iframe(src.compose_message(draft_id), [], {scrolling: 'no'})});
+      },
+      subscribe: function(verification_email_text, source) {
+        return iframe(src.subscribe_dialog(verification_email_text, 'embedded', source), ['short'], {scrolling: 'no'});
+      },
+      attachment: function(meta, container_classes) {
+        return tool.e('span', {class: (container_classes || []).concat('pgp_attachment').join(' '), html: iframe(src.pgp_attachment_iframe(meta))});
+      },
+      message: function(armored, message_id, is_outgoing, sender, has_password) {
+        return iframe(src.pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password), ['pgp_block']) + hide_gmail_new_message_in_thread_notification;
+      },
+      pubkey: function(armored_pubkey, is_outgoing) {
+        return iframe(src.pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']);
+      },
+      reply: function(conversation_params, skip_click_prompt, ignore_draft) {
+        return iframe(src.reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']);
+      },
+      passphrase: function(longids) {
+        return dialog(iframe(src.passphrase_dialog('embedded', longids), ['medium'], {scrolling: 'no'}))
+      },
+    },
+  };
 }

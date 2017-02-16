@@ -33,7 +33,6 @@ catcher.try(function () {
   document.dispatchEvent(new CustomEvent(destruction_event));
   document.addEventListener(destruction_event, destroy);
 
-  init_elements_factory_js();
   init_elements_inject_js();
   init_elements_notifications_js();
   init_elements_replace_js();

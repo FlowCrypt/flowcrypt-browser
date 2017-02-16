@@ -9,6 +9,11 @@ function init_setup_js() {
   window.account_email_global = null;
   window.same_world_global = true;
 
+  var factory;
+  window.get_factory = function() {
+    return factory;
+  };
+
   window.save_account_email_full_name = function (account_email) {
     // will cycle until page loads and name is accessible
     // todo - create general event on_gmail_finished_loading for similar actions
@@ -47,6 +52,7 @@ function init_setup_js() {
   window.setup = function (account_email) {
     tool.browser.message.tab_id(function (tab_id) {
       catcher.try(function () {
+        factory = init_elements_factory_js(account_email, tab_id, reloadable_class);
         hijack_gmail_hotkeys(account_email, tab_id);
         inject_meta(destroyable_class);
         add_account_email_to_list_of_accounts(account_email);
@@ -80,7 +86,7 @@ function init_setup_js() {
   window.initialize = function (account_email, tab_id) {
     tool.browser.message.listen({
       open_new_message: function (data) {
-        open_new_message(account_email, tab_id);
+        open_new_message();
       },
       close_new_message: function (data) {
         $('div.new_message').remove();
@@ -96,17 +102,17 @@ function init_setup_js() {
       },
       passphrase_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(passphrase_dialog(account_email, data.type, data.longids, tab_id));
+          $('body').append(get_factory().dialog.passphrase(data.type, data.longids));
         }
       },
       subscribe_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(subscribe_dialog(account_email, null, 'dialog', data ? data.source : null, tab_id));
+          $('body').append(get_factory().dialog.subscribe(null, 'dialog', data ? data.source : null));
         }
       },
       add_pubkey_dialog_gmail: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(add_pubkey_dialog(account_email, data.emails, tab_id));
+          $('body').append(get_factory().dialog.add_pubkey(data.emails));
         }
       },
       notification_show: function (data) {

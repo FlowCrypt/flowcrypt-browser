@@ -19,6 +19,7 @@ db_open(function (db) {
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
   var attach = init_shared_attach_js(5, 10);
+  var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id, '');
   var compose = init_shared_compose_js(url_params, db, attach);
 
   function recover_thread_id_if_missing(callback) {
@@ -139,7 +140,7 @@ db_open(function (db) {
             $('#attachments').css('display', 'block');
             var attachment_metas = tool.api.gmail.find_attachments(gmail_message_object);
             $.each(attachment_metas, function (i, attachment_meta) {
-              $('#attachments').append(pgp_attachment_iframe(url_params.account_email, attachment_meta, []));
+              $('#attachments').append(factory.embeddded.attachment(attachment_meta, []));
             });
           } else {
             console.log('failed to re-show sent attachments'); //todo - handle !success

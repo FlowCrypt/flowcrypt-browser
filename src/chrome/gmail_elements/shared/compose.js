@@ -36,8 +36,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
   };
 
-  init_elements_factory_js();
-
   tool.browser.message.tab_id(function (tab_id) {
     tool.browser.message.listen({
       close_dialog: function (data) {
@@ -885,8 +883,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
       });
     } else {
       tool.browser.message.tab_id(function (compose_window_tab_id) {
+        var factory = init_elements_factory_js(url_params.account_email, compose_window_tab_id);
         $.featherlight({
-          iframe: add_pubkey_dialog_src(url_params.account_email, get_recipients_from_dom('no_pgp'), compose_window_tab_id, 'settings'),
+          iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'),
           iframeWidth: 515,
           iframeHeight: $('html').height() - 50,
         });
