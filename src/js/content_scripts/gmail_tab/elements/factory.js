@@ -39,7 +39,7 @@ function init_elements_factory_js(account_email, parent_tab_id, reloadable_class
       return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
     },
     pgp_attachment_iframe: function (meta) {
-      var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id };
+      var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id, url: meta.url };
       return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attachment.htm'), params);
     },
     pgp_block_iframe: function (armored, message_id, is_outgoing, sender, has_password) {
