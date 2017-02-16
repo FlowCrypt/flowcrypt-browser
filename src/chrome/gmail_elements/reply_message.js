@@ -140,7 +140,7 @@ db_open(function (db) {
             $('#attachments').css('display', 'block');
             var attachment_metas = tool.api.gmail.find_attachments(gmail_message_object);
             $.each(attachment_metas, function (i, attachment_meta) {
-              $('#attachments').append(factory.embeddded.attachment(attachment_meta, []));
+              $('#attachments').append(factory.embedded.attachment(attachment_meta, []));
             });
           } else {
             console.log('failed to re-show sent attachments'); //todo - handle !success

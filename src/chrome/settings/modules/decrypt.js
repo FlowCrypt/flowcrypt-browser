@@ -47,7 +47,7 @@ db_open(function (db) {
           tool.file.save_to_downloads(attachment.name.replace(/(\.pgp)|(\.gpg)$/, ''), attachment.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
-          $('.passphrase_dialog').html(factory.embeddded.passphrase(missing_passprase_longids));
+          $('.passphrase_dialog').html(factory.embedded.passphrase(missing_passprase_longids));
         } else {
           delete result.message;
           console.log(result);
