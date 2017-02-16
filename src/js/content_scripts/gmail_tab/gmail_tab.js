@@ -30,16 +30,23 @@ catcher.try(function () {
     return !$('.' + destroyable_class).length && !$('.gmail_notifications').length && !$('.new_message_button').length;
   };
 
+  window.TrySetDestryableInterval = function (code, ms) {
+    var id = setInterval(window.catcher.try(code), ms);
+    destroyable_intervals.push(id);
+    return id;
+  };
+
+  window.TrySetDestryableTimeout = function (code, ms) {
+    var id = setTimeout(window.catcher.try(code), ms);
+    destroyable_timeouts.push(id);
+    return id;
+  };
+
   document.dispatchEvent(new CustomEvent(destruction_event));
   document.addEventListener(destruction_event, destroy);
 
-  init_elements_inject_js();
-  init_elements_notifications_js();
-  init_elements_replace_js();
-  init_setup_js();
-
   if(window.vacant()) {
-    wait_for_account_email_then_setup();
+    init_setup_js().wait_for_account_email_then_setup();
   }
 
 })();

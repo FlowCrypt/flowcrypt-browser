@@ -296,6 +296,7 @@
       spinner: spinner,
       passphrase_toggle: passphrase_toggle,
       enter: ui_enter,
+      build_jquery_selectors: ui_build_jquery_selectors,
       event: {
         double: double,
         parallel: parallel,
@@ -1060,6 +1061,27 @@
       if (e.which == key_codes().enter) {
         callback();
       }
+    };
+  }
+
+  function ui_build_jquery_selectors(selectors) {
+    var cache = {};
+    return {
+      cached: function(name) {
+        if(!cache[name]) {
+          if(typeof selectors[name] === 'undefined') {
+            catcher.log('unknown selector name: ' + name);
+          }
+          cache[name] = $(selectors[name]);
+        }
+        return cache[name];
+      },
+      now: function(name) {
+        if(typeof selectors[name] === 'undefined') {
+          catcher.log('unknown selector name: ' + name);
+        }
+        return $(selectors[name]);
+      },
     };
   }
 

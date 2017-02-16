@@ -10,32 +10,12 @@ function init_setup_js() {
   window.same_world_global = true;
 
   var factory;
-  window.get_factory = function() {
-    return factory;
-  };
+  var inject;
+  var replace;
+  var notifications = init_elements_notifications_js();
 
-  window.save_account_email_full_name = function (account_email) {
-    // will cycle until page loads and name is accessible
-    // todo - create general event on_gmail_finished_loading for similar actions
-    TrySetDestryableTimeout(function () {
-      var full_name = $("div.gb_hb div.gb_lb").text();
-      if(full_name) {
-        account_storage_set(account_email, { full_name: full_name, });
-      } else {
-        save_account_email_full_name(account_email);
-      }
-    }, 1000);
-  };
 
-  window.save_account_email_full_name_if_needed = function (account_email) {
-    account_storage_get(account_email, 'full_name', function (value) {
-      if(typeof value === 'undefined') {
-        save_account_email_full_name(account_email);
-      }
-    });
-  };
-
-  window.wait_for_account_email_then_setup = function () {
+  function wait_for_account_email_then_setup() {
     var account_email = get_account_email();
     if(typeof account_email !== 'undefined') {
       console.log('Loading CryptUp ' + catcher.version());
@@ -46,30 +26,31 @@ function init_setup_js() {
       account_email_interval += 1000;
       TrySetDestryableTimeout(wait_for_account_email_then_setup, account_email_interval);
     }
-  };
+  }
 
   // called by wait_for_account_email_then_setup
-  window.setup = function (account_email) {
+  function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
       catcher.try(function () {
         factory = init_elements_factory_js(account_email, tab_id, reloadable_class);
+        inject = init_elements_inject_js(factory, account_email, tab_id, destroyable_class);
         hijack_gmail_hotkeys(account_email, tab_id);
-        inject_meta(destroyable_class);
+        inject.meta();
         add_account_email_to_list_of_accounts(account_email);
         save_account_email_full_name_if_needed(account_email);
         var show_setup_needed_notification_if_setup_not_done = true;
         var wait_for_setup_interval = TrySetDestryableInterval(function () {
           account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], function (storage) {
             if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
-              gmail_notification_clear();
+              notifications.clear();
               initialize(account_email, tab_id);
               clearInterval(wait_for_setup_interval);
             } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
               var set_up_link = tool.env.url_create('_PLUGIN/settings/index.htm', { account_email: account_email });
               var set_up_notification = '<a href="' + set_up_link + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
-              gmail_notification_show(set_up_notification, {
+              notifications.show(set_up_notification, {
                 notification_setup_needed_dismiss: function () {
-                  account_storage_set(account_email, { notification_setup_needed_dismissed: true }, gmail_notification_clear);
+                  account_storage_set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
                 },
                 close: function () {
                   show_setup_needed_notification_if_setup_not_done = false;
@@ -80,13 +61,13 @@ function init_setup_js() {
         }, 1000);
       })();
     });
-  };
+  }
 
   // called by setup
-  window.initialize = function (account_email, tab_id) {
+  function initialize(account_email, tab_id) {
     tool.browser.message.listen({
       open_new_message: function (data) {
-        open_new_message();
+        inject.compose_window();
       },
       close_new_message: function (data) {
         $('div.new_message').remove();
@@ -95,29 +76,29 @@ function init_setup_js() {
         $('iframe#' + data.frame_id).remove();
       },
       reinsert_reply_box: function (data) {
-        reinsert_reply_box(data.account_email, tab_id, data.subject, data.my_email, data.their_email, data.thread_id);
+        replace.reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id);
       },
       set_css: function (data) {
         $(data.selector).css(data.css);
       },
       passphrase_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(get_factory().dialog.passphrase(data.type, data.longids));
+          $('body').append(factory.dialog.passphrase(data.type, data.longids));
         }
       },
       subscribe_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(get_factory().dialog.subscribe(null, 'dialog', data ? data.source : null));
+          $('body').append(factory.dialog.subscribe(null, 'dialog', data ? data.source : null));
         }
       },
       add_pubkey_dialog_gmail: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(get_factory().dialog.add_pubkey(data.emails));
+          $('body').append(factory.dialog.add_pubkey(data.emails));
         }
       },
       notification_show: function (data) {
-        gmail_notification_show(data.notification, data.callbacks);
-        $('body').one('click', catcher.try(gmail_notification_clear));
+        notifications.show(data.notification, data.callbacks);
+        $('body').one('click', catcher.try(notifications.clear));
       },
       close_dialog: function (data) {
         $('#cryptup_dialog').remove();
@@ -127,23 +108,44 @@ function init_setup_js() {
     tool.browser.message.send(null, 'migrate_account', { account_email: account_email, }, catcher.try(function () {
       start(account_email, tab_id);
     }));
-  };
+  }
 
   // called by initialize
-  window.start = function (account_email, tab_id) {
+  function start(account_email, tab_id) {
     account_storage_get(account_email, ['addresses', 'google_token_scopes'], function (storage) {
-      var addresses = storage.addresses || [account_email];
       var can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-      inject_buttons(account_email, destroyable_class, tab_id);
-      show_initial_notifications(account_email);
-      replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
+      inject.buttons();
+      replace = init_elements_replace_js(factory, account_email, storage.addresses || [account_email], can_read_emails);
+      notifications.show_initial(account_email);
+      replace.everything();
       TrySetDestryableInterval(function () {
-        replace_pgp_elements(account_email, addresses, can_read_emails, tab_id);
+        replace.everything();
       }, replace_pgp_elements_interval);
     });
-  };
+  }
 
-  window.hijack_gmail_hotkeys = function (account_email, tab_id) {
+  function save_account_email_full_name(account_email) {
+    // will cycle until page loads and name is accessible
+    // todo - create general event on_gmail_finished_loading for similar actions
+    TrySetDestryableTimeout(function () {
+      var full_name = $("div.gb_hb div.gb_lb").text();
+      if(full_name) {
+        account_storage_set(account_email, { full_name: full_name, });
+      } else {
+        save_account_email_full_name(account_email);
+      }
+    }, 1000);
+  }
+
+  function save_account_email_full_name_if_needed(account_email) {
+    account_storage_get(account_email, 'full_name', function (value) {
+      if(typeof value === 'undefined') {
+        save_account_email_full_name(account_email);
+      }
+    });
+  }
+
+  function hijack_gmail_hotkeys() {
     var keys = tool.env.key_codes();
     var unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
     $(document).keypress(function (e) {
@@ -151,33 +153,23 @@ function init_setup_js() {
         var causes_unsecure_reply = tool.value(e.which).in(unsecure_reply_key_shortcuts);
         if(causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
           e.stopImmediatePropagation();
-          set_reply_box_editable(account_email, tab_id);
+          replace.set_reply_box_editable();
         }
       })();
     });
-  };
+  }
 
-  window.get_account_email = function () {
+  function get_account_email() {
     var account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._]+@[^…< ]+/gi);
     if(account_email_loading_match !== null) {
       return account_email_loading_match[0].replace(/^[\s\.]+|[\s\.]+$/gm, '').toLowerCase();
     } else {
       return undefined;
     }
-  };
+  }
 
-  /* ######################## MIMICKING STANDARD JS FUNCTIONS ######################### */
-
-  window.TrySetDestryableInterval = function (code, ms) {
-    var id = setInterval(window.catcher.try(code), ms);
-    destroyable_intervals.push(id);
-    return id;
-  };
-
-  window.TrySetDestryableTimeout = function (code, ms) {
-    var id = setTimeout(window.catcher.try(code), ms);
-    destroyable_timeouts.push(id);
-    return id;
+  return {
+    wait_for_account_email_then_setup: wait_for_account_email_then_setup,
   };
 
 }
