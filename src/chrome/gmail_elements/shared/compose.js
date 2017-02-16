@@ -413,7 +413,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       if(db_contact && db_contact.has_pgp && db_contact.pubkey) {
         callback(db_contact);
       } else {
-        tool.api.attester.keys_find(email, function (success, result) {
+        tool.api.attester.lookup_email(email, function (success, result) {
           if(success && result.email) {
             if(result.pubkey) {
               var parsed = openpgp.key.readArmored(result.pubkey);

@@ -44,7 +44,7 @@ function account_consistency_fixes(account_email) {
     // re-submitting pubkey if failed
     if(storage.setup_done && private_storage_get('local', account_email, 'master_public_key_submit') && !private_storage_get('local', account_email, 'master_public_key_submitted')) {
       console.log('consistency_fixes: submitting pubkey');
-      tool.api.attester.keys_submit(account_email, private_storage_get('local', account_email, 'master_public_key'), false, function (success, response) {
+      tool.api.attester.initial_legacy_submit(account_email, private_storage_get('local', account_email, 'master_public_key'), false, function (success, response) {
         if(success && response.saved) {
           private_storage_set('local', account_email, 'master_public_key_submitted', true);
         }
@@ -57,7 +57,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
   var my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
   account_storage_get(account_email, ['addresses', 'addresses_keyserver'], function (storage) {
     if(storage.addresses && storage.addresses.length) {
-      tool.api.attester.keys_find(storage.addresses, function (success, results) {
+      tool.api.attester.lookup_email(storage.addresses, function (success, results) {
         if(success) {
           var addresses_keyserver = [];
           $.each(results.results, function (i, result) {

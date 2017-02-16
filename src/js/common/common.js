@@ -370,9 +370,9 @@
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
       },
       attester: {
-        keys_find: api_attester_keys_find,
-        keys_submit: api_attester_keys_submit,
-        keys_attest: api_attester_keys_attest,
+        lookup_email: api_attester_lookup_email,
+        initial_legacy_submit: api_attester_initial_legacy_submit,
+        initial_confirm: api_attester_initial_confirm,
         replace_request: api_attester_replace_request,
         replace_confirm: api_attester_replace_confirm,
         packet: {
@@ -1159,7 +1159,7 @@
   function keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
     account_storage_get(account_email, ['addresses'], function (storage) {
-      api_attester_keys_find(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
+      api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
         if(success) {
           $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
@@ -1193,7 +1193,7 @@
               emails_setup_done.push(account_email);
             }
           });
-          api_attester_keys_check(emails_setup_done, function (success, response) {
+          api_attester_legacy_keys_check(emails_setup_done, function (success, response) {
             if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
               var save_result = {};
               $.each(emails_setup_done, function (i, account_email) {
@@ -2222,32 +2222,32 @@
   /* tool.api.attester */
 
   function api_attester_call(path, values, callback, format) {
-    api_call('https://cryptup-keyserver.herokuapp.com/', path, values, callback, format || 'JSON');
-    // api_call('http://127.0.0.1:5000/', path, values, callback, format || 'JSON');
+    api_call('https://attester.herokuapp.com/', path, values, callback, format || 'JSON');
+    // api_call('http://127.0.0.1:5002/', path, values, callback, format || 'JSON');
   }
 
-  function api_attester_keys_find(email, callback) {
-    return api_attester_call('keys/find', {
+  function api_attester_lookup_email(email, callback) {
+    return api_attester_call('lookup/email', {
       email: (typeof email === 'string') ? tool.str.trim_lower(email) : email.map(tool.str.trim_lower),
     }, callback);
   }
 
-  function api_attester_keys_submit(email, pubkey, attest, callback) {
-    return api_attester_call('keys/submit', {
+  function api_attester_initial_legacy_submit(email, pubkey, attest, callback) {
+    return api_attester_call('initial/legacy_submit', {
       email: tool.str.trim_lower(email),
       pubkey: pubkey.trim(),
       attest: attest || false,
     }, callback);
   }
 
-  function api_attester_keys_check(emails, callback) {
-    return api_attester_call('keys/check', {
+  function api_attester_legacy_keys_check(emails, callback) {
+    api_call('https://cryptup-keyserver.herokuapp.com/', 'keys/check', { // should deprecate it soon
       emails: emails.map(tool.str.trim_lower),
-    }, callback);
+    }, callback, 'JSON');
   }
 
-  function api_attester_keys_attest(signed_attest_packet, callback) {
-    return api_attester_call('keys/attest', {
+  function api_attester_initial_confirm(signed_attest_packet, callback) {
+    return api_attester_call('initial/confirm', {
       packet: signed_attest_packet,
     }, callback);
   }

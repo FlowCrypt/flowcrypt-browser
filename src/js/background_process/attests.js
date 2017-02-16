@@ -77,7 +77,7 @@ function process_attest_packet_text(account_email, attest_packet_text) {
         if(!is_attested) {
           tool.crypto.message.sign(key, attest.text, true, function (signed_attest_packet) {
             if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
-              var keyserver_api_endpoint = tool.api.attester.keys_attest;
+              var keyserver_api_endpoint = tool.api.attester.initial_confirm;
             } else {
               var keyserver_api_endpoint = tool.api.attester.replace_confirm;
             }

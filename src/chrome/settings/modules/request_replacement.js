@@ -9,7 +9,7 @@ $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner());
 var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key')
 var prv_headers = tool.crypto.armor.headers('private_key');
 
-tool.api.attester.keys_find(url_params.account_email, function (success, keyserver_result) {
+tool.api.attester.lookup_email(url_params.account_email, function (success, keyserver_result) {
   if(!success) {
     $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>');
     $('.reload').click(function () {
