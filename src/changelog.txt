@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.3.9 on February 16, 2017: Direct Attachments</b>
+reading: google drive attachment downloading issue
+internal: refactor gmail_tab content scripts
+internal: separate attester endpoints
+internal: direct attachments with signed certs
+
 <b>version 3.3.8 on February 13, 2017: Compatibility</b>
 composing: fixed misbehaving send button on empty form
 composing: tab+enter should allow hitting the send button
