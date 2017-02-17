@@ -2273,7 +2273,7 @@
 
   function api_attester_initial_confirm(signed_attest_packet, callback) {
     return api_attester_call('initial/confirm', {
-      packet: signed_attest_packet,
+      signed_message: signed_attest_packet,
     }, callback);
   }
 
