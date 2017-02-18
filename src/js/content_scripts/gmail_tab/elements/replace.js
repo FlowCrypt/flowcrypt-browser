@@ -10,7 +10,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
     replace_armored_blocks();
     replace_pgp_attachments();
     replace_cryptup_tags();
-    replace_reply_buttons();
+    replace_conversation_buttons();
     replace_standard_reply_box();
   }
 
@@ -76,26 +76,43 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
     });
   }
 
-  function replace_reply_buttons(force) {
-    if($('iframe.pgp_block').filter(':visible').length || force) { // if convo has pgp blocks
+  function add_cryptup_conversation_icon(container_selector, icon_html, icon_selector, on_click) {
+      container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous cryptup buttons, if any
+      container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(on_click)));
+  }
+
+  function replace_conversation_buttons(force) {
+    var convo_upper_icons = $('div.ade:visible');
+    var use_encryption_in_this_convo = $('iframe.pgp_block').filter(':visible').length || force;
+    // reply buttons
+    if(use_encryption_in_this_convo) {
       if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
-        $('td.acX').not('.replaced').last().addClass('replaced').html(factory.button.reply()).click(catcher.try(set_reply_box_editable));
-      } else { // all others get removed
-        $('td.acX').not('.replaced').each(function () {
-          $(this).addClass('replaced').html('');
+        var conversation_reply_buttons = $('td.acX').not('.replaced');
+        conversation_reply_buttons.last().addClass('replaced').each(function (i, reply_button) {
+          if(i + 1 < conversation_reply_buttons.length) {
+            $(reply_button).addClass('replaced').html(''); // hide all except last
+          } else {
+            $(reply_button).html(factory.button.reply()).click(catcher.try(set_reply_box_editable)); // replace last
+          }
         });
       }
-      if(!$('div.ade:visible').is('.appended')) {
-        $('div.ade').not('.appended').addClass('appended').append(factory.button.without_cryptup()).children('.show_original_conversation').click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
-          $(self).parent().find('.gZ').click();
-          // $('div.ade.appended .gZ').click();
-        }));
+    }
+    // conversation top-right icon buttons
+    if(convo_upper_icons.length) {
+      if(use_encryption_in_this_convo) {
+        if(!convo_upper_icons.is('.appended') || convo_upper_icons.find('.use_secure_reply').length) { // either not appended, or appended icon is outdated (convo switched to encrypted)
+          add_cryptup_conversation_icon(convo_upper_icons, factory.button.without_cryptup(), '.show_original_conversation', function () {
+            convo_upper_icons.find('.gZ').click();
+          });
+        }
+      } else {
+        if(!convo_upper_icons.is('.appended')) {
+          add_cryptup_conversation_icon(convo_upper_icons, factory.button.with_cryptup(), '.use_secure_reply', function() {
+            replace_conversation_buttons(true);
+            replace_standard_reply_box(true, true);
+          });
+        }
       }
-    } else if(!$('div.ade:visible').is('.appended')) {
-      $('div.ade').not('.appended').addClass('appended').append(factory.button.with_cryptup()).children('.use_secure_reply').click(catcher.try(function () {
-        replace_reply_buttons(true);
-        replace_standard_reply_box(true, true);
-      }));
     }
   }
 
