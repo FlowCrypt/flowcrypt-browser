@@ -11,12 +11,12 @@ tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
 
-function fetch_all_account_addresses(account_email, callback, query, from_emails) {
+function fetch_account_aliases(account_email, callback, query, from_emails) {
   from_emails = from_emails || [];
   query = query || 'in:sent';
   tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
-      fetch_all_account_addresses(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
+      fetch_account_aliases(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
     } else {
       callback(from_emails);
     }
@@ -91,7 +91,7 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
     }
     var address = addresses.pop();
     var attest = (address == settings_url_params.account_email); // only request attestation of main email
-    tool.api.attester.keys_submit(address, pubkey, attest, function (key_submitted, response) {
+    tool.api.attester.initial_legacy_submit(address, pubkey, attest, function (key_submitted, response) {
       if(attest && key_submitted) {
         if(!response.attested) {
           save_attest_request(settings_url_params.account_email, 'CRYPTUP', function () {

@@ -295,6 +295,8 @@
     ui: {
       spinner: spinner,
       passphrase_toggle: passphrase_toggle,
+      enter: ui_enter,
+      build_jquery_selectors: ui_build_jquery_selectors,
       event: {
         double: double,
         parallel: parallel,
@@ -369,9 +371,9 @@
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
       },
       attester: {
-        keys_find: api_attester_keys_find,
-        keys_submit: api_attester_keys_submit,
-        keys_attest: api_attester_keys_attest,
+        lookup_email: api_attester_lookup_email,
+        initial_legacy_submit: api_attester_initial_legacy_submit,
+        initial_confirm: api_attester_initial_confirm,
         replace_request: api_attester_replace_request,
         replace_confirm: api_attester_replace_confirm,
         packet: {
@@ -381,18 +383,26 @@
       },
       cryptup: {
         auth_error: api_cryptup_auth_error,
+        error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
+        presign_files: api_cryptup_message_presign_files,
+        confirm_files: api_cryptup_message_confirm_files,
         message_upload: api_cryptup_message_upload,
-        message_upload_attachment: api_cryptup_message_upload_attachment,
         link_message: api_cryptup_link_message,
       },
+      aws: {
+        s3_upload: api_aws_s3_upload, // ([{base_url, fields, attachment}, ...], cb)
+      }
     },
     value: function(v) {
       return {
         in: function(array_or_str) { return arr_contains(array_or_str, v); } // tool.value(v).in(array_or_string)
       };
+    },
+    e: function(name, attrs) {
+      return $('<' + name + ' />', attrs)[0].outerHTML;
     },
   };
 
@@ -820,7 +830,7 @@
     }
   }
 
-  function file_attachment(name, type, content, size, url) {
+  function file_attachment(name, type, content, size, url) { // todo - refactor as (content, name, type, LENGTH, url), making all but content voluntary
     return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
       name: name,
       type: type || 'application/octet-stream',
@@ -1046,6 +1056,35 @@
     });
   }
 
+  function ui_enter(callback) {
+    return function(e) {
+      if (e.which == key_codes().enter) {
+        callback();
+      }
+    };
+  }
+
+  function ui_build_jquery_selectors(selectors) {
+    var cache = {};
+    return {
+      cached: function(name) {
+        if(!cache[name]) {
+          if(typeof selectors[name] === 'undefined') {
+            catcher.log('unknown selector name: ' + name);
+          }
+          cache[name] = $(selectors[name]);
+        }
+        return cache[name];
+      },
+      now: function(name) {
+        if(typeof selectors[name] === 'undefined') {
+          catcher.log('unknown selector name: ' + name);
+        }
+        return $(selectors[name]);
+      },
+    };
+  }
+
   /* tools.browser.message */
 
   var background_script_shortcut_handlers;
@@ -1145,7 +1184,7 @@
   function keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
     account_storage_get(account_email, ['addresses'], function (storage) {
-      api_attester_keys_find(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
+      api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
         if(success) {
           $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
@@ -1179,7 +1218,7 @@
               emails_setup_done.push(account_email);
             }
           });
-          api_attester_keys_check(emails_setup_done, function (success, response) {
+          api_attester_legacy_keys_check(emails_setup_done, function (success, response) {
             if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
               var save_result = {};
               $.each(emails_setup_done, function (i, account_email) {
@@ -1319,17 +1358,30 @@
   function crypto_key_decrypt(prv, passphrase) { // returns true, false, or RETURNS a caught known exception
     try {
       return prv.decrypt(passphrase);
-    } catch(e) {
-      if(e.message === 'Unknown s2k type.' && prv.subKeys.length) {
-        try { // may be a key that only contains subkeys as in https://alexcabal.com/creating-the-perfect-gpg-keypair/
-          return prv.subKeys.length === prv.subKeys.reduce(function (successes, subkey) { return successes + Number(subkey.subKey.decrypt(passphrase)); }, 0);
-        } catch(subkey_e) {
-          return subkey_e;
+    } catch(primary_e) {
+      if(!tool.value(primary_e.message).in(['Unknown s2k type.', 'Invalid enum value.'])) {
+        return new Error('primary decrypt error: "' + primary_e.message + '"'); // unknown exception for master key
+      } else if(prv.subKeys.length) {
+        var subkes_succeeded = 0;
+        var subkeys_unusable = 0;
+        var unknown_exception;
+        $.each(prv.subKeys, function(i, subkey) {
+          try {
+            subkes_succeeded += subkey.subKey.decrypt(passphrase);
+          } catch(subkey_e) {
+            subkeys_unusable++;
+            if(!tool.value(subkey_e.message).in(['Key packet is required for this signature.', 'Unknown s2k type.', 'Invalid enum value.'])) {
+              unknown_exception = subkey_e;
+              return false;
+            }
+          }
+        });
+        if(unknown_exception) {
+          return new Error('subkey decrypt error: "' + unknown_exception.message + '"');
         }
-      } else if(e.message === 'Invalid enum value.') {
-        return e;
+        return subkes_succeeded > 0 && (subkes_succeeded + subkeys_unusable) === prv.subKeys.length;
       } else {
-        throw e;
+        return new Error('primary decrypt error and no subkeys to try: "' + primary_e.message + '"');
       }
     }
   }
@@ -1442,10 +1494,7 @@
 
   function crypto_message_sign(signing_prv, data, armor, callback) {
     var options = { data: data, armor: armor, privateKeys: signing_prv, };
-    openpgp.sign(options).then(callback, function (error) {
-      console.log(error); // todo - better handling. Alerts suck.
-      alert('Error signing message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
-    });
+    openpgp.sign(options).then(function(result) {callback(true, result.data)}, function (error) {callback(false, error.message)});
   }
 
   function get_sorted_keys_for_message(db, account_email, message, callback) {
@@ -2195,33 +2244,33 @@
   /* tool.api.attester */
 
   function api_attester_call(path, values, callback, format) {
-    api_call('https://cryptup-keyserver.herokuapp.com/', path, values, callback, format || 'JSON');
-    // api_call('http://127.0.0.1:5000/', path, values, callback, format || 'JSON');
+    api_call('https://attester.herokuapp.com/', path, values, callback, format || 'JSON');
+    // api_call('http://127.0.0.1:5002/', path, values, callback, format || 'JSON');
   }
 
-  function api_attester_keys_find(email, callback) {
-    return api_attester_call('keys/find', {
+  function api_attester_lookup_email(email, callback) {
+    return api_attester_call('lookup/email', {
       email: (typeof email === 'string') ? tool.str.trim_lower(email) : email.map(tool.str.trim_lower),
     }, callback);
   }
 
-  function api_attester_keys_submit(email, pubkey, attest, callback) {
-    return api_attester_call('keys/submit', {
+  function api_attester_initial_legacy_submit(email, pubkey, attest, callback) {
+    return api_attester_call('initial/legacy_submit', {
       email: tool.str.trim_lower(email),
       pubkey: pubkey.trim(),
       attest: attest || false,
     }, callback);
   }
 
-  function api_attester_keys_check(emails, callback) {
-    return api_attester_call('keys/check', {
+  function api_attester_legacy_keys_check(emails, callback) {
+    api_call('https://cryptup-keyserver.herokuapp.com/', 'keys/check', { // should deprecate it soon
       emails: emails.map(tool.str.trim_lower),
-    }, callback);
+    }, callback, 'JSON');
   }
 
-  function api_attester_keys_attest(signed_attest_packet, callback) {
-    return api_attester_call('keys/attest', {
-      packet: signed_attest_packet,
+  function api_attester_initial_confirm(signed_attest_packet, callback) {
+    return api_attester_call('initial/confirm', {
+      signed_message: signed_attest_packet,
     }, callback);
   }
 
@@ -2253,8 +2302,8 @@
     if(packet.success !== true) {
       callback(false, packet.error);
     } else {
-      tool.crypto.message.sign(decrypted_prv, content_text, true, function (signed_attest_packet) {
-        callback(true, signed_attest_packet.data);
+      crypto_message_sign(decrypted_prv, content_text, true, function (success, signed_attest_packet) {
+        callback(success, signed_attest_packet);
       });
     }
   }
@@ -2350,6 +2399,28 @@
     throw Error('tool.api.cryptup.auth_error not callable');
   }
 
+  function api_cryptup_error_text(server_call_response) {
+    if(server_call_response instanceof Array) {
+      var results;
+      $.each(server_call_response, function(i, v) {
+        results += (i + 1) + ': ' + api_cryptup_error_text(v) + '\n';
+      });
+      return results.trim();
+    } else {
+      if(server_call_response && server_call_response.error) {
+        if(typeof server_call_response.error === 'object' && (server_call_response.error.internal_msg || server_call_response.error.public_msg)) {
+          return String(server_call_response.error.public_msg) + ' (' + server_call_response.error.internal_msg + ')';
+        } else {
+          return String(server_call_response.error);
+        }
+      } else if(server_call_response) {
+        return 'unknown';
+      } else {
+        return 'Internet connection problem, please try again';
+      }
+    }
+  }
+
   function api_cryptup_response_formatter(callback) {
     return function (success, response) {
       if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
@@ -2401,7 +2472,7 @@
           product: product,
         }, api_cryptup_response_formatter(function (success_or_auth_error, result) {
           if(success_or_auth_error === true) {
-            account_storage_set(null, { cryptup_account_subscription: result.subscription, }, function () {
+            account_storage_set(null, { cryptup_account_subscription: result.subscription }, function () {
               callback(true, result);
             });
           } else if(success_or_auth_error === false) {
@@ -2416,16 +2487,28 @@
     });
   }
 
-  function api_cryptup_message_upload_attachment(attachment, callback) {
+  function api_cryptup_message_presign_files(attachments, callback) {
     storage_cryptup_auth_info(function (email, uuid, verified) {
       if(verified) {
-        api_cryptup_call('message/upload', {
+        api_cryptup_call('message/presign_files', {
           account: email,
           uuid: uuid,
-          content: attachment,
-          type: attachment.type,
-          role: 'attachment',
-        }, api_cryptup_response_formatter(callback), 'FORM');
+          lengths: attachments.map(function(a) { return a.size; }),
+        }, api_cryptup_response_formatter(callback));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
+
+  function api_cryptup_message_confirm_files(identifiers, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('message/confirm_files', {
+          account: email,
+          uuid: uuid,
+          identifiers: identifiers,
+        }, api_cryptup_response_formatter(callback));
       } else {
         callback(api_cryptup_auth_error);
       }
@@ -2448,6 +2531,26 @@
     return api_cryptup_call('link/message', {
       short: short,
     }, api_cryptup_response_formatter(callback));
+  }
+
+  /* tool.api.aws */
+
+  function api_aws_s3_upload(items, callback) {
+    if (!items.length) {
+      callback(false);
+      return;
+    }
+    var results = new Array(items.length);
+    $.each(items, function (i, item) {
+      var values = item.fields;
+      values.file = file_attachment('encrpted_attachment', 'application/octet-stream', item.attachment.content);
+      api_call(item.base_url, '', values, function(success) {
+        results[i] = success;
+        if(results.reduce(function(sum, r) { return sum + (typeof r !== 'undefined') }, 0) === results.length) { // no undefined left
+          callback(results.reduce(function(s, v) { return s + v; }, 0) === results.length, results); // callback(all_good, results);
+        }
+      }, 'FORM');
+    });
   }
 
 })();

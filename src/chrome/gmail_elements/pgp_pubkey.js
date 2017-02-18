@@ -36,9 +36,15 @@ db_open(function (db) {
   }
 
   if(typeof pubkey !== 'undefined') {
-    $('.input_email').val(tool.str.trim_lower(pubkey.users[0].userId.userid));
-    $('.email').text(tool.str.trim_lower(pubkey.users[0].userId.userid));
-    set_button_text(db);
+    if (pubkey.getEncryptionKeyPacket() === null && pubkey.getSigningKeyPacket() === null) {
+      // todo - people may still get errors if this is signing only key and they try to encrypt, but I'm leaving it here in case they just want to verify signatures
+      $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
+      $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
+    } else {
+      $('.input_email').val(tool.str.trim_lower(pubkey.users[0].userId.userid));
+      $('.email').text(tool.str.trim_lower(pubkey.users[0].userId.userid));
+      set_button_text(db);
+    }
   } else {
     var fixed = url_params.armored_pubkey;
     while(/\n> |\n>\n/.test(fixed)) {
@@ -50,13 +56,13 @@ db_open(function (db) {
       $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
       $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
     }
-    send_resize_message();
   }
+  send_resize_message();
 
   $('.action_add_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     if(tool.str.is_email_valid($('.input_email').val())) {
       db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function () {
-        $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>')
+        $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
         $('.input_email').remove();
       });
     } else {

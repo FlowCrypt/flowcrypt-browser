@@ -75,22 +75,26 @@ function process_attest_packet_text(account_email, attest_packet_text) {
     if(attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
       is_already_attested(account_email, attest.attester, function (is_attested) {
         if(!is_attested) {
-          tool.crypto.message.sign(key, attest.text, true, function (signed_attest_packet) {
-            if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
-              var keyserver_api_endpoint = tool.api.attester.keys_attest;
-            } else {
-              var keyserver_api_endpoint = tool.api.attester.replace_confirm;
-            }
-            keyserver_api_endpoint(signed_attest_packet.data, function (success, response) {
-              if(success && response && response.attested) {
-                account_storage_mark_as_attested(account_email, attest.content.attester, function () {
-                  console.log('successfully attested ' + account_email);
-                });
+          tool.crypto.message.sign(key, attest.text, true, function (success, result) {
+            if(success) {
+              if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
+                var keyserver_api_endpoint = tool.api.attester.initial_confirm;
               } else {
-                console.log('error attesting ' + account_email);
-                console.log(response);
+                var keyserver_api_endpoint = tool.api.attester.replace_confirm;
               }
-            });
+              keyserver_api_endpoint(result, function (success, response) {
+                if(success && response && response.attested) {
+                  account_storage_mark_as_attested(account_email, attest.content.attester, function () {
+                    console.log('successfully attested ' + account_email);
+                  });
+                } else {
+                  console.log('error attesting ' + account_email);
+                  console.log(response);
+                }
+              });
+            } else {
+              catcher.log('Error signing ' + attest.content.action + ' attest packet: ' + result);
+            }
           });
         } else {
           console.log(attest.content.attester + ' already attested ' + account_email);

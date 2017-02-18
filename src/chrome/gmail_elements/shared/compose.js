@@ -36,8 +36,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
   };
 
-  init_elements_factory_js();
-
   tool.browser.message.tab_id(function (tab_id) {
     tool.browser.message.listen({
       close_dialog: function (data) {
@@ -217,14 +215,17 @@ function init_shared_compose_js(url_params, db, attach_js) {
     });
   }
 
-  function is_compose_form_rendered_as_ready() {
-    if($('#send_btn span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND) {
+  function is_compose_form_rendered_as_ready(recipients) {
+    if($('#send_btn span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND && recipients && recipients.length) {
       return true;
-    } else if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
-      alert('Please re-enter recipients marked in red color.');
-      return false;
     } else {
-      alert('Please wait, information about recipients is still loading.');
+      if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
+        alert('Please re-enter recipients marked in red color.');
+      } else if(!recipients || !recipients.length) {
+        alert('Please add a recipient first');
+      } else {
+        alert('Please wait, information about recipients is still loading.');
+      }
       return false;
     }
   }
@@ -252,7 +253,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function encrypt_and_send(account_email, recipients, subject, plaintext, send_email) {
-    if(is_compose_form_rendered_as_ready()) {
+    if(is_compose_form_rendered_as_ready(recipients)) {
       original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
       $('#send_btn i').replaceWith(tool.ui.spinner());
@@ -266,13 +267,18 @@ function init_shared_compose_js(url_params, db, attach_js) {
               attach_js.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
                 if(attachments.length && challenge) { // these will be password encrypted attachments
                   $('#send_btn span').text('Uploading attachments');
-                  upload_attachments_to_cryptup(attachments, function (all_good, upload_results) {
+                  upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
                     if(all_good === true) {
                       $('#send_btn span').text('Encrypting email');
                       plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                       do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
+                    } else if(all_good === tool.api.cryptup.auth_error) {
+                      if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+                        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+                      }
+                      $('#send_btn').html(original_btn_html);
                     } else {
-                      handle_upload_attachments_to_cryptup_error(all_good, upload_results);
+                      alert('There was an error uploading attachments. Please try it again. Write me at tom@cryptup.org if it happens repeatedly.\n\n' + upload_error_message);
                       $('#send_btn').html(original_btn_html);
                     }
                   });
@@ -293,65 +299,47 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
-  function handle_upload_attachments_to_cryptup_error(result_summary, upload_results) {
-    if(result_summary === tool.api.cryptup.auth_error) {
-      if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
-        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
-      }
-    } else { // todo - offer to retry only failed attachments
-      alert('Failed to upload attachments, please try again. Encountered errors:\n' + upload_results.map(function (result) {
-        if(result && result.url) {
-          return '\n' + (upload_results.indexOf(result) + 1) + ': no error';
-        } else {
-          return '\n' + (upload_results.indexOf(result) + 1) + ': ' + result.error;
-        }
-      }));
-    }
-  }
-
-  function upload_attachments_to_cryptup(attachments, callback, _results, _i) {
-    _i = _i || 0;
-    _results = _results || [];
-    if(attachments[_i]) {
-      tool.api.cryptup.message_upload_attachment(attachments[_i], function (success, server_result) {
-        if(success === true && server_result && server_result.url) {
-          _results[_i] = { attachment: attachments[_i], url: server_result.url };
-        } else if(success === tool.api.cryptup.auth_error) {
-          _results[_i] = { attachment: attachments[_i], error: tool.api.cryptup.auth_error };
-        } else {
-          if(server_result && server_result.error) {
-            if(typeof server_result.error === 'object' && (server_result.error.internal_msg || server_result.error.public_msg)) {
-              var str_err = String(server_result.error.public_msg) + ' (' + server_result.error.internal_msg + ')';
-            } else {
-              var str_err = String(server_result.error);
-            }
-          } else {
-            var str_err = success ? 'unknown' : 'internet connection dropped';
+  function upload_attachments_to_cryptup(attachments, callback) {
+    tool.api.cryptup.presign_files(attachments, function (pf_success, pf_result) {
+      if(pf_success === true && pf_result && pf_result.approvals && pf_result.approvals.length === attachments.length) {
+        var items = [];
+        $.each(pf_result.approvals, function (i, approval) {
+          items.push({base_url: approval.base_url, fields: approval.fields, attachment: attachments[i]});
+        });
+        tool.api.aws.s3_upload(items, function (all_uploaded, s3_results) {
+          if(all_uploaded) {
+            tool.api.cryptup.confirm_files(items.map(function(item) {return item.fields.key;}), function(cf_success, cf_result) {
+              if(cf_success && cf_result && cf_result.confirmed && cf_result.confirmed.length === items.length) {
+                $.each(attachments, function(i) {
+                  attachments[i].url = pf_result.approvals[i].base_url + pf_result.approvals[i].fields.key;
+                });
+                callback(true, attachments);
+              } else if(cf_success && cf_result && cf_result.confirmed) { // todo - retry confirming one more time, it may have been a timeout
+                callback(false, null, 'Could not verify that all files were uploaded properly, please try again.');
+              } else {
+                callback(false, null, tool.api.cryptup.error_text(cf_result));
+              }
+            });
+          } else { // todo - retry just problematic files
+            callback(false, null, 'Some files failed to upload, please try again');
           }
-          _results[_i] = { attachment: attachments[_i], error: str_err };
-        }
-        upload_attachments_to_cryptup(attachments, callback, _results, ++_i);
-      });
-    } else {
-      var all_good = _results.reduce(function (reduced, result) {
-        if(typeof result.error === 'function' && result.error === tool.api.cryptup.auth_error) {
-          return tool.api.cryptup.auth_error;
-        } else {
-          return reduced && typeof result.error === 'undefined';
-        }
-      }, true);
-      callback(all_good, _results);
-    }
+        });
+      } else if (pf_success === tool.api.cryptup.auth_error) {
+        callback(tool.api.cryptup.auth_error);
+      } else {
+        callback(false, null, tool.api.cryptup.error_text(pf_result));
+      }
+    });
   }
 
-  function add_uploaded_file_links_to_message_body(plaintext, upload_results) {
+  function add_uploaded_file_links_to_message_body(plaintext, attachments) {
     plaintext += '\n\n';
-    $.each(upload_results, function (i, result) {
-      var size_mb = result.attachment.size / (1024 * 1024);
+    $.each(attachments, function (i, attachment) {
+      var size_mb = attachment.size / (1024 * 1024);
       var size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
-      var link_text = 'Attachment: ' + result.attachment.name + ' (' + result.attachment.type + ')' + size_text;
-      var cryptup_data = tool.str.html_attribute_encode({ size: result.attachment.size, type: result.attachment.type, name: result.attachment.name });
-      plaintext += '<a href="' + result.url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
+      var link_text = 'Attachment: ' + attachment.name + ' (' + attachment.type + ')' + size_text;
+      var cryptup_data = tool.str.html_attribute_encode({ size: attachment.size, type: attachment.type, name: attachment.name });
+      plaintext += '<a href="' + attachment.url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
     });
     return plaintext;
   }
@@ -423,12 +411,15 @@ function init_shared_compose_js(url_params, db, attach_js) {
       if(db_contact && db_contact.has_pgp && db_contact.pubkey) {
         callback(db_contact);
       } else {
-        tool.api.attester.keys_find(email, function (success, result) {
+        tool.api.attester.lookup_email(email, function (success, result) {
           if(success && result.email) {
             if(result.pubkey) {
               var parsed = openpgp.key.readArmored(result.pubkey);
               if(!parsed.keys[0]) {
                 catcher.log('Dropping found but incompatible public key', {for: result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null });
+                result.pubkey = null;
+              } else if (parsed.keys[0].getEncryptionKeyPacket() === null) {
+                catcher.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: result.email, fingerprint: tool.crypto.key.fingerprint(parsed.keys[0]) });
                 result.pubkey = null;
               }
             }
@@ -873,14 +864,13 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }
   }
 
-  function format_password_protected_email(short_id, bodies) {
+  function format_password_protected_email(short_id, original_bodies) {
     var decrypt_url = 'https://cryptup.org/' + short_id;
-    var new_bodies = {
-      'text/plain': [l.open_password_protected_message, decrypt_url, '', bodies['text/plain']].join('\n'),
-    };
-    if(bodies['text/html']) {
-      bodies['text/html'] = [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', bodies['text/html']].join('<br>\n');
+    var new_bodies = { 'text/plain': [l.open_password_protected_message + ' ' + decrypt_url, '', original_bodies['text/plain']].join('\n') };
+    if(original_bodies['text/html']) {
+      new_bodies['text/html'] = [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', original_bodies['text/html']].join('<br>\n');
     }
+    return new_bodies;
   }
 
   $('#input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));
@@ -894,8 +884,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
       });
     } else {
       tool.browser.message.tab_id(function (compose_window_tab_id) {
+        var factory = init_elements_factory_js(url_params.account_email, compose_window_tab_id);
         $.featherlight({
-          iframe: add_pubkey_dialog_src(url_params.account_email, get_recipients_from_dom('no_pgp'), compose_window_tab_id, 'settings'),
+          iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'),
           iframeWidth: 515,
           iframeHeight: $('html').height() - 50,
         });

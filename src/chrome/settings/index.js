@@ -7,10 +7,11 @@ var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 $('span#v').text(catcher.version());
 
 var tab_id_global = undefined;
-init_elements_factory_js();
 
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
+
+  var factory = init_elements_factory_js(url_params.account_email, tab_id, '');
 
   tool.browser.message.listen({
     open_page: function (data, sender, respond) {
@@ -24,12 +25,10 @@ tool.browser.message.tab_id(function (tab_id) {
       reload(data.advanced);
     },
     add_pubkey_dialog: function (data, sender, respond) {
-      var src = tool.env.url_create('/chrome/gmail_elements/add_pubkey.htm', { account_email: url_params.account_email, emails: data.emails });
-      window.open(src, '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+      window.open(factory.src.add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: function (data) {
-      var src = $(subscribe_dialog(url_params.account_email, null, 'settings', null, tab_id)).find('iframe').attr('src');
-      window.open(src, '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+      window.open(factory.src.subscribe_dialog(null, 'settings', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: function (data) {
       alert(data.notification);

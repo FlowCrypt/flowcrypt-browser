@@ -4,7 +4,7 @@
 
 function init_elements_notifications_js() {
 
-  window.show_initial_notifications = function (account_email) {
+  function show_initial_notifications(account_email) {
     account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function (storage) {
       if(!storage.notification_setup_done_seen) {
         account_storage_set(account_email, { notification_setup_done_seen: true }, function () {
@@ -15,13 +15,13 @@ function init_elements_notifications_js() {
         gmail_notification_show('<a href="' + backup_url + '">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
       }
     });
-  };
+  }
 
-  window.gmail_notification_clear = function () {
+  function gmail_notification_clear() {
     $('.gmail_notifications').html('');
-  };
+  }
 
-  window.gmail_notification_show = function (text, callbacks) {
+  function gmail_notification_show(text, callbacks) {
     $('.gmail_notifications').html('<div class="gmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome')) + '</div>');
     if(!callbacks) {
       callbacks = {};
@@ -31,7 +31,7 @@ function init_elements_notifications_js() {
       callbacks.close = function () {
         original_close_callback();
         gmail_notification_clear();
-      }
+      };
     } else {
       callbacks.close = gmail_notification_clear;
     }
@@ -43,6 +43,12 @@ function init_elements_notifications_js() {
     $.each(callbacks, function (name, callback) {
       $('.gmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
     });
+  }
+
+  return {
+    show_initial: show_initial_notifications,
+    clear: gmail_notification_clear,
+    show: gmail_notification_show,
   };
 
 }

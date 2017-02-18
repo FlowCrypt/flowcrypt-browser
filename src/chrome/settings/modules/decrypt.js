@@ -12,7 +12,7 @@ db_open(function (db) {
 
     var attach_js = init_shared_attach_js(100, 1);
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    init_elements_factory_js();
+    var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id, '');
 
     tool.browser.message.listen({
       close_dialog: function () {
@@ -47,7 +47,7 @@ db_open(function (db) {
           tool.file.save_to_downloads(attachment.name.replace(/(\.pgp)|(\.gpg)$/, ''), attachment.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
-          $('.passphrase_dialog').html(passphrase_dialog(url_params.account_email, 'embedded', missing_passprase_longids, tab_id));
+          $('.passphrase_dialog').html(factory.embedded.passphrase(missing_passprase_longids));
         } else {
           delete result.message;
           console.log(result);

@@ -102,7 +102,6 @@ db_open(function (db) {
           passphrase_interval = setInterval(check_passphrase_entered, 1000);
         } else {
           delete result.message;
-          console.log(result);
           $('body.attachment').html('Error opening file<br>Downloading original..');
           tool.file.save_to_downloads(url_params.name, url_params.type, encrypted_data);
         }
@@ -135,8 +134,8 @@ db_open(function (db) {
         decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
       });
     } else if(url_params.url) {
-      tool.file.download_as_uint8(url_params.url, render_progress, function (data) {
-        decrypt_and_save_attachment_to_downloads(tool.str.from_uint8(data)); //toto - have to convert to uint8 because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
+      tool.file.download_as_uint8(url_params.url, render_progress, function (success, data) {
+        decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(data)); //toto - have to convert to str because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
       });
     } else {
       throw Error('Missing both attachment_id and url');

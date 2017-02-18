@@ -41,9 +41,9 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
   }
 
   function save_and_fill_submit_option(addresses) {
-    all_addresses = addresses.concat(url_params.account_email);
-    account_storage_set(url_params.account_email, { addresses: addresses }, function () {
-      show_submit_all_addresses_option(addresses);
+    all_addresses = tool.arr.unique(addresses.concat(url_params.account_email));
+    account_storage_set(url_params.account_email, { addresses: all_addresses }, function () {
+      show_submit_all_addresses_option(all_addresses);
     });
   }
   if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
@@ -51,7 +51,7 @@ account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes
   }
   if(typeof storage.addresses === 'undefined') {
     if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-      fetch_all_account_addresses(url_params.account_email, save_and_fill_submit_option);
+      fetch_account_aliases(url_params.account_email, save_and_fill_submit_option);
     } else { // cannot read emails, don't fetch alternative addresses
       save_and_fill_submit_option([url_params.account_email]);
     }
@@ -87,7 +87,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     if(storage.setup_done) {
       render_setup_done(url_params.account_email);
     } else {
-      tool.api.attester.keys_find(url_params.account_email, function (keyserver_success, result) {
+      tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, result) {
         if(keyserver_success && result.pubkey) {
           if(result.attested) {
             account_email_attested_fingerprint = tool.crypto.key.fingerprint(result.pubkey);
@@ -138,7 +138,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
         });
       }
     } else {
-      tool.api.attester.keys_find(account_email, function (success, result) {
+      tool.api.attester.lookup_email(account_email, function (success, result) {
         if(success && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
           // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
           private_storage_set('local', account_email, 'master_public_key_submitted', true);
@@ -385,20 +385,24 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
       $('#step_2b_manual_enter .input_passphrase').val('');
       $('#step_2b_manual_enter .input_passphrase').focus();
     } else if(decrypt_result === true) {
-      $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner());
-      var options = {
-        passphrase: passphrase,
-        setup_simple: false,
-        key_backup_prompt: false,
-        submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
-        submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-        save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
-      };
-      save_key(url_params.account_email, prv, options, function () {
-        finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
-      });
+      if(prv.getEncryptionKeyPacket() !== null) {
+        $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner());
+        var options = {
+          passphrase: passphrase,
+          setup_simple: false,
+          key_backup_prompt: false,
+          submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+          submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
+          save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+        };
+        save_key(url_params.account_email, prv, options, function () {
+          finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
+        });
+      } else {
+        alert('This looks like a valid key but it cannot be used for encryption. Please write me at tom@cryptup.org to see why is that. I\'m VERY prompt to respond.');
+      }
     } else {
-      alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.message + ')');
+      alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.message + ')');
     }
   }
 });

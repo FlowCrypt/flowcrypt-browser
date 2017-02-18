@@ -93,9 +93,9 @@ function wait_for_token_email(timeout, callback) {
   }
   var end = Date.now() + timeout * 1000;
   storage_cryptup_auth_info(function (account, uuid, verified) {
-    fetch_token_emails_and_find_matching_token(account, uuid, function (success, token) {
-      if(success && token) {
-        callback(token);
+    fetch_token_emails_and_find_matching_token(account, uuid, function (success, tokens) {
+      if(success && tokens) {
+        callback(tokens);
       } else if(Date.now() < end) {
         setTimeout(function () {
           wait_for_token_email((end - Date.now()) / 1000, callback);
@@ -116,6 +116,7 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
       callback(v1, v2);
     }
   }
+  var tokens = [];
   tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function (list_success, response) {
     if(list_success) {
       if(response.messages) {
@@ -126,15 +127,16 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
                 var message_content = tool.str.base64url_decode(gmail_message_object.payload.body.data);
                 var token_link_match = message_content.match(/account\/login?([^\s"<]+)/g);
                 if(token_link_match !== null) {
+                  console.log(token_link_match);
                   var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
                   if(token_link_params.uuid === uuid && token_link_params.token) {
-                    callback_once(true, token_link_params.token);
-                    return false;
+                    tokens.push(token_link_params.token);
                   }
                 }
               }
             });
-            callback_once(true, null);
+            tokens.reverse();
+            callback_once(Boolean(tokens.length), tokens.length ? tokens : null);
           } else {
             callback_once(false, null);
           }
@@ -154,8 +156,12 @@ function render_open_verification_email_message() {
   $('.status').text('Please check your inbox for a verification email.');
 }
 
-function handle_login_result(registered, verified, subscription, error) {
-  if(registered) {
+function handle_login_result(registered, verified, subscription, error, tokens) {
+  if(!registered && tokens && tokens.length) {
+    tool.api.cryptup.account_login(url_params.account_email, tokens.pop(), function(r, v, s, e) {
+      handle_login_result(r, v, s, e, tokens);
+    });
+  } else if(registered) {
     if(verified) {
       if(subscription && subscription.level !== null) { //todo - check expiration
         notify_upgraded_and_close();
@@ -165,11 +171,13 @@ function handle_login_result(registered, verified, subscription, error) {
       }
     } else {
       render_status('verifying..', true);
-      if(can_read_emails) {
+      if(can_read_emails && !tokens) {
         $('.status').text('This may take a minute.. ');
-        wait_for_token_email(30, function (token) {
-          if(token) {
-            tool.api.cryptup.account_login(url_params.account_email, token, handle_login_result);
+        wait_for_token_email(30, function (tokens) {
+          if(tokens) {
+            tool.api.cryptup.account_login(url_params.account_email, tokens.pop(), function(r, v, s, e) {
+              handle_login_result(r, v, s, e, tokens);
+            });
           } else {
             render_open_verification_email_message();
           }
