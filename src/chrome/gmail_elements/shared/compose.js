@@ -780,29 +780,30 @@ function init_shared_compose_js(url_params, db, attach_js) {
         rerender_include_pubkey_icon();
       }
     }
-    $(email_element).children('i').removeClass('fa').removeClass('fa-spin').removeClass('ion-load-c').removeClass('fa-repeat').addClass('ion-android-close');
+    $(email_element).children('i').removeClass('fa').removeClass('fa-spin').removeClass('ion-load-c').removeClass('fa-repeat').prepend("<img src='/img/svgs/close-icon.svg' alt='close' class='close-icon svg'>");
     if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
+
       $(email_element).children('i').removeClass('ion-android-close').addClass('fa').addClass('fa-repeat');
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
     } else if(contact.has_pgp && tool.crypto.key.expired_for_encryption(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
-      $(email_element).prepend("<i class='fa fa-clock-o'></i>");
+      $(email_element).prepend("<img src='/img/svgs/expired-timer.svg' class='expired-time'>");
       $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + recipient_key_id_text(contact));
     } else if(contact.has_pgp && contact.attested) {
       $(email_element).addClass("attested");
-      $(email_element).prepend("<i class='ion-locked'></i>");
+      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg'>");
       $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + recipient_key_id_text(contact));
     } else if(contact.has_pgp) {
       $(email_element).addClass("has_pgp");
-      $(email_element).prepend("<i class='ion-locked'></i>");
+      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg'>");
       $(email_element).attr('title', 'Does use encryption' + recipient_key_id_text(contact));
     } else {
       $(email_element).addClass("no_pgp");
-      $(email_element).prepend("<i class='ion-locked'></i>");
+      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg' alt='Locked Icon'>");
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     show_hide_password_or_pubkey_container_and_color_send_button();

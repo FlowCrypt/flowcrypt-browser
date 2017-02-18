@@ -1023,8 +1023,8 @@
   }
 
   function passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
-    var button_hide = '<i class="fa fa-eye-slash"></i><br>hide';
-    var button_show = '<i class="fa fa-eye"></i><br>show';
+    var button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
+    var button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
     account_storage_get(null, ['hide_pass_phrases'], function (storage) {
       if(force_initial_show_or_hide === 'hide') {
         var show = false;

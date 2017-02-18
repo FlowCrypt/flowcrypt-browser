@@ -1,56 +1,22 @@
 /* Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE */
 
 body, html {
-  font-family: 'Open Sans', Arial!important;
+  font-family: 'Open Sans', sans-serif, Arial!important;
   position: relative;
   height: 100%;
   width: auto;
 }
-.new_message_featherlight .featherlight-content, .new_message_featherlight .featherlight-content iframe {
-  overflow: hidden !important;
-}
-.new_message_featherlight .featherlight-content .featherlight-close-icon {
-  display: none;
-}
-#header-row img.cryptup-logo {
-  width: 100px;
-  height: auto;
-  margin-right: 5px;
-  text-align: left;
-}
-#header-row .logo-row {
-  margin-top: 10px;
-}
-#header-row a.cryptup-logo-row {
-  text-decoration: none;
-}
-#header-row .cryptup-logo-row span {
-  opacity: .7;
-  transition: .3s;
-  top: 7px;
-  position: absolute
-}
-#header-row .cryptup-logo-row:hover span {
-  opacity: 1;
-}
-#security_module {
-  min-height: 180px;
-}
-#alt-accounts .separator {
-  background: black;
-  width: 90%;
-  margin: 5px auto 10px auto!important;
-  height: 1px;
-  opacity: .2;
-}
-#alt-accounts.accounts-row {
-  /*animation: fadeInUp.4s;*/
-  display: none;
-}
-#alt-accounts.accounts-row.active {
-  display: block;
-  animation: fadeInDown .4s;
-}
+.new_message_featherlight .featherlight-content, .new_message_featherlight .featherlight-content iframe { overflow: hidden !important;}
+.new_message_featherlight .featherlight-content .featherlight-close-icon { display: none; }
+#header-row img.cryptup-logo { width: 100px; height: auto; margin-right: 5px; text-align: left; }
+#header-row .logo-row { margin-top: 10px; }
+#header-row a.cryptup-logo-row { text-decoration: none; }
+#header-row .cryptup-logo-row span { opacity: .7; transition: .3s; top: 7px; position: absolute}
+#header-row .cryptup-logo-row:hover span { opacity: 1;}
+#security_module { min-height: 180px; }
+#alt-accounts .separator { background: black; width: 90%; margin: 5px auto 10px auto!important;height: 1px; opacity: .2; }
+#alt-accounts.accounts-row { display: none;}
+#alt-accounts.accounts-row.active { display: block; animation: fadeInDown .4s;}
 #alt-accounts.accounts-row {
   background: #f3f3f3;
   height: auto;
@@ -137,18 +103,18 @@ body, html {
   position: absolute;
   z-index: 5;
 }
-#header-row .profile-img, #header-row .fa-user {
+#header-row .profile-img, #header-row .profile-img {
   width: 40px;
   height: 40px;
   display: inline-block;
-  border: 2px solid #f3f3f3;
+  border: 2px solid #cccccc;
   border-radius: 120px;
   margin-left: 10px;
   cursor: pointer;
   text-align: center;
   font-size: 22px;
   padding-top: 7px;
-  color: #666;
+  opacity: .8;
 }
 #header-row .ion-android-person {
   text-align: center;
@@ -191,6 +157,12 @@ body, html {
 #settings-row .my-keys-row .key_words, #settings-row .my-keys-row .key_id {
   text-align: left;
 }
+.profile-row #toggle-accounts-profile-img {
+  padding-left: 5px;
+  position: relative;
+  top: -3px;
+  left: -8px;
+}
 .profile-row .down-option {
   /*background: black;*/
   width: 40px;
@@ -203,13 +175,12 @@ body, html {
   display: inline-block;
 }
 .profile-row .add-account {
-  /*background: blue;*/
   position: absolute;
-  font-size: 12px;
-  bottom: -30px;
+  font-size: 11px;
+  bottom: -10px;
   opacity: .6;
   text-decoration: underline;
-  right: 81px;
+  right: 58px;
 }
 #settings-row .fa.fa-key {
   font-size: 22px;
@@ -225,7 +196,8 @@ body, html {
   left: 4px;
 }
 #settings-row .my-keys-copy {
-  text-indent: 25px;
+  text-indent: 5px;
+  font-weight: 600;
   display: inline-block;
 }
 #settings-row h1 {
@@ -302,8 +274,18 @@ body, html {
   padding-left: 0!important;
   text-indent: 5px;
 }
+.abs-row .key-icon {
+  width: 35px;
+  margin-left: 0;
+}
+.abs-row .shield-icon {
+  width: 23;
+  margin-top: -6px;
+}
+
 .security-copy {
-  margin-left: 25px;
+  margin-left: 5px;
+  font-weight: 600;
 }
 #footer-row {
   position: fixed;
