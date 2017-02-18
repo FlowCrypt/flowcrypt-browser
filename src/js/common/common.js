@@ -1494,10 +1494,7 @@
 
   function crypto_message_sign(signing_prv, data, armor, callback) {
     var options = { data: data, armor: armor, privateKeys: signing_prv, };
-    openpgp.sign(options).then(callback, function (error) {
-      console.log(error); // todo - better handling. Alerts suck.
-      alert('Error signing message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
-    });
+    openpgp.sign(options).then(function(result) {callback(true, result.data)}, function (error) {callback(false, error.message)});
   }
 
   function get_sorted_keys_for_message(db, account_email, message, callback) {
@@ -2305,8 +2302,8 @@
     if(packet.success !== true) {
       callback(false, packet.error);
     } else {
-      tool.crypto.message.sign(decrypted_prv, content_text, true, function (signed_attest_packet) {
-        callback(true, signed_attest_packet.data);
+      crypto_message_sign(decrypted_prv, content_text, true, function (success, signed_attest_packet) {
+        callback(success, signed_attest_packet);
       });
     }
   }

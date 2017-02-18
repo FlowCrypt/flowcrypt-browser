@@ -53,6 +53,7 @@ tool.api.attester.lookup_email(url_params.account_email, function (success, keys
               }
             });
           } else {
+            catcher.log('Error signing REQUEST_REPLACEMENT:' + sign_result);
             alert('Error signing request. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(sign_result));
           }
         });
