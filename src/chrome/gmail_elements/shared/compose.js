@@ -545,13 +545,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
       for(var i = 0; i < emails.length - 1; i++) {
         $('#input_to').siblings('.recipients').append('<span>' + emails[i] + icon + '</span>');
       }
-      $('.recipients span i').click(remove_receiver);
       $('#input_to').val(emails[emails.length - 1]);
       resize_input_to();
       evaluate_receivers();
     } else if(!$('#input_to').is(':focus') && content) {
       $('#input_to').siblings('.recipients').append('<span>' + content + icon + '</span>');
-      $('.recipients span i').click(remove_receiver);
       $('#input_to').val('');
       resize_input_to();
       evaluate_receivers();
@@ -780,11 +778,13 @@ function init_shared_compose_js(url_params, db, attach_js) {
         rerender_include_pubkey_icon();
       }
     }
-    $(email_element).children('i').removeClass('fa').removeClass('fa-spin').removeClass('ion-load-c').removeClass('fa-repeat').prepend("<img src='/img/svgs/close-icon.svg' alt='close' class='close-icon svg'>");
+    $(email_element).children('img, i').remove();
+    $(email_element).append("<img src='/img/svgs/close-icon.svg' alt='close' class='close-icon svg'>").find('img.close-icon').click(remove_receiver);
     if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
-      $(email_element).children('i').removeClass('ion-android-close').addClass('fa').addClass('fa-repeat');
+      $(email_element).children('img').replaceWith('<i class="fa fa-repeat action_retry_pubkey_fetch"></i>');
+      $(email_element).find('.action_retry_pubkey_fetch').click(remove_receiver); // todo - actual refresh
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
@@ -802,7 +802,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       $(email_element).attr('title', 'Does use encryption' + recipient_key_id_text(contact));
     } else {
       $(email_element).addClass("no_pgp");
-      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg' alt='Locked Icon'>");
+      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg'>");
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     show_hide_password_or_pubkey_container_and_color_send_button();
