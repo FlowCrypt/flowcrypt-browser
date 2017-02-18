@@ -80,7 +80,7 @@ function init_elements_replace_js() {
     if($('iframe.pgp_block').filter(':visible').length || force) { // if convo has pgp blocks
       if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
         //todo - button below should be in factory.js
-        var reply_button = '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
+        var reply_button = '<div class="' + destroyable_class + ' reply_message_button"><i src="fa fa-mail-reply"></i></div>';
         $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(catcher.try(function () {
           set_reply_box_editable(account_email, gmail_tab_id);
         }));

@@ -25,41 +25,32 @@
           </a>
         </div>
 
-        <div class="col-sm-offset-5 col-sm-4 text-right">
-
+        <div class="col-sm-offset-5 col-sm-4 text-right" style="padding-right:0;">
           <div class="profile-row ">
             <span class="email-address"></span>
-            <span id="toggle-accounts-profile-img" style="font-size:27px;padding-left: 5px; position: relative; top: 5px;">
-              <i class="fa fa-user"></i>
-              <!-- <img class="profile-img" src="http://armando.sx/img/armando.png" alt=""> -->
+            <span id="toggle-accounts-profile-img">
+              <img src="/img/svgs/profile-icon.svg" class="profile-img" alt="Profile Image">
             </span>
-            <br>
             <a href="#" class="add-account action_add_account hide_if_setup_not_done">
                 + Add account
             </a>
             <a class="down-option ion-ios-arrow-down" id="switch-account" href="#"></a>
-
           </div>
-
           <div id="alt-accounts" class="accounts-row">
             <div class="separator"></div>
             <div class="row alt-accounts accounts-options-row text-center">
               <div class="col-sm-offset-6 col-sm-5 btn">
                 <a href="#" class="action_add_account">Add Account</a>
               </div>
-
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   </section>
 
   <section id="settings-row">
     <div class="container basic">
-
       <div class="row hide_if_setup_not_done">
         <h1 class="text-center">CryptUp Settings</h1>
         <div class="separator"></div>
@@ -342,8 +333,9 @@
 
         <div class="col-xs-6 settings-border key_list">
           <div class="row abs-row">
-            <div class="col-sm-12">
-              <i class="fa fa-key"></i>
+            <div class="col-sm-12" style="padding-left:0;">
+              <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon">
+              <!-- <i class="fa fa-key"></i> -->
               <span class="my-keys-copy">My Keys</span>
               <span class="text-right change-passphrase">
                 <a href="#" class="show_settings_page add_key" page="/chrome/settings/modules/add_key.htm">Add Key</a>
@@ -354,8 +346,9 @@
 
         <div class="col-xs-6 settings-border">
           <div class="row abs-row">
-            <div class="col-sm-12">
-              <i class="fa fa-shield"></i>
+            <div class="col-sm-12" style="padding-left:0;">
+              <!-- <i class="fa fa-shield"></i> -->
+              <img src="/img/svgs/shield-icon.svg" class="shield-icon" alt="shield icon">
               <span class="security-copy">Security</span>
               <span class="text-right change-passphrase">
                 <a href="#" class="show_settings_page" page="/chrome/settings/modules/change_passphrase.htm">Change pass phrase</a>
