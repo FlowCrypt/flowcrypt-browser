@@ -146,7 +146,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
         return '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src.img('svgs/reply-icon.svg') + '" /></div>';
       },
       without_cryptup: function() {
-        return '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + src.logo(true, 16) + '" /></span>';
+        return '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show conversation without CryptUp"><span>see original</span></span>';
       },
       with_cryptup: function() {
         return '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + src.logo(true, 16) + '"/></span>';
