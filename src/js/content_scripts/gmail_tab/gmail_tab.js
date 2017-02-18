@@ -4,8 +4,8 @@
 
 catcher.try(function () {
 
-  window.injected = true; // background page will test if scripts are already injected, and injectif not
-  window.destruction_event = chrome.runtime.id + '_destroy'
+  window.injected = true; // background page will use this to test if scripts were already injected, and inject if not
+  window.destruction_event = chrome.runtime.id + '_destroy';
   window.destroyable_class = chrome.runtime.id + '_destroyable';
   window.reloadable_class = chrome.runtime.id + '_reloadable';
   window.destroyable_intervals = [];

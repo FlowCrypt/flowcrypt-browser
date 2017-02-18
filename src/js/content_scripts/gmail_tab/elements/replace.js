@@ -79,27 +79,20 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   function replace_reply_buttons(force) {
     if($('iframe.pgp_block').filter(':visible').length || force) { // if convo has pgp blocks
       if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
-        //todo - button below should be in factory.js
-        var reply_button = '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
-        $('td.acX').not('.replaced').last().addClass('replaced').html(reply_button).click(catcher.try(function () {
-          set_reply_box_editable();
-        }));
+        $('td.acX').not('.replaced').last().addClass('replaced').html(factory.button.reply()).click(catcher.try(set_reply_box_editable));
       } else { // all others get removed
         $('td.acX').not('.replaced').each(function () {
           $(this).addClass('replaced').html('');
         });
       }
       if(!$('div.ade:visible').is('.appended')) {
-        //todo - button below should be in factory.js
-        $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + factory.src.logo(true, 16) + '" /></span>');
-        $('div.ade.appended span.show_original_conversation').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
-          $('div.ade.appended .gZ').click();
+        $('div.ade').not('.appended').addClass('appended').append(factory.button.without_cryptup()).children('.show_original_conversation').click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
+          $(self).parent().find('.gZ').click();
+          // $('div.ade.appended .gZ').click();
         }));
       }
     } else if(!$('div.ade:visible').is('.appended')) {
-      //todo - button below should be in factory.js
-      $('div.ade').not('.appended').addClass('appended').append('<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + factory.src.logo(true, 16) + '"/></span>');
-      $('div.ade.appended span.use_secure_reply').click(catcher.try(function () {
+      $('div.ade').not('.appended').addClass('appended').append(factory.button.with_cryptup()).children('.use_secure_reply').click(catcher.try(function () {
         replace_reply_buttons(true);
         replace_standard_reply_box(true, true);
       }));
@@ -158,7 +151,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
         var message_id = parse_message_id_from('attachment', this);
         if(message_id) {
           if(can_read_emails) {
-            $(new_pgp_messages).prepend('<div class="attachment_loader">Getting file info..' + tool.ui.spinner() + '</div>');
+            $(new_pgp_messages).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner()));
             $(this).addClass('message_id_' + message_id);
             tool.browser.message.send(null, 'list_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
               catcher.try(function () {
@@ -194,8 +187,8 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
               })();
             });
           } else {
-            $(new_pgp_messages).prepend('<div class="attachment_loader">Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>');
-            $('.auth_settings').click(catcher.try(function () {
+            var status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
+            $(new_pgp_messages).prepend(factory.embedded.attachment_status(status_message)).children('a.auth_settings').click(catcher.try(function () {
               tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }

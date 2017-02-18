@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_elements_factory_js(account_email, parent_tab_id, reloadable_class) {
+function init_elements_factory_js(account_email, parent_tab_id, reloadable_class, destroyable_class) {
 
   reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
@@ -83,6 +83,14 @@ function init_elements_factory_js(account_email, parent_tab_id, reloadable_class
 
   return {
     src: src,
+    meta: {
+      notification_container: function() {
+        return '<center class="' + destroyable_class + ' gmail_notifications"></center>';
+      },
+      stylesheet: function(file) {
+        return '<link class="' + destroyable_class + '" rel="stylesheet" href="' + chrome.extension.getURL('css/' + file + '.css') + '" />';
+      },
+    },
     dialog: {
       passphrase: function(longids) {
         // todo - confirm that type is supposed to be "dialog"
@@ -118,6 +126,23 @@ function init_elements_factory_js(account_email, parent_tab_id, reloadable_class
       passphrase: function(longids) {
         return dialog(iframe(src.passphrase_dialog('embedded', longids), ['medium'], {scrolling: 'no'}))
       },
+      attachment_status: function(content) {
+        return tool.e('div', {class: 'attachment_loader', html: content});
+      }
     },
+    button: {
+      compose: function() {
+        return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
+      },
+      reply: function() {
+        return '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
+      },
+      without_cryptup: function() {
+        return '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + src.logo(true, 16) + '" /></span>';
+      },
+      with_cryptup: function() {
+        return '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + src.logo(true, 16) + '"/></span>';
+      },
+    }
   };
 }

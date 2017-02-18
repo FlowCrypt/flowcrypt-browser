@@ -8,20 +8,20 @@ function init_elements_notifications_js() {
     account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function (storage) {
       if(!storage.notification_setup_done_seen) {
         account_storage_set(account_email, { notification_setup_done_seen: true }, function () {
-          gmail_notification_show('CryptUp was successfully set up for this account. <a href="#" class="close">close</a>');
+          content_script_notification_show('CryptUp was successfully set up for this account. <a href="#" class="close">close</a>');
         });
       } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
         var backup_url = tool.env.url_create('_PLUGIN/settings/modules/backup.htm', { account_email: account_email });
-        gmail_notification_show('<a href="' + backup_url + '">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
+        content_script_notification_show('<a href="' + backup_url + '">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
       }
     });
   }
 
-  function gmail_notification_clear() {
+  function content_script_notification_clear() {
     $('.gmail_notifications').html('');
   }
 
-  function gmail_notification_show(text, callbacks) {
+  function content_script_notification_show(text, callbacks) {
     $('.gmail_notifications').html('<div class="gmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome')) + '</div>');
     if(!callbacks) {
       callbacks = {};
@@ -30,10 +30,10 @@ function init_elements_notifications_js() {
       var original_close_callback = callbacks.close;
       callbacks.close = function () {
         original_close_callback();
-        gmail_notification_clear();
+        content_script_notification_clear();
       };
     } else {
-      callbacks.close = gmail_notification_clear;
+      callbacks.close = content_script_notification_clear;
     }
     if(typeof callbacks.reload === 'undefined') {
       callbacks.reload = function () {
@@ -47,8 +47,8 @@ function init_elements_notifications_js() {
 
   return {
     show_initial: show_initial_notifications,
-    clear: gmail_notification_clear,
-    show: gmail_notification_show,
+    clear: content_script_notification_clear,
+    show: content_script_notification_show,
   };
 
 }

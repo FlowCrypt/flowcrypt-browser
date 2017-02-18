@@ -32,8 +32,8 @@ function init_setup_js() {
   function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
       catcher.try(function () {
-        factory = init_elements_factory_js(account_email, tab_id, reloadable_class);
-        inject = init_elements_inject_js(factory, account_email, tab_id, destroyable_class);
+        factory = init_elements_factory_js(account_email, tab_id, reloadable_class, destroyable_class);
+        inject = init_elements_inject_js(factory);
         hijack_gmail_hotkeys(account_email, tab_id);
         inject.meta();
         add_account_email_to_list_of_accounts(account_email);
@@ -67,7 +67,7 @@ function init_setup_js() {
   function initialize(account_email, tab_id) {
     tool.browser.message.listen({
       open_new_message: function (data) {
-        inject.compose_window();
+        inject.open_compose_window();
       },
       close_new_message: function (data) {
         $('div.new_message').remove();
