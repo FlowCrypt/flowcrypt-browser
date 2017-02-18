@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.4.0 on February 17, 2017: Signing Fix</b>
+internal: fixed bug that will repeatedly show error alerts
+
 <b>version 3.3.9 on February 16, 2017: Direct Attachments</b>
 reading: google drive attachment downloading issue
 internal: refactor gmail_tab content scripts
