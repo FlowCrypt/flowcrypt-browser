@@ -1082,6 +1082,12 @@
         }
         return $(selectors[name]);
       },
+      selector: function (name) {
+        if(typeof selectors[name] === 'undefined') {
+          catcher.log('unknown selector name: ' + name);
+        }
+        return selectors[name];
+      }
     };
   }
 
