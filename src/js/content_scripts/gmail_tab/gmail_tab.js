@@ -46,7 +46,7 @@ catcher.try(function () {
   document.addEventListener(destruction_event, destroy);
 
   if(window.vacant()) {
-    init_setup_js().wait_for_account_email_then_setup();
+    init_setup_js(chrome.runtime.id).wait_for_account_email_then_setup();
   }
 
 })();

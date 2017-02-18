@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_setup_js() {
+function init_setup_js(chrome_runtime_id) {
 
   var account_email_interval = 1000;
   var replace_pgp_elements_interval = 1000;
@@ -32,7 +32,7 @@ function init_setup_js() {
   function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
       catcher.try(function () {
-        factory = init_elements_factory_js(account_email, tab_id, reloadable_class, destroyable_class);
+        factory = init_elements_factory_js(account_email, tab_id, chrome_runtime_id, reloadable_class, destroyable_class);
         inject = init_elements_inject_js(factory);
         hijack_gmail_hotkeys(account_email, tab_id);
         inject.meta();

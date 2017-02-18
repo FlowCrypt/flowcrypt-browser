@@ -19,7 +19,7 @@ db_open(function (db) {
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
   var attach = init_shared_attach_js(5, 10);
-  var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id, '');
+  var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id);
   var compose = init_shared_compose_js(url_params, db, attach);
 
   function recover_thread_id_if_missing(callback) {

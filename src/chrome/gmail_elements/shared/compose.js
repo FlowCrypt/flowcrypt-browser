@@ -784,7 +784,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
-
       $(email_element).children('i').removeClass('ion-android-close').addClass('fa').addClass('fa-repeat');
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');

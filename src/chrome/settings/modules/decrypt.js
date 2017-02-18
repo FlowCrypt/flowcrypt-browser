@@ -12,7 +12,7 @@ db_open(function (db) {
 
     var attach_js = init_shared_attach_js(100, 1);
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id, '');
+    var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id);
 
     tool.browser.message.listen({
       close_dialog: function () {

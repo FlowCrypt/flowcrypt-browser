@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_elements_factory_js(account_email, parent_tab_id, reloadable_class, destroyable_class) {
+function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_id, reloadable_class, destroyable_class) {
 
   reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
@@ -15,6 +15,14 @@ function init_elements_factory_js(account_email, parent_tab_id, reloadable_class
   }
 
   var src = {
+    img: function(relative_path) {
+      if(!chrome_runtime_id) {
+        catcher.log('Attempting to load an image without knowing runtime_id: ' + relative_path); // which will probably not work
+        return '/img/' + relative_path;
+      } else {
+        return 'chrome-extension://' + chrome_runtime_id + '/img/' + relative_path;
+      }
+    },
     logo: function (include_header, size) {
       if(size !== 16) {
         return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
@@ -135,7 +143,7 @@ function init_elements_factory_js(account_email, parent_tab_id, reloadable_class
         return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
       },
       reply: function() {
-        return '<div class="' + destroyable_class + ' reply_message_button"><i class="fa fa-mail-reply"></i></div>';
+        return '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src.img('svgs/reply-icon.svg') + '" /></div>';
       },
       without_cryptup: function() {
         return '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show Without CryptUp"><img src="' + src.logo(true, 16) + '" /></span>';
