@@ -27,9 +27,10 @@ div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0; ma
   div.new_message, div.new_message iframe { height: 450px; }
 }
 
-div.ade.appended span.cryptup_convo_button img { border: 3px solid #31A217; width: 8px; margin: 4px; position: relative; bottom: 1px; opacity: 0.8; }
-div.ade.appended span.cryptup_convo_button:hover img { opacity: 1; }
-div.ade.appended span.cryptup_convo_button.use_secure_reply img { -webkit-filter: grayscale(1); }
+div.ade.appended span.cryptup_convo_button > img { border: 2px solid #31A217; width: 10px; margin: 4px; position: relative; bottom: 1px; opacity: 0.8; }
+div.ade.appended span.cryptup_convo_button > span { text-transform: uppercase; font-size: 9.5px; color: white; background: #31A217; padding: 2px 3px 2px 3px;
+  display: inline-block; border-radius: 2px; cursor: default; }
+div.ade.appended span.cryptup_convo_button:hover > img, div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
 
 /* pgp decrypted message */
 iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
