@@ -253,6 +253,19 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   position: absolute;
   right: 10px;
 }
+.abs-row .key-icon {
+  width: 35px;
+  margin-left: 0;
+}
+.abs-row .shield-icon {
+  width: 18px;
+  margin-top: -4px;
+}
+.security-copy {
+   margin-left: 5px;
+   font-weight: 600;
+}
+
 #footer-row {
   position: fixed;
   bottom: 0;
