@@ -84,12 +84,14 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   function replace_conversation_buttons(force) {
     var convo_upper_icons = $('div.ade:visible');
     var use_encryption_in_this_convo = $('iframe.pgp_block').filter(':visible').length || force;
+    var visible_reply_buttons = $('td.acX:visible');
     // reply buttons
     if(use_encryption_in_this_convo) {
-      if(!$('td.acX.replaced').length) { // last reply button in convo gets replaced
-        var conversation_reply_buttons = $('td.acX').not('.replaced');
-        conversation_reply_buttons.last().addClass('replaced').each(function (i, reply_button) {
-          if(i + 1 < conversation_reply_buttons.length) {
+      if(visible_reply_buttons.not('.replaced').length) { // last reply button in convo gets replaced
+        var conversation_reply_buttons_to_replace = visible_reply_buttons.not('.replaced');
+        var has_visible_replacements = visible_reply_buttons.filter('.replaced').length > 0;
+        conversation_reply_buttons_to_replace.addClass('replaced').each(function (i, reply_button) {
+          if(i + 1 < conversation_reply_buttons_to_replace.length || has_visible_replacements) {
             $(reply_button).addClass('replaced').html(''); // hide all except last
           } else {
             $(reply_button).html(factory.button.reply()).click(catcher.try(set_reply_box_editable)); // replace last
