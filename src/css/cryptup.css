@@ -9,6 +9,7 @@
 .button.long { width: 200px; }
 
 a { color: #0A9FD3; }
+a:focus { outline: none !important; }
 .line.red, td.red, b.red, span.red { color: #d14836; }
 .line.prange, td.orange, b.orange, span.orange { color: #d18826; }
 .line.green, td.green, b.green, span.green { color: #31A217; }
@@ -33,6 +34,7 @@ a { color: #0A9FD3; }
 .toggle_show_hide_pass_phrase .eye-open,
 .toggle_show_hide_pass_phrase .eye-closed { width: 19px; height: 15px;}
 .display_none { display: none; }
+
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
