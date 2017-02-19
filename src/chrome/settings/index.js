@@ -4,7 +4,7 @@
 
 var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 
-$('span#v').text(catcher.version());
+$('.logo-row span#v').text(catcher.version());
 
 var tab_id_global = undefined;
 
@@ -22,13 +22,13 @@ tool.browser.message.tab_id(function (tab_id) {
     },
     reload: function (data) {
       $('.featherlight-close').click();
-      reload(data.advanced);
+      reload(data && data.advanced);
     },
     add_pubkey_dialog: function (data, sender, respond) {
       window.open(factory.src.add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: function (data) {
-      window.open(factory.src.subscribe_dialog(null, 'settings', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+      window.open(factory.src.subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: function (data) {
       alert(data.notification);
@@ -56,6 +56,7 @@ function initialize() {
     $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
     account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
       if(storage.setup_done) {
+        render_subscription_status_header();
         if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
           $('.auth_denied_warning').css('display', 'block');
         }
@@ -85,14 +86,26 @@ function initialize() {
   }
 }
 
+function render_subscription_status_header() {
+  storage_cryptup_subscription(function (level, expire, active) {
+    if(active) {
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
+      $('.logo-row .subscription .expire').text('until ' + expire.split(' ')[0]).css('display', 'inline-block');
+    } else {
+      $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
+      $('.logo-row .subscription .upgrade').css('display', 'inline-block');
+    }
+  });
+}
+
 function render_storage_inconsistency_error(account_email, text_reason) {
   if(!account_email) {
     throw new Error('Missing account_email to render inconsistency for');
   }
   var html = '<div class="line">CryptUp is not set up correctly for ' + account_email + ':<br/><b class="bad">' + text_reason + '</b></div>';
   html += '<div class="line">This happens when users manually change values in browser extension storage or when developers (that is myself) make a mistake.</div>';
-  html += '<div class="line">Email me at tom@cryptup.org if you think this one is on me.</div>'
-  html += '<div class="line">&nbsp;</div>'
+  html += '<div class="line">Email me at tom@cryptup.org if you think this one is on me.</div>';
+  html += '<div class="line">&nbsp;</div>';
   html += '<div class="line"><div class="button red reset_account">Reset cryptup for ' + account_email + '</div></div>';
   $('#settings-row').html(html);
   $('.reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
