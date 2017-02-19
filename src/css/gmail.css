@@ -5,8 +5,9 @@ div.new_message_button { border-radius: 2px; cursor: default; font-size: 11px; f
   line-height: 27px; outline: 0; padding: 0 8px; display: inline-block; position: relative; user-select: none; color: #fff; border: 1px solid transparent;
   min-width: 97px; margin-right: 0; background: #31A217; }
 div.reply_message_button { min-width: 30px; background: #31A217; color: white; font-size: 15px; -webkit-transition: .4s; transition: .4s;
-  padding: 6px 2px 4px 8px; border-radius: 2px; border: 1px solid transparent; opacity: 0.8; }
+  padding: 15px 8px; border-radius: 2px; border: 1px solid transparent; opacity: 0.8; position: relative; }
 div.reply_message_button i { margin-right: 12px; }
+div.reply_message_button > img { width: 20px; position: absolute; left: 0; right: 0; top: 4px; margin: 0 auto;}
 div.new_message_button:hover, div.reply_message_button:hover { opacity: 1; color: white; border: 1px solid #777; }
 div.new_message_button:hover { background-color: #2f9f17; }
 
