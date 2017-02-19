@@ -15,10 +15,13 @@ a { color: #0A9FD3; }
 .line.gray, td.gray, b.gray, span.gray { color: #B7B7B7; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
-.green_label { color: white; background-color: #31A217; display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
-.orange_label { color: white; background-color: #d18826; display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
-.red_label { color: white; background-color: #d14836; display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
-.button.red { background-color: #d14836; color: white;}
+.green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
+.green_label.short, .orange_label.short, .red_label.short, .gray_label.short { min-width: 0px; }
+.green_label { color: white; background-color: #31A217; }
+.orange_label { color: white; background-color: #d18826; }
+.red_label { color: white; background-color: #d14836; }
+.gray_label { color: white; background-color: #B7B7B7; }
+.button.red { background-color: #d14836; color: white; }
 .button.green { background-color: #31A217; border:0 !important; color: white; }
 .button.gray { background-color: #B7B7B7; background-image: -webkit-linear-gradient(top, #C5C5C5, #B7B7B7); color: white;}
 .button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444;}
@@ -45,7 +48,7 @@ div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
-body#settings > div#content {  margin-top: 120px; margin-bottom: 150px; }
+body#settings > div#content {  margin-top: 70px; margin-bottom: 150px; }
 body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
 /*body#settings > div#content.page #page_back_button { display: none; position: absolute; top: 10px; left: 10px; }*/
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
@@ -178,6 +181,15 @@ body#settings > div#content.dialog.add_pubkey.inside_compose separator { display
 body#settings > div#content.storage { background-color: #eaeaea; padding-top: 30px; padding-bottom: 100px; min-height: 100%; height: 100%; margin: 0 auto; }
 body#settings > div#content.storage .emails a { padding-right: 20px; }
 body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; border: 1px solid #cacaca; width: 70%; background-color: white; }
+
+body#settings > div#content.subscribe .list_benefits { display: none; }
+body#settings > div#content.subscribe .list_benefits table img { width: 15px; }
+body#settings > div#content.subscribe .list_benefits table { width: 100%; }
+body#settings > div#content.subscribe .list_benefits table tr th { padding-bottom: 10px; text-transform: uppercase; }
+body#settings > div#content.subscribe .list_benefits table tr th:first-child { text-align: left; }
+body#settings > div#content.subscribe .list_benefits table tr td { padding-bottom: 7px; text-align: left; }
+body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
+
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }

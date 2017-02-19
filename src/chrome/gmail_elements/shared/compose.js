@@ -240,7 +240,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       return false;
     } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
       tool.env.increment('upgrade_notify_attach_nonpgp', function () {
-        if(confirm('Sending password encrypted attachments is possible with CryptUp Pro.\n\nIt\'s free for one year if you register now.')) {
+        if(confirm('Sending password encrypted attachments is possible with CryptUp Advanced.\n\nIt\'s free for one year if you sign up now.')) {
           tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
         }
       });

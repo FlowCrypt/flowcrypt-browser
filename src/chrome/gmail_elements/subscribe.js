@@ -8,12 +8,22 @@ var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
 var l = {
-  welcome: 'Welcome to CryptUp Pro.<br/><br/>You can now send encrypted attachments to anyone.',
+  welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send encrypted attachments to anyone.',
 };
 if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
-  $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px', });
+  $('#content').html('One moment..').css({
+    'width': '460px',
+    'padding': '30px 20px',
+    'height': '100px',
+    'margin-bottom': '0px',
+  });
   $('body').css('width', '460px');
+} else if(url_params.placement === 'settings') {
+  $('#content').removeClass('dialog');
+  $('.list_benefits').css('display', 'block');
+  $('.line.button_padding').css('padding', 0);
+  tool.env.increment('upgrade_dialog_show');
 } else {
   tool.env.increment('upgrade_dialog_show');
 }
@@ -55,7 +65,7 @@ function render_embedded(level, expire, active) {
 function render_dialog(level, expire, active) {
   if(active) {
     if(url_params.source !== 'auth_error') {
-      $('#content').html('<div class="line">You have already upgraded to CryptUp Pro</div><div class="line"><div class="button green long action_close">close</div></div>');
+      $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
     } else {
       $('h1').text('CryptUp Account');
       $('.status').text('Your account information seems outdated.');
@@ -209,7 +219,7 @@ function notify_upgraded_and_close() {
   tool.env.increment('upgrade_done');
   if(url_params.placement !== 'embedded') {
     tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-      notification: 'Successfully upgraded to CryptUp Pro.',
+      notification: 'Successfully upgraded to CryptUp Advanced.',
     });
     close_dialog();
   } else {
@@ -218,10 +228,11 @@ function notify_upgraded_and_close() {
 }
 
 function close_dialog() {
-  if(url_params.placement !== 'settings') {
-    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
-  } else {
+  if(url_params.placement === 'settings_compose') {
     window.close();
+  } else if (url_params.placement === 'settings'){
+    tool.browser.message.send(url_params.parent_tab_id, 'reload');
+  } else {
+    tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
   }
-
 }
