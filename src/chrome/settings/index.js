@@ -240,7 +240,6 @@ function menu_account_html(email, photo) {
     '    <div class="row contains_email">' + email + '</div>',
     '  </div>',
     // '  <div class="col-sm-1 "><img class="profile-img " src="" alt=""></div>',
-    '  <span class="ion-ios-checkmark"></span>',
     '</div>',
   ].join('');
 }
