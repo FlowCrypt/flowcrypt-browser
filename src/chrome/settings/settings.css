@@ -120,7 +120,7 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 }
 #settings-row .separator {
   background: rgba(0, 0, 0, .09);
-  width: 60%;
+  max-width: 515px;
   margin: 15px auto 20px auto;
   height: 1px;
 }
@@ -187,7 +187,7 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 }
 #settings-row .box {
   background-color: #31A217;
-  background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%);
+  /*background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%);*/
   border: 0;
   border-top-left-radius: 3px;
   border-top-right-radius: 3px;
