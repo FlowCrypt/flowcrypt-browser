@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="232px" height="229px" viewBox="0 0 232 229" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
+    <title>Shape</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <radialGradient cx="50%" cy="0%" fx="50%" fy="0%" r="233.931224%" id="radialGradient-1">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#FAFAFA" offset="9.21513762%"></stop>
+            <stop stop-color="#FAFAFA" offset="9.21513762%"></stop>
+            <stop stop-color="#FFFFFF" offset="23.3723474%"></stop>
+            <stop stop-color="#31A217" offset="100%"></stop>
+        </radialGradient>
+        <path d="M222.549948,196.560788 C218.733243,192.082369 215.931808,188.488053 213.683551,182.061043 C209.029304,164.710788 214.472219,144.826252 214.472219,144.826252 L214.441116,144.846294 C218.011224,134.12793 219.975116,122.672442 219.975116,110.749291 C219.975116,51.2382068 171.844203,3 112.487558,3 C53.1309126,3.00222696 5,51.2404338 5,110.751518 C5,156.805076 33.8385588,196.088672 74.3849371,211.505924 L74.3649427,211.508151 C74.3649427,211.508151 74.6182048,211.610592 75.0802971,211.782068 C80.3943586,213.759609 85.9083639,215.322936 91.5823243,216.445324 C113.549482,221.411448 155.884246,227.04566 214.825453,217.14459 C229.470224,214.628124 229.747924,205.012106 222.549948,196.560788 Z M131.83323,135.078843 L91.8644672,135.078843 C87.9522338,135.078843 84.782014,131.898742 84.782014,127.977063 C84.782014,124.055385 87.9544554,120.877511 91.8644672,120.877511 L131.83323,120.877511 C135.747685,120.877511 138.915683,124.055385 138.915683,127.977063 C138.915683,131.898742 135.747685,135.078843 131.83323,135.078843 Z M148.963969,107.001316 L91.8644672,107.001316 C87.9522338,107.001316 84.782014,103.823442 84.782014,99.9017633 C84.782014,95.9800846 87.9544554,92.8022109 91.8644672,92.8022109 L148.963969,92.8022109 C152.878424,92.8022109 156.046423,95.9823115 156.046423,99.9017633 C156.046423,103.823442 152.876203,107.001316 148.963969,107.001316 Z" id="path-2"></path>
+        <filter x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" id="filter-3">
+            <feMorphology radius="0.5" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="2" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Playground" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Shape" fill-rule="nonzero">
+            <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+            <use stroke="#979797" stroke-width="1" fill="url(#radialGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
+        </g>
+    </g>
+</svg>

@@ -90,20 +90,15 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   max-width: 800px;
   margin: 0 auto!important;
 }
+.settings-icons-rows > .col-xs-2 {
+  padding-left: 0;
+  padding-right: 0;
+}
 .accounts-options-row .btn a {
   border: 1px solid #d3d3d3;
   display: inline-block;
   padding: 5px 14px;
   background: white;
-}
-.ion-ios-person-outline {
-  font-size: 85px;
-  color: white;
-  top: -7px;
-  left: 49px;
-  right: 0;
-  position: absolute;
-  z-index: 5;
 }
 #header-row .profile-img, #header-row .profile-img {
   width: 40px;
@@ -214,39 +209,56 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   background-color: #31A217;
   background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%);
   border: 0;
-  /*background: #31A217;*/
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
   display: block;
-  width: 110px;
-  height: 110px;
-  margin: 0 auto 15px auto;
+  width: 115px;
+  height: 130px;
+  transition: .1s;
+  margin: 0 auto;
 }
-#settings-row .box:hover svg {
+#settings-row .box:hover img {
   opacity: 1;
-  transition: .6s;
-  transform: scale(1.025);
+  transform: scale(1.075);
 }
-#settings-row .box svg {
+#settings-row .box img {
   color: white;
   opacity: .9;
   position: absolute;
-  top: 21px;
+  top: 20px;
+  right: 0;
+  left: 0;
   bottom: 0;
+  width: 75px;
   margin: 0 auto;
   text-align: center!important;
   display: block;
-  margin-left: 0;
-  margin-right: 0;
-  width: inherit;
-  transition: .6s;
+  transition: .2s ease-out;
 }
-#settings-row .box svg.contacts {
-  margin-top: -7px;
+#settings-row .box::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 115px;
+  height: 40px;
+  border: 1px solid #343434;
+  opacity: .2;
+  left: 0;
+  right: 0;
+  text-align: center;
+  margin: 0 auto;
+  z-index: -3
 }
 #settings-row a p {
-  /*font-weight: 600;*/
-  margin-top: 15px;
-  width: 120px;
+  font-weight: 600;
+  width: 110px;
+  text-align: center;
+  margin: 2px auto 5px auto;
+  color: #343434;
+  text-transform: uppercase;
   font-size: 17px;
+  opacity: .5;
+  letter-spacing: -0.4px;
 }
 #settings-row a {
   text-decoration: none;
@@ -269,26 +281,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   position: absolute;
   right: 10px;
 }
-.abs-row .ion-locked {
-  position: absolute;
-  left: 0;
-  margin-left: 0;
-  padding-left: 0!important;
-  text-indent: 5px;
-}
-.abs-row .key-icon {
-  width: 35px;
-  margin-left: 0;
-}
-.abs-row .shield-icon {
-  width: 18px;
-  margin-top: -4px;
-}
-
-.security-copy {
-  margin-left: 5px;
-  font-weight: 600;
-}
 #footer-row {
   position: fixed;
   bottom: 0;
@@ -298,7 +290,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   left: 0;
   font-weight: 600;
   -webkit-animation: fadeInUp 2s;
-  /*top:0;*/
 }
 input#passphrase-to-open-email {
   margin-left: 15px;
@@ -336,8 +327,32 @@ body#settings .settings-border {
 body#settings .settings-border .row {
   padding: 10px 0;
 }
-body#settings .settings-border .key-content-row:nth-child(odd) {
-  /*background: #f3f3f3;*/
+#settings-row .box img.security-icon {
+  width: 70px;
+}
+#settings-row .box img.keys-icon {
+  width: 65px;
+  top: 21px;
+}
+#settings-row .box img.feedback-icon {
+  width: 77px;
+  top: 23px;
+}
+#settings-row .box img.new-email-icon {
+  width: 78px;
+  top: 20px;
+}
+#settings-row .box img.pub-key-icon {
+  width: 63px;
+  top: 21px;
+}
+#settings-row .box img.contacts-icon {
+  width: 82px;
+  top: 22px;
+}
+#settings-row .box img.servers-icon {
+  width: 84px;
+  top: 23px;
 }
 @media (max-width: 991px) {
   .my-keys-row .settings-border {

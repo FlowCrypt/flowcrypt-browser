@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="224px" height="224px" viewBox="0 0 224 224" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
+    <title>new-email</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <radialGradient cx="50%" cy="54.9447265%" fx="50%" fy="54.9447265%" r="174.063671%" id="radialGradient-1">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#8FD37F" offset="100%"></stop>
+        </radialGradient>
+        <circle id="path-2" cx="113" cy="115.582713" r="58.9567829"></circle>
+        <filter x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" id="filter-3">
+            <feMorphology radius="2" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="5" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Playground" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="new-email" transform="translate(-1.000000, -1.000000)">
+            <g id="Group" transform="translate(0.982112, 0.982112)" fill-rule="nonzero">
+                <polygon id="Shape" fill="#FFFFFF" points="169.257098 123.884553 54.7786769 123.884553 77.4649494 142.382591 146.570826 142.382591"></polygon>
+                <path d="M178.680627,116.555142 L200.66886,98.7551436 L200.66886,21.2727976 L23.7159346,21.2727976 L23.7159346,98.7551436 L45.7041679,116.555142 L178.680627,116.555142 Z M77.4649494,38.3747568 L146.570826,38.3747568 L146.570826,45.7041679 L77.4649494,45.7041679 L77.4649494,38.3747568 Z M43.2610309,64.5512251 L180.425725,64.5512251 L180.425725,71.8806362 L43.2610309,71.8806362 L43.2610309,64.5512251 Z M43.2610309,90.3786738 L180.425725,90.3786738 L180.425725,97.7080849 L43.2610309,97.7080849 L43.2610309,90.3786738 Z" id="Shape" fill="#FFFFFF"></path>
+                <polygon id="Shape" fill="#CCCCCC" opacity="0.699999988" points="207.998271 71.8806362 207.998271 92.8218108 221.261015 82.0022039"></polygon>
+                <polygon id="Shape" fill="#CCCCCC" opacity="0.699999988" points="112.017888 0.680642539 94.2178891 13.9433865 129.817886 13.9433865"></polygon>
+                <polygon id="Shape" fill="#FFFFFF" points="112.017888 170.304157 131.562984 154.598276 137.147297 150.061021 86.888478 150.061021 92.4727912 154.598276"></polygon>
+                <polygon id="Shape" fill="#FFFFFF" points="84.0963214 157.390433 0.331622962 89.6806346 0.331622962 219.515917 20.5747584 204.508075"></polygon>
+                <polygon id="Shape" fill="#FFFFFF" points="203.461017 204.508075 223.704152 219.515917 223.704152 89.6806346 139.939454 157.390433"></polygon>
+                <polygon id="Shape" fill="#CCCCCC" opacity="0.699999988" points="16.0375039 71.8806362 2.77476 82.0022039 16.0375039 92.8218108"></polygon>
+                <path d="M114.461025,177.982588 C113.064946,179.029646 110.970829,179.029646 109.92377,177.982588 L90.3786738,162.276707 L8.01005365,223.355133 L216.374741,223.355133 L134.006121,162.276707 L114.461025,177.982588 Z" id="Shape" fill="#FFFFFF"></path>
+            </g>
+            <g id="Oval-2">
+                <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+                <use stroke="#31A217" stroke-width="4" fill="url(#radialGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
+            </g>
+            <path d="M135.574826,105.109781 L133.38103,105.109781 L133.372149,94.9882263 C133.363267,83.9622272 123.673261,74.9917834 111.762813,75.0000056 C99.8523661,75.0082279 90.1623601,83.9786716 90.1712419,95.0046708 L90.1890054,105.126226 L89.4074101,105.126226 C85.3129162,105.134448 81.991136,108.209559 82.0000178,112.000003 L82.0000178,142.134445 C82.0000178,145.924889 85.3306798,149 89.4251736,149 L135.59259,148.975333 C139.687084,148.975333 143.008864,145.900222 142.999982,142.109778 L142.999982,111.967114 C142.999982,108.17667 139.66932,105.109781 135.574826,105.109781 Z M98.9662332,105.604063 L98.9484697,95.4825081 C98.9484697,88.5182864 105.059124,82.8531758 112.581979,82.8449535 C120.104835,82.8449535 126.224371,88.5100642 126.224371,95.4660637 L126.242135,105.587618 L98.9662332,105.604063 Z" id="Shape" fill="#31A217" fill-rule="nonzero"></path>
+        </g>
+    </g>
+</svg>
