@@ -220,11 +220,11 @@ table#compose td#input_addresses_container > div input#input_to { vertical-align
 table#compose td#input_addresses_container > div .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
   -webkit-transition: .25s; transition: .25s;}
 table#compose td#input_addresses_container > div .recipients { height: auto; position: relative; }
-table#compose td#input_addresses_container > div .recipients span { padding: 5px 10px 5px 18px; }
+table#compose td#input_addresses_container > div .recipients span { padding: 5px 17px 5px 18px; }
 table#compose td#input_addresses_container > div .recipients span > img:first-child {position: absolute; top: 5px; left: 5px; width: 10px; height: 13px; opacity: .9;}
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
-table#compose td#input_addresses_container > div .recipients span .close-icon { right: -4px; height: 9px; width: 9px; cursor: pointer; }
+table#compose td#input_addresses_container > div .recipients span .close-icon { position: absolute; right: 4px; top: 8px; height: 9px; width: 9px; cursor: pointer; }
 table#compose td#input_addresses_container > div .recipients span .close-icon:hover { opacity: 1; }
 table#compose td#input_addresses_container > div .recipients span.wrong { background: #A44; color: white;}
 table#compose td#input_addresses_container > div .recipients span.wrong .close-icon { opacity: 1; }
@@ -295,7 +295,7 @@ table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: mid
 table#compose .bottom .icon.attach {  top: 8px;}
 table#compose .bottom .icon.standard { position: relative; top: 3px; }
 table#compose .bottom .icon.standard i { font-size: 20px; display: inline-block; padding: 3px 5px; }
-table#compose .bottom .action_feedback { position: absolute; top: 6px; left: 91%; }
+table#compose .bottom .action_feedback { width: 25px; opacity: 1; float: right; margin-top: 6px; margin-right: 15px;}
 table#compose .bottom .icon.pubkey { background-image: url(/img/pubkey-icon-16-16-standard.png); background-repeat: no-repeat;
   background-position: center; width: 16px; height: 16px; position: absolute; right: 61px; left: initial; top: 7px; padding: 7px 6px; }
 table#compose .bottom .icon.pubkey.active { background-image: url('/img/pubkey-icon-16-16-active.png'); opacity: 1;}
