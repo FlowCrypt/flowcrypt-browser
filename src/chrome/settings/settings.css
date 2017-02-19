@@ -221,7 +221,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   bottom: 2px;
   width: 115px;
   height: 40px;
-  border: 1px solid #343434;
   opacity: .2;
   left: 0;
   right: 0;
@@ -230,15 +229,18 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   z-index: -3
 }
 #settings-row a p {
-  font-weight: 600;
+  font-weight: 500;
   width: 110px;
   text-align: center;
-  margin: 2px auto 5px auto;
+  margin: 15px auto 5px auto;
   color: #343434;
   text-transform: uppercase;
   font-size: 17px;
   opacity: .5;
   letter-spacing: -0.4px;
+}
+#settings-row a:hover p {
+  opacity: 1;
 }
 #settings-row a {
   text-decoration: none;
