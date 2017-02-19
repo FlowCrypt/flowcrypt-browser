@@ -539,7 +539,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function render_receivers() {
     if($('#contacts').css('display') !== 'none') {}
     var content = $('#input_to').val();
-    var icon = '<i class="fa ion-load-c fa-spin"></i>';
+    var icon = tool.ui.spinner();
     if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back
       var emails = content.split(/[,]/g);
       for(var i = 0; i < emails.length - 1; i++) {
@@ -631,9 +631,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
       $.each(renderable_contacts, function (i, contact) {
         ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
         if(contact.has_pgp) {
-          ul_html += '<i class="fa fa-lock"></i>';
+          ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
         } else {
-          ul_html += '<i class="fa fa-lock" style="color: gray;"></i>';
+          ul_html += '<img src="/img/svgs/locked-icon-gray.svg" />';
         }
         if(contact.email.length < 40) {
           var display_email = contact.email;
@@ -779,7 +779,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       }
     }
     $(email_element).children('img, i').remove();
-    $(email_element).append("<img src='/img/svgs/close-icon.svg' alt='close' class='close-icon svg'>").find('img.close-icon').click(remove_receiver);
+    $(email_element).append('<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />').find('img.close-icon').click(remove_receiver);
     if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
@@ -790,19 +790,19 @@ function init_shared_compose_js(url_params, db, attach_js) {
       $(email_element).addClass("wrong");
     } else if(contact.has_pgp && tool.crypto.key.expired_for_encryption(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
-      $(email_element).prepend("<img src='/img/svgs/expired-timer.svg' class='expired-time'>");
+      $(email_element).prepend('<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + recipient_key_id_text(contact));
     } else if(contact.has_pgp && contact.attested) {
       $(email_element).addClass("attested");
-      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg'>");
+      $(email_element).prepend('<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + recipient_key_id_text(contact));
     } else if(contact.has_pgp) {
       $(email_element).addClass("has_pgp");
-      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg'>");
+      $(email_element).prepend('<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Does use encryption' + recipient_key_id_text(contact));
     } else {
       $(email_element).addClass("no_pgp");
-      $(email_element).prepend("<img src='/img/svgs/locked-icon.svg'>");
+      $(email_element).prepend('<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     show_hide_password_or_pubkey_container_and_color_send_button();

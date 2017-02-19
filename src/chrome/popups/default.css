@@ -109,24 +109,6 @@ html, body {
   top: 10px;
   bottom: 0;
 }
-.ion-android-person {
-  color: rgba(0, 0, 0, .9);
-  font-size: 20px;
-  position: absolute;
-  top: 7px;
-  bottom: 0;
-  z-index: 300;
-  left: 10px;
-  border: 3px solid #f3f3f3;
-  display: inline-block;
-  width: 28px;
-  height: 25px;
-  text-align: center;
-  padding-top: 2px;
-  border-radius: 120px;
-  right: 0;
-  font-size: 20px;
-}
 .action_send_email {
   text-align: center;
   display: block;
@@ -140,17 +122,6 @@ html, body {
 .profile-row span {
   position: relative;
 }
-.profile-row .ion-ios-arrow-down {
-  position: absolute;
-  bottom: 0;
-  right: 62px;
-  top: 9px;
-  color: #337ab7;
-  z-index: 20;
-  font-size: 22px;
-  cursor: pointer;
-}
-.profile-row .ion-ios-arrow-down:hover {}
 .active-profile {
   font-size: 13px;
   font-weight: 500;
@@ -162,13 +133,6 @@ html, body {
 }
 a:focus {
   outline: none;
-}
-#switch-account.ion-ios-arrow-down.up {
-  -webkit-transform: rotate(-180deg);
-  transform: rotate(-180deg);
-}
-.ion-ios-arrow-down.red {
-  background: red !important;
 }
 ul {
   padding-left: 0px;

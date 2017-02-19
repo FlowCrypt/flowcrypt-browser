@@ -51,22 +51,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 .accounts-options-row:hover {
   background: transparent!important;
 }
-.alt-accounts .ion-ios-checkmark, .alt-accounts .ion-ios-close {
-  /* right: -22px;
-  top: 15px;
-  bottom: 0; */
-  position: absolute;
-  right: 1px;
-  top: 6px;
-  bottom: 5px;
-  font-size: 20px;
-}
-.alt-accounts .ion-ios-checkmark {
-  color: #31A217;
-}
-.alt-accounts .ion-ios-close {
-  color: gray;
-}
 #alt-accounts.accounts-row .alt-accounts {
   /*background: black;*/
   height: 40px;
@@ -112,10 +96,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   font-size: 22px;
   padding-top: 7px;
   opacity: .8;
-}
-#header-row .ion-android-person {
-  text-align: center;
-  margin-bottom: 0;
 }
 .settings-icons-rows span.key_block_icon {
   color: white;
@@ -262,14 +242,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 }
 #settings-row a {
   text-decoration: none;
-}
-.ion-ios-arrow-down {
-  transition: .5s;
-}
-.ion-ios-arrow-down.up {
-  -webkit-transform: rotate(-180deg);
-  /* Safari */
-  transform: rotate(-180deg);
 }
 .abs-row {
   position: absolute;
