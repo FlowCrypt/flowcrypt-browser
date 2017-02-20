@@ -537,7 +537,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function render_receivers() {
-    if($('#contacts').css('display') !== 'none') {}
     var content = $('#input_to').val();
     var icon = tool.ui.spinner('green');
     if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back
@@ -663,7 +662,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       $('#contacts ul li.auth_contacts').click(function () {
         auth_contacts(url_params.account_email);
       });
-      $('#contacts').css('display', 'block');
+      $('#contacts').css({ display: 'block', top: ($('#compose > tbody > tr:first').height() + $('#input_addresses_container > div:first').height() + 10) + 'px' });
     } else {
       hide_contacts();
     }
