@@ -76,6 +76,7 @@ db_open(function (db) {
   }
 
   compose.on_render();
+  $('#input_to').focus();
   $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click)).keypress(tool.ui.enter(send_btn_click));
   $('.close_new_message').click(new_message_close);
   account_storage_get(url_params.account_email, ['addresses'], function (storage) { // add send-from addresses
