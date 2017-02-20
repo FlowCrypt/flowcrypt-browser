@@ -54,7 +54,6 @@
   },
   "web_accessible_resources": [
     "/css/gmail.css",
-    "/css/font-awesome.min.css",
     "/fonts/fontawesome-webfont.ttf",
     "/fonts/fontawesome-webfont.woff",
     "/fonts/fontawesome-webfont.woff2",

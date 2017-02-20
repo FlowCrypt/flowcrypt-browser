@@ -12,7 +12,7 @@ function init_elements_inject_js(factory) {
   });
 
   function meta() {
-    S.cached('body').append(factory.meta.stylesheet('gmail') + factory.meta.stylesheet('font-awesome.min') + factory.meta.notification_container());
+    S.cached('body').append(factory.meta.stylesheet('gmail') + factory.meta.notification_container());
   }
 
   function open_compose_window() {
