@@ -783,7 +783,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
-      $(email_element).children('img').replaceWith('<i class="fa fa-repeat action_retry_pubkey_fetch"></i>');
+      $(email_element).children('img').replaceWith('<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
       $(email_element).find('.action_retry_pubkey_fetch').click(remove_receiver); // todo - actual refresh
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
