@@ -133,7 +133,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
         return tool.e('div', {id: 'new_message', class: 'new_message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})});
       },
       subscribe: function(verification_email_text, source) {
-        return iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short'], {scrolling: 'no'});
+        return iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'});
       },
       attachment: function(meta, container_classes) {
         return tool.e('span', {class: (container_classes || []).concat('pgp_attachment').join(' '), html: iframe(src_pgp_attachment_iframe(meta))});
