@@ -347,6 +347,9 @@
       },
     },
     api: {
+      error: {
+        network: 'API_ERROR_NETWORK',
+      },
       google: {
         user_info: api_google_user_info,
       },
@@ -1921,8 +1924,11 @@
   function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function) {
     if(fail_on_auth !== true) {
       tool.browser.message.send(null, 'google_auth', { account_email: account_email, }, function (response) {
-        //todo: respond with success in background script, test if response.success === true, and error handling
-        base_api_function(account_email, method, resource, parameters, callback, true);
+        if(response && response.success === false && response.error === tool.api.error.network) {
+          callback(false, tool.api.error.network);
+        } else { //todo: error handling for other bad situations
+          base_api_function(account_email, method, resource, parameters, callback, true);
+        }
       });
     } else {
       callback(false, error_response);

@@ -12,14 +12,12 @@ function google_auth(auth_request, sender, respond) {
     if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
       google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
     } else {
-      google_auth_refresh_token(storage.google_token_refresh, function (tokens_object) {
-        if(typeof tokens_object.access_token !== 'undefined') {
-          google_auth_save_tokens(auth_request.account_email, tokens_object, storage.google_token_scopes, function () {
-            respond({
-              success: true,
-              message_id: auth_request.message_id,
-              account_email: auth_request.account_email, //todo: should be tested first with google_auth_check_email?
-            });
+      google_auth_refresh_token(storage.google_token_refresh, function (success, result) {
+        if(!success && result === tool.api.error.network) {
+          respond({ success: false, error: tool.api.error.network });
+        } else if(typeof result.access_token !== 'undefined') {
+          google_auth_save_tokens(auth_request.account_email, result, storage.google_token_scopes, function () {
+            respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
           });
         } else {
           google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
@@ -136,10 +134,14 @@ function google_auth_refresh_token(refresh_token, callback) {
     crossDomain: true,
     async: true,
     success: function (response) {
-      callback(response);
+      callback(true, response);
     },
     error: function (XMLHttpRequest, status, error) {
-      callback({ request: XMLHttpRequest, status: status, error: error });
+      if(XMLHttpRequest.status === 0 && status === 'error') { // connection error
+        callback(false, tool.api.error.network);
+      } else {
+        callback(false, { request: XMLHttpRequest, status: status, error: error });
+      }
     },
   });
 }
