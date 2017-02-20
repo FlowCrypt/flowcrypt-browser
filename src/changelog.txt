@@ -1,5 +1,20 @@
 <div>
 
+<b>version 3.4.1 on February 19, 2017: User Friendly</b>
+reading: badly displayed verification message result
+reading: correct pass phrase will get rejected when opening email
+reading: cryptup failing to render decrypted messages
+reading: google auth keeps reappearing on spotty internet
+reading: switch-to-encrypted and show-original buttons improved
+composing: requests for lookup were getting doubled
+composing: recipients sometimes get doubled
+composing: move found contacts down when size of recipients increases
+composing: automatic focus on recipients when composing
+design: replace all ion icons and font-awesome design
+design: Update basic/advanced Settings icons
+setup: add a HUGE warning not to delete backup emails
+setup: subscribtion status in settings
+
 <b>version 3.4.0 on February 17, 2017: Signing Fix</b>
 internal: fixed bug that will repeatedly show error alerts
 
