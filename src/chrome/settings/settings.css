@@ -85,8 +85,8 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   background: white;
 }
 #header-row .profile-img, #header-row .profile-img {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: inline-block;
   border: 2px solid #cccccc;
   border-radius: 120px;
