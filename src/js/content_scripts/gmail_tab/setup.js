@@ -83,7 +83,7 @@ function init_setup_js(chrome_runtime_id) {
       },
       passphrase_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialog.passphrase(data.type, data.longids));
+          $('body').append(factory.dialog.passphrase(data.longids, data.type));
         }
       },
       subscribe_dialog: function (data) {

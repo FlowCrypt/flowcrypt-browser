@@ -36,7 +36,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/new_message.htm'), params);
   }
 
-  function src_passphrase_dialog(type, longids) {
+  function src_passphrase_dialog(longids, type) {
     var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: parent_tab_id };
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/passphrase.htm'), params);
   }
@@ -118,12 +118,10 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       },
     },
     dialog: {
-      passphrase: function(longids) {
-        // todo - confirm that type is supposed to be "dialog"
-        return dialog(iframe(src_passphrase_dialog('dialog', longids), ['medium'], {scrolling: 'no'}))
+      passphrase: function(longids, type) {
+        return dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}))
       },
       subscribe: function(verification_email_text, source) {
-        // todo - double check that the placement was actually called dialog
         return dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source), ['short'], {scrolling: 'no'}));
       },
       add_pubkey: function(emails) {
@@ -150,7 +148,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
         return iframe(src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']);
       },
       passphrase: function(longids) {
-        return dialog(iframe(src_passphrase_dialog('embedded', longids), ['medium'], {scrolling: 'no'}))
+        return dialog(iframe(src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}))
       },
       attachment_status: function(content) {
         return tool.e('div', {class: 'attachment_loader', html: content});

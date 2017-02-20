@@ -12,7 +12,8 @@ if(url_params.type === 'embedded') {
 tool.ui.passphrase_toggle(['passphrase']);
 
 var all_private_keys = private_keys_get(url_params.account_email);
-
+console.log(all_private_keys);
+console.log(url_params.longids);
 if(url_params.longids) {
   var private_keys = private_keys_get(url_params.account_email, url_params.longids.split(','));
 } else {
@@ -33,16 +34,16 @@ if(all_private_keys.length > 1) {
 }
 
 function render_error() {
-  $('input.passphrase').val('');
-  $('input.passphrase').css('border-color', 'red');
-  $('input.passphrase').css('color', 'red');
-  $('input.passphrase').attr('placeholder', 'Please try again');
+  $('#passphrase').val('');
+  $('#passphrase').css('border-color', 'red');
+  $('#passphrase').css('color', 'red');
+  $('#passphrase').attr('placeholder', 'Please try again');
 }
 
 function render_normal() {
-  $('input.passphrase').css('border-color', 'gray');
-  $('input.passphrase').css('color', 'black');
-  $('input.passphrase').focus();
+  $('#passphrase').css('border-color', 'gray');
+  $('#passphrase').css('color', 'black');
+  $('#passphrase').focus();
 }
 
 $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
@@ -50,11 +51,14 @@ $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function 
 }));
 
 $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  var pass = $('input.passphrase').val();
+  var pass = $('#passphrase').val();
+  console.log(pass);
   var is_correct = false;
+  console.log(private_keys);
   $.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     if(tool.crypto.key.decrypt(prv, pass) === true) {
+      console.log(true);
       is_correct = true;
       if($('.forget').prop('checked')) {
         save_passphrase('session', url_params.account_email, keyinfo.longid, pass);
@@ -62,6 +66,7 @@ $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () 
         save_passphrase('local', url_params.account_email, keyinfo.longid, pass);
       }
       tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
+      return false;
     }
   });
   if(!is_correct) {
@@ -70,4 +75,4 @@ $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () 
   }
 }));
 
-$('input.passphrase').keyup(render_normal);
+$('#passphrase').keyup(render_normal);
