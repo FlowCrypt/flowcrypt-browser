@@ -559,10 +559,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
-    $('#input_to').focus();
     $('#input_to').val(tool.str.trim_lower(email));
     hide_contacts();
-    $('#input_to').blur();
+    render_receivers();
     $('#input_to').focus();
   }
 
@@ -726,7 +725,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function rerender_include_pubkey_icon(include) {
     if(include === null || typeof include === 'undefined') { // decide if pubkey should be included
-      if(!include_pubkey_toggled_manually) { // leave it as is if toggled manually beforeconsole.log('a');
+      if(!include_pubkey_toggled_manually) { // leave it as is if toggled manually before
         rerender_include_pubkey_icon(recipients_missing_my_key.length && !tool.value(get_sender_from_dom()).in(my_addresses_on_pks));
       }
     } else { // set icon to specific state
@@ -826,9 +825,10 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function on_render() {
     $('#input_to').keydown(respond_to_input_hotkeys);
-    $('#input_to').keyup(render_receivers);
+    var render_receivers_double_prevented = tool.ui.event.prevent(tool.ui.event.double(), render_receivers);
+    $('#input_to').keyup(render_receivers_double_prevented);
     $('#input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
-    $('#input_to').blur(render_receivers);
+    $('#input_to').blur(render_receivers_double_prevented);
     $('#input_text').keyup(function () {
       $('#send_btn_note').text('');
     });
