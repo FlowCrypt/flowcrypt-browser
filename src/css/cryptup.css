@@ -51,7 +51,7 @@ div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
-body#settings > div#content {  margin-top: 70px; margin-bottom: 150px; }
+body#settings > div#content {  margin-top: 70px; margin-bottom: 150px; position: relative;}
 body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
 /*body#settings > div#content.page #page_back_button { display: none; position: absolute; top: 10px; left: 10px; }*/
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
@@ -67,6 +67,7 @@ body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { padding: 0; box-sizing: border-box;
   width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px; }
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
+body#settings > div#content .start-arrow { position: absolute; width: 160px; right: 53px; animation: fadeInUp 1s;}
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #cccccc; vertical-align: middle; }
 body#settings > div.profile-row .ion-person::before { margin-top: 4px; }
@@ -237,11 +238,12 @@ table#compose td#input_addresses_container > div .recipients span { margin-top: 
 table#compose td#input_addresses_container > div .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
   -webkit-transition: .25s; transition: .25s;}
 table#compose td#input_addresses_container > div .recipients { height: auto; position: relative; }
-table#compose td#input_addresses_container > div .recipients span { padding: 5px 15px 5px 15px; }
-table#compose td#input_addresses_container > div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
+table#compose td#input_addresses_container > div .recipients span { padding: 5px 15px 6px 15px; }
+table#compose td#input_addresses_container > div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 0px; }
+table#compose td#input_addresses_container > div .recipients span > img.repeat-icon { right: -6px; top: 1px;}
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
-table#compose td#input_addresses_container > div .recipients span .close-icon { right: -7px; height: 9px; width: 9px; cursor: pointer; }
+table#compose td#input_addresses_container > div .recipients span .close-icon { right: -7px; height: 9px; width: 9px; top:0; cursor: pointer; }
 table#compose td#input_addresses_container > div .recipients span .close-icon:hover { opacity: 1; }
 table#compose td#input_addresses_container > div .recipients span.wrong { background: #A44; color: white;}
 table#compose td#input_addresses_container > div .recipients span.wrong .close-icon { opacity: 1; }
@@ -249,6 +251,7 @@ table#compose td#input_addresses_container > div .recipients span.has_pgp { back
 table#compose td#input_addresses_container > div .recipients span.attested { background: #31A217; color: white;}
 table#compose td#input_addresses_container > div .recipients span.attested img { opacity: 1; }
 table#compose td#input_addresses_container > div .recipients span.expired { background: #31A217; color: black;}
+table#compose td#input_addresses_container > div .recipients span img .expired-time {width: 12px; height: 12px; top: 1px; left: -6px;}
 table#compose td#input_addresses_container > div .recipients span.expired i.fa-clock-o { position: relative; left: -4px; font-size: 15px; }
 table#compose td#input_addresses_container > div .recipients span.no_pgp { background: #989898; color: white;}
 table#compose td#input_addresses_container > div .recipients span.failed { border: 1px dashed #A44; }
@@ -374,6 +377,7 @@ body.attachment:hover { border-color: #eaeaea; }
 body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; right:13px; opacity: 1; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
 body.attachment #download i { font-size: 39px; padding-bottom: 0; margin-top: 22px; opacity: .4;}
+body.attachment #download .download-icon { margin-top: 15px; margin-bottom: 8px; }
 body.attachment #download .download-prompt { margin-top:1px; font-size: 14px; }
 body.attachment #header { margin-top:10px; padding-bottom: 0; font-weight: 400; font-size: 14px; width: 100px; text-align: left; position: absolute; right: 5px; line-height: 1.5;
   top:15px; overflow: hidden;}
