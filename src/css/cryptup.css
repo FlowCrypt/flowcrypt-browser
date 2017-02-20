@@ -3,7 +3,7 @@
 @font-face { font-family: 'signature'; src: url('/fonts/Tangerine_Regular.ttf'); }
 @font-face { font-family: 'signature'; src: url('/fonts/Tangerine_Bold.ttf'); font-weight: bold; }
 
-.button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
+.button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; font-weight: 600; letter-spacing: 0.2px;
   border: 1px solid transparent; color: #fff; border-radius: 2px; font-size: 11px; text-align: center; white-space: nowrap;
   min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 5px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
@@ -75,14 +75,15 @@ body#settings > div.profile-row > .email-address { margin-right: 10px; font-size
 body#settings > div.profile-row > span > i { font-size: 200%; display: inline-block; margin-left: 3px; position: relative; top: 5px; width: 35px; height: 35px; border: 1px solid #ccc;
   border-radius: 120px; color: #ccc;}
 body#settings .action_show_help { text-decoration: none; position: absolute; top: 41px; margin-left: 245px; opacity: .3;}
+body#settings .action_show_help img { width: 28px; }
 body#settings > .action_show_help:hover { text-decoration: underline; }
 body#settings > div#content.setup [id^="step_"] { animation: fadeIn .7s;}
 body#settings > div#content.setup h1 {-webkit-animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_0_found_key { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
 body#settings > div#content.setup div#step_1_easy_or_manual { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
-body#settings > div#content.setup div#step_1_easy_or_manual .circle-i { height: 90px; margin:0 auto; margin-bottom: 35px; border-radius: 120px;  -webkit-animation: fadeInUp .5s; animation: fadeInUp .5s;}
-body#settings > div#content.setup div#step_1_easy_or_manual .circle-i i { font-size: 73px; padding-top: 19px; display: inline-block; color: #31A217;}
-body#settings > div#content.setup div#step_1_easy_or_manual .circle-i i.manual { color: #B7B7B7; }
+body#settings > div#content.setup div#step_1_easy_or_manual .circle-i { -webkit-animation: fadeInUp .5s; animation: fadeInUp .5s; margin-bottom: 35px; }
+body#settings > div#content.setup div#step_1_easy_or_manual > .col { opacity: 0.7; }
+body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover { opacity: 1; }
 
 
 body#settings > div#content.setup div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white;  font-size: 16px; font-weight: normal;
