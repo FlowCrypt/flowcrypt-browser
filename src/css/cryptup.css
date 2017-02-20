@@ -37,6 +37,9 @@ a:focus { outline: none !important; }
 i.small_spinner { display: inline-block; width: 40px; height: 18px; text-align: center; position: relative; }
 i.small_spinner img { position: absolute; left: 0; right: 0; margin-left: auto; margin-right: auto; width: 26px; }
 
+i.large_spinner { display: block; width: 75px; height: 75px; text-align: center; position: relative; }
+i.large_spinner img { position: relative; width: 75px; height: 75px; }
+
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
 .featherlight .featherlight-close-icon { background: none !important; border: none !important; }
@@ -373,7 +376,7 @@ body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: cen
 body.attachment:hover { border-color: #eaeaea; }
 body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; right:13px; opacity: 1; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
-body.attachment #download i { font-size: 39px; padding-bottom: 0; margin-top: 22px; opacity: .4;}
+body.attachment #download .large_spinner { margin-top: 7px; margin-left: 20px; }
 body.attachment #download .download-icon { margin-top: 15px; margin-bottom: 8px; }
 body.attachment #download .download-prompt { margin-top:1px; font-size: 14px; }
 body.attachment #header { margin-top:10px; padding-bottom: 0; font-weight: 400; font-size: 14px; width: 100px; text-align: left; position: absolute; right: 5px; line-height: 1.5;

@@ -1019,12 +1019,12 @@
     }
   }
 
-  function ui_spinner(color) {
+  function ui_spinner(color, placeholder_class) {
     var url = '/img/svgs/spinner-' + color + '-small.svg';
     if (window.chrome && window.chrome.runtime && window.chrome.runtime.id) {
       var url = 'chrome-extension://' + chrome.runtime.id + url;
     }
-    return '<i class="small_spinner"><img src="' + url + '" /></i>';
+    return '<i class="' + (placeholder_class || 'small_spinner') + '"><img src="' + url + '" /></i>';
   }
 
   function passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
