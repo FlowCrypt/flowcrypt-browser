@@ -507,7 +507,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
     } else if(value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {
       $('#input_to').blur();
       if($('#contacts').css('display') === 'block') {
-        $('#input_to').blur();
         if($('#contacts .select_contact.hover').length) {
           $('#contacts .select_contact.hover').click();
         } else {
@@ -537,27 +536,28 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function render_receivers() {
-    var content = $('#input_to').val();
-    var icon = tool.ui.spinner('green');
-    if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back
-      var emails = content.split(/[,]/g);
+    var input_to = $('#input_to').val().toLowerCase();
+    if(tool.value(',').in(input_to)) {
+      var emails = input_to.split(',');
       for(var i = 0; i < emails.length - 1; i++) {
-        $('#input_to').siblings('.recipients').append('<span>' + emails[i] + icon + '</span>');
+        $('#input_to').siblings('.recipients').append('<span>' + emails[i] + tool.ui.spinner('green') + '</span>');
       }
-      $('#input_to').val(emails[emails.length - 1]);
-      resize_input_to();
-      evaluate_receivers();
-    } else if(!$('#input_to').is(':focus') && content) {
-      $('#input_to').siblings('.recipients').append('<span>' + content + icon + '</span>');
-      $('#input_to').val('');
-      resize_input_to();
-      evaluate_receivers();
+    } else if(!$('#input_to').is(':focus') && input_to) {
+      $('#input_to').siblings('.recipients').append('<span>' + input_to + tool.ui.spinner('green') + '</span>');
+    } else {
+      return;
     }
+    $('#input_to').val('');
+    resize_input_to();
+    evaluate_receivers();
   }
 
   function select_contact(email, from_query) {
-    if($('.recipients span').last().text() === from_query.substring) {
-      $('.recipients span').last().remove();
+    var possibly_bogus_recipient = $('.recipients span').last();
+    var possibly_bogus_address = tool.str.trim_lower(possibly_bogus_recipient.text());
+    var q = tool.str.trim_lower(from_query.substring);
+    if(possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
+      possibly_bogus_recipient.remove();
     }
     $('#input_to').focus();
     $('#input_to').val(tool.str.trim_lower(email));
@@ -567,8 +567,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function resize_input_to() {
-    var new_width = Math.max(150, $('#input_to').parent().width() - $('#input_to').siblings('.recipients').width() - 50);
-    $('#input_to').css('width', new_width + 'px');
+    $('#input_to').css('width', (Math.max(150, $('#input_to').parent().width() - $('#input_to').siblings('.recipients').width() - 50)) + 'px');
   }
 
   function remove_receiver() {
@@ -651,17 +650,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
         ul_html += '<li class="loading">loading...</li>';
       }
       $('#contacts ul').html(ul_html);
-      $('#contacts ul li.select_contact').click(function () {
-        select_contact($(this).attr('email'), query);
-      });
-      $('#contacts ul li.select_contact').hover(function () {
-        $(this).addClass('hover');
-      }, function () {
-        $(this).removeClass('hover');
-      });
-      $('#contacts ul li.auth_contacts').click(function () {
-        auth_contacts(url_params.account_email);
-      });
+      $('#contacts ul li.select_contact').click(function () { select_contact(tool.str.trim_lower($(this).attr('email')), query); });
+      $('#contacts ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
+      $('#contacts ul li.auth_contacts').click(function () { auth_contacts(url_params.account_email); });
       $('#contacts').css({ display: 'block', top: ($('#compose > tbody > tr:first').height() + $('#input_addresses_container > div:first').height() + 10) + 'px' });
     } else {
       hide_contacts();
