@@ -182,7 +182,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       });
     } else {
       if($('div#reply_message_prompt').length) { // todo - will only work for reply box, not compose box
-        $('div#reply_message_prompt').html(tool.ui.spinner() + ' Waiting for pass phrase to open previous draft..');
+        $('div#reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
         clearInterval(passphrase_interval);
         passphrase_interval = setInterval(function () {
           check_passphrase_entered(encrypted_draft);
@@ -256,7 +256,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(is_compose_form_rendered_as_ready(recipients)) {
       original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
-      $('#send_btn i').replaceWith(tool.ui.spinner());
+      $('#send_btn i').replaceWith(tool.ui.spinner('white'));
       storage_cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_password_hint').val() || '', answer: $('#input_password').val(), };
@@ -539,7 +539,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   function render_receivers() {
     if($('#contacts').css('display') !== 'none') {}
     var content = $('#input_to').val();
-    var icon = tool.ui.spinner();
+    var icon = tool.ui.spinner('green');
     if(content.match(/[,]/) !== null) { // todo - make this work for tab key as well, and return focus back
       var emails = content.split(/[,]/g);
       for(var i = 0; i < emails.length - 1; i++) {

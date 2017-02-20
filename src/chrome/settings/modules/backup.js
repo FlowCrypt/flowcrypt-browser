@@ -173,7 +173,7 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
     $('#password2').focus();
   } else {
     var btn_text = $(self).text();
-    $(self).html(tool.ui.spinner());
+    $(self).html(tool.ui.spinner('white'));
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     var prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, new_passphrase);
@@ -205,7 +205,7 @@ function backup_on_gmail() {
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
     var btn_text = $(self).text();
-    $(self).html(tool.ui.spinner());
+    $(self).html(tool.ui.spinner('white'));
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     backup_key_on_gmail(url_params.account_email, armored_private_key, function (success) {
       if(success) {
@@ -223,7 +223,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
     var btn_text = $(self).text();
-    $(self).html(tool.ui.spinner());
+    $(self).html(tool.ui.spinner('white'));
     var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');

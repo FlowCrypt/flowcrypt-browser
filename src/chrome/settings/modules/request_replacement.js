@@ -4,9 +4,9 @@
 
 var url_params = tool.env.url_params(['account_email']);
 
-$('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner());
+$('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
-var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key')
+var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key');
 var prv_headers = tool.crypto.armor.headers('private_key');
 
 tool.api.attester.lookup_email(url_params.account_email, function (success, keyserver_result) {

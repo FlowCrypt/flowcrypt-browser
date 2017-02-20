@@ -87,7 +87,7 @@ function render_dialog(level, expire, active) {
 }
 
 function render_status(content, spinner) {
-  $(url_params.placement === 'embedded' ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner() : ''));
+  $(url_params.placement === 'embedded' ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner('white') : ''));
 }
 
 function register_and_subscribe() {

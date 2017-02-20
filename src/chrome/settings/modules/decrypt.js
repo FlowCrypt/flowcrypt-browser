@@ -34,7 +34,7 @@ db_open(function (db) {
       var ids = attach_js.get_attachment_ids();
       if(ids.length === 1) {
         original_content = $(self).html();
-        $(self).html('Decrypting.. ' + tool.ui.spinner());
+        $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
         attach_js.collect_attachment(ids[0], decrypt_and_download);
       } else {
         alert('Please add a file to decrypt');

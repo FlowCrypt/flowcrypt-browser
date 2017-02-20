@@ -268,7 +268,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
   var passphrase = $('#recovery_pasword').val();
   if(passphrase) {
     var btn_text = $(self).text();
-    $(self).html(tool.ui.spinner());
+    $(self).html(tool.ui.spinner('white'));
     var worked = false;
     $.each(recovered_keys, function (i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
@@ -340,7 +340,7 @@ $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_ma
 });
 
 $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
-  $(this).html('Disagnosing.. ' + tool.ui.spinner());
+  $(this).html('Disagnosing.. ' + tool.ui.spinner('white'));
   openpgp.generateKey({ // create a bogus key for testing and diagnosis
     numBits: 4096,
     userIds: [{ name: 'pass phrase is stockholm', email: 'bad@key.com', }],
@@ -386,7 +386,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
       $('#step_2b_manual_enter .input_passphrase').focus();
     } else if(decrypt_result === true) {
       if(prv.getEncryptionKeyPacket() !== null) {
-        $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner());
+        $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
         var options = {
           passphrase: passphrase,
           setup_simple: false,
@@ -425,7 +425,7 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
   } else {
     $('h1').text('Please wait, setting up CryptUp');
     $('#step_2a_manual_create input').prop('disabled', true);
-    $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner() + 'just a minute');
+    $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner('white') + 'just a minute');
     get_and_save_userinfo(url_params.account_email, function (userinfo) {
       create_save_key_pair(url_params.account_email, {
         full_name: userinfo.full_name,

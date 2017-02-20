@@ -7,7 +7,7 @@ var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 $('.action_send_feedback').click(function () {
   var original_button_text = $(this).text();
   var button = this;
-  $(this).html(tool.ui.spinner());
+  $(this).html(tool.ui.spinner('white'));
   setTimeout(function () { // this is so that spinner starts spinning before a potential failed connection alert shows up
     tool.api.cryptup.help_feedback(url_params.account_email, $('#input_text').val() + '\n\n\nCryptUp ' + catcher.version(), function (success, response) {
       if(success && response.sent === true) {

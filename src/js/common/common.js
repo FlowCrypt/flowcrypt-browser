@@ -1016,8 +1016,12 @@
     }
   }
 
-  function ui_spinner() {
-    return '&nbsp;<i class="fa fa-spinner fa-spin"></i>&nbsp;';
+  function ui_spinner(color) {
+    var url = '/img/svgs/spinner-' + color + '-small.svg';
+    if (window.chrome && window.chrome.runtime && window.chrome.runtime.id) {
+      var url = 'chrome-extension://' + chrome.runtime.id + url;
+    }
+    return '<i class="small_spinner"><img src="' + url + '" /></i>';
   }
 
   function passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {

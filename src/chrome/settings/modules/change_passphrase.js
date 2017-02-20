@@ -4,6 +4,8 @@
 
 var url_params = tool.env.url_params(['account_email']);
 
+$('.action_password').html(tool.ui.spinner('white') + 'some text here' + tool.ui.spinner('white'));
+
 if(private_keys_get(url_params.account_email).length > 1) {
   $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
   $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');

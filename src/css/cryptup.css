@@ -34,7 +34,8 @@ a:focus { outline: none !important; }
 .toggle_show_hide_pass_phrase .eye-open,
 .toggle_show_hide_pass_phrase .eye-closed { width: 19px; height: 15px;}
 .display_none { display: none; }
-
+i.small_spinner { display: inline-block; width: 40px; height: 18px; text-align: center; position: relative; }
+i.small_spinner img { position: absolute; left: 0; right: 0; margin-left: auto; margin-right: auto; width: 26px; }
 
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
@@ -283,9 +284,6 @@ table#compose #error_contaner_new_message {background: #f3f3f3; position: absolu
   animation: fadeInUp .7s; text-indent: 10px; color: #d14836; border: 1px solid #d14836;}
 table#compose #error_contaner_new_message #error_text_new_message { display: inline-block; text-indent: 15px; color: #d14836; height: auto; position: absolute; margin-top: 7px;}
 table#compose #error_contaner_new_message .ion-android-alert { font-size: 30px; }
-
-.spinner svg { display: none; }
-.spinner .active svg { position: absolute; top:0; right: 0; left:0; bottom:0; display: block !important; opacity: 1!important; }
 
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 6px 0; z-index: 1; }

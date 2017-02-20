@@ -170,7 +170,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
         var message_id = parse_message_id_from('attachment', this);
         if(message_id) {
           if(can_read_emails) {
-            $(new_pgp_messages).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner()));
+            $(new_pgp_messages).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner('green')));
             $(this).addClass('message_id_' + message_id);
             tool.browser.message.send(null, 'list_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
               catcher.try(function () {

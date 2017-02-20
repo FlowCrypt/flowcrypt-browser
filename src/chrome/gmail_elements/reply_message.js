@@ -201,7 +201,7 @@ db_open(function (db) {
       can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       if(!url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there is a draft
         original_reply_message_prompt = $('div#reply_message_prompt').html();
-        $('div#reply_message_prompt').html(tool.ui.spinner() + ' Loading draft');
+        $('div#reply_message_prompt').html(tool.ui.spinner('green') + ' Loading draft');
         tool.api.gmail.draft_get(url_params.account_email, storage.drafts_reply[url_params.thread_id], 'raw', function (success, response) {
           if(success) {
             compose.draft_set_id(storage.drafts_reply[url_params.thread_id]);
