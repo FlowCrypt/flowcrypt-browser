@@ -99,8 +99,7 @@ body#settings > div#content.setup div.action_save_private { margin-top: 20px; fo
 body#settings > div#content.setup div.action_create_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px;
-  line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; background-color: #088447 !important; background-image: -webkit-linear-gradient(top,#0F8C4F,#088447);
-  padding: 4px 35px; margin-left: 5px; }
+  line-height: 27px; outline: 0; vertical-align: middle; margin-top: -9px; padding: 4px 35px; margin-left: 5px; }
 body#settings > div#content.setup div.manual h2 { display: inline-block; margin:0; margin-top: -18px; margin-bottom: 26px;}
 body#settings > div#content.setup div.manual #addresses { color: #888; }
 body#settings > div#content.setup div#step_2_recovery { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
