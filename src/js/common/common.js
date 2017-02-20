@@ -1367,8 +1367,6 @@
   }
 
   function crypto_key_decrypt(prv, passphrase) { // returns true, false, or RETURNS a caught known exception
-    console.log(prv);
-    console.log(passphrase);
     try {
       return prv.decrypt(passphrase);
     } catch(primary_e) {

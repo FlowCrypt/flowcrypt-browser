@@ -242,7 +242,7 @@ table#compose td#input_addresses_container > div .recipients span { margin-top: 
   -webkit-transition: .25s; transition: .25s;}
 table#compose td#input_addresses_container > div .recipients { height: auto; position: relative; }
 table#compose td#input_addresses_container > div .recipients span { padding: 5px 15px 6px 15px; }
-table#compose td#input_addresses_container > div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 0px; }
+table#compose td#input_addresses_container > div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
 table#compose td#input_addresses_container > div .recipients span > img.repeat-icon { right: -6px; top: 1px;}
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
