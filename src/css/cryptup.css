@@ -280,9 +280,7 @@ table#compose td.text div#input_text { padding-top:8px; padding-left:8px; outlin
 #reply_message table#compose td.text div#input_text { overflow-y: visible; }
 #new_message table#compose td.text div#input_text { overflow-x: hidden; }
 table#compose td.text { border-bottom: none; position: relative;}
-table#compose .fa-close { font-size: 20px; margin-top: -1px; }
 table#compose #send_btn i { font-size: 20px; }
-table#compose #send_btn .fa-lock, #send_btn  .fa-unlock { position: relative; left: -3px; top: 3px; }
 table#compose #error_contaner_new_message {background: #f3f3f3; position: absolute;bottom:0; left:0; right:0; padding: 10px 0; z-index: 10; -webkit-animation: fadeInUp .7s;
   animation: fadeInUp .7s; text-indent: 10px; color: #d14836; border: 1px solid #d14836;}
 table#compose #error_contaner_new_message #error_text_new_message { display: inline-block; text-indent: 15px; color: #d14836; height: auto; position: absolute; margin-top: 7px;}
@@ -300,7 +298,6 @@ div#contacts:hover ul li:first-child { background: none; }
 div#contacts:hover ul li:first-child:hover { background: #eee; }
 div#contacts:hover ul li:hover { background: #eee; }
 div#contacts .button { padding: 4px 20px; }
-div#contacts .button .fa-search { color: #fff; }
 
 table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1px solid #f5f5f5; border-radius: 2px; opacity: 0.35; top: 12px; left: 12px;}
 table#compose .bottom .icon:hover { border-color: #dadada; opacity: 1; }

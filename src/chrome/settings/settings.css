@@ -159,19 +159,6 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
   text-decoration: underline;
   right: 58px;
 }
-#settings-row .fa.fa-key {
-  font-size: 22px;
-  color: #31A217;
-  width: 30px;
-  position: absolute;
-  left: 0;
-}
-.fa.fa-shield {
-  color: #31A217;
-  font-size: 22px;
-  position: absolute;
-  left: 4px;
-}
 #settings-row .my-keys-copy {
   text-indent: 5px;
   font-weight: 600;
