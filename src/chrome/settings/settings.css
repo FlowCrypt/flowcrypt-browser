@@ -14,6 +14,7 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 #header-row .logo-row a.cryptup-logo-row { text-decoration: none; }
 #header-row .logo-row .cryptup-logo-row span { opacity: .7; transition: .3s; top: 5px;}
 #header-row .logo-row .cryptup-logo-row:hover span { opacity: 1;}
+a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-left: 20px; }
 
 #security_module { min-height: 180px; }
 #alt-accounts .separator { background: black; width: 90%; margin: 5px auto 10px auto!important;height: 1px; opacity: .2; }

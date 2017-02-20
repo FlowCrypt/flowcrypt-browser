@@ -1,0 +1,78 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+<head>
+  <link rel="stylesheet" href="/css/cryptup.css">
+</head>
+<body style="padding: 40px; font-size: 14px; line-height: 18px;">
+
+  <div class="lightboxed">
+
+    <h1>CryptUp Privacy Policy</h1>
+
+    <p>The goal is that CryptUp will have access to as little information as necessary. The deails are outlined below.</p>
+
+    <p>This document is the first draft and it is written in Plain English as opposed to Legal Language so that it can be readily understood. Please send me feedback if any section needs clarification or clearer language.</p>
+
+    <h2>Terminology</h2>
+    <ul>
+      <li>CRYPTUP or WE - CryptUp's developers, employees, legal entity or server software that is under our direct control</li>
+      <li>YOU - the user of this software bound by its licence and terms of use</li>
+      <li>SERVER HARDWARE - a 3rd party server infrastructure provided as a service to CRYPTUP. It may include cloud servers and related services</li>
+      <li>CRYPTUP SERVER - server software holding user account related information, and allowing storage of encrypted MESSAGE when needed. This software runs on SERVER HARDWARE</li>
+      <li>ATTESTER - server software necessary to make encrypted PGP communication smooth. It helps distribute and verify PUBLIC KEYS and runs on SERVER HARDWARE</li>
+      <li>PUBLIC KEY - Cryptographic information needed in order to encrypt data for someone</li>
+      <li>PRIVATE KEY - Cryptographic information needed to open or decrypt previously encrypted data for its corresponding PUBLIC KEY. Additionally protected with a PASS PHRASE</li>
+      <li>PASS PHRASE - A long textual string that is difficult to guess or brute force, used to protect the PRIVATE KEY</li>
+      <li>BRUTE FORCE ATTACK - A method of unlocking encrypted material without breaking the underlying encryption, by using vast amounts of computational power to guess all possible combinations of a given PASS PHRASE or MESSAGE PASSWORD. This attack method can be combined with other methods such as a dictionary attack (the use of words commonly found in passwords). The success rate of such attack can vary from very high (simple, short PASS PHRASE or MESSAGE PASSWORD) through very low (long, complicated, uncommon and hard to guess PASS PHRASE or MESSAGE PASSWORD) to effectively impossible with current technology (complex, very long, random PASS PHRASE or MESSAGE PASSWORD)</li>
+      <li>LOCAL MACHINE - general term for hardware used by end users such as a computer, laptop, tablet or a phone</li>
+      <li>LOCAL APP - CryptUp software that runs on LOCAL MACHINE. This may take a form of a browser extension or a native application</li>
+      <li>LOCAL APP CONTACTS - Collection of contacts who use encryption, their PUBLIC KEYs and related info stored in LOCAL APP</li>
+      <li>WEB APP - CryptUp software which is served on the web through a link</li>
+      <li>PRIVATE WEB APP - is a WEB APP that produces or keeps sensitive MESSAGE CONTENT exclusively on LOCAL MACHINE</li>
+      <!--<li>HASH - data fingerprint that is always consistent for the same data and does not reveal any information about the data itself. https://en.wikipedia.org/wiki/Cryptographic_hash_function</li>-->
+      <li>EMAIL PROVIDER - person, company or their software who ensures delivery of your email. This could be Google, Yahoo, Microsoft, your or other person's private email server, or any other that can fulfill this function</li>
+      <li>COMPATIBLE SOFTWARE - Software from other vendors which is able to follow the OpenPGP standard of asymmetric key encryption. LOCAL APP or PRIVATE WEB APP Will attempt to find out which recipients use COMPATIBLE SOFTWARE by first searching your LOCAL APP CONTACTS and if not found, performing a lookup with ATTESTER. For the purpose of this document, recipients are considered as having COMPATIBLE SOFTWARE if LOCAL APP or PRIVATE WEB APP has access to recipient's PUBLIC KEY</li>
+      <li>PLAIN TEXT - message that has not been encrypted, and may be readable by anyone handling it</li>
+      <li>MESSAGE - encrypted text data that may or may not include encrypted attachments. Typically in the format of an email with certain parts of the email encrypted</li>
+      <li>MESSAGE PASSWORD - one-time password used to encrypt MESSAGE when recipient doesn't have COMPATIBLE SOFTWARE</li>
+      <li>CONTENT - the actual meaningful information contained inside MESSAGE, accessible to anyone with corresponding PRIVATE KEY or MESSAGE PASSWORD</li>
+    </ul>
+
+    <h2>End-to-end encryption</h2>
+    <p>Regardless of the method of MESSAGE delivery, CryptUp is an end-to-end encryption software. That means the CONTENT of your MESSAGE is encrypted in LOCAL APP or PRIVATE WEB APP and then sent to the recipient encrypted. How the MESSAGE is handled by the recipient depends on their setup. The vast majority of compatible software will only decrypt your MESSAGEs on the recipient's LOCAL MACHINE. That means neither EMAIL PROVIDER or CRYPTUP can access the CONTENT of the MESSAGE in transit or at rest.</p>
+
+    <h2>MESSAGE delivery and storage</h2>
+    <p>When you message a recipient who has COMPATIBLE SOFTWARE, the encrypted message is transferred from your EMAIL PROVIDER to recipient's EMAIL PROVIDER. This includes any attachments. How the encrypted data is transferred and stored and what happens to it is at the sole discretion of respective EMAIL PROVIDERs. EMAIL PROVIDER will see who you are messaging, how often, the email subject and related meta information just like they do when you send PLAIN TEXT email. The mechanics of sending encrypted email is the same as PLAIN TEXT email, except EMAIL PROVIDER is not able to see the CONTENT of these MESSAGEs.</p>
+    <p>When any of your recipients do not have COMPATIBLE SOFTWARE, LOCAL APP or PRIVATE WEB APP will require a MESSAGE PASSWORD to be provided by sender. Anyone who has access to the MESSAGE PASSWORD can open such MESSAGE. The encrypted MESSAGE is then sent through EMAIL PROVIDERs the same way as above. In addition, encrypted MESSAGE will be stored on CRYPTUP SERVER. This helps recipients without COMPATIBLE SOFTWARE to open such messages and view their CONTENT through the use of PRIVATE WEB APP. When the recipient doesn't have COMPATIBLE SOFTWARE and the encrypted MESSAGE is relayed through CRYPTUP SERVER, following information is stored along with it: (a) date and time it was sent, (b) size of MESSAGE, (c) the encrypted MESSAGE, (d) message expiration time, (e): indication if this is a MESSAGE text or attachment, (f) sender of MESSAGE only if this is an attachment and this particular MESSAGE never expires. MESSAGE that is not an attachment or is set to expire at a future date will not have any sender associated with it on CRYPTUP SERVER. Because MESSAGE PASSWORD can be subject to a BRUTE FORCE ATTACK, it is advisable to use a MESSAGE PASSWORD of sufficient strength for your particular use case.</p>
+
+    <h2>Handling of PRIVATE KEYs, MESSAGE PASSWORDs and PASS PHRASEs</h2>
+    <p>CRYPTUP will never have access to user PRIVATE KEYs, MESSAGE PASSWORDs or PASS PHRASEs. LOCAL APP is intended to never send such information to CRYPTUP SERVER or ATTESTER.</p>
+    <p>If any user intentionally or unintentionally sends a PRIVATE KEY, MESSAGE PASSWORD or PASS PHRASE to CRYPTUP (please do not do that!), CRYPTUP will delete such information immediately upon noticing it, unless it was explicitly indicated by the user that this material is solely for testing purposes. In either case, users should consider such keys not trusted and compromised, and should avoid using them in production scenarios.</p>
+    <p>LOCAL APP, PRIVATE WEB APP or any other CRYPTUP software will not distribute PASS PHRASEs or MESSAGE PASSWORDs in any way. Safe storage, backup and distribution of this material is left solely on the user.</p>
+    <p>LOCAL APP will store PRIVATE KEYs in storage accessible only to LOCAL MACHINE such as browser storage, application storage, hard drive or similar, and the security of these PRIVATE KEYs depend on the security of the underlying LOCAL MACHINE that keeps them. For this reason, it is advised to always update to latest operating system, keep up to date with latest security fixes, keep the system virus free using reliable antivirus software, using full-disk encryption or any other practices that make LOCAL MACHINE less vulnerable to attackers. Additionally, CRYPTUP recommends that you select an option to "Always require a pass phrase when opening email" as an additional layer of security in case your LOCAL MACHINE gets compromised in the future through physical or other means.</p>
+    <p>In addition to storing PRIVATE KEY in LOCAL APP exclusive to LOCAL MACHINE, depending on how was LOCAL APP set up, following will apply:</p>
+    <ul>
+      <li>Option 1 - manual setup - use (import) my own key:  LOCAL APP will keep both the PRIVATE KEY and PASS PHRASE exclusively on LOCAL MACHINE, unless user specifically navigates to backup section of settings where they perform an additional form of PRIVATE KEY backup.</li>
+      <li>Option 2 - manual setup - create a new key: LOCAL APP will provide the user with a comprehensive estimation of the strength of their PASS PHRASE. Once the user chooses a PASS PHRASE of satisfactory strength depending on their use case, LOCAL APP will store the PASS PHRASE and the PRIVATE KEY exclusively on LOCAL MACHINE. In addition, as a part of the setup procedure, it will ask user to select an additional method of PRIVATE KEY backup, if needed. User is free to select a backup method or choose not to perform any backup.</li>
+      <li>Option 3 - simple setup - create a new key: LOCAL APP will provide the user with a comprehensive estimation of the strength of their PASS PHRASE. Once the user chooses a PASS PHRASE of satisfactory strength depending on their use case, LOCAL APP will store the PASS PHRASE and the PRIVATE KEY on LOCAL MACHINE. In addition, LOCAL APP will automatically back up the key on user's EMAIL PROVIDER. The backed up key is protected with a PASS PHRASE that will always stay exclusively on LOCAL APP within LOCAL MACHINE. It is strongly recommended to choose a PASS PHRASE that will be evaluated to maximum strength (full strength bar) during LOCAL APP setup, as PASS PHRASEs of such strength take vast amount of resources to crack through BRUTE FORCE ATTACK, making such attacks effectively impossible.</li>
+    </ul>
+
+    <h2>More considerations</h2>
+    <p>This document is factually correct but incomplete. Additional information concerning following topics will be added soon:</p>
+    <ul>
+      <li>handling of PUBLIC KEYs, ATTESTER data storage and publication policy</li>
+      <li>handling of expired MESSAGEs (their content and all associated data gets deleted)</li>
+      <li>policy of purging data from CRYPTUP SERVER (expired messages purged automatically, everything else per request of sender)</li>
+      <li>the process and technical details of purging data</li>
+      <li>software security review and disclosure of security related bugs</li>
+    </ul>
+
+    <h2>Feedback</h2>
+    <p>This privacy policy is subject to change without prior notice based on feedback from the community. Such changes and prior versions will be visible on project's public repository and also mentioned in project's changelog if/when such changes occur.</p>
+    <p>Please send me your feedback or requests for clarification at tom@cryptup.org</p>
+
+  </div>
+
+</body>
+</html>

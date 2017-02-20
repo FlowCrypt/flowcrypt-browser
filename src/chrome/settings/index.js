@@ -60,7 +60,7 @@ function initialize() {
         if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
           $('.auth_denied_warning').css('display', 'block');
         }
-        $('.hide_if_setup_not_done').css('display', 'block');
+        $('.hide_if_setup_not_done').css('display', 'initial');
         $('.show_if_setup_not_done').css('display', 'none');
         var private_keys = private_keys_get(url_params.account_email);
         if(!private_keys.length) {
@@ -70,7 +70,7 @@ function initialize() {
         }
         add_key_rows_html(private_keys);
       } else {
-        $('.show_if_setup_not_done').css('display', 'block');
+        $('.show_if_setup_not_done').css('display', 'initial');
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     });
@@ -79,7 +79,7 @@ function initialize() {
       if(account_emails && account_emails[0]) {
         window.location = tool.env.url_create('index.htm', { account_email: account_emails[0] });
       } else {
-        $('.show_if_setup_not_done').css('display', 'block');
+        $('.show_if_setup_not_done').css('display', 'initial');
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     });
