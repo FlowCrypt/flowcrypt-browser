@@ -198,9 +198,9 @@ body#settings > div#content.subscribe .list_benefits table tr td { padding-botto
 body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
 
 
-body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0; background-color: #FFF; word-wrap: break-word; zoom: reset; }
+body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }
-html {  padding:0px; margin: 0; zoom: reset; }
+html {  padding:0px; margin: 0; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0px;
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
