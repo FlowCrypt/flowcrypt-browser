@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.4.2 on February 20, 2017: Legal</b>
+legal: included a privacy policy
+legal: included licensing and terms of use in the settings
+design: improving buttons that only have a spinner in it
+design: changed size of profile image on setup
+
 <b>version 3.4.1 on February 19, 2017: User Friendly</b>
 reading: badly displayed verification message result
 reading: correct pass phrase will get rejected when opening email
