@@ -72,7 +72,7 @@ body#settings > div#content input[type=password], body#settings > div#content in
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div#content .start-arrow { position: absolute; width: 160px; right: 53px; animation: fadeInUp 1s;}
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
-body#settings > div.profile-row .profile-img { border-radius: 120px; width: 48px; height: 48px; border: 1px solid #cccccc; vertical-align: middle; }
+body#settings > div.profile-row .profile-img { border-radius: 120px; width: 30px; height: 30px; border: 1px solid #cccccc; vertical-align: middle; }
 body#settings > div.profile-row .ion-person::before { margin-top: 4px; }
 body#settings > div#content .chevron-left { position: absolute; left: 20px; top:43px; width: 35px; height: 20px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; opacity: .4;
   animation: fadeInRight 1s ;}
