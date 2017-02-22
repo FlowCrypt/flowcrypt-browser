@@ -41,14 +41,19 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/passphrase.htm'), params);
   }
 
-  function src_subscribe_dialog(verification_email_text, placement, source) {
-    var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: parent_tab_id };
+  function src_subscribe_dialog(verification_email_text, placement, source, subscribe_result_tab_id) {
+    var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: parent_tab_id, subscribe_result_tab_id: subscribe_result_tab_id };
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/subscribe.htm'), params);
   }
 
   function src_add_pubkey_dialog(emails, placement) {
     var params = { account_email: account_email, emails: emails, parent_tab_id: parent_tab_id, placement: placement };
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
+  }
+
+  function src_add_footer_dialog(placement) {
+    var params = { account_email: account_email, parent_tab_id: parent_tab_id, placement: placement };
+    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/shared/footer.htm'), params);
   }
 
   function src_pgp_attachment_iframe(meta) {
@@ -104,6 +109,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       passphrase_dialog: src_passphrase_dialog,
       subscribe_dialog: src_subscribe_dialog,
       add_pubkey_dialog: src_add_pubkey_dialog,
+      add_footer_dialog: src_add_footer_dialog,
       pgp_attachment_iframe: src_pgp_attachment_iframe,
       pgp_block_iframe: src_pgp_block_iframe,
       pgp_pubkey_iframe: src_pgp_pubkey_iframe,
@@ -121,12 +127,15 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       passphrase: function(longids, type) {
         return dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}))
       },
-      subscribe: function(verification_email_text, source) {
-        return dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source), ['short'], {scrolling: 'no'}));
+      subscribe: function(verification_email_text, source, subscribe_result_tab_id) {
+        return dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source, subscribe_result_tab_id), ['short'], {scrolling: 'no'}));
       },
       add_pubkey: function(emails) {
         return dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
       },
+      // add_footer: function(placement) {
+      //   return dialog(iframe(src_add_pubkey_dialog(placement), []));
+      // },
     },
     embedded: {
       compose: function(draft_id) {

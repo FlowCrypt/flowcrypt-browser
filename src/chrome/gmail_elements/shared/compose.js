@@ -30,16 +30,37 @@ function init_shared_compose_js(url_params, db, attach_js) {
   var keyserver_lookup_results_by_email = {};
   var is_reply_box = Boolean($('body#reply_message').length);
   var original_btn_html;
+  var email_footer;
+  var tab_id;
+  var factory;
   var l = {
     open_password_protected_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
   };
 
-  tool.browser.message.tab_id(function (tab_id) {
+  tool.browser.message.tab_id(function (id) {
+    tab_id = id;
+    factory = init_elements_factory_js(url_params.account_email, tab_id);
+    var subscribe_result_listener;
     tool.browser.message.listen({
       close_dialog: function (data) {
         $('.featherlight.featherlight-iframe').remove();
+      },
+      set_footer: function (data) {
+        email_footer = data.footer;
+        update_footer_icon();
+        $('.featherlight.featherlight-iframe').remove();
+      },
+      subscribe: function(data, sender, respond) {
+        subscribe_result_listener = respond;
+        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', {'subscribe_result_tab_id': tab_id});
+      },
+      subscribe_result: function(data) {
+        if(typeof subscribe_result_listener === 'function') {
+          subscribe_result_listener(data.active);
+          subscribe_result_listener = undefined;
+        }
       },
     }, tab_id);
   });
@@ -47,11 +68,17 @@ function init_shared_compose_js(url_params, db, attach_js) {
   $('.icon.action_include_pubkey').attr('title', l.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
-  account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function (storage) {
+  account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer'], function (storage) {
     my_addresses_on_pks = storage.addresses_pks || [];
     my_addresses_on_keyserver = storage.addresses_keyserver || [];
     can_save_drafts = tool.api.gmail.has_scope(storage.google_token_scopes, 'compose');
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+    storage_cryptup_subscription(function(level, expire, active) {
+      if(active) {
+        email_footer = storage.email_footer;
+        update_footer_icon();
+      }
+    });
     if(!can_save_drafts) {
       $('#send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
       $('#send_btn_note a.auth_drafts').click(auth_drafts);
@@ -271,7 +298,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
                     if(all_good === true) {
                       $('#send_btn span').text('Encrypting email');
                       plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
-                      do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
+                      do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
                     } else if(all_good === tool.api.cryptup.auth_error) {
                       if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
                         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
@@ -283,7 +310,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
                     }
                   });
                 } else {
-                  do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, true, send_email);
+                  do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, true, send_email);
                 }
               });
             } catch(err) {
@@ -365,7 +392,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     });
   }
 
-  function do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
+  function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
       if($('.bottom .icon.action_include_pubkey').length && $('.bottom .icon.action_include_pubkey').is('.active')) {
         encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
@@ -375,11 +402,12 @@ function init_shared_compose_js(url_params, db, attach_js) {
         // 'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'),
       };
       $('#send_btn span').text(((attachments || []).length) && attach_files_to_email ? 'Uploading attachments' : 'Sending');
-      db_contact_update(db, recipients, { last_use: Date.now(), }, function () {
+      db_contact_update(db, recipients, { last_use: Date.now() }, function () {
         if(challenge) {
           upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
             if(short_id) {
               body = format_password_protected_email(short_id, body);
+              body = format_email_footer(body);
               send_email(body, attachments, attach_files_to_email);
             } else {
               alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
@@ -387,6 +415,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
             }
           });
         } else {
+          body = format_email_footer(body);
           send_email(body, attachments, attach_files_to_email);
         }
       });
@@ -574,7 +603,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     $(this).parent().remove();
     resize_input_to();
     show_hide_password_or_pubkey_container_and_color_send_button();
-    rerender_include_pubkey_icon();
+    update_pubkey_icon();
   }
 
   function auth_drafts() {
@@ -723,16 +752,28 @@ function init_shared_compose_js(url_params, db, attach_js) {
     });
   }
 
-  function rerender_include_pubkey_icon(include) {
+  function update_pubkey_icon(include) {
     if(include === null || typeof include === 'undefined') { // decide if pubkey should be included
       if(!include_pubkey_toggled_manually) { // leave it as is if toggled manually before
-        rerender_include_pubkey_icon(recipients_missing_my_key.length && !tool.value(get_sender_from_dom()).in(my_addresses_on_pks));
+        update_pubkey_icon(recipients_missing_my_key.length && !tool.value(get_sender_from_dom()).in(my_addresses_on_pks));
       }
     } else { // set icon to specific state
       if(include) {
         $('.bottom .icon.action_include_pubkey').addClass('active').attr('title', l.include_pubkey_icon_title_active);
       } else {
         $('.bottom .icon.action_include_pubkey').removeClass('active').attr('title', l.include_pubkey_icon_title);
+      }
+    }
+  }
+
+  function update_footer_icon(include) {
+    if(include === null || typeof include === 'undefined') { // decide if pubkey should be included
+      update_footer_icon(!!email_footer);
+    } else { // set icon to specific state
+      if(include) {
+        $('.bottom .icon.action_include_footer').addClass('active');
+      } else {
+        $('.bottom .icon.action_include_footer').removeClass('active');
       }
     }
   }
@@ -758,13 +799,13 @@ function init_shared_compose_js(url_params, db, attach_js) {
             if(!pubkey_sent) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
               recipients_missing_my_key.push(email);
             }
-            rerender_include_pubkey_icon();
+            update_pubkey_icon();
           });
         } else {
-          rerender_include_pubkey_icon();
+          update_pubkey_icon();
         }
       } else {
-        rerender_include_pubkey_icon();
+        update_pubkey_icon();
       }
     }
     $(email_element).children('img, i').remove();
@@ -837,9 +878,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       if(!$('#input_to').is(':focus')) {
         $('#input_to').focus();
       }
-    }).children().click(function () {
-      return false;
-    });
+    }).children().click(function () { return false; });
     resize_input_to();
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
   }
@@ -862,26 +901,23 @@ function init_shared_compose_js(url_params, db, attach_js) {
     return new_bodies;
   }
 
+  function format_email_footer(body) {
+    return {
+      'text/plain': body['text/plain'] + (email_footer ? '\n' + email_footer : ''),
+    };
+  }
+
   $('#input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));
   $('#input_password').focus(show_hide_password_or_pubkey_container_and_color_send_button);
   $('#input_password').blur(show_hide_password_or_pubkey_container_and_color_send_button);
 
   $('.add_pubkey').click(function () {
     if(url_params.placement !== 'settings') {
-      tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog_gmail', {
-        emails: get_recipients_from_dom('no_pgp'),
-      });
+      tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog_gmail', { emails: get_recipients_from_dom('no_pgp') });
     } else {
-      tool.browser.message.tab_id(function (compose_window_tab_id) {
-        var factory = init_elements_factory_js(url_params.account_email, compose_window_tab_id);
-        $.featherlight({
-          iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'),
-          iframeWidth: 515,
-          iframeHeight: $('html').height() - 50,
-        });
-      });
+      $.featherlight({ iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'), iframeWidth: 515, iframeHeight: $('html').height() - 50 });
     }
-    clearInterval(added_pubkey_db_lookup_interval);
+    clearInterval(added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
     added_pubkey_db_lookup_interval = setInterval(function () {
       $.each(get_recipients_from_dom('no_pgp'), function (i, email) {
         db_contact_get(db, email, function (contact) {
@@ -897,14 +933,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
   });
 
   $('.action_feedback').click(function () {
-    tool.browser.message.send(null, 'settings', {
-      account_email: url_params.account_email,
-      page: '/chrome/settings/modules/help.htm',
-    });
+    tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/help.htm' });
   });
 
   $('#input_from').change(function () {
-    // when I change input_from, I should completely re-evaluate: rerender_include_pubkey_icon() and render_pubkey_result()
+    // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
     // because they might not have a pubkey for the alternative address, and might get confused
   });
 
@@ -917,8 +950,17 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   $('.icon.action_include_pubkey').click(function () {
     include_pubkey_toggled_manually = true;
-    rerender_include_pubkey_icon(!$(this).is('.active'));
+    update_pubkey_icon(!$(this).is('.active'));
   });
+
+  $('.icon.action_include_footer').click(function () {
+    if(!$(this).is('.active')) {
+      $.featherlight({ iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 250 });
+    } else {
+      update_footer_icon(!$(this).is('.active'));
+    }
+  });
+
 
   return {
     draft_set_id: draft_set_id,
@@ -929,7 +971,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     handle_send_message_error: handle_send_message_error,
     evaluate_receivers: evaluate_receivers,
     resize_reply_box: resize_reply_box,
-    rerender_include_pubkey_icon: rerender_include_pubkey_icon,
+    update_pubkey_icon: update_pubkey_icon,
     get_recipients_from_dom: get_recipients_from_dom,
     get_sender_from_dom: get_sender_from_dom,
     on_render: on_render,

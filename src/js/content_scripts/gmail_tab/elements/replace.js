@@ -30,7 +30,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
       var end_index = end_found + block_headers.end.length;
     }
     var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
-    var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length - 1);
+    var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length);
     return replace_armored_block_type(text_with_replaced_block, block_headers, end_required, block_processor, begin_index + block_replacement.length);
   }
 

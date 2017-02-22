@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
 var original_content;
 var product = 'free_year';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
@@ -221,6 +221,9 @@ function notify_upgraded_and_close() {
     tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
       notification: 'Successfully upgraded to CryptUp Advanced.',
     });
+    if(url_params.subscribe_result_tab_id) {
+      tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});
+    }
     close_dialog();
   } else {
     render_status(l.welcome);

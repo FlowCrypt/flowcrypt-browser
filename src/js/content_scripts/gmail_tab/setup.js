@@ -88,7 +88,7 @@ function init_setup_js(chrome_runtime_id) {
       },
       subscribe_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialog.subscribe(null, 'dialog', data ? data.source : null));
+          $('body').append(factory.dialog.subscribe(null, data ? data.source : null, data.subscribe_result_tab_id));
         }
       },
       add_pubkey_dialog_gmail: function (data) {
