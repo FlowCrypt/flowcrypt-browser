@@ -44,7 +44,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
     }, tab_id);
   });
 
-  $('.icon.pubkey').attr('title', l.include_pubkey_icon_title);
+  $('.icon.action_include_pubkey').attr('title', l.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
   account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver'], function (storage) {
@@ -367,7 +367,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   function do_encrypt_message_body(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
-      if($('.bottom .icon.pubkey').length && $('.bottom .icon.pubkey').is('.active')) {
+      if($('.bottom .icon.action_include_pubkey').length && $('.bottom .icon.action_include_pubkey').is('.active')) {
         encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
       var body = {
@@ -730,9 +730,9 @@ function init_shared_compose_js(url_params, db, attach_js) {
       }
     } else { // set icon to specific state
       if(include) {
-        $('.bottom .icon.pubkey').addClass('active').attr('title', l.include_pubkey_icon_title_active);
+        $('.bottom .icon.action_include_pubkey').addClass('active').attr('title', l.include_pubkey_icon_title_active);
       } else {
-        $('.bottom .icon.pubkey').removeClass('active').attr('title', l.include_pubkey_icon_title);
+        $('.bottom .icon.action_include_pubkey').removeClass('active').attr('title', l.include_pubkey_icon_title);
       }
     }
   }

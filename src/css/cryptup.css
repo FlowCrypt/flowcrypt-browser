@@ -73,7 +73,6 @@ body#settings > div#content .separator {max-width: 550px; margin:10px auto; marg
 body#settings > div#content .start-arrow { position: absolute; width: 160px; right: 53px; animation: fadeInUp 1s;}
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}
 body#settings > div.profile-row .profile-img { border-radius: 120px; width: 30px; height: 30px; border: 1px solid #cccccc; vertical-align: middle; }
-body#settings > div.profile-row .ion-person::before { margin-top: 4px; }
 body#settings > div#content .chevron-left { position: absolute; left: 20px; top:43px; width: 35px; height: 20px; color: #999; cursor: pointer; -webkit-animation: fadeInRight 1s; opacity: .4;
   animation: fadeInRight 1s ;}
 body#settings > div.profile-row > .email-address { margin-right: 10px; font-size: 15px;}
@@ -269,25 +268,42 @@ table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
 table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; width: 98%; outline: none; }
 table#compose tr.bottom { background-color: #f5f5f5; }
-table#compose td.bottom { padding: 0; height: 42px; padding-left:9px; border-top: 1px solid #cfcfcf; position: relative;}
-table#compose td.bottom div#send_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
+table#compose td.bottom { padding: 7px 12px 1px 12px; height: 47px; border-top: 1px solid #cfcfcf;}
+table#compose td.bottom div#send_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; white-space: nowrap; min-width: 56px;
   border: 1px solid transparent; position: relative; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center;
-  white-space: nowrap; min-width: 56px; height: 27px; line-height: 27px; outline: 0; padding: 5px 25px; margin: 6px 2px;
-  vertical-align: middle; -webkit-transition: .5s!important; transition: .5s!important; top: -2px;}
-table#compose .close_new_message i.ion-android-close { font-size: 27px; top: 10px!important; color: white; margin-top: -5px; }
+  height: 27px; line-height: 27px; outline: 0; padding: 5px 25px; -webkit-transition: .5s!important; transition: .5s!important; top: -2px; margin: 0; margin-right: 10px; }
+table#compose #send_btn i { font-size: 20px; }
 table#compose td.bottom div#send_btn_note { display: inline-block; font-size: 12.8px; padding-left: 5px; opacity: 0.5; }
 table#compose td.bottom .delete-draft { width: 20px; height: 20px;}
-table#compose td.text div#input_text { padding-top:8px; padding-left:8px; outline: none; border: none !important; -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important; box-shadow: none !important; height:100%; word-wrap: break-word; max-width: 525px; background-image: url(/img/lock-seamless-bg-alpha.png);
-  overflow-y: auto; padding-bottom: 16px; }
+table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1px solid #f5f5f5; border-radius: 2px; opacity: 0.35; vertical-align: middle;  }
+table#compose .bottom .icon img, table#compose .bottom .icon i { height: 20px; width: 20px; display: block; background-repeat: no-repeat; background-position: center; }
+table#compose .bottom .icon.right { float:right; margin-top: 3px; }
+table#compose .bottom .icon:hover { border-color: #dadada; opacity: 1; }
+table#compose .bottom .icon:active { border-color: #4d90fe; }
+table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: middle; padding: 0; display: inline-block; margin-top: 4px }
+table#compose .bottom .icon.active { opacity: 1; }
+table#compose .bottom .icon.action_feedback { opacity: 1; }
+table#compose .bottom .icon.action_include_pubkey i { background-image: url(/img/pubkey-icon-16-16-standard.png); }
+table#compose .bottom .icon.action_include_pubkey.active i { background-image: url(/img/pubkey-icon-16-16-active.png); }
+table#compose .bottom .icon.add_footer i { background-image: url(/img/footer-icon.png); }
+table#compose .bottom .icon.add_footer.active i { background-image: url(/img/footer-icon-active.png); }
+
+table#compose td.text { border-bottom: none; position: relative;}
+table#compose td.text div#input_text { padding-top: 8px; padding-left: 8px; outline: none; border: none !important; -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important; box-shadow: none !important; height: 100%; word-wrap: break-word; max-width: 525px;
+  background-image: url(/img/lock-seamless-bg-alpha.png); overflow-y: auto; padding-bottom: 16px; }
 #reply_message table#compose td.text div#input_text { overflow-y: visible; }
 #new_message table#compose td.text div#input_text { overflow-x: hidden; }
-table#compose td.text { border-bottom: none; position: relative;}
-table#compose #send_btn i { font-size: 20px; }
-table#compose #error_contaner_new_message {background: #f3f3f3; position: absolute;bottom:0; left:0; right:0; padding: 10px 0; z-index: 10; -webkit-animation: fadeInUp .7s;
-  animation: fadeInUp .7s; text-indent: 10px; color: #d14836; border: 1px solid #d14836;}
-table#compose #error_contaner_new_message #error_text_new_message { display: inline-block; text-indent: 15px; color: #d14836; height: auto; position: absolute; margin-top: 7px;}
-table#compose #error_contaner_new_message .ion-android-alert { font-size: 30px; }
+
+table#compose #fineuploader { position: absolute; bottom: 5px; right: 0; }
+table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
+table#compose #fineuploader .qq-total-progress-bar-container { display: none; height: 0; border: 0; visibility: hidden; position: absolute; }
+table#compose #fineuploader .qq-upload-list {overflow-x: hidden; }
+table#compose #fineuploader .qq-upload-list::-webkit-scrollbar {  width: 0 !important;}
+table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.5; margin-left: 12px; padding: 5px; }
+table#compose #fineuploader .qq-upload-list li .qq-upload-file { width: 210px; line-height: 18px; color: black; }
+table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 7px; position: relative; }
+table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 6px 0; z-index: 1; }
@@ -301,31 +317,6 @@ div#contacts:hover ul li:first-child { background: none; }
 div#contacts:hover ul li:first-child:hover { background: #eee; }
 div#contacts:hover ul li:hover { background: #eee; }
 div#contacts .button { padding: 4px 20px; }
-
-table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1px solid #f5f5f5; border-radius: 2px; opacity: 0.35; top: 12px; left: 12px;}
-table#compose .bottom .icon:hover { border-color: #dadada; opacity: 1; }
-table#compose .bottom .icon:active { border-color: #4d90fe; }
-table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: middle; padding: 0; display: inline-block; margin-top: 4px }
-table#compose .bottom .icon.attach {  top: 8px;}
-table#compose .bottom .icon.standard { position: relative; top: 3px; }
-table#compose .bottom .icon.standard i { font-size: 20px; display: inline-block; padding: 3px 5px; }
-table#compose .bottom .action_feedback { width: 25px; opacity: 1; float: right; margin-top: 6px; margin-right: 15px;}
-table#compose .bottom .icon.pubkey { background-image: url(/img/pubkey-icon-16-16-standard.png); background-repeat: no-repeat;
-  background-position: center; width: 16px; height: 16px; position: absolute; right: 61px; left: initial; top: 7px; padding: 7px 6px; }
-table#compose .bottom .icon.pubkey.active { background-image: url('/img/pubkey-icon-16-16-active.png'); opacity: 1;}
-table#compose .bottom .icon.ion-help-circled { position: absolute; right: 14px; left: initial; font-size: 19px; top: 14px; padding: 6px; }
-
-
-table#compose #fineuploader { position: absolute; bottom: 5px; right: 0; }
-table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
-table#compose #fineuploader .qq-total-progress-bar-container { display: none; height: 0; border: 0; visibility: hidden; position: absolute; }
-table#compose #fineuploader .qq-upload-list {overflow-x: hidden; }
-table#compose #fineuploader .qq-upload-list::-webkit-scrollbar {  width: 0 !important;}
-table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.5; margin-left: 12px; padding: 5px; }
-table#compose #fineuploader .qq-upload-list li .qq-upload-file { width: 210px; line-height: 18px; color: black; }
-table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 7px; position: relative; }
-table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
-table#compose #fineuploader .qq-upload-list li .ion-android-close { font-size: 18px; position: absolute; top: 5px; bottom: 0; }
 
 table#compose tr#password_or_pubkey_container { display: none; }
 table#compose tr#password_or_pubkey_container td { height: 66px; padding: 5px 14px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s; }
@@ -364,7 +355,6 @@ div#reply_message_successful_container > #attachments > span.pgp_attachment > if
 table#compose #error_container_reply_message {background: #f3f3f3; position: absolute;bottom:0; left:0; right:0; padding: 10px 0; z-index: 10; -webkit-animation: fadeInUp .7s;
   animation: fadeInUp .7s; text-indent: 10px; color: #d14836; border: 1px solid #d14836;}
 table#compose #error_container_reply_message #error_text_reply_message { display: inline-block; text-indent: 15px; color:#d14836; height: auto; position: absolute; margin-top: 7px;}
-table#compose #error_container_reply_message .ion-android-alert { font-size: 30px; }
 
 .loading_copy { -webkit-animation: fadeIn 1s; animation: fadeIn 1s; text-align: center; font-size: 19px; color: #afafaf; margin-top: 4px;}
 .loader { text-align: center; padding-left: 0; margin-left: 0; -webkit-animation: fadeInUp 1s;  animation: fadeInUp 1s;}
