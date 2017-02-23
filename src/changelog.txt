@@ -1,5 +1,12 @@
 <div>
 
+<b>version 3.4.3 on February 22, 2017: Email Footer</b>
+composing: add email footer
+composing: new lines will get messed up when rendering sent message
+reading: better decrypt error handling
+setup: show result of attestation in an iframe
+internal: organize common functions
+
 <b>version 3.4.2 on February 20, 2017: Legal</b>
 legal: included a privacy policy
 legal: included licensing and terms of use in the settings
