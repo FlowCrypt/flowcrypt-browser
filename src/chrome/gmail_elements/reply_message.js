@@ -118,7 +118,7 @@ db_open(function (db) {
     });
   }
 
-  function reply_message_render_success(to, has_attachments, message_id) {
+  function reply_message_render_success(to, has_attachments, message_id, email_footer) {
     $('#send_btn_note').text('Deleting draft..');
     compose.draft_delete(url_params.account_email, function () {
       tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
@@ -130,6 +130,9 @@ db_open(function (db) {
       $('#reply_message_successful_container div.replied_from').text(url_params.from);
       $('#reply_message_successful_container div.replied_to span').text(to);
       $('#reply_message_successful_container div.replied_body').html($('#input_text').get(0).innerText.replace(/\n/g, '<br>'));
+      if(email_footer) {
+        $('#reply_message_successful_container .email_footer').html('<br>' + email_footer.replace(/\n/g, '<br>'));
+      }
       var t = new Date();
       var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
       $('#reply_message_successful_container div.replied_time').text(time);
@@ -159,12 +162,12 @@ db_open(function (db) {
       'In-Reply-To': thread_message_id_last,
       'References': thread_message_referrences_last + ' ' + thread_message_id_last,
     };
-    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments, attach_files) {
+    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments, attach_files, email_footer) {
       tool.mime.encode(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
         tool.api.gmail.message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
           if(success) {
             tool.env.increment('reply', function () {
-              reply_message_render_success(headers.To, (attachments || []).length, response.id);
+              reply_message_render_success(headers.To, (attachments || []).length, response.id, email_footer);
             });
           } else {
             compose.handle_send_message_error(response);

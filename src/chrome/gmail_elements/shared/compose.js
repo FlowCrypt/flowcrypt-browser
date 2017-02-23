@@ -408,7 +408,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
             if(short_id) {
               body = format_password_protected_email(short_id, body);
               body = format_email_footer(body);
-              send_email(body, attachments, attach_files_to_email);
+              send_email(body, attachments, attach_files_to_email, email_footer);
             } else {
               alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
               $('#send_btn').html(original_btn_html);
@@ -416,7 +416,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
           });
         } else {
           body = format_email_footer(body);
-          send_email(body, attachments, attach_files_to_email);
+          send_email(body, attachments, attach_files_to_email, email_footer);
         }
       });
     });
@@ -955,7 +955,8 @@ function init_shared_compose_js(url_params, db, attach_js) {
 
   $('.icon.action_include_footer').click(function () {
     if(!$(this).is('.active')) {
-      $.featherlight({ iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 250 });
+      var noscroll = function() { $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no'); };
+      $.featherlight({iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: noscroll});
     } else {
       update_footer_icon(!$(this).is('.active'));
     }

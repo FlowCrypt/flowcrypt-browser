@@ -5,6 +5,7 @@
 <head>
   <link rel="stylesheet" href="/css/cryptup.css" />
   <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
 </head>
@@ -61,7 +62,7 @@
           <div id="send_btn_note"></div>
           <span class="icon right action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon.svg" class="" alt="Help"></span>
           <span class="icon right action_include_pubkey" title="Include your Public Key"><i alt="pubkey"></i></span>
-          <!--<div class="icon right action_include_footer" tabindex="-1" title="Include email footer (not encrypted)"><i alt="footer"></i></div>-->
+          <div class="icon right action_include_footer" tabindex="-1" title="Include email footer (not encrypted)"><i alt="footer"></i></div>
         </td>
       </tr>
     </table>
@@ -85,6 +86,9 @@
           <div class="replied_body pgp_secure"></div>
         </td>
       </tr>
+      <tr>
+        <td colspan="2" class="email_footer"></td>
+      </tr>
     </table>
     <div id="attachments"></div>
   </div>
@@ -94,6 +98,7 @@
   <script src="/lib/iso-8859-2.js"></script>
   <script src="/lib/require.js"></script>
   <script src="/lib/fine-uploader.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
   <script src="/js/common/mnemonic.js"></script>
   <script src="/js/common/storage.js"></script>
   <script src="/js/common/common.js"></script>
