@@ -1681,13 +1681,18 @@
             try {
               openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function (decrypted) {
                 catcher.try(function () {
-                  if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                    callback({
-                      success: true,
-                      content: decrypted,
-                      encrypted: true,
-                      signature: keys.signed_by.length ? crypto_message_verify_signature(message, keys) : false,
-                    });
+                  if(decrypted.data !== null) {
+                    if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
+                      callback({
+                        success: true,
+                        content: decrypted,
+                        encrypted: true,
+                        signature: keys.signed_by.length ? crypto_message_verify_signature(message, keys) : false,
+                      });
+                    }
+                  } else {
+                    other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at tom@cryptup.org to fix this.');
+                    counts.attempts++;
                   }
                 })();
               }).catch(function (decrypt_error) {
