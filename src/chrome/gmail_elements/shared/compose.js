@@ -290,34 +290,36 @@ function init_shared_compose_js(url_params, db, attach_js) {
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, subscription_active)) {
             $('#send_btn span').text(attach_js.has_attachment() ? 'Encrypting attachments' : 'Encrypting');
             challenge = emails_without_pubkeys.length ? challenge : null;
-            try {
-              attach_js.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
-                if(attachments.length && challenge) { // these will be password encrypted attachments
-                  $('#send_btn span').text('Uploading attachments');
-                  upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
-                    if(all_good === true) {
-                      $('#send_btn span').text('Encrypting email');
-                      plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
-                      do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
-                    } else if(all_good === tool.api.cryptup.auth_error) {
-                      if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
-                        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+            add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription_active, function(plaintext) {
+              try {
+                attach_js.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
+                  if(attachments.length && challenge) { // these will be password encrypted attachments
+                    $('#send_btn span').text('Uploading attachments');
+                    upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
+                      if(all_good === true) {
+                        $('#send_btn span').text('Encrypting email');
+                        plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
+                        do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
+                      } else if(all_good === tool.api.cryptup.auth_error) {
+                        if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+                          tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+                        }
+                        $('#send_btn').html(original_btn_html);
+                      } else {
+                        alert('There was an error uploading attachments. Please try it again. Write me at tom@cryptup.org if it happens repeatedly.\n\n' + upload_error_message);
+                        $('#send_btn').html(original_btn_html);
                       }
-                      $('#send_btn').html(original_btn_html);
-                    } else {
-                      alert('There was an error uploading attachments. Please try it again. Write me at tom@cryptup.org if it happens repeatedly.\n\n' + upload_error_message);
-                      $('#send_btn').html(original_btn_html);
-                    }
-                  });
-                } else {
-                  do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, true, send_email);
-                }
-              });
-            } catch(err) {
-              catcher.handle_exception(err);
-              $('#send_btn').html(original_btn_html);
-              alert(err);
-            }
+                    });
+                  } else {
+                    do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, true, send_email);
+                  }
+                });
+              } catch(err) {
+                catcher.handle_exception(err);
+                $('#send_btn').html(original_btn_html);
+                alert(String(err));
+              }
+            });
           } else {
             $('#send_btn').html(original_btn_html);
           }
@@ -327,7 +329,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function upload_attachments_to_cryptup(attachments, callback) {
-    tool.api.cryptup.presign_files(attachments, function (pf_success, pf_result) {
+    tool.api.cryptup.message_presign_files(attachments, function (pf_success, pf_result) {
       if(pf_success === true && pf_result && pf_result.approvals && pf_result.approvals.length === attachments.length) {
         var items = [];
         $.each(pf_result.approvals, function (i, approval) {
@@ -335,7 +337,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         });
         tool.api.aws.s3_upload(items, function (all_uploaded, s3_results) {
           if(all_uploaded) {
-            tool.api.cryptup.confirm_files(items.map(function(item) {return item.fields.key;}), function(cf_success, cf_result) {
+            tool.api.cryptup.message_confirm_files(items.map(function(item) {return item.fields.key;}), function(cf_success, cf_result) {
               if(cf_success && cf_result && cf_result.confirmed && cf_result.confirmed.length === items.length) {
                 $.each(attachments, function(i) {
                   attachments[i].url = pf_result.approvals[i].base_url + pf_result.approvals[i].fields.key;
@@ -369,6 +371,31 @@ function init_shared_compose_js(url_params, db, attach_js) {
       plaintext += '<a href="' + attachment.url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
     });
     return plaintext;
+  }
+
+  function add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription_active, callback) {
+    if(challenge && subscription_active) {
+      tool.api.cryptup.message_token(function(success, result) {
+        if(success === tool.api.cryptup.auth_error) {
+          if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+            tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+          }
+          $('#send_btn').html(original_btn_html);
+        } else if(success === true && result && result.token) {
+          callback(plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
+            sender: get_sender_from_dom(),
+            recipient: tool.arr.without_value(tool.arr.without_value(recipients, get_sender_from_dom()), url_params.account_email),
+            subject: subject,
+            token: result.token,
+          })}));
+        } else {
+          alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + ((result || {}).error || 'unknown error'));
+          $('#send_btn').html(original_btn_html);
+        }
+      });
+    } else {
+      callback(plaintext);
+    }
   }
 
   function upload_encrypted_message_to_cryptup(encrypted_data, callback) {

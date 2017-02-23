@@ -390,9 +390,11 @@
         help_feedback: api_cryptup_help_feedback,
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
-        presign_files: api_cryptup_message_presign_files,
-        confirm_files: api_cryptup_message_confirm_files,
-        message_upload: api_cryptup_message_upload,
+        message_presign_files: api_cryptup_message_presign_files,
+        message_confirm_files: api_cryptup_message_confirm_files,
+        message_upload: api_cryptup_message_upload,  // todo - DEPRECATE THIS. Send as JSON to message/store
+        message_token: api_cryptup_message_token,
+        message_reply: api_cryptup_message_reply,
         link_message: api_cryptup_link_message,
       },
       aws: {
@@ -1761,7 +1763,7 @@
   }
 
   function crypto_message_format_text(text_or_html) {
-    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).replace(/\n/g, '<br>').replace(/^(<br>)+|(<br>)+$/, '').replace(/ {2,}/g, function (spaces) {
+    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).trim().replace(/\n/g, '<br>').replace(/^(<br>)+|(<br>)+$/, '').replace(/ {2,}/g, function (spaces) {
       return '&nbsp;'.repeat(spaces.length);
     });
   }
@@ -2534,16 +2536,43 @@
     });
   }
 
-  function api_cryptup_message_upload(encrypted_data_armored, callback) {
+  function api_cryptup_message_upload(encrypted_data_armored, callback) { // todo - DEPRECATE THIS. Send as JSON to message/store
     if(encrypted_data_armored.length > 100000) {
       callback(false, {error: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
     } else {
       api_cryptup_call('message/upload', {
         content: file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored),
-        type: 'text/plain',
-        role: 'message',
       }, api_cryptup_response_formatter(callback), 'FORM');
     }
+  }
+
+  function api_cryptup_message_token(callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('message/token', {
+          account: email,
+          uuid: uuid,
+        }, api_cryptup_response_formatter(callback));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
+
+  function api_cryptup_message_reply(token, from, to, subject, message, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('message/reply', {
+          token: token,
+          from: from,
+          to: to,
+          subject: subject,
+          message: message,
+        }, api_cryptup_response_formatter(callback));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
   }
 
   function api_cryptup_link_message(short, callback) {
