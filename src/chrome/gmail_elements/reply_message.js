@@ -15,6 +15,7 @@ db_open(function (db) {
   var thread_message_id_last = '';
   var thread_message_referrences_last = '';
   var can_read_emails = undefined;
+  var plaintext;
   url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
   url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
@@ -108,13 +109,28 @@ db_open(function (db) {
     });
   });
 
-  function reply_message_reinsert_reply_box() {
-    tool.browser.message.send(url_params.parent_tab_id, 'reinsert_reply_box', {
-      account_email: url_params.account_email,
-      my_email: url_params.from,
-      subject: url_params.subject,
-      their_email: compose.get_recipients_from_dom().join(','),
-      thread_id: url_params.thread_id,
+  function send_btn_click() {
+    var recipients = compose.get_recipients_from_dom();
+    var headers = {
+      'To': recipients.join(', '),
+      'From': url_params.from,
+      'Subject': url_params.subject,
+      'In-Reply-To': thread_message_id_last,
+      'References': thread_message_referrences_last + ' ' + thread_message_id_last,
+    };
+    plaintext = $('#input_text').get(0).innerText;
+    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function (encrypted_message_text_to_send, attachments, attach_files, email_footer) {
+      tool.mime.encode(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
+        tool.api.gmail.message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
+          if(success) {
+            tool.env.increment('reply', function () {
+              reply_message_render_success(headers.To, (attachments || []).length, response.id, email_footer);
+            });
+          } else {
+            compose.handle_send_message_error(response);
+          }
+        });
+      });
     });
   }
 
@@ -129,7 +145,7 @@ db_open(function (db) {
       $('#reply_message_table_container').css('display', 'none');
       $('#reply_message_successful_container div.replied_from').text(url_params.from);
       $('#reply_message_successful_container div.replied_to span').text(to);
-      $('#reply_message_successful_container div.replied_body').html($('#input_text').get(0).innerText.replace(/\n/g, '<br>'));
+      $('#reply_message_successful_container div.replied_body').html(plaintext.replace(/\n/g, '<br>'));
       if(email_footer) {
         $('#reply_message_successful_container .email_footer').html('<br>' + email_footer.replace(/\n/g, '<br>'));
       }
@@ -153,27 +169,13 @@ db_open(function (db) {
     });
   }
 
-  function send_btn_click() {
-    var recipients = compose.get_recipients_from_dom();
-    var headers = {
-      'To': recipients.join(', '),
-      'From': url_params.from,
-      'Subject': url_params.subject,
-      'In-Reply-To': thread_message_id_last,
-      'References': thread_message_referrences_last + ' ' + thread_message_id_last,
-    };
-    compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_text_to_send, attachments, attach_files, email_footer) {
-      tool.mime.encode(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
-        tool.api.gmail.message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
-          if(success) {
-            tool.env.increment('reply', function () {
-              reply_message_render_success(headers.To, (attachments || []).length, response.id, email_footer);
-            });
-          } else {
-            compose.handle_send_message_error(response);
-          }
-        });
-      });
+  function reply_message_reinsert_reply_box() {
+    tool.browser.message.send(url_params.parent_tab_id, 'reinsert_reply_box', {
+      account_email: url_params.account_email,
+      my_email: url_params.from,
+      subject: url_params.subject,
+      their_email: compose.get_recipients_from_dom().join(','),
+      thread_id: url_params.thread_id,
     });
   }
 
@@ -185,7 +187,7 @@ db_open(function (db) {
     }
     compose.on_render();
     $("#input_to").focus();
-    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click)).keypress(tool.ui.enter(send_btn_click));;
+    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click)).keypress(tool.ui.enter(send_btn_click));
     if(url_params.to) {
       $('#input_text').focus();
       document.getElementById("input_text").focus();
