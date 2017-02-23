@@ -234,34 +234,34 @@
 
   window.tool = {
     str: {
-      trim_lower: trim_lower, //todo - deprecate in favor of parse_email
-      parse_email: parse_email,
-      pretty_print: pretty_print,
-      inner_text: inner_text,
-      number_format: number_format,
-      is_email_valid: is_email_valid,
-      month_name: month_name,
-      random: random,
-      html_attribute_encode: html_attribute_encode,
-      html_attribute_decode: html_attribute_decode,
+      trim_lower: str_trim_lower, //todo - deprecate in favor of parse_email
+      parse_email: str_parse_email,
+      pretty_print: str_pretty_print,
+      inner_text: str_inner_text,
+      number_format: str_number_format,
+      is_email_valid: str_is_email_valid,
+      month_name: str_month_name,
+      random: str_random,
+      html_attribute_encode: str_html_attribute_encode,
+      html_attribute_decode: str_html_attribute_decode,
       html_escape: str_html_escape,
       html_unescape: str_html_unescape,
-      base64url_encode: base64url_encode,
-      base64url_decode: base64url_decode,
-      from_uint8: from_uint8,
-      to_uint8: to_uint8,
-      from_equal_sign_notation_as_utf: from_equal_sign_notation_as_utf,
-      uint8_as_utf: uint8_as_utf,
-      to_hex: to_hex,
+      base64url_encode: str_base64url_encode,
+      base64url_decode: str_base64url_decode,
+      from_uint8: str_from_uint8,
+      to_uint8: str_to_uint8,
+      from_equal_sign_notation_as_utf: str_from_equal_sign_notation_as_utf,
+      uint8_as_utf: str_uint8_as_utf,
+      to_hex: str_to_hex,
       extract_cryptup_attachments: str_extract_cryptup_attachments,
     },
     env: {
       browser: env_browser,
       url_params: env_url_params,
       url_create: env_url_create,
-      key_codes: key_codes,
-      set_up_require: set_up_require,
-      increment: increment,
+      key_codes: env_key_codes,
+      set_up_require: env_set_up_require,
+      increment: env_increment,
     },
     arr: {
       unique: arr_unique,
@@ -276,47 +276,47 @@
       key_by_value: obj_key_by_value,
     },
     time: {
-      wait: wait,
-      get_future_timestamp_in_months: get_future_timestamp_in_months,
+      wait: time_wait,
+      get_future_timestamp_in_months: time_get_future_timestamp_in_months,
       hours: time_hours,
     },
     file: {
-      download_as_uint8: download_as_uint8,
-      save_to_downloads: save_to_downloads,
+      download_as_uint8: file_download_as_uint8,
+      save_to_downloads: file_save_to_downloads,
       attachment: file_attachment,
     },
     mime: {
-      headers_to_from: headers_to_from,
-      resembles_message: resembles_message,
-      format_content_to_display: format_content_to_display, // todo - should be refactored into two
+      headers_to_from: mime_headers_to_from,
+      resembles_message: mime_resembles_message,
+      format_content_to_display: mime_format_content_to_display, // todo - should be refactored into two
       decode: mime_decode,
       encode: mime_encode,
     },
     ui: {
       spinner: ui_spinner,
-      passphrase_toggle: passphrase_toggle,
+      passphrase_toggle: ui_passphrase_toggle,
       enter: ui_enter,
       build_jquery_selectors: ui_build_jquery_selectors,
       event: {
-        double: double,
-        parallel: parallel,
-        spree: spree,
-        prevent: prevent,
-        release: release, // todo - I may have forgot to use this somwhere, used only parallel() - if that's how it works
+        double: ui_event_double,
+        parallel: ui_event_parallel,
+        spree: ui_event_spree,
+        prevent: ui_event_prevent,
+        release: ui_event_release, // todo - I may have forgot to use this somewhere, used only parallel() - if that's how it works
       },
     },
     browser: {
       message: {
-        send: send,
-        tab_id: tab_id,
-        listen: listen,
-        listen_background: listen_background,
+        send: browser_message_send,
+        tab_id: browser_message_tab_id,
+        listen: browser_message_listen,
+        listen_background: browser_message_listen_background,
       },
     },
     diagnose: {
-      message_pubkeys: message_pubkeys,
-      keyserver_fingerprints: keyserver_fingerprints,
-      keyserver_pubkeys: keyserver_pubkeys,
+      message_pubkeys: giagnose_message_pubkeys,
+      keyserver_fingerprints: diagnose_keyserver_fingerprints,
+      keyserver_pubkeys: diagnose_keyserver_pubkeys,
     },
     crypto: {
       armor: {
@@ -411,14 +411,14 @@
 
   /* tool.str */
 
-  function trim_lower(email) {
+  function str_trim_lower(email) {
     if(tool.value('<').in(email) && tool.value('>').in(email)) {
       email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
     }
     return email.trim().toLowerCase();
   }
 
-  function parse_email(email_string) {
+  function str_parse_email(email_string) {
     if(tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
       return {
         email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
@@ -431,17 +431,17 @@
     };
   }
 
-  function pretty_print(obj) {
+  function str_pretty_print(obj) {
     return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
   }
 
-  function inner_text(html_text) {
+  function str_inner_text(html_text) {
     var e = document.createElement('div');
     e.innerHTML = html_text;
     return e.innerText;
   }
 
-  function number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
+  function str_number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
     nStr += '';
     var x = nStr.split('.');
     var x1 = x[0];
@@ -453,15 +453,15 @@
     return x1 + x2;
   }
 
-  function is_email_valid(email) {
+  function str_is_email_valid(email) {
     return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(email);
   }
 
-  function month_name(month_index) {
+  function str_month_name(month_index) {
     return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month_index];
   }
 
-  function random(length) {
+  function str_random(length) {
     var id = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     for(var i = 0; i < (length || 5); i++) {
@@ -478,29 +478,29 @@
     return str.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
-  function html_attribute_encode(values) {
-    return base64url_encode(JSON.stringify(values));
+  function str_html_attribute_encode(values) {
+    return str_base64url_encode(JSON.stringify(values));
   }
 
-  function html_attribute_decode(encoded) {
-    return JSON.parse(base64url_decode(encoded));
+  function str_html_attribute_decode(encoded) {
+    return JSON.parse(str_base64url_decode(encoded));
   }
 
-  function base64url_encode(str) {
+  function str_base64url_encode(str) {
     if(typeof str === 'undefined') {
       return str;
     }
     return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  function base64url_decode(str) {
+  function str_base64url_decode(str) {
     if(typeof str === 'undefined') {
       return str;
     }
     return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
   }
 
-  function from_uint8(u8a) {
+  function str_from_uint8(u8a) {
     var CHUNK_SZ = 0x8000;
     var c = [];
     for(var i = 0; i < u8a.length; i += CHUNK_SZ) {
@@ -509,7 +509,7 @@
     return c.join("");
   }
 
-  function to_uint8(raw) {
+  function str_to_uint8(raw) {
     var rawLength = raw.length;
     var uint8 = new Uint8Array(new ArrayBuffer(rawLength));
     for(var i = 0; i < rawLength; i++) {
@@ -518,13 +518,13 @@
     return uint8;
   }
 
-  function from_equal_sign_notation_as_utf(str) {
+  function str_from_equal_sign_notation_as_utf(str) {
     return str.replace(/(=[A-F0-9]{2})+/g, function (equal_sign_utf_part) {
-      return uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function (two_hex_digits) { return parseInt(two_hex_digits, 16); }));
+      return str_uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function (two_hex_digits) { return parseInt(two_hex_digits, 16); }));
     });
   }
 
-  function uint8_as_utf(a) { //tom
+  function str_uint8_as_utf(a) { //tom
     var length = a.length;
     var bytes_left_in_char = 0;
     var utf8_string = '';
@@ -570,7 +570,7 @@
     return utf8_string;
   }
 
-  function to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
+  function str_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
     var i, l, o = '',
       n;
     s += '';
@@ -585,7 +585,7 @@
     if(tool.value('cryptup_file').in(decrypted_content)) {
       decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
         var element = $(found_link);
-        var attachment_data = html_attribute_decode(element.attr('cryptup-data'));
+        var attachment_data = str_html_attribute_decode(element.attr('cryptup-data'));
         cryptup_attachments.push(file_attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));
         return '';
       });
@@ -639,11 +639,11 @@
     return link;
   }
 
-  function key_codes() {
+  function env_key_codes() {
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
-  function set_up_require() {
+  function env_set_up_require() {
     require.config({
       baseUrl: '/lib',
       paths: {
@@ -676,7 +676,7 @@
     'upgrade_done': 'ud',
   };
 
-  function increment(type, callback) {
+  function env_increment(type, callback) {
     if(!known_metric_types[type]) {
       catcher.log('Unknown metric type "' + type + '"');
     }
@@ -691,7 +691,7 @@
         storage.metrics[metrics_k] += 1;
       }
       account_storage_set(null, { metrics: storage.metrics, }, function () {
-        send(null, 'update_uninstall_url', null, callback);
+        browser_message_send(null, 'update_uninstall_url', null, callback);
       });
     });
   }
@@ -761,7 +761,7 @@
 
   /* tool.time */
 
-  function wait(until_this_function_evaluates_true) {
+  function time_wait(until_this_function_evaluates_true) {
     return new Promise(function (success, error) {
       var interval = setInterval(function () {
         var result = until_this_function_evaluates_true();
@@ -780,7 +780,7 @@
     });
   }
 
-  function get_future_timestamp_in_months(months_to_add) {
+  function time_get_future_timestamp_in_months(months_to_add) {
     return new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add;
   }
 
@@ -790,7 +790,7 @@
 
   /* tools.file */
 
-  function download_as_uint8(url, progress, callback) {
+  function file_download_as_uint8(url, progress, callback) {
     var request = new XMLHttpRequest();
     request.open("GET", url, true);
     request.responseType = "arraybuffer";
@@ -808,7 +808,7 @@
     request.send();
   }
 
-  function save_to_downloads(name, type, content) {
+  function file_save_to_downloads(name, type, content) {
     var blob = new Blob([content], { type: type });
     if(window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, name);
@@ -860,7 +860,7 @@
     }
   }
 
-  function headers_to_from(parsed_mime_message) {
+  function mime_headers_to_from(parsed_mime_message) {
     var header_to = [];
     var header_from;
     if(parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
@@ -876,7 +876,7 @@
     return { from: header_from, to: header_to, };
   }
 
-  function resembles_message(message) {
+  function mime_resembles_message(message) {
     var m = message.toLowerCase();
     var has_content_type = m.match(/content-type: +[0-9a-z\-\/]+/) !== null;
     var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) !== null;
@@ -884,7 +884,7 @@
     return has_content_type && (has_content_transfer_encoding || has_content_disposition);
   }
 
-  function format_content_to_display(text, full_mime_message) {
+  function mime_format_content_to_display(text, full_mime_message) {
     // todo - this function is very confusing, and should be split into two:
     // ---> format_mime_plaintext_to_display(text, charset)
     // ---> get_charset(full_mime_message)
@@ -965,19 +965,19 @@
   var SLOW_SPREE_MS = 200;
   var VERY_SLOW_SPREE_MS = 500;
 
-  function double() {
+  function ui_event_double() {
     return { name: 'double', id: tool.str.random(10), };
   }
 
-  function parallel() {
+  function ui_event_parallel() {
     return { name: 'parallel', id: tool.str.random(10), };
   }
 
-  function spree(type) {
+  function ui_event_spree(type) {
     return { name: (type || '') + 'spree', id: tool.str.random(10), };
   }
 
-  function prevent(meta, callback) { //todo: messy + needs refactoring
+  function ui_event_prevent(meta, callback) { //todo: messy + needs refactoring
     return function () {
       if(meta.name === 'spree') {
         clearTimeout(events_fired[meta.id]);
@@ -1006,7 +1006,7 @@
     };
   }
 
-  function release(id) {
+  function ui_event_release(id) {
     if(id in events_fired) {
       var ms_to_release = DOUBLE_MS + events_fired[id] - Date.now();
       if(ms_to_release > 0) {
@@ -1027,7 +1027,7 @@
     return '<i class="' + (placeholder_class || 'small_spinner') + '"><img src="' + url + '" /></i>';
   }
 
-  function passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
+  function ui_passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
     var button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
     var button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
     account_storage_get(null, ['hide_pass_phrases'], function (storage) {
@@ -1063,7 +1063,7 @@
 
   function ui_enter(callback) {
     return function(e) {
-      if (e.which == key_codes().enter) {
+      if (e.which == env_key_codes().enter) {
         callback();
       }
     };
@@ -1109,7 +1109,7 @@
     return parsed;
   }
 
-  function send(destination_string, name, data, callback) {
+  function browser_message_send(destination_string, name, data, callback) {
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), };
     if(background_script_shortcut_handlers && msg.to === null) {
       background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
@@ -1120,11 +1120,11 @@
     }
   }
 
-  function tab_id(callback) {
-    send(null, '_tab_', null, callback);
+  function browser_message_tab_id(callback) {
+    browser_message_send(null, '_tab_', null, callback);
   }
 
-  function listen_background(handlers) {
+  function browser_message_listen_background(handlers) {
     background_script_shortcut_handlers = handlers;
     chrome.runtime.onMessage.addListener(function (request, sender, respond) {
       var safe_respond = function (response) {
@@ -1146,7 +1146,7 @@
     });
   }
 
-  function listen(handlers, listen_for_tab_id) {
+  function browser_message_listen(handlers, listen_for_tab_id) {
     var processed = [];
     chrome.runtime.onMessage.addListener(function (request, sender, respond) {
       return catcher.try(function () {
@@ -1177,7 +1177,7 @@
 
   /* tool.diagnose */
 
-  function message_pubkeys(account_email, message) {
+  function giagnose_message_pubkeys(account_email, message) {
     var message_key_ids = message.getEncryptionKeyIds();
     var local_key_ids = crypto_key_ids(private_storage_get('local', account_email, 'master_public_key'));
     var diagnosis = { found_match: false, receivers: message_key_ids.length, };
@@ -1192,7 +1192,7 @@
     return diagnosis;
   }
 
-  function keyserver_pubkeys(account_email, callback) {
+  function diagnose_keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
     account_storage_get(account_email, ['addresses'], function (storage) {
       api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
@@ -1219,7 +1219,7 @@
     });
   }
 
-  function keyserver_fingerprints() {
+  function diagnose_keyserver_fingerprints() {
     get_account_emails(function (account_emails) {
       if(account_emails && account_emails.length) {
         account_storage_get(account_emails, ['setup_done'], function (multi_storage) {
@@ -2377,7 +2377,7 @@
           result.content = {};
           return result;
         }
-        if(result.content.random && result.content.random.length !== 40) {
+        if(result.content.str_random && result.content.str_random.length !== 40) {
           result.error = 'Wrong RAN line value format';
           result.content = {};
           return result;
