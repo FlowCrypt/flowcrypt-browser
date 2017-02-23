@@ -70,6 +70,7 @@
     "/chrome/gmail_elements/add_pubkey.htm",
     "/chrome/gmail_elements/pgp_pubkey.htm",
     "/chrome/gmail_elements/subscribe.htm",
+    "/chrome/gmail_elements/attest.htm",
     "/chrome/gmail_elements/shared/footer.htm"
   ],
   "oauth2": {

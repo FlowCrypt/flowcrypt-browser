@@ -46,6 +46,11 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/subscribe.htm'), params);
   }
 
+  function src_attest(attest_packet) {
+    var params = { account_email: account_email, attest_packet: attest_packet, parent_tab_id: parent_tab_id };
+    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attest.htm'), params);
+  }
+
   function src_add_pubkey_dialog(emails, placement) {
     var params = { account_email: account_email, emails: emails, parent_tab_id: parent_tab_id, placement: placement };
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
@@ -132,10 +137,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       },
       add_pubkey: function(emails) {
         return dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
-      },
-      // add_footer: function(placement) {
-      //   return dialog(iframe(src_add_pubkey_dialog(placement), []));
-      // },
+      }
     },
     embedded: {
       compose: function(draft_id) {
@@ -161,7 +163,10 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       },
       attachment_status: function(content) {
         return tool.e('div', {class: 'attachment_loader', html: content});
-      }
+      },
+      attest: function(attest_packet) {
+        return iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'});
+      },
     },
     button: {
       compose: function() {

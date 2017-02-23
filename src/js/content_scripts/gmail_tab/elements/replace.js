@@ -48,11 +48,11 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
         return factory.embedded.pubkey(armored, is_outgoing);
       });
-      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('attest_packet'), true, function(armored) {
-        tool.browser.message.send(null, 'attest_packet_received', { account_email: account_email, packet: armored, });
-        //todo - show attestation result iframe
-        return '';
-      });
+      if(tool.value(sender_email).in(['attest@cryptup.org'])) {
+        processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('attest_packet'), true, function(armored) {
+          return factory.embedded.attest(armored);
+        });
+      }
       processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('cryptup_verification'), false, function(armored) {
         return factory.embedded.subscribe(armored, 'embedded', null);
       });

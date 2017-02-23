@@ -26,7 +26,11 @@ function attest_requested_handler(message, sender, respond) {
 }
 
 function attest_packet_received_handler(message, sender, respond) {
-  process_attest_packet_text(message.account_email, message.packet);
+  process_attest_packet_text(message.account_email, message.packet, function(account, packet, success, result) {
+    add_attest_log(account, packet, success, result, function() {
+      respond({success: success, result: result});
+    });
+  });
 }
 
 function watch_for_attest_email(account_email) {
@@ -56,62 +60,62 @@ function check_email_for_attests_and_respond(account_email) {
           }
         });
       } else {
-        console.log('cannot fetch attest emails for ' + account_email);
+        add_attest_log(false, 'cannot fetch attest emails for ' + account_email);
         stop_watching(account_email);
       }
     } else {
-      console.log('cannot get passphrase for signing - skip fetching attest emails for ' + account_email);
+      console.log('cannot get pass phrase for signing - skip fetching attest emails for ' + account_email);
     }
   });
 }
 
-function process_attest_packet_text(account_email, attest_packet_text) {
+function process_attest_packet_text(account_email, attest_packet_text, callback) {
   var attest = tool.api.attester.packet.parse(attest_packet_text);
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
-  var decrypted = tool.crypto.key.decrypt(key, get_passphrase(account_email));
-  if(decrypted) {
-    var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-    var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.trim_lower(account_email));
-    if(attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
-      is_already_attested(account_email, attest.attester, function (is_attested) {
-        if(!is_attested) {
+  is_already_attested(account_email, attest.attester, function (is_attested) {
+    if (!is_attested) {
+      var decrypted = tool.crypto.key.decrypt(key, get_passphrase(account_email));
+      if (decrypted) {
+        var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
+        var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.trim_lower(account_email));
+        if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
           tool.crypto.message.sign(key, attest.text, true, function (success, result) {
-            if(success) {
-              if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
+            if (success) {
+              if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
                 var keyserver_api_endpoint = tool.api.attester.initial_confirm;
               } else {
                 var keyserver_api_endpoint = tool.api.attester.replace_confirm;
               }
               keyserver_api_endpoint(result, function (success, response) {
-                if(success && response && response.attested) {
+                if (success && response && response.attested) {
                   account_storage_mark_as_attested(account_email, attest.content.attester, function () {
-                    console.log('successfully attested ' + account_email);
+                    callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
                   });
                 } else {
-                  console.log('error attesting ' + account_email);
-                  console.log(response);
+                  callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at tom@cryptup.org to find out why.\n\n' + JSON.stringify(response));
                 }
               });
             } else {
               catcher.log('Error signing ' + attest.content.action + ' attest packet: ' + result);
+              callback(account_email, attest_packet_text, false, 'Error signing the attest. Write me at tom@cryptup.org to find out why.');
             }
           });
         } else {
-          console.log(attest.content.attester + ' already attested ' + account_email);
-          stop_watching(account_email);
+          callback(account_email, attest_packet_text, false, 'This attest message is ignored as it does not match your settings.\n\nWrite me at tom@cryptup.org to help.');
         }
-      });
+      } else {
+        callback(account_email, attest_packet_text, false, 'Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.');
+      }
     } else {
-      console.log('ignored incorrect (malicious?) attest message for ' + account_email);
-      console.log(attest);
-      // todo - ignore that message and stop pulling it - it's a fake attest message
+      callback(account_email, attest_packet_text, true, attest.content.attester + ' already attested ' + account_email);
+      stop_watching(account_email);
     }
-  }
+  });
 }
 
 function process_attest_email(account_email, gmail_message_object) {
   if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-    process_attest_packet_text(account_email, tool.str.base64url_decode(gmail_message_object.payload.body.data));
+    process_attest_packet_text(account_email, tool.str.base64url_decode(gmail_message_object.payload.body.data), add_attest_log);
   }
 }
 
@@ -182,6 +186,21 @@ function account_storage_mark_as_attested(account_email, attester, callback) {
         storage.attests_processed.push(attester); //add attester as processed if not already there
       }
       account_storage_set(account_email, storage, callback);
+    } else {
+      callback();
     }
+  });
+}
+
+function add_attest_log(account_email, packet, success, attestation_result_text, callback) {
+  console.log('attest result ' + success + ': ' + attestation_result_text);
+  account_storage_get(account_email, ['attest_log'], function(storage) {
+    if(!storage.attest_log) {
+      storage.attest_log = [];
+    } else if(storage.attest_log.length > 100) {
+      storage.attest_log = [{attempt: 100, success: false, result: 'DELETED 100 LOGS'}];
+    }
+    storage.attest_log.push({attempt: storage.attest_log.length + 1, packet: packet, success: success, result: attestation_result_text});
+    account_storage_set(account_email, storage, callback);
   });
 }
