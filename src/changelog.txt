@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.5.0 on February 23, 2017: Web Reply</b>
+composing: allow anyone without PGP to reply to encrypted messages
+composing: fixed reply box to properly render sent attachment
+composing: fixed problem upgrading acct
+
 <b>version 3.4.3 on February 22, 2017: Email Footer</b>
 composing: add email footer
 composing: new lines will get messed up when rendering sent message
