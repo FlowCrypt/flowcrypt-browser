@@ -254,6 +254,7 @@
       uint8_as_utf: str_uint8_as_utf,
       to_hex: str_to_hex,
       extract_cryptup_attachments: str_extract_cryptup_attachments,
+      extract_cryptup_reply_token: str_extract_cryptup_reply_token,
     },
     env: {
       browser: env_browser,
@@ -581,6 +582,13 @@
       o += n.length < 2 ? '0' + n : n;
     }
     return o;
+  }
+
+  function str_extract_cryptup_reply_token(decrypted_content) {
+    var cryptup_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
+    if(cryptup_token_element.length && cryptup_token_element.attr('cryptup-data')) {
+      return str_html_attribute_decode(cryptup_token_element.attr('cryptup-data'));
+    }
   }
 
   function str_extract_cryptup_attachments(decrypted_content, cryptup_attachments) {
@@ -1723,7 +1731,7 @@
       return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
     }
     $.each(keys, function (i, key) {
-      $.each(key.subKeys, function (i, sub_key) {
+      $.each(key.subKeys || [], function (i, sub_key) {
         sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
       });
     });
@@ -2559,20 +2567,15 @@
     });
   }
 
-  function api_cryptup_message_reply(token, from, to, subject, message, callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        api_cryptup_call('message/reply', {
-          token: token,
-          from: from,
-          to: to,
-          subject: subject,
-          message: message,
-        }, api_cryptup_response_formatter(callback));
-      } else {
-        callback(api_cryptup_auth_error);
-      }
-    });
+  function api_cryptup_message_reply(short, token, from, to, subject, message, callback) {
+    api_cryptup_call('message/reply', {
+      short: short,
+      token: token,
+      from: from,
+      to: to,
+      subject: subject,
+      message: message,
+    }, api_cryptup_response_formatter(callback));
   }
 
   function api_cryptup_link_message(short, callback) {
