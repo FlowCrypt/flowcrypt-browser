@@ -580,7 +580,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
         add_extra = 0;
       }
       $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
-      var current_height = $('table#compose').height();
+      if($('#reply_message_successful_container').is(':visible')) {
+        var current_height = $('#reply_message_successful_container').height();
+      } else {
+        var current_height = $('table#compose').height();
+      }
       if(current_height !== last_reply_box_table_height) {
         last_reply_box_table_height = current_height;
         tool.browser.message.send(url_params.parent_tab_id, 'set_css', {

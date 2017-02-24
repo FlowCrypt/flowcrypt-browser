@@ -161,6 +161,7 @@ db_open(function (db) {
             $.each(attachment_metas, function (i, attachment_meta) {
               $('#attachments').append(factory.embedded.attachment(attachment_meta, []));
             });
+            compose.resize_reply_box();
           } else {
             console.log('failed to re-show sent attachments'); //todo - handle !success
           }
