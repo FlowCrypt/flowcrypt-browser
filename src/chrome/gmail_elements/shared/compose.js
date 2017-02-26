@@ -619,10 +619,14 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
-    $('#input_to').val(tool.str.trim_lower(email));
-    hide_contacts();
-    render_receivers();
-    $('#input_to').focus();
+    setTimeout(function() {
+      if(!tool.value(email).in(get_recipients_from_dom())) {
+        $('#input_to').val(tool.str.trim_lower(email));
+        render_receivers();
+        hide_contacts();
+        $('#input_to').focus();
+      }
+    }, tool.int.random(20, 200)); // desperate amount to remove duplicates. Better solution advisable.
   }
 
   function resize_input_to() {

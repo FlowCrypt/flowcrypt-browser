@@ -276,6 +276,9 @@
       map: obj_map,
       key_by_value: obj_key_by_value,
     },
+    int: {
+      random: int_random,
+    },
     time: {
       wait: time_wait,
       get_future_timestamp_in_months: time_get_future_timestamp_in_months,
@@ -767,6 +770,12 @@
         return k;
       }
     }
+  }
+
+  /* tool.int */
+
+  function int_random(min_value, max_value) {
+    return min_value + Math.round(Math.random() * (max_value - min_value))
   }
 
   /* tool.time */
