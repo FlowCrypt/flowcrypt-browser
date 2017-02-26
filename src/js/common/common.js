@@ -1804,6 +1804,7 @@
       processData: false,
       contentType: content_type,
       async: true,
+      timeout: 20000,
       success: function (response) {
         callback(true, response);
       },
@@ -2273,7 +2274,8 @@
   /* tool.api.attester */
 
   function api_attester_call(path, values, callback, format) {
-    api_call('https://attester.herokuapp.com/', path, values, callback, format || 'JSON');
+    api_call('https://attester.cryptup.io/', path, values, callback, format || 'JSON');
+    // api_call('https://attester.herokuapp.com/', path, values, callback, format || 'JSON');
     // api_call('http://127.0.0.1:5002/', path, values, callback, format || 'JSON');
   }
 
