@@ -613,12 +613,14 @@ function init_shared_compose_js(url_params, db, attach_js) {
   }
 
   function select_contact(email, from_query) {
-    var possibly_bogus_recipient = $('.recipients span').last();
+    var possibly_bogus_recipient = $('.recipients span.wrong').last();
     var possibly_bogus_address = tool.str.trim_lower(possibly_bogus_recipient.text());
     var q = tool.str.trim_lower(from_query.substring);
     if(possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
+    // if duplicates still show, do if (recipients: have this email already) here and see if it helps
+    // also check if this is called with prevent.double()
     $('#input_to').val(tool.str.trim_lower(email));
     hide_contacts();
     render_receivers();
