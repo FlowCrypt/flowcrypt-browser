@@ -90,7 +90,7 @@ function render_subscription_status_header() {
   storage_cryptup_subscription(function (level, expire, active) {
     if(active) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
-      $('.logo-row .subscription .expire').text('until ' + expire.split(' ')[0]).css('display', 'inline-block');
+      $('.logo-row .subscription .expire').text(expire ? ('until ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
       $('.logo-row .subscription .upgrade').css('display', 'inline-block');
