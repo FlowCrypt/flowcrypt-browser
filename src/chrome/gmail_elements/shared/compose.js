@@ -619,8 +619,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
     if(possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
-    // if duplicates still show, do if (recipients: have this email already) here and see if it helps
-    // also check if this is called with prevent.double()
     $('#input_to').val(tool.str.trim_lower(email));
     hide_contacts();
     render_receivers();
@@ -711,7 +709,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
         ul_html += '<li class="loading">loading...</li>';
       }
       $('#contacts ul').html(ul_html);
-      $('#contacts ul li.select_contact').click(function () { select_contact(tool.str.trim_lower($(this).attr('email')), query); });
+      $('#contacts ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) { select_contact(tool.str.trim_lower($(self).attr('email')), query); }));
       $('#contacts ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
       $('#contacts ul li.auth_contacts').click(function () { auth_contacts(url_params.account_email); });
       $('#contacts').css({ display: 'block', top: ($('#compose > tbody > tr:first').height() + $('#input_addresses_container > div:first').height() + 10) + 'px' });

@@ -1,5 +1,12 @@
 <div>
 
+<b>version 3.5.1 on February 26, 2017: New Attester</b>
+composing: problem address not showing after clicking on contact
+internal: every page/frame should have a title
+internal: new attester url
+setup: properly display lifetime members
+setup: error signing attest
+
 <b>version 3.5.0 on February 23, 2017: Web Reply</b>
 composing: allow anyone without PGP to reply to encrypted messages
 composing: fixed reply box to properly render sent attachment
