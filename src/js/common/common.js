@@ -1780,7 +1780,9 @@
   }
 
   function crypto_message_format_text(text_or_html) {
-    return tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, '<br>')).trim().replace(/\n/g, '<br>').replace(/^(<br>)+|(<br>)+$/, '').replace(/ {2,}/g, function (spaces) {
+    var nl = '_cryptup_newline_placeholder_' + str_random(3) + '_';
+    var plain = tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>')).trim();
+    return plain.replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
       return '&nbsp;'.repeat(spaces.length);
     });
   }
