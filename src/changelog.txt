@@ -1,7 +1,7 @@
 <div>
 
 <b>version 3.5.1 on February 26, 2017: New Attester</b>
-composing: problem address not showing after clicking on contact
+composing: address not showing after clicking on contact
 composing: prevent doubling of recipients
 internal: every page/frame should have a title
 internal: new attester url
