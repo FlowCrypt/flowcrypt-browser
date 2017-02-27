@@ -2,16 +2,17 @@
 
 'use strict';
 
-function init_shared_compose_js(url_params, db, attach_js) {
+function init_shared_compose_js(url_params, db) {
 
   var SAVE_DRAFT_FREQUENCY = 3000;
-
   var PUBKEY_LOOKUP_RESULT_WRONG = 'wrong';
   var PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
-
   var BTN_ENCRYPT_AND_SEND = 'encrypt and send';
   var BTN_WRONG_ENTRY = 're-enter recipient..';
   var BTN_WAIT = 'wait..';
+
+  var factory;
+  var attach = init_shared_attach_js(5, 10);
 
   var last_draft = '';
   var draft_id;
@@ -32,7 +33,6 @@ function init_shared_compose_js(url_params, db, attach_js) {
   var original_btn_html;
   var email_footer;
   var tab_id;
-  var factory;
   var l = {
     open_password_protected_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
@@ -265,7 +265,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       alert('Some recipients don\'t have encryption set up. Please add a password.');
       $('#input_password').focus();
       return false;
-    } else if(attach_js.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
+    } else if(attach.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
       tool.env.increment('upgrade_notify_attach_nonpgp', function () {
         if(confirm('Sending password encrypted attachments is possible with CryptUp Advanced.\n\nIt\'s free for one year if you sign up now.')) {
           tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
@@ -288,11 +288,11 @@ function init_shared_compose_js(url_params, db, attach_js) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_password_hint').val() || '', answer: $('#input_password').val(), };
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, subscription_active)) {
-            $('#send_btn span').text(attach_js.has_attachment() ? 'Encrypting attachments' : 'Encrypting');
+            $('#send_btn span').text(attach.has_attachment() ? 'Encrypting attachments' : 'Encrypting');
             challenge = emails_without_pubkeys.length ? challenge : null;
             add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription_active, function(plaintext) {
               try {
-                attach_js.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
+                attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
                   if(attachments.length && challenge) { // these will be password encrypted attachments
                     $('#send_btn span').text('Uploading attachments');
                     upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
@@ -915,7 +915,7 @@ function init_shared_compose_js(url_params, db, attach_js) {
       }
     }).children().click(function () { return false; });
     resize_input_to();
-    attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+    attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
   }
 
   function should_save_draft(message_body) {

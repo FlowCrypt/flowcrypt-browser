@@ -1850,7 +1850,7 @@
             try {
               var error_obj = JSON.parse(response.responseText);
               if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
-                google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, api_gmail_call);
+                google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, api_google_call);
               } else {
                 response._error = error_obj.error;
                 callback(false, response);
@@ -1894,24 +1894,30 @@
     return scopes && tool.value(api_gmail_scope_dict[scope]).in(scopes)
   }
 
-  function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth) {
+  function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth, prefix, content_type) {
     if(!account_email) {
       throw new Error('missing account_email in api_gmail_call');
     }
     account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
-      if(method === 'GET' || method === 'DELETE') {
-        var data = parameters;
-      } else {
-        var data = JSON.stringify(parameters);
-      }
       if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
+        if(prefix === 'upload') {
+          var url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
+          var data = parameters;
+        } else {
+          var url = 'https://www.googleapis.com/gmail/v1/users/me/' + resource;
+          if(method === 'GET' || method === 'DELETE') {
+            var data = parameters;
+          } else {
+            var data = JSON.stringify(parameters);
+          }
+        }
         $.ajax({
-          url: 'https://www.googleapis.com/gmail/v1/users/me/' + resource,
+          url: url,
           method: method,
           data: data,
           headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
           crossDomain: true,
-          contentType: 'application/json; charset=UTF-8',
+          contentType: content_type || 'application/json; charset=UTF-8',
           async: true,
           success: function (response) {
             if(callback) {
@@ -1922,7 +1928,7 @@
             try {
               var error_obj = JSON.parse(response.responseText);
               if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
-                google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call);
+                google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call, prefix, content_type);
               } else {
                 response._error = error_obj.error;
                 if(callback) {
@@ -1943,18 +1949,18 @@
           },
         });
       } else { // no valid gmail_api oauth token
-        google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, api_gmail_call);
+        google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, api_gmail_call, prefix, content_type);
       }
     });
   }
 
-  function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function) {
+  function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function, prefix) {
     if(fail_on_auth !== true) {
-      tool.browser.message.send(null, 'google_auth', { account_email: account_email, }, function (response) {
+      tool.browser.message.send(null, 'google_auth', { account_email: account_email }, function (response) {
         if(response && response.success === false && response.error === tool.api.error.network) {
           callback(false, tool.api.error.network);
         } else { //todo: error handling for other bad situations
-          base_api_function(account_email, method, resource, parameters, callback, true);
+          base_api_function(account_email, method, resource, parameters, callback, true, prefix);
         }
       });
     } else {
@@ -2034,11 +2040,32 @@
     }, callback);
   }
 
+  function encode_as_multipart_related(parts) { // todo - this could probably be achieved with emailjs-mime-builder
+    var boundary = 'this_sucks_' + str_random(10);
+    var body = '';
+    $.each(parts, function(type, data) {
+      body += '--' + boundary + '\n';
+      body += 'Content-Type: ' + type + '\n';
+      if(tool.value('json').in(type)) {
+        body += '\n' + data + '\n\n';
+      } else {
+        body += 'Content-Transfer-Encoding: base64\n';
+        body += '\n' + btoa(data) + '\n\n';
+      }
+    });
+    body += '--' + boundary + '--';
+    return  {
+      content_type: 'multipart/related; boundary=' + boundary,
+      body: body,
+    };
+  }
+
   function api_gmail_message_send(account_email, mime_message, thread_id, callback) {
-    api_gmail_call(account_email, 'POST', 'messages/send', {
-      raw: tool.str.base64url_encode(mime_message),
-      threadId: thread_id || null,
-    }, callback);
+    var request = encode_as_multipart_related({
+      'application/json; charset=UTF-8': JSON.stringify({threadId: thread_id || null}),
+      'message/rfc822': mime_message, //tool.str.base64url_encode(
+    });
+    api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, 'upload', request.content_type);
   }
 
   function api_gmail_message_list(account_email, q, include_deleted, callback) {

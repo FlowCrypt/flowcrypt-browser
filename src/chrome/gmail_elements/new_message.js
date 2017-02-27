@@ -12,8 +12,7 @@ db_open(function (db) {
     return;
   }
 
-  var attach = init_shared_attach_js(5, 10);
-  var compose = init_shared_compose_js(url_params, db, attach);
+  var compose = init_shared_compose_js(url_params, db);
 
   function send_btn_click() {
     var recipients = compose.get_recipients_from_dom();
