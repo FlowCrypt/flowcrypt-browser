@@ -301,6 +301,7 @@
       passphrase_toggle: ui_passphrase_toggle,
       enter: ui_enter,
       build_jquery_selectors: ui_build_jquery_selectors,
+      scroll: ui_scroll,
       event: {
         double: ui_event_double,
         parallel: ui_event_parallel,
@@ -1044,6 +1045,18 @@
       var url = 'chrome-extension://' + chrome.runtime.id + url;
     }
     return '<i class="' + (placeholder_class || 'small_spinner') + '"><img src="' + url + '" /></i>';
+  }
+
+  function ui_scroll(selector, repeat) {
+    var el = $(selector).first()[0];
+    if(el) {
+      el.scrollIntoView();
+      $.each(repeat, function(i, delay) { // useful if mobile keyboard is about to show up
+        setTimeout(function() {
+          el.scrollIntoView();
+        }, delay);
+      });
+    }
   }
 
   function ui_passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {

@@ -94,7 +94,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
           if(i + 1 < conversation_reply_buttons_to_replace.length || has_visible_replacements) {
             $(reply_button).addClass('replaced').html(''); // hide all except last
           } else {
-            $(reply_button).html(factory.button.reply()).click(catcher.try(set_reply_box_editable)); // replace last
+            $(reply_button).html(factory.button.reply()).click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(set_reply_box_editable))); // replace last
           }
         });
       }
@@ -344,10 +344,11 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   }
 
   function set_reply_box_editable() {
-    var reply_container_iframe_selector = '.reply_message_iframe_container > iframe';
-    if($(reply_container_iframe_selector).length) {
-      var conversation_params = get_conversation_params(get_conversation_root_element($(reply_container_iframe_selector).get(0)));
-      $(reply_container_iframe_selector).replaceWith(factory.embedded.reply(conversation_params, true));
+    var reply_container_iframe = $('.reply_message_iframe_container > iframe').first();
+    if(reply_container_iframe.length) {
+      var conversation_params = get_conversation_params(get_conversation_root_element(reply_container_iframe[0]));
+      tool.ui.scroll(reply_container_iframe);
+      reply_container_iframe.replaceWith(factory.embedded.reply(conversation_params, true));
     } else {
       replace_standard_reply_box(true);
     }
