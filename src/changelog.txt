@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.5.2 on February 27, 2017: Reply Scroll</b>
+compose: use proper upload API for gmail messages
+compose: reply button scrolling didn't work on some browsers
+compose: messages containing < were getting clipped
+
 <b>version 3.5.1 on February 26, 2017: New Attester</b>
 composing: address not showing after clicking on contact
 composing: prevent doubling of recipients
