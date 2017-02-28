@@ -255,6 +255,7 @@
       to_hex: str_to_hex,
       extract_cryptup_attachments: str_extract_cryptup_attachments,
       extract_cryptup_reply_token: str_extract_cryptup_reply_token,
+      strip_cryptup_reply_token: str_strip_cryptup_reply_token,
     },
     env: {
       browser: env_browser,
@@ -586,6 +587,10 @@
       o += n.length < 2 ? '0' + n : n;
     }
     return o;
+  }
+
+  function str_strip_cryptup_reply_token(decrypted_content) {
+    return decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
   }
 
   function str_extract_cryptup_reply_token(decrypted_content) {
@@ -1794,7 +1799,7 @@
 
   function crypto_message_format_text(text_or_html) {
     var nl = '_cryptup_newline_placeholder_' + str_random(3) + '_';
-    var plain = tool.str.inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>')).trim();
+    var plain = str_inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>')).trim();
     return plain.replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
       return '&nbsp;'.repeat(spaces.length);
     });

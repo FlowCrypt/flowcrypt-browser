@@ -224,6 +224,7 @@ db_open(function (db) {
     if(!tool.mime.resembles_message(decrypted_content)) {
       var cryptup_attachments = [];
       decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
+      decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content);
       render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message), false, function () {
         if(cryptup_attachments.length) {
           render_inner_attachments(cryptup_attachments);
