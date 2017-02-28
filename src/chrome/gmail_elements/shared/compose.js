@@ -569,7 +569,7 @@ function init_shared_compose_js(url_params, db) {
           $('#contacts .select_contact').first().click();
         }
       }
-      $('#input_to').focus();
+      $('#input_to').focus().blur();
       return false;
     }
   }
@@ -623,10 +623,10 @@ function init_shared_compose_js(url_params, db) {
       if(!tool.value(email).in(get_recipients_from_dom())) {
         $('#input_to').val(tool.str.trim_lower(email));
         render_receivers();
-        hide_contacts();
         $('#input_to').focus();
       }
-    }, tool.int.random(20, 200)); // desperate amount to remove duplicates. Better solution advisable.
+    }, tool.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
+    hide_contacts();
   }
 
   function resize_input_to() {
@@ -901,10 +901,8 @@ function init_shared_compose_js(url_params, db) {
 
   function on_render() {
     $('#input_to').keydown(respond_to_input_hotkeys);
-    var render_receivers_double_prevented = tool.ui.event.prevent(tool.ui.event.double(), render_receivers);
-    $('#input_to').keyup(render_receivers_double_prevented);
     $('#input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
-    $('#input_to').blur(render_receivers_double_prevented);
+    $('#input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), render_receivers));
     $('#input_text').keyup(function () {
       $('#send_btn_note').text('');
     });
