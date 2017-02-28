@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.5.4 on February 28, 2017: Strip Reply Tokens</b>
+reading: strip reply tokens from received or sent message
+
 <b>version 3.5.3 on February 28, 2017: Recipients Fix</b>
 compose: fixing compose window recipients behavior
 
