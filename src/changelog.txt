@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.5.3 on February 28, 2017: Recipients Fix</b>
+compose: fixing compose window recipients behavior
+
 <b>version 3.5.2 on February 27, 2017: Reply Scroll</b>
 compose: use proper upload API for gmail messages
 compose: reply button scrolling didn't work on some browsers

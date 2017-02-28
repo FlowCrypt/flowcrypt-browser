@@ -19,7 +19,7 @@ $('.action_send_feedback').click(function () {
         if(success && response.sent === false) {
           alert(response.text);
         } else {
-          alert('Connection failed, please try to send it one more time.');
+          alert('Connection failed, please try to send it one more time. My direct email is tom@cryptup.org');
         }
       }
     });
