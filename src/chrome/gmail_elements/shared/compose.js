@@ -58,15 +58,15 @@ function init_shared_compose_js(url_params, db, subscription) {
         $('.featherlight.featherlight-iframe').remove();
       },
       subscribe: show_subscribe_dialog_and_wait_for_response,
-      subscribe_result: function(data) {
-        if(data.active && !subscription.active) {
-          subscription.active = active; // todo - deal with levels later
+      subscribe_result: function(new_subscription) {
+        if(new_subscription.active && !subscription.active) {
+          subscription.active = new_subscription.active; // todo - deal with levels later
           attach.update_size_limmit(25, function(combined_size) {
             alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
           });
         }
         if(typeof subscribe_result_listener === 'function') {
-          subscribe_result_listener(data.active);
+          subscribe_result_listener(new_subscription.active);
           subscribe_result_listener = undefined;
         }
       },
@@ -78,8 +78,8 @@ function init_shared_compose_js(url_params, db, subscription) {
     } else {
       attach = init_shared_attach_js(5, 10, function(combined_size) {
         if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. First year is free if you sign up now.')) {
-          show_subscribe_dialog_and_wait_for_response(null, null, function(subscribe_result) {
-            if(subscribe_result && subscribe_result.active) {
+          show_subscribe_dialog_and_wait_for_response(null, null, function(new_subscription_active) {
+            if(new_subscription_active) {
               alert('You\'re all set, now you can add your file again.');
             }
           });
