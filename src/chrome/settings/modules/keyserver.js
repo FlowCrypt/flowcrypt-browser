@@ -41,7 +41,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
           var action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
           var color = 'orange';
         } else {
-          var note = 'Submitted, but not attested.';
+          var note = 'Found but not attested.';
           var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
           var color = 'orange';
         }
