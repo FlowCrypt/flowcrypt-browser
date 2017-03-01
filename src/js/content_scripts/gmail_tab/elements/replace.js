@@ -161,7 +161,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   }
 
   function replace_pgp_attachments() {
-    var selectors = get_attachments_selectors(null, ['.pgp', '.gpg', '.asc', 'noname']);
+    var selectors = get_attachments_selectors(null, ['.pgp', '.gpg', '.asc', 'noname', 'message']);
     $(selectors.container).each(function () {
       var new_pgp_messages = $(this).children(selectors.attachments).not('.evaluated');
       if(new_pgp_messages.length) {
@@ -273,7 +273,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   }
 
   function hide_pgp_attached_message_and_append_as_text(message_id, classes, attachments) {
-    var selectors = get_attachments_selectors(message_id, ['.asc']);
+    var selectors = get_attachments_selectors(message_id, ['.asc', 'message']);
     hide_attachments(selectors.attachments, attachments.length);
     if($('div.a3s.m' + message_id + ' iframe').length === 0) {
       $('span.aVW').css('display', 'none');
