@@ -180,11 +180,20 @@ db_open(function (db) {
     }
   }
 
+  function render_progress(element, percent, received, size) {
+    var size = size || url_params.size;
+    if(percent) {
+      element.text(percent + '%');
+    } else if(size) {
+      element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
+    }
+  }
+
   function render_inner_attachments(attachments) {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
     $.each(attachments, function (i, attachment) {
-      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ')</div>');
+      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name + '</b>&nbsp;&nbsp;&nbsp;(' + tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB, ' + attachment.type + ') <span class="progress"><span class="percent"></span></span></div>');
     });
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
@@ -192,7 +201,13 @@ db_open(function (db) {
       if(attachment.content) {
         tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
       } else {
-        tool.file.download_as_uint8(attachment.url, /* progress function */ null, function (success, downloaded) {
+        $(self).find('.progress').prepend(tool.ui.spinner('green'));
+        tool.file.download_as_uint8(attachment.url, function(percent, load, total) {
+          render_progress($(self).find('.progress .percent'), percent, load, total || attachment.size);
+        }, function (success, downloaded) {
+          setTimeout(function() {
+            $(self).find('.progress').html('');
+          }, 200);
           decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
         });
       }
