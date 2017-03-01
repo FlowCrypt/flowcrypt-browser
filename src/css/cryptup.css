@@ -196,9 +196,11 @@ body#settings > div#content.subscribe .list_benefits { display: none; }
 body#settings > div#content.subscribe .list_benefits table img { width: 15px; }
 body#settings > div#content.subscribe .list_benefits table { width: 100%; }
 body#settings > div#content.subscribe .list_benefits table tr th { padding-bottom: 10px; text-transform: uppercase; }
-body#settings > div#content.subscribe .list_benefits table tr th:first-child { text-align: left; }
+body#settings > div#content.subscribe .list_benefits table tr th:first-child { text-align: left; padding-left: 20px; }
 body#settings > div#content.subscribe .list_benefits table tr td { padding-bottom: 2px; text-align: left; }
+body#settings > div#content.subscribe .list_benefits table tr td:first-child { padding-left: 20px; }
 body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
+body#settings > div#content.subscribe .list_benefits table tr:hover td { background-color: #f6f6f6; }
 
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
