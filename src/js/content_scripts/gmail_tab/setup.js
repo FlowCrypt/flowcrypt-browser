@@ -79,7 +79,6 @@ function init_setup_js(chrome_runtime_id) {
         replace.reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id);
       },
       set_css: function (data) {
-        console.log(data);
         $(data.selector).css(data.css);
       },
       passphrase_dialog: function (data) {
