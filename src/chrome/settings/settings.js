@@ -257,7 +257,6 @@ function show_settings_page(page, add_url_text) {
       var variant = 'new_message_featherlight';
       var close_on_click = false;
     }
-    console.log(height);
     $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant: variant, });
     $('.new_message_featherlight .featherlight-content').prepend('<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
   } else { // on a sub page/module page, inside a lightbox. Just change location.

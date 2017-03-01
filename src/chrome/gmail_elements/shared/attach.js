@@ -8,6 +8,12 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
   var uploader = undefined;
   var size_limit = file_size_limit_mb ? file_size_limit_mb * 1024 * 1024 : null;
 
+  function update_size_limmit(new_limit, new_oversize_callback) {
+    file_size_limit_mb = new_limit;
+    size_limit = new_limit ? new_limit * 1024 * 1024 : null;
+    oversize_callback = new_oversize_callback;
+  }
+
   function initialize_attach_dialog(element_id, button_id) {
     $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function () {
       var config = {
@@ -86,7 +92,7 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
       if(size_limit && get_file_size_sum() + new_file.size > size_limit) {
         uploader.cancel(id);
         if(typeof oversize_callback === 'function') {
-          oversize_callback();
+          oversize_callback(get_file_size_sum() + new_file.size);
         } else {
           alert('Combined file size is limited to ' + file_size_limit_mb + 'MB');
         }
@@ -106,5 +112,6 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
     collect_and_encrypt_attachments: collect_and_encrypt_attachments,
     get_attachment_ids: get_attachment_ids,
     collect_attachment: collect_attachment,
+    update_size_limmit: update_size_limmit,
   };
 }

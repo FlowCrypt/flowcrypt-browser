@@ -15,7 +15,14 @@ get_account_emails(function (account_emails) {
 });
 
 function render(obj) {
-  $('.pre').html(tool.str.pretty_print(obj));
+  $.each(obj, function(filtered_key, data) {
+    $('.pre').append('<div><b>' + filtered_key + ' <span class="bad delete" key="' + data.key + '" style="cursor: pointer;">[X]</span></b> ' + tool.str.pretty_print(data.value) + '</div>');
+  });
+  $('.delete').click(function() {
+    chrome.storage.local.remove($(this).attr('key'), function () {
+      window.location.reload();
+    });
+  });
 }
 
 chrome.storage.local.get(function (storage) {
@@ -27,7 +34,7 @@ chrome.storage.local.get(function (storage) {
   var filtered = {};
   $.each(storage, function (key, value) {
     if(tool.value(real_filter).in(key)) {
-      filtered['<b>' + key.replace(real_filter, '') + '</b>'] = value;
+      filtered[key.replace(real_filter, '')] = {key: key, value: value};
     }
   });
   render(filtered);
@@ -38,13 +45,9 @@ $('.save').click(function () {
     if($('.namespace').val() === '-- namespace --' || $('.type').val() === '-- type --' || !$('.key').val()) {
       alert('Namespace, key and type need to be filled');
     } else {
-      var storage_update = {}
+      var storage_update = {};
       storage_update[$('.key').val()] = JSON.parse($('.value').val());
-      if($('.namespace').val() === 'global') {
-        var account_email = null;
-      } else {
-        var account_email = decodeURIComponent($('.namespace').val());
-      }
+      var account_email = $('.namespace').val() === 'global' ? null : decodeURIComponent($('.namespace').val());
       account_storage_set(account_email, storage_update, function () {
         window.location.reload();
       });

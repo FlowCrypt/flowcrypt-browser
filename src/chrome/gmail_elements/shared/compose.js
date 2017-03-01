@@ -2,7 +2,13 @@
 
 'use strict';
 
-function init_shared_compose_js(url_params, db) {
+function init_shared_compose_js(url_params, db, subscription) {
+
+  var l = {
+    open_password_protected_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
+    include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
+    include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
+  };
 
   var SAVE_DRAFT_FREQUENCY = 3000;
   var PUBKEY_LOOKUP_RESULT_WRONG = 'wrong';
@@ -12,7 +18,7 @@ function init_shared_compose_js(url_params, db) {
   var BTN_WAIT = 'wait..';
 
   var factory;
-  var attach = init_shared_attach_js(5, 10);
+  var attach;
 
   var last_draft = '';
   var draft_id;
@@ -33,16 +39,15 @@ function init_shared_compose_js(url_params, db) {
   var original_btn_html;
   var email_footer;
   var tab_id;
-  var l = {
-    open_password_protected_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
-    include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
-    include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
-  };
 
   tool.browser.message.tab_id(function (id) {
     tab_id = id;
     factory = init_elements_factory_js(url_params.account_email, tab_id);
     var subscribe_result_listener;
+    function show_subscribe_dialog_and_wait_for_response(data, sender, respond) {
+      subscribe_result_listener = respond;
+      tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', {subscribe_result_tab_id: tab_id});
+    }
     tool.browser.message.listen({
       close_dialog: function (data) {
         $('.featherlight.featherlight-iframe').remove();
@@ -52,17 +57,35 @@ function init_shared_compose_js(url_params, db) {
         update_footer_icon();
         $('.featherlight.featherlight-iframe').remove();
       },
-      subscribe: function(data, sender, respond) {
-        subscribe_result_listener = respond;
-        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', {'subscribe_result_tab_id': tab_id});
-      },
+      subscribe: show_subscribe_dialog_and_wait_for_response,
       subscribe_result: function(data) {
+        if(data.active && !subscription.active) {
+          subscription.active = active; // todo - deal with levels later
+          attach.update_size_limmit(25, function(combined_size) {
+            alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
+          });
+        }
         if(typeof subscribe_result_listener === 'function') {
           subscribe_result_listener(data.active);
           subscribe_result_listener = undefined;
         }
       },
     }, tab_id);
+    if(subscription.active) {
+      attach = init_shared_attach_js(25, 10, function(combined_size) {
+        alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
+      });
+    } else {
+      attach = init_shared_attach_js(5, 10, function(combined_size) {
+        if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. First year is free if you sign up now.')) {
+          show_subscribe_dialog_and_wait_for_response(null, null, function(subscribe_result) {
+            if(subscribe_result && subscribe_result.active) {
+              alert('You\'re all set, now you can add your file again.');
+            }
+          });
+        }
+      });
+    }
   });
 
   $('.icon.action_include_pubkey').attr('title', l.include_pubkey_icon_title);
@@ -73,12 +96,10 @@ function init_shared_compose_js(url_params, db) {
     my_addresses_on_keyserver = storage.addresses_keyserver || [];
     can_save_drafts = tool.api.gmail.has_scope(storage.google_token_scopes, 'compose');
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-    storage_cryptup_subscription(function(level, expire, active) {
-      if(active) {
-        email_footer = storage.email_footer;
-        update_footer_icon();
-      }
-    });
+    if(subscription.active) {
+      email_footer = storage.email_footer;
+      update_footer_icon();
+    }
     if(!can_save_drafts) {
       $('#send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
       $('#send_btn_note a.auth_drafts').click(auth_drafts);
@@ -285,13 +306,13 @@ function init_shared_compose_js(url_params, db) {
       $('#send_btn span').text('Loading');
       $('#send_btn i').replaceWith(tool.ui.spinner('white'));
       $('#send_btn_note').text('');
-      storage_cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
+      storage_cryptup_subscription(function (_l, _e, _active) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_password_hint').val() || '', answer: $('#input_password').val(), };
-          if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, subscription_active)) {
+          if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, _active)) {
             $('#send_btn span').text(attach.has_attachment() ? 'Encrypting attachments' : 'Encrypting');
             challenge = emails_without_pubkeys.length ? challenge : null;
-            add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription_active, function(plaintext) {
+            add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, _active, function(plaintext) {
               try {
                 attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
                   if(attachments.length && challenge) { // these will be password encrypted attachments
@@ -922,7 +943,9 @@ function init_shared_compose_js(url_params, db) {
       }
     }).children().click(function () { return false; });
     resize_input_to();
-    attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+    tool.time.wait(function() { if(attach) { return true; }}).then(function() {
+      attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+    });
   }
 
   function should_save_draft(message_body) {
