@@ -248,7 +248,7 @@ function show_settings_page(page, add_url_text) {
   } else if(!settings_url_params.parent_tab_id) { // on a main page
     if(page !== '/chrome/gmail_elements/new_message.htm') {
       var width = Math.min(800, $('body').width() - 200);
-      var height = $('html').height() - 150;
+      var height = $('html').height() - ($('html').height() > 800 ? 150 : 75);
       var variant = null;
       var close_on_click = 'background';
     } else {
@@ -257,6 +257,7 @@ function show_settings_page(page, add_url_text) {
       var variant = 'new_message_featherlight';
       var close_on_click = false;
     }
+    console.log(height);
     $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant: variant, });
     $('.new_message_featherlight .featherlight-content').prepend('<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
   } else { // on a sub page/module page, inside a lightbox. Just change location.

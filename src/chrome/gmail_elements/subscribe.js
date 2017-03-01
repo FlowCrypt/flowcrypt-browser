@@ -12,22 +12,17 @@ var l = {
 };
 if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
-  $('#content').html('One moment..').css({
-    'width': '460px',
-    'padding': '30px 20px',
-    'height': '100px',
-    'margin-bottom': '0px',
-  });
-  $('body').css('width', '460px');
+  $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px' });
+  $('body').css({'width': '460px', 'overflow': 'hidden'});
 } else if(url_params.placement === 'settings') {
-  $('#content').removeClass('dialog');
+  $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
   $('.list_benefits').css('display', 'block');
   $('.line.button_padding').css('padding', 0);
   tool.env.increment('upgrade_dialog_show');
 } else {
   tool.env.increment('upgrade_dialog_show');
+  $('body').css('overflow', 'hidden');
 }
-$('body').css('overflow', 'hidden');
 $('#content').css('display', 'block');
 
 // tool.ui.passphrase_toggle(['passphrase']);

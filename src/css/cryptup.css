@@ -17,7 +17,7 @@ a:focus { outline: none !important; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 .green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
-.green_label.short, .orange_label.short, .red_label.short, .gray_label.short { min-width: 0px; }
+.green_label.short, .orange_label.short, .red_label.short, .gray_label.short { min-width: 0; }
 .green_label { color: white; background-color: #31A217; }
 .orange_label { color: white; background-color: #d18826; }
 .red_label { color: white; background-color: #d14836; }
@@ -44,7 +44,7 @@ i.large_spinner img { position: relative; width: 75px; height: 75px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
 .featherlight .featherlight-close-icon { background: none !important; border: none !important; }
 .featherlight.new_message_featherlight .featherlight-content { background: none !important; }
-.featherlight .featherlight-content > .line { color: white; text-align: center; opacity: 0.75; font-weight: 200; letter-spacing: .25;}
+.featherlight .featherlight-content > .line { color: white; text-align: center; opacity: 0.75; font-weight: 200; letter-spacing: 0.25px;}
 .good { color: #088447; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }
@@ -110,7 +110,7 @@ body#settings > div#content.setup div#step_2_recovery { display: none; -webkit-a
 body#settings > div#content.setup div#step_2_recovery div#error_text_container { display: none; }
 body#settings > div#content.setup div#step_2_recovery div#error_text {  line-height: 1.5; color: #d14836; -webkit-animation: fadeInDown .7s; animation: fadeInDown .7s;   }
 body#settings > div#content.setup .squaredFour { width: 20px; margin: 5px; display: inline-block; position: relative; left: 16px; }
-body#settings > div#content.setup .squaredFour label { width: 20px; height: 20px; cursor: pointer; position: absolute; top: 0; left: 0; background: #fcfff4; background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); border-radius: 4px; box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);}
+body#settings > div#content.setup .squaredFour label { width: 20px; height: 20px; cursor: pointer; position: absolute; top: 0; left: 0; background: #fcfff4; background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%); border-radius: 4px; box-shadow: inset 0 1px 1px white, 0 1px 3px rgba(0, 0, 0, 0.5);}
 body#settings > div#content.setup .squaredFour label:after { content: ''; width: 9px; height: 5px; position: absolute; top: 4px; left: 4px; border: 3px solid #333; border-top: none; border-right: none; background: transparent; opacity: 0;-webkit-transform: rotate(-45deg); transform: rotate(-45deg);  }
 body#settings > div#content.setup .squaredFour label:hover::after {  opacity: 0.5;}
 body#settings > div#content.setup .squaredFour input[type=checkbox] {visibility: hidden;}
@@ -197,14 +197,14 @@ body#settings > div#content.subscribe .list_benefits table img { width: 15px; }
 body#settings > div#content.subscribe .list_benefits table { width: 100%; }
 body#settings > div#content.subscribe .list_benefits table tr th { padding-bottom: 10px; text-transform: uppercase; }
 body#settings > div#content.subscribe .list_benefits table tr th:first-child { text-align: left; }
-body#settings > div#content.subscribe .list_benefits table tr td { padding-bottom: 7px; text-align: left; }
+body#settings > div#content.subscribe .list_benefits table tr td { padding-bottom: 2px; text-align: left; }
 body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
 
 
-body { font-family: arial,sans-serif; font-size: 12.8px; padding:0px; margin: 0; background-color: #FFF; word-wrap: break-word; }
+body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }
-html {  padding:0px; margin: 0; }
-table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0px;
+html {  padding:0; margin: 0; }
+table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0;
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
 body.pgp_secure, div.replied_body.pgp_secure { border: 1px solid #f0f0f0; border-left: 4px solid #31A217; padding-left:10px; min-height: 25px;
