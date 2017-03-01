@@ -526,7 +526,7 @@ function init_shared_compose_js(url_params, db) {
       if($('.recipients span.no_pgp').length) {
         $("#password_or_pubkey_container").css('display', 'table-row');
         if($('#input_password').val() || $('#input_password').is(':focus')) {
-          $('.label_password').css('display', 'block');
+          $('.label_password').css('display', 'inline-block');
           $('#input_password').attr('placeholder', '');
         } else {
           $('.label_password').css('display', 'none');
