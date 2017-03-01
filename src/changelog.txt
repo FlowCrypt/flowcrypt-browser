@@ -1,5 +1,17 @@
 <div>
 
+<b>version 3.5.5 on March 1, 2017: Large Attachments</b>
+composing: allow larger attachments
+composing: show progress when uploading files
+composing: draft subject format fix
+composing: sped up compose window
+composing: prevent reply box from infinitely expanding
+composing: re-phrased password prompt
+reading: show a progress when downloading/decrypting files
+reading: recognize pgp messages attached as "message"
+settings: fix missing scroll bar in settings
+settings: changed servers attest text
+
 <b>version 3.5.4 on February 28, 2017: Strip Reply Tokens</b>
 reading: strip reply tokens from received or sent message
 
