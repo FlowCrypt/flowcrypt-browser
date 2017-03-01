@@ -284,6 +284,7 @@ function init_shared_compose_js(url_params, db) {
       original_btn_html = $('#send_btn').html();
       $('#send_btn span').text('Loading');
       $('#send_btn i').replaceWith(tool.ui.spinner('white'));
+      $('#send_btn_note').text('');
       storage_cryptup_subscription(function (subscription_level, subscription_expire, subscription_active) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_password_hint').val() || '', answer: $('#input_password').val(), };
@@ -304,10 +305,14 @@ function init_shared_compose_js(url_params, db) {
                         if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
                           tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
                         }
-                        $('#send_btn').html(original_btn_html);
+                        setTimeout(function() {
+                          $('#send_btn').html(original_btn_html); // otherwise render_upload_progress will hijack this
+                        }, 100);
                       } else {
                         alert('There was an error uploading attachments. Please try it again. Write me at tom@cryptup.org if it happens repeatedly.\n\n' + upload_error_message);
-                        $('#send_btn').html(original_btn_html);
+                        setTimeout(function() {
+                          $('#send_btn').html(original_btn_html); // otherwise render_upload_progress will hijack this
+                        }, 100);
                       }
                     });
                   } else {
@@ -349,16 +354,23 @@ function init_shared_compose_js(url_params, db) {
                 callback(false, null, tool.api.cryptup.error_text(cf_result));
               }
             });
-          } else { // todo - retry just problematic files
+          } else { // todo - retry just the failed problematic files
             callback(false, null, 'Some files failed to upload, please try again');
           }
-        });
+        }, render_upload_progress);
       } else if (pf_success === tool.api.cryptup.auth_error) {
         callback(tool.api.cryptup.auth_error);
       } else {
         callback(false, null, tool.api.cryptup.error_text(pf_result));
       }
     });
+  }
+
+  function render_upload_progress(progress) {
+    if(attach.has_attachment()) {
+      progress = Math.floor(progress);
+      $('#send_btn > span').text(progress < 100 ? 'uploading attachments.. ' + progress + '%' : 'sending');
+    }
   }
 
   function add_uploaded_file_links_to_message_body(plaintext, attachments) {
@@ -399,7 +411,7 @@ function init_shared_compose_js(url_params, db) {
   }
 
   function upload_encrypted_message_to_cryptup(encrypted_data, callback) {
-    $('#send_btn span').text('Uploading');
+    $('#send_btn span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through CryptUp and recipients get a link. They also get the encrypted data in message body.
@@ -424,10 +436,7 @@ function init_shared_compose_js(url_params, db) {
       if($('.bottom .icon.action_include_pubkey').length && $('.bottom .icon.action_include_pubkey').is('.active')) {
         encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
-      var body = {
-        'text/plain': encrypted.data,
-        // 'text/html': encrypted.data.replace(/(?:\r\n|\r|\n)/g, '<br>\n'),
-      };
+      var body = { 'text/plain': encrypted.data };
       $('#send_btn span').text(((attachments || []).length) && attach_files_to_email ? 'Uploading attachments' : 'Sending');
       db_contact_update(db, recipients, { last_use: Date.now() }, function () {
         if(challenge) {
@@ -995,7 +1004,6 @@ function init_shared_compose_js(url_params, db) {
     }
   });
 
-
   return {
     draft_set_id: draft_set_id,
     draft_meta_store: draft_meta_store,
@@ -1009,6 +1017,7 @@ function init_shared_compose_js(url_params, db) {
     get_recipients_from_dom: get_recipients_from_dom,
     get_sender_from_dom: get_sender_from_dom,
     on_render: on_render,
+    render_upload_progress: render_upload_progress,
   };
 
 }

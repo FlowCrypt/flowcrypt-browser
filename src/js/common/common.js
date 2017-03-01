@@ -272,6 +272,9 @@
       without_value: arr_without_value,
       select: arr_select,
       contains: arr_contains,
+      sum: arr_sum,
+      average: arr_average,
+      zeroes: arr_zeroes,
     },
     obj: {
       map: obj_map,
@@ -758,6 +761,18 @@
 
   function arr_contains(arr, value) {
     return arr && typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1;
+  }
+
+  function arr_zeroes(length) {
+    return new Array(length).map(function() { return 0 });
+  }
+
+  function arr_sum(arr) {
+    return arr.reduce(function(a, b) { return a + b; }, 0);
+  }
+
+  function arr_average(arr) {
+    return arr_sum(arr) / arr.length;
   }
 
   /* tool.obj */
@@ -1807,7 +1822,7 @@
 
   /* tool.api */
 
-  function api_call(base_url, path, values, callback, format) {
+  function api_call(base_url, path, values, callback, format, progress_callback) {
     if(format === 'JSON') {
       var formatted_values = JSON.stringify(values);
       var content_type = 'application/json; charset=UTF-8';
@@ -1825,6 +1840,7 @@
       throw Error('unknown format:' + String(format));
     }
     return $.ajax({
+      xhr: get_ajax_upload_progress_xhr(progress_callback),
       url: base_url + path,
       method: 'POST',
       data: formatted_values,
@@ -1833,7 +1849,7 @@
       processData: false,
       contentType: content_type,
       async: true,
-      timeout: 20000,
+      timeout: typeof progress_callback === 'function' ? undefined : 20000, // progress_callback tends to be defined on LARGE requests
       success: function (response) {
         callback(true, response);
       },
@@ -1841,6 +1857,16 @@
         callback(false, { request: XMLHttpRequest, status: status, error: error });
       },
     });
+  }
+
+  function get_ajax_upload_progress_xhr(progress_callback) {
+    return typeof progress_callback !== 'function' ? undefined : function() {
+      var upload_reporting_xhr = new window.XMLHttpRequest();
+      upload_reporting_xhr.upload.addEventListener("progress", function(evt) {
+        progress_callback(evt.lengthComputable ? parseInt((evt.loaded / evt.total) * 100) : null);
+      }, false);
+      return upload_reporting_xhr;
+    };
   }
 
   /* tool.api.google */
@@ -1912,13 +1938,13 @@
     return scopes && tool.value(api_gmail_scope_dict[scope]).in(scopes)
   }
 
-  function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth, prefix, content_type) {
+  function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth, upload_progress_callback, content_type) {
     if(!account_email) {
       throw new Error('missing account_email in api_gmail_call');
     }
     account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
       if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
-        if(prefix === 'upload') {
+        if(typeof upload_progress_callback === 'function') {
           var url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
           var data = parameters;
         } else {
@@ -1930,6 +1956,7 @@
           }
         }
         $.ajax({
+          xhr: get_ajax_upload_progress_xhr(upload_progress_callback),
           url: url,
           method: method,
           data: data,
@@ -1946,7 +1973,7 @@
             try {
               var error_obj = JSON.parse(response.responseText);
               if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
-                google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call, prefix, content_type);
+                google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call, upload_progress_callback, content_type);
               } else {
                 response._error = error_obj.error;
                 if(callback) {
@@ -1967,18 +1994,18 @@
           },
         });
       } else { // no valid gmail_api oauth token
-        google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, api_gmail_call, prefix, content_type);
+        google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, api_gmail_call, upload_progress_callback, content_type);
       }
     });
   }
 
-  function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function, prefix) {
+  function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function, upload_progress, content_type) {
     if(fail_on_auth !== true) {
       tool.browser.message.send(null, 'google_auth', { account_email: account_email }, function (response) {
         if(response && response.success === false && response.error === tool.api.error.network) {
           callback(false, tool.api.error.network);
         } else { //todo: error handling for other bad situations
-          base_api_function(account_email, method, resource, parameters, callback, true, prefix);
+          base_api_function(account_email, method, resource, parameters, callback, true, upload_progress, content_type);
         }
       });
     } else {
@@ -2078,12 +2105,12 @@
     };
   }
 
-  function api_gmail_message_send(account_email, mime_message, thread_id, callback) {
+  function api_gmail_message_send(account_email, mime_message, thread_id, callback, progress_callback) {
     var request = encode_as_multipart_related({
       'application/json; charset=UTF-8': JSON.stringify({threadId: thread_id || null}),
-      'message/rfc822': mime_message, //tool.str.base64url_encode(
+      'message/rfc822': mime_message,
     });
-    api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, 'upload', request.content_type);
+    api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, progress_callback || function () {}, request.content_type);
   }
 
   function api_gmail_message_list(account_email, q, include_deleted, callback) {
@@ -2644,21 +2671,27 @@
 
   /* tool.api.aws */
 
-  function api_aws_s3_upload(items, callback) {
+  function api_aws_s3_upload(items, callback, progress_callback) {
     if (!items.length) {
       callback(false);
       return;
     }
     var results = new Array(items.length);
+    var progress = arr_zeroes(items.length);
     $.each(items, function (i, item) {
       var values = item.fields;
       values.file = file_attachment('encrpted_attachment', 'application/octet-stream', item.attachment.content);
-      api_call(item.base_url, '', values, function(success) {
+      api_call(item.base_url, '', values, function(success, s3_result) {
         results[i] = success;
         if(results.reduce(function(sum, r) { return sum + (typeof r !== 'undefined') }, 0) === results.length) { // no undefined left
           callback(results.reduce(function(s, v) { return s + v; }, 0) === results.length, results); // callback(all_good, results);
         }
-      }, 'FORM');
+      }, 'FORM', function(single_file_progress) {
+        progress[i] = single_file_progress;
+        ui_event_prevent(ui_event_spree(), function() {
+          progress_callback(arr_average(progress)); // this should of course be weighted average. How many years until someone notices?
+        })();
+      });
     });
   }
 

@@ -30,7 +30,7 @@ db_open(function (db) {
           } else {
             compose.handle_send_message_error(response);
           }
-        });
+        }, compose.render_upload_progress);
       });
     });
   }
