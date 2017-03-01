@@ -181,7 +181,7 @@ function init_shared_compose_js(url_params, db, subscription) {
               set_note(success);
               if(success) {
                 draft_id = response.id;
-                draft_meta_store(true, response.id, url_params.thread_id, get_recipients_from_dom(), S.cached('input_subject'));
+                draft_meta_store(true, response.id, url_params.thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
                 // recursing one more time, because we need the draft_id we get from this reply in the message itself
                 // essentially everytime we save draft for the first time, we have to save it twice
                 // save_draft_in_process will remain true because well.. it's still in process
