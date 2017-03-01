@@ -196,7 +196,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
         compose.evaluate_receivers();
       }
       setTimeout(function () { // delay automatic resizing until a second later
-        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), compose.resize_reply_box));
+        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), compose.resize_reply_box));
         $('#input_text').keyup(compose.resize_reply_box);
       }, 1000);
       compose.resize_reply_box();

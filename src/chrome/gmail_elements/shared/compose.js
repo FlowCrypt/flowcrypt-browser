@@ -4,11 +4,32 @@
 
 function init_shared_compose_js(url_params, db, subscription) {
 
-  var l = {
+  var L = {
     open_password_protected_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
   };
+
+  var S = tool.ui.build_jquery_selectors({
+    body: 'body',
+    compose_table: 'table#compose',
+    input_text: 'div#input_text',
+    input_to: '#input_to',
+    input_from: '#input_from',
+    input_subject: '#input_subject',
+    input_password: '#input_password',
+    password_or_pubkey: '#password_or_pubkey_container',
+    add_their_pubkey: '.add_pubkey',
+    send_btn_note: '#send_btn_note',
+    send_btn_span: '#send_btn span',
+    send_btn_i: '#send_btn i',
+    send_btn: '#send_btn',
+    icon_pubkey: '.icon.action_include_pubkey',
+    icon_footer: '.icon.action_include_footer',
+    icon_help: '.action_feedback',
+    reply_message_prompt: 'div#reply_message_prompt',
+    reply_message_successful: '#reply_message_successful_container',
+  });
 
   var SAVE_DRAFT_FREQUENCY = 3000;
   var PUBKEY_LOOKUP_RESULT_WRONG = 'wrong';
@@ -88,7 +109,7 @@ function init_shared_compose_js(url_params, db, subscription) {
     }
   });
 
-  $('.icon.action_include_pubkey').attr('title', l.include_pubkey_icon_title);
+  S.cached('icon_pubkey').attr('title', L.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
   account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer'], function (storage) {
@@ -101,8 +122,8 @@ function init_shared_compose_js(url_params, db, subscription) {
       update_footer_icon();
     }
     if(!can_save_drafts) {
-      $('#send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
-      $('#send_btn_note a.auth_drafts').click(auth_drafts);
+      S.cached('send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
+      S.cached('send_btn_note').find('a.auth_drafts').click(auth_drafts);
     }
   });
 
@@ -137,16 +158,16 @@ function init_shared_compose_js(url_params, db, subscription) {
   function draft_save(force_save) {
     function set_note(result) {
       if(result) {
-        $('#send_btn_note').text('Saved');
+        S.cached('send_btn_note').text('Saved');
       } else {
-        $('#send_btn_note').text('Not saved');
+        S.cached('send_btn_note').text('Not saved');
       }
     }
-    if(can_save_drafts && (should_save_draft($('#input_text').text()) || force_save === true)) {
+    if(can_save_drafts && (should_save_draft(S.cached('input_text').text()) || force_save === true)) {
       save_draft_in_process = true;
-      $('#send_btn_note').text('Saving');
+      S.cached('send_btn_note').text('Saving');
       var armored_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
-      tool.crypto.message.encrypt([armored_pubkey], null, null, $('#input_text')[0].innerText, true, function (encrypted) {
+      tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, true, function (encrypted) {
         if(url_params.thread_id) { // replied message
           var body = '[cryptup:link:draft_reply:' + url_params.thread_id + ']\n\n' + encrypted.data;
         } else if(draft_id) {
@@ -154,13 +175,13 @@ function init_shared_compose_js(url_params, db, subscription) {
         } else {
           var body = encrypted.data;
         }
-        tool.mime.encode(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: $('#input_subject').val() || url_params.subject || 'CryptUp draft', }, [], function (mime_message) {
+        tool.mime.encode(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: S.cached('input_subject').val() || url_params.subject || 'CryptUp draft', }, [], function (mime_message) {
           if(!draft_id) {
             tool.api.gmail.draft_create(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
               set_note(success);
               if(success) {
                 draft_id = response.id;
-                draft_meta_store(true, response.id, url_params.thread_id, get_recipients_from_dom(), $('#input_subject'));
+                draft_meta_store(true, response.id, url_params.thread_id, get_recipients_from_dom(), S.cached('input_subject'));
                 // recursing one more time, because we need the draft_id we get from this reply in the message itself
                 // essentially everytime we save draft for the first time, we have to save it twice
                 // save_draft_in_process will remain true because well.. it's still in process
@@ -209,14 +230,14 @@ function init_shared_compose_js(url_params, db, subscription) {
       }
       // todo: should be using tool.crypto.message.decrypt() function
       openpgp.decrypt({ message: openpgp.message.readArmored(encrypted_draft), format: 'utf8', privateKey: private_key, }).then(function (plaintext) {
-        $('#input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
+        S.cached('input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
         if(headers && headers.to && headers.to.length) {
-          $('#input_to').focus();
-          $('#input_to').val(headers.to.join(','));
-          $('#input_text').focus();
+          S.cached('input_to').focus();
+          S.cached('input_to').val(headers.to.join(','));
+          S.cached('input_text').focus();
         }
         if(headers && headers.from) {
-          $('#input_from').val(headers.from);
+          S.cached('input_from').val(headers.from);
         }
         if(render_function) {
           render_function();
@@ -229,8 +250,8 @@ function init_shared_compose_js(url_params, db, subscription) {
         }
       });
     } else {
-      if($('div#reply_message_prompt').length) { // todo - will only work for reply box, not compose box
-        $('div#reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
+      if(S.now('reply_message_prompt').length) { // todo - will only work for reply box, not compose box
+        S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
         clearInterval(passphrase_interval);
         passphrase_interval = setInterval(function () {
           check_passphrase_entered(encrypted_draft);
@@ -264,10 +285,10 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function is_compose_form_rendered_as_ready(recipients) {
-    if($('#send_btn span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND && recipients && recipients.length) {
+    if(S.cached('send_btn_span').text().toLowerCase().trim() === BTN_ENCRYPT_AND_SEND && recipients && recipients.length) {
       return true;
     } else {
-      if($('#send_btn span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
+      if(S.cached('send_btn_span').text().toLowerCase().trim() === BTN_WRONG_ENTRY) {
         alert('Please re-enter recipients marked in red color.');
       } else if(!recipients || !recipients.length) {
         alert('Please add a recipient first');
@@ -284,7 +305,7 @@ function init_shared_compose_js(url_params, db, subscription) {
       return false;
     } else if(emails_without_pubkeys.length && !challenge.answer) {
       alert('Some recipients don\'t have encryption set up. Please add a password.');
-      $('#input_password').focus();
+      S.cached('input_password').focus();
       return false;
     } else if(attach.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
       tool.env.increment('upgrade_notify_attach_nonpgp', function () {
@@ -302,22 +323,22 @@ function init_shared_compose_js(url_params, db, subscription) {
 
   function encrypt_and_send(account_email, recipients, subject, plaintext, send_email) {
     if(is_compose_form_rendered_as_ready(recipients)) {
-      original_btn_html = $('#send_btn').html();
-      $('#send_btn span').text('Loading');
-      $('#send_btn i').replaceWith(tool.ui.spinner('white'));
-      $('#send_btn_note').text('');
+      original_btn_html = S.cached('send_btn').html();
+      S.cached('send_btn_span').text('Loading');
+      S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
+      S.cached('send_btn_note').text('');
       storage_cryptup_subscription(function (_l, _e, _active) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
-          var challenge = { question: $('#input_password_hint').val() || '', answer: $('#input_password').val(), };
+          var challenge = { question: $('#input_password_hint').val() || '', answer: S.cached('input_password').val(), };
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, _active)) {
-            $('#send_btn span').text('Encrypting');
+            S.cached('send_btn_span').text('Encrypting');
             challenge = emails_without_pubkeys.length ? challenge : null;
             add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, _active, function(plaintext) {
               try {
                 attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
                   if(attachments.length && challenge) { // these will be password encrypted attachments
                     setTimeout(function() {
-                      $('#send_btn span').text('sending');
+                      S.cached('send_btn_span').text('sending');
                     }, 500);
                     upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
                       if(all_good === true) {
@@ -328,12 +349,12 @@ function init_shared_compose_js(url_params, db, subscription) {
                           tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
                         }
                         setTimeout(function() {
-                          $('#send_btn').html(original_btn_html); // otherwise render_upload_progress will hijack this
+                          S.cached('send_btn').html(original_btn_html); // otherwise render_upload_progress will hijack this
                         }, 100);
                       } else {
                         alert('There was an error uploading attachments. Please try it again. Write me at tom@cryptup.org if it happens repeatedly.\n\n' + upload_error_message);
                         setTimeout(function() {
-                          $('#send_btn').html(original_btn_html); // otherwise render_upload_progress will hijack this
+                          S.cached('send_btn').html(original_btn_html); // otherwise render_upload_progress will hijack this
                         }, 100);
                       }
                     });
@@ -343,12 +364,12 @@ function init_shared_compose_js(url_params, db, subscription) {
                 });
               } catch(err) {
                 catcher.handle_exception(err);
-                $('#send_btn').html(original_btn_html);
+                S.cached('send_btn').html(original_btn_html);
                 alert(String(err));
               }
             });
           } else {
-            $('#send_btn').html(original_btn_html);
+            S.cached('send_btn').html(original_btn_html);
           }
         });
       });
@@ -391,7 +412,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   function render_upload_progress(progress) {
     if(attach.has_attachment()) {
       progress = Math.floor(progress);
-      $('#send_btn > span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
+      S.cached('send_btn_span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
     }
   }
 
@@ -414,7 +435,7 @@ function init_shared_compose_js(url_params, db, subscription) {
           if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
             tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
           }
-          $('#send_btn').html(original_btn_html);
+          S.cached('send_btn').html(original_btn_html);
         } else if(success === true && result && result.token) {
           callback(plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
             sender: get_sender_from_dom(),
@@ -424,7 +445,7 @@ function init_shared_compose_js(url_params, db, subscription) {
           })}));
         } else {
           alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + ((result || {}).error || 'unknown error'));
-          $('#send_btn').html(original_btn_html);
+          S.cached('send_btn').html(original_btn_html);
         }
       });
     } else {
@@ -433,7 +454,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function upload_encrypted_message_to_cryptup(encrypted_data, callback) {
-    $('#send_btn span').text('Sending');
+    S.cached('send_btn_span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through CryptUp and recipients get a link. They also get the encrypted data in message body.
@@ -455,12 +476,12 @@ function init_shared_compose_js(url_params, db, subscription) {
 
   function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
-      if($('.bottom .icon.action_include_pubkey').length && $('.bottom .icon.action_include_pubkey').is('.active')) {
+      if(S.cached('icon_pubkey').is('.active')) {
         encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
       var body = { 'text/plain': encrypted.data };
       setTimeout(function() {
-        $('#send_btn span').text('sending');
+        S.cached('send_btn_span').text('sending');
       }, 500);
       db_contact_update(db, recipients, { last_use: Date.now() }, function () {
         if(challenge) {
@@ -471,7 +492,7 @@ function init_shared_compose_js(url_params, db, subscription) {
               send_email(body, attachments, attach_files_to_email, email_footer);
             } else {
               alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
-              $('#send_btn').html(original_btn_html);
+              S.cached('send_btn').html(original_btn_html);
             }
           });
         } else {
@@ -484,8 +505,8 @@ function init_shared_compose_js(url_params, db, subscription) {
 
   function handle_send_message_error(response) {
     if(response && response.status === 413) {
-      $('#send_btn span').text(BTN_ENCRYPT_AND_SEND);
-      $('#send_btn i').attr('class', '');
+      S.cached('send_btn_span').text(BTN_ENCRYPT_AND_SEND);
+      S.now('send_btn_i').attr('class', '');
       tool.env.increment('upgrade_notify_attach_size', function () {
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
@@ -530,8 +551,8 @@ function init_shared_compose_js(url_params, db, subscription) {
       var email_element = this;
       var email = tool.str.trim_lower($(email_element).text());
       if(tool.str.is_email_valid(email)) {
-        $("#send_btn span").text(BTN_WAIT);
-        $("#send_btn_note").text("Checking email addresses");
+        S.cached('send_btn_span').text(BTN_WAIT);
+        S.cached('send_btn_note').text("Checking email addresses");
         lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, function (pubkey_lookup_result) {
           render_pubkey_result(email_element, email, pubkey_lookup_result);
         });
@@ -542,46 +563,46 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function get_password_validation_warning() {
-    if(!$('#input_password').val()) {
+    if(!S.cached('input_password').val()) {
       return 'No password entered';
     }
   }
 
   function show_hide_password_or_pubkey_container_and_color_send_button() {
-    $("#send_btn span").text(BTN_ENCRYPT_AND_SEND);
-    $("#send_btn_note").text('');
-    $("#send_btn").attr('title', '');
-    var was_previously_visible = $("#password_or_pubkey_container").css('display') === 'table-row';
+    S.cached('send_btn_span').text(BTN_ENCRYPT_AND_SEND);
+    S.cached('send_btn_note').text('');
+    S.cached('send_btn').attr('title', '');
+    var was_previously_visible = S.cached('password_or_pubkey').css('display') === 'table-row';
     if(!$('.recipients span').length) {
-      $("#password_or_pubkey_container").css('display', 'none');
-      $('#send_btn').removeClass('gray').addClass('green');
+      S.cached('password_or_pubkey').css('display', 'none');
+      S.cached('send_btn').removeClass('gray').addClass('green');
     } else {
       if($('.recipients span.no_pgp').length) {
-        $("#password_or_pubkey_container").css('display', 'table-row');
-        if($('#input_password').val() || $('#input_password').is(':focus')) {
+        S.cached('password_or_pubkey').css('display', 'table-row');
+        if(S.cached('input_password').val() || S.cached('input_password').is(':focus')) {
           $('.label_password').css('display', 'inline-block');
-          $('#input_password').attr('placeholder', '');
+          S.cached('input_password').attr('placeholder', '');
         } else {
           $('.label_password').css('display', 'none');
-          $('#input_password').attr('placeholder', 'one time password');
+          S.cached('input_password').attr('placeholder', 'one time password');
         }
         if(get_password_validation_warning()) {
-          $('#send_btn').removeClass('green').addClass('gray');
+          S.cached('send_btn').removeClass('green').addClass('gray');
         } else {
-          $('#send_btn').removeClass('gray').addClass('green');
+          S.cached('send_btn').removeClass('gray').addClass('green');
         }
       } else if($('.recipients span.failed, .recipients span.wrong').length) {
-        $("#send_btn span").text(BTN_WRONG_ENTRY);
-        $("#send_btn").attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
-        $("#send_btn").removeClass('green').addClass('gray');
+        S.cached('send_btn_span').text(BTN_WRONG_ENTRY);
+        S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
+        S.cached('send_btn').removeClass('green').addClass('gray');
       } else {
-        $("#password_or_pubkey_container").css('display', 'none');
-        $('#send_btn').removeClass('gray').addClass('green');
+        S.cached('password_or_pubkey').css('display', 'none');
+        S.cached('send_btn').removeClass('gray').addClass('green');
       }
     }
     if(is_reply_box) {
-      if(!was_previously_visible && $("#password_or_pubkey_container").css('display') === 'table-row') {
-        resize_reply_box($("#password_or_pubkey_container").first().height() + 20);
+      if(!was_previously_visible && S.cached('password_or_pubkey').css('display') === 'table-row') {
+        resize_reply_box(S.cached('password_or_pubkey').first().height() + 20);
       } else {
         resize_reply_box();
       }
@@ -589,12 +610,12 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function respond_to_input_hotkeys(input_to_keydown_event) {
-    var value = $('#input_to').val();
+    var value = S.cached('input_to').val();
     var keys = tool.env.key_codes();
     if(!value && input_to_keydown_event.which === keys.backspace) {
       $('.recipients span').last().remove();
     } else if(value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {
-      $('#input_to').blur();
+      S.cached('input_to').blur();
       if($('#contacts').css('display') === 'block') {
         if($('#contacts .select_contact.hover').length) {
           $('#contacts .select_contact.hover').click();
@@ -602,45 +623,45 @@ function init_shared_compose_js(url_params, db, subscription) {
           $('#contacts .select_contact').first().click();
         }
       }
-      $('#input_to').focus().blur();
+      S.cached('input_to').focus().blur();
       return false;
     }
   }
 
   function resize_reply_box(add_extra) {
     if(is_reply_box) {
-      if(isNaN(add_extra)) {
-        add_extra = 0;
-      }
-      $('div#input_text').css('max-width', ($('body').width() - 20) + 'px');
-      if($('#reply_message_successful_container').is(':visible')) {
-        var current_height = $('#reply_message_successful_container').height();
+      add_extra = isNaN(add_extra) ? 0 : Number(add_extra);
+      S.cached('input_text').css('max-width', (S.cached('body').width() - 20) + 'px');
+      if(S.cached('reply_message_successful').is(':visible')) {
+        var current_height = S.cached('reply_message_successful').height() + 1;
       } else {
-        var current_height = $('table#compose').height();
+        var current_height = S.cached('compose_table').height() + 1;
       }
+      console.log([current_height, last_reply_box_table_height]);
       if(current_height !== last_reply_box_table_height) {
         last_reply_box_table_height = current_height;
+        console.log('tesst');
         tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
           selector: 'iframe#' + url_params.frame_id,
-          css: { height: Math.max(260, current_height + 1) + add_extra, }
+          css: { height: (Math.max(260, current_height) + add_extra) + 'px' },
         });
       }
     }
   }
 
   function render_receivers() {
-    var input_to = $('#input_to').val().toLowerCase();
+    var input_to = S.cached('input_to').val().toLowerCase();
     if(tool.value(',').in(input_to)) {
       var emails = input_to.split(',');
       for(var i = 0; i < emails.length - 1; i++) {
-        $('#input_to').siblings('.recipients').append('<span>' + emails[i] + tool.ui.spinner('green') + '</span>');
+        S.cached('input_to').siblings('.recipients').append('<span>' + emails[i] + tool.ui.spinner('green') + '</span>');
       }
-    } else if(!$('#input_to').is(':focus') && input_to) {
-      $('#input_to').siblings('.recipients').append('<span>' + input_to + tool.ui.spinner('green') + '</span>');
+    } else if(!S.cached('input_to').is(':focus') && input_to) {
+      S.cached('input_to').siblings('.recipients').append('<span>' + input_to + tool.ui.spinner('green') + '</span>');
     } else {
       return;
     }
-    $('#input_to').val('');
+    S.cached('input_to').val('');
     resize_input_to();
     evaluate_receivers();
   }
@@ -654,16 +675,16 @@ function init_shared_compose_js(url_params, db, subscription) {
     }
     setTimeout(function() {
       if(!tool.value(email).in(get_recipients_from_dom())) {
-        $('#input_to').val(tool.str.trim_lower(email));
+        S.cached('input_to').val(tool.str.trim_lower(email));
         render_receivers();
-        $('#input_to').focus();
+        S.cached('input_to').focus();
       }
     }, tool.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
     hide_contacts();
   }
 
   function resize_input_to() {
-    $('#input_to').css('width', (Math.max(150, $('#input_to').parent().width() - $('#input_to').siblings('.recipients').width() - 50)) + 'px');
+    S.cached('input_to').css('width', (Math.max(150, S.cached('input_to').parent().width() - S.cached('input_to').siblings('.recipients').width() - 50)) + 'px');
   }
 
   function remove_receiver() {
@@ -677,7 +698,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   function auth_drafts() {
     tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: tool.api.gmail.scope(['compose']), }, function (google_auth_response) {
       if(google_auth_response.success === true) {
-        $('#send_btn_note').text('');
+        S.cached('send_btn_note').text('');
         can_save_drafts = true;
         clearInterval(save_draft_interval);
         draft_save();
@@ -692,7 +713,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function auth_contacts(account_email) {
-    $('#input_to').val($('.recipients span').last().text());
+    S.cached('input_to').val($('.recipients span').last().text());
     $('.recipients span').last().remove();
     tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: tool.api.gmail.scope(['read']), }, function (google_auth_response) {
       if(google_auth_response.success === true) {
@@ -756,7 +777,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function search_contacts(db_only) {
-    var query = { substring: tool.str.trim_lower($('#input_to').val()) };
+    var query = { substring: tool.str.trim_lower(S.cached('input_to').val()) };
     if(query.substring !== '') {
       db_contact_search(db, query, function (contacts) {
         if(db_only) {
@@ -827,9 +848,9 @@ function init_shared_compose_js(url_params, db, subscription) {
       }
     } else { // set icon to specific state
       if(include) {
-        $('.bottom .icon.action_include_pubkey').addClass('active').attr('title', l.include_pubkey_icon_title_active);
+        S.cached('icon_pubkey').addClass('active').attr('title', L.include_pubkey_icon_title_active);
       } else {
-        $('.bottom .icon.action_include_pubkey').removeClass('active').attr('title', l.include_pubkey_icon_title);
+        S.cached('icon_pubkey').removeClass('active').attr('title', L.include_pubkey_icon_title);
       }
     }
   }
@@ -839,9 +860,9 @@ function init_shared_compose_js(url_params, db, subscription) {
       update_footer_icon(!!email_footer);
     } else { // set icon to specific state
       if(include) {
-        $('.bottom .icon.action_include_footer').addClass('active');
+        S.cached('icon_footer').addClass('active');
       } else {
-        $('.bottom .icon.action_include_footer').removeClass('active');
+        S.cached('icon_footer').removeClass('active');
       }
     }
   }
@@ -920,8 +941,8 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function get_sender_from_dom() {
-    if($('#input_from').length) {
-      return $('#input_from').val();
+    if(S.cached('input_from').length) {
+      return S.cached('input_from').val();
     } else {
       return url_params.account_email;
     }
@@ -933,16 +954,16 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function on_render() {
-    $('#input_to').keydown(respond_to_input_hotkeys);
-    $('#input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
-    $('#input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), render_receivers));
-    $('#input_text').keyup(function () {
-      $('#send_btn_note').text('');
+    S.cached('input_to').keydown(respond_to_input_hotkeys);
+    S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
+    S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), render_receivers));
+    S.cached('input_text').keyup(function () {
+      S.cached('send_btn_note').text('');
     });
-    $('table#compose').click(hide_contacts);
+    S.cached('compose_table').click(hide_contacts);
     $('#input_addresses_container > div').click(function () {
-      if(!$('#input_to').is(':focus')) {
-        $('#input_to').focus();
+      if(!S.cached('input_to').is(':focus')) {
+        S.cached('input_to').focus();
       }
     }).children().click(function () { return false; });
     resize_input_to();
@@ -962,28 +983,26 @@ function init_shared_compose_js(url_params, db, subscription) {
 
   function format_password_protected_email(short_id, original_bodies) {
     var decrypt_url = 'https://cryptup.org/' + short_id;
-    var new_bodies = { 'text/plain': [l.open_password_protected_message + ' ' + decrypt_url, '', original_bodies['text/plain']].join('\n') };
+    var new_bodies = { 'text/plain': [L.open_password_protected_message + ' ' + decrypt_url, '', original_bodies['text/plain']].join('\n') };
     if(original_bodies['text/html']) {
-      new_bodies['text/html'] = [l.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', original_bodies['text/html']].join('<br>\n');
+      new_bodies['text/html'] = [L.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', original_bodies['text/html']].join('<br>\n');
     }
     return new_bodies;
   }
 
   function format_email_footer(body) {
-    return {
-      'text/plain': body['text/plain'] + (email_footer ? '\n' + email_footer : ''),
-    };
+    return { 'text/plain': body['text/plain'] + (email_footer ? '\n' + email_footer : '') };
   }
 
-  $('#input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));
-  $('#input_password').focus(show_hide_password_or_pubkey_container_and_color_send_button);
-  $('#input_password').blur(show_hide_password_or_pubkey_container_and_color_send_button);
+  S.cached('input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));
+  S.cached('input_password').focus(show_hide_password_or_pubkey_container_and_color_send_button);
+  S.cached('input_password').blur(show_hide_password_or_pubkey_container_and_color_send_button);
 
-  $('.add_pubkey').click(function () {
+  S.cached('add_their_pubkey').click(function () {
     if(url_params.placement !== 'settings') {
       tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog_gmail', { emails: get_recipients_from_dom('no_pgp') });
     } else {
-      $.featherlight({ iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'), iframeWidth: 515, iframeHeight: $('html').height() - 50 });
+      $.featherlight({ iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'), iframeWidth: 515, iframeHeight: S.cached('body').height() - 50 });
     }
     clearInterval(added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
     added_pubkey_db_lookup_interval = setInterval(function () {
@@ -1000,28 +1019,28 @@ function init_shared_compose_js(url_params, db, subscription) {
     }, 1000);
   });
 
-  $('.action_feedback').click(function () {
+  S.cached('icon_help').click(function () {
     tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/help.htm' });
   });
 
-  $('#input_from').change(function () {
+  S.cached('input_from').change(function () {
     // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
     // because they might not have a pubkey for the alternative address, and might get confused
   });
 
-  $('#input_text').get(0).onpaste = function (e) {
+  S.cached('input_text').get(0).onpaste = function (e) {
     if(e.clipboardData.getData('text/html')) {
       simulate_ctrl_v(tool.str.inner_text(e.clipboardData.getData('text/html')).replace(/\n/g, '<br>'));
       return false;
     }
   };
 
-  $('.icon.action_include_pubkey').click(function () {
+  S.cached('icon_pubkey').click(function () {
     include_pubkey_toggled_manually = true;
     update_pubkey_icon(!$(this).is('.active'));
   });
 
-  $('.icon.action_include_footer').click(function () {
+  S.cached('icon_footer').click(function () {
     if(!$(this).is('.active')) {
       var noscroll = function() { $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no'); };
       $.featherlight({iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: noscroll});
