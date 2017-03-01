@@ -835,8 +835,8 @@
     request.open("GET", url, true);
     request.responseType = "arraybuffer";
     if(typeof progress === 'function') {
-      request.onprogress = function (e) {
-        progress(e.loaded, e.total);
+      request.onprogress = function (evt) {
+        progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
       };
     }
     request.onerror = function (e) {
@@ -1822,7 +1822,23 @@
 
   /* tool.api */
 
-  function api_call(base_url, path, values, callback, format, progress_callback) {
+  function get_ajax_progress_xhr(progress_callbacks) {
+    var progress_reporting_xhr = new window.XMLHttpRequest();
+    if(typeof progress_callbacks.upload === 'function') {
+      progress_reporting_xhr.upload.addEventListener("progress", function(evt) {
+        progress_callbacks.upload(evt.lengthComputable ? parseInt((evt.loaded / evt.total) * 100) : null);
+      }, false);
+    }
+    if(typeof progress_callbacks.download === 'function') {
+      progress_reporting_xhr.onprogress = function (evt) {
+        progress_callbacks.download(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
+      };
+    }
+    return progress_reporting_xhr;
+  }
+
+  function api_call(base_url, path, values, callback, format, progress) {
+    progress = progress || {};
     if(format === 'JSON') {
       var formatted_values = JSON.stringify(values);
       var content_type = 'application/json; charset=UTF-8';
@@ -1840,7 +1856,9 @@
       throw Error('unknown format:' + String(format));
     }
     return $.ajax({
-      xhr: get_ajax_upload_progress_xhr(progress_callback),
+      xhr: function() {
+        return get_ajax_progress_xhr(progress);
+      },
       url: base_url + path,
       method: 'POST',
       data: formatted_values,
@@ -1849,7 +1867,7 @@
       processData: false,
       contentType: content_type,
       async: true,
-      timeout: typeof progress_callback === 'function' ? undefined : 20000, // progress_callback tends to be defined on LARGE requests
+      timeout: typeof progress.upload === 'function' || typeof progress.download === 'function' ? undefined : 20000,
       success: function (response) {
         callback(true, response);
       },
@@ -1857,16 +1875,6 @@
         callback(false, { request: XMLHttpRequest, status: status, error: error });
       },
     });
-  }
-
-  function get_ajax_upload_progress_xhr(progress_callback) {
-    return typeof progress_callback !== 'function' ? undefined : function() {
-      var upload_reporting_xhr = new window.XMLHttpRequest();
-      upload_reporting_xhr.upload.addEventListener("progress", function(evt) {
-        progress_callback(evt.lengthComputable ? parseInt((evt.loaded / evt.total) * 100) : null);
-      }, false);
-      return upload_reporting_xhr;
-    };
   }
 
   /* tool.api.google */
@@ -1938,13 +1946,14 @@
     return scopes && tool.value(api_gmail_scope_dict[scope]).in(scopes)
   }
 
-  function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth, upload_progress_callback, content_type) {
+  function api_gmail_call(account_email, method, resource, parameters, callback, fail_on_auth, progress, content_type) {
     if(!account_email) {
       throw new Error('missing account_email in api_gmail_call');
     }
+    progress = progress || {};
     account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
       if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
-        if(typeof upload_progress_callback === 'function') {
+        if(typeof progress.upload === 'function') {
           var url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
           var data = parameters;
         } else {
@@ -1956,7 +1965,9 @@
           }
         }
         $.ajax({
-          xhr: get_ajax_upload_progress_xhr(upload_progress_callback),
+          xhr: function () {
+            return get_ajax_progress_xhr(progress);
+          },
           url: url,
           method: method,
           data: data,
@@ -1973,7 +1984,7 @@
             try {
               var error_obj = JSON.parse(response.responseText);
               if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
-                google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call, upload_progress_callback, content_type);
+                google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call, progress, content_type);
               } else {
                 response._error = error_obj.error;
                 if(callback) {
@@ -1994,18 +2005,18 @@
           },
         });
       } else { // no valid gmail_api oauth token
-        google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, api_gmail_call, upload_progress_callback, content_type);
+        google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, api_gmail_call, progress, content_type);
       }
     });
   }
 
-  function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function, upload_progress, content_type) {
+  function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function, progress, content_type) {
     if(fail_on_auth !== true) {
       tool.browser.message.send(null, 'google_auth', { account_email: account_email }, function (response) {
         if(response && response.success === false && response.error === tool.api.error.network) {
           callback(false, tool.api.error.network);
         } else { //todo: error handling for other bad situations
-          base_api_function(account_email, method, resource, parameters, callback, true, upload_progress, content_type);
+          base_api_function(account_email, method, resource, parameters, callback, true, progress, content_type);
         }
       });
     } else {
@@ -2110,7 +2121,7 @@
       'application/json; charset=UTF-8': JSON.stringify({threadId: thread_id || null}),
       'message/rfc822': mime_message,
     });
-    api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, progress_callback || function () {}, request.content_type);
+    api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, {upload: progress_callback || function () {}}, request.content_type);
   }
 
   function api_gmail_message_list(account_email, q, include_deleted, callback) {
@@ -2143,8 +2154,8 @@
     }
   }
 
-  function api_gmail_message_attachment_get(account_email, message_id, attachment_id, callback) {
-    api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback);
+  function api_gmail_message_attachment_get(account_email, message_id, attachment_id, callback, progress_callback) {
+    api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback, undefined, {download: progress_callback});
   }
 
   function api_gmail_find_attachments(gmail_email_object, internal_results, internal_message_id) {
@@ -2686,12 +2697,12 @@
         if(results.reduce(function(sum, r) { return sum + (typeof r !== 'undefined') }, 0) === results.length) { // no undefined left
           callback(results.reduce(function(s, v) { return s + v; }, 0) === results.length, results); // callback(all_good, results);
         }
-      }, 'FORM', function(single_file_progress) {
+      }, 'FORM', {upload: function(single_file_progress) {
         progress[i] = single_file_progress;
         ui_event_prevent(ui_event_spree(), function() {
           progress_callback(arr_average(progress)); // this should of course be weighted average. How many years until someone notices?
         })();
-      });
+      }});
     });
   }
 
