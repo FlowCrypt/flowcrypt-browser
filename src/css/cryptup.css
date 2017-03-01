@@ -371,6 +371,7 @@ body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: cen
 body.attachment:hover { border-color: #eaeaea; }
 body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; right:13px; opacity: 1; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
+body.attachment #download.visible { visibility: visible; }
 body.attachment #download .large_spinner { margin-top: 7px; margin-left: 20px; }
 body.attachment #download .download-icon { margin-top: 15px; margin-bottom: 8px; }
 body.attachment #download .download-prompt { margin-top:1px; font-size: 14px; }

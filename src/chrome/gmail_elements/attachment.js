@@ -93,7 +93,7 @@ db_open(function (db) {
   function decrypt_and_save_attachment_to_downloads(success, encrypted_data) {
     if(success) {
       tool.crypto.message.decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
-        $('#download').html(original_content);
+        $('#download').html(original_content).removeClass('visible');
         if(result.success) {
           tool.file.save_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
@@ -135,6 +135,7 @@ db_open(function (db) {
   $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     tool.env.increment('download');
     original_content = $(self).html();
+    $(self).addClass('visible');
     $(self).html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
     progress_element = $('.download_progress');
     if(url_params.attachment_id) {
