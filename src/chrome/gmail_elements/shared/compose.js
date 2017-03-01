@@ -310,16 +310,17 @@ function init_shared_compose_js(url_params, db, subscription) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = { question: $('#input_password_hint').val() || '', answer: $('#input_password').val(), };
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, _active)) {
-            $('#send_btn span').text(attach.has_attachment() ? 'Encrypting attachments' : 'Encrypting');
+            $('#send_btn span').text('Encrypting');
             challenge = emails_without_pubkeys.length ? challenge : null;
             add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, _active, function(plaintext) {
               try {
                 attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
                   if(attachments.length && challenge) { // these will be password encrypted attachments
-                    $('#send_btn span').text('Uploading attachments');
+                    setTimeout(function() {
+                      $('#send_btn span').text('sending');
+                    }, 500);
                     upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
                       if(all_good === true) {
-                        $('#send_btn span').text('Encrypting email');
                         plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                         do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, false, send_email);
                       } else if(all_good === tool.api.cryptup.auth_error) {
@@ -390,7 +391,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   function render_upload_progress(progress) {
     if(attach.has_attachment()) {
       progress = Math.floor(progress);
-      $('#send_btn > span').text(progress < 100 ? 'uploading attachments.. ' + progress + '%' : 'sending');
+      $('#send_btn > span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
     }
   }
 
@@ -458,7 +459,9 @@ function init_shared_compose_js(url_params, db, subscription) {
         encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
       }
       var body = { 'text/plain': encrypted.data };
-      $('#send_btn span').text(((attachments || []).length) && attach_files_to_email ? 'Uploading attachments' : 'Sending');
+      setTimeout(function() {
+        $('#send_btn span').text('sending');
+      }, 500);
       db_contact_update(db, recipients, { last_use: Date.now() }, function () {
         if(challenge) {
           upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
