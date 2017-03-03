@@ -30,7 +30,7 @@ function init_shared_compose_js(url_params, db, subscription) {
     send_btn: '#send_btn',
     icon_pubkey: '.icon.action_include_pubkey',
     icon_footer: '.icon.action_include_footer',
-    icon_help: '.icon.action_feedback',
+    icon_help: '.action_feedback',
     icon_sign: '.icon.action_sign',
     reply_message_prompt: 'div#reply_message_prompt',
     reply_message_successful: '#reply_message_successful_container',
