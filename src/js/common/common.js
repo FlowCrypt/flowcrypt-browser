@@ -2382,7 +2382,7 @@
           } else if(attachments.length) {
             var found = false;
             $.each(attachments, function (i, attachment_meta) {
-              if(attachment_meta.name.match(/\.asc$/)) {
+              if(attachment_meta.name.match(/\.asc$/) || attachment_meta.name === 'message') {
                 found = true;
                 api_gmail_fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
                   if(fetch_attachments_success) {
