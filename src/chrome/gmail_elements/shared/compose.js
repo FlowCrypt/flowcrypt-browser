@@ -1138,6 +1138,7 @@ function init_shared_compose_js(url_params, db, subscription) {
     get_sender_from_dom: get_sender_from_dom,
     on_render: on_render,
     render_upload_progress: render_upload_progress,
+    S: S,
   };
 
 }

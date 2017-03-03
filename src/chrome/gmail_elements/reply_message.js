@@ -138,17 +138,24 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     function reply_message_render_success(to, has_attachments, message_id, email_footer) {
       $('#send_btn_note').text('Deleting draft..');
       compose.draft_delete(url_params.account_email, function () {
-        tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-          notification: 'Your encrypted message has been sent.'
-        });
+        tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Your encrypted message has been sent.' });
         reply_message_reinsert_reply_box();
+        var is_signed = compose.S.cached('icon_sign').is('.active');
+        if(is_signed) {
+          $('.replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
+        }
         $('.replied_body').css('width', $('table#compose').width() - 30);
         $('#reply_message_table_container').css('display', 'none');
         $('#reply_message_successful_container div.replied_from').text(url_params.from);
         $('#reply_message_successful_container div.replied_to span').text(to);
         $('#reply_message_successful_container div.replied_body').html(plaintext.replace(/\n/g, '<br>'));
         if (email_footer) {
-          $('#reply_message_successful_container .email_footer').html('<br>' + email_footer.replace(/\n/g, '<br>'));
+          if(is_signed) {
+            $('.replied_body').append('<br><br>' + email_footer.replace(/\n/g, '<br>'));
+          } else {
+            $('#reply_message_successful_container .email_footer').html('<br>' + email_footer.replace(/\n/g, '<br>'));
+          }
+
         }
         var t = new Date();
         var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
