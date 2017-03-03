@@ -23,9 +23,8 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
         tool.mime.encode(url_params.account_email, encrypted_message_body, headers, attach_files ? attachments : null, function (mime_message) {
           tool.api.gmail.message_send(url_params.account_email, mime_message, null, function (success, response) {
             if(success) {
-              tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-                notification: 'Your encrypted message has been sent.'
-              });
+              var is_signed = compose.S.cached('icon_sign').is('.active');
+              tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' message has been sent.' });
               compose.draft_delete(url_params.account_email, function () {
                 tool.env.increment('compose', new_message_close);
               });

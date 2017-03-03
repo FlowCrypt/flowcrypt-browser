@@ -138,9 +138,9 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     function reply_message_render_success(to, has_attachments, message_id, email_footer) {
       $('#send_btn_note').text('Deleting draft..');
       compose.draft_delete(url_params.account_email, function () {
-        tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Your encrypted message has been sent.' });
-        reply_message_reinsert_reply_box();
         var is_signed = compose.S.cached('icon_sign').is('.active');
+        reply_message_reinsert_reply_box();
+        tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' reply has been sent.' });
         if(is_signed) {
           $('.replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
         }
