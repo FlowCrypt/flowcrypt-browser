@@ -171,7 +171,7 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   margin-bottom: 10px;
 }
 #settings-row {
-  padding: 50px 0;
+  padding: 73px 0;
 }
 #settings-row .box {
   background-color: #31A217;
@@ -259,12 +259,16 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
 #footer-row {
   position: fixed;
   bottom: 0;
-  margin-bottom: 30px;
+  padding-bottom: 20px;
+  padding-top: 20px;
   text-align: center;
   right: 0;
   left: 0;
   font-weight: 600;
   -webkit-animation: fadeInUp 2s;
+  background: white;
+  border-top: 1px solid #cacaca;
+  box-shadow: rgba(0,0,0,0.15) 0 0 8px;
 }
 input#passphrase-to-open-email {
   margin-left: 15px;

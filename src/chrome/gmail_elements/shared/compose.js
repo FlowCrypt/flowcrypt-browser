@@ -178,13 +178,6 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function draft_save(force_save) {
-    function set_note(result) {
-      if(result) {
-        S.cached('send_btn_note').text('Saved');
-      } else {
-        S.cached('send_btn_note').text('Not saved');
-      }
-    }
     if(can_save_drafts && (should_save_draft(S.cached('input_text').text()) || force_save === true)) {
       save_draft_in_process = true;
       S.cached('send_btn_note').text('Saving');
@@ -200,7 +193,7 @@ function init_shared_compose_js(url_params, db, subscription) {
         tool.mime.encode(url_params.account_email, body, { To: get_recipients_from_dom(), From: get_sender_from_dom(), Subject: S.cached('input_subject').val() || url_params.subject || 'CryptUp draft', }, [], function (mime_message) {
           if(!draft_id) {
             tool.api.gmail.draft_create(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
-              set_note(success);
+              S.cached('send_btn_note').text(success ? 'Saved' : 'Not saved');
               if(success) {
                 draft_id = response.id;
                 draft_meta_store(true, response.id, url_params.thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
@@ -215,7 +208,7 @@ function init_shared_compose_js(url_params, db, subscription) {
             });
           } else {
             tool.api.gmail.draft_update(url_params.account_email, draft_id, mime_message, function (success, response) {
-              set_note(success);
+              S.cached('send_btn_note').text(success ? 'Saved' : 'Not saved');
               save_draft_in_process = false;
             });
           }
