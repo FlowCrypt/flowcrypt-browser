@@ -19,7 +19,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     function send_btn_click() {
       var recipients = compose.get_recipients_from_dom();
       var headers = { To: recipients.join(', '), Subject: $('#input_subject').val(), From: compose.get_sender_from_dom() };
-      compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_body, attachments, attach_files) {
+      compose.process_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_body, attachments, attach_files) {
         tool.mime.encode(url_params.account_email, encrypted_message_body, headers, attach_files ? attachments : null, function (mime_message) {
           tool.api.gmail.message_send(url_params.account_email, mime_message, null, function (success, response) {
             if(success) {

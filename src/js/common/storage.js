@@ -186,7 +186,7 @@ function private_keys_get(account_email, longid) {
     } else { // looking for a single key
       var found = null;
       $.each(keys, function (i, keyinfo) {
-        if(keyinfo.longid === longid) {
+        if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
           found = keyinfo;
         }
       });

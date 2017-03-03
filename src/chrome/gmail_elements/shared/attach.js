@@ -52,9 +52,25 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
     });
   }
 
+  function collect_attachments(callback) {
+    var attachments = [];
+    function add(attachment) {
+      attachments.push(attachment);
+      if(attachments.length === Object.keys(attached_files).length) {
+        callback(attachments);
+      }
+    }
+    if(!Object.keys(attached_files).length) {
+      callback(attachments);
+    } else {
+      $.each(attached_files, function (id) {
+        collect_attachment(id, add);
+      });
+    }
+  }
+
   function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
     var attachments = [];
-
     function add(attachment) {
       attachments.push(attachment);
       if(attachments.length === Object.keys(attached_files).length) {
@@ -110,6 +126,7 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
     initialize_attach_dialog: initialize_attach_dialog,
     has_attachment: has_attachment,
     collect_and_encrypt_attachments: collect_and_encrypt_attachments,
+    collect_attachments: collect_attachments,
     get_attachment_ids: get_attachment_ids,
     collect_attachment: collect_attachment,
     update_size_limmit: update_size_limmit,

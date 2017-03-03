@@ -120,7 +120,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
         'References': thread_message_referrences_last + ' ' + thread_message_id_last,
       };
       plaintext = $('#input_text').get(0).innerText;
-      compose.encrypt_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function (encrypted_message_text_to_send, attachments, attach_files, email_footer) {
+      compose.process_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function (encrypted_message_text_to_send, attachments, attach_files, email_footer) {
         tool.mime.encode(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
           tool.api.gmail.message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
             if (success) {
