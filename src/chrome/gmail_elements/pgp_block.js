@@ -4,8 +4,6 @@
 
 var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature']);
 
-var raw_message_on_error;
-
 var l = {
   cant_open: 'Could not open this message with CryptUp.\n\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
@@ -41,10 +39,7 @@ db_open(function (db) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
     render_error(l.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function () {
       $('.review_settings').click(function () {
-        tool.browser.message.send(null, 'settings', {
-          account_email: url_params.account_email,
-          page: '/chrome/texts/chrome_content_settings.htm',
-        });
+        tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/texts/chrome_content_settings.htm' });
       });
     });
     return;
@@ -309,10 +304,7 @@ db_open(function (db) {
       clearInterval(passphrase_interval);
       passphrase_interval = setInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-        tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {
-          type: 'message',
-          longids: missing_or_wrong_passphrase_key_longids,
-        });
+        tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_passphrase_key_longids });
         clearInterval(passphrase_interval);
         passphrase_interval = setInterval(check_passphrase_changed, 250);
       }));

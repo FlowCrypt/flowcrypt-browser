@@ -1232,11 +1232,12 @@
   }
 
   function browser_message_send(destination_string, name, data, callback) {
-    var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), };
-    if(background_script_shortcut_handlers && msg.to === null) {
-      background_script_shortcut_handlers[name](data, null, callback); // calling from background script to background script: skip messaging completely
-    } else if(tool.value('_generated_background_page.html').in(window.location.href)) {
-      chrome.tabs.sendMessage(destination_parse(destination_string).tab, msg, undefined, callback);
+    var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10) };
+    var is_background_page = tool.value('_generated_background_page.html').in(window.location.href);
+    if (is_background_page && background_script_shortcut_handlers && msg.to === null) {
+      background_script_shortcut_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
+    } else if(is_background_page) {
+      chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, callback);
     } else {
       chrome.runtime.sendMessage(msg, callback);
     }
@@ -1248,7 +1249,7 @@
 
   function browser_message_listen_background(handlers) {
     background_script_shortcut_handlers = handlers;
-    chrome.runtime.onMessage.addListener(function (request, sender, respond) {
+    chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
       var safe_respond = function (response) {
         try { // avoiding unnecessary errors when target tab gets closed
           respond(response);
@@ -1258,41 +1259,33 @@
           }
         }
       };
-      if(request.to) {
-        request.sender = sender;
-        chrome.tabs.sendMessage(destination_parse(request.to).tab, request, undefined, safe_respond);
-      } else {
-        handlers[request.name](request.data, sender, safe_respond);
+      if(msg.to && msg.to !== 'broadcast') {
+        msg.sender = sender;
+        chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, safe_respond);
+      } else if(tool.value(msg.name).in(Object.keys(handlers))) {
+        handlers[msg.name](msg.data, sender, safe_respond);
+      } else if(msg.to !== 'broadcast') {
+        catcher.log('tool.browser.message.listen_background error: handler "' + msg.name + '" not set');
       }
-      return request.respondable === true;
+      return msg.respondable === true;
     });
   }
 
   function browser_message_listen(handlers, listen_for_tab_id) {
     var processed = [];
-    chrome.runtime.onMessage.addListener(function (request, sender, respond) {
+    chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
       return catcher.try(function () {
-        if(request.to === listen_for_tab_id) {
-          if(!tool.value(request.uid).in(processed)) {
-            processed.push(request.uid);
-            if(typeof handlers[request.name] !== 'undefined') {
-              handlers[request.name](request.data, sender, respond);
-            } else {
-              if(request.name !== '_tab_') {
-                catcher.try(function () {
-                  throw new Error('tool.browser.message.listen error: handler "' + request.name + '" not set');
-                })();
-              } else {
-                // console.log('tool.browser.message.listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for background tab');
-              }
+        if(msg.to === listen_for_tab_id || msg.to === 'broadcast') {
+          if(!tool.value(msg.uid).in(processed)) {
+            processed.push(msg.uid);
+            if(typeof handlers[msg.name] !== 'undefined') {
+              handlers[msg.name](msg.data, sender, respond);
+            } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
+              catcher.log('tool.browser.message.listen error: handler "' + msg.name + '" not set');
             }
-          } else {
-            // console.log('tool.browser.message.listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" duplicate');
           }
-        } else {
-          // console.log('tool.browser.message.listen tab_id ' + listen_for_tab_id + ' notification: threw away message "' + request.name + '" meant for tab_id ' + request.to);
         }
-        return request.respondable === true;
+        return msg.respondable === true;
       })();
     });
   }

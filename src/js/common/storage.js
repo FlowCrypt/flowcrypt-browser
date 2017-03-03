@@ -65,9 +65,8 @@ function get_storage(storage_type) {
 function notify_about_storage_access_error(account_email, parent_tab_id) {
   if(parent_tab_id) {
     var update_settings_link = tool.env.url_create('chrome-extension://bnjglocicdkmhmoohhfkfkbbkejdhdgc/chrome/settings/index.htm', { account_email: account_email, page: '/chrome/texts/chrome_content_settings.htm' });
-    tool.browser.message.send(parent_tab_id, 'notification_show', {
-      notification: 'Some browser settings are keeping CryptUp from working properly. <a href="' + update_settings_link + '" target="cryptup">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.',
-    });
+    var msg = 'Some browser settings are keeping CryptUp from working properly. <a href="' + update_settings_link + '" target="cryptup">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
+    tool.browser.message.send(parent_tab_id, 'notification_show', { notification: msg });
   } else {
     console.log('SecurityError: cannot access localStorage or sessionStorage');
   }
@@ -169,17 +168,13 @@ function private_keys_get(account_email, longid) {
   });
   var primary_key_armored = private_storage_get('local', account_email, 'master_private_key');
   if(!contains_primary && (primary_key_armored || '').trim()) {
-    keys.push({
-      armored: primary_key_armored,
-      primary: true,
-      longid: tool.crypto.key.longid(primary_key_armored),
-    });
+    keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
   }
   if(typeof longid !== 'undefined') { // looking for a specific key(s)
     if(typeof longid === 'object') { // looking for an array of keys
       var found = [];
       $.each(keys, function (i, keyinfo) {
-        if(tool.value(keyinfo.longid).in(longid)) {
+        if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
           found.push(keyinfo);
         }
       });

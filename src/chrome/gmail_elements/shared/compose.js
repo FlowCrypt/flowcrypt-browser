@@ -96,6 +96,12 @@ function init_shared_compose_js(url_params, db, subscription) {
           subscribe_result_listener = undefined;
         }
       },
+      passphrase_entry: function(data) {
+        if(data && data.entered === false) {
+          clearInterval(passphrase_interval);
+          reset_send_btn();
+        }
+      },
     }, tab_id);
     if(subscription.active) {
       attach = init_shared_attach_js(25, 10, function(combined_size) {
@@ -268,19 +274,26 @@ function init_shared_compose_js(url_params, db, subscription) {
     } else {
       if(S.now('reply_message_prompt').length) { // todo - will only work for reply box, not compose box
         S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
-        clearInterval(passphrase_interval);
-        passphrase_interval = setInterval(function () {
-          check_passphrase_entered(encrypted_draft);
-        }, 1000);
+        when_master_passphrase_entered(function(passphrase) {
+          compose.decrypt_and_render_draft(url_params.account_email, encrypted_draft, reply_message_render_table);
+        });
       }
     }
   }
 
-  function check_passphrase_entered(encrypted_draft) {
-    if(get_passphrase(url_params.account_email) !== null) {
-      clearInterval(passphrase_interval);
-      compose.decrypt_and_render_draft(url_params.account_email, encrypted_draft, reply_message_render_table);
-    }
+  function when_master_passphrase_entered(callback, seconds_timeout) {
+    clearInterval(passphrase_interval);
+    var timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
+    passphrase_interval = setInterval(function () {
+      var passphrase = get_passphrase(url_params.account_email);
+      if(passphrase !== null) {
+        clearInterval(passphrase_interval);
+        callback(passphrase);
+      } else if (timeout_at && Date.now() > timeout_at) {
+        clearInterval();
+        callback(null);
+      }
+    }, 1000);
   }
 
   function collect_all_available_public_keys(account_email, recipients, callback) {
@@ -407,8 +420,16 @@ function init_shared_compose_js(url_params, db, subscription) {
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     var passphrase = get_passphrase(account_email);
     if(passphrase === null) {
-      alert('no pass phrase'); // todo - get passphrase
-      reset_send_btn();
+      S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
+      tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'sign', longids: 'primary' });
+      when_master_passphrase_entered(function (passphrase) {
+        if(passphrase) {
+          sign_and_send(account_email, recipients, armored_pubkeys, subject, plaintext, challenge, _active, send_email);
+        } else { // timeout - reset
+          clearInterval(passphrase_interval);
+          reset_send_btn();
+        }
+      }, 60);
     } else {
       tool.crypto.key.decrypt(prv, passphrase);
       tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
