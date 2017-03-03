@@ -704,12 +704,9 @@ function init_shared_compose_js(url_params, db, subscription) {
       } else {
         var current_height = S.cached('compose_table').height() + 1;
       }
-      if(current_height !== last_reply_box_table_height) {
+      if(current_height !== last_reply_box_table_height && Math.abs(current_height - (last_reply_box_table_height || 0)) > 2) { // more then two pixel difference compared to last time
         last_reply_box_table_height = current_height;
-        tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
-          selector: 'iframe#' + url_params.frame_id,
-          css: { height: (Math.max(260, current_height) + add_extra) + 'px' },
-        });
+        tool.browser.message.send(url_params.parent_tab_id, 'set_css', { selector: 'iframe#' + url_params.frame_id, css: { height: (Math.max(260, current_height) + add_extra) + 'px' } });
       }
     }
   }
