@@ -556,7 +556,7 @@ function init_shared_compose_js(url_params, db, subscription) {
           upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
             if(short_id) {
               body = format_password_protected_email(short_id, body);
-              body['text/plain'] = format_email_text_footer(['text/plain']);
+              body['text/plain'] = format_email_text_footer(body['text/plain']);
               send_email(body, attachments, attach_files_to_email, email_footer);
             } else {
               alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
