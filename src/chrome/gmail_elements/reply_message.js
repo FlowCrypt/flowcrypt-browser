@@ -80,7 +80,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     }
 
     function retrieve_decrypt_and_add_forwarded_message(message_id) {
-      tool.api.gmail.extract_armored_message(url_params.account_email, message_id, 'full', function (armored_message) {
+      tool.api.gmail.extract_armored_block(url_params.account_email, message_id, 'full', function (armored_message) {
         tool.crypto.message.decrypt(db, url_params.account_email, armored_message, undefined, function (result) {
           if (result.success) {
             if (!tool.mime.resembles_message(result.content.data)) {

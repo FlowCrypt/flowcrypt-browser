@@ -66,8 +66,8 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attachment.htm'), params);
   }
 
-  function src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password) {
-    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
+  function src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature) {
+    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id, signature: signature };
     return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm'), params);
   }
 
@@ -149,8 +149,8 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       attachment: function(meta, container_classes) {
         return tool.e('span', {class: (container_classes || []).concat('pgp_attachment').join(' '), html: iframe(src_pgp_attachment_iframe(meta))});
       },
-      message: function(armored, message_id, is_outgoing, sender, has_password) {
-        return iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password), ['pgp_block']) + hide_gmail_new_message_in_thread_notification;
+      message: function(armored, message_id, is_outgoing, sender, has_password, signature) {
+        return iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature), ['pgp_block']) + hide_gmail_new_message_in_thread_notification;
       },
       pubkey: function(armored_pubkey, is_outgoing) {
         return iframe(src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']);

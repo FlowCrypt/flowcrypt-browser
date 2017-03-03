@@ -86,9 +86,9 @@ function list_pgp_attachments(request, sender, respond) {
           pgp_attachments.push(attachment);
         } else if(attachment.name === 'signature.asc') {
           pgp_signatures.push(attachment);
-        } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.+\.asc$/g)) { // name starts with a key id
+        } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?\.asc$/g)) { // name starts with a key id
           pgp_pubkeys.push(attachment);
-        } else if((attachment.name.match(/\.asc$/) || attachment.name === 'message') && attachment.size < 100000) {
+        } else if((attachment.name.match(/\.asc$/) || attachment.name === 'message') && attachment.size < 100000 && !attachment.inline) {
           pgp_messages.push(attachment);
         } else if(attachment.name === '') {
           pgp_hide.push(attachment);

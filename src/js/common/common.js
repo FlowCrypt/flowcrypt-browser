@@ -238,6 +238,7 @@
       parse_email: str_parse_email,
       pretty_print: str_pretty_print,
       inner_text: str_inner_text,
+      normalize_spaces: str_normalize_spaces,
       number_format: str_number_format,
       is_email_valid: str_is_email_valid,
       month_name: str_month_name,
@@ -299,6 +300,7 @@
       format_content_to_display: mime_format_content_to_display, // todo - should be refactored into two
       decode: mime_decode,
       encode: mime_encode,
+      signed: mime_parse_message_with_detached_signature,
     },
     ui: {
       spinner: ui_spinner,
@@ -349,7 +351,8 @@
       },
       message: {
         sign: crypto_message_sign,
-        verify: crypto_message_verify_signature,
+        verify: crypto_message_verify,
+        verify_detached: crypto_message_verify_detached,
         decrypt: crypto_message_decrypt,
         encrypt: crypto_message_encrypt,
         format_text: crypto_message_format_text,
@@ -379,7 +382,7 @@
         find_attachments: api_gmail_find_attachments,
         fetch_attachments: api_gmail_fetch_attachments,
         search_contacts: api_gmail_search_contacts,
-        extract_armored_message: gmail_api_extract_armored_message,
+        extract_armored_block: gmail_api_extract_armored_block,
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
       },
       attester: {
@@ -450,6 +453,10 @@
     var e = document.createElement('div');
     e.innerHTML = html_text;
     return e.innerText;
+  }
+
+  function str_normalize_spaces(str) {
+    return str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
   }
 
   function str_number_format(nStr) { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
@@ -997,6 +1004,69 @@
     });
   }
 
+  function mime_parse_message_with_detached_signature(mime_message) {
+    /*
+    Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
+    Unforntunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
+
+     --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
+     Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
+     From: Henry Electrum <henry.electrum@gmail.com>
+     To: tom@cryptup.org
+     Message-ID: <abd68ba1-35c3-ee8a-0d60-0319c608d56b@gmail.com>
+     Subject: compatibility - simples signed email
+
+     --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1
+     Content-Type: text/plain; charset=utf-8
+     Content-Transfer-Encoding: quoted-printable
+
+     content
+
+     --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
+     */
+    var signed_header_index = mime_message.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
+    if(signed_header_index !== -1) {
+      mime_message = mime_message.substr(signed_header_index);
+      var first_boundary_index = mime_message.substr(0, 1000).toLowerCase().indexOf('boundary=');
+      if(first_boundary_index) {
+        var boundary = mime_message.substr(first_boundary_index, 100);
+        console.log(boundary);
+        boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
+        if(boundary) {
+          boundary = boundary.replace(/^boundary="?|"$/gi, '');
+          var boundary_begin = '\r\n--' + boundary + '\r\n';
+          var boundary_end = '--' + boundary + '--';
+          var end_index = mime_message.indexOf(boundary_end);
+          if(end_index !== -1) {
+            mime_message = mime_message.substr(0, end_index + boundary_end.length);
+            if(mime_message) {
+              var result = { full: mime_message, signed: null, signature: null };
+              var first_part_start_index = mime_message.indexOf(boundary_begin);
+              if(first_part_start_index !== -1) {
+                first_part_start_index += boundary_begin.length;
+                var first_part_end_index = mime_message.indexOf(boundary_begin, first_part_start_index);
+                var second_part_start_index = first_part_end_index + boundary_begin.length;
+                var second_part_end_index = mime_message.indexOf(boundary_end, second_part_start_index);
+                if(second_part_end_index !== -1) {
+                  var first_part = mime_message.substr(first_part_start_index, first_part_end_index - first_part_start_index);
+                  var second_part = mime_message.substr(second_part_start_index, second_part_end_index - second_part_start_index);
+                  if(first_part.match(/^content-type: application\/pgp-signature/gi) !== null && tool.value('-----BEGIN PGP SIGNATURE-----').in(first_part) && tool.value('-----END PGP SIGNATURE-----').in(first_part)) {
+                    result.signature = crypto_armor_clip(first_part);
+                    result.signed = second_part;
+                  } else {
+                    result.signature = crypto_armor_clip(second_part);
+                    result.signed = first_part;
+                  }
+                  return result;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   /* tool.ui */
 
   var events_fired = {};
@@ -1382,7 +1452,7 @@
 
   function crypto_armor_clip(text) {
     if(text && tool.value(crypto_armor_headers_dict[null].begin).in(text) && tool.value(crypto_armor_headers_dict[null].end).in(text)) {
-      var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
+      var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
       return(match !== null && match.length) ? match[0] : null;
     }
   }
@@ -1529,18 +1599,10 @@
 
   function crypto_key_test(armored, passphrase, callback) {
     try {
-      openpgp.encrypt({
-        data: 'this is a test encrypt/decrypt loop to discover certain browser inabilities to create proper keys with openpgp.js',
-        armor: true,
-        publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()],
-      }).then(function (result) {
+      openpgp.encrypt({ data: 'this is a test', armor: true, publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()] }).then(function (result) {
         var prv = openpgp.key.readArmored(armored).keys[0];
         crypto_key_decrypt(prv, passphrase);
-        openpgp.decrypt({
-          message: openpgp.message.readArmored(result.data),
-          format: 'utf8',
-          privateKey: prv,
-        }).then(function () {
+        openpgp.decrypt({ message: openpgp.message.readArmored(result.data), format: 'utf8', privateKey: prv }).then(function () {
           callback(true);
         }).catch(function (error) {
           callback(false, error.message);
@@ -1658,18 +1720,11 @@
     return options;
   }
 
-  function crypto_message_verify_signature(message, keys) {
-    var signature = {
-      signer: null,
-      contact: keys.verification_contacts.length ? keys.verification_contacts[0] : null,
-      match: true,
-      error: null,
-    };
+  function crypto_message_verify(message, keys_for_verification, optional_contact) {
+    var signature = { signer: null, contact: optional_contact || null,  match: null, error: null };
     try {
-      $.each(message.verify(keys.for_verification), function (i, verify_result) {
-        if(verify_result.valid !== true) {
-          signature.match = false;
-        }
+      $.each(message.verify(keys_for_verification), function (i, verify_result) {
+        signature.match = tool.value(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
         if(!signature.signer) {
           signature.signer = crypto_key_longid(verify_result.keyid.bytes);
         }
@@ -1684,6 +1739,13 @@
       }
     }
     return signature;
+  }
+
+  function crypto_message_verify_detached(db, account_email, plaintext, signature_text, callback) {
+    var message = openpgp.message.readSignedContent(plaintext, signature_text);
+    get_sorted_keys_for_message(db, account_email, message, function(keys) {
+      callback(crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]));
+    });
   }
 
   function crypto_message_decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
@@ -1715,17 +1777,13 @@
         if(!message.text) {
           var sm_headers = crypto_armor_headers('signed_message', 're');
           var text = encrypted_data.match(RegExp(sm_headers.begin + '\nHash:\s[A-Z0-9]+\n([^]+)\n' + sm_headers.middle + '[^]+' + sm_headers.end, 'm'));
-          if(text && text.length === 2) {
-            message.text = text[1];
-          } else {
-            message.text = encrypted_data;
-          }
+          message.text = text && text.length === 2 ? text[1] : encrypted_data;
         }
         callback({
           success: true,
-          content: { data: message.text, },
+          content: { data: message.text },
           encrypted: false,
-          signature: crypto_message_verify_signature(message, keys),
+          signature: crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]),
         });
       } else {
         $.each(keys.with_passphrases, function (i, keyinfo) {
@@ -1739,7 +1797,7 @@
                         success: true,
                         content: decrypted,
                         encrypted: true,
-                        signature: keys.signed_by.length ? crypto_message_verify_signature(message, keys) : false,
+                        signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false,
                       });
                     }
                   } else {
@@ -2172,12 +2230,14 @@
       });
     }
     if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {
+      // is attachment, but not an inline one
       internal_results.push({
         message_id: internal_message_id,
         id: gmail_email_object.body.attachmentId,
         size: gmail_email_object.body.size,
         name: gmail_email_object.filename,
         type: gmail_email_object.mimeType,
+        inline: (api_gmail_find_header(gmail_email_object, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
       });
     }
     return internal_results;
@@ -2222,10 +2282,11 @@
   }
 
   function api_gmail_find_header(api_gmail_message_object, header_name) {
-    if(typeof api_gmail_message_object.payload.headers !== 'undefined') {
-      for(var i = 0; i < api_gmail_message_object.payload.headers.length; i++) {
-        if(api_gmail_message_object.payload.headers[i].name.toLowerCase() === header_name.toLowerCase()) {
-          return api_gmail_message_object.payload.headers[i].value;
+    var node = api_gmail_message_object.payload ? api_gmail_message_object.payload : api_gmail_message_object;
+    if(typeof node.headers !== 'undefined') {
+      for(var i = 0; i < node.headers.length; i++) {
+        if(node.headers[i].name.toLowerCase() === header_name.toLowerCase()) {
+          return node.headers[i].value;
         }
       }
     }
@@ -2309,7 +2370,7 @@
    *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
    *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
    */
-  function gmail_api_extract_armored_message(account_email, message_id, format, success_callback, error_callback) {
+  function gmail_api_extract_armored_block(account_email, message_id, format, success_callback, error_callback) {
     api_gmail_message_get(account_email, message_id, format, function (get_message_success, gmail_message_object) {
       if(get_message_success) {
         if(format === 'full') {

@@ -214,7 +214,7 @@ body.pgp_secure, div.replied_body.pgp_secure { border: 1px solid #f0f0f0; border
 body.pgp_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; min-height: 25px; }
 body.pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; min-height: 25px; }
 body > #pgp_block { height: auto; }
-body > #pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 320px; }
+body > #pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 270px; }
 body > #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
 body > #pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px; font-family: monospace;}
 body > #pgp_block input#answer { padding: 8px 8px; width: 232px; }

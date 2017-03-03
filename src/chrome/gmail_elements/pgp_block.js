@@ -2,7 +2,9 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password']);
+var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature']);
+
+var raw_message_on_error;
 
 var l = {
   cant_open: 'Could not open this message with CryptUp.\n\n',
@@ -233,9 +235,9 @@ db_open(function (db) {
     }
   }
 
-  function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature) {
+  function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature_result) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
-    render_pgp_signature_check_result(signature);
+    render_pgp_signature_check_result(signature_result);
     if(!tool.mime.resembles_message(decrypted_content)) {
       var cryptup_attachments = [];
       decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
@@ -260,36 +262,42 @@ db_open(function (db) {
   }
 
   function decrypt_and_render(optional_password) {
-    tool.crypto.message.decrypt(db, url_params.account_email, url_params.message, optional_password, function (result) {
-      if(result.success) {
-        if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
-          console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
-          initialize(true);
-        } else {
-          decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
-        }
-      } else if(result.format_error) {
-        render_error(l.bad_format + '\n\n' + result.format_error);
-      } else if(result.missing_passphrases.length) {
-        render_passphrase_prompt(result.missing_passphrases);
-      } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
-        render_error(l.not_properly_set_up + button_html('cryptup settings', 'green settings'));
-      } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
-        if(url_params.has_password && !optional_password) {
+    if(!url_params.signature) {
+      tool.crypto.message.decrypt(db, url_params.account_email, url_params.message, optional_password, function (result) {
+        if(result.success) {
+          if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
+            console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
+            initialize(true);
+          } else {
+            decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
+          }
+        } else if(result.format_error) {
+          render_error(l.bad_format + '\n\n' + result.format_error);
+        } else if(result.missing_passphrases.length) {
+          render_passphrase_prompt(result.missing_passphrases);
+        } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
+          render_error(l.not_properly_set_up + button_html('cryptup settings', 'green settings'));
+        } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
+          if(url_params.has_password && !optional_password) {
+            render_password_prompt();
+          } else {
+            handle_private_key_mismatch(url_params.account_email, result.message);
+          }
+        } else if(result.counts.wrong_password) {
+          alert('Incorrect answer, please try again');
           render_password_prompt();
+        } else if(result.counts.errors) {
+          render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
         } else {
-          handle_private_key_mismatch(url_params.account_email, result.message);
+          delete result.message;
+          render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
         }
-      } else if(result.counts.wrong_password) {
-        alert('Incorrect answer, please try again');
-        render_password_prompt();
-      } else if(result.counts.errors) {
-        render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
-      } else {
-        delete result.message;
-        render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
-      }
-    });
+      });
+    } else {
+      tool.crypto.message.verify_detached(db, url_params.account_email, url_params.message, url_params.signature, function (signature_result) {
+        decide_decrypted_content_formatting_and_render(url_params.message, false, signature_result);
+      });
+    }
   }
 
   function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids) {
@@ -337,14 +345,38 @@ db_open(function (db) {
   }
 
   function initialize(force_pull_message_from_api) {
-    if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
-      $('#pgp_block').text('Decrypting...');
+    if(can_read_emails && url_params.message && url_params.signature === true) {
+      $('#pgp_block').text('Loading signature...');
+      tool.api.gmail.message_get(url_params.account_email, url_params.message_id, 'raw', function(success, result) {
+        message_fetched_from_api = 'raw';
+        if(success && result.raw) {
+          var mime_message = tool.str.base64url_decode(result.raw);
+          var parsed = tool.mime.signed(mime_message);
+          if(parsed) {
+            url_params.signature = parsed.signature;
+            url_params.message = parsed.signed;
+            decrypt_and_render();
+          } else {
+            tool.mime.decode(mime_message, function (success, result) {
+              url_params.signature = result.signature;
+              console.log('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
+              console.log(mime_message);
+              console.log('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
+              decrypt_and_render();
+            });
+          }
+        } else {
+          decrypt_and_render();
+        }
+      });
+    } else if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
+      $('#pgp_block').text(url_params.signature ? 'Verifying..' : 'Decrypting...');
       decrypt_and_render();
-    } else { // need to fetch the message from gmail api
+    } else { // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
       if(can_read_emails) {
         $('#pgp_block').text('Retrieving message...');
         var format = (!message_fetched_from_api) ? 'full' : 'raw';
-        tool.api.gmail.extract_armored_message(url_params.account_email, url_params.message_id, format, function (message_raw) {
+        tool.api.gmail.extract_armored_block(url_params.account_email, url_params.message_id, format, function (message_raw) {
           $('#pgp_block').text('Decrypting...');
           url_params.message = message_raw;
           message_fetched_from_api = format;

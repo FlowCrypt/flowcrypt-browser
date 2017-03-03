@@ -35,11 +35,9 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   }
 
   function replace_armored_blocks() { // todo - most of this could be optimized by using .indexOf instead of RegExp, but it might result in ugly code
-    var conversation_has_new_pgp_message = false;
     $("div.adP.adO div.a3s:contains('" + tool.crypto.armor.headers().begin + "')").not('.evaluated').each(function () { // for each email that contains PGP block
       $(this).addClass('evaluated');
-      var html = $(this).html();
-      var original_text = this.innerText.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
+      var original_text = tool.str.normalize_spaces(this.innerText);
       var processed_text = original_text;
       var message_id = parse_message_id_from('message', this);
       var sender_email = $(this).closest('.gs').find('span.gD').attr('email').toLowerCase();
@@ -246,6 +244,10 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
     });
   }
 
+  function get_message_body_element(message_id) {
+    return $('div.a3s.m' + message_id);
+  }
+
   function hide_pgp_attached_pubkey_and_append_to_text(message_id, classes, attachments) {
     var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
     var is_outgoing = tool.value(sender_email).in(addresses);
@@ -259,7 +261,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
               if(tool.value(tool.crypto.armor.headers().begin).in(armored_key)) {
                 //todo - this approach below is what should be done in every similar function - hide them by exact names, one by one
                 hide_attachments(selector, 1);
-                $('div.a3s.m' + message_id).append(factory.embedded.pubkey(armored_key, is_outgoing));
+                get_message_body_element(message_id).append(factory.embedded.pubkey(armored_key, is_outgoing));
               } else {
                 $(selector).children('.attachment_loader').text('Unknown encryption format');
               }
@@ -275,18 +277,27 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   function hide_pgp_attached_message_and_append_as_text(message_id, classes, attachments) {
     var selectors = get_attachments_selectors(message_id, ['.asc', 'message']);
     hide_attachments(selectors.attachments, attachments.length);
-    if($('div.a3s.m' + message_id + ' iframe').length === 0) {
-      $('span.aVW').css('display', 'none');
-      $('div.a3s.m' + message_id).css('display', 'block');
-      var sender_email = ($('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-      $('div.a3s.m' + message_id).append(factory.embedded.message('', message_id, false, sender_email, false));
-    }
+    var message_element = get_message_body_element(message_id);
+    $('span.aVW').css('display', 'none'); // no clue what this is
+    message_element.css('display', 'block');
+    var sender_email = (message_element.closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
+    message_element.append(factory.embedded.message('', message_id, false, sender_email, false));
   }
 
   function hide_pgp_attached_signatures_and_handle(message_id, classes, attachments) {
     var selectors = get_attachments_selectors(message_id, ['signature.asc']);
     hide_attachments(selectors.attachments, attachments.length);
-    // todo - transfer signature into existing pgp_block, or create a new pgp_block
+    var message_element = get_message_body_element(message_id);
+    $('span.aVW').css('display', 'none'); // no clue what this is
+    message_element.css('display', 'block');
+    var sender_email = (message_element.closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
+    var embedded = factory.embedded.message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email, false, true);
+    if(!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers(null).begin).in(message_element.text())) {
+      message_element.addClass('evaluated');
+      message_element.html(embedded);
+    } else {
+      message_element.append(embedded);
+    }
   }
 
   function hide_pgp_meaningless_attachments(message_id, classes, attachments) {
@@ -334,7 +345,7 @@ function init_elements_replace_js(factory, account_email, addresses, can_read_em
   }
 
   function replace_standard_reply_box(editable, force) {
-    var reply_box = $('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
+    $('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
       var root_element = get_conversation_root_element(reply_box);
       if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) {
         var iframe = factory.embedded.reply(get_conversation_params(root_element), editable);
