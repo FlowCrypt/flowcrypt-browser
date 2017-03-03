@@ -12,7 +12,7 @@ db_open(function (db) {
 
     var attach_js = init_shared_attach_js(100, 1);
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id);
+    var factory = init_elements_factory_js(url_params.account_email, tab_id);
 
     tool.browser.message.listen({
       close_dialog: function () {
@@ -44,7 +44,7 @@ db_open(function (db) {
     function decrypt_and_download(attachment) { // todo - this is more or less copy-pasted from attachment.js, should use common function
       tool.crypto.message.decrypt(db, url_params.account_email, tool.str.from_uint8(attachment.content), undefined, function (result) { // todo - don't convert to str once decrypt() can handle uint8
         if(result.success) {
-          tool.file.save_to_downloads(attachment.name.replace(/(\.pgp)|(\.gpg)$/, ''), attachment.type, result.content.data);
+          tool.file.save_to_downloads(attachment.name.replace(/\.(pgp|gpg|asc)$/i, ''), attachment.type, result.content.data);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
           $('.passphrase_dialog').html(factory.embedded.passphrase(missing_passprase_longids));
@@ -54,7 +54,7 @@ db_open(function (db) {
           alert('These was a problem decrypting this file, details are in the console.');
         }
         $('.action_decrypt_and_download').html(original_content);
-      });
+      }, 'binary');
     }
 
   });

@@ -1703,8 +1703,8 @@
     }, 100);
   }
 
-  function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password) {
-    var options = { message: message, format: (is_armored) ? 'utf8' : 'binary', };
+  function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password, force_output_format) {
+    var options = { message: message, format: is_armored ? force_output_format || 'utf8' : force_output_format || 'binary' };
     if(!one_time_message_password) {
       options.privateKey = keyinfo.decrypted;
     } else {
@@ -1741,7 +1741,7 @@
     });
   }
 
-  function crypto_message_decrypt(db, account_email, encrypted_data, one_time_message_password, callback) {
+  function crypto_message_decrypt(db, account_email, encrypted_data, one_time_message_password, callback, force_output_format) {
     var armored_encrypted = tool.value(crypto_armor_headers('message').begin).in(encrypted_data);
     var armored_signed_only = tool.value(crypto_armor_headers('signed_message').begin).in(encrypted_data);
     var other_errors = [];
@@ -1782,7 +1782,7 @@
         $.each(keys.with_passphrases, function (i, keyinfo) {
           if(!counts.decrypted) {
             try {
-              openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password)).then(function (decrypted) {
+              openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password, force_output_format)).then(function (decrypted) {
                 catcher.try(function () {
                   if(decrypted.data !== null) {
                     if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
