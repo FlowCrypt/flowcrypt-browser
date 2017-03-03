@@ -431,7 +431,7 @@ function init_shared_compose_js(url_params, db, subscription) {
             attach.collect_attachments(function (attachments) { // todo - not signing attachments
               db_contact_update(db, recipients, { last_use: Date.now() }, function () {
                 S.now('send_btn_span').text('Sending');
-                send_email({ 'text/plain': signing_result }, attachments, true, email_footer);
+                send_email({ 'text/plain': with_attached_pubkey_if_needed(signing_result) }, attachments, true, email_footer);
               });
             });
           });
@@ -542,11 +542,16 @@ function init_shared_compose_js(url_params, db, subscription) {
     });
   }
 
+  function with_attached_pubkey_if_needed(encrypted) {
+    if(S.cached('icon_pubkey').is('.active')) {
+      encrypted += '\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
+    }
+    return encrypted;
+  }
+
   function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
-      if(S.cached('icon_pubkey').is('.active')) {
-        encrypted.data += '\n\n\n' + private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
-      }
+      encrypted.data = with_attached_pubkey_if_needed(encrypted.data);
       var body = { 'text/plain': encrypted.data };
       setTimeout(function() {
         S.now('send_btn_span').text('sending');
