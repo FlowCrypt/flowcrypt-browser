@@ -48,7 +48,6 @@ account_storage_get(null, 'errors', function (storage) {
 if(!localStorage.settings_seen) {
   open_settings_page('initial.htm'); // called after the very first installation of the plugin
   localStorage.settings_seen = true;
-  catcher.try(tool.diagnose.keyserver_fingerprints)();
 }
 
 inject_cryptup_into_gmail_if_needed();
