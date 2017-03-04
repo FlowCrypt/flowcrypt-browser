@@ -252,7 +252,7 @@ function init_shared_compose_js(url_params, db, subscription) {
           S.cached('input_text').focus();
         }
         if(headers && headers.from) {
-          S.cached('input_from').val(headers.from);
+          S.now('input_from').val(headers.from);
         }
         if(render_function) {
           render_function();
@@ -1025,8 +1025,8 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function get_sender_from_dom() {
-    if(S.cached('input_from').length) {
-      return S.cached('input_from').val();
+    if(S.now('input_from').length) {
+      return S.now('input_from').val();
     } else {
       return url_params.account_email;
     }
@@ -1112,7 +1112,7 @@ function init_shared_compose_js(url_params, db, subscription) {
     tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/help.htm' });
   });
 
-  S.cached('input_from').change(function () {
+  S.now('input_from').change(function () {
     // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
     // because they might not have a pubkey for the alternative address, and might get confused
   });
