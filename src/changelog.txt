@@ -1,5 +1,14 @@
 <div>
 
+<b>version 3.6.0 on March 2, 2017: Signatures</b>
+composing: stop reply box from expanding on its own - second attempt
+composing: option to sign outgoing messages instead of encrypting them
+reading: verify detached signatures
+reading: message in attachment called message - second attempt
+settings: fix settings decrypt form
+settings: cryptup is hiring note in settings
+settings: rename advanced settings
+
 <b>version 3.5.5 on March 1, 2017: Large Attachments</b>
 composing: allow larger attachments
 composing: show progress when uploading files
