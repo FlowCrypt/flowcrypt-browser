@@ -268,7 +268,7 @@ function init_shared_compose_js(url_params, db, subscription) {
       if(S.now('reply_message_prompt').length) { // todo - will only work for reply box, not compose box
         S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
         when_master_passphrase_entered(function(passphrase) {
-          compose.decrypt_and_render_draft(url_params.account_email, encrypted_draft, reply_message_render_table);
+          compose.decrypt_and_render_draft(url_params.account_email, encrypted_draft);
         });
       }
     }
