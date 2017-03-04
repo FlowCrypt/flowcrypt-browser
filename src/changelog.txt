@@ -1,5 +1,9 @@
 <div>
 
+<b>version 3.6.1 on March 2, 2017: Compose Bugfixes</b>
+composing: compose form ignoring from: field
+composing: fix rendering conversation drafts
+
 <b>version 3.6.0 on March 2, 2017: Signatures</b>
 composing: stop reply box from expanding on its own - second attempt
 composing: option to sign outgoing messages instead of encrypting them
