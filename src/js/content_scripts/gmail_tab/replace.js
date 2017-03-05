@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_elements_replace_js(factory, account_email, addresses, can_read_emails) {
+function gmail_element_replacer(factory, account_email, addresses, can_read_emails) {
 
   var password_sentence = 'This message is encrypted. If you can\'t read it, visit the following link: '; // todo - should be in a common place as the code that generated it
 
