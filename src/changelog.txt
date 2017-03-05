@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.6.2 on March 5, 2017: Prompts</b>
+composing: upgrade prompts don't refresh info in compose window
+reading: newlines doubled in signed messages
+internal: lower fingerprint check interval
+internal: switch to new api endpoint
+
 <b>version 3.6.1 on March 2, 2017: Compose Bugfixes</b>
 composing: compose form ignoring from: field
 composing: fix rendering conversation drafts
