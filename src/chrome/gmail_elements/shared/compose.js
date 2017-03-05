@@ -45,7 +45,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   var BTN_LOADING = 'loading..';
 
   var factory;
-  var attach;
+  var attach = init_shared_attach_js(get_max_attachment_size_and_oversize_notice);
 
   var last_draft = '';
   var draft_id;
@@ -65,15 +65,11 @@ function init_shared_compose_js(url_params, db, subscription) {
   var is_reply_box = Boolean($('body#reply_message').length);
   var email_footer;
   var tab_id;
+  var subscribe_result_listener;
 
   tool.browser.message.tab_id(function (id) {
     tab_id = id;
     factory = init_elements_factory_js(url_params.account_email, tab_id);
-    var subscribe_result_listener;
-    function show_subscribe_dialog_and_wait_for_response(data, sender, respond) {
-      subscribe_result_listener = respond;
-      tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', {subscribe_result_tab_id: tab_id});
-    }
     tool.browser.message.listen({
       close_dialog: function (data) {
         $('.featherlight.featherlight-iframe').remove();
@@ -87,9 +83,6 @@ function init_shared_compose_js(url_params, db, subscription) {
       subscribe_result: function(new_subscription) {
         if(new_subscription.active && !subscription.active) {
           subscription.active = new_subscription.active; // todo - deal with levels later
-          attach.update_size_limmit(25, function(combined_size) {
-            alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
-          });
         }
         if(typeof subscribe_result_listener === 'function') {
           subscribe_result_listener(new_subscription.active);
@@ -103,22 +96,12 @@ function init_shared_compose_js(url_params, db, subscription) {
         }
       },
     }, tab_id);
-    if(subscription.active) {
-      attach = init_shared_attach_js(25, 10, function(combined_size) {
-        alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
-      });
-    } else {
-      attach = init_shared_attach_js(5, 10, function(combined_size) {
-        if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. First year is free if you sign up now.')) {
-          show_subscribe_dialog_and_wait_for_response(null, null, function(new_subscription_active) {
-            if(new_subscription_active) {
-              alert('You\'re all set, now you can add your file again.');
-            }
-          });
-        }
-      });
-    }
   });
+
+  function show_subscribe_dialog_and_wait_for_response(data, sender, respond) {
+    subscribe_result_listener = respond;
+    tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', {subscribe_result_tab_id: tab_id});
+  }
 
   S.cached('icon_pubkey').attr('title', L.include_pubkey_icon_title);
 
@@ -137,6 +120,34 @@ function init_shared_compose_js(url_params, db, subscription) {
       S.cached('send_btn_note').find('a.auth_drafts').click(auth_drafts);
     }
   });
+
+  function get_max_attachment_size_and_oversize_notice() {
+    if(!subscription.active) {
+      return {
+        size_mb: 5,
+        size: 5 * 1024 * 1024,
+        count: 10,
+        oversize: function(combined_size) {
+          if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. First year is free if you sign up now.')) {
+            show_subscribe_dialog_and_wait_for_response(null, null, function(new_subscription_active) {
+              if(new_subscription_active) {
+                alert('You\'re all set, now you can add your file again.');
+              }
+            });
+          }
+        },
+      };
+    } else {
+      return {
+        size_mb: 25,
+        size: 25 * 1024 * 1024,
+        count: 10,
+        oversize: function(combined_size) {
+          alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
+        },
+      };
+    }
+  }
 
   function reset_send_btn(delay) {
     var do_reset = function() {
@@ -333,7 +344,7 @@ function init_shared_compose_js(url_params, db, subscription) {
     } else if(is_encrypt && attach.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
       tool.env.increment('upgrade_notify_attach_nonpgp', function () {
         if(confirm('Sending password encrypted attachments is possible with CryptUp Advanced.\n\nIt\'s free for one year if you sign up now.')) {
-          tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
+          show_subscribe_dialog_and_wait_for_response();
         }
       });
       return false;
@@ -359,7 +370,7 @@ function init_shared_compose_js(url_params, db, subscription) {
       S.now('send_btn_span').text('Loading');
       S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
       S.cached('send_btn_note').text('');
-      storage_cryptup_subscription(function (_l, _e, _active) {
+      storage_cryptup_subscription(function (_l, _e, _active) { // todo - this should be removed. subscribtion_subscribe should be dynamically updated, and used here
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = emails_without_pubkeys.length ? { answer: S.cached('input_password').val() } : null;
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, _active)) {
@@ -986,7 +997,7 @@ function init_shared_compose_js(url_params, db, subscription) {
     if(contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
-      $(email_element).children('img').replaceWith('<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
+      $(email_element).children('img:visible').replaceWith('<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
       $(email_element).find('.action_retry_pubkey_fetch').click(remove_receiver); // todo - actual refresh
     } else if(contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');

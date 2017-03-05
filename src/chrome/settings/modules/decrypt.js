@@ -10,7 +10,9 @@ db_open(function (db) {
     var original_content;
     var missing_passprase_longids = [];
 
-    var attach_js = init_shared_attach_js(100, 1);
+    var attach_js = init_shared_attach_js(function() {
+      return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
+    });
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     var factory = init_elements_factory_js(url_params.account_email, tab_id);
 

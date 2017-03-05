@@ -2,17 +2,10 @@
 
 'use strict';
 
-function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_callback) {
+function init_shared_attach_js(get_limits) {
 
   var attached_files = {};
   var uploader = undefined;
-  var size_limit = file_size_limit_mb ? file_size_limit_mb * 1024 * 1024 : null;
-
-  function update_size_limmit(new_limit, new_oversize_callback) {
-    file_size_limit_mb = new_limit;
-    size_limit = new_limit ? new_limit * 1024 * 1024 : null;
-    oversize_callback = new_oversize_callback;
-  }
 
   function initialize_attach_dialog(element_id, button_id) {
     $('#qq-template').load('/chrome/gmail_elements/shared/attach.template.htm', function () {
@@ -24,7 +17,18 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
         // dragAndDrop: {
         //   extraDropzones: [$('#body').get(0)]
         // },
-        callbacks: { onSubmitted: process_new_attachment, onCancel: cancel_attachment },
+        callbacks: {
+          onSubmitted: function(id, name) {
+            catcher.try(function() {
+              process_new_attachment(id, name);
+            })();
+          },
+          onCancel: function(id) {
+            catcher.try(function() {
+              cancel_attachment(id);
+            })();
+          },
+        },
       };
       uploader = new qq.FineUploader(config);
     });
@@ -100,17 +104,18 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
 
   function process_new_attachment(id, name) {
     tool.env.increment('attach');
-    if(file_count_limit && Object.keys(attached_files).length >= file_count_limit) {
-      alert('Amount of attached files is limited to ' + file_count_limit);
+    var limits = typeof get_limits === 'function' ? get_limits() : {};
+    if(limits.count && Object.keys(attached_files).length >= limits.count) {
+      alert('Amount of attached files is limited to ' + limits.count);
       uploader.cancel(id);
     } else {
       var new_file = uploader.getFile(id);
-      if(size_limit && get_file_size_sum() + new_file.size > size_limit) {
+      if(limits.size && get_file_size_sum() + new_file.size > limits.size) {
         uploader.cancel(id);
-        if(typeof oversize_callback === 'function') {
-          oversize_callback(get_file_size_sum() + new_file.size);
+        if(typeof limits.oversize === 'function') {
+          limits.oversize(get_file_size_sum() + new_file.size);
         } else {
-          alert('Combined file size is limited to ' + file_size_limit_mb + 'MB');
+          alert('Combined file size is limited to ' + limits.size_mb + 'MB');
         }
         return;
       }
@@ -129,6 +134,5 @@ function init_shared_attach_js(file_size_limit_mb, file_count_limit, oversize_ca
     collect_attachments: collect_attachments,
     get_attachment_ids: get_attachment_ids,
     collect_attachment: collect_attachment,
-    update_size_limmit: update_size_limmit,
   };
 }
