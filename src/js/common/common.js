@@ -938,7 +938,7 @@
     if(/<((br)|(div)|p) ?\/?>/.test(text)) {
       return text;
     }
-    text = (text || '').replace(/\n/g, '<br>\n');
+    text = (text || '').replace(/\r?\n/g, '<br>\n');
     if(text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
       return window.iso88592.decode(text);
     }
