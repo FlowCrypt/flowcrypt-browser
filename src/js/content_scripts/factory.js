@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_id, reloadable_class, destroyable_class) {
+function element_factory(account_email, parent_tab_id, chrome_runtime_id, reloadable_class, destroyable_class) {
 
   reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';

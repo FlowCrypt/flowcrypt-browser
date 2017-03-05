@@ -69,7 +69,7 @@ function init_shared_compose_js(url_params, db, subscription) {
 
   tool.browser.message.tab_id(function (id) {
     tab_id = id;
-    factory = init_elements_factory_js(url_params.account_email, tab_id);
+    factory = element_factory(url_params.account_email, tab_id);
     tool.browser.message.listen({
       close_dialog: function (data) {
         $('.featherlight.featherlight-iframe').remove();

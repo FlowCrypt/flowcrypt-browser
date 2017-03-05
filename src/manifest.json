@@ -21,12 +21,12 @@
         "/lib/jquery.min.js",
         "/js/common/storage.js",
         "/js/common/common.js",
-        "/js/content_scripts/gmail_tab/elements/inject.js",
-        "/js/content_scripts/gmail_tab/elements/notifications.js",
-        "/js/content_scripts/gmail_tab/elements/factory.js",
-        "/js/content_scripts/gmail_tab/elements/replace.js",
-        "/js/content_scripts/gmail_tab/setup.js",
-        "/js/content_scripts/gmail_tab/gmail_tab.js"
+        "/js/content_scripts/factory.js",
+        "/js/content_scripts/inject.js",
+        "/js/content_scripts/notifications.js",
+        "/js/content_scripts/setup.js",
+        "/js/content_scripts/gmail_tab/replace.js",
+        "/js/content_scripts/gmail_tab/gmail.js"
       ]
     },
     {

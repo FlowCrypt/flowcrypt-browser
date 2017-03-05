@@ -21,7 +21,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
     url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
-    var factory = init_elements_factory_js(url_params.account_email, url_params.parent_tab_id);
+    var factory = element_factory(url_params.account_email, url_params.parent_tab_id);
     var compose = init_shared_compose_js(url_params, db, subscription);
 
     function recover_thread_id_if_missing(callback) {

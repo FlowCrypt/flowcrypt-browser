@@ -2,17 +2,21 @@
 
 'use strict';
 
-function init_elements_inject_js(factory) {
+function content_script_element_injector(webmail_name, factory) {
+
+  var compose_button_container_selector = {
+    'gmail': 'div.aic',
+  };
 
   var S = tool.ui.build_jquery_selectors({
     body: 'body',
-    compose_button_container: 'div.aic',
+    compose_button_container: compose_button_container_selector[webmail_name],
     compose_button: 'div.new_message_button',
     compose_window: 'div.new_message',
   });
 
   function meta() {
-    S.cached('body').append(factory.meta.stylesheet('gmail') + factory.meta.notification_container());
+    S.cached('body').append(factory.meta.stylesheet(webmail_name) + factory.meta.notification_container());
   }
 
   function open_compose_window() {

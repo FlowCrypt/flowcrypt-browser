@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_elements_notifications_js() {
+function content_script_notifications() {
 
   function show_initial_notifications(account_email) {
     account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function (storage) {

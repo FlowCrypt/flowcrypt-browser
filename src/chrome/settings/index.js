@@ -11,7 +11,7 @@ var tab_id_global = undefined;
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
 
-  var factory = init_elements_factory_js(url_params.account_email, tab_id);
+  var factory = element_factory(url_params.account_email, tab_id);
 
   tool.browser.message.listen({
     open_page: function (data, sender, respond) {

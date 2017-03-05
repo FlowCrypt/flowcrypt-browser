@@ -14,7 +14,7 @@ db_open(function (db) {
       return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
     });
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    var factory = init_elements_factory_js(url_params.account_email, tab_id);
+    var factory = element_factory(url_params.account_email, tab_id);
 
     tool.browser.message.listen({
       close_dialog: function () {
