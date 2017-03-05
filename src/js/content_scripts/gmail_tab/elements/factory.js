@@ -33,47 +33,47 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
 
   function src_compose_message(draft_id) {
     var params = { account_email: account_email, parent_tab_id: parent_tab_id, draft_id: draft_id, placement: 'gmail' };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/new_message.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/new_message.htm'), params);
   }
 
   function src_passphrase_dialog(longids, type) {
     var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/passphrase.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/passphrase.htm'), params);
   }
 
   function src_subscribe_dialog(verification_email_text, placement, source, subscribe_result_tab_id) {
     var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: parent_tab_id, subscribe_result_tab_id: subscribe_result_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/subscribe.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/subscribe.htm'), params);
   }
 
   function src_attest(attest_packet) {
     var params = { account_email: account_email, attest_packet: attest_packet, parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attest.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/attest.htm'), params);
   }
 
   function src_add_pubkey_dialog(emails, placement) {
     var params = { account_email: account_email, emails: emails, parent_tab_id: parent_tab_id, placement: placement };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/add_pubkey.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/add_pubkey.htm'), params);
   }
 
   function src_add_footer_dialog(placement) {
     var params = { account_email: account_email, parent_tab_id: parent_tab_id, placement: placement };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/shared/footer.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/shared/footer.htm'), params);
   }
 
   function src_pgp_attachment_iframe(meta) {
     var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id, url: meta.url };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/attachment.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/attachment.htm'), params);
   }
 
   function src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature) {
     var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id, signature: signature };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_block.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/pgp_block.htm'), params);
   }
 
   function src_pgp_pubkey_iframe(armored_pubkey, is_outgoing) {
     var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/pgp_pubkey.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/pgp_pubkey.htm'), params);
   }
 
   function src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft) {
@@ -91,7 +91,7 @@ function init_elements_factory_js(account_email, parent_tab_id, chrome_runtime_i
       ignore_draft: Boolean(ignore_draft),
       parent_tab_id: parent_tab_id,
     };
-    return tool.env.url_create(chrome.extension.getURL('chrome/gmail_elements/reply_message.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/reply_message.htm'), params);
   }
 
   function iframe(src, classes, additional_attributes) {

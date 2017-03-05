@@ -309,7 +309,7 @@ $('.action_skip_recovery').click(function () {
 });
 
 $('.action_send').click(function () {
-  window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email, page: '/chrome/gmail_elements/new_message.htm' });
+  window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email, page: '/chrome/elements/new_message.htm' });
 });
 
 $('.action_account_settings').click(function () {

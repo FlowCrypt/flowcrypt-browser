@@ -61,7 +61,7 @@ function choose_email_or_settings_popup(active_account_email) {
     if(active_account_email) {
       tool.browser.message.send(null, 'settings', {
         account_email: active_account_email,
-        page: '/chrome/gmail_elements/new_message.htm',
+        page: '/chrome/elements/new_message.htm',
       }, function () {
         window.close();
       });

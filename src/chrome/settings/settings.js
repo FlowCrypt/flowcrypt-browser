@@ -246,7 +246,7 @@ function show_settings_page(page, add_url_text) {
   if(settings_url_params.embedded) { //embedded on the main page
     tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', { page: page, add_url_text: add_url_text });
   } else if(!settings_url_params.parent_tab_id) { // on a main page
-    if(page !== '/chrome/gmail_elements/new_message.htm') {
+    if(page !== '/chrome/elements/new_message.htm') {
       var width = Math.min(800, $('body').width() - 200);
       var height = $('html').height() - ($('html').height() > 800 ? 150 : 75);
       var variant = null;
