@@ -79,8 +79,8 @@
         storage.errors.unshift(error.stack || error_message);
         account_storage_set(null, storage);
       });
-    } catch(storage_err) {
-
+    } catch (storage_err) {
+      console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
     }
     return true;
   }
@@ -130,6 +130,34 @@
     }
   }
 
+  function info(name, details) {
+    name = 'INFO: ' + name;
+    console.log(name);
+    try {
+      throw new Error(name);
+    } catch(e) {
+      if(typeof details !== 'string') {
+        try {
+          details = JSON.stringify(details);
+        } catch(stringify_error) {
+          details = '(could not stringify details "' + String(details) + '" in catcher.info because: ' + stringify_error.message + ')';
+        }
+      }
+      e.stack = e.stack + '\n\n\ndetails: ' + details;
+      try {
+        account_storage_get(null, ['errors'], function (storage) {
+          if(typeof storage.errors === 'undefined') {
+            storage.errors = [];
+          }
+          storage.errors.unshift(e.stack || error_message);
+          account_storage_set(null, storage);
+        });
+      } catch (storage_err) {
+        console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
+      }
+    }
+  }
+
   function environment(url) {
     if(!url) {
       url = window.location.href;
@@ -168,6 +196,7 @@
     handle_error: handle_error,
     handle_exception: handle_exception,
     log: log,
+    info: info,
     version: cryptup_version,
     try: try_wrapper,
     environment: environment,
