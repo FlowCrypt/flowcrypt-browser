@@ -334,6 +334,7 @@
         strip: crypto_armor_strip,
         clip: crypto_armor_clip,
         headers: crypto_armor_headers,
+        replace_blocks: crypto_armor_replace_blocks,
       },
       hash: {
         sha1: crypto_hash_sha1,
@@ -1448,6 +1449,61 @@
       var match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE)-----[^]+-----END PGP (MESSAGE|SIGNATURE)-----)/gm);
       return(match !== null && match.length) ? match[0] : null;
     }
+  }
+
+  var password_sentence = 'This message is encrypted. If you can\'t read it, visit the following link: '; // todo - should be in a common place as the code that generated it
+
+  function crypto_armor_replace_blocks(factory, original_text, message_id, sender_email, is_outgoing) {
+    var original_text = str_normalize_spaces(original_text);
+    var replacement_text = original_text;
+    var has_password;
+    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
+      return factory.embedded.pubkey(armored, is_outgoing);
+    });
+    if(tool.value(sender_email).in(['attest@cryptup.org'])) {
+      replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('attest_packet'), true, function(armored) {
+        return factory.embedded.attest(armored);
+      });
+    }
+    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('cryptup_verification'), false, function(armored) {
+      return factory.embedded.subscribe(armored, 'embedded', null);
+    });
+    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('signed_message'), true, function(armored) {
+      //todo - for now doesn't work with clipped signed messages because not tested yet
+      return factory.embedded.message(armored, message_id, is_outgoing, sender_email, false);
+    });
+    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('message'), false, function(armored, has_end) {
+      if(typeof has_password === 'undefined') {
+        has_password = tool.value(password_sentence).in(original_text);
+      }
+      return factory.embedded.message(has_end ? armored : '', message_id, is_outgoing, sender_email, has_password || false);
+    });
+    if(replacement_text !== original_text) {
+      if(has_password) {
+        replacement_text = replacement_text.replace(RegExp(RegExp.escape(password_sentence) + '.+\n\n', 'm'), '');
+      }
+      return replacement_text;
+    }
+  }
+
+  function replace_armored_block_type(text, block_headers, end_required, block_processor, optional_search_after_index) {
+    var begin_index = text.indexOf(block_headers.begin, optional_search_after_index);
+    if(begin_index < 0) {
+      return text;
+    }
+    var end_found = text.indexOf(block_headers.end, begin_index);
+    if(end_found < 0) {
+      if(end_required) {
+        return text;
+      } else {
+        var end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
+      }
+    } else {
+      var end_index = end_found + block_headers.end.length;
+    }
+    var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
+    var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length);
+    return replace_armored_block_type(text_with_replaced_block, block_headers, end_required, block_processor, begin_index + block_replacement.length);
   }
 
   /* tool.crypto.hash */

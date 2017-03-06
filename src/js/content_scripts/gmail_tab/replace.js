@@ -4,8 +4,6 @@
 
 function gmail_element_replacer(factory, account_email, addresses, can_read_emails) {
 
-  var password_sentence = 'This message is encrypted. If you can\'t read it, visit the following link: '; // todo - should be in a common place as the code that generated it
-
   function everything() {
     replace_armored_blocks();
     replace_pgp_attachments();
@@ -14,62 +12,16 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     replace_standard_reply_box();
   }
 
-  function replace_armored_block_type(text, block_headers, end_required, block_processor, optional_search_after_index) {
-    var begin_index = text.indexOf(block_headers.begin, optional_search_after_index);
-    if(begin_index < 0) {
-      return text;
-    }
-    var end_found = text.indexOf(block_headers.end, begin_index);
-    if(end_found < 0) {
-      if(end_required) {
-        return text;
-      } else {
-        var end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
-      }
-    } else {
-      var end_index = end_found + block_headers.end.length;
-    }
-    var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
-    var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length);
-    return replace_armored_block_type(text_with_replaced_block, block_headers, end_required, block_processor, begin_index + block_replacement.length);
-  }
-
   function replace_armored_blocks() { // todo - most of this could be optimized by using .indexOf instead of RegExp, but it might result in ugly code
     $("div.adP.adO div.a3s:contains('" + tool.crypto.armor.headers().begin + "')").not('.evaluated').each(function () { // for each email that contains PGP block
       $(this).addClass('evaluated');
-      var original_text = tool.str.normalize_spaces(this.innerText);
-      var processed_text = original_text;
-      var message_id = parse_message_id_from('message', this);
-      var sender_email = $(this).closest('.gs').find('span.gD').attr('email').toLowerCase();
+      var message_id = determine_message_id('message', this);
+      var sender_email = get_sender_email(this);
       var is_outgoing = tool.value(sender_email).in(addresses);
-      var has_password;
-      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('public_key'), false, function(armored) {
-        return factory.embedded.pubkey(armored, is_outgoing);
-      });
-      if(tool.value(sender_email).in(['attest@cryptup.org'])) {
-        processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('attest_packet'), true, function(armored) {
-          return factory.embedded.attest(armored);
-        });
-      }
-      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('cryptup_verification'), false, function(armored) {
-        return factory.embedded.subscribe(armored, 'embedded', null);
-      });
-      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('signed_message'), true, function(armored) {
-        //todo - for now doesn't work with clipped signed messages because not tested yet
-        return factory.embedded.message(armored, message_id, is_outgoing, sender_email, false);
-      });
-      processed_text = replace_armored_block_type(processed_text, tool.crypto.armor.headers('message'), false, function(armored, has_end) {
+      var replacement = tool.crypto.armor.replace_blocks(factory, this.innerText, message_id, sender_email, is_outgoing);
+      if(typeof replacement !== 'undefined') {
         $('.adI').css('display', 'none'); // hide translate prompt
-        if(typeof has_password === 'undefined') {
-          has_password = tool.value(password_sentence).in(original_text);
-        }
-        return factory.embedded.message(has_end ? armored : '', message_id, is_outgoing, sender_email, has_password || false);
-      });
-      if(processed_text !== original_text) {
-        if(has_password) {
-          processed_text = processed_text.replace(RegExp(RegExp.escape(password_sentence) + '.+\n\n', 'm'), '');
-        }
-        $(this).html(processed_text.replace(/\n/g, '<br>'));
+        $(this).html(replacement.replace(/\n/g, '<br>'));
       }
     });
   }
@@ -140,13 +92,13 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     });
   }
 
-  function parse_message_id_from(element_type, my_element) {
+  function determine_message_id(base_element_type, my_element) {
     var selectors = {
       message: $(my_element).parents('div.adP.adO'),
       attachment: $(my_element).parent().siblings('div.adP.adO'),
     };
     var message_id = null; // todo: maybe need to traverse through all children elements classes of the whole message to get to /^m([0-9a-f]{16})$/ - as a backup
-    var found = [selectors[element_type].get(0), selectors[element_type].find('div.a3s').get(0)];
+    var found = [selectors[base_element_type].get(0), selectors[base_element_type].find('div.a3s').get(0)];
     var classes = [].concat(found[0] ? tool.arr.from_dome_node_list(found[0].classList) : [], found[1] ? tool.arr.from_dome_node_list(found[1].classList) : []);
     $.each(classes, function (i, message_class) {
       var match = message_class.match(/^m([0-9a-f]{16})$/);
@@ -159,13 +111,13 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_pgp_attachments() {
-    var selectors = get_attachments_selectors(null, ['.pgp', '.gpg', '.asc', 'noname', 'message']);
+    var selectors = get_attachments_selectors(null, ['*.pgp', '*.gpg', '*.asc', 'noname', 'message']);
     $(selectors.container).each(function () {
       var new_pgp_messages = $(this).children(selectors.attachments).not('.evaluated');
       if(new_pgp_messages.length) {
         new_pgp_messages.addClass('evaluated');
         var attachment_container_classes = tool.arr.from_dome_node_list(new_pgp_messages.get(0).classList);
-        var message_id = parse_message_id_from('attachment', this);
+        var message_id = determine_message_id('attachment', this);
         if(message_id) {
           if(can_read_emails) {
             $(new_pgp_messages).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner('green')));
@@ -214,14 +166,15 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     });
   }
 
-  function get_attachments_selectors(message_id, file_name_ends_array) {
+  function get_attachments_selectors(message_id, file_name_filters) {
     var attachments = [];
     var container_selector = 'div.aQH';
     if(message_id) {
       container_selector += '.message_id_' + message_id;
     }
-    $.each(file_name_ends_array, function (i, file_name_end) {
-      attachments.push(((message_id) ? (container_selector + ' > ') : '') + 'span[download_url*="' + file_name_end.replace(/@/g, '%40') + ':https"]');
+    $.each(file_name_filters, function (i, file_name_filter) {
+      var filter = file_name_filter.indexOf('*.') === 0 ? file_name_filter.substr(1) : ':' + file_name_filter;
+      attachments.push(((message_id) ? (container_selector + ' > ') : '') + 'span[download_url*="' + filter.replace(/@/g, '%40') + ':https"]');
     });
     return { container: container_selector, attachments: attachments.join(', '), };
   }
@@ -237,7 +190,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_pgp_attachments_in_message(message_id, classes, attachments) {
-    var selectors = get_attachments_selectors(message_id, ['.pgp', '.gpg']);
+    var selectors = get_attachments_selectors(message_id, ['*.pgp', '*.gpg']);
     hide_attachments(selectors.attachments, attachments.length);
     $.each(attachments, function (i, attachment) {
       $(selectors.container).prepend(factory.embedded.attachment(attachment, classes));
@@ -248,12 +201,16 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     return $('div.a3s.m' + message_id);
   }
 
+  function get_sender_email(message_element) {
+    return ($(message_element).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
+  }
+
   function hide_pgp_attached_pubkey_and_append_to_text(message_id, classes, attachments) {
-    var sender_email = $('div.a3s.m' + message_id).closest('.gs').find('span.gD').attr('email');
-    var is_outgoing = tool.value(sender_email).in(addresses);
     tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
       catcher.try(function () {
         if(success) {
+          var message_element = get_message_body_element(message_id);
+          var is_outgoing = tool.value(get_sender_email(message_element)).in(addresses);
           $.each(downloaded_attachments, function (i, downloaded_attachment) {
             catcher.try(function () {
               var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
@@ -261,7 +218,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
               if(tool.value(tool.crypto.armor.headers().begin).in(armored_key)) {
                 //todo - this approach below is what should be done in every similar function - hide them by exact names, one by one
                 hide_attachments(selector, 1);
-                get_message_body_element(message_id).append(factory.embedded.pubkey(armored_key, is_outgoing));
+                message_element.append(factory.embedded.pubkey(armored_key, is_outgoing));
               } else {
                 $(selector).children('.attachment_loader').text('Unknown encryption format');
               }
@@ -275,13 +232,11 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function hide_pgp_attached_message_and_append_as_text(message_id, classes, attachments) {
-    var selectors = get_attachments_selectors(message_id, ['.asc', 'message']);
+    var selectors = get_attachments_selectors(message_id, ['*.asc', 'message']);
     hide_attachments(selectors.attachments, attachments.length);
-    var message_element = get_message_body_element(message_id);
     $('span.aVW').css('display', 'none'); // no clue what this is
-    message_element.css('display', 'block');
-    var sender_email = (message_element.closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-    message_element.append(factory.embedded.message('', message_id, false, sender_email, false));
+    var message_element = get_message_body_element(message_id);
+    message_element.append(factory.embedded.message('', message_id, false, get_sender_email(message_element), false)).css('display', 'block');
   }
 
   function hide_pgp_attached_signatures_and_handle(message_id, classes, attachments) {
@@ -289,14 +244,12 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     hide_attachments(selectors.attachments, attachments.length);
     var message_element = get_message_body_element(message_id);
     $('span.aVW').css('display', 'none'); // no clue what this is
-    message_element.css('display', 'block');
-    var sender_email = (message_element.closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-    var embedded = factory.embedded.message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email, false, true);
+    var embedded = factory.embedded.message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, get_sender_email(message_element), false, true);
     if(!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers(null).begin).in(message_element.text())) {
       message_element.addClass('evaluated');
-      message_element.html(embedded);
+      message_element.html(embedded).css('display', 'block');
     } else {
-      message_element.append(embedded);
+      message_element.append(embedded).css('display', 'block');
     }
   }
 
@@ -312,7 +265,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
       var thread_message_id = thread_match[1];
     } else { // sometimes won't work, that's why the else
       var thread_id = '';
-      var thread_message_id = parse_message_id_from('message', conversation_root_element.find('div.a3s.evaluated'));
+      var thread_message_id = determine_message_id('message', conversation_root_element.find('div.a3s.evaluated'));
     }
     var reply_to_estimate = [conversation_root_element.find('h3.iw span[email]').last().attr('email').trim().toLowerCase()]; // add original sender
     var reply_to = [];
