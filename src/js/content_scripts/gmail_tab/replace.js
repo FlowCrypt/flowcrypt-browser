@@ -162,7 +162,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
               if(tool.value(tool.crypto.armor.headers().begin).in(armored_key)) {
                 message_element.append(factory.embedded.pubkey(armored_key, is_outgoing));
               } else {
-                attachment_selector.css('display', 'block'); // todo - test file that looks like a pubkey but has bogus stuff in it
+                attachment_selector.css('display', 'block');
                 attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
               }
             } else {
