@@ -98,7 +98,7 @@
   function handle_exception(exception) {
     try {
       var caller_line = exception.stack.split('\n')[1];
-      var matched = caller_line.match(/\.js\:([0-9]+)\:([0-9]+)\)?/);
+      var matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
       var line = Number(matched[1]);
       var col = Number(matched[2]);
     } catch(line_err) {
@@ -1101,9 +1101,8 @@
         events_fired[meta.id] = setTimeout(callback, VERY_SLOW_SPREE_MS);
       } else {
         if(meta.id in events_fired) {
-          if(meta.name === 'parallel') {
-            return; // id was found - means the event handling is still being processed. Do not call back
-          } else if(meta.name === 'double') {
+          // if(meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
+          if(meta.name === 'double') {
             if(Date.now() - events_fired[meta.id] > DOUBLE_MS) {
               events_fired[meta.id] = Date.now();
               callback(this, meta.id);

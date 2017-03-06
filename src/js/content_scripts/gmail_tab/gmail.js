@@ -11,7 +11,7 @@ catcher.try(function() {
     name: 'gmail',
     get_user_account_email:  function () {
       var account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._]+@[^…< ]+/gi);
-      return account_email_loading_match !== null ? account_email_loading_match[0].replace(/^[\s\.]+|[\s\.]+$/gm, '').toLowerCase() : undefined;
+      return account_email_loading_match !== null ? account_email_loading_match[0].replace(/^[\s.]+|[\s.]+$/gm, '').toLowerCase() : undefined;
     },
     get_user_full_name: function () {
       return $("div.gb_hb div.gb_lb").text();
