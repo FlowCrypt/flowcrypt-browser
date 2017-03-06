@@ -120,14 +120,12 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
         if(message_id) {
           if(can_read_emails) {
             $(new_pgp_messages).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner('green')));
-            tool.browser.message.send(null, 'list_gmail_pgp_attachments', { account_email: account_email, message_id: message_id, }, function (response) {
-              catcher.try(function () {
-                if(response.success) {
-                  process_attachments(message_id, response.attachments, attachments_container);
-                } else {
-                  //todo: show button to retry
-                }
-              })();
+            tool.api.gmail.message_get(account_email, message_id, 'full', function (success, message) {
+              if(success) {
+                process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container);
+              } else {
+                //todo: show button to retry
+              }
             });
           } else {
             var status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';

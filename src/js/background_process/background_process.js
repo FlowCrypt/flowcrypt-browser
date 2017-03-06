@@ -20,7 +20,6 @@ tool.browser.message.listen_background({
   migrate_account: migrate_account,
   google_auth: google_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
-  list_gmail_pgp_attachments: list_gmail_pgp_attachments,
   settings: open_settings_page_handler,
   attest_requested: attest_requested_handler,
   attest_packet_received: attest_packet_received_handler,
@@ -68,12 +67,6 @@ function get_active_tab_info(request, sender, respond) {
     } else {
       respond({ provider: null, account_email: null, same_world: null, });
     }
-  });
-}
-
-function list_gmail_pgp_attachments(request, sender, respond) {
-  tool.api.gmail.message_get(request.account_email, request.message_id, 'full', function (success, message) {
-    respond({ success: success, attachments: success ? tool.api.gmail.find_attachments(message) : undefined });
   });
 }
 
