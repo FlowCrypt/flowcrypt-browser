@@ -46,7 +46,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   };
 
   document.dispatchEvent(new CustomEvent(destruction_event));
-  document.addEventListener(destruction_event, destroy);
+  document.addEventListener(destruction_event, catcher.try(destroy));
 
   /* GENERAL CONTENT SCRIPT FUNCTIONS */
 

@@ -28,17 +28,17 @@ function content_script_notifications() {
     }
     if(typeof callbacks.close !== 'undefined') {
       var original_close_callback = callbacks.close;
-      callbacks.close = function () {
+      callbacks.close = catcher.try(function () {
         original_close_callback();
         content_script_notification_clear();
-      };
+      });
     } else {
-      callbacks.close = content_script_notification_clear;
+      callbacks.close = catcher.try(content_script_notification_clear);
     }
     if(typeof callbacks.reload === 'undefined') {
-      callbacks.reload = function () {
+      callbacks.reload = catcher.try(function () {
         window.location.reload();
-      };
+      });
     }
     $.each(callbacks, function (name, callback) {
       $('.gmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
