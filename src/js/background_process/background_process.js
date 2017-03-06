@@ -20,7 +20,7 @@ tool.browser.message.listen_background({
   migrate_account: migrate_account,
   google_auth: google_auth,
   gmail_auth_code_result: google_auth_window_result_handler,
-  list_pgp_attachments: list_pgp_attachments,
+  list_gmail_pgp_attachments: list_gmail_pgp_attachments,
   settings: open_settings_page_handler,
   attest_requested: attest_requested_handler,
   attest_packet_received: attest_packet_received_handler,
@@ -71,43 +71,9 @@ function get_active_tab_info(request, sender, respond) {
   });
 }
 
-function list_pgp_attachments(request, sender, respond) {
+function list_gmail_pgp_attachments(request, sender, respond) {
   tool.api.gmail.message_get(request.account_email, request.message_id, 'full', function (success, message) {
-    if(success) {
-      var attachments = tool.api.gmail.find_attachments(message);
-      var pgp_attachments = [];
-      var pgp_messages = [];
-      var pgp_signatures = [];
-      var pgp_pubkeys = [];
-      var pgp_hide = [];
-      $.each(attachments, function (i, attachment) {
-        if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
-          pgp_attachments.push(attachment);
-        } else if(attachment.name === 'signature.asc') {
-          pgp_signatures.push(attachment);
-        } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?\.asc$/g)) { // name starts with a key id
-          pgp_pubkeys.push(attachment);
-        } else if((attachment.name.match(/\.asc$/) || attachment.name === 'message') && attachment.size < 100000 && !attachment.inline) {
-          pgp_messages.push(attachment);
-        } else if(attachment.name === '') {
-          pgp_hide.push(attachment);
-        }
-      });
-      respond({
-        success: true,
-        attachments: pgp_attachments,
-        signatures: pgp_signatures,
-        pubkeys: pgp_pubkeys,
-        messages: pgp_messages,
-        hide: pgp_hide,
-        message_id: request.message_id,
-      });
-    } else {
-      respond({
-        success: false,
-        message_id: request.message_id,
-      });
-    }
+    respond({ success: success, attachments: success ? tool.api.gmail.find_attachments(message) : undefined });
   });
 }
 

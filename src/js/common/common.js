@@ -1976,10 +1976,14 @@
       async: true,
       timeout: typeof progress.upload === 'function' || typeof progress.download === 'function' ? undefined : 20000,
       success: function (response) {
-        callback(true, response);
+        catcher.try(function () {
+          callback(true, response);
+        })();
       },
       error: function (XMLHttpRequest, status, error) {
-        callback(false, { request: XMLHttpRequest, status: status, error: error });
+        catcher.try(function () {
+          callback(false, { request: XMLHttpRequest, status: status, error: error });
+        })();
       },
     });
   }
@@ -2003,7 +2007,9 @@
           contentType: 'application/json; charset=UTF-8',
           async: true,
           success: function (response) {
-            callback(true, response);
+            catcher.try(function () {
+              callback(true, response);
+            })();
           },
           error: function (response) {
             try {
@@ -2012,16 +2018,20 @@
                 google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, api_google_call);
               } else {
                 response._error = error_obj.error;
-                callback(false, response);
+                catcher.try(function () {
+                  callback(false, response);
+                })();
               }
             } catch(err) {
-              response._error = {};
-              var re_title = /<title>([^<]+)<\/title>/mgi;
-              var title_match = re_title.exec(response.responseText);
-              if(title_match) {
-                response._error.message = title_match[1];
-              }
-              callback(false, response);
+              catcher.try(function () {
+                response._error = {};
+                var re_title = /<title>([^<]+)<\/title>/mgi;
+                var title_match = re_title.exec(response.responseText);
+                if(title_match) {
+                  response._error.message = title_match[1];
+                }
+                callback(false, response);
+              })();
             }
           },
         });
@@ -2083,9 +2093,11 @@
           contentType: content_type || 'application/json; charset=UTF-8',
           async: true,
           success: function (response) {
-            if(callback) {
-              callback(true, response);
-            }
+            catcher.try(function () {
+              if(callback) {
+                callback(true, response);
+              }
+            })();
           },
           error: function (response) {
             try {
@@ -2095,19 +2107,23 @@
               } else {
                 response._error = error_obj.error;
                 if(callback) {
-                  callback(false, response);
+                  catcher.try(function () {
+                    callback(false, response);
+                  })();
                 }
               }
             } catch(err) {
-              response._error = {};
-              var re_title = /<title>([^<]+)<\/title>/mgi;
-              var title_match = re_title.exec(response.responseText);
-              if(title_match) {
-                response._error.message = title_match[1];
-              }
-              if(callback) {
-                callback(false, response);
-              }
+              catcher.try(function () {
+                response._error = {};
+                var re_title = /<title>([^<]+)<\/title>/mgi;
+                var title_match = re_title.exec(response.responseText);
+                if(title_match) {
+                  response._error.message = title_match[1];
+                }
+                if(callback) {
+                  callback(false, response);
+                }
+              })();
             }
           },
         });
@@ -2279,17 +2295,34 @@
       });
     }
     if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {
-      // is attachment, but not an inline one
-      internal_results.push({
+      var attachemnt = {
         message_id: internal_message_id,
         id: gmail_email_object.body.attachmentId,
         size: gmail_email_object.body.size,
         name: gmail_email_object.filename,
         type: gmail_email_object.mimeType,
         inline: (api_gmail_find_header(gmail_email_object, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
-      });
+      };
+      attachemnt.treat_as = attachment_get_treat_as(attachemnt);
+      internal_results.push(attachemnt);
     }
     return internal_results;
+  }
+
+  function attachment_get_treat_as(attachment) {
+    if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
+      return 'encrypted';
+    } else if(attachment.name === 'signature.asc') {
+      return  'signature';
+    } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?\.asc$/g)) { // name starts with a key id
+      return 'public_key';
+    } else if((attachment.name.match(/\.asc$/) || attachment.name === 'message') && attachment.size < 100000 && !attachment.inline) {
+      return 'message';
+    } else if(attachment.name === '') {
+      return 'hidden';
+    } else {
+      return 'standard';
+    }
   }
 
   function api_gmail_find_bodies(gmail_email_object, internal_results) {

@@ -146,8 +146,8 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       subscribe: function(verification_email_text, source) {
         return iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'});
       },
-      attachment: function(meta, container_classes) {
-        return tool.e('span', {class: (container_classes || []).concat('pgp_attachment').join(' '), html: iframe(src_pgp_attachment_iframe(meta))});
+      attachment: function(meta) {
+        return tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))});
       },
       message: function(armored, message_id, is_outgoing, sender, has_password, signature) {
         return iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature), ['pgp_block']) + hide_gmail_new_message_in_thread_notification;
