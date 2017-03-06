@@ -1,5 +1,9 @@
 <div>
 
+<b>version 3.6.3 on March 6, 2017: Refactoring</b>
+internal: preparing for Google Inbox
+settings: add link to source code
+
 <b>version 3.6.2 on March 5, 2017: Prompts</b>
 composing: upgrade prompts don't refresh info in compose window
 reading: newlines doubled in signed messages
