@@ -7,7 +7,7 @@ center.gmail_notifications div.gmail_notification { background-color: rgb(249, 2
   line-height: 16px; padding: 6px 10px; z-index: 999; margin-top: 50px; display:inline-block; margin-right: 50px; margin-left: 50px; }
 center.gmail_notifications div.gmail_notification a { color: black; padding-left: 6px; padding-right: 2px; }
 center.gmail_notifications div.gmail_notification a:hover { text-decoration: none; }
-
+body.cryptup_inbox center.gmail_notifications { position: fixed; }
 
 /* buttons body.cryptup_inbox */
 body.cryptup_inbox div.new_message_button { background-color: #31A217; height: 40px; position: relative; width: 40px; box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
