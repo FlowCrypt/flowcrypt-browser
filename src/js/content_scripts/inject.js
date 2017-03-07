@@ -6,6 +6,7 @@ function content_script_element_injector(webmail_name, factory) {
 
   var compose_button_container_selector = {
     'gmail': 'div.aic',
+    'inbox': 'div.jp',
   };
 
   var S = tool.ui.build_jquery_selectors({
@@ -16,7 +17,7 @@ function content_script_element_injector(webmail_name, factory) {
   });
 
   function meta() {
-    S.cached('body').append(factory.meta.stylesheet(webmail_name) + factory.meta.notification_container());
+    S.cached('body').addClass('cryptup_' + webmail_name).append(factory.meta.stylesheet('webmail') + factory.meta.notification_container());
   }
 
   function open_compose_window() {
@@ -30,7 +31,16 @@ function content_script_element_injector(webmail_name, factory) {
       TrySetDestryableTimeout(buttons, 300);
     } else {
       if(S.now('compose_button').length === 0) {
-        S.now('compose_button_container').prepend(factory.button.compose()).find(S.selector('compose_button')).click(catcher.try(open_compose_window));
+        if(webmail_name === 'inbox') {
+          var container = S.now('compose_button_container').append(factory.button.compose(webmail_name));
+          container.find(S.selector('compose_button')).hover(
+            catcher.try(function() { $('#cryptup_compose_button_label').css('opacity', 1); }),
+            catcher.try(function() { $('#cryptup_compose_button_label').css('opacity', ''); })
+          );
+        } else {
+          var container = S.now('compose_button_container').prepend(factory.button.compose(webmail_name))
+        }
+        container.find(S.selector('compose_button')).click(catcher.try(open_compose_window));
       }
     }
   }

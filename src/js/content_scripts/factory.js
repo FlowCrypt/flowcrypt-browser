@@ -169,8 +169,12 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       },
     },
     button: {
-      compose: function() {
-        return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
+      compose: function(webmail_name) {
+        if(webmail_name === 'inbox') {
+          return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
+        } else {
+          return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
+        }
       },
       reply: function() {
         return '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>';

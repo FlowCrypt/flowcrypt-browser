@@ -57,14 +57,18 @@ function content_script_setup_if_vacant(webmail_specific) {
 
   function wait_for_account_email_then_setup() {
     var account_email = webmail_specific.get_user_account_email();
-    if(typeof account_email !== 'undefined') {
-      console.log('Loading CryptUp ' + catcher.version());
-      window.account_email_global = account_email;
-      setup(account_email);
-    } else {
-      console.log('Cannot load CryptUp yet. Page: ' + window.location + ' (' + document.title + ')');
-      account_email_interval += 1000;
-      TrySetDestryableTimeout(wait_for_account_email_then_setup, account_email_interval);
+    if(!window.account_email_global) {
+      if(typeof account_email !== 'undefined') {
+        console.log('Loading CryptUp ' + catcher.version());
+        window.account_email_global = account_email;
+        setup(account_email);
+      } else {
+        if(account_email_interval > 6000) {
+          console.log('Cannot load CryptUp yet. Page: ' + window.location + ' (' + document.title + ')');
+        }
+        account_email_interval += 1000;
+        TrySetDestryableTimeout(wait_for_account_email_then_setup, account_email_interval);
+      }
     }
   }
 

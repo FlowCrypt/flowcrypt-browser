@@ -18,15 +18,17 @@
     {
       "matches": ["*://mail.google.com/*"],
       "js": [
-        "/lib/jquery.min.js",
-        "/js/common/storage.js",
-        "/js/common/common.js",
-        "/js/content_scripts/factory.js",
-        "/js/content_scripts/inject.js",
-        "/js/content_scripts/notifications.js",
-        "/js/content_scripts/setup.js",
-        "/js/content_scripts/gmail_tab/replace.js",
-        "/js/content_scripts/gmail_tab/gmail.js"
+        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
+        "/js/content_scripts/gmail_tab/replace.js", "/js/content_scripts/gmail_tab/gmail.js"
+      ]
+    },
+    {
+      "matches": ["*://inbox.google.com/*"],
+      "js": [
+        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
+        "/js/content_scripts/inbox_tab/replace.js", "/js/content_scripts/inbox_tab/inbox.js"
       ]
     },
     {
@@ -53,10 +55,7 @@
     ]
   },
   "web_accessible_resources": [
-    "/css/gmail.css",
-    "/fonts/fontawesome-webfont.ttf",
-    "/fonts/fontawesome-webfont.woff",
-    "/fonts/fontawesome-webfont.woff2",
+    "/css/webmail.css",
     "/img/logo-19-14-white.png",
     "/img/svgs/reply-icon.svg",
     "/img/svgs/spinner-white-small.svg",
