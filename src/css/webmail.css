@@ -13,7 +13,7 @@ center.gmail_notifications div.gmail_notification a:hover { text-decoration: non
 body.cryptup_inbox div.new_message_button { background-color: #31A217; height: 40px; position: relative; width: 40px; box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
   box-sizing: content-box; cursor: pointer; outline: none; padding: 0; border: none; border-radius: 50%; -webkit-user-drag: none; margin-right: 8px; }
 body.cryptup_inbox div.new_message_button > img { height: 16px; margin-top: 12px; margin-left: 10px; }
-
+body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !important; } /* reply, reply all, forward in menu next to encrypted messages */
 
 /* buttons body.cryptup_gmail */
 body.cryptup_gmail div.new_message_button { border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; height: 27px;

@@ -16,7 +16,8 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
       var is_outgoing = tool.value(sender_email).in(addresses);
       var replacement = tool.crypto.armor.replace_blocks(factory, message_element.innerText, message_id, sender_email, is_outgoing);
       if(typeof replacement !== 'undefined') {
-        $(this).html(replacement.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>'));
+        $(message_element).parents('.ap').addClass('pgp_message_container');
+        $(message_element).html(replacement.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>'));
       }
     });
   }
