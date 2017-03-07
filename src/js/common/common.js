@@ -1539,7 +1539,7 @@
       if(has_password) {
         replacement_text = replacement_text.replace(RegExp(RegExp.escape(password_sentence) + '.+\n\n', 'm'), '');
       }
-      return replacement_text;
+      return replacement_text.trim();
     }
   }
 
