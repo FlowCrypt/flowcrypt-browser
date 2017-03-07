@@ -360,7 +360,7 @@ div#reply_message_prompt #reply_click_area { width: 95%; height: 50px; margin-to
 a#a_reply, a#a_reply_all, a#a_forward {}
 p#reply_links { margin: 0; }
 div#reply_message_table_container table#compose { border-top: 1px solid #cfcfcf; width: 100%; }
-div#reply_message_successful_container { width: 100%; display: none; }
+div#reply_message_successful_container { width: 100%; display: none; padding-bottom: 40px; }
 div#reply_message_successful_container > table { width: 100%; margin: 0; padding: 0; }
 div#reply_message_successful_container > table td { vertical-align: top; }
 div#reply_message_successful_container > table tr.first { margin-bottom: 20px; }

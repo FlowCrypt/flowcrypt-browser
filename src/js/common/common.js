@@ -286,6 +286,7 @@
       extract_cryptup_attachments: str_extract_cryptup_attachments,
       extract_cryptup_reply_token: str_extract_cryptup_reply_token,
       strip_cryptup_reply_token: str_strip_cryptup_reply_token,
+      int_to_hex: str_int_to_hex,
     },
     env: {
       browser: env_browser,
@@ -618,15 +619,43 @@
     return utf8_string;
   }
 
-  function str_to_hex(s) { //http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
-    var i, l, o = '',
-      n;
+  function str_to_hex(s) { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
+    var i, l, o = '', n;
     s += '';
     for(i = 0, l = s.length; i < l; i++) {
       n = s.charCodeAt(i).toString(16);
       o += n.length < 2 ? '0' + n : n;
     }
     return o;
+  }
+
+  function str_int_to_hex(int_as_string) { // http://answers.google.com/answers/threadview/id/519786.html (thefistofthenorthsta-ga)
+    var hex = new Array(Math.ceil(int_as_string.length * 0.83048202372184058696757985737235));
+    var hex_chars = '0123456789abcdef';
+    for(var i=0; i<hex.length; i++) {
+      hex[i] = 0;
+    }
+    for(var i=0; i<int_as_string.length; i++) {
+      for(var j=0; j<hex.length; j++) {
+        hex[j] *= 10;
+      }
+      hex[0] += parseInt(int_as_string.charAt(i));
+      for(var j=0; j < hex.length; j++) {
+        if(hex[j] > 16) {
+          hex[j + 1] += Math.floor(hex[j] / 16);
+          hex[j] = hex[j] % 16;
+        }
+      }
+    }
+    var index = hex.length - 1;
+    while(hex[index] == 0 && index > 0) {
+      --index;
+    }
+    var result = hex_chars.charAt(hex[0]);
+    for(var i=1; i <= index; i++) {
+      result = hex_chars.charAt(hex[i]) + result;
+    }
+    return result;
   }
 
   function str_strip_cryptup_reply_token(decrypted_content) {

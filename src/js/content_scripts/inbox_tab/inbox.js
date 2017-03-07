@@ -8,7 +8,6 @@ catcher.try(function() {
   var replacer;
 
   content_script_setup_if_vacant({
-    // <div class="gb_sb"><div class="gb_vb gb_wb">Full Name</div><div class="gb_xb">here.should.be.my.email@gmail.com</div></div>
     name: 'inbox',
     get_user_account_email:  function () {
       var account_email_loading_match = $('div.gb_xb').text().match(/^[a-z0-9._]+@[a-z0-9\-_.]+$/gi);

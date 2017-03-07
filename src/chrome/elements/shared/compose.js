@@ -715,14 +715,18 @@ function init_shared_compose_js(url_params, db, subscription) {
     if(is_reply_box) {
       add_extra = isNaN(add_extra) ? 0 : Number(add_extra);
       S.cached('input_text').css('max-width', (S.cached('body').width() - 20) + 'px');
-      if(S.cached('reply_message_successful').is(':visible')) {
-        var current_height = S.cached('reply_message_successful').height() + 1;
+      var min_height = 0;
+      if(S.cached('compose_table').is(':visible')) {
+        var current_height = S.cached('compose_table').outerHeight();
+        min_height = 260;
+      } else if(S.cached('reply_message_successful').is(':visible')) {
+        var current_height = S.cached('reply_message_successful').outerHeight();
       } else {
-        var current_height = S.cached('compose_table').height() + 1;
+        var current_height = S.cached('reply_message_prompt').outerHeight();
       }
       if(current_height !== last_reply_box_table_height && Math.abs(current_height - (last_reply_box_table_height || 0)) > 2) { // more then two pixel difference compared to last time
         last_reply_box_table_height = current_height;
-        tool.browser.message.send(url_params.parent_tab_id, 'set_css', { selector: 'iframe#' + url_params.frame_id, css: { height: (Math.max(260, current_height) + add_extra) + 'px' } });
+        tool.browser.message.send(url_params.parent_tab_id, 'set_css', { selector: 'iframe#' + url_params.frame_id, css: { height: (Math.max(min_height, current_height) + add_extra) + 'px' } });
       }
     }
   }

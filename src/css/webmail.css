@@ -40,10 +40,12 @@ body.cryptup_inbox div.new_message { right: 100px; }
 }
 div.evaluated iframe.embedded { width: 500px; height: 160px; border: 1px solid #cacaca; }  /* attest messages, verification results */
 iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
-iframe.reply_message { height: 260px; width: 100%; border: none; }
+iframe.reply_message { height: 80px; width: 100%; border: none; }
 div.remove_borders { border: none !important; padding:0 !important; margin:0 !important; }
 span.pgp_attachment { display: block; float: left; margin: 0 0 16px 16px; height: 120px; width: 180px; position: relative; }
 span.pgp_attachment > iframe { height: 120px; width: 180px; padding: 0; margin: 0; border: none; overflow: hidden; }
+div.reply_message_iframe_container { margin-bottom: 0; padding-bottom: 0; line-height: 8px; }
+
 
 
 /* cryptup dialog */

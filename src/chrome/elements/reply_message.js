@@ -169,11 +169,13 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
               $.each(attachment_metas, function (i, attachment_meta) {
                 $('#attachments').append(factory.embedded.attachment(attachment_meta, []));
               });
-              compose.resize_reply_box();
             } else {
               console.log('failed to re-show sent attachments'); //todo - handle !success
             }
+            compose.resize_reply_box();
           });
+        } else {
+          compose.resize_reply_box();
         }
       });
     }
