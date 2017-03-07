@@ -67,12 +67,12 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
   }
 
   function src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature) {
-    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id, signature: signature };
+    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(10), message: armored, has_password: has_password, message_id: message_id, sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id, signature: signature };
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/pgp_block.htm'), params);
   }
 
   function src_pgp_pubkey_iframe(armored_pubkey, is_outgoing) {
-    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
+    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(10), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/pgp_pubkey.htm'), params);
   }
 
@@ -80,7 +80,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
     var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
     var params = {
       account_email: account_email,
-      frame_id: 'frame_' + tool.str.random(),
+      frame_id: 'frame_' + tool.str.random(10),
       placement: 'gmail',
       to: headers.to,
       from: headers.from,

@@ -10,13 +10,13 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_armored_blocks() {
-    $("div.F3hlO").not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers().begin + "')").each(function (i, message_element) { // for each email that contains PGP block
+    $("div.xJNT8d").not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers().begin + "')").each(function (i, message_element) { // for each email that contains PGP block
       var message_id = dom_extract_message_id(message_element);
       var sender_email = dom_extract_sender_email(message_element);
       var is_outgoing = tool.value(sender_email).in(addresses);
       var replacement = tool.crypto.armor.replace_blocks(factory, message_element.innerText, message_id, sender_email, is_outgoing);
       if(typeof replacement !== 'undefined') {
-        $(this).html(replacement.replace(/\n/g, '<br>'));
+        $(this).html(replacement.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>'));
       }
     });
   }
