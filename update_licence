@@ -11,7 +11,7 @@ source_extension_patterns = {
 	'css': '/* %s */\n',
 	'htm': '<!-- %s -->\n',
 }
-source_file_paths = ['./src/css/cryptup.css', './src/css/gmail.css']
+source_file_paths = ['./src/css/cryptup.css', './src/css/webmail.css']
 source_file_blacklist = ['./src/chrome/elements/shared/attach.template.htm', './src/chrome/gmail_elements/shared/attach.template.htm']
 
 
