@@ -84,4 +84,8 @@ if(url_params.account_email) {
     }
   }));
 
+  $('.action_attest_log').click(function () {
+    show_settings_page('/chrome/dev/storage.htm', tool.env.url_create('', {filter: url_params.account_email, keys: 'attest_log', title: 'Attest Log - ' + url_params.account_email}).replace('?', '&'));
+  });
+
 }

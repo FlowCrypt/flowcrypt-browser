@@ -188,9 +188,9 @@ body#settings > div#content.dialog.add_pubkey.inside_compose select.email { widt
 body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey { width: 462px; height: 250px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose separator { display: none; }
 
-body#settings > div#content.storage { background-color: #eaeaea; padding-top: 30px; padding-bottom: 100px; min-height: 100%; height: 100%; margin: 0 auto; }
+body#settings > div#content.storage { padding-top: 30px; padding-bottom: 100px; min-height: 100%; height: 100%; margin: 0 auto; }
 body#settings > div#content.storage .emails a { padding-right: 20px; }
-body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; border: 1px solid #cacaca; width: 70%; background-color: white; }
+body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; background-color: white; }
 
 body#settings > div#content.subscribe .list_benefits { display: none; }
 body#settings > div#content.subscribe .list_benefits table img { width: 15px; }
