@@ -1,5 +1,9 @@
 <div>
 
+<b>version 3.7.0 on March 7, 2017: Google Inbox</b>
+composing, reading: CryptUp can now run on inbox.google.com
+setup: added compatibility for broken Windows GPA keys
+
 <b>version 3.6.3 on March 6, 2017: Refactoring</b>
 internal: preparing for Google Inbox
 settings: add link to source code
