@@ -4,7 +4,7 @@
 
 var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
 var original_content;
-var product = 'free_year';
+var product = 'free_quarter';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
 var l = {
