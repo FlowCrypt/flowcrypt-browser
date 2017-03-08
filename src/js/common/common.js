@@ -1629,17 +1629,24 @@
     return found_expired_subkey;
   }
 
-  function crypto_key_normalize(armored) {
+  function crypto_key_normalize(armored_original) {
+    var key;
+    var armored_normalized_newlines = armored_original.replace(/\r?\n/g, '\n').trim();
+    var nl_2 = armored_normalized_newlines.match(/\n\n/g);
+    var nl_4 = armored_normalized_newlines.match(/\n\n\n\n/g);
+    if(nl_2 && nl_4 && nl_2.length > 1 && nl_4.length === 1) {
+      armored_normalized_newlines = armored_normalized_newlines.replace(/\n\n/g, '\n'); // remove double newlines. GPA on windows does this
+    }
     try {
-      if(RegExp(crypto_armor_headers('public_key', 're').begin).test(armored)) {
-        var key = openpgp.key.readArmored(armored).keys[0];
-      } else if(RegExp(crypto_armor_headers('message', 're').begin).test(armored)) {
-        var key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
-      } else {
-        var key = undefined;
+      if(RegExp(crypto_armor_headers('public_key', 're').begin).test(armored_normalized_newlines)) {
+        key = openpgp.key.readArmored(armored_normalized_newlines).keys[0];
+      } else if(RegExp(crypto_armor_headers('message', 're').begin).test(armored_normalized_newlines)) {
+        key = openpgp.key.Key(openpgp.message.readArmored(armored_normalized_newlines).packets);
       }
       if(key) {
         return key.armor();
+      } else {
+        return armored_normalized_newlines;
       }
     } catch(error) {
       catcher.handle_exception(error);

@@ -371,7 +371,8 @@ function test_private_key_and_handle(account_email, key, options, success_callba
 }
 
 $('#step_2b_manual_enter .action_save_private').click(function () {
-  var prv = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
+  var normalized_armored_key = tool.crypto.key.normalize($('#step_2b_manual_enter .input_private_key').val());
+  var prv = openpgp.key.readArmored(normalized_armored_key).keys[0];
   var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
   var prv_headers = tool.crypto.armor.headers('private_key');
   if(typeof prv === 'undefined') {
@@ -379,7 +380,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
   } else if(prv.isPublic()) {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
   } else {
-    var decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(prv.armor()).keys[0], passphrase);
+    var decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(normalized_armored_key).keys[0], passphrase);
     if(decrypt_result === false) {
       alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
       $('#step_2b_manual_enter .input_passphrase').val('');
