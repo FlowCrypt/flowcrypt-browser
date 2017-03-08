@@ -39,7 +39,7 @@
     }
     try {
       $.ajax({
-        url: 'https://cryptup.herokuapp.com/help/error',
+        url: 'https://api.cryptup.io/help/error',
         method: 'POST',
         data: JSON.stringify({
           name: (error.name || '').substring(0, 50),
