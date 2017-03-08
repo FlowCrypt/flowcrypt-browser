@@ -629,33 +629,20 @@
     return o;
   }
 
-  function str_int_to_hex(int_as_string) { // http://answers.google.com/answers/threadview/id/519786.html (thefistofthenorthsta-ga)
-    var hex = new Array(Math.ceil(int_as_string.length * 0.83048202372184058696757985737235));
-    var hex_chars = '0123456789abcdef';
-    for(var i=0; i<hex.length; i++) {
-      hex[i] = 0;
-    }
-    for(var i=0; i<int_as_string.length; i++) {
-      for(var j=0; j<hex.length; j++) {
-        hex[j] *= 10;
-      }
-      hex[0] += parseInt(int_as_string.charAt(i));
-      for(var j=0; j < hex.length; j++) {
-        if(hex[j] > 16) {
-          hex[j + 1] += Math.floor(hex[j] / 16);
-          hex[j] = hex[j] % 16;
-        }
+  function str_int_to_hex(int_as_string) { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
+    var dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
+    while(dec.length){
+      s = 1 * dec.shift();
+      for(i = 0; s || i < sum.length; i++){
+        s += (sum[i] || 0) * 10;
+        sum[i] = s % 16;
+        s = (s - sum[i]) / 16
       }
     }
-    var index = hex.length - 1;
-    while(hex[index] == 0 && index > 0) {
-      --index;
+    while(sum.length){
+      hex.push(sum.pop().toString(16))
     }
-    var result = hex_chars.charAt(hex[0]);
-    for(var i=1; i <= index; i++) {
-      result = hex_chars.charAt(hex[i]) + result;
-    }
-    return result;
+    return hex.join('')
   }
 
   function str_strip_cryptup_reply_token(decrypted_content) {

@@ -142,7 +142,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function process_attachments(message_id, attachment_metas, attachments_container, skip_google_drive) {
     var message_element = get_message_body_element(message_id);
     var sender_email = get_sender_email(message_element);
-    var is_outgoing = tool.value(get_sender_email(message_element)).in(addresses);
+    var is_outgoing = tool.value(sender_email).in(addresses);
     attachments_container.parent().find('span.aVW').css('visibility', 'hidden'); // original gmail header showing amount of attachments
     $.each(attachment_metas, function(i, attachment_meta) {
       if(attachment_meta.treat_as !== 'original') {

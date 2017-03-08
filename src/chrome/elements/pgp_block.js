@@ -267,7 +267,12 @@ db_open(function (db) {
             decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
           }
         } else if(result.format_error) {
-          render_error(l.bad_format + '\n\n' + result.format_error);
+          if(can_read_emails && message_fetched_from_api !== 'raw') {
+            console.log('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
+            initialize(true);
+          } else {
+            render_error(l.bad_format + '\n\n' + result.format_error);
+          }
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
