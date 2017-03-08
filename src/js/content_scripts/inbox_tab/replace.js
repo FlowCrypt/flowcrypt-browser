@@ -48,7 +48,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
               if(success) {
                 process_attachments(message_id, message_element, tool.api.gmail.find_attachments(message), attachments_container);
               } else {
-                //todo: show button to retry
+                $(new_pgp_messages).find('.attachment_loader').text('Failed to load');
               }
             });
           } else {
@@ -58,7 +58,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
             }));
           }
         } else {
-          //was not able to determine message id
+          $(new_pgp_messages).prepend(factory.embedded.attachment_status('Unknown message id'));
         }
       }
     });
@@ -86,7 +86,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
                 attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
               }
             } else {
-              // todo - render error + retry button
+              attachments_container.find('.attachment_loader').text('Please reload page');
             }
           });
         } else if (attachment_meta.treat_as === 'signature') {
