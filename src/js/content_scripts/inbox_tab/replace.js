@@ -191,7 +191,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
       addresses: addresses,
       my_email: my_email,
       thread_id: thread_id,
-      thread_message_id: thread_id ? thread_id : dom_extract_message_id($(base_element).find('.ap').last().children().first()), // backup
+      thread_message_id: thread_id ? thread_id : dom_extract_message_id($(conversation_root_element).find('.ap').last().children().first()), // backup
     };
   }
 
