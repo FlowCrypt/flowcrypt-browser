@@ -8,7 +8,7 @@ var product = 'free_quarter';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
 var l = {
-  welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send encrypted attachments to anyone.',
+  welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send larger attachments, to anyone.',
 };
 if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
