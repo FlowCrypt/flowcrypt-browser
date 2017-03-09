@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.7.2 on March 9, 2017: Bugfixes</b>
+internal: prevent excessive subscription sync
+
 <b>version 3.7.1 on March 8, 2017: Subscription Sync</b>
 setup: update subscription done message
 setup: add account subscription sync
