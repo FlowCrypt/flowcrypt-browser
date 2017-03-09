@@ -146,7 +146,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     attachments_container.parent().find('span.aVW').css('visibility', 'hidden'); // original gmail header showing amount of attachments
     $.each(attachment_metas, function(i, attachment_meta) {
       if(attachment_meta.treat_as !== 'original') {
-        var attachment_selector = attachments_container.find(get_attachment_selector(attachment_meta.name)).first();
+        var attachment_selector = attachments_container.find(get_attachment_selector(attachment_meta.name || 'noname')).first();
         hide_attachment(attachment_selector, attachments_container);
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
           attachments_container.prepend(factory.embedded.attachment(attachment_meta));
