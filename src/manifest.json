@@ -33,10 +33,12 @@
     },
     {
       "matches": ["*://accounts.google.com/o/oauth2/approval*"],
-      "js": [
-        "/js/common/common.js",
-        "/js/content_scripts/oauth_window/oauth_window.js"
-      ]
+      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/oauth_window.js"]
+    },
+    {
+      "matches": ["https://cryptup.org/stripe*", "https://cryptup.io/stripe*"],
+      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/checkout/stripe.js"],
+      "all_frames": true
     }
   ],
   "background": {

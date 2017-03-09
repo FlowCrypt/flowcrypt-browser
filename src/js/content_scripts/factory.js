@@ -94,6 +94,10 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/reply_message.htm'), params);
   }
 
+  function src_stripe_checkout() {
+    return tool.env.url_create('http://l.cryptup.org/stripe.htm', { parent_tab_id: parent_tab_id });
+  }
+
   function iframe(src, classes, additional_attributes) {
     var attributes = { id: tool.env.url_params(['frame_id'], src).frame_id, class: (classes || []).concat(reloadable_class).join(' '), src: src };
     $.each(additional_attributes, function(a, v) {
@@ -166,6 +170,9 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       },
       attest: function(attest_packet) {
         return iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'});
+      },
+      stripe_checkout: function() {
+        return iframe(src_stripe_checkout());
       },
     },
     button: {

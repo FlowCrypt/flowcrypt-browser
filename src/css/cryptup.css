@@ -201,7 +201,7 @@ body#settings > div#content.subscribe .list_benefits table tr td { padding-botto
 body#settings > div#content.subscribe .list_benefits table tr td:first-child { padding-left: 20px; }
 body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
 body#settings > div#content.subscribe .list_benefits table tr:hover td { background-color: #f6f6f6; }
-
+body#settings > div#content.subscribe .stripe_checkout { display: none; }
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }

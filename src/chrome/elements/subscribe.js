@@ -3,8 +3,14 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
+
+var PRODUCTS = {
+  trial: { id: 'free_quarter', method: 'trial', name: 'trial' },
+  advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly' },
+};
+
+var chosen_product;
 var original_content;
-var product = 'free_quarter';
 var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
 var l = {
@@ -25,8 +31,18 @@ if(url_params.placement === 'embedded') {
 }
 $('#content').css('display', 'block');
 
-// tool.ui.passphrase_toggle(['passphrase']);
-// $('input.passphrase').keyup(render_normal);
+tool.browser.message.tab_id(function (tab_id) {
+  var factory = element_factory(url_params.account_email, tab_id);
+  tool.browser.message.listen({
+    stripe_result: stripe_result_handler,
+  }, tab_id);
+  $('.stripe_checkout').html(factory.embedded.stripe_checkout());
+});
+
+function stripe_result_handler(data, sender, respond) {
+  $('.stripe_checkout').html('').css('display', 'none');
+  register_and_subscribe(PRODUCTS.advanced_monthly, data.token);
+}
 
 account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
   can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
@@ -51,7 +67,10 @@ function render_embedded(level, expire, active) {
   if(active) {
     render_status(l.welcome);
   } else if(url_params.verification_email_text) {
-    tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result)
+    account_storage_get(null, ['cryptup_subscription_attempt'], function (storage) {
+      chosen_product = storage.cryptup_subscription_attempt;
+      tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result)
+    });
   } else { // not really tested or expected
     catcher.log('embedded subscribe.htm but has no verification_email_text');
   }
@@ -76,7 +95,7 @@ function render_dialog(level, expire, active) {
     if(active && url_params.source === 'auth_error') {
       repair_auth_error_get_new_installation();
     } else {
-      register_and_subscribe();
+      register_and_subscribe(PRODUCTS.trial);
     }
   }));
 }
@@ -85,8 +104,10 @@ function render_status(content, spinner) {
   $(url_params.placement === 'embedded' ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner('white') : ''));
 }
 
-function register_and_subscribe() {
+function register_and_subscribe(product, source_token) {
   render_status('registering..', true);
+  chosen_product = product;
+  chosen_product.source = source_token || null;
   tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
 }
 
@@ -132,7 +153,6 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
                 var message_content = tool.str.base64url_decode(gmail_message_object.payload.body.data);
                 var token_link_match = message_content.match(/account\/login?([^\s"<]+)/g);
                 if(token_link_match !== null) {
-                  console.log(token_link_match);
                   var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
                   if(token_link_params.uuid === uuid && token_link_params.token) {
                     tokens.push(token_link_params.token);
@@ -156,27 +176,29 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
 }
 
 function render_open_verification_email_message() {
-  $('.action_ok').css('display', 'none');
-  $('.action_close').text('ok');
-  $('.status').text('Please check your inbox for a verification email.');
+  account_storage_set(null, { 'cryptup_subscription_attempt': chosen_product }, function () {
+    $('.action_ok').css('display', 'none');
+    $('.action_close').text('ok');
+    $('.status').text('Please check your inbox for a verification email.');
+  });
 }
 
-function handle_login_result(registered, verified, subscription, error, tokens) {
-  if(!registered && tokens && tokens.length) {
-    tool.api.cryptup.account_login(url_params.account_email, tokens.pop(), function(r, v, s, e) {
-      handle_login_result(r, v, s, e, tokens);
+function handle_login_result(registered, verified, subscription, error, cryptup_email_verification_tokens) {
+  if(!registered && cryptup_email_verification_tokens && cryptup_email_verification_tokens.length) {
+    tool.api.cryptup.account_login(url_params.account_email, cryptup_email_verification_tokens.pop(), function(r, v, s, e) {
+      handle_login_result(r, v, s, e, cryptup_email_verification_tokens);
     });
   } else if(registered) {
     if(verified) {
       if(subscription && subscription.level !== null) { //todo - check expiration
         notify_upgraded_and_close();
       } else {
-        render_status('upgrading cryptup..', true);
-        tool.api.cryptup.account_subscribe(product, handle_subscribe_result);
+        render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
+        tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, chosen_product.source, handle_subscribe_result);
       }
     } else {
       render_status('verifying..', true);
-      if(can_read_emails && !tokens) {
+      if(can_read_emails && !cryptup_email_verification_tokens) {
         $('.status').text('This may take a minute.. ');
         wait_for_token_email(30, function (tokens) {
           if(tokens) {
@@ -204,6 +226,9 @@ function handle_login_result(registered, verified, subscription, error, tokens) 
 function handle_subscribe_result(success, response) {
   if(success && response && response.subscription && response.subscription.level) {
     notify_upgraded_and_close();
+  } else if(success === tool.api.cryptup.auth_error) {
+    alert('There was a problem logging in, please write me at tom@cryptup.org to fix this');
+    window.location.reload();
   } else {
     alert('There was a problem upgrading CryptUp (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
     window.location.reload();
@@ -213,9 +238,7 @@ function handle_subscribe_result(success, response) {
 function notify_upgraded_and_close() {
   tool.env.increment('upgrade_done');
   if(url_params.placement !== 'embedded') {
-    tool.browser.message.send(url_params.parent_tab_id, 'notification_show', {
-      notification: 'Successfully upgraded to CryptUp Advanced.',
-    });
+    tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to CryptUp Advanced.' });
     if(url_params.subscribe_result_tab_id) {
       tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});
     }

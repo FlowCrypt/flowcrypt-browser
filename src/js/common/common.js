@@ -71,14 +71,16 @@
       console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
     }
     try {
-      tool.env.increment('error');
-      account_storage_get(null, ['errors'], function (storage) {
-        if(typeof storage.errors === 'undefined') {
-          storage.errors = [];
-        }
-        storage.errors.unshift(error.stack || error_message);
-        account_storage_set(null, storage);
-      });
+      if(typeof account_storage_get === 'function' && typeof account_storage_set === 'function') {
+        tool.env.increment('error');
+        account_storage_get(null, ['errors'], function (storage) {
+          if(typeof storage.errors === 'undefined') {
+            storage.errors = [];
+          }
+          storage.errors.unshift(error.stack || error_message);
+          account_storage_set(null, storage);
+        });
+      }
     } catch (storage_err) {
       console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
     }
@@ -2801,12 +2803,14 @@
     });
   }
 
-  function api_cryptup_account_subscribe(product, callback) {
+  function api_cryptup_account_subscribe(product, method, payment_source_token, callback) {
     storage_cryptup_auth_info(function (email, uuid, verified) {
       if(verified) {
         api_cryptup_call('account/subscribe', {
           account: email,
           uuid: uuid,
+          method: method,
+          source: payment_source_token,
           product: product,
         }, api_cryptup_response_formatter(function (success_or_auth_error, result) {
           if(success_or_auth_error === true) {
