@@ -1283,9 +1283,21 @@
     if (is_background_page && background_script_shortcut_handlers && msg.to === null) {
       background_script_shortcut_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
     } else if(is_background_page) {
-      chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, callback);
+      chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, function(r) {
+        catcher.try(function() {
+          if(typeof callback !== 'undefined') {
+            callback(r);
+          }
+        })();
+      });
     } else {
-      chrome.runtime.sendMessage(msg, callback);
+      chrome.runtime.sendMessage(msg, function(r) {
+        catcher.try(function() {
+          if(typeof callback !== 'undefined') {
+            callback(r);
+          }
+        })();
+      });
     }
   }
 
@@ -1301,6 +1313,7 @@
           respond(response);
         } catch(e) {
           if(e.message !== 'Attempting to use a disconnected port object') {
+            catcher.handle_exception(e);
             throw e;
           }
         }

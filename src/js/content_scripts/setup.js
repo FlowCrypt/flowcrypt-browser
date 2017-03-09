@@ -75,34 +75,32 @@ function content_script_setup_if_vacant(webmail_specific) {
   // called by wait_for_account_email_then_setup
   function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
-      catcher.try(function () {
-        factory = element_factory(account_email, tab_id, chrome.runtime.id, reloadable_class, destroyable_class);
-        inject = content_script_element_injector(webmail_specific.name, factory);
-        inject.meta();
-        add_account_email_to_list_of_accounts(account_email);
-        save_account_email_full_name_if_needed(account_email);
-        var show_setup_needed_notification_if_setup_not_done = true;
-        var wait_for_setup_interval = TrySetDestroyableInterval(function () {
-          account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], function (storage) {
-            if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
-              notifications.clear();
-              initialize(account_email, tab_id);
-              clearInterval(wait_for_setup_interval);
-            } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-              var set_up_link = tool.env.url_create('_PLUGIN/settings/index.htm', { account_email: account_email });
-              var set_up_notification = '<a href="' + set_up_link + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
-              notifications.show(set_up_notification, {
-                notification_setup_needed_dismiss: function () {
-                  account_storage_set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
-                },
-                close: function () {
-                  show_setup_needed_notification_if_setup_not_done = false;
-                }
-              });
-            }
-          });
-        }, 1000);
-      })();
+      factory = element_factory(account_email, tab_id, chrome.runtime.id, reloadable_class, destroyable_class);
+      inject = content_script_element_injector(webmail_specific.name, factory);
+      inject.meta();
+      add_account_email_to_list_of_accounts(account_email);
+      save_account_email_full_name_if_needed(account_email);
+      var show_setup_needed_notification_if_setup_not_done = true;
+      var wait_for_setup_interval = TrySetDestroyableInterval(function () {
+        account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], function (storage) {
+          if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
+            notifications.clear();
+            initialize(account_email, tab_id);
+            clearInterval(wait_for_setup_interval);
+          } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
+            var set_up_link = tool.env.url_create('_PLUGIN/settings/index.htm', { account_email: account_email });
+            var set_up_notification = '<a href="' + set_up_link + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+            notifications.show(set_up_notification, {
+              notification_setup_needed_dismiss: function () {
+                account_storage_set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
+              },
+              close: function () {
+                show_setup_needed_notification_if_setup_not_done = false;
+              }
+            });
+          }
+        });
+      }, 1000);
     });
   }
 
@@ -148,9 +146,9 @@ function content_script_setup_if_vacant(webmail_specific) {
       },
     }, tab_id);
 
-    tool.browser.message.send(null, 'migrate_account', { account_email: account_email, }, catcher.try(function () {
+    tool.browser.message.send(null, 'migrate_account', { account_email: account_email, }, function () {
       webmail_specific.start(account_email, inject, notifications, factory);
-    }));
+    });
   }
 
   function save_account_email_full_name_if_needed(account_email) {
