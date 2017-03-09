@@ -1,5 +1,12 @@
 <div>
 
+<b>version 3.7.1 on March 8, 2017: Subscription Sync</b>
+setup: update subscription done message
+setup: add account subscription sync
+settings: add attest log and error log on experimental page
+settings: publish pricing
+internal: update api endpoint
+
 <b>version 3.7.0 on March 7, 2017: Google Inbox</b>
 composing, reading: CryptUp can now run on inbox.google.com
 setup: added compatibility for broken Windows GPA keys
