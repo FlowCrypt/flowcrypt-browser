@@ -103,7 +103,7 @@ function schedule_keyserver_fingerprint_check() {
   setTimeout(function() {
     if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {
       // update may happen to many people at the same time -- server overload
-      setInterval(catcher.try(tool.diagnose.keyserver_fingerprints), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(catcher.try(tool.diagnose.keyserver_fingerprints), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
       catcher.try(tool.diagnose.keyserver_fingerprints)(); // now
@@ -144,7 +144,7 @@ function schedule_cryptup_subscription_level_check() {
   setTimeout(function() {
     if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      setInterval(catcher.try(cryptup_subscription_level_update), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(catcher.try(cryptup_subscription_level_update), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
       catcher.try(cryptup_subscription_level_update)(); // now
