@@ -431,6 +431,7 @@
         auth_error: api_cryptup_auth_error,
         error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
+        account_check: api_cryptup_account_check,
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
         message_presign_files: api_cryptup_message_presign_files,
@@ -2563,7 +2564,6 @@
 
   function api_attester_call(path, values, callback, format) {
     api_call('https://attester.cryptup.io/', path, values, callback, format || 'JSON');
-    // api_call('https://attester.herokuapp.com/', path, values, callback, format || 'JSON');
     // api_call('http://127.0.0.1:5002/', path, values, callback, format || 'JSON');
   }
 
@@ -2711,7 +2711,6 @@
 
   function api_cryptup_call(path, values, callback, format) {
     api_call('https://api.cryptup.io/', path, values, callback, format || 'JSON');
-    // api_call('https://cryptup.herokuapp.com/', path, values, callback, format || 'JSON');
     // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
   }
 
@@ -2758,6 +2757,12 @@
     }, api_cryptup_response_formatter(callback));
   }
 
+  function api_cryptup_account_check(emails, callback) {
+    api_cryptup_call('account/check', {
+      emails: emails,
+    }, api_cryptup_response_formatter(callback));
+  }
+
   function api_cryptup_account_login(account_email, token, callback) {
     storage_cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
       var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
@@ -2765,7 +2770,7 @@
       api_cryptup_call('account/login', { account: email, uuid: uuid, token: token || null, }, function (success, result) {
         if(success) {
           if(result.registered === true) {
-            account_storage_set(null, { cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: result.verified === true, cryptup_account_subscription: result.subscription, }, function () {
+            account_storage_set(null, { cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: result.verified === true, cryptup_account_subscription: result.subscription }, function () {
               callback(true, result.verified === true, result.subscription);
             });
           } else {

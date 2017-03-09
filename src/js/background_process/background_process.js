@@ -53,6 +53,8 @@ inject_cryptup_into_gmail_if_needed();
 
 schedule_keyserver_fingerprint_check();
 
+schedule_cryptup_subscription_level_check();
+
 function open_settings_page_handler(message, sender, respond) {
   open_settings_page(message.path, message.account_email, message.page);
   respond();
