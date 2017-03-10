@@ -2214,6 +2214,14 @@
     }
   }
 
+  function mime_content_node(MimeBuilder, type, content) {
+    var node = new MimeBuilder(type).setContent(content);
+    if(type === 'text/plain') {
+      node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
+    }
+    return node;
+  }
+
   /*
     body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
     headers: at least {To, From, Subject}
@@ -2226,16 +2234,19 @@
       $.each(headers, function (key, header) {
         root_node.addHeader(key, header);
       });
-      root_node.addHeader('OpenPGP', 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key')));
-      var text_node = new MimeBuilder('multipart/alternative');
+      root_node.addHeader('OpenPGP', 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key'))); // todo - this should be moved out of here
       if(typeof body === 'string') {
-        text_node.appendChild(new MimeBuilder('text/plain').setContent(body));
+        body = {'text/plain': body};
+      }
+      if(Object.keys(body).length === 1) {
+        var content_node = mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0]]);
       } else {
+        var content_node = new MimeBuilder('multipart/alternative');
         $.each(body, function (type, content) {
-          text_node.appendChild(new MimeBuilder(type).setContent(content));
+          content_node.appendChild(mime_content_node(MimeBuilder, type, content));
         });
       }
-      root_node.appendChild(text_node);
+      root_node.appendChild(content_node);
       $.each(attachments || [], function (i, attachment) {
         root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
           'Content-Disposition': 'attachment',

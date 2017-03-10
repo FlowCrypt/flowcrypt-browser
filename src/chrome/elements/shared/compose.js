@@ -435,22 +435,42 @@ function init_shared_compose_js(url_params, db, subscription) {
         }
       }, 60);
     } else {
-      tool.crypto.key.decrypt(prv, passphrase);
-      tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
-        if(success) {
-          handle_send_btn_processing_error(function () {
-            attach.collect_attachments(function (attachments) { // todo - not signing attachments
-              db_contact_update(db, recipients, { last_use: Date.now() }, function () {
-                S.now('send_btn_span').text('Sending');
-                send_email({ 'text/plain': with_attached_pubkey_if_needed(signing_result) }, attachments, true, email_footer);
+      tool.env.set_up_require();
+      require(['emailjs-mime-codec'], function (MimeCodec) {
+
+        // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
+        // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
+        // resulting in.. wait for it.. signatures that don't match
+        // if you are reading this and have ideas about better solutions which:
+        //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
+        //  - don't require text to be sent as an attachment
+        //  - don't require all other clients to support PGP/MIME
+        // then please let me know. Eagerly waiting! In the meanwhile..
+        if(!/[^\s]{77,}/.test(plaintext)) {
+          // except when the text contains word longer than 76 characters. Gmail doesn't rape texts containing very long words!
+          plaintext = MimeCodec.foldLines(plaintext, 76, true);
+          // makes me want to include a long word with every message. Candidate:
+          // https://en.wikipedia.org/wiki/Lopadotemachoselachogaleokranioleipsanodrimhypotrimmatosilphioparaomelitokatakechymenokichlepikossyphophattoperisteralektryonoptekephalliokigklopeleiolagoiosiraiobaphetraganopterygon
+          // or maybe just _______________________________________________________________________________
+        }
+
+        tool.crypto.key.decrypt(prv, passphrase);
+        tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
+          if(success) {
+            handle_send_btn_processing_error(function () {
+              attach.collect_attachments(function (attachments) { // todo - not signing attachments
+                db_contact_update(db, recipients, { last_use: Date.now() }, function () {
+                  S.now('send_btn_span').text('Sending');
+                  send_email({ 'text/plain': with_attached_pubkey_if_needed(signing_result) }, attachments, true, email_footer);
+                });
               });
             });
-          });
-        } else {
-          catcher.log('error signing message. Error:' + signing_result);
-          alert('There was an error signing this message. Please write me at tom@cryptup.org, I resolve similar issues very quickly.\n\n' + signing_result);
-          reset_send_btn();
-        }
+          } else {
+            catcher.log('error signing message. Error:' + signing_result);
+            alert('There was an error signing this message. Please write me at tom@cryptup.org, I resolve similar issues very quickly.\n\n' + signing_result);
+            reset_send_btn();
+          }
+        });
       });
     }
   }
