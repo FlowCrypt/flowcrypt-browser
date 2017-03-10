@@ -446,13 +446,7 @@ function init_shared_compose_js(url_params, db, subscription) {
         //  - don't require text to be sent as an attachment
         //  - don't require all other clients to support PGP/MIME
         // then please let me know. Eagerly waiting! In the meanwhile..
-        if(!/[^\s]{77,}/.test(plaintext)) {
-          // except when the text contains word longer than 76 characters. Gmail doesn't rape texts containing very long words!
-          plaintext = MimeCodec.foldLines(plaintext, 76, true);
-          // makes me want to include a long word with every message. Candidate:
-          // https://en.wikipedia.org/wiki/Lopadotemachoselachogaleokranioleipsanodrimhypotrimmatosilphioparaomelitokatakechymenokichlepikossyphophattoperisteralektryonoptekephalliokigklopeleiolagoiosiraiobaphetraganopterygon
-          // or maybe just _______________________________________________________________________________
-        }
+        plaintext = MimeCodec.foldLines(plaintext, 76, true);
 
         tool.crypto.key.decrypt(prv, passphrase);
         tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
