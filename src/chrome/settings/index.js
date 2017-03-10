@@ -25,9 +25,11 @@ tool.browser.message.tab_id(function (tab_id) {
       reload(data && data.advanced);
     },
     add_pubkey_dialog: function (data, sender, respond) {
+      // todo: use #cryptup_dialog just like passphrase_dialog does
       window.open(factory.src.add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: function (data) {
+      // todo: use #cryptup_dialog just like passphrase_dialog does
       window.open(factory.src.subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: function (data) {
@@ -36,6 +38,14 @@ tool.browser.message.tab_id(function (tab_id) {
     open_google_auth_dialog: function (data) {
       $('.featherlight-close').click();
       new_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
+    },
+    passphrase_dialog: function (data) {
+      if(!$('#cryptup_dialog').length) {
+        $('body').append(factory.dialog.passphrase(data.longids, data.type));
+      }
+    },
+    close_dialog: function (data) {
+      $('#cryptup_dialog').remove();
     },
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
