@@ -1,5 +1,13 @@
 <div>
 
+<b>version 3.7.3 on March 9, 2017: Signing Compatibility</b>
+composing: fixed signed messages line folding
+reading:noname file left hanging
+reading: google inbox - base element is not defined
+internal: don't try to sync if no emails yet
+internal: preparing stripe
+internal: handle chrome messaging listener exceptions
+
 <b>version 3.7.2 on March 9, 2017: Bugfixes</b>
 internal: prevent excessive subscription sync
 
