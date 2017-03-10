@@ -257,7 +257,7 @@ db_open(function (db) {
   }
 
   function decrypt_and_render(optional_password) {
-    if(!url_params.signature) {
+    if(typeof url_params.signature !== 'string') {
       tool.crypto.message.decrypt(db, url_params.account_email, url_params.message, optional_password, function (result) {
         if(result.success) {
           if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
@@ -394,10 +394,7 @@ db_open(function (db) {
       } else { // gmail message read auth not allowed
         $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
         $('.auth_settings').click(function () {
-          tool.browser.message.send(null, 'settings', {
-            account_email: url_params.account_email,
-            page: '/chrome/settings/modules/auth_denied.htm',
-          });
+          tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
         });
       }
     }
