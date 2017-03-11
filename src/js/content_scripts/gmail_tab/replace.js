@@ -167,7 +167,8 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
             }
           });
         } else if (attachment_meta.treat_as === 'signature') {
-          var embedded_signed_message = factory.embedded.message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email, false, true);
+          var signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';
+          var embedded_signed_message = factory.embedded.message(signed_content, message_id, false, sender_email, false, true);
           if(!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers(null).begin).in(message_element.text())) {
             message_element.addClass('evaluated');
             message_element.html(embedded_signed_message).css('display', 'block');
