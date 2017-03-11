@@ -3,7 +3,32 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
-$('.status').html('Verifying..' + tool.ui.spinner('green'));
-tool.browser.message.send(null, 'attest_packet_received', { account_email: url_params.account_email, packet: url_params.attest_packet }, function(attestation) {
-  $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.inner_text(attestation.result.replace(/\n/g, '<br>')).replace(/\n/g, '<br>'));
-});
+
+if(get_passphrase(url_params.account_email) !== null) {
+  process_attest();
+} else {
+  $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>')
+  $('.action_passphrase').click(function() {
+    tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {type: 'attest'});
+  });
+  tool.browser.message.tab_id(function(tab_id) {
+    tool.browser.message.listen({
+      passphrase_entry: function(message, sender, respond) {
+        if(message.entered && get_passphrase(url_params.account_email) !== null) {
+          process_attest();
+        }
+      },
+    })
+  });
+}
+
+function process_attest() {
+  $('.status').html('Verifying..' + tool.ui.spinner('green'));
+  tool.browser.message.send(null, 'attest_packet_received', {
+    account_email: url_params.account_email,
+    packet: url_params.attest_packet,
+    passphrase: get_passphrase(url_params.account_email),
+  }, function(attestation) {
+    $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.inner_text(attestation.result.replace(/\n/g, '<br>')).replace(/\n/g, '<br>'));
+  });
+}

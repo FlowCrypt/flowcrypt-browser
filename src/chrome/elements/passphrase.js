@@ -9,9 +9,10 @@ if(url_params.type === 'embedded') {
   $('div.separator').css('display', 'none');
   $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
   $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-}
-if(url_params.type === 'sign') {
-  $('h1').text('Enter your pass phrase to sign email')
+} else if(url_params.type === 'sign') {
+  $('h1').text('Enter your pass phrase to sign email');
+} else if(url_params.type === 'attest') {
+  $('h1').text('Enter your pass phrase to confirm attestation');
 }
 tool.ui.passphrase_toggle(['passphrase']);
 

@@ -5,7 +5,7 @@
 var CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
 var CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
 var ATTESTERS = {
-  CRYPTUP: { email: 'attest@cryptup.org', api: undefined, pubkey: undefined, }
+  CRYPTUP: { email: 'attest@cryptup.org', api: undefined, pubkey: undefined }
 };
 
 var currently_watching = {};
@@ -26,7 +26,7 @@ function attest_requested_handler(message, sender, respond) {
 }
 
 function attest_packet_received_handler(message, sender, respond) {
-  process_attest_packet_text(message.account_email, message.packet, function(account, packet, success, result) {
+  process_attest_packet_text(message.account_email, message.packet, message.passphrase, function(account, packet, success, result) {
     add_attest_log(account, packet, success, result, function() {
       respond({success: success, result: result});
     });
@@ -69,12 +69,12 @@ function check_email_for_attests_and_respond(account_email) {
   });
 }
 
-function process_attest_packet_text(account_email, attest_packet_text, callback) {
+function process_attest_packet_text(account_email, attest_packet_text, passphrase, callback) {
   var attest = tool.api.attester.packet.parse(attest_packet_text);
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
   is_already_attested(account_email, attest.attester, function (is_attested) {
     if (!is_attested) {
-      var decrypted = tool.crypto.key.decrypt(key, get_passphrase(account_email));
+      var decrypted = tool.crypto.key.decrypt(key, passphrase || get_passphrase(account_email));
       if (decrypted) {
         var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
         var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.trim_lower(account_email));
@@ -116,7 +116,7 @@ function process_attest_packet_text(account_email, attest_packet_text, callback)
 
 function process_attest_email(account_email, gmail_message_object) {
   if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-    process_attest_packet_text(account_email, tool.str.base64url_decode(gmail_message_object.payload.body.data), add_attest_log);
+    process_attest_packet_text(account_email, tool.str.base64url_decode(gmail_message_object.payload.body.data), null, add_attest_log);
   }
 }
 
