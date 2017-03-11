@@ -154,7 +154,8 @@ body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #66
 body#settings > div#content.pubkeys table#emails tr { height: 32px; }
 body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
   border-bottom: 1px solid #dadada; }
-body#settings > div#content.pubkeys #edit_contact textarea.input_pubkey { width: 500px; height: 420px; font-size: 12px; padding: 8px; }
+body#settings > div#content.pubkeys textarea.input_pubkey { width: 600px; height: 420px; font-size: 12px; padding: 8px; }
+body#settings > div#content.pubkeys iframe.pgp_block { width: 500px; height: 175px !important; margin-bottom: 20px; border: none; }
 
 body#settings > div#content.footer { margin: 0; }
 body#settings > div#content.footer .user_free, body#settings > div#content.footer .user_subscribed { display: none; }
