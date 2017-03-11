@@ -421,51 +421,56 @@ function init_shared_compose_js(url_params, db, subscription) {
   function sign_and_send(account_email, recipients, armored_pubkeys, subject, plaintext, challenge, _active, send_email) {
     S.now('send_btn_span').text('Signing');
     var keyinfo = private_keys_get(account_email, 'primary');
-    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-    var passphrase = get_passphrase(account_email);
-    if(passphrase === null) {
-      S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
-      tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'sign', longids: 'primary' });
-      when_master_passphrase_entered(function (passphrase) {
-        if(passphrase) {
-          sign_and_send(account_email, recipients, armored_pubkeys, subject, plaintext, challenge, _active, send_email);
-        } else { // timeout - reset
-          clearInterval(passphrase_interval);
-          reset_send_btn();
-        }
-      }, 60);
-    } else {
-      tool.env.set_up_require();
-      require(['emailjs-mime-codec'], function (MimeCodec) {
-
-        // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
-        // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
-        // resulting in.. wait for it.. signatures that don't match
-        // if you are reading this and have ideas about better solutions which:
-        //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
-        //  - don't require text to be sent as an attachment
-        //  - don't require all other clients to support PGP/MIME
-        // then please let me know. Eagerly waiting! In the meanwhile..
-        plaintext = MimeCodec.foldLines(plaintext, 76, true);
-
-        tool.crypto.key.decrypt(prv, passphrase);
-        tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
-          if(success) {
-            handle_send_btn_processing_error(function () {
-              attach.collect_attachments(function (attachments) { // todo - not signing attachments
-                db_contact_update(db, recipients, { last_use: Date.now() }, function () {
-                  S.now('send_btn_span').text('Sending');
-                  send_email({ 'text/plain': with_attached_pubkey_if_needed(signing_result) }, attachments, true, email_footer);
-                });
-              });
-            });
-          } else {
-            catcher.log('error signing message. Error:' + signing_result);
-            alert('There was an error signing this message. Please write me at tom@cryptup.org, I resolve similar issues very quickly.\n\n' + signing_result);
+    if(keyinfo) {
+      var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+      var passphrase = get_passphrase(account_email);
+      if(passphrase === null) {
+        S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
+        tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'sign', longids: 'primary' });
+        when_master_passphrase_entered(function (passphrase) {
+          if(passphrase) {
+            sign_and_send(account_email, recipients, armored_pubkeys, subject, plaintext, challenge, _active, send_email);
+          } else { // timeout - reset
+            clearInterval(passphrase_interval);
             reset_send_btn();
           }
+        }, 60);
+      } else {
+        tool.env.set_up_require();
+        require(['emailjs-mime-codec'], function (MimeCodec) {
+
+          // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
+          // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
+          // resulting in.. wait for it.. signatures that don't match
+          // if you are reading this and have ideas about better solutions which:
+          //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
+          //  - don't require text to be sent as an attachment
+          //  - don't require all other clients to support PGP/MIME
+          // then please let me know. Eagerly waiting! In the meanwhile..
+          plaintext = MimeCodec.foldLines(plaintext, 76, true);
+
+          tool.crypto.key.decrypt(prv, passphrase);
+          tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
+            if(success) {
+              handle_send_btn_processing_error(function () {
+                attach.collect_attachments(function (attachments) { // todo - not signing attachments
+                  db_contact_update(db, recipients, { last_use: Date.now() }, function () {
+                    S.now('send_btn_span').text('Sending');
+                    send_email({ 'text/plain': with_attached_pubkey_if_needed(signing_result) }, attachments, true, email_footer);
+                  });
+                });
+              });
+            } else {
+              catcher.log('error signing message. Error:' + signing_result);
+              alert('There was an error signing this message. Please write me at tom@cryptup.org, I resolve similar issues very quickly.\n\n' + signing_result);
+              reset_send_btn();
+            }
+          });
         });
-      });
+      }
+    } else {
+      alert('Cannot sign the message because your plugin is not correctly set up. Write me at tom@cryptup.org if this persists.');
+      reset_send_btn();
     }
   }
 
