@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.7.4 on March 10, 2017: Attest Without Pass Phrase</b>
+setup: prompt user to enter passphrase on attest if needed
+setup: fixing public key submit if checked on manual enter
+composing: passphrase_dialog broken in settings compose
+reading: display friendly error when failed to get detached signature
+
 <b>version 3.7.3 on March 9, 2017: Signing Compatibility</b>
 composing: fixed signed messages line folding
 reading:noname file left hanging
