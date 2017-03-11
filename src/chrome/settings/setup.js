@@ -392,7 +392,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
           passphrase: passphrase,
           setup_simple: false,
           key_backup_prompt: false,
-          submit_key: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+          submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
           submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
           save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
         };
