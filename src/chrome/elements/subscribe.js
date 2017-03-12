@@ -23,11 +23,15 @@ if(url_params.placement === 'embedded') {
   $('body').css({'width': '460px', 'overflow': 'hidden'});
 } else if(url_params.placement === 'settings') {
   $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
-  $('.list_benefits').css('display', 'block');
+  if(url_params.source !== 'auth_error') {
+    $('.list_benefits').css('display', 'block');
+  }
   $('.line.button_padding').css('padding', 0);
   tool.env.increment('upgrade_dialog_show');
 } else {
-  $('.list_benefits').css('display', 'block');
+  if(url_params.source !== 'auth_error') {
+    $('.list_benefits').css('display', 'block');
+  }
   tool.env.increment('upgrade_dialog_show');
   $('body').css('overflow', 'hidden');
 }
