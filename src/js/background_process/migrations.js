@@ -112,46 +112,15 @@ function schedule_keyserver_fingerprint_check() {
   setInterval(catcher.try(tool.diagnose.keyserver_fingerprints), tool.time.hours(23 + Math.random())); // random 23-24 hours
 }
 
-function cryptup_subscription_level_update() {
-  get_account_emails(function(emails) {
-    if(emails.length) {
-      tool.api.cryptup.account_check(emails, function(success, result) {
-        if(success) {
-          storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
-            storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
-              var local_storage_update = {};
-              if(result.email && result.subscription && (result.subscription.level !== stored_level || result.subscription.method !== stored_method || result.subscription.expire !== stored_expire)) {
-                local_storage_update['cryptup_account_subscription'] = result.subscription;
-              }
-              if((result.email && !cryptup_account_email) || (result.email && cryptup_account_email !== result.email)) {
-                // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
-                local_storage_update['cryptup_account_email'] = result.email;
-                local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
-                local_storage_update['cryptup_account_verified'] = true;
-              }
-              if(Object.keys(local_storage_update).length) {
-                catcher.info('updating account subscription from ' + stored_level + ' to ' + result.subscription.level, result);
-                account_storage_set(null, local_storage_update);
-              }
-            });
-          });
-        } else {
-          catcher.info('could not check account subscription', result);
-        }
-      });
-    }
-  });
-}
-
 function schedule_cryptup_subscription_level_check() {
   setTimeout(function() {
     if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      setTimeout(catcher.try(cryptup_subscription_level_update), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(catcher.try(tool.api.cryptup.account_update), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      catcher.try(cryptup_subscription_level_update)(); // now
+      catcher.try(tool.api.cryptup.account_update)(); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  setInterval(catcher.try(cryptup_subscription_level_update), tool.time.hours(23 + Math.random())); // random 23-24 hours
+  setInterval(catcher.try(tool.api.cryptup.account_update), tool.time.hours(23 + Math.random())); // random 23-24 hours
 }

@@ -442,6 +442,7 @@
         message_token: api_cryptup_message_token,
         message_reply: api_cryptup_message_reply,
         link_message: api_cryptup_link_message,
+        account_update: api_cryptup_account_update,
       },
       aws: {
         s3_upload: api_aws_s3_upload, // ([{base_url, fields, attachment}, ...], cb)
@@ -2906,6 +2907,47 @@
     return api_cryptup_call('link/message', {
       short: short,
     }, api_cryptup_response_formatter(callback));
+  }
+
+  function api_cryptup_account_update(callback) {
+    if(typeof callback !== 'function') {
+      callback = function() {};
+    }
+    get_account_emails(function(emails) {
+      if(emails.length) {
+        tool.api.cryptup.account_check(emails, function(success, result) {
+          if(success) {
+            storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
+              storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
+                var local_storage_update = {};
+                if(result.email && result.subscription && (result.subscription.level !== stored_level || result.subscription.method !== stored_method || result.subscription.expire !== stored_expire)) {
+                  local_storage_update['cryptup_account_subscription'] = result.subscription;
+                }
+                if((result.email && !cryptup_account_email) || (result.email && cryptup_account_email !== result.email)) {
+                  // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
+                  local_storage_update['cryptup_account_email'] = result.email;
+                  local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
+                  local_storage_update['cryptup_account_verified'] = true;
+                }
+                if(Object.keys(local_storage_update).length) {
+                  catcher.info('updating account subscription from ' + stored_level + ' to ' + result.subscription.level, result);
+                  account_storage_set(null, local_storage_update, function() {
+                    callback(true);
+                  });
+                } else {
+                  callback(false);
+                }
+              });
+            });
+          } else {
+            catcher.info('could not check account subscription', result);
+            callback(null);
+          }
+        });
+      } else {
+        callback(null);
+      }
+    });
   }
 
   /* tool.api.aws */

@@ -47,14 +47,16 @@ function stripe_result_handler(data, sender, respond) {
   register_and_subscribe(PRODUCTS.advanced_monthly, data.token);
 }
 
-account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
-  can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-  storage_cryptup_subscription(function (level, expire, active) {
-    if(url_params.placement !== 'embedded') {
-      render_dialog(level, expire, active);
-    } else {
-      render_embedded(level, expire, active);
-    }
+tool.api.cryptup.account_update(function() {
+  account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
+    can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+    storage_cryptup_subscription(function (level, expire, active, method) {
+      if(url_params.placement !== 'embedded') {
+        render_dialog(level, expire, active);
+      } else {
+        render_embedded(level, expire, active);
+      }
+    });
   });
 });
 

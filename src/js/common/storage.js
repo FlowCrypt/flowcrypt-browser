@@ -300,7 +300,7 @@ function storage_cryptup_subscription(callback) {
       var active = true; // todo: check cryptup_subscription.expire
       callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, active, s.cryptup_account_subscription.method || 'trial');
     } else {
-      callback(null, null, false);
+      callback(null, null, false, null);
     }
   });
 }
