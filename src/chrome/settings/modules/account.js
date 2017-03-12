@@ -13,6 +13,7 @@ tool.api.cryptup.account_update(function () {
       $('.level').text('advanced');
       $('.expire').text(expire.split(' ')[0]);
       if(method === 'stripe') {
+        $('.line.cancel').css('display', 'block');
         $('.expire_label').text('Renews on');
         $('.price').text('$5 monthly');
         $('.method').text('Credit Card (processed by Stripe Payments)');

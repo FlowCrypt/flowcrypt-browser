@@ -206,9 +206,10 @@ body#settings > div#content.subscribe .list_table table tr td:not(:first-child) 
 body#settings > div#content.subscribe .stripe_checkout { display: none; }
 body#settings > div#content.subscribe .stripe_checkout iframe { width: 500px; border: none; }
 
-body#settings > div#content.account .list_table { width: 500px; }
-body#settings > div#content.account .list_table tr td { padding-right: 20px; }
+body#settings > div#content.account .list_table.account_table { width: 500px; }
+body#settings > div#content.account .list_table.account_table tr td { padding-right: 20px; }
 body#settings > div#content.account .loading.line { width: 100px; }
+body#settings > div#content.account .cancel.line { display: none; }
 
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
