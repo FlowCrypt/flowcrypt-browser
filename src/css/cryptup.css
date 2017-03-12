@@ -193,17 +193,23 @@ body#settings > div#content.storage { padding-top: 30px; padding-bottom: 100px; 
 body#settings > div#content.storage .emails a { padding-right: 20px; }
 body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; background-color: white; }
 
-body#settings > div#content.subscribe .list_benefits { display: none; }
-body#settings > div#content.subscribe .list_benefits table img { width: 15px; }
-body#settings > div#content.subscribe .list_benefits table { width: 100%; }
-body#settings > div#content.subscribe .list_benefits table tr th { padding-bottom: 10px; text-transform: uppercase; }
-body#settings > div#content.subscribe .list_benefits table tr th:first-child { text-align: left; padding-left: 20px; }
-body#settings > div#content.subscribe .list_benefits table tr td { padding-bottom: 2px; text-align: left; }
-body#settings > div#content.subscribe .list_benefits table tr td:first-child { padding-left: 20px; }
-body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
-body#settings > div#content.subscribe .list_benefits table tr:hover td { background-color: #f6f6f6; }
+body#settings > div#content .list_table { display: none; }
+body#settings > div#content .list_table table img { width: 15px; }
+body#settings > div#content .list_table table { width: 100%; }
+body#settings > div#content .list_table table tr th { padding-bottom: 10px; text-transform: uppercase; }
+body#settings > div#content .list_table table tr th:first-child { text-align: left; padding-left: 20px; }
+body#settings > div#content .list_table table tr td { padding-bottom: 2px; text-align: left; }
+body#settings > div#content .list_table table tr td:first-child { padding-left: 20px; }
+body#settings > div#content .list_table table tr:hover td { background-color: #f6f6f6; }
+
+body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 120px; text-align: center; }
 body#settings > div#content.subscribe .stripe_checkout { display: none; }
 body#settings > div#content.subscribe .stripe_checkout iframe { width: 500px; border: none; }
+
+body#settings > div#content.account .list_table { width: 500px; }
+body#settings > div#content.account .list_table tr td { padding-right: 20px; }
+body#settings > div#content.account .loading.line { width: 100px; }
+
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }

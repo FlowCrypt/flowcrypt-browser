@@ -1,0 +1,46 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+
+<div id="content" class="account">
+
+  <h1>CryptUp Account</h1>
+
+  <div class="line loading"></div>
+
+  <div class="line list_table">
+    <table>
+      <tr><td>Account email</td><td class="email"></td></tr>
+      <tr><td>Level</td><td class="level"></td></tr>
+      <tr><td>Subscription</td><td class="price"></td></tr>
+      <tr><td>Payment method</td><td class="method"></td></tr>
+      <tr><td class="expire_label"></td><td class="expire"></td></tr>
+    </table>
+  </div>
+  <div class="line">
+  </div>
+
+</div>
+
+<script src="/lib/jquery.min.js"></script>
+<script src="/lib/featherlight/featherlight.js"></script>
+<script src="/lib/openpgp.js"></script>
+<script src="/lib/require.js"></script>
+<script src="/js/common/mnemonic.js"></script>
+<script src="/js/common/storage.js"></script>
+<script src="/js/common/common.js"></script>
+<script src="../settings.js"></script>
+<script src="account.js"></script>
+
+</body>
+
+</html>

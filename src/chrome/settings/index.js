@@ -99,9 +99,12 @@ function initialize() {
 function render_subscription_status_header() {
   storage_cryptup_subscription(function (level, expire, active, method) {
     if(active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
-      var expires_description = method === 'trial' ? 'until' : 'renews on';
-      $('.logo-row .subscription .expire').text(expire ? (expires_description + ' ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(function () {
+        show_settings_page('/chrome/settings/modules/account.htm');
+      }).css('cursor', 'pointer');
+      if(method === 'trial') {
+        $('.logo-row .subscription .expire').text(expire ? ('until ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+      }
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
       $('.logo-row .subscription .upgrade').css('display', 'inline-block');
