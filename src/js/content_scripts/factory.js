@@ -172,7 +172,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
         return iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'});
       },
       stripe_checkout: function() {
-        return iframe(src_stripe_checkout());
+        return iframe(src_stripe_checkout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'});
       },
     },
     button: {
