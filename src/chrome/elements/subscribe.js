@@ -27,6 +27,7 @@ if(url_params.placement === 'embedded') {
   $('.line.button_padding').css('padding', 0);
   tool.env.increment('upgrade_dialog_show');
 } else {
+  $('.list_benefits').css('display', 'block');
   tool.env.increment('upgrade_dialog_show');
   $('body').css('overflow', 'hidden');
 }

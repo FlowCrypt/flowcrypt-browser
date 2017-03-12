@@ -54,4 +54,5 @@ div#cryptup_dialog iframe { position: absolute; width: 640px; height: 370px; top
   box-shadow: 10px 10px 5px #888888; box-shadow: 0 0 25px #AAA; }
 div#cryptup_dialog iframe.short { height: 300px; margin-top: -300px; }
 div#cryptup_dialog iframe.medium { height: 500px; margin-top: -300px; }
+div#cryptup_dialog iframe.mediumtall { height: 630px; margin-top: -315px; }
 div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }

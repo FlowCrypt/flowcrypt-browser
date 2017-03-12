@@ -137,7 +137,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
         return dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}))
       },
       subscribe: function(verification_email_text, source, subscribe_result_tab_id) {
-        return dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source, subscribe_result_tab_id), ['short'], {scrolling: 'no'}));
+        return dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source, subscribe_result_tab_id), ['mediumtall'], {scrolling: 'no'}));
       },
       add_pubkey: function(emails) {
         return dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
