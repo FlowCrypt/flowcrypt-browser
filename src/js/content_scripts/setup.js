@@ -146,7 +146,7 @@ function content_script_setup_if_vacant(webmail_specific) {
       },
     }, tab_id);
 
-    tool.browser.message.send(null, 'migrate_account', { account_email: account_email, }, function () {
+    tool.browser.message.send(null, 'migrate_account', { account_email: account_email }, function () {
       webmail_specific.start(account_email, inject, notifications, factory);
     });
   }

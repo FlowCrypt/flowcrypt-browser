@@ -45,7 +45,9 @@ tool.browser.message.tab_id(function (tab_id) {
   $('.stripe_checkout').html(L.credit_or_debit + '<br><br>' + factory.embedded.stripe_checkout());
 });
 
-// $('.stripe_checkout').css('display', 'block');
+if(url_params.source !== 'auth_error') {
+  // $('.stripe_checkout').css('display', 'block');
+}
 
 function stripe_result_handler(data, sender, respond) {
   $('.stripe_checkout').html('').css('display', 'none');
@@ -79,7 +81,7 @@ function render_embedded(level, expire, active) {
   } else if(url_params.verification_email_text) {
     account_storage_get(null, ['cryptup_subscription_attempt'], function (storage) {
       chosen_product = storage.cryptup_subscription_attempt;
-      tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result)
+      tool.api.cryptup.account_login(url_params.account_email, parse_account_verification_text(url_params.verification_email_text), handle_login_result);
     });
   } else { // not really tested or expected
     catcher.log('embedded subscribe.htm but has no verification_email_text');
@@ -118,7 +120,9 @@ function register_and_subscribe(product, source_token) {
   render_status('registering..', true);
   chosen_product = product;
   chosen_product.source = source_token || null;
-  tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
+  account_storage_set(null, { 'cryptup_subscription_attempt': chosen_product }, function () {
+    tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
+  });
 }
 
 function wait_for_token_email(timeout, callback) {
@@ -145,7 +149,6 @@ function wait_for_token_email(timeout, callback) {
 
 function fetch_token_emails_and_find_matching_token(account_email, uuid, callback) {
   var called_back = false;
-
   function callback_once(v1, v2) {
     if(!called_back) {
       called_back = true;
@@ -160,13 +163,9 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
           if(get_success) {
             $.each(messages, function (id, gmail_message_object) {
               if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-                var message_content = tool.str.base64url_decode(gmail_message_object.payload.body.data);
-                var token_link_match = message_content.match(/account\/login?([^\s"<]+)/g);
-                if(token_link_match !== null) {
-                  var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
-                  if(token_link_params.uuid === uuid && token_link_params.token) {
-                    tokens.push(token_link_params.token);
-                  }
+                var token = parse_account_verification_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
+                if(token) {
+                  tokens.push(token);
                 }
               }
             });
@@ -185,12 +184,20 @@ function fetch_token_emails_and_find_matching_token(account_email, uuid, callbac
   });
 }
 
+function parse_account_verification_text(verification_email_text, stored_uuid_to_cross_check) {
+  var token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
+  if(token_link_match !== null) {
+    var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
+    if((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
+      return token_link_params.token;
+    }
+  }
+}
+
 function render_open_verification_email_message() {
-  account_storage_set(null, { 'cryptup_subscription_attempt': chosen_product }, function () {
-    $('.action_ok').css('display', 'none');
-    $('.action_close').text('ok');
-    $('.status').text('Please check your inbox for a verification email.');
-  });
+  $('.action_ok').css('display', 'none');
+  $('.action_close').text('ok');
+  $('.status').text('Please check your inbox for a verification email.');
 }
 
 function handle_login_result(registered, verified, subscription, error, cryptup_email_verification_tokens) {
@@ -234,15 +241,17 @@ function handle_login_result(registered, verified, subscription, error, cryptup_
 }
 
 function handle_subscribe_result(success, response) {
-  if(success && response && response.subscription && response.subscription.level) {
-    notify_upgraded_and_close();
-  } else if(success === tool.api.cryptup.auth_error) {
-    alert('There was a problem logging in, please write me at tom@cryptup.org to fix this');
-    window.location.reload();
-  } else {
-    alert('There was a problem upgrading CryptUp (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
-    window.location.reload();
-  }
+  account_storage_remove(null, 'cryptup_subscription_attempt', function () {
+    if(success && response && response.subscription && response.subscription.level) {
+      notify_upgraded_and_close();
+    } else if(success === tool.api.cryptup.auth_error) {
+      alert('There was a problem logging in, please write me at tom@cryptup.org to fix this');
+      window.location.reload();
+    } else {
+      alert('There was a problem upgrading CryptUp (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
+      window.location.reload();
+    }
+  });
 }
 
 function notify_upgraded_and_close() {
