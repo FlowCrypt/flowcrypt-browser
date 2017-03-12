@@ -36,8 +36,10 @@ tool.browser.message.tab_id(function (tab_id) {
   tool.browser.message.listen({
     stripe_result: stripe_result_handler,
   }, tab_id);
-  $('.stripe_checkout').html(factory.embedded.stripe_checkout());
+  $('.stripe_checkout').html('Credit or debit card to use. You can cancel anytime.<br><br>' + factory.embedded.stripe_checkout());
 });
+
+// $('.stripe_checkout').css('display', 'block');
 
 function stripe_result_handler(data, sender, respond) {
   $('.stripe_checkout').html('').css('display', 'none');

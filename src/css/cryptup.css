@@ -203,6 +203,7 @@ body#settings > div#content.subscribe .list_benefits table tr td:first-child { p
 body#settings > div#content.subscribe .list_benefits table tr td:not(:first-child) { width: 120px; text-align: center; }
 body#settings > div#content.subscribe .list_benefits table tr:hover td { background-color: #f6f6f6; }
 body#settings > div#content.subscribe .stripe_checkout { display: none; }
+body#settings > div#content.subscribe .stripe_checkout iframe { width: 500px; border: none; }
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }
