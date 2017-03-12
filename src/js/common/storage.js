@@ -298,7 +298,7 @@ function storage_cryptup_subscription(callback) {
   account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], function (s) {
     if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_verified && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       var active = true; // todo: check cryptup_subscription.expire
-      callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, active);
+      callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, active, s.cryptup_account_subscription.method || 'trial');
     } else {
       callback(null, null, false);
     }
