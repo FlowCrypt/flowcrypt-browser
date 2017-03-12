@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.7.5 on March 12, 2017: Import Contacts</b>
+settings: bulk import contacts form from settings
+settings: preparing CryptUp Advanced
+composing: show a friendly message if missing prv on signing
+reading: try to process messages with detached sigs even without text
+
 <b>version 3.7.4 on March 10, 2017: Attest Without Pass Phrase</b>
 setup: prompt user to enter passphrase on attest if needed
 setup: fixing public key submit if checked on manual enter
