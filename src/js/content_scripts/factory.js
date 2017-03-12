@@ -95,7 +95,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
   }
 
   function src_stripe_checkout() {
-    return tool.env.url_create('http://l.cryptup.org/stripe.htm', { parent_tab_id: parent_tab_id });
+    return tool.env.url_create('https://cryptup.org/stripe.htm', { parent_tab_id: parent_tab_id });
   }
 
   function iframe(src, classes, additional_attributes) {

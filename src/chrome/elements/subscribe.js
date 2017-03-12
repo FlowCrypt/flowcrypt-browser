@@ -13,8 +13,9 @@ var chosen_product;
 var original_content;
 var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
-var l = {
+var L = {
   welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send larger attachments, to anyone.',
+  credit_or_debit: 'Credit or debit card to use. You can cancel anytime.',
 };
 if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
@@ -36,7 +37,7 @@ tool.browser.message.tab_id(function (tab_id) {
   tool.browser.message.listen({
     stripe_result: stripe_result_handler,
   }, tab_id);
-  $('.stripe_checkout').html('Credit or debit card to use. You can cancel anytime.<br><br>' + factory.embedded.stripe_checkout());
+  $('.stripe_checkout').html(L.credit_or_debit + '<br><br>' + factory.embedded.stripe_checkout());
 });
 
 // $('.stripe_checkout').css('display', 'block');
@@ -58,7 +59,7 @@ account_storage_get(url_params.account_email, ['google_token_scopes'], function 
 });
 
 function repair_auth_error_get_new_installation() {
-  account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false, }, function () {
+  account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, function () {
     render_status('checking..', true);
     tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
   });
@@ -67,7 +68,7 @@ function repair_auth_error_get_new_installation() {
 function render_embedded(level, expire, active) {
   $('#content').html('<div class="line status"></div>');
   if(active) {
-    render_status(l.welcome);
+    render_status(L.welcome);
   } else if(url_params.verification_email_text) {
     account_storage_get(null, ['cryptup_subscription_attempt'], function (storage) {
       chosen_product = storage.cryptup_subscription_attempt;
@@ -246,7 +247,7 @@ function notify_upgraded_and_close() {
     }
     close_dialog();
   } else {
-    render_status(l.welcome);
+    render_status(L.welcome);
   }
 }
 
