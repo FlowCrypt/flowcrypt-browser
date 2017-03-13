@@ -1,5 +1,9 @@
 <div>
 
+<b>version 3.7.6 on March 13, 2017: Subscriptions</b>
+setup: more robust subscriptions
+setup: basic microsoft auth tests
+
 <b>version 3.7.5 on March 12, 2017: Import Contacts</b>
 settings: bulk import contacts form from settings
 settings: preparing CryptUp Advanced
