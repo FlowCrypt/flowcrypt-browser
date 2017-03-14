@@ -210,6 +210,8 @@ body#settings > div#content.account .list_table.account_table { width: 500px; }
 body#settings > div#content.account .list_table.account_table tr td { padding-right: 20px; }
 body#settings > div#content.account .loading.line { width: 100px; }
 body#settings > div#content.account .cancel.line { display: none; }
+body#settings > div#content.account .level, body#settings > div#content.account .price, body#settings > div#content.account .method, body#settings > div#content.account .expire {
+  text-transform: capitalize; }
 
 
 body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }

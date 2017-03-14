@@ -11,7 +11,7 @@ tool.api.cryptup.account_update(function () {
     storage_cryptup_subscription(function(level, expire, active, method) {
       $('.email').text(email);
       $('.level').text('advanced');
-      $('.expire').text(expire.split(' ')[0]);
+      $('.expire').text(expire ? expire.split(' ')[0] : 'lifetime');
       if(method === 'stripe') {
         $('.line.cancel').css('display', 'block');
         $('.expire_label').text('Renews on');
