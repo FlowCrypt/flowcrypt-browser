@@ -6,6 +6,10 @@ var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 
 $('.logo-row span#v').text(catcher.version());
 
+$.each(tool.env.webmails, function(i, webmail_name) {
+  $('.signin_button.' + webmail_name).css('display', 'inline-block');
+});
+
 var tab_id_global = undefined;
 
 tool.browser.message.tab_id(function (tab_id) {

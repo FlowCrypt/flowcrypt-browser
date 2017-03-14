@@ -297,6 +297,8 @@
       key_codes: env_key_codes,
       set_up_require: env_set_up_require,
       increment: env_increment,
+      webmails: ['gmail', 'inbox'],
+      // webmails: ['gmail', 'inbox', 'outlook'],
     },
     arr: {
       unique: arr_unique,

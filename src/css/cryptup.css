@@ -33,7 +33,6 @@ a:focus { outline: none !important; }
     margin-left: -55px; margin-top: 1px; padding-top: 7px; cursor: pointer; opacity: 0.5; background: #dadada; height: 36px; line-height: 14px; }
 .toggle_show_hide_pass_phrase .eye-open,
 .toggle_show_hide_pass_phrase .eye-closed { width: 19px; height: 15px;}
-.display_none { display: none; }
 
 i.small_spinner { display: inline-block; width: 40px; height: 18px; text-align: center; position: relative; }
 i.small_spinner img { position: absolute; left: 0; right: 0; margin-left: auto; margin-right: auto; width: 26px; }
@@ -49,7 +48,7 @@ i.large_spinner img { position: relative; width: 75px; height: 75px; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }
 
-div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative;}
+div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative; }
 div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 
@@ -89,6 +88,13 @@ body#settings > div#content.setup div#step_1_easy_or_manual .circle-i { -webkit-
 body#settings > div#content.setup div#step_1_easy_or_manual > .col { opacity: 0.7; }
 body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover { opacity: 1; }
 
+body#settings .signin_button { width: 220px; height: 46px; padding: 13px; text-align: left; padding-left: 50px; user-focus: none; user-select: none;
+  cursor: pointer; opacity: 0.8; color: #222; }
+body#settings .signin_button:hover { opacity: 1; color: black; }
+body#settings .signin_button.gmail { background-image: url(/img/guidelined/google-signin.png); }
+body#settings .signin_button.gmail:active { background-image: url(/img/guidelined/google-signin-pressed.png); }
+body#settings .signin_button.outlook { background-image: url(/img/guidelined/microsoft-signin.png); }
+body#settings .signin_button.outlook:active { background-image: url(/img/guidelined/microsoft-signin-pressed.png); }
 
 body#settings > div#content.setup div#step_2_easy_generating { display: none; text-align: center; margin-top: 100px; background: white;  font-size: 16px; font-weight: normal;
   color: #666; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
@@ -419,3 +425,5 @@ div#cryptup_dialog iframe.medium { height: 500px; margin-top: -300px; }
 div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 
 .featherlight { z-index: 8 !important; }
+
+.display_none { display: none; }

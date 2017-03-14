@@ -4,8 +4,6 @@
 
 function content_script_setup_if_vacant(webmail_specific) {
 
-  var debug_only_webmails = ['outlook'];
-
   window.injected = true; // background script will use this to test if scripts were already injected, and inject if not
   window.account_email_global = null; // used by background script
   window.same_world_global = true; // used by background_script
@@ -65,10 +63,10 @@ function content_script_setup_if_vacant(webmail_specific) {
       if(typeof account_email !== 'undefined') {
         console.log('Loading CryptUp ' + catcher.version());
         window.account_email_global = account_email;
-        if(tool.value(webmail_specific.name).in(debug_only_webmails)) {
-          console.log('CryptUp disabled: ' + webmail_specific.name + ' integration currently for development only');
-        } else {
+        if(tool.value(webmail_specific.name).in(tool.env.webmails)) {
           setup(account_email);
+        } else {
+          console.log('CryptUp disabled: ' + webmail_specific.name + ' integration currently for development only');
         }
       } else {
         if(account_email_interval > 6000) {
