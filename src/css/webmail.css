@@ -31,6 +31,11 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span { text-tran
   display: inline-block; border-radius: 2px; cursor: default; }
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img, div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
 
+/* buttons body.cryptup_outlook */
+body.cryptup_outlook .cryptup_compose_button_container { display: inline-block; width: 30px; }
+body.cryptup_outlook .cryptup_compose_button_container .new_message_button { display: inline-block; position: absolute; left: 12px; margin-top: 9px; background-color: #31A217;
+  padding: 2px; height: 19px; cursor: pointer; }
+body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
 
 /* elements */
 div.new_message { position: absolute; bottom: 0; width: 540px; right: 30px; padding: 0; z-index: 5; height: 605px; box-shadow: rgba(0,0,0,0.3) 0 2px 8px; }

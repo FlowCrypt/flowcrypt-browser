@@ -15,32 +15,36 @@
 
   <div id="content" class="auth">
     <div class="line">
-      <h1>Explaining CryptUp Google permissions</h1>
+      <h1>Explaining CryptUp webmail permissions</h1>
     </div>
     <div class="line">
-      <em>Manage drafts and send emails</em> helps you compose and send encrypted emails.
+      <em class="permission_send"></em> helps you compose and send encrypted emails.
     </div>
     <div class="line">
-      <em>Read messages</em> allows you to reply to a conversation and open attachments. It also makes setup and use of this plugin a smoother experience.
+      <em class="permission_read"></em> allows you to reply to a conversation and open attachments. It also makes setup and use of this plugin a smoother experience.
     </div>
     <div class="line">
-      Nobody, CryptUp developers included, is able to access these permissions, they are stored privately in your browser. Learn more about <a href="#" data-featherlight="/chrome/texts/gmail_auth_help.htm">Gmail access and security</a>.
+      Nobody, CryptUp developers included, is able to access these permissions, they are stored privately in your browser. Learn more about <a href="#" data-featherlight="/chrome/texts/email_provider_auth_security.htm">email provider access and security</a>.
     </div>
 
     <div class="show_if_setup_not_done" style="display: none;">
-      <div class="line">
+      <div class="line hidable gmail">
         <b>You can proceed with limited permissions. This allows you to get familiar with email encryption and CryptUp.</b> You can always change your permission settings later.
       </div>
       <div class="line">
         &nbsp;
       </div>
-      <div class="line">
+      <div class="line hidable gmail">
         <div class="button green auth_action_limited">PROCEED WITH SEND ONLY</div>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <div class="button green action_auth_proceed">PROCEED WITH ALL PERMISSIONS</div>
+        <div class="button hidable gmail green action_auth_proceed">PROCEED WITH ALL PERMISSIONS</div>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <div class="button gray close_page">LATER</div>
+        <div class="button hidable gmail gray close_page">LATER</div>
       </div>
+      <div class="line hidable outlook">
+        <div class="button green close_page">close</div>
+      </div>
+
     </div>
     <div class="show_if_setup_done" style="display: none;">
       <div class="line">

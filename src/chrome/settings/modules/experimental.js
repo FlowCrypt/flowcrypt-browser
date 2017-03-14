@@ -59,7 +59,7 @@ if(url_params.account_email) {
 
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
     $(self).html(tool.ui.spinner('white'));
-    fetch_account_aliases(url_params.account_email, function(addresses) {
+    fetch_account_aliases_from_gmail(url_params.account_email, function(addresses) {
       var all = tool.arr.unique(addresses.concat(url_params.account_email));
       account_storage_set(url_params.account_email, { addresses: all }, function () {
         alert('Updated to: ' + all.join(', '));

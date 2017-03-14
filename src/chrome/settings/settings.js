@@ -11,12 +11,12 @@ tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
 
-function fetch_account_aliases(account_email, callback, query, from_emails) {
+function fetch_account_aliases_from_gmail(account_email, callback, query, from_emails) {
   from_emails = from_emails || [];
   query = query || 'in:sent';
   tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
-      fetch_account_aliases(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
+      fetch_account_aliases_from_gmail(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
     } else {
       callback(from_emails);
     }
@@ -111,51 +111,56 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
   }
 }
 
-function fetch_email_key_backups(account_email, callback) {
-  var q = [
-    'from:' + account_email,
-    'to:' + account_email,
-    '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
-    '-is:spam',
-  ];
-  tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
-    if(success) {
-      if(response.messages) {
-        var message_ids = [];
-        $.each(response.messages, function (i, message) {
-          message_ids.push(message.id);
-        });
-        tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
-          if(success) {
-            var attachments = [];
-            $.each(messages, function (i, message) {
-              attachments = attachments.concat(tool.api.gmail.find_attachments(message));
-            });
-            tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
-              var keys = [];
-              $.each(downloaded_attachments, function (i, downloaded_attachment) {
-                try {
-                  var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
-                  var key = openpgp.key.readArmored(armored_key).keys[0];
-                  if(key.isPrivate()) {
-                    keys.push(key);
-                  }
-                } catch(err) {}
+function fetch_email_key_backups(account_email, email_provider, callback) {
+  if(email_provider !== 'gmail') {
+    catcher.log('fetch_email_key_backups not implemented for ' + email_provider);
+    callback(false, 'fetch_email_key_backups not implemented for ' + email_provider);
+  } else {
+    var q = [
+      'from:' + account_email,
+      'to:' + account_email,
+      '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
+      '-is:spam',
+    ];
+    tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
+      if(success) {
+        if(response.messages) {
+          var message_ids = [];
+          $.each(response.messages, function (i, message) {
+            message_ids.push(message.id);
+          });
+          tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
+            if(success) {
+              var attachments = [];
+              $.each(messages, function (i, message) {
+                attachments = attachments.concat(tool.api.gmail.find_attachments(message));
               });
-              callback(success, keys);
-            });
-          } else {
-            callback(false, 'Connection dropped while checking for backups. Please try again.');
-            display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
-          }
-        });
+              tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
+                var keys = [];
+                $.each(downloaded_attachments, function (i, downloaded_attachment) {
+                  try {
+                    var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
+                    var key = openpgp.key.readArmored(armored_key).keys[0];
+                    if(key.isPrivate()) {
+                      keys.push(key);
+                    }
+                  } catch(err) {}
+                });
+                callback(success, keys);
+              });
+            } else {
+              callback(false, 'Connection dropped while checking for backups. Please try again.');
+              display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
+            }
+          });
+        } else {
+          callback(true, null);
+        }
       } else {
-        callback(true, null);
+        callback(false, 'Connection dropped while checking for backups. Please try again.');
       }
-    } else {
-      callback(false, 'Connection dropped while checking for backups. Please try again.');
-    }
-  });
+    });
+  }
 }
 
 function readable_crack_time(total_seconds) { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form

@@ -45,6 +45,7 @@
     },
     {
       "matches": ["https://outlook.office.com/noop/cryptup"],
+      "css": ["/css/hide.css"],
       "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/microsoft.js"],
       "all_frames": true
     },
@@ -75,6 +76,7 @@
     "/img/svgs/reply-icon.svg",
     "/img/svgs/spinner-white-small.svg",
     "/img/svgs/spinner-green-small.svg",
+    "/img/logo-19-19-white-green.png",
     "/chrome/elements/new_message.htm",
     "/chrome/elements/reply_message.htm",
     "/chrome/elements/pgp_block.htm",

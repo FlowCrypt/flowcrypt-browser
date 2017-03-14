@@ -2718,17 +2718,17 @@
   }
 
   function api_outlook_sendmail(account_email, subject, to, body, attachments, thread_id, callback, progress_callback) {
+    var outlook_content_type = {'text/plain': 'Text', 'text/html': 'HTML'}[Object.keys(body)[0]];
     api_outlook_call(account_email, 'me/sendmail', {
       Message: {
         ConversationId: thread_id,
         ToRecipients: (typeof to === 'string' ? [to] : to).map(function(email) { return {"EmailAddress": {"Address": email} }; }),
         Subject: subject,
-        Body: {"ContentType": "Text" /* or 'HTML' */, "Content": body},
+        Body: { ContentType: outlook_content_type, Content: body[Object.keys(body)[0]] },
         Attachments: (attachments || []).map(function (a) { return {"@odata.type": "#Microsoft.OutlookServices.FileAttachment", "Name": a.name, "ContentBytes": btoa(a.content)}}),
       }
     }, 'text', callback);
   }
-
 
   /*
    Each message in the response contains multiple properties, including the Body property. The message body can be either HTML or text.

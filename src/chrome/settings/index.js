@@ -3,14 +3,14 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
+var tab_id_global;
+var microsoft_auth_attempt = {};
 
 $('.logo-row span#v').text(catcher.version());
 
 $.each(tool.env.webmails, function(i, webmail_name) {
   $('.signin_button.' + webmail_name).css('display', 'inline-block');
 });
-
-var tab_id_global = undefined;
 
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
@@ -41,7 +41,7 @@ tool.browser.message.tab_id(function (tab_id) {
     },
     open_google_auth_dialog: function (data) {
       $('.featherlight-close').click();
-      new_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
+      new_google_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
     },
     passphrase_dialog: function (data) {
       if(!$('#cryptup_dialog').length) {
@@ -50,6 +50,18 @@ tool.browser.message.tab_id(function (tab_id) {
     },
     close_dialog: function (data) {
       $('#cryptup_dialog').remove();
+    },
+    microsoft_access_token_result: function (message) {
+      tool.api.auth.process_fragment(message.fragment, null, microsoft_auth_attempt.window_id, function (success, result, authed_email, state) {
+        if(state.frame === microsoft_auth_attempt.window_id && state.tab === tab_id) {
+          microsoft_auth_attempt.close_auth_window();
+          account_storage_set(authed_email, {email_provider: 'outlook'}, function () {
+            window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: authed_email });
+          });
+        } else {
+          console.log('Ignoring auth request with a wrong frame or tab id: ' + [microsoft_auth_attempt.window_id, tab_id, state.frame, state.tab].join(','));
+        }
+      });
     },
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
@@ -158,12 +170,8 @@ function add_key_rows_html(private_keys) {
   });
 }
 
-function new_account_authentication_prompt(account_email, omit_read_scope) {
-  account_email = account_email || '';
-  tool.browser.message.send(null, 'google_auth', {
-    account_email: account_email,
-    omit_read_scope: omit_read_scope,
-  }, function (response) {
+function new_google_account_authentication_prompt(account_email, omit_read_scope) {
+  tool.browser.message.send(null, 'google_auth', { account_email: account_email || '', omit_read_scope: omit_read_scope }, function (response) {
     if(response && response.success === true) {
       add_account_email_to_list_of_accounts(response.account_email, function () {
         account_storage_get(response.account_email, ['setup_done'], function (storage) {
@@ -171,22 +179,28 @@ function new_account_authentication_prompt(account_email, omit_read_scope) {
             alert('You\'re all set.');
             window.location = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
           } else {
-            window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
+            account_storage_set(response.account_email, {email_provider: 'gmail'}, function () {
+              window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
+            });
           }
         });
       });
     } else if(response && response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
-      if(account_email) {
-        show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
-      } else {
-        show_settings_page('/chrome/settings/modules/auth_denied.htm');
-      }
+      show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
     } else {
       console.log(response);
       alert('Please try again. If this happens repeatedly, please write me at tom@cryptup.org to fix it.');
       window.location.reload();
     }
   });
+}
+
+function new_microsoft_account_authentication_prompt(account_email) {
+  var window_id = 'popup_' + tool.str.random(20);
+  var close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function () {
+    show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=outlook' : '');
+  });
+  microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
 }
 
 $.get('/changelog.txt', null, function (data) {
@@ -206,11 +220,16 @@ $('.action_go_auth_denied').click(function () {
 });
 
 $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  new_account_authentication_prompt();
+  // todo - should let them choose google or microsoft
+  new_google_account_authentication_prompt();
 }));
 
-$('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  new_account_authentication_prompt(url_params.account_email);
+$('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+  new_google_account_authentication_prompt(url_params.account_email);
+}));
+
+$('.action_microsoft_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+  new_microsoft_account_authentication_prompt(url_params.account_email);
 }));
 
 $('body').click(function () {

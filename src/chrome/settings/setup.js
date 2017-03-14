@@ -17,6 +17,7 @@ var account_email_attested_fingerprint = undefined;
 var recovered_keys = undefined;
 var tab_id_global = undefined;
 var all_addresses = [url_params.account_email];
+var email_provider;
 
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
@@ -32,33 +33,36 @@ tool.browser.message.tab_id(function (tab_id) {
 });
 
 // show alternative account addresses in setup form + save them for later
-account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes'], function (storage) {
-  function show_submit_all_addresses_option(addrs) {
-    if(addrs && addrs.length > 1) {
-      $('.addresses').text(tool.arr.without_value(addrs, url_params.account_email).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('visibility', 'visible');
+account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes', 'email_provider'], function (storage) {
+  if(storage.email_provider === 'gmail') {
+    if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+      $('.auth_denied_warning').css('display', 'block');
     }
-  }
-
-  function save_and_fill_submit_option(addresses) {
-    all_addresses = tool.arr.unique(addresses.concat(url_params.account_email));
-    account_storage_set(url_params.account_email, { addresses: all_addresses }, function () {
-      show_submit_all_addresses_option(all_addresses);
-    });
-  }
-  if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-    $('.auth_denied_warning').css('display', 'block');
-  }
-  if(typeof storage.addresses === 'undefined') {
-    if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-      fetch_account_aliases(url_params.account_email, save_and_fill_submit_option);
-    } else { // cannot read emails, don't fetch alternative addresses
-      save_and_fill_submit_option([url_params.account_email]);
+    if(typeof storage.addresses === 'undefined') {
+      if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+        fetch_account_aliases_from_gmail(url_params.account_email, save_and_fill_submit_option);
+      } else { // cannot read emails, don't fetch alternative addresses
+        save_and_fill_submit_option([url_params.account_email]);
+      }
+    } else {
+      show_submit_all_addresses_option(storage.addresses);
     }
-  } else {
-    show_submit_all_addresses_option(storage.addresses);
   }
 });
+
+function show_submit_all_addresses_option(addrs) {
+  if(addrs && addrs.length > 1) {
+    $('.addresses').text(tool.arr.without_value(addrs, url_params.account_email).join(', '));
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('visibility', 'visible');
+  }
+}
+
+function save_and_fill_submit_option(addresses) {
+  all_addresses = tool.arr.unique(addresses.concat(url_params.account_email));
+  account_storage_set(url_params.account_email, { addresses: all_addresses }, function () {
+    show_submit_all_addresses_option(all_addresses);
+  });
+}
 
 function display_block(name) {
   var blocks = [
@@ -83,28 +87,30 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   if(!url_params.account_email) {
     window.location = 'index.htm';
   }
-  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'google_token_scopes'], function (storage) {
+  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], function (storage) {
+    email_provider = storage.email_provider || 'gmail';
+
     if(storage.setup_done) {
       render_setup_done(url_params.account_email);
     } else {
-      tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, result) {
-        if(keyserver_success && result.pubkey) {
-          if(result.attested) {
-            account_email_attested_fingerprint = tool.crypto.key.fingerprint(result.pubkey);
+      tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, keyserver_result) {
+        if(keyserver_success && keyserver_result.pubkey) {
+          if(keyserver_result.attested) {
+            account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
           }
-          if(tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-            fetch_email_key_backups(url_params.account_email, function (success, keys) {
+          if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+            fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
               if(success && keys) {
-                display_block('step_2_recovery');
                 recovered_keys = keys;
+                display_block('step_2_recovery');
               } else {
                 display_block('step_0_found_key');
               }
             });
-          } else { // cannot read gmail to find a backup
-            if(result.has_cryptup) {
+          } else { // cannot read gmail to find a backup, or this is outlook
+            if(keyserver_result.has_cryptup) {
               display_block('step_2b_manual_enter');
-              $('#step_2b_manual_enter').prepend('<div class="line red">Because of missing Gmail permission, CryptUp can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUp Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+              $('#step_2b_manual_enter').prepend('<div class="line red">CryptUp can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUp Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
             } else {
               display_block('step_1_easy_or_manual');
             }
@@ -217,21 +223,25 @@ function create_save_key_pair(account_email, options) {
   });
 }
 
-function get_and_save_userinfo(account_email, callback) {
-  tool.api.google.user_info(account_email, function (success, response) {
-    var result = { full_name: '', };
-    if(success) {
-      result.full_name = response.name || '';
-      result.gender = response.gender;
-      result.locale = response.locale;
-      result.picture = response.picture;
-      account_storage_set(account_email, result, function () {
+function get_and_save_google_user_info(account_email, callback) {
+  var result = { full_name: '' };
+  if(email_provider === 'gmail') {
+    tool.api.google.user_info(account_email, function (success, response) {
+      if(success) {
+        result.full_name = response.name || '';
+        result.gender = response.gender;
+        result.locale = response.locale;
+        result.picture = response.picture;
+        account_storage_set(account_email, result, function () {
+          callback(result);
+        });
+      } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
         callback(result);
-      });
-    } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
-      callback(result);
-    }
-  });
+      }
+    });
+  } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
+    callback(result);
+  }
 }
 
 $('.action_show_help').click(function () {
@@ -246,7 +256,7 @@ $('.action_simple_setup').click(function () {
   }
   display_block('step_2_easy_generating');
   $('h1').text('Please wait, setting up CryptUp');
-  get_and_save_userinfo(url_params.account_email, function (userinfo) {
+  get_and_save_google_user_info(url_params.account_email, function (userinfo) {
     create_save_key_pair(url_params.account_email, {
       full_name: userinfo.full_name,
       passphrase: '',
@@ -427,7 +437,7 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
     $('h1').text('Please wait, setting up CryptUp');
     $('#step_2a_manual_create input').prop('disabled', true);
     $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner('white') + 'just a minute');
-    get_and_save_userinfo(url_params.account_email, function (userinfo) {
+    get_and_save_google_user_info(url_params.account_email, function (userinfo) {
       create_save_key_pair(url_params.account_email, {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val(),
