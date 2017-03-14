@@ -173,17 +173,15 @@ function init_shared_compose_js(url_params, db, subscription) {
         } else {
           delete drafts[url_params.thread_id];
         }
-        account_storage_set(url_params.account_email, {
-          drafts_reply: drafts,
-        }, then);
+        account_storage_set(url_params.account_email, { drafts_reply: drafts }, then);
       } else { // it's a new message
         var drafts = storage.drafts_compose || {};
         if(store_if_true) {
-          drafts[draft_id] = { recipients: recipients, subject: subject, date: new Date().getTime(), };
+          drafts[draft_id] = { recipients: recipients, subject: subject, date: new Date().getTime() };
         } else {
           delete drafts[draft_id];
         }
-        account_storage_set(url_params.account_email, { drafts_compose: drafts, }, then);
+        account_storage_set(url_params.account_email, { drafts_compose: drafts }, then);
       }
     });
   }

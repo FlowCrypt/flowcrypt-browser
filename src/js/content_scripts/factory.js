@@ -131,9 +131,6 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       stylesheet: function(file) {
         return '<link class="' + destroyable_class + '" rel="stylesheet" href="' + chrome.extension.getURL('css/' + file + '.css') + '" />';
       },
-      oauth: function(url) {
-        return iframe(url, [], {id: 'oauth'}); //'display_none'
-      },
     },
     dialog: {
       passphrase: function(longids, type) {
