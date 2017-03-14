@@ -392,6 +392,7 @@
       },
     },
     api: {
+      id_token: api_parse_id_token,
       error: {
         network: 'API_ERROR_NETWORK',
       },
@@ -417,6 +418,11 @@
         search_contacts: api_gmail_search_contacts,
         extract_armored_block: gmail_api_extract_armored_block,
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
+      },
+      outlook: {
+        oauth_url: api_outlook_oauth_url,
+        message_send: api_outlook_sendmail,
+        message_get: api_outlook_message_get,
       },
       attester: {
         lookup_email: api_attester_lookup_email,
@@ -2012,7 +2018,7 @@
     return progress_reporting_xhr;
   }
 
-  function api_call(base_url, path, values, callback, format, progress) {
+  function api_call(base_url, path, values, callback, format, progress, headers, response_format) {
     progress = progress || {};
     if(format === 'JSON') {
       var formatted_values = JSON.stringify(values);
@@ -2037,8 +2043,9 @@
       url: base_url + path,
       method: 'POST',
       data: formatted_values,
-      dataType: 'json',
+      dataType: response_format || 'json',
       crossDomain: true,
+      headers: headers || undefined,
       processData: false,
       contentType: content_type,
       async: true,
@@ -2056,15 +2063,15 @@
     });
   }
 
+  function api_parse_id_token(id_token) {
+    return JSON.parse(atob(id_token.split(/\./g)[1]));
+  }
+
   /* tool.api.google */
 
   function api_google_call(account_email, method, url, parameters, callback, fail_on_auth) {
     account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
-      if(method === 'GET' || method === 'DELETE') {
-        var data = parameters;
-      } else {
-        var data = JSON.stringify(parameters);
-      }
+      var data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
       if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
         $.ajax({
           url: url,
@@ -2586,6 +2593,60 @@
       }
     });
   }
+
+  /* tool.api.outlook */
+
+  var api_outlook_oauth_config = {
+    oauth_url: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    client_id: '5c22daa5-737e-440b-8dd1-e4e9d0f4a1a9',
+    redirect_uri: 'https://outlook.office.com/noop/cryptup',
+    scopes: ['openid', 'email', 'https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
+  };
+
+  function api_outlook_oauth_url(suggested_account_email) {
+    return env_url_create(api_outlook_oauth_config.oauth_url, {
+      client_id: api_outlook_oauth_config.client_id,
+      response_type: 'token id_token',
+      redirect_uri: api_outlook_oauth_config.redirect_uri,
+      nonce: tool.str.random(20),
+      response_mode: 'fragment',
+      scope: api_outlook_oauth_config.scopes.join(' '),
+      state: 'cryptup',
+      login_hint: suggested_account_email || '',
+    });
+  }
+
+  function api_outlook_call(account_email, resource, values, response_format, callback, progress) {
+    account_storage_get(account_email, ['microsoft_auth'], function (storage) {
+      // todo : refresh token if needed
+      api_call('https://outlook.office.com/api/v2.0/', resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format);
+    });
+  }
+
+  function api_outlook_sendmail(account_email, subject, to, body, attachments, thread_id, callback, progress_callback) {
+    api_outlook_call(account_email, 'me/sendmail', {
+      Message: {
+        ConversationId: thread_id,
+        ToRecipients: (typeof to === 'string' ? [to] : to).map(function(email) { return {"EmailAddress": {"Address": email} }; }),
+        Subject: subject,
+        Body: {"ContentType": "Text" /* or 'HTML' */, "Content": body},
+        Attachments: (attachments || []).map(function (a) { return {"@odata.type": "#Microsoft.OutlookServices.FileAttachment", "Name": a.name, "ContentBytes": btoa(a.content)}}),
+      }
+    }, 'text', callback);
+  }
+
+
+  /*
+   Each message in the response contains multiple properties, including the Body property. The message body can be either HTML or text.
+   If the body is HTML, by default, any potentially unsafe HTML (for example, JavaScript) embedded in the Body property would be removed before the body content is returned in a REST response.
+   To get the entire, original HTML content, include the following HTTP request header:
+   Prefer: outlook.allow-unsafe-html
+   */
+  function api_outlook_message_get(message_id, callback, progress_callback) {
+    api_outlook_call(account_email, 'me/messages/' + message_id, null, 'json', callback, progress_callback);
+  }
+
+
 
   /* tool.api.attester */
 
