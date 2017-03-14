@@ -615,7 +615,7 @@ function init_shared_compose_js(url_params, db, subscription) {
       });
     } else {
       catcher.log('tool.api.gmail.message_send error response from gmail', response);
-      alert('Error sending message, try to re-open your Gmail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
+      alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }
 
@@ -886,10 +886,10 @@ function init_shared_compose_js(url_params, db, subscription) {
         } else {
           contact_search_in_progress = true;
           render_search_results(contacts, query);
-          tool.api.gmail.search_contacts(url_params.account_email, query.substring, contacts, function (gmail_contact_results) {
+          tool.api.gmail.search_contacts(url_params.account_email, query.substring, contacts, function (search_contacts_results) {
             var re_rendering_needed = false;
-            if(gmail_contact_results.new.length) {
-              $.each(gmail_contact_results.new, function (i, contact) {
+            if(search_contacts_results.new.length) {
+              $.each(search_contacts_results.new, function (i, contact) {
                 db_contact_get(db, contact.email, function (in_db) {
                   if(!in_db) {
                     db_contact_save(db, db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
@@ -1123,7 +1123,7 @@ function init_shared_compose_js(url_params, db, subscription) {
 
   S.cached('add_their_pubkey').click(function () {
     if(url_params.placement !== 'settings') {
-      tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog_gmail', { emails: get_recipients_from_dom('no_pgp') });
+      tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog', { emails: get_recipients_from_dom('no_pgp') });
     } else {
       $.featherlight({ iframe: factory.src.add_pubkey_dialog(get_recipients_from_dom('no_pgp'), 'settings'), iframeWidth: 515, iframeHeight: S.cached('body').height() - 50 });
     }

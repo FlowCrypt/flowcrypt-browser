@@ -32,6 +32,14 @@
       ]
     },
     {
+      "matches": ["*://outlook.live.com/*"],
+      "js": [
+        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
+        "/js/content_scripts/outlook_tab/replace.js", "/js/content_scripts/outlook_tab/outlook.js"
+      ]
+    },
+    {
       "matches": ["*://accounts.google.com/o/oauth2/approval*"],
       "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/oauth_window.js"]
     },

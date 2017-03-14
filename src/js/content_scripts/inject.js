@@ -7,6 +7,7 @@ function content_script_element_injector(webmail_name, factory) {
   var compose_button_container_selector = {
     'gmail': 'div.aic',
     'inbox': 'div.jp',
+    'outlook': 'div._fce_b',
   };
 
   var S = tool.ui.build_jquery_selectors({

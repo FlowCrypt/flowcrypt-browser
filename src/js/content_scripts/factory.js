@@ -126,7 +126,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
     },
     meta: {
       notification_container: function() {
-        return '<center class="' + destroyable_class + ' gmail_notifications"></center>';
+        return '<center class="' + destroyable_class + ' webmail_notifications"></center>';
       },
       stylesheet: function(file) {
         return '<link class="' + destroyable_class + '" rel="stylesheet" href="' + chrome.extension.getURL('css/' + file + '.css') + '" />';
@@ -182,6 +182,8 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       compose: function(webmail_name) {
         if(webmail_name === 'inbox') {
           return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
+        } else if(webmail_name === 'outlook') {
+          return '<div class="_fce_c ' + destroyable_class + '" role="presentation" style="display: inline;"><div class="new_message_button">secure compose</div></div>';
         } else {
           return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
         }

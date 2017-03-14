@@ -49,7 +49,7 @@ if(!localStorage.settings_seen) {
   localStorage.settings_seen = true;
 }
 
-inject_cryptup_into_gmail_if_needed();
+inject_cryptup_into_webmail_if_needed();
 
 schedule_keyserver_fingerprint_check();
 

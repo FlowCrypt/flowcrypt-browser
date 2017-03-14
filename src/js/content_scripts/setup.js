@@ -4,6 +4,8 @@
 
 function content_script_setup_if_vacant(webmail_specific) {
 
+  var debug_only_webmails = ['outlook'];
+
   window.injected = true; // background script will use this to test if scripts were already injected, and inject if not
   window.account_email_global = null; // used by background script
   window.same_world_global = true; // used by background_script
@@ -61,7 +63,11 @@ function content_script_setup_if_vacant(webmail_specific) {
       if(typeof account_email !== 'undefined') {
         console.log('Loading CryptUp ' + catcher.version());
         window.account_email_global = account_email;
-        setup(account_email);
+        if(tool.value(webmail_specific.name).in(debug_only_webmails)) {
+          console.log('CryptUp disabled: ' + webmail_specific.name + ' integration currently for development only');
+        } else {
+          setup(account_email);
+        }
       } else {
         if(account_email_interval > 6000) {
           console.log('Cannot load CryptUp yet. Page: ' + window.location + ' (' + document.title + ')');
@@ -87,7 +93,7 @@ function content_script_setup_if_vacant(webmail_specific) {
             notifications.clear();
             initialize(account_email, tab_id);
             clearInterval(wait_for_setup_interval);
-          } else if(!$("div.gmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
+          } else if(!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
             var set_up_link = tool.env.url_create('_PLUGIN/settings/index.htm', { account_email: account_email });
             var set_up_notification = '<a href="' + set_up_link + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
             notifications.show(set_up_notification, {
@@ -132,7 +138,7 @@ function content_script_setup_if_vacant(webmail_specific) {
           $('body').append(factory.dialog.subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
         }
       },
-      add_pubkey_dialog_gmail: function (data) {
+      add_pubkey_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog.add_pubkey(data.emails));
         }
@@ -161,7 +167,7 @@ function content_script_setup_if_vacant(webmail_specific) {
 
   function save_account_email_full_name(account_email) {
     // will cycle until page loads and name is accessible
-    // todo - create general event on_gmail_finished_loading for similar actions
+    // todo - create general event on_webmail_finished_loading for similar actions
     TrySetDestryableTimeout(function () {
       var full_name = webmail_specific.get_user_full_name();
       if(full_name) {

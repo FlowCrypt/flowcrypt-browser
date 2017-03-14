@@ -222,13 +222,13 @@ function private_keys_remove(account_email, remove_longid) {
   private_storage_set('local', account_email, 'private_keys', filtered_private_keys);
 }
 
-function account_storage_set(gmail_account_email, values, callback) {
-  if(!gmail_account_email) {
-    gmail_account_email = global_storage_scope;
+function account_storage_set(account_email, values, callback) {
+  if(!account_email) {
+    account_email = global_storage_scope;
   }
   var storage_update = {};
   $.each(values, function (key, value) {
-    storage_update[account_storage_key(gmail_account_email, key)] = value;
+    storage_update[account_storage_key(account_email, key)] = value;
   });
   chrome.storage.local.set(storage_update, function () {
     catcher.try(function () {
@@ -250,11 +250,11 @@ function account_storage_get(account_or_accounts, keys, callback) {
   });
 }
 
-function account_storage_remove(gmail_account_email, key_or_keys, callback) {
-  if(!gmail_account_email) {
-    gmail_account_email = global_storage_scope;
+function account_storage_remove(account_email, key_or_keys, callback) {
+  if(!account_email) {
+    account_email = global_storage_scope;
   }
-  chrome.storage.local.remove(account_storage_key(gmail_account_email, key_or_keys), function () {
+  chrome.storage.local.remove(account_storage_key(account_email, key_or_keys), function () {
     catcher.try(function () {
       if(typeof callback !== 'undefined') {
         callback();

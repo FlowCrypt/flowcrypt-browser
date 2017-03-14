@@ -18,11 +18,11 @@ function content_script_notifications() {
   }
 
   function content_script_notification_clear() {
-    $('.gmail_notifications').html('');
+    $('.webmail_notifications').html('');
   }
 
   function content_script_notification_show(text, callbacks) {
-    $('.gmail_notifications').html('<div class="gmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome')) + '</div>');
+    $('.webmail_notifications').html('<div class="webmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome')) + '</div>');
     if(!callbacks) {
       callbacks = {};
     }
@@ -41,7 +41,7 @@ function content_script_notifications() {
       });
     }
     $.each(callbacks, function (name, callback) {
-      $('.gmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
+      $('.webmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
     });
   }
 

@@ -200,7 +200,7 @@ function is_master_private_key_encrypted(account_email) {
   }
 }
 
-function backup_on_gmail() {
+function backup_on_email_provider() {
   if(!is_master_private_key_encrypted(url_params.account_email)) {
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
@@ -251,7 +251,7 @@ function write_backup_done_and_render(prompt, method) {
 $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var selected = $('input[type=radio][name=input_backup_choice]:checked').val();
   if(selected === 'gmail') {
-    backup_on_gmail();
+    backup_on_email_provider();
   } else if(selected === 'file') {
     backup_as_file();
   } else if(selected === 'print') {

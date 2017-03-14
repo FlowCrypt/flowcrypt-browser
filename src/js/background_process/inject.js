@@ -4,7 +4,7 @@
 
 var responses = {};
 
-function inject_cryptup_into_gmail_if_needed() {
+function inject_cryptup_into_webmail_if_needed() {
   $.each(chrome.runtime.getManifest().content_scripts, function (i, group) {
     get_content_script_tab_ids(group.matches, function (tab_ids) {
       $.each(tab_ids, function (i, tab_id) {
