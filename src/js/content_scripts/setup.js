@@ -17,18 +17,20 @@ function content_script_setup_if_vacant(webmail_specific) {
   window.destroyable_timeouts = [];
 
   window.destroy = function () {
-    console.log('Updating CryptUp');
-    document.removeEventListener(destruction_event, destroy);
-    $.each(destroyable_intervals, function (i, id) {
-      clearInterval(id);
-    });
-    $.each(destroyable_timeouts, function (i, id) {
-      clearTimeout(id);
-    });
-    $('.' + destroyable_class).remove();
-    $('.' + reloadable_class).each(function (i, reloadable_element) {
-      $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
-    });
+    catcher.try(function () {
+      console.log('Updating CryptUp');
+      document.removeEventListener(destruction_event, destroy);
+      $.each(destroyable_intervals, function (i, id) {
+        clearInterval(id);
+      });
+      $.each(destroyable_timeouts, function (i, id) {
+        clearTimeout(id);
+      });
+      $('.' + destroyable_class).remove();
+      $('.' + reloadable_class).each(function (i, reloadable_element) {
+        $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
+      });
+    })();
   };
 
   window.vacant = function () {
@@ -48,7 +50,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   };
 
   document.dispatchEvent(new CustomEvent(destruction_event));
-  document.addEventListener(destruction_event, catcher.try(destroy));
+  document.addEventListener(destruction_event, destroy);
 
   /* GENERAL CONTENT SCRIPT FUNCTIONS */
 
