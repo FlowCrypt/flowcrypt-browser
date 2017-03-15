@@ -50,6 +50,7 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
 }
 .settings-icons-rows {
   max-width: 800px;
+  display: block;
   margin: 0 auto!important;
 }
 .settings-icons-rows > .col-xs-2 {
@@ -255,7 +256,9 @@ body#settings .advanced {
 }
 body#settings.advanced .advanced {
   display: block;
-  animation: fadeIn .7s;
+  opacity: 0;
+  animation: fadeIn .7s .25s;
+  animation-fill-mode:forwards;
 }
 body#settings.advanced a.advanced {
   display: inline;
@@ -264,7 +267,9 @@ body#settings.advanced .basic {
   display: none;
 }
 body#settings .basic {
-  animation: fadeIn .7s;
+  opacity: 0;
+  animation: fadeIn .7s .25s;
+  animation-fill-mode:forwards;
 }
 body#settings .settings-border {
   border: 1px solid rgba(0, 0, 0, .2);
