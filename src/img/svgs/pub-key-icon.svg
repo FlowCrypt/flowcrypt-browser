@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="175px" height="230px" viewBox="0 0 175 230" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="173px" height="228px" viewBox="0 0 173 228" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
     <title>pub-key-icon</title>
     <desc>Created with Sketch.</desc>
@@ -13,18 +13,14 @@
         </radialGradient>
         <path d="M123.783727,0.521438772 L123.783727,31.3650909 C123.783727,34.6798346 126.469748,37.3669653 129.787412,37.3669653 L160.514512,37.3669653 L123.783727,0.521438772 Z" id="path-2"></path>
         <filter x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" id="filter-3">
-            <feMorphology radius="0.5" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
-            <feOffset dx="0" dy="2" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
             <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
-            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
             <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
         </filter>
         <path d="M124.711052,45.082107 C119.742275,45.082107 115.714286,41.0620885 115.714286,36.0748572 L115.714286,1.09667011 L3.00605844,1.00000113 C1.34585821,0.998577187 0,2.34542204 0,4.00324884 L0,212.020068 C0,216.991109 4.0259222,221.020934 8.99138767,221.020934 L161.522721,221.020934 C163.17735,221.020934 164.522357,219.680955 164.526894,218.022632 L165,45.082107 L124.711052,45.082107 Z" id="path-4"></path>
         <filter x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" id="filter-5">
-            <feMorphology radius="0.5" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
-            <feOffset dx="0" dy="2" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
             <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
-            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
             <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
         </filter>
         <rect id="path-6" x="0" y="0" width="25" height="8" rx="4"></rect>
@@ -109,15 +105,15 @@
         </mask>
     </defs>
     <g id="Playground" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="pub-key-icon" transform="translate(5.000000, 2.000000)">
+        <g id="pub-key-icon" transform="translate(4.000000, 1.000000)">
             <g>
                 <g id="Shape" fill-rule="nonzero">
                     <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
-                    <use stroke="#979797" stroke-width="1" fill="url(#radialGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
+                    <use fill="url(#radialGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
                 </g>
                 <g id="Shape" fill-rule="nonzero">
                     <use fill="black" fill-opacity="1" filter="url(#filter-5)" xlink:href="#path-4"></use>
-                    <use stroke="#979797" stroke-width="1" fill="url(#radialGradient-1)" fill-rule="evenodd" xlink:href="#path-4"></use>
+                    <use fill="url(#radialGradient-1)" fill-rule="evenodd" xlink:href="#path-4"></use>
                 </g>
                 <g id="Group-7" transform="translate(17.000000, 79.000000)" stroke="#358622" stroke-width="2" opacity="0.600000024" fill="#31A217">
                     <g id="Group-6" transform="translate(0.500000, 0.000000)">
