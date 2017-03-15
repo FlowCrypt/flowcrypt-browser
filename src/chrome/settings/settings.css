@@ -111,7 +111,7 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   padding-left: 0!important;
 }
 #settings-row .settings-icons-rows.hide_if_setup_not_done {
-  display: block!important;
+  /*display: block!important;*/
 }
 
 #settings-row .my-keys-row .key_words, #settings-row .my-keys-row .key_id {
@@ -140,7 +140,7 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   bottom: -10px;
   opacity: .6;
   text-decoration: underline;
-  right: 51px;
+  right: 52px;
 }
 #settings-row .my-keys-copy {
   text-indent: 5px;
