@@ -964,7 +964,7 @@
       return node.headers['content-disposition'][0].params.filename;
     }
     if(node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
-      return node.headers['content-disposition'][0].params.name;
+      return node.headers['content-type'][0].params.name;
     }
   }
 
