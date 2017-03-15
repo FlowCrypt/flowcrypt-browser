@@ -17,6 +17,7 @@
   "content_scripts": [
     {
       "matches": ["*://mail.google.com/*"],
+      "css": ["/css/webmail.css"],
       "js": [
         "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
         "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
@@ -25,6 +26,7 @@
     },
     {
       "matches": ["*://inbox.google.com/*"],
+      "css": ["/css/webmail.css"],
       "js": [
         "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
         "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
@@ -33,6 +35,7 @@
     },
     {
       "matches": ["*://outlook.live.com/*"],
+      "css": ["/css/webmail.css"],
       "js": [
         "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
         "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
