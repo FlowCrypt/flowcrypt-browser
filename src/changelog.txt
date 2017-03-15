@@ -1,5 +1,14 @@
 <div>
 
+<b>version 3.7.7 on March 14, 2017: Style fix</b>
+internal: include webmail css directly in manifest
+internal: basic outlook setup
+internal: change auth button based on google guidelines
+internal: prevent old destroy event handlers from firing
+internal: properly recognizing mime file names
+internal: prevent empty strings from gettings into the list of accounts
+settings: lifetime member account fix
+
 <b>version 3.7.6 on March 13, 2017: Subscriptions</b>
 setup: more robust subscriptions
 setup: basic microsoft auth tests
