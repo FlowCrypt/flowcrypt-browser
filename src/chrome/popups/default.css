@@ -21,16 +21,12 @@ html, body {
   display: block;
   width: 300px;
   background: #31A217;
-  /*padding: 18px 20px;*/
   position: relative;
-  /*overflow: hidden;*/
   cursor: pointer!important;
   text-align: left;
   font-weight: 500;
   font-size: 16px;
   margin-right: 64px;
-  /*box-shadow: 0px 1px 3px rgba(0, 0, 0, .3);*/
-  /*border-bottom: 2px solid transparent;*/
 }
 .menu-row span:first-child {
   width: 250px;
@@ -64,6 +60,18 @@ html, body {
   transition: .5s;
   animation: fadeInUp .4s;
 }
+#email_or_settings {
+  background-image: radial-gradient(52% 137%, #FFFFFF 42%, #E8E5E5 75%, #F3EFEF 100%);
+}
+#email_or_settings img {
+  opacity: .85;
+  transition: .3s;
+}
+#email_or_settings img:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
 .profile-row:hover:before {
   position: absolute;
   width: 250px;
