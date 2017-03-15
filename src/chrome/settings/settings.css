@@ -309,7 +309,7 @@ body#settings .settings-border .row {
     width: 100%!important;
   }
 }
-@media (max-width: 761px) {
+@media (max-width: 448px) {
   #footer-row {
     position: relative;
   }
