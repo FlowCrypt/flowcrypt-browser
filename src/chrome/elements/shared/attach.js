@@ -86,7 +86,7 @@ function init_shared_attach_js(get_limits) {
     } else {
       $.each(attached_files, function (id, file) {
         read_attachment_data_as_uint8(id, function (file_data) {
-          tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, false, function (encrypted_file_content) {
+          tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false, function (encrypted_file_content) {
             add(tool.file.attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted_file_content.message.packets.write()));
           });
         });

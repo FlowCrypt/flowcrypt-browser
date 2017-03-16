@@ -191,7 +191,7 @@ function init_shared_compose_js(url_params, db, subscription) {
       save_draft_in_process = true;
       S.cached('send_btn_note').text('Saving');
       var armored_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id);
-      tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, true, function (encrypted) {
+      tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted) {
         if(url_params.thread_id) { // replied message
           var body = '[cryptup:link:draft_reply:' + url_params.thread_id + ']\n\n' + encrypted.data;
         } else if(draft_id) {
@@ -578,7 +578,7 @@ function init_shared_compose_js(url_params, db, subscription) {
   }
 
   function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, attach_files_to_email, send_email) {
-    tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, true, function (encrypted) {
+    tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
       encrypted.data = with_attached_pubkey_if_needed(encrypted.data);
       var body = { 'text/plain': encrypted.data };
       setTimeout(function() {

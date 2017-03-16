@@ -1971,8 +1971,11 @@
     });
   }
 
-  function crypto_message_encrypt(armored_pubkeys, signing_prv, challenge, data, armor, callback) {
-    var options = { data: data, armor: armor, };
+  function crypto_message_encrypt(armored_pubkeys, signing_prv, challenge, data, filename, armor, callback) {
+    var options = { data: data, armor: armor };
+    if(filename) {
+      options.filename = filename;
+    }
     var used_challange = false;
     if(armored_pubkeys) {
       options.publicKeys = [];
