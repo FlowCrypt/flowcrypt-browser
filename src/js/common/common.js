@@ -452,6 +452,7 @@
         message_upload: api_cryptup_message_upload,  // todo - DEPRECATE THIS. Send as JSON to message/store
         message_token: api_cryptup_message_token,
         message_reply: api_cryptup_message_reply,
+        message_contact: api_cryptup_message_contact,
         link_message: api_cryptup_link_message,
         account_update: api_cryptup_account_update,
       },
@@ -767,23 +768,27 @@
   };
 
   function env_increment(type, callback) {
-    if(!known_metric_types[type]) {
-      catcher.log('Unknown metric type "' + type + '"');
-    }
-    account_storage_get(null, ['metrics'], function (storage) {
-      var metrics_k = known_metric_types[type];
-      if(!storage.metrics) {
-        storage.metrics = {};
+    if(typeof account_storage_get === 'function') {
+      if(!known_metric_types[type]) {
+        catcher.log('Unknown metric type "' + type + '"');
       }
-      if(!storage.metrics[metrics_k]) {
-        storage.metrics[metrics_k] = 1;
-      } else {
-        storage.metrics[metrics_k] += 1;
-      }
-      account_storage_set(null, { metrics: storage.metrics, }, function () {
-        browser_message_send(null, 'update_uninstall_url', null, callback);
+      account_storage_get(null, ['metrics'], function (storage) {
+        var metrics_k = known_metric_types[type];
+        if(!storage.metrics) {
+          storage.metrics = {};
+        }
+        if(!storage.metrics[metrics_k]) {
+          storage.metrics[metrics_k] = 1;
+        } else {
+          storage.metrics[metrics_k] += 1;
+        }
+        account_storage_set(null, { metrics: storage.metrics }, function () {
+          browser_message_send(null, 'update_uninstall_url', null, callback);
+        });
       });
-    });
+    } else if (typeof callback === 'function') {
+      callback();
+    }
   }
 
   /* tool.arr */
@@ -1067,8 +1072,8 @@
 
   function mime_parse_message_with_detached_signature(mime_message) {
     /*
-    Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
-    Unforntunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
+      Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
+      Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
 
      --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
      Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
@@ -1496,14 +1501,14 @@
   }
 
   var crypto_armor_headers_dict = {
-      null: { begin: '-----BEGIN', end: '-----END' },
-      public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----' },
-      private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----' },
-      attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----' },
-      cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----' },
-      signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
-      signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
-      message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----' },
+    null: { begin: '-----BEGIN', end: '-----END' },
+    public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----' },
+    private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----' },
+    attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----' },
+    cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----' },
+    signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
+    signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
+    message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----' },
   };
 
   function crypto_armor_headers(block_type, format) {
@@ -2145,8 +2150,8 @@
 
   var USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
   var api_gmail_scope_dict = {
-      read: 'https://www.googleapis.com/auth/gmail.readonly',
-      compose: 'https://www.googleapis.com/auth/gmail.compose',
+    read: 'https://www.googleapis.com/auth/gmail.readonly',
+    compose: 'https://www.googleapis.com/auth/gmail.compose',
   };
 
   function api_gmail_scope(scope) {
@@ -2250,10 +2255,10 @@
   }
 
   /*
-    body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
-    headers: at least {To, From, Subject}
-    attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
-  */
+   body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
+   headers: at least {To, From, Subject}
+   attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
+   */
   function mime_encode(account_email, body, headers, attachments, mime_message_callback) {
     tool.env.set_up_require();
     require(['emailjs-mime-builder'], function (MimeBuilder) {
@@ -2996,32 +3001,48 @@
     });
   }
 
-  function api_cryptup_message_presign_files(attachments, callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        api_cryptup_call('message/presign_files', {
-          account: email,
-          uuid: uuid,
-          lengths: attachments.map(function(a) { return a.size; }),
-        }, api_cryptup_response_formatter(callback));
-      } else {
-        callback(api_cryptup_auth_error);
-      }
-    });
+  function api_cryptup_message_presign_files(attachments, callback, message_token) {
+    if(!message_token) {
+      storage_cryptup_auth_info(function (email, uuid, verified) {
+        if(verified) {
+          api_cryptup_call('message/presign_files', {
+            account: email,
+            uuid: uuid,
+            lengths: attachments.map(function(a) { return a.size; }),
+          }, api_cryptup_response_formatter(callback));
+        } else {
+          callback(api_cryptup_auth_error);
+        }
+      });
+    } else {
+      api_cryptup_call('message/presign_files', {
+        message_token_account: message_token.account,
+        message_token: message_token.token,
+        lengths: attachments.map(function(a) { return a.size; }),
+      }, api_cryptup_response_formatter(callback));
+    }
   }
 
-  function api_cryptup_message_confirm_files(identifiers, callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        api_cryptup_call('message/confirm_files', {
-          account: email,
-          uuid: uuid,
-          identifiers: identifiers,
-        }, api_cryptup_response_formatter(callback));
-      } else {
-        callback(api_cryptup_auth_error);
-      }
-    });
+  function api_cryptup_message_confirm_files(identifiers, callback, message_token) {
+    if(!message_token) {
+      storage_cryptup_auth_info(function (email, uuid, verified) {
+        if(verified) {
+          api_cryptup_call('message/confirm_files', {
+            account: email,
+            uuid: uuid,
+            identifiers: identifiers,
+          }, api_cryptup_response_formatter(callback));
+        } else {
+          callback(api_cryptup_auth_error);
+        }
+      });
+    } else {
+      api_cryptup_call('message/confirm_files', {
+        message_token_account: message_token.account,
+        message_token: message_token.token,
+        identifiers: identifiers,
+      }, api_cryptup_response_formatter(callback));
+    }
   }
 
   function api_cryptup_message_upload(encrypted_data_armored, callback) { // todo - DEPRECATE THIS. Send as JSON to message/store
@@ -3057,6 +3078,16 @@
       message: message,
     }, api_cryptup_response_formatter(callback));
   }
+
+  function api_cryptup_message_contact(sender, message, callback, message_token) {
+    api_cryptup_call('message/contact', {
+      message_token_account: message_token.account,
+      message_token: message_token.token,
+      sender: sender,
+      message: message,
+    }, api_cryptup_response_formatter(callback));
+  }
+
 
   function api_cryptup_link_message(short, callback) {
     return api_cryptup_call('link/message', {
