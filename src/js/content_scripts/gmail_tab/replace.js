@@ -4,6 +4,8 @@
 
 function gmail_element_replacer(factory, account_email, addresses, can_read_emails) {
 
+  var last_reply_box_reinserted = 0;
+
   function everything() {
     replace_armored_blocks();
     replace_attachments();
@@ -270,8 +272,11 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function reinsert_reply_box(subject, my_email, reply_to, thread_id) {
-    var params = { subject: subject, reply_to: reply_to, addresses: addresses, my_email: my_email, thread_id: thread_id, thread_message_id: thread_id };
-    $('.reply_message_iframe_container').append(factory.embedded.reply(params, false, true));
+    if(Date.now() - last_reply_box_reinserted > 1000) { // preventing double inserts on some browsers
+      last_reply_box_reinserted = Date.now();
+      var params = { subject: subject, reply_to: reply_to, addresses: addresses, my_email: my_email, thread_id: thread_id, thread_message_id: thread_id };
+      $('.reply_message_iframe_container').append(factory.embedded.reply(params, false, true));
+    }
   }
 
   return {
