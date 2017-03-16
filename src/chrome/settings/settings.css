@@ -111,9 +111,6 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   text-indent: 0;
   padding-left: 0!important;
 }
-#settings-row .settings-icons-rows.hide_if_setup_not_done {
-  /*display: block!important;*/
-}
 
 #settings-row .my-keys-row .key_words, #settings-row .my-keys-row .key_id {
   text-align: left;

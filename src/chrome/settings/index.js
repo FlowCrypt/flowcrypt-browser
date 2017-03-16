@@ -76,6 +76,15 @@ tool.browser.message.tab_id(function (tab_id) {
   }
 });
 
+function display_original(selector) {
+  var filterable = $(selector);
+  filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
+  filterable.filter('table').css('display', 'table');
+  filterable.filter('tr').css('display', 'table-row');
+  filterable.filter('td').css('display', 'table-cell');
+  filterable.not('a, b, i, img, span, input, label, select, table, tr, td').css('display', 'block');
+}
+
 function initialize() {
   if(url_params.account_email) {
     $('.email-address').text(url_params.account_email);
@@ -86,7 +95,7 @@ function initialize() {
         if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
           $('.auth_denied_warning').css('display', 'block');
         }
-        $('.hide_if_setup_not_done').css('display', 'initial');
+        display_original('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
         var private_keys = private_keys_get(url_params.account_email);
         if(!private_keys.length) {
@@ -96,7 +105,7 @@ function initialize() {
         }
         add_key_rows_html(private_keys);
       } else {
-        $('.show_if_setup_not_done').css('display', 'initial');
+        display_original('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     });
