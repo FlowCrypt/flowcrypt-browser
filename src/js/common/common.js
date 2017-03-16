@@ -2424,7 +2424,9 @@
   }
 
   function attachment_get_treat_as(attachment) {
-    if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
+    if(attachment.name === '' || attachment.name === 'PGPexch.htm.pgp') { // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
+      return 'hidden';
+    } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
       return 'encrypted';
     } else if(attachment.name === 'signature.asc') {
       return  'signature';
@@ -2432,8 +2434,6 @@
       return 'public_key';
     } else if((attachment.name.match(/\.asc$/) || attachment.name === 'message') && attachment.size < 100000 && !attachment.inline) {
       return 'message';
-    } else if(attachment.name === '') {
-      return 'hidden';
     } else {
       return 'standard';
     }
