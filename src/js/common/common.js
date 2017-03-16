@@ -327,6 +327,7 @@
       download_as_uint8: file_download_as_uint8,
       save_to_downloads: file_save_to_downloads,
       attachment: file_attachment,
+      pgp_name_patterns: file_pgp_name_patterns,
     },
     mime: {
       headers_to_from: mime_headers_to_from,
@@ -954,6 +955,10 @@
       size: size || content.length,
       url: url || null,
     };
+  }
+
+  function file_pgp_name_patterns() {
+    return ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification'];
   }
 
   /* tool.mime */
@@ -2424,8 +2429,8 @@
   }
 
   function attachment_get_treat_as(attachment) {
-    if(attachment.name === '' || attachment.name === 'PGPexch.htm.pgp') { // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
-      return 'hidden';
+    if(tool.value(attachment.name).in(['', 'PGPexch.htm.pgp', 'PGPMIME version identification'])) {
+      return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
       return 'encrypted';
     } else if(attachment.name === 'signature.asc') {

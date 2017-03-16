@@ -115,7 +115,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function replace_attachments() {
     $('div.aQH').each(function (i, attachments_container) {
       attachments_container = $(attachments_container);
-      var new_pgp_messages = attachments_container.children(['*.pgp', '*.gpg', '*.asc', 'noname', 'message'].map(get_attachment_selector).join(',')).not('.evaluated').addClass('evaluated');
+      var new_pgp_messages = attachments_container.children(tool.file.pgp_name_patterns().map(get_attachment_selector).join(',')).not('.evaluated').addClass('evaluated');
       if(new_pgp_messages.length) {
         var message_id = determine_message_id('attachment', attachments_container);
         if(message_id) {
