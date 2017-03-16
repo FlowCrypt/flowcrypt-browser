@@ -53,7 +53,7 @@ $('.action_show_stripe').click(function() {
 
 $('.action_show_group').click(function() {
   $('h1').text('CryptUp Group License');
-  $('.status').html('Manage your users under a single billing interface.<br/><br/>Group discounts apply to 11th seat and up, starting at 5% depending on group size.<br/><br/>In addition to group discount, there is a flat 20% discount for customers billed yearly.<br/><br/>Write me at tom@cryptup.org');
+  $('.status').html('Manage your users under a single billing interface.<br/><br/>Group discounts apply to 51st seat and up, starting at 5% depending on group size.<br/><br/>In addition to group discount, there is a flat 20% discount for customers billed yearly.<br/><br/>Write me at tom@cryptup.org');
   $('.hide_on_checkout').css('display', 'none');
 });
 
