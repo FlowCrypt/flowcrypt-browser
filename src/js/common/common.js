@@ -1226,6 +1226,7 @@
         var show = !storage.hide_pass_phrases;
       }
       $.each(pass_phrase_input_ids, function (i, id) {
+        $('#' + id).addClass('toggled_passphrase');
         if(show) {
           $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
           $('#' + id).attr('type', 'text');

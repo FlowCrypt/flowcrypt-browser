@@ -30,7 +30,8 @@ a:focus { outline: none !important; }
 .button_secure.green { background:  #31A217; }
 .toggle_show_hide_pass_phrase { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none;
   -ms-user-select: none; user-select: none; display: inline-block; position: absolute; width: 50px; text-align: center; padding-left: 4px;
-    margin-left: -55px;  padding-top: 7px; cursor: pointer; opacity: 0.5; background: #dadada; height: 36px; line-height: 14px; border: 1px solid rgb(179, 179, 179)}
+  margin-left: -55px;  padding-top: 7px; cursor: pointer; opacity: 0.5; background: #dadada; height: 36px; line-height: 14px;
+  border: 1px solid rgba(0,0,0,0.25); border-left: none; }
 .toggle_show_hide_pass_phrase .eye-open,
 .toggle_show_hide_pass_phrase .eye-closed { width: 19px; height: 15px;}
 
@@ -55,7 +56,6 @@ div.line.left { text-align: left; }
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
 body#settings > div#content {  margin-top: 70px; margin-bottom: 150px; position: relative;}
 body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
-/*body#settings > div#content.page #page_back_button { display: none; position: absolute; top: 10px; left: 10px; }*/
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
 body#settings > div#content.page img.screen { border: 1px dotted #cacaca; }
 body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
@@ -68,9 +68,7 @@ body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { padding: 0; box-sizing: border-box;
   width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px; }
-body#settings > div#content input#input_passphrase,
-body#settings > div#content.test_passphrase input,
-body#settings > div#content input#recovery_pasword  { margin-right: 54px; padding-right: 10px;}
+.toggled_passphrase  { margin-right: 54px; padding-right: 10px; }
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div#content .start-arrow { position: absolute; width: 160px; right: 53px; animation: fadeInUp 1s;}
 body#settings > div.profile-row { position: fixed; top:10px; right:20px;}

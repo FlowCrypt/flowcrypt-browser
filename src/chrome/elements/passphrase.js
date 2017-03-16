@@ -46,7 +46,7 @@ function render_error() {
 }
 
 function render_normal() {
-  $('#passphrase').css('border-color', 'gray');
+  $('#passphrase').css('border-color', '');
   $('#passphrase').css('color', 'black');
   $('#passphrase').focus();
 }
