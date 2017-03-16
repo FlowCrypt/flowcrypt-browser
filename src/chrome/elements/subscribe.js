@@ -45,9 +45,17 @@ tool.browser.message.tab_id(function (tab_id) {
   $('.stripe_checkout').html(L.credit_or_debit + '<br><br>' + factory.embedded.stripe_checkout());
 });
 
-if(url_params.source !== 'auth_error') {
-  // $('.stripe_checkout').css('display', 'block');
-}
+$('.action_show_stripe').click(function() {
+  $('.status').text('You are subscribing to a $5 monthly payment for CryptUp Advanced.');
+  $('.hide_on_checkout').css('display', 'none');
+  $('.stripe_checkout').css('display', 'block');
+});
+
+$('.action_show_group').click(function() {
+  $('h1').text('CryptUp Group License');
+  $('.status').html('Manage your users under a single billing interface.<br/><br/>Group discounts apply to 11th seat and up, starting at 5% depending on group size.<br/><br/>In addition to group discount, there is a flat 20% discount for customers billed yearly.<br/><br/>Write me at tom@cryptup.org');
+  $('.hide_on_checkout').css('display', 'none');
+});
 
 function stripe_result_handler(data, sender, respond) {
   $('.stripe_checkout').html('').css('display', 'none');
@@ -58,6 +66,13 @@ tool.api.cryptup.account_update(function() {
   account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     storage_cryptup_subscription(function (level, expire, active, method) {
+      if(!active) {
+        $('.status').text('After the trial period, your account will automatically switch back to Free Forever.');
+      } else if(active && method === 'trial') {
+        $('.status').text('After the trial period, your account will automatically switch back to Free Forever. You can subscribe now to stay on CryptUp Advanced.');
+      } else {
+        // todo - upgrade to business
+      }
       if(url_params.placement !== 'embedded') {
         render_dialog(level, expire, active);
       } else {
@@ -216,7 +231,7 @@ function handle_login_result(registered, verified, subscription, error, cryptup_
     } else {
       render_status('verifying..', true);
       if(can_read_emails && !cryptup_email_verification_tokens) {
-        $('.status').text('This may take a minute.. ');
+        $('.status').text('This may take a minute.. ' + tool.ui.spinner('green'));
         wait_for_token_email(30, function (tokens) {
           if(tokens) {
             tool.api.cryptup.account_login(url_params.account_email, tokens.pop(), function(r, v, s, e) {

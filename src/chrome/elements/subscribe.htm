@@ -14,8 +14,7 @@
 
   <div id="content" class="subscribe dialog display_none">
     <div class="line"><h1>Upgrade to CryptUp Advanced</h1></div>
-    <div class="line stripe_checkout"></div>
-    <div class="list_table">
+    <div class="list_table hide_on_checkout">
       <div class="line">CryptUp Free Forever will always stay feature rich. Privacy is such a<br>fundamental thing that <u>anyone</u> should have it, <u>free</u>. See for yourself:</div>
       <div class="line">
         <table>
@@ -34,12 +33,17 @@
         </table>
       </div>
     </div>
-    <div class="line status">After the trial period, your account will automatically switch back to Free Forever.</div>
+    <div class="line status"></div>
+    <div class="line stripe_checkout"></div>
     <div class="line button_padding">&nbsp;</div>
-    <div class="line">
-      <div class="button long green action_ok">FREE 3 month trial</div>
+    <div class="line hide_on_checkout">
+      <div class="button green action_ok">FREE 3 month trial</div>
       &nbsp;&nbsp;
-      <div class="button long gray action_close">LATER</div>
+      <div class="button gray action_show_stripe">subscribe now</div>
+      &nbsp;&nbsp;
+      <div class="button gray action_show_group">group license</div>
+      &nbsp;&nbsp;
+      <div class="button gray action_close">LATER</div>
     </div>
   </div>
 
