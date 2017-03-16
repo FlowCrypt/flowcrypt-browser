@@ -2998,10 +2998,8 @@
             account_storage_set(null, { cryptup_account_subscription: result.subscription }, function () {
               callback(true, result);
             });
-          } else if(success_or_auth_error === false) {
-            callback(false, result);
           } else {
-            callback(success_or_auth_error);
+            callback(success_or_auth_error, result);
           }
         }));
       } else {

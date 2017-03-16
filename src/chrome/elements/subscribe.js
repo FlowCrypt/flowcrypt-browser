@@ -5,8 +5,8 @@
 var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
 
 var PRODUCTS = {
-  trial: { id: 'free_quarter', method: 'trial', name: 'trial' },
-  advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly' },
+  trial: { id: 'free_quarter', method: 'trial', name: 'trial', level: 'pro' },
+  advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
 };
 
 var chosen_product;
@@ -40,7 +40,7 @@ $('#content').css('display', 'block');
 tool.browser.message.tab_id(function (tab_id) {
   var factory = element_factory(url_params.account_email, tab_id);
   tool.browser.message.listen({
-    stripe_result: stripe_result_handler,
+    stripe_result: stripe_credit_card_entered_handler,
   }, tab_id);
   $('.stripe_checkout').html(L.credit_or_debit + '<br><br>' + factory.embedded.stripe_checkout());
 });
@@ -57,9 +57,18 @@ $('.action_show_group').click(function() {
   $('.hide_on_checkout').css('display', 'none');
 });
 
-function stripe_result_handler(data, sender, respond) {
+function stripe_credit_card_entered_handler(data, sender, respond) {
   $('.stripe_checkout').html('').css('display', 'none');
-  register_and_subscribe(PRODUCTS.advanced_monthly, data.token);
+  chosen_product = PRODUCTS.advanced_monthly;
+  chosen_product.source = data.token;
+  storage_cryptup_auth_info(function(email, uuid, verified) {
+    if(verified) {
+      tool.api.cryptup.account_update()
+      tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, data.token, handle_subscribe_result);
+    } else {
+      register_and_subscribe(PRODUCTS.advanced_monthly, data.token);
+    }
+  });
 }
 
 tool.api.cryptup.account_update(function() {
@@ -69,14 +78,14 @@ tool.api.cryptup.account_update(function() {
       if(!active) {
         $('.status').text('After the trial period, your account will automatically switch back to Free Forever.');
       } else if(active && method === 'trial') {
-        $('.status').text('After the trial period, your account will automatically switch back to Free Forever. You can subscribe now to stay on CryptUp Advanced.');
+        $('.status').html('After the trial period, your account will automatically switch back to Free Forever.<br/><br/>You can subscribe now to stay on CryptUp Advanced. It\'s $5 a month.');
       } else {
         // todo - upgrade to business
       }
       if(url_params.placement !== 'embedded') {
-        render_dialog(level, expire, active);
+        render_dialog(level, expire, active, method);
       } else {
-        render_embedded(level, expire, active);
+        render_embedded(level, expire, active, method);
       }
     });
   });
@@ -89,7 +98,7 @@ function repair_auth_error_get_new_installation() {
   });
 }
 
-function render_embedded(level, expire, active) {
+function render_embedded(level, expire, active, method) {
   $('#content').html('<div class="line status"></div>');
   if(active) {
     render_status(L.welcome);
@@ -103,15 +112,23 @@ function render_embedded(level, expire, active) {
   }
 }
 
-function render_dialog(level, expire, active) {
+function render_dialog(level, expire, active, method) {
   if(active) {
     if(url_params.source !== 'auth_error') {
-      $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+      if(method === 'trial') {
+        $('.list_table').css('display', 'none');
+        $('.action_ok').css('display', 'none');
+        $('.action_show_stripe').removeClass('gray').addClass('green');
+      } else {
+        $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+      }
     } else {
       $('h1').text('CryptUp Account');
       $('.status').text('Your account information seems outdated.');
       $('.action_ok').text('Update account info');
     }
+  } else {
+
   }
 
   $('.action_close').click(close_dialog);
@@ -231,7 +248,7 @@ function handle_login_result(registered, verified, subscription, error, cryptup_
     } else {
       render_status('verifying..', true);
       if(can_read_emails && !cryptup_email_verification_tokens) {
-        $('.status').text('This may take a minute.. ' + tool.ui.spinner('green'));
+        $('.status').html('This may take a minute.. ' + tool.ui.spinner('green'));
         wait_for_token_email(30, function (tokens) {
           if(tokens) {
             tool.api.cryptup.account_login(url_params.account_email, tokens.pop(), function(r, v, s, e) {
@@ -258,10 +275,23 @@ function handle_login_result(registered, verified, subscription, error, cryptup_
 function handle_subscribe_result(success, response) {
   account_storage_remove(null, 'cryptup_subscription_attempt', function () {
     if(success && response && response.subscription && response.subscription.level) {
-      notify_upgraded_and_close();
+      if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
+        notify_upgraded_and_close();
+      } else if(response.error) {
+        catcher.log('unexpected error subscribing: ' + chosen_product.id + ':' + chosen_product.method + ':' + url_params.account_email, response);
+        alert('There was an error while subscribing. Please write me at tom@cryptup.org to fix this.\n\n' + response.error);
+        setTimeout(function() {
+          window.location.reload();
+        }, 500);
+      } else {
+        catcher.log('unexpected issue subscribing: ' + chosen_product.id + ':' + chosen_product.method + ':' + url_params.account_email, response);
+        alert('There was an issue subscribing. Please write me at tom@cryptup.org to fix this.\n\n' + response.error);
+        setTimeout(function() {
+          window.location.reload();
+        }, 500);
+      }
     } else if(success === tool.api.cryptup.auth_error) {
-      alert('There was a problem logging in, please write me at tom@cryptup.org to fix this');
-      window.location.reload();
+      register_and_subscribe(chosen_product, chosen_product.source);
     } else {
       alert('There was a problem upgrading CryptUp (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
       window.location.reload();

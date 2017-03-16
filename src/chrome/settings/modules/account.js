@@ -20,7 +20,10 @@ tool.api.cryptup.account_update(function () {
       } else {
         $('.expire_label').text('Until');
         $('.price').text('free');
-        $('.method').text('trial');
+        $('.method').html('trial <a href="#" class="action_go_subscription">upgrade</a>');
+        $('.action_go_subscription').click(function() {
+          show_settings_page('/chrome/elements/subscribe.htm', '&placement=settings');
+        })
       }
       $('.loading').text(' ');
       $('.list_table').css('display', 'block');
