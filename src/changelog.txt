@@ -1,5 +1,16 @@
 <div>
 
+<b>version 3.7.8 on March 16, 2017: Design and compatibility</b>
+reading: trouble recognizing public keys from Enigmail
+reading: recognize new mime format from enigmail
+reading: hide PGPexch.htm.pgp
+design: Long Passphrases run into the hide button
+design: prevent other settings blocks from showing while loading
+design: use block and inline-block for hide_if_setup_not_done
+composing: include filename in pgp data packet
+composing: reply box can double up - try to prevent it
+internal: don't include mnemonic twice in new_message and reply_message
+
 <b>version 3.7.7 on March 14, 2017: Style fix</b>
 internal: include webmail css directly in manifest
 internal: basic outlook setup
