@@ -289,6 +289,7 @@
       extract_cryptup_reply_token: str_extract_cryptup_reply_token,
       strip_cryptup_reply_token: str_strip_cryptup_reply_token,
       int_to_hex: str_int_to_hex,
+      message_difference: str_message_difference,
     },
     env: {
       browser: env_browser,
@@ -432,6 +433,7 @@
         oauth_url: api_outlook_oauth_url,
         message_send: api_outlook_sendmail,
         message_get: api_outlook_message_get,
+        message_thread: api_outlook_message_thread,
       },
       attester: {
         lookup_email: api_attester_lookup_email,
@@ -686,6 +688,30 @@
       });
     }
     return decrypted_content;
+  }
+
+  function message_to_comparable_format(encrypted_message) {
+    return encrypted_message.substr(0, 5000).replace(/[^a-zA-Z0-9]+/g, ' ').trim().substr(0, 4000).trim().split(' ').reduce(function(arr, word) {
+      if(word.length > 20) {
+        arr.push(word);
+      }
+      return arr;
+    }, []);
+  }
+
+  function str_message_difference(msg_1, msg_2) {
+    var msg = [message_to_comparable_format(msg_1), message_to_comparable_format(msg_2)];
+    var difference = [0, 0];
+    $.each(msg[0], function(i, word) {
+      difference[0] += !tool.value(word).in(msg[1]);
+    });
+    if(!difference[0]) {
+      return 0;
+    }
+    $.each(msg[1], function(i, word) {
+      difference[1] += !tool.value(word).in(msg[0]);
+    });
+    return Math.min(difference[0], difference[1]);
   }
 
   /* tool.env */
@@ -2054,7 +2080,7 @@
     };
   }
 
-  function api_call(base_url, path, values, callback, format, progress, headers, response_format) {
+  function api_call(base_url, path, values, callback, format, progress, headers, response_format, method) {
     progress = progress || {};
     if(format === 'JSON') {
       var formatted_values = JSON.stringify(values);
@@ -2077,7 +2103,7 @@
         return get_ajax_progress_xhr(progress);
       },
       url: base_url + path,
-      method: 'POST',
+      method: method || 'POST',
       data: formatted_values,
       dataType: response_format || 'json',
       crossDomain: true,
@@ -2756,19 +2782,19 @@
     });
   }
 
-  function api_outlook_call(account_email, resource, values, response_format, callback, progress) {
+  function api_outlook_call(account_email, resource, values, response_format, callback, progress, method) {
     account_storage_get(account_email, ['microsoft_auth'], function (storage) {
       if(Date.now() < storage.microsoft_auth.expires_on) {
-        api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format);
+        api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format, method);
       } else { // token refresh needed
         silent_implicit_token_refresh_in_hidden_iframe(account_email, function(auth_success, auth_result) {
           if(auth_success) {
-            api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format);
+            api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format, method);
           } else if(auth_result === 'login_required') {
             alert('Outlook needs you to sign in again to continue using CryptUp.');
             verbose_implicit_token_refresh_in_window_popup(account_email, function (verbose_auth_succcess, verbose_auth_result) {
               if(verbose_auth_succcess) {
-                api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + verbose_auth_result.access_token}, response_format);
+                api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + verbose_auth_result.access_token}, response_format, method);
               } else {
                 callback(false, 'Could not get permission from Outlook');
               }
@@ -2809,10 +2835,17 @@
    To get the entire, original HTML content, include the following HTTP request header:
    Prefer: outlook.allow-unsafe-html
    */
-  function api_outlook_message_get(message_id, callback, progress_callback) {
+  function api_outlook_message_get(account_email, message_id, callback, progress_callback) {
     api_outlook_call(account_email, 'me/messages/' + message_id, null, 'json', callback, progress_callback);
   }
 
+  function api_outlook_message_thread(account_email, conversation_id, callback) {
+    // http://stackoverflow.com/questions/41125652/fetch-messages-filtered-by-conversationid-via-office365-api
+    // string finalUrl = "https://outlook.office.com/api/beta/me/Messages?$filter=" + HttpUtility.UrlEncode(string.Format("ConversationId eq '{0}'", conversationId));
+    api_outlook_call(account_email, env_url_create('me/messages', {
+      '$filter': "ConversationId eq '" + conversation_id + "'",
+    }), null, 'json', callback, null, 'GET');
+  }
 
 
   /* tool.api.attester */

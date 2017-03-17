@@ -39,7 +39,12 @@ tool.browser.message.tab_id(function(tab_id) {
   $('.action_send_email').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
     var attachments = $('.input_file').prop('checked') ? [tool.file.attachment('some file.txt', 'text/plain', 'this is some file\nreally, its just a file\n\nseriously\n')] : [];
     var body = $('.input_html').prop('checked') ? {'text/html': $('.input_body').val()} : {'text/plain': $('.input_body').val()};
-    tool.api.outlook.message_send($('.account_email').val(), $('.input_subject').val(), $('.input_to').val().split(','), body, attachments, $('.input_thread_id').val() || null, render_api_response);
+    var message = tool.api.common.message($('.account_email').val(), $('.account_email').val(), $('.input_to').val().split(','), $('.input_subject').val(), body, attachments, $('.input_thread_id').val());
+    tool.api.outlook.message_send($('.account_email').val(), message, render_api_response);
+  }));
+
+  $('.action_get_thread').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
+    tool.api.outlook.message_thread($('.account_email').val(), $('.input_thread_id').val(), render_api_response);
   }));
 
   render_token_info();

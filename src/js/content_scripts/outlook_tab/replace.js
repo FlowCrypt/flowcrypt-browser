@@ -12,16 +12,31 @@ function outlook_element_replacer(factory, account_email, addresses) {
   }
 
   function replace_armored_blocks() {
-    $("#Item\\.MessagePartBody, #Item\\.MessageUniqueBody, .BodyFragment, .PlainText").not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers().begin + "')").each(function (i, message_element) { // for each email that contains PGP block
-      var message_id = null; //dom_extract_message_id(message_element);
-      var sender_email = null; //dom_extract_sender_email(message_element);
-      var is_outgoing = null; //tool.value(sender_email).in(addresses);
+    //.not('.evaluated').addClass('evaluated');
+    $("#Item\\.MessagePartBody, #Item\\.MessageUniqueBody, .BodyFragment, .PlainText").filter(":contains('" + tool.crypto.armor.headers().begin + "')").each(function (i, message_element) { // for each email that contains PGP block
+      var message_id = dom_extract_selected_conversation_id(); // outlook does not give use message_id that we can parse from the dom. Using Convo id instead
+      var sender_email = dom_extract_sender_email(message_element);
+      var is_outgoing = tool.value(sender_email).in(addresses);
       var replacement = tool.crypto.armor.replace_blocks(factory, message_element.innerText, message_id, sender_email, is_outgoing);
       if(typeof replacement !== 'undefined') {
         $(message_element).parents('.ap').addClass('pgp_message_container');
         $(message_element).html(replacement.trim().replace(/\n/g, '<br>'));
       }
     });
+  }
+
+  function dom_extract_sender_email(element) {
+    var sender = get_message_root_element(element).children('div[role=heading]').find('._rp_g1').text().trim();
+    return sender ? tool.str.parse_email(sender).email : null;
+  }
+
+  function get_message_root_element(element) {
+    return $(element).parents('div._rp_K4').first();
+  }
+
+  function dom_extract_selected_conversation_id() {
+    // http://stackoverflow.com/questions/41125652/fetch-messages-filtered-by-conversationid-via-office365-api
+    return $('._lvv_11 div[data-convid][aria-selected=true]').attr('data-convid');
   }
 
 
