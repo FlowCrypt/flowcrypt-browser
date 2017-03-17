@@ -67,6 +67,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   var tab_id;
   var subscribe_result_listener;
   var additional_message_headers = {};
+  var email_provider;
 
   tool.browser.message.tab_id(function (id) {
     tab_id = id;
@@ -107,7 +108,8 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   S.cached('icon_pubkey').attr('title', L.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
-  account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer'], function (storage) {
+  account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider'], function (storage) {
+    email_provider = storage.email_provider || 'gmail';
     my_addresses_on_pks = storage.addresses_pks || [];
     my_addresses_on_keyserver = storage.addresses_keyserver || [];
     can_save_drafts = tool.api.gmail.has_scope(storage.google_token_scopes, 'compose');
@@ -613,13 +615,13 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     $.each(additional_message_headers, function (k, h) {
       message.headers[k] = h;
     });
-    tool.api.gmail.message_send(url_params.account_email, message, function (success, response) {
+    tool.api[email_provider].message_send(url_params.account_email, message, function (success, response) {
       if(success) {
         var is_signed = S.cached('icon_sign').is('.active');
         tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' message has been sent.' });
         draft_delete(url_params.account_email, function () {
           tool.env.increment('compose', function () {
-            message_sent_callback(message, plaintext, email_footer, response.id);
+            message_sent_callback(message, plaintext, email_footer, response ? response.id : null);
           });
         });
       } else {
@@ -636,7 +638,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
     } else {
-      catcher.log('tool.api.gmail.message_send error response from gmail', response);
+      catcher.log('tool.api.' + email_provider + '.message_send error response from gmail', response);
       alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }
@@ -819,7 +821,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function auth_drafts() {
-    tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: tool.api.gmail.scope(['compose']), }, function (google_auth_response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: tool.api.gmail.scope(['compose']) }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         S.cached('send_btn_note').text('');
         can_save_drafts = true;
@@ -838,7 +840,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   function auth_contacts(account_email) {
     S.cached('input_to').val($('.recipients span').last().text());
     $('.recipients span').last().remove();
-    tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: tool.api.gmail.scope(['read']), }, function (google_auth_response) {
+    tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: tool.api.gmail.scope(['read']) }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         can_read_emails = true;
         search_contacts();
@@ -903,7 +905,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     var query = { substring: tool.str.trim_lower(S.cached('input_to').val()) };
     if(query.substring !== '') {
       db_contact_search(db, query, function (contacts) {
-        if(db_only) {
+        if(db_only || !can_read_emails) {
           render_search_results(contacts, query);
         } else {
           contact_search_in_progress = true;

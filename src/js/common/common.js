@@ -2646,6 +2646,8 @@
 
   /* tool.api.outlook */
 
+  var outlook_api_endpoint = 'https://outlook.office.com/api/v2.0/';
+
   var api_outlook_oauth_config = {
     oauth_url: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
     client_id: '5c22daa5-737e-440b-8dd1-e4e9d0f4a1a9',
@@ -2665,7 +2667,11 @@
         callback(false, 'Does not match expected frame id', null, state);
       } else {
         if(token_response.error) {
-          callback(false, token_response.error + ':' + decodeURIComponent(token_response.error_description), null, state);
+          if(token_response.error === 'login_required') {
+            callback(false, 'login_required', null, state);
+          } else {
+            callback(false, token_response.error + ':' + decodeURIComponent(token_response.error_description), null, state);
+          }
         } else {
           var token_account_email_claim = token_response.id_token ? api_auth_parse_id_token(token_response.id_token).email : null;
           token_response.expires_in = Number(token_response.expires_in);
@@ -2706,12 +2712,34 @@
               $('#' + frame_id).remove();
               callback(success, result);
             } else {
-              console.log('Ignoring auth request with a wrong frame or tab id: ' + [frame_id, tab_id, state.frame, tab.id].join(','));
+              console.log('Ignoring auth request with a wrong frame or tab id: ' + [frame_id, tab_id, state.frame, state.tab].join(','));
             }
           });
         },
       }, tab_id);
     });
+  }
+
+  function verbose_implicit_token_refresh_in_window_popup(account_email, callback) {
+    var window_id = 'popup_' + tool.str.random(20);
+    browser_message_tab_id(function (tab_id) {
+      var close_auth_window = tool.api.auth.window(api_outlook_oauth_url(account_email, window_id, tab_id, false), function () {
+        callback(false, 'Outlook login required');
+      });
+      browser_message_listen({
+        microsoft_access_token_result: function (message) {
+          api_auth_process_and_save_fragment(message.fragment, account_email, window_id, function (success, result, _, state) {
+            if(state.frame === window_id && state.tab === tab_id) {
+              close_auth_window();
+              callback(success, result);
+            } else {
+              console.log('Ignoring auth request with a wrong frame or tab id: ' + [window_id, tab_id, state.frame, state.tab].join(','));
+            }
+          });
+        },
+      }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+    });
+
   }
 
   function api_outlook_oauth_url(suggested_account_email, window_or_frame_id, result_tab_id, silent_refresh) {
@@ -2728,18 +2756,23 @@
     });
   }
 
-  // function api_outlook_look_for_failed_auth() { // todo
-  //
-  // }
-
   function api_outlook_call(account_email, resource, values, response_format, callback, progress) {
     account_storage_get(account_email, ['microsoft_auth'], function (storage) {
       if(Date.now() < storage.microsoft_auth.expires_on) {
-        api_call('https://outlook.office.com/api/v2.0/', resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format);
+        api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format);
       } else { // token refresh needed
         silent_implicit_token_refresh_in_hidden_iframe(account_email, function(auth_success, auth_result) {
           if(auth_success) {
-            api_call('https://outlook.office.com/api/v2.0/', resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format);
+            api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format);
+          } else if(auth_result === 'login_required') {
+            alert('Outlook needs you to sign in again to continue using CryptUp.');
+            verbose_implicit_token_refresh_in_window_popup(account_email, function (verbose_auth_succcess, verbose_auth_result) {
+              if(verbose_auth_succcess) {
+                api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + verbose_auth_result.access_token}, response_format);
+              } else {
+                callback(false, 'Could not get permission from Outlook');
+              }
+            });
           } else {
             callback(false, 'error refreshing cryptup token: ' + auth_result);
           }
@@ -2756,9 +2789,18 @@
         ToRecipients: message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; }),
         Subject: message.subject,
         Body: { ContentType: {'text/plain': 'Text', 'text/html': 'HTML'}[body_key], Content: message.body[body_key] },
-        Attachments: message.attachments.map(function (a) { return {"@odata.type": "#Microsoft.OutlookServices.FileAttachment", "Name": a.name, "ContentBytes": btoa(a.content)}}),
+        Attachments: message.attachments.map(function (attachment) {
+          return {
+            "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
+            "Name": attachment.name,
+            "ContentBytes": btoa(typeof attachment.content === 'string' ? attachment.content : str_from_uint8(attachment.content)),
+            "ContentType": attachment.type,
+            "IsInline": false,
+            "Size": attachment.size,
+          };
+        }),
       }
-    }, 'text', callback);
+    }, 'text', callback, progress_callback);
   }
 
   /*
