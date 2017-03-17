@@ -1,5 +1,12 @@
 <div>
 
+<b>version 3.8.0 on March 17, 2017: Stripe and preparing Outlook</b>
+settings: finalize stripe
+internal: outlook - compose messages
+internal: outlook - basig pgp message replacing
+internal: better environment recognition
+internal: all send functions to use common message format
+
 <b>version 3.7.8 on March 16, 2017: Design and compatibility</b>
 reading: trouble recognizing public keys from Enigmail
 reading: recognize new mime format from enigmail
