@@ -44,7 +44,7 @@
         data: JSON.stringify({
           name: (error.name || '').substring(0, 50),
           message: (error_message || '').substring(0, 200),
-          url: (url || '').substring(0, 300),
+          url: (url || '').substring(0, 100),
           line: line || 0,
           col: col || 0,
           trace: error.stack || '',
@@ -170,12 +170,20 @@
       return 'dev';
     } else if(url.indexOf('himcfccebk') !== -1) {
       return 'test';
-    } else if (url.indexOf('l.cryptup.org') !== -1) {
-      return 'local'
-    } else if (url.indexOf('cryptup.org') !== -1) {
-      return 'web'
+    } else if (url.indexOf('l.cryptup.org') !== -1 || url.indexOf('l.cryptup.io') !== -1) {
+      return 'local';
+    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('cryptup.io') !== -1) {
+      return 'web';
+    } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
+      return 'fork';
+    } else if (url.indexOf('mail.google.com') !== -1) {
+      return 'script:gmail';
+    } else if (url.indexOf('inbox.google.com') !== -1) {
+      return 'script:inbox';
+    } else if (url.indexOf('outlook.live.com') !== -1) {
+      return 'script:outlook';
     } else {
-      return 'content_script';
+      return 'unknown';
     }
   }
 
