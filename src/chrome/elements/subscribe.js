@@ -15,7 +15,7 @@ var cryptup_verification_email_sender = 'verify@cryptup.org';
 var can_read_emails;
 var L = {
   welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send larger attachments, to anyone.',
-  credit_or_debit: 'Credit or debit card to use. You can cancel anytime.',
+  credit_or_debit: 'Enter credit or debit card to use. You can cancel anytime.',
 };
 if(url_params.placement === 'embedded') {
   tool.env.increment('upgrade_verification_embedded_show');
