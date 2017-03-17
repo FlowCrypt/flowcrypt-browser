@@ -14,27 +14,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
       return;
     }
 
-    var compose = init_shared_compose_js(url_params, db, subscription);
-
-    function send_btn_click() {
-      var recipients = compose.get_recipients_from_dom();
-      var headers = { To: recipients.join(', '), Subject: $('#input_subject').val(), From: compose.get_sender_from_dom() };
-      compose.process_and_send(url_params.account_email, recipients, headers.Subject, $('#input_text').get(0).innerText, function (encrypted_message_body, attachments, attach_files) {
-        tool.mime.encode(url_params.account_email, encrypted_message_body, headers, attach_files ? attachments : null, function (mime_message) {
-          tool.api.gmail.message_send(url_params.account_email, mime_message, null, function (success, response) {
-            if(success) {
-              var is_signed = compose.S.cached('icon_sign').is('.active');
-              tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' message has been sent.' });
-              compose.draft_delete(url_params.account_email, function () {
-                tool.env.increment('compose', new_message_close);
-              });
-            } else {
-              compose.handle_send_message_error(response);
-            }
-          }, compose.render_upload_progress);
-        });
-      });
-    }
+    var compose = init_shared_compose_js(url_params, db, subscription, new_message_close);
 
     function order_addresses(account_email, addresses) {
       return [account_email].concat(tool.arr.without_value(addresses, account_email)); //places main account email as first
@@ -87,7 +67,6 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
 
     compose.on_render();
     $('#input_to').focus();
-    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click)).keypress(tool.ui.enter(send_btn_click));
     $('.close_new_message').click(new_message_close);
     account_storage_get(url_params.account_email, ['addresses'], function (storage) { // add send-from addresses
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1) {

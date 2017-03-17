@@ -155,21 +155,19 @@ $('.action_reset_password').click(function () {
   $('#password').focus();
 });
 
-function backup_key_on_gmail(account_email, armored_key, callback) {
-  var email_headers = { From: account_email, To: account_email, Subject: recovery_email_subjects[0] };
+function backup_key_on_gmail(account_email, armored_key, callback) { // todo - refactor into single function as backup_key_on_outlook that takes api function as argument
   $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
     var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
-    var text = { 'text/html': email_message };
-    tool.mime.encode(url_params.account_email, text, email_headers, email_attachments, function (mime_message) {
-      tool.api.gmail.message_send(url_params.account_email, mime_message, null, callback);
-    });
+    var message = tool.api.common.message(account_email, account_email, account_email, recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
+    tool.api.gmail.message_send(account_email, message, callback);
   });
 }
 
 function backup_key_on_outlook(account_email, armored_key, callback) {
   $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
     var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
-    tool.api.outlook.message_send(account_email, recovery_email_subjects[0], account_email, { 'text/html': email_message }, email_attachments, null, callback);
+    var message = tool.api.common.message(account_email, account_email, account_email, recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
+    tool.api.outlook.message_send(account_email, message, callback);
   });
 }
 

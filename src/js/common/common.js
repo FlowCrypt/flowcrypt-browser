@@ -405,6 +405,9 @@
       google: {
         user_info: api_google_user_info,
       },
+      common: {
+        message: api_common_email_message_object,
+      },
       gmail: {
         scope: api_gmail_scope,
         has_scope: api_gmail_has_scope,
@@ -2100,6 +2103,22 @@
     return JSON.parse(atob(id_token.split(/\./g)[1]));
   }
 
+  /* tool.api.common */
+
+  function api_common_email_message_object(account_email, from, to, subject, body, attachments, thread_id) {
+    return {
+      headers: {
+        OpenPGP: 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key')),
+      },
+      from: from,
+      to: typeof to === 'object' ? to : to.split(','),
+      subject: subject,
+      body: typeof body === 'object' ? body : {'text/plain': body},
+      attachments: attachments || [],
+      thread: thread_id || null,
+    };
+  }
+
   /* tool.api.google */
 
   function api_google_call(account_email, method, url, parameters, callback, fail_on_auth) {
@@ -2268,14 +2287,13 @@
    headers: at least {To, From, Subject}
    attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
    */
-  function mime_encode(account_email, body, headers, attachments, mime_message_callback) {
+  function mime_encode(body, headers, attachments, mime_message_callback) {
     tool.env.set_up_require();
     require(['emailjs-mime-builder'], function (MimeBuilder) {
       var root_node = new MimeBuilder('multipart/mixed');
       $.each(headers, function (key, header) {
         root_node.addHeader(key, header);
       });
-      root_node.addHeader('OpenPGP', 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key'))); // todo - this should be moved out of here
       if(typeof body === 'string') {
         body = {'text/plain': body};
       }
@@ -2352,18 +2370,17 @@
       }
     });
     body += '--' + boundary + '--';
-    return  {
-      content_type: 'multipart/related; boundary=' + boundary,
-      body: body,
-    };
+    return { content_type: 'multipart/related; boundary=' + boundary, body: body };
   }
 
-  function api_gmail_message_send(account_email, mime_message, thread_id, callback, progress_callback) {
-    var request = encode_as_multipart_related({
-      'application/json; charset=UTF-8': JSON.stringify({threadId: thread_id || null}),
-      'message/rfc822': mime_message,
+  function api_gmail_message_send(account_email, message, callback, progress_callback) {
+    message.headers.From = message.from;
+    message.headers.To = message.to.join(',');
+    message.headers.Subject = message.subject;
+    mime_encode(message.body, message.headers, message.attachments, function(mime_message) {
+      var request = encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
+      api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, {upload: progress_callback || function () {}}, request.content_type);
     });
-    api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, {upload: progress_callback || function () {}}, request.content_type);
   }
 
   function api_gmail_message_list(account_email, q, include_deleted, callback) {
@@ -2731,15 +2748,15 @@
     });
   }
 
-  function api_outlook_sendmail(account_email, subject, to, body, attachments, thread_id, callback, progress_callback) {
-    var outlook_content_type = {'text/plain': 'Text', 'text/html': 'HTML'}[Object.keys(body)[0]];
+  function api_outlook_sendmail(account_email, message, callback, progress_callback) {
+    var body_key = Object.keys(message.body)[0];
     api_outlook_call(account_email, 'me/sendmail', {
       Message: {
-        ConversationId: thread_id,
-        ToRecipients: (typeof to === 'string' ? [to] : to).map(function(email) { return {"EmailAddress": {"Address": email} }; }),
-        Subject: subject,
-        Body: { ContentType: outlook_content_type, Content: body[Object.keys(body)[0]] },
-        Attachments: (attachments || []).map(function (a) { return {"@odata.type": "#Microsoft.OutlookServices.FileAttachment", "Name": a.name, "ContentBytes": btoa(a.content)}}),
+        ConversationId: message.thread,
+        ToRecipients: message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; }),
+        Subject: message.subject,
+        Body: { ContentType: {'text/plain': 'Text', 'text/html': 'HTML'}[body_key], Content: message.body[body_key] },
+        Attachments: message.attachments.map(function (a) { return {"@odata.type": "#Microsoft.OutlookServices.FileAttachment", "Name": a.name, "ContentBytes": btoa(a.content)}}),
       }
     }, 'text', callback);
   }

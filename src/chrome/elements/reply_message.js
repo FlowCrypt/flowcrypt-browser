@@ -14,15 +14,13 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     }
 
     var original_reply_message_prompt = undefined;
-    var thread_message_id_last = '';
-    var thread_message_referrences_last = '';
     var can_read_emails = undefined;
     var plaintext;
     url_params.skip_click_prompt = Boolean(Number(url_params.skip_click_prompt || ''));
     url_params.ignore_draft = Boolean(Number(url_params.ignore_draft || ''));
 
     var factory = element_factory(url_params.account_email, url_params.parent_tab_id);
-    var compose = init_shared_compose_js(url_params, db, subscription);
+    var compose = init_shared_compose_js(url_params, db, subscription, reply_message_render_success);
 
     function recover_thread_id_if_missing(callback) {
       if (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id) {
@@ -64,8 +62,9 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
     function reply_message_determine_header_variables(load_last_message_for_forward) {
       tool.api.gmail.thread_get(url_params.account_email, url_params.thread_id, 'full', function (success, thread) {
         if (success && thread.messages && thread.messages.length > 0) {
-          thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          var thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+          var thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          compose.headers({ 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last });
           if (load_last_message_for_forward) {
             url_params.subject = 'Fwd: ' + url_params.subject;
             retrieve_decrypt_and_add_forwarded_message(thread.messages[thread.messages.length - 1].id);
@@ -110,32 +109,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
       });
     });
 
-    function send_btn_click() {
-      var recipients = compose.get_recipients_from_dom();
-      var headers = {
-        'To': recipients.join(', '),
-        'From': url_params.from,
-        'Subject': url_params.subject,
-        'In-Reply-To': thread_message_id_last,
-        'References': thread_message_referrences_last + ' ' + thread_message_id_last,
-      };
-      plaintext = $('#input_text').get(0).innerText;
-      compose.process_and_send(url_params.account_email, recipients, headers.Subject, plaintext, function (encrypted_message_text_to_send, attachments, attach_files, email_footer) {
-        tool.mime.encode(url_params.account_email, encrypted_message_text_to_send, headers, attach_files ? attachments : null, function (mime_message) {
-          tool.api.gmail.message_send(url_params.account_email, mime_message, url_params.thread_id, function (success, response) {
-            if (success) {
-              tool.env.increment('reply', function () {
-                reply_message_render_success(headers.To, (attachments || []).length, response.id, email_footer);
-              });
-            } else {
-              compose.handle_send_message_error(response);
-            }
-          }, compose.render_upload_progress);
-        });
-      });
-    }
-
-    function reply_message_render_success(to, has_attachments, message_id, email_footer) {
+    function reply_message_render_success(message, plaintext, email_footer, message_id) {
       $('#send_btn_note').text('Deleting draft..');
       compose.draft_delete(url_params.account_email, function () {
         var is_signed = compose.S.cached('icon_sign').is('.active');
@@ -147,7 +121,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
         $('.replied_body').css('width', $('table#compose').width() - 30);
         $('#reply_message_table_container').css('display', 'none');
         $('#reply_message_successful_container div.replied_from').text(url_params.from);
-        $('#reply_message_successful_container div.replied_to span').text(to);
+        $('#reply_message_successful_container div.replied_to span').text(message.to);
         $('#reply_message_successful_container div.replied_body').html(plaintext.replace(/\n/g, '<br>'));
         if (email_footer) {
           if(is_signed) {
@@ -155,13 +129,12 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
           } else {
             $('#reply_message_successful_container .email_footer').html('<br>' + email_footer.replace(/\n/g, '<br>'));
           }
-
         }
         var t = new Date();
         var time = ((t.getHours() != 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
         $('#reply_message_successful_container div.replied_time').text(time);
         $('#reply_message_successful_container').css('display', 'block');
-        if (has_attachments) { // todo - will not work with cryptup uploaded attachments. Why extra request, anyway?
+        if (message.attachments.length) { // todo - will not work with cryptup uploaded attachments. Why extra request, anyway?
           tool.api.gmail.message_get(url_params.account_email, message_id, 'full', function (success, gmail_message_object) {
             if (success) {
               $('#attachments').css('display', 'block');
@@ -198,7 +171,6 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
       }
       compose.on_render();
       $("#input_to").focus();
-      $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), send_btn_click)).keypress(tool.ui.enter(send_btn_click));
       if (url_params.to) {
         $('#input_text').focus();
         document.getElementById("input_text").focus();
