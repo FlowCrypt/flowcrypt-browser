@@ -123,9 +123,11 @@ function render_dialog(level, expire, active, method) {
         $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
       }
     } else {
-      $('h1').text('CryptUp Account');
-      $('.status').text('Your account information seems outdated.');
-      $('.action_ok').text('Update account info');
+      $('h1').text('New Device');
+      $('.action_show_stripe, .action_show_group').css('display', 'none');
+      $('.status').text('This browser or device is not registered on your CryptUp Account.');
+      $('.action_ok').text('Add Device');
+      $('.action_ok, .action_close').addClass('long');
     }
   } else {
 
