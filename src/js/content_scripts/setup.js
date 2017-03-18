@@ -4,53 +4,59 @@
 
 function content_script_setup_if_vacant(webmail_specific) {
 
-  window.injected = true; // background script will use this to test if scripts were already injected, and inject if not
-  window.account_email_global = null; // used by background script
-  window.same_world_global = true; // used by background_script
+  if(!window.injected) {
 
-  window.destruction_event = chrome.runtime.id + '_destroy';
-  window.destroyable_class = chrome.runtime.id + '_destroyable';
-  window.reloadable_class = chrome.runtime.id + '_reloadable';
-  window.destroyable_intervals = [];
-  window.destroyable_timeouts = [];
+    window.injected = true; // background script will use this to test if scripts were already injected, and inject if not
+    window.account_email_global = null; // used by background script
+    window.same_world_global = true; // used by background_script
 
-  window.destroy = function () {
-    catcher.try(function () {
-      console.log('Updating CryptUp');
-      document.removeEventListener(destruction_event, destroy);
-      $.each(destroyable_intervals, function (i, id) {
-        clearInterval(id);
-      });
-      $.each(destroyable_timeouts, function (i, id) {
-        clearTimeout(id);
-      });
-      $('.' + destroyable_class).remove();
-      $('.' + reloadable_class).each(function (i, reloadable_element) {
-        $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
-      });
-    })();
-  };
+    window.destruction_event = chrome.runtime.id + '_destroy';
+    window.destroyable_class = chrome.runtime.id + '_destroyable';
+    window.reloadable_class = chrome.runtime.id + '_reloadable';
+    window.destroyable_intervals = [];
+    window.destroyable_timeouts = [];
 
-  window.vacant = function () {
-    return !$('.' + destroyable_class).length;
-  };
+    window.destroy = function () {
+      catcher.try(function () {
+        console.log('Updating CryptUp');
+        document.removeEventListener(destruction_event, destroy);
+        $.each(destroyable_intervals, function (i, id) {
+          clearInterval(id);
+        });
+        $.each(destroyable_timeouts, function (i, id) {
+          clearTimeout(id);
+        });
+        $('.' + destroyable_class).remove();
+        $('.' + reloadable_class).each(function (i, reloadable_element) {
+          $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
+        });
+      })();
+    };
 
-  window.TrySetDestroyableInterval = function (code, ms) {
-    var id = setInterval(window.catcher.try(code), ms);
-    destroyable_intervals.push(id);
-    return id;
-  };
+    window.vacant = function () {
+      return !$('.' + destroyable_class).length;
+    };
 
-  window.TrySetDestryableTimeout = function (code, ms) {
-    var id = setTimeout(window.catcher.try(code), ms);
-    destroyable_timeouts.push(id);
-    return id;
-  };
+    window.TrySetDestroyableInterval = function (code, ms) {
+      var id = setInterval(window.catcher.try(code), ms);
+      destroyable_intervals.push(id);
+      return id;
+    };
 
-  document.dispatchEvent(new CustomEvent(destruction_event));
-  document.addEventListener(destruction_event, destroy);
+    window.TrySetDestryableTimeout = function (code, ms) {
+      var id = setTimeout(window.catcher.try(code), ms);
+      destroyable_timeouts.push(id);
+      return id;
+    };
 
-  /* GENERAL CONTENT SCRIPT FUNCTIONS */
+    document.dispatchEvent(new CustomEvent(destruction_event));
+    document.addEventListener(destruction_event, destroy);
+
+    if(window.vacant()) {
+      wait_for_account_email_then_setup();
+    }
+
+  }
 
   var account_email_interval = 1000;
   var factory;
@@ -176,10 +182,6 @@ function content_script_setup_if_vacant(webmail_specific) {
         save_account_email_full_name(account_email);
       }
     }, 1000);
-  }
-
-  if(window.vacant()) {
-    wait_for_account_email_then_setup();
   }
 
 }
