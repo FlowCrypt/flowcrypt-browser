@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.8.1 on March 17, 2017: Double Inject Prevention</b>
+internal: prevent content script double injection
+
 <b>version 3.8.0 on March 17, 2017: Stripe and preparing Outlook</b>
 settings: finalize stripe
 internal: outlook - compose messages
