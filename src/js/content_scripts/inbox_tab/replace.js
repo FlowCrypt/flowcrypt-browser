@@ -23,10 +23,10 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     });
   }
 
-  function replace_standard_reply_box(editable, force_replace_even_if_pgp_block_is_not_visible) {
+  function replace_standard_reply_box(editable, force_replace_even_if_pgp_block_is_not_present) {
     $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
       var root_element = dom_get_conversation_root_element(reply_box);
-      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force_replace_even_if_pgp_block_is_not_visible)) {
+      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force_replace_even_if_pgp_block_is_not_present)) {
         var iframe = factory.embedded.reply(get_conversation_params(root_element), editable);
         $(reply_box).addClass('reply_message_iframe_container').html(iframe).children(':not(iframe)').css('display', 'none'); //.addClass('remove_borders')
       }
@@ -172,24 +172,12 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
 
   function get_conversation_params(conversation_root_element) {
     var thread_id = dom_extract_thread_id(conversation_root_element);
-    var reply_to_estimate = [dom_extract_sender_email(conversation_root_element)].concat(dom_extract_recipients(conversation_root_element));
-    var reply_to = [];
-    var my_email = account_email;
-    $.each(reply_to_estimate, function (i, email) {
-      if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
-        my_email = email;
-      } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
-        reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
-      }
-    });
-    if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-      reply_to = tool.arr.unique(reply_to_estimate);
-    }
+    var headers = tool.api.common.reply_correspondents(account_email, addresses, dom_extract_sender_email(conversation_root_element), dom_extract_recipients(conversation_root_element));
     return {
       subject: dom_extract_subject(conversation_root_element),
-      reply_to: reply_to,
+      reply_to: headers.to,
       addresses: addresses,
-      my_email: my_email,
+      my_email: headers.from,
       thread_id: thread_id,
       thread_message_id: thread_id ? thread_id : dom_extract_message_id($(conversation_root_element).find('.ap').last().children().first()), // backup
     };

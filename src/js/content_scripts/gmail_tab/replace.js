@@ -209,38 +209,39 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     return ($(message_element).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  function get_conversation_params(conversation_root_element) {
+  function get_thread_and_message_ids_for_reply(conversation_root_element) {
     var thread_match = /\/([0-9a-f]{16})/g.exec(window.location);
     if(thread_match !== null) {
-      var thread_id = thread_match[1];
-      var thread_message_id = thread_match[1];
+      return {thread: thread_match[1], message: thread_match[1]};
     } else { // sometimes won't work, that's why the else
-      var thread_id = '';
-      var thread_message_id = determine_message_id('message', conversation_root_element.find('div.a3s.evaluated'));
+      return {thread: '', message: determine_message_id('message', conversation_root_element.find('div.a3s.evaluated'))};
     }
-    var reply_to_estimate = [conversation_root_element.find('h3.iw span[email]').last().attr('email').trim().toLowerCase()]; // add original sender
-    var reply_to = [];
-    conversation_root_element.find('span.hb').last().find('span.g2').each(function () {
-      reply_to_estimate.push($(this).attr('email').toLowerCase()); // add all recipients including me
+  }
+
+  function dom_get_message_sender(conversation_root_element) {
+    return conversation_root_element.find('h3.iw span[email]').last().attr('email').trim().toLowerCase();
+  }
+
+  function dom_get_message_recipients(conversation_root_element) {
+    return conversation_root_element.find('span.hb').last().find('span.g2').toArray().map(function (el) {
+      return $(el).attr('email').toLowerCase(); // add all recipients including me
     });
-    var my_email = account_email;
-    $.each(reply_to_estimate, function (i, email) {
-      if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
-        my_email = email;
-      } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
-        reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
-      }
-    });
-    if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-      reply_to = tool.arr.unique(reply_to_estimate);
-    }
+  }
+
+  function dom_get_message_subject(conversation_root_element) {
+    return $(conversation_root_element).find('h2.hP').text();
+  }
+
+  function get_conversation_params(convo_root_el) {
+    var ids = get_thread_and_message_ids_for_reply(convo_root_el);
+    var headers = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, dom_get_message_sender(convo_root_el), dom_get_message_recipients(convo_root_el));
     return {
-      subject: $(conversation_root_element).find('h2.hP').text(),
-      reply_to: reply_to,
+      subject: dom_get_message_subject(convo_root_el),
+      reply_to: headers.to,
       addresses: addresses,
-      my_email: my_email,
-      thread_id: thread_id,
-      thread_message_id: thread_message_id,
+      my_email: headers.from,
+      thread_id: ids.thread,
+      thread_message_id: ids.message,
     };
   }
 

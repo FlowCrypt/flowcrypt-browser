@@ -6,7 +6,7 @@ function outlook_element_replacer(factory, account_email, addresses) {
 
   function everything() {
     replace_armored_blocks();
-    // replace_standard_reply_box();
+    replace_standard_reply_box();
     // replace_attachments();
     //
   }
@@ -35,10 +35,17 @@ function outlook_element_replacer(factory, account_email, addresses) {
   }
 
   function dom_extract_selected_conversation_id() {
-    // http://stackoverflow.com/questions/41125652/fetch-messages-filtered-by-conversationid-via-office365-api
     return $('._lvv_11 div[data-convid][aria-selected=true]').attr('data-convid');
   }
 
+  function replace_standard_reply_box(editable, force_replace_even_if_pgp_block_is_not_present) {
+    $('div._rp_s6').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
+      if($('iframe.pgp_block').filter(':visible').length || force_replace_even_if_pgp_block_is_not_present) {
+        var iframe = factory.embedded.reply({thread_id: dom_extract_selected_conversation_id()}, editable);
+        $(reply_box).addClass('reply_message_iframe_container').html(iframe).children(':not(iframe)').css('display', 'none');
+      }
+    });
+  }
 
   return {
     everything: everything,

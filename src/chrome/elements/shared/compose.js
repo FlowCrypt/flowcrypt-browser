@@ -631,14 +631,14 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function handle_send_message_error(response) {
+    reset_send_btn();
     if(response && response.status === 413) {
-      reset_send_btn();
       S.now('send_btn_i').attr('class', '');
       tool.env.increment('upgrade_notify_attach_size', function () {
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
     } else {
-      catcher.log('tool.api.' + email_provider + '.message_send error response from gmail', response);
+      catcher.log('tool.api.' + email_provider + '.message_send error response from ' +  email_provider, response);
       alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }

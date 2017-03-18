@@ -416,6 +416,7 @@
       },
       common: {
         message: api_common_email_message_object,
+        reply_correspondents: api_common_reply_correspondents,
       },
       gmail: {
         scope: api_gmail_scope,
@@ -2090,7 +2091,10 @@
 
   function api_call(base_url, path, values, callback, format, progress, headers, response_format, method) {
     progress = progress || {};
-    if(format === 'JSON') {
+    if(format === 'JSON' && values === null) {
+      var formatted_values = undefined;
+      var content_type = undefined;
+    } else if(format === 'JSON') {
       var formatted_values = JSON.stringify(values);
       var content_type = 'application/json; charset=UTF-8';
     } else if(format === 'FORM') {
@@ -2139,7 +2143,10 @@
 
   /* tool.api.common */
 
-  function api_common_email_message_object(account_email, from, to, subject, body, attachments, thread_id) {
+  function api_common_email_message_object(account_email, from, to, subject, body, attachments, thread_referrence) {
+    from = from || '';
+    to = to || '';
+    subject = subject || '';
     return {
       headers: {
         OpenPGP: 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key')),
@@ -2149,8 +2156,25 @@
       subject: subject,
       body: typeof body === 'object' ? body : {'text/plain': body},
       attachments: attachments || [],
-      thread: thread_id || null,
+      thread: thread_referrence || null,
     };
+  }
+
+  function api_common_reply_correspondents(account_email, addresses, last_message_sender, last_message_recipients) {
+    var reply_to_estimate = [last_message_sender].concat(last_message_recipients);
+    var reply_to = [];
+    var my_email = account_email;
+    $.each(reply_to_estimate, function (i, email) {
+      if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
+        my_email = email;
+      } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
+        reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
+      }
+    });
+    if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
+      reply_to = tool.arr.unique(reply_to_estimate);
+    }
+    return {to: reply_to, from: my_email};
   }
 
   /* tool.api.google */
@@ -2431,7 +2455,7 @@
       }
       if(message_id.length) {
         var id = message_id.pop();
-        api_gmail_call(account_email, 'GET', 'messages/' + id, { format: format || 'full', }, function (success, response) {
+        api_gmail_call(account_email, 'GET', 'messages/' + id, { format: format || 'full' }, function (success, response) {
           if(success) {
             results[id] = response;
             api_gmail_message_get(account_email, message_id, format, callback, results);
@@ -2443,7 +2467,7 @@
         callback(true, results);
       }
     } else {
-      api_gmail_call(account_email, 'GET', 'messages/' + message_id, { format: format || 'full', }, callback);
+      api_gmail_call(account_email, 'GET', 'messages/' + message_id, { format: format || 'full' }, callback);
     }
   }
 
@@ -2817,24 +2841,49 @@
 
   function api_outlook_sendmail(account_email, message, callback, progress_callback) {
     var body_key = Object.keys(message.body)[0];
-    api_outlook_call(account_email, 'me/sendmail', {
-      Message: {
-        ConversationId: message.thread,
-        ToRecipients: message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; }),
-        Subject: message.subject,
-        Body: { ContentType: {'text/plain': 'Text', 'text/html': 'HTML'}[body_key], Content: message.body[body_key] },
-        Attachments: message.attachments.map(function (attachment) {
-          return {
-            "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
-            "Name": attachment.name,
-            "ContentBytes": btoa(typeof attachment.content === 'string' ? attachment.content : str_from_uint8(attachment.content)),
-            "ContentType": attachment.type,
-            "IsInline": false,
-            "Size": attachment.size,
-          };
-        }),
-      }
-    }, 'text', callback, progress_callback);
+    var body = { ContentType: {'text/plain': 'Text', 'text/html': 'HTML'}[body_key], Content: message.body[body_key] };
+    var to = message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; });
+    var attachments = message.attachments.map(function (attachment) {
+      return {
+        "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
+        "Name": attachment.name,
+        "ContentBytes": btoa(typeof attachment.content === 'string' ? attachment.content : str_from_uint8(attachment.content)),
+        "ContentType": attachment.type,
+        "IsInline": false,
+        "Size": attachment.size,
+      };
+    });
+    if(!message.thread || !message.thread.length) { // new message or reply message fallback
+      api_outlook_call(account_email, 'me/sendmail', {Message: { ToRecipients: to, Subject: message.subject, Body: body, Attachments: attachments }}, 'text', callback, progress_callback);
+    } else { // reply. Create a draftt as a reply to message.thread, Outlook will automatically populate headers. Just need to update body and attachments (also recipients - user could have edited them)
+      api_outlook_call(account_email, 'me/messages/' + message.thread.pop() + '/createreplyall', {}, 'json', function (create_reply_success, create_reply_result) { // message.thread.pop() gets last message id in the thread
+        if(create_reply_success && create_reply_result && create_reply_result.Id) { // progress callback belongs below because that's where we update attachments
+          api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id, { Body: body, Attachments: attachments, ToRecipients: to }, 'json', function (update_reply_success, update_reply_result) {
+            if(update_reply_success) {
+              api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id + '/send', null, 'text', callback);
+            } else {
+              catcher.log('failed to update a reply message on outlook', update_reply_result);
+              callback(false, 'Failed to update a reply message on Outlook.');
+            }
+          }, progress_callback, 'PATCH');
+        } else if (create_reply_result && create_reply_result.request && create_reply_result.request.responseJSON && create_reply_result.request.responseJSON.error && create_reply_result.request.responseJSON.error.code === 'ErrorInvalidReferenceItem') {
+
+          // Outlook does not allow replying to sent messages (or has a similar restriction of this sort)
+          // POST message_id/createreplyall -> 400 {"code":"ErrorInvalidReferenceItem","message":"The reference item does not support the requested operation."}
+          // that is why message.thread reference contains all message ids in the thread, and this recursive call will try them one by one until Outlook API doesn't complain
+          // eventually, it will find a message in the thread that can be replied to
+          // if not, it will fall back to me/sendmail and send a fresh new email instead replying to a thread
+          // if you are a member of the Microsoft Office API team and are reading this, please fix it! This awful and ugly code makes me cry every morning.
+
+          console.log('Outlook API ErrorInvalidReferenceItem: ' + (create_reply_result.thread.length ? 'retrying createreplyall with a previous message id, ' + create_reply_result.thread.length + ' left' : 'sending reply as a new message'));
+          api_outlook_sendmail(account_email, message, callback, progress_callback);
+
+        } else {
+          catcher.log('failed to create a reply message on outlook', create_reply_result);
+          callback(false, 'Failed to create a reply message on Outlook.');
+        }
+      });
+    }
   }
 
   /*
@@ -2854,7 +2903,6 @@
       '$filter': "ConversationId eq '" + conversation_id + "'",
     }), null, 'json', callback, null, 'GET');
   }
-
 
   /* tool.api.attester */
 
