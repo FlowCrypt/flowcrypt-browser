@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.8.3 on March 19, 2017: Bugfix</b>
+composing: fixed problem replacing reply box
+
 <b>version 3.8.2 on March 18, 2017: Replying</b>
 composing: fixed problems replying from google inbox
 composing: outlook: reply
