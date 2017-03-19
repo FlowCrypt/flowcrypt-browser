@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.8.2 on March 18, 2017: Replying</b>
+composing: fixed problems replying from google inbox
+composing: outlook: reply
+setup: properly handle google auth error
+
 <b>version 3.8.1 on March 17, 2017: Double Inject Prevention</b>
 internal: prevent content script double injection
 
