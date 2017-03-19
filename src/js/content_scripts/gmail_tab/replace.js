@@ -234,7 +234,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
 
   function get_conversation_params(convo_root_el) {
     var ids = get_thread_and_message_ids_for_reply(convo_root_el);
-    var headers = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, dom_get_message_sender(convo_root_el), dom_get_message_recipients(convo_root_el));
+    var headers = tool.api.common.reply_correspondents(account_email, storage.addresses, dom_get_message_sender(convo_root_el), dom_get_message_recipients(convo_root_el));
     return {
       subject: dom_get_message_subject(convo_root_el),
       reply_to: headers.to,
