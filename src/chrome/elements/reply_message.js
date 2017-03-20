@@ -45,7 +45,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
           tool.api.gmail.message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
             if (success) {
               url_params.thread_id = gmail_message_object.threadId;
-              var reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), tool.api.gmail.find_header(gmail_message_object, 'to').split(','));
+              var reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
               if(!url_params.to) {
                 url_params.to = reply.to;
               }

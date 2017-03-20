@@ -2165,10 +2165,12 @@
     var reply_to = [];
     var my_email = account_email;
     $.each(reply_to_estimate, function (i, email) {
-      if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
-        my_email = email;
-      } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
-        reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
+      if(email) {
+        if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
+          my_email = email;
+        } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
+          reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
+        }
       }
     });
     if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
