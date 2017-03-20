@@ -6,7 +6,9 @@ var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 var tab_id_global;
 var microsoft_auth_attempt = {};
 
-$('.logo-row span#v').text(catcher.version());
+tool.time.wait(function() { if(typeof catcher !== 'undefined') { return true; }}).then(function() {
+  $('.logo-row span#v').text(catcher.version());
+});
 
 $.each(tool.env.webmails, function(i, webmail_name) {
   $('.signin_button.' + webmail_name).css('display', 'inline-block');

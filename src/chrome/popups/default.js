@@ -35,7 +35,7 @@ tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab)
 });
 
 function redirect_to_initial_setup(account_email) {
-  tool.browser.message.send(null, 'settings', { account_email: account_email, }, function () {
+  tool.browser.message.send(null, 'settings', { account_email: account_email }, function () {
     window.close();
   });
 }
@@ -59,10 +59,7 @@ function choose_email_or_settings_popup(active_account_email) {
   });
   $('.action_send_email').click(function () {
     if(active_account_email) {
-      tool.browser.message.send(null, 'settings', {
-        account_email: active_account_email,
-        page: '/chrome/elements/new_message.htm',
-      }, function () {
+      tool.browser.message.send(null, 'settings', { account_email: active_account_email, page: '/chrome/elements/new_message.htm' }, function () {
         window.close();
       });
     } else {
