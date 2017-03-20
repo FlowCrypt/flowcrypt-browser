@@ -4,7 +4,7 @@
 
 var l = {
   all_good: 'Your account is well set up. If you cannot open some of your received email, please inform your contacts to update their information about your public key. ',
-  mismatch: 'There is at least one incorrect pubkey record. Your encrypted email might be unreadable as a result. ',
+  mismatch: 'There is at least one incorrect pubkey record. Your encrypted email may be unreadable as a result. ',
   missing: 'Some receiving emails are not registered for encryption, and your contancts will not know they can send you encrypted email. ',
 };
 
@@ -33,7 +33,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     if(result.pubkey === null) {
       var note = 'Missing record. Your contacts will not know you have encryption set up.';
       var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';
-      var remove = '<div class="button gray2 small action_remove_alias" email="' + email + '">Remove email</div>';
+      var remove = '&nbsp; <b class="bad action_remove_alias" email="' + email + '" title="Remove address from list of send-from addresses.">[x]</b>';
       var color = 'orange';
     } else if(result.match) {
       if(email === url_params.account_email && !result.attested) {
@@ -61,7 +61,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
       }
     } else {
       if(email === url_params.account_email && !result.attested) {
-        var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
+        var note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
         var remove = '';
         var color = 'red';
@@ -71,26 +71,29 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
         var remove = '';
         var color = 'orange';
       } else if(email === url_params.account_email && result.attested) {
-        var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
+        var note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         var action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
         var remove = '';
         var color = 'red';
       } else {
-        var note = 'Wrong public key recorded. Your incoming email might be unreadable when encrypted.';
+        var note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         var action = '';
         var remove = '';
         var color = 'red';
       }
     }
-    $('table#emails').append('<tr><td>' + email + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td><td>' + remove + '</td></tr>');
+    $('table#emails').append('<tr><td>' + email + remove + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
   });
   $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     $(self).html(tool.ui.spinner('white'));
     action_submit_or_request_attestation($(self).attr('email'));
   }));
   $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-    $(self).html(tool.ui.spinner('white'));
-    action_remove_alias($(self).attr('email'));
+    account_storage_get(url_params.account_email, ['addresses'], function (storage) {
+      account_storage_set(url_params.account_email, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}, function () {
+        window.location.reload();
+      });
+    });
   }));
   $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     $(self).html(tool.ui.spinner('white'));
@@ -120,10 +123,4 @@ function action_submit_or_request_attestation(email) {
       window.location.reload();
     });
   }
-}
-
-function action_remove_alias (email) {
-  account_storage_alias_remove(url_params.account_email, [email], function () {
-    window.location.reload();
-  });
 }

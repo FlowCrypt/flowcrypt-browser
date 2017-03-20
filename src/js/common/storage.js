@@ -250,39 +250,6 @@ function account_storage_get(account_or_accounts, keys, callback) {
   });
 }
 
-function account_storage_alias_remove(account_email, alias_or_aliases, callback) {
-  Array.prototype.contains = function (element){
-    return this.indexOf(element) > -1;
-  };
-
-  Array.prototype.containsAt = function (element) {
-    return this.indexOf(element);
-  };
-
-  if(!account_email) {
-    account_email = global_storage_scope;
-  }
-
-  chrome.storage.local.get(account_storage_key(account_email, 'addresses'),
-  function(data){
-    var aliases_to_keep = data[account_storage_key(account_email, 'addresses')];
-
-    for (var i = 0; i < alias_or_aliases.length; i++) {
-      if (aliases_to_keep.contains(alias_or_aliases[i])) {
-        aliases_to_keep.splice(aliases_to_keep.containsAt(alias_or_aliases[i]), 1);
-      }
-    }
-
-    account_storage_set(account_email, { addresses: aliases_to_keep }, function() {
-      catcher.try(function () {
-        if(typeof callback !== 'undefined') {
-          callback();
-        }
-      })();
-    });
-  });
-}
-
 function account_storage_remove(account_email, key_or_keys, callback) {
   if(!account_email) {
     account_email = global_storage_scope;
