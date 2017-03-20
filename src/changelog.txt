@@ -1,5 +1,9 @@
 <div>
 
+<b>version 3.8.4 on March 19, 2017: Aliases</b>
+setup: remove unused email aliases
+composing: better recognition of reply to addresses
+
 <b>version 3.8.3 on March 19, 2017: Bugfix</b>
 composing: fixed problem replacing reply box
 
