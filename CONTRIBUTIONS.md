@@ -6,7 +6,7 @@ By contributing to this library (a pull request or a direct commit), unless othe
 ### Contributions and Credits
 
 Tankred Hase (https://github.com/tanx)
- - wrote or contributed to core libraries that CryptUp uses
+ - wrote or contributed to core libraries that CryptUp uses (OpenPGP.js, email.js)
 
 
 Armando Flores (http://armando.sx/)
