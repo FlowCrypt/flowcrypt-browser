@@ -184,7 +184,7 @@ function add_key_rows_html(private_keys) {
 
 function new_google_account_authentication_prompt(account_email, omit_read_scope) {
   tool.browser.message.send(null, 'google_auth', { account_email: account_email || '', omit_read_scope: omit_read_scope }, function (response) {
-    if(response && response.success === true) {
+    if(response && response.success === true && response.account_email) {
       add_account_email_to_list_of_accounts(response.account_email, function () {
         account_storage_get(response.account_email, ['setup_done'], function (storage) {
           if(storage.setup_done) { // this was just an additional permission
