@@ -1572,10 +1572,10 @@
     }
   }
 
-  var password_sentence = 'This message is encrypted. If you can\'t read it, visit the following link: '; // todo - should be in a common place as the code that generated it
+  var password_sentence = /This\smessage\sis\sencrypted.\sIf\syou\scan't\sread\sit,\svisit\sthe\sfollowing\slink:\s.+\n\n/gm; // todo - should be in a common place as the code that generated it
 
   function crypto_armor_replace_blocks(factory, original_text, message_id, sender_email, is_outgoing) {
-    var original_text = str_normalize_spaces(original_text);
+    original_text = str_normalize_spaces(original_text);
     var replacement_text = original_text;
     var has_password;
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
@@ -1595,13 +1595,13 @@
     });
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('message'), false, function(armored, has_end) {
       if(typeof has_password === 'undefined') {
-        has_password = tool.value(password_sentence).in(original_text);
+        has_password = original_text.match(password_sentence) !== null;
       }
       return factory.embedded.message(has_end ? armored : '', message_id, is_outgoing, sender_email, has_password || false);
     });
     if(replacement_text !== original_text) {
       if(has_password) {
-        replacement_text = replacement_text.replace(RegExp(RegExp.escape(password_sentence) + '.+\n\n', 'm'), '');
+        replacement_text = replacement_text.replace(password_sentence, '');
       }
       return replacement_text.trim();
     }
