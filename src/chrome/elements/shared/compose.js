@@ -22,8 +22,12 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     input_from: '#input_from',
     input_subject: '#input_subject',
     input_password: '#input_password',
-    password_or_pubkey: '#password_or_pubkey_container',
+    input_intro: '.input_intro',
+    add_intro: '.action_add_intro',
     add_their_pubkey: '.add_pubkey',
+    intro_container: '.intro_container',
+    password_or_pubkey: '#password_or_pubkey_container',
+    password_label: '.label_password',
     send_btn_note: '#send_btn_note',
     send_btn_span: '#send_btn span',
     send_btn_i: '#send_btn i',
@@ -694,36 +698,54 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
   }
 
+  function show_message_password_ui_and_color_button() {
+    S.cached('password_or_pubkey').css('display', 'table-row');
+    S.cached('password_or_pubkey').css('display', 'table-row');
+    if(S.cached('input_password').val() || S.cached('input_password').is(':focus')) {
+      S.cached('password_label').css('display', 'inline-block');
+      S.cached('input_password').attr('placeholder', '');
+    } else {
+      S.cached('password_label').css('display', 'none');
+      S.cached('input_password').attr('placeholder', 'one time password');
+    }
+    if(get_password_validation_warning()) {
+      S.cached('send_btn').removeClass('green').addClass('gray');
+    } else {
+      S.cached('send_btn').removeClass('gray').addClass('green');
+    }
+    if(S.cached('input_intro').is(':visible')) {
+      S.cached('add_intro').css('display', 'none');
+    } else {
+      S.cached('add_intro').css('display', 'block');
+    }
+  }
+
+  function hide_message_password_ui() {
+    S.cached('password_or_pubkey').css('display', 'none');
+    S.cached('input_password').val('');
+    S.cached('add_intro').css('display', 'none');
+    S.cached('input_intro').text('');
+    S.cached('intro_container').css('display', 'none');
+  }
+
   function show_hide_password_or_pubkey_container_and_color_send_button() {
     reset_send_btn();
     S.cached('send_btn_note').text('');
     S.cached('send_btn').attr('title', '');
     var was_previously_visible = S.cached('password_or_pubkey').css('display') === 'table-row';
     if(!$('.recipients span').length) {
-      S.cached('password_or_pubkey').css('display', 'none');
+      hide_message_password_ui();
       S.cached('send_btn').removeClass('gray').addClass('green');
     } else if(S.cached('icon_sign').is('.active')) {
       S.cached('send_btn').removeClass('gray').addClass('green');
     } else if($('.recipients span.no_pgp').length) {
-      S.cached('password_or_pubkey').css('display', 'table-row');
-      if(S.cached('input_password').val() || S.cached('input_password').is(':focus')) {
-        $('.label_password').css('display', 'inline-block');
-        S.cached('input_password').attr('placeholder', '');
-      } else {
-        $('.label_password').css('display', 'none');
-        S.cached('input_password').attr('placeholder', 'one time password');
-      }
-      if(get_password_validation_warning()) {
-        S.cached('send_btn').removeClass('green').addClass('gray');
-      } else {
-        S.cached('send_btn').removeClass('gray').addClass('green');
-      }
+      show_message_password_ui_and_color_button();
     } else if($('.recipients span.failed, .recipients span.wrong').length) {
       S.now('send_btn_span').text(BTN_WRONG_ENTRY);
       S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       S.cached('send_btn').removeClass('green').addClass('gray');
     } else {
-      S.cached('password_or_pubkey').css('display', 'none');
+      hide_message_password_ui();
       S.cached('send_btn').removeClass('gray').addClass('green');
     }
     if(is_reply_box) {
@@ -1124,13 +1146,20 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
   }
 
-  function format_password_protected_email(short_id, original_bodies) {
+  function format_password_protected_email(short_id, original_body) {
+    // html: .join('<br/>\n')
+    // L.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>'
     var decrypt_url = 'https://cryptup.org/' + short_id;
-    var new_bodies = { 'text/plain': [L.open_password_protected_message + ' ' + decrypt_url, '', original_bodies['text/plain']].join('\n') };
-    if(original_bodies['text/html']) {
-      new_bodies['text/html'] = [L.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>', '', original_bodies['text/html']].join('<br>\n');
+    var intro = S.cached('input_intro').length ? S.cached('input_intro').get(0).innerText.trim() : '';
+    var lines = [];
+    if(intro) {
+      lines.push(intro);
+      lines.push('');
     }
-    return new_bodies;
+    lines.push(L.open_password_protected_message + ' ' + decrypt_url);
+    lines.push('');
+    lines.push(original_body['text/plain']);
+    return { 'text/plain': lines.join('\n') };
   }
 
   function format_email_text_footer(body_part, is_html) {
@@ -1165,6 +1194,12 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         });
       });
     }, 1000);
+  });
+
+  S.cached('add_intro').click(function () {
+    $(this).css('display', 'none');
+    S.cached('intro_container').css('display', 'table-row');
+    S.cached('input_intro').focus();
   });
 
   S.cached('icon_help').click(function () {
