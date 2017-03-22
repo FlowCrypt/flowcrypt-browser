@@ -75,7 +75,7 @@ db_open(function (db) {
       if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
         account_storage_set(url_params.account_email, { successfully_received_at_leat_one_message: true });
       }
-      $('#pgp_block').html(is_error ? content : tool.crypto.message.format_text(content));
+      $('#pgp_block').html(is_error ? content : anchorme(tool.crypto.message.format_text(content), { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
       if(callback) {
         callback();
       }

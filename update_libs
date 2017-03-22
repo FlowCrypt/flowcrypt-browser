@@ -25,6 +25,7 @@ LIBS = [
     {'name': 'emailjs/util.js', 'url': 'https://raw.githubusercontent.com/isaacs/core-util-is/509c1d671df48207b7c1a9708195049fd35c053e/lib/util.js', 'v': USE_GIT}, # outdated https://github.com/joyent/node-http-signature/issues/18
     {'name': 'featherlight/featherlight.js', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.js', 'v': r' \* Version ([^ ]+) '},
     {'name': 'featherlight/featherlight.css', 'url': 'https://raw.githubusercontent.com/noelboss/featherlight/master/src/featherlight.css', 'v': r' \* Version ([^ ]+) '},
+    {'name': 'anchorme.js', 'url': 'https://raw.githubusercontent.com/alexcorvi/anchorme.js/gh-pages/dist-browser/anchorme.js', 'v': USE_GIT},
     # following urls need to be kept up to date
     {'name': 'bootstrap/bootstrap.css', 'url': 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css', 'v': '3.3.6'},
     {'name': 'bootstrap/bootstrap.js', 'url': 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js', 'v': '3.3.6'},
