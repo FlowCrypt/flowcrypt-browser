@@ -1,5 +1,12 @@
 <div>
 
+<b>version 3.8.5 on March 21, 2017: Intro</b>
+composing: option to add plain text intro to password encrypted messages
+reading: links inside encrypted messages are now clickable
+reading: fixed recipient couldn't open password protected emails after installing CryptUp
+settings: fixed having to click twice on browser button
+settings: fixed attempting to save empty account email
+
 <b>version 3.8.4 on March 19, 2017: Aliases</b>
 setup: remove unused email aliases
 composing: better recognition of reply to addresses
@@ -100,7 +107,7 @@ composing: option to sign outgoing messages instead of encrypting them
 reading: verify detached signatures
 reading: message in attachment called message - second attempt
 settings: fix settings decrypt form
-settings: cryptup is hiring note in settings
+settings: CryptUp is hiring note in settings
 settings: rename advanced settings
 
 <b>version 3.5.5 on March 1, 2017: Large Attachments</b>
@@ -155,7 +162,7 @@ design: changed size of profile image on setup
 <b>version 3.4.1 on February 19, 2017: User Friendly</b>
 reading: badly displayed verification message result
 reading: correct pass phrase will get rejected when opening email
-reading: cryptup failing to render decrypted messages
+reading: CryptUp failing to render decrypted messages
 reading: google auth keeps reappearing on spotty internet
 reading: switch-to-encrypted and show-original buttons improved
 composing: requests for lookup were getting doubled
@@ -192,7 +199,7 @@ composing: straight to password prompt on missing pubkey
 composing: fix ms office incompatibilities
 reading: browser crash fix on file download
 reading: fingeprint shown in gmail element pubkey block should be spaced
-internal: separate keyserver and cryptup urls
+internal: separate keyserver and CryptUp urls
 
 <b>version 3.3.6 on February 8, 2017: Attachment Handling Fixes</b>
 composing: binary files can now be attached as well
@@ -262,9 +269,9 @@ setup: full name to be included in key user list
 setup: missing toggle button when adding a secondary key
 setup: easier to find public key
 setup: properly handle create key errors in setup
-setup: offline cryptup settings
+setup: offline CryptUp settings
 composing: problem rendering attachments after a reply
-composing: make cryptup work with conversation view switched off
+composing: make CryptUp work with conversation view switched off
 composing: forwarding should include Fwd: ... in header
 reading: show received pubkeys shortened
 design: fixing changelog layout
@@ -373,7 +380,7 @@ setup: allowing CryptUp to work with any webmail in future (Yahoo etc)
 setup: gmail notification that page needs refresh after install
 setup: fingerprint check exception fix
 composing: more robust reply box replacing
-composing: attach pubkey if didn't submit to cryptup keyserver
+composing: attach pubkey if didn't submit to CryptUp keyserver
 
 <b>version 2.8.5 on December 30, 2016: Compose Bugfixes</b>
 composing: fixed exception when pulling pubkeys
@@ -491,7 +498,7 @@ composing: clearer prompt to connect gmail contacts
 composing: reworded challenge question/answer ui
 composing: changed send button text (less technical)
 composing: message sent confirmation
-reading: formatting email response from non-cryptup people
+reading: formatting email response from non-CryptUp people
 reading: mime encrypted attachments fix
 
 <b>version 2.3.2 on November 14, 2016: setting bugfix</b>
@@ -514,7 +521,7 @@ composing: better recipients selection UX
 composing: fixed newlines in drafts
 composing: reply box to resize on challenge q
 composing: hide gmail translate message box
-composing: attach pubkey when talking to non-cryptup contacts
+composing: attach pubkey when talking to non-CryptUp contacts
 composing: restyling missing pubkey prompt
 composing: bugfix traditional drafts mid-convo
 composing: bugfix very first google contact not to wipe previous one
@@ -522,7 +529,7 @@ composing: bugfix recipients missing placeholder
 
 <b>version 2.1.0 on May 18, 2016: Usability: Setup</b>
 setup: initial screen image link fix
-setup: option to disable cryptup for each account
+setup: option to disable CryptUp for each account
 setup: remind user didn't submit pubkey and never received encrypted message
 setup: creating a new key even if doesn't remember passphrase from last
 
