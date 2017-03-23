@@ -2861,9 +2861,11 @@
     });
   }
 
+  var api_outlook_body_types = {'text/plain': 'Text', 'text/html': 'HTML'};
+
   function api_outlook_sendmail(account_email, message, callback, progress_callback) {
-    var body_key = Object.keys(message.body)[0];
-    var body = { ContentType: {'text/plain': 'Text', 'text/html': 'HTML'}[body_key], Content: message.body[body_key] };
+    var body_type = typeof message.body['text/html'] !== 'undefined' ? 'text/html' : 'text/plain';
+    var body = { ContentType: api_outlook_body_types[body_type], Content: message.body[body_type] };
     var to = message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; });
     var attachments = message.attachments.map(function (attachment) {
       return {
