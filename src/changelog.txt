@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.8.6 on March 23, 2017: HTML Email</b>
+composing: send password encrypted messages as html
+reading: better pgp/mime email recognition
+reading: outlook: remove link previews
+
 <b>version 3.8.5 on March 21, 2017: Intro</b>
 composing: option to add plain text intro to password encrypted messages
 reading: links inside encrypted messages are now clickable
