@@ -5,7 +5,10 @@
 function init_shared_compose_js(url_params, db, subscription, message_sent_callback) {
 
   var L = {
-    open_password_protected_message: 'This message is encrypted. If you can\'t read it, visit the following link:',
+    message_encrypted_html: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ',
+    message_encrypted_text: 'This message is encrypted. Follow this link to open it: ',
+    alternatively_copy_paste: 'Alternatively copy and paste the following link: ',
+    open_message: 'Open Message',
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
     header_title_compose_encrypt: 'New Secure Message',
@@ -47,6 +50,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   var BTN_SIGN_AND_SEND = 'sign and send';
   var BTN_WRONG_ENTRY = 're-enter recipient..';
   var BTN_LOADING = 'loading..';
+  var CRYPTUP_WEB_URL = 'https://cryptup.org';
 
   var factory;
   var attach = init_shared_attach_js(get_max_attachment_size_and_oversize_notice);
@@ -458,7 +462,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
           plaintext = MimeCodec.foldLines(plaintext, 76, true);
 
           tool.crypto.key.decrypt(prv, passphrase);
-          tool.crypto.message.sign(prv, format_email_text_footer(plaintext), true, function (success, signing_result) {
+          tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
             if(success) {
               handle_send_btn_processing_error(function () {
                 attach.collect_attachments(function (attachments) { // todo - not signing attachments
@@ -600,7 +604,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
           upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
             if(short_id) {
               body = format_password_protected_email(short_id, body);
-              body['text/plain'] = format_email_text_footer(body['text/plain']);
+              body = format_email_text_footer(body);
               do_send_message(tool.api.common.message(url_params.account_email, url_params.from || get_sender_from_dom(), recipients, subject, body, attachments, url_params.thread_id), plaintext);
             } else {
               alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
@@ -608,7 +612,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
             }
           });
         } else {
-          body['text/plain'] = format_email_text_footer(body['text/plain']);
+          body = format_email_text_footer(body);
           do_send_message(tool.api.common.message(url_params.account_email, url_params.from || get_sender_from_dom(), recipients, subject, body, attachments, url_params.thread_id), plaintext);
         }
       });
@@ -1147,28 +1151,33 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function format_password_protected_email(short_id, original_body) {
-    // html: .join('<br/>\n')
-    // L.open_password_protected_message.replace(/ /g, '&nbsp;') + ' <a href="' + tool.str.html_escape(decrypt_url) + '">' + tool.str.html_escape(decrypt_url) + '</a>'
-    var decrypt_url = 'https://cryptup.org/' + short_id;
+    var decrypt_url = CRYPTUP_WEB_URL + '/' + short_id;
+    var a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + L.open_message + '</a>';
     var intro = S.cached('input_intro').length ? S.cached('input_intro').get(0).innerText.trim() : '';
-    var lines = [];
+    var text = [];
+    var html = [];
     if(intro) {
-      lines.push(intro);
-      lines.push('');
+      text.push(intro + '\n');
+      html.push(intro.replace(/\n/, '<br>') + '<br><br>');
     }
-    lines.push(L.open_password_protected_message + ' ' + decrypt_url);
-    lines.push('');
-    lines.push(original_body['text/plain']);
-    return { 'text/plain': lines.join('\n') };
+    text.push(L.message_encrypted_text + decrypt_url + '\n');
+    html.push('<div class="cryptup_encrypted_message_replaceable">');
+    html.push(L.message_encrypted_html + a + '<br><br>');
+    html.push(L.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
+    text.push(original_body['text/plain']);
+    var html_cryptup_web_url_link = '<a href="' + tool.str.html_escape(CRYPTUP_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(CRYPTUP_WEB_URL) + '</a>';
+    var html_pgp_message = original_body['text/html'] ? original_body['text/html'] : original_body['text/plain'].replace(CRYPTUP_WEB_URL, html_cryptup_web_url_link).replace(/\n/g, '<br>\n');
+    html.push('<div style="color: #999;">' + html_pgp_message + '</div>');
+    html.push('</div>');
+    return { 'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  function format_email_text_footer(body_part, is_html) {
-    var text = body_part + (email_footer ? '\n' + email_footer : '');
-    if(is_html) {
-      catcher.log('html footer not implemented');
-    } else {
-      return text;
+  function format_email_text_footer(original_body) {
+    var body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
+    if(typeof original_body['text/html'] !== 'undefined') {
+      body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
     }
+    return body;
   }
 
   S.cached('input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), show_hide_password_or_pubkey_container_and_color_send_button));

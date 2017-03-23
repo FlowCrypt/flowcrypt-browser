@@ -1572,7 +1572,11 @@
     }
   }
 
-  var password_sentence = /This\smessage\sis\sencrypted.\sIf\syou\scan't\sread\sit,\svisit\sthe\sfollowing\slink:\s.+\n\n/gm; // todo - should be in a common place as the code that generated it
+  var password_sentence_present_test = /https:\/\/cryptup\.(org|io)\/[a-zA-Z0-9]{10}/;
+  var password_sentences = [
+    /This\smessage\sis\sencrypted.+\n\n?/gm, // todo - should be in a common place as the code that generated it
+    /.*https:\/\/cryptup\.(org|io)\/[a-zA-Z0-9]{10}.*\n\n?/gm,
+  ];
 
   function crypto_armor_replace_blocks(factory, original_text, message_id, sender_email, is_outgoing) {
     original_text = str_normalize_spaces(original_text);
@@ -1595,13 +1599,15 @@
     });
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('message'), false, function(armored, has_end) {
       if(typeof has_password === 'undefined') {
-        has_password = original_text.match(password_sentence) !== null;
+        has_password = original_text.match(password_sentence_present_test) !== null;
       }
       return factory.embedded.message(has_end ? armored : '', message_id, is_outgoing, sender_email, has_password || false);
     });
     if(replacement_text !== original_text) {
       if(has_password) {
-        replacement_text = replacement_text.replace(password_sentence, '');
+        $.each(password_sentences, function(i, remove_sentence_re) {
+          replacement_text = replacement_text.replace(remove_sentence_re, '');
+        });
       }
       return replacement_text.trim();
     }
