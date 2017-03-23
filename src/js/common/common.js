@@ -379,6 +379,7 @@
         clip: crypto_armor_clip,
         headers: crypto_armor_headers,
         replace_blocks: crypto_armor_replace_blocks,
+        normalize: crypto_armor_normalize,
       },
       hash: {
         sha1: crypto_hash_sha1,
@@ -1578,12 +1579,30 @@
     /.*https:\/\/cryptup\.(org|io)\/[a-zA-Z0-9]{10}.*\n\n?/gm,
   ];
 
+  function crypto_armor_normalize(armored, type) {
+    if(tool.value(type).in(['message', 'public_key', 'private_key', 'key'])) {
+      armored = armored.replace(/\r?\n/g, '\n').trim();
+      var nl_2 = armored.match(/\n\n/g);
+      var nl_3 = armored.match(/\n\n\n/g);
+      var nl_4 = armored.match(/\n\n\n\n/g);
+      var nl_6 = armored.match(/\n\n\n\n\n\n/g);
+      if (nl_3 && nl_6 && nl_3.length > 1 && nl_6.length === 1) {
+        return armored.replace(/\n\n\n/g, '\n'); // newlines tripled: fix
+      } else if(nl_2 && nl_4 && nl_2.length > 1 && nl_4.length === 1) {
+        return armored.replace(/\n\n/g, '\n'); // newlines doubled.GPA on windows does this, and sometimes message can get extracted this way from html
+      }
+      return armored;
+    } else {
+      return armored;
+    }
+  }
+
   function crypto_armor_replace_blocks(factory, original_text, message_id, sender_email, is_outgoing) {
     original_text = str_normalize_spaces(original_text);
     var replacement_text = original_text;
     var has_password;
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
-      return factory.embedded.pubkey(armored, is_outgoing);
+      return factory.embedded.pubkey(crypto_armor_normalize(armored, 'public_key'), is_outgoing);
     });
     if(tool.value(sender_email).in(['attest@cryptup.org'])) {
       replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('attest_packet'), true, function(armored) {
@@ -1601,7 +1620,7 @@
       if(typeof has_password === 'undefined') {
         has_password = original_text.match(password_sentence_present_test) !== null;
       }
-      return factory.embedded.message(has_end ? armored : '', message_id, is_outgoing, sender_email, has_password || false);
+      return factory.embedded.message(has_end ? crypto_armor_normalize(armored, 'message') : '', message_id, is_outgoing, sender_email, has_password || false);
     });
     if(replacement_text !== original_text) {
       if(has_password) {
@@ -1712,24 +1731,19 @@
     return found_expired_subkey;
   }
 
-  function crypto_key_normalize(armored_original) {
-    var key;
-    var armored_normalized_newlines = armored_original.replace(/\r?\n/g, '\n').trim();
-    var nl_2 = armored_normalized_newlines.match(/\n\n/g);
-    var nl_4 = armored_normalized_newlines.match(/\n\n\n\n/g);
-    if(nl_2 && nl_4 && nl_2.length > 1 && nl_4.length === 1) {
-      armored_normalized_newlines = armored_normalized_newlines.replace(/\n\n/g, '\n'); // remove double newlines. GPA on windows does this
-    }
+  function crypto_key_normalize(armored) {
     try {
-      if(RegExp(crypto_armor_headers('public_key', 're').begin).test(armored_normalized_newlines)) {
-        key = openpgp.key.readArmored(armored_normalized_newlines).keys[0];
-      } else if(RegExp(crypto_armor_headers('message', 're').begin).test(armored_normalized_newlines)) {
-        key = openpgp.key.Key(openpgp.message.readArmored(armored_normalized_newlines).packets);
+      armored = crypto_armor_normalize(armored, 'key');
+      var key;
+      if(RegExp(crypto_armor_headers('public_key', 're').begin).test(armored)) {
+        key = openpgp.key.readArmored(armored).keys[0];
+      } else if(RegExp(crypto_armor_headers('message', 're').begin).test(armored)) {
+        key = openpgp.key.Key(openpgp.message.readArmored(armored).packets);
       }
       if(key) {
         return key.armor();
       } else {
-        return armored_normalized_newlines;
+        return armored;
       }
     } catch(error) {
       catcher.handle_exception(error);

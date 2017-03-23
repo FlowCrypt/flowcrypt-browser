@@ -17,7 +17,10 @@ function outlook_element_replacer(factory, account_email, addresses) {
       var message_id = dom_extract_selected_conversation_id(); // outlook does not give use message_id that we can parse from the dom. Using Convo id instead
       var sender_email = dom_extract_sender_email(message_element);
       var is_outgoing = tool.value(sender_email).in(addresses);
-      var replacement = tool.crypto.armor.replace_blocks(factory, message_element.innerText, message_id, sender_email, is_outgoing);
+      var html = $(message_element.outerHTML);
+      html.find('div[id^="LPBorder"]').replaceWith('<br>'); // this is preview of links that Outlook puts in. The link in pgp message comment will trigger it.
+      html.find('a:contains("https://cryptup.org"), a:contains("https://cryptup.io")').replaceWith('https://cryptup.org'); // links inside pgp comment cause trouble
+      var replacement = tool.crypto.armor.replace_blocks(factory, html[0].innerText, message_id, sender_email, is_outgoing);
       if(typeof replacement !== 'undefined') {
         $(message_element).parents('.ap').addClass('pgp_message_container');
         $(message_element).html(replacement.trim().replace(/\n/g, '<br>'));
