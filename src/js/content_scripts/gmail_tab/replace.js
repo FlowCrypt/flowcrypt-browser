@@ -191,7 +191,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function get_attachment_selector(file_name_filter) {
-    return 'span[download_url*="' + (file_name_filter.indexOf('*.') === 0 ? file_name_filter.substr(1) : ':' + file_name_filter).replace(/@/g, '%40') + ':https"]';
+    return 'span[download_url*="' + (file_name_filter.indexOf('*.') === 0 ? file_name_filter.substr(1) : ':' + file_name_filter).replace(/@/g, '%40') + ':https"]:visible';
   }
 
   function hide_attachment(atachment_element, attachments_container_selector) {
