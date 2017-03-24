@@ -31,7 +31,7 @@ db_open(function (db) {
       if(!tool.crypto.key.fingerprint(armored)) {
         alert('Could not recognize the format, please try again.');
         $('.pubkey').val('').focus();
-      } else if (openpgp.key.readArmored(armored).keys[0].getEncryptionKeyPacket() === null) {
+      } else if (!tool.crypto.key.usable(armored)) {
         alert('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
         $('.pubkey').val('').focus();
       } else {

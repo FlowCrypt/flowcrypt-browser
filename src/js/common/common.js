@@ -394,6 +394,7 @@
         fingerprint: crypto_key_fingerprint,
         longid: crypto_key_longid,
         test: crypto_key_test,
+        usable: crypto_key_usable,
       },
       message: {
         sign: crypto_message_sign,
@@ -1729,6 +1730,18 @@
       }
     });
     return found_expired_subkey;
+  }
+
+  function crypto_key_usable(armored) { // is pubkey usable for encrytion?
+    if(!crypto_key_fingerprint(armored)) {
+      return false;
+    }
+    var pubkey = openpgp.key.readArmored(armored).keys[0];
+    if(!pubkey) {
+      return false;
+    }
+    patch_public_keys_to_ignore_expiration([pubkey]);
+    return pubkey.getEncryptionKeyPacket() !== null;
   }
 
   function crypto_key_normalize(armored) {
