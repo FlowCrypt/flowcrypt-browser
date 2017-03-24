@@ -10,8 +10,10 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     replace_attachments();
   }
 
+  var message_text_element_selector = 'div.b5.xJNT8d';
+
   function replace_armored_blocks() {
-    $("div.xJNT8d").not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers().begin + "')").each(function (i, message_element) { // for each email that contains PGP block
+    $(message_text_element_selector).not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers().begin + "')").each(function (i, message_element) { // for each email that contains PGP block
       var message_id = dom_extract_message_id(message_element);
       var sender_email = dom_extract_sender_email(message_element);
       var is_outgoing = tool.value(sender_email).in(addresses);
@@ -39,7 +41,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
       var new_pgp_messages = attachments_container.children(tool.file.pgp_name_patterns().map(get_attachment_selector).join(',')).not('.evaluated').addClass('evaluated');
       if(new_pgp_messages.length) {
         var message_root_container = attachments_container.parents('.ap');
-        var message_element = message_root_container.find('div.xJNT8d');
+        var message_element = message_root_container.find(message_text_element_selector);
         var message_id = dom_extract_message_id(message_element);
         if(message_id) {
           if(can_read_emails) {
