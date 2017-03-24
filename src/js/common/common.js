@@ -1031,7 +1031,7 @@
         }
       });
     }
-    return { from: header_from, to: header_to, };
+    return { from: header_from, to: header_to };
   }
 
   function mime_resembles_message(message) {
@@ -1039,7 +1039,8 @@
     var has_content_type = m.match(/content-type: +[0-9a-z\-\/]+/) !== null;
     var has_content_transfer_encoding = m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) !== null;
     var has_content_disposition = m.match(/content-disposition: +[0-9a-z\-\/]+/) !== null;
-    return has_content_type && (has_content_transfer_encoding || has_content_disposition);
+    var has_boundary = m.match(/; boundary=/) !== null;
+    return has_content_type && (has_content_transfer_encoding || has_content_disposition || has_boundary);
   }
 
   function mime_format_content_to_display(text, full_mime_message) {
