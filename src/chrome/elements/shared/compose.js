@@ -285,7 +285,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         }
       });
     } else {
-      if(S.now('reply_message_prompt').length) { // todo - will only work for reply box, not compose box
+      if(is_reply_box) {
         S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
         when_master_passphrase_entered(function(passphrase) {
           decrypt_and_render_draft(url_params.account_email, encrypted_draft);
@@ -437,7 +437,6 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
       var passphrase = get_passphrase(url_params.account_email);
       if(passphrase === null) {
-        S.now('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
         tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'sign', longids: 'primary' });
         when_master_passphrase_entered(function (passphrase) {
           if(passphrase) {
