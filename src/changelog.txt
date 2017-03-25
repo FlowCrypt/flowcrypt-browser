@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.8.7 on March 24, 2017: Inbox Bugfixes</b>
+reading: problems decrypting attached messages in Inbox
+reading: better mime message recognition
+composing: key expirations should be ignored
+composing: reply message refactoring
+
 <b>version 3.8.6 on March 23, 2017: HTML Email</b>
 composing: send password encrypted messages as html
 reading: better pgp/mime email recognition
