@@ -112,7 +112,7 @@ function google_auth_save_tokens(account_email, tokens_object, scopes, callback)
   account_storage_set(account_email, to_save, callback);
 }
 
-function google_auth_get_tokens(code, callback) {
+function google_auth_get_tokens(code, callback, retries_left) {
   $.ajax({
     url: tool.env.url_create(google_oauth2.url_tokens, { grant_type: 'authorization_code', code: code, client_id: google_oauth2.client_id, redirect_uri: google_oauth2.url_redirect }),
     method: 'POST',
@@ -122,7 +122,13 @@ function google_auth_get_tokens(code, callback) {
       callback(response);
     },
     error: function (XMLHttpRequest, status, error) {
-      callback({ request: XMLHttpRequest, status: status, error: error });
+      if(!retries_left) {
+        callback({ request: XMLHttpRequest, status: status, error: error });
+      } else {
+        setTimeout(function () { // retry again
+          google_auth_get_tokens(code, callback, retries_left - 1);
+        }, 2000);
+      }
     },
   });
 }
@@ -161,7 +167,7 @@ function google_auth_check_email(expected_email, access_token, callback) {
       console.log('google_auth_check_email error');
       console.log(expected_email);
       console.log(response);
-      callback(expected_email); //todo - handle better
+      callback(expected_email); //todo - handle better. On a network error, this could result in saving this wrongly. Should re-try two times with some delay, then call back.
     },
   });
 }
@@ -190,9 +196,6 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
     google_auth_get_tokens(params.code, function (tokens_object) {
       if(typeof tokens_object.access_token !== 'undefined') {
         google_auth_check_email(state_object.account_email, tokens_object.access_token, function (account_email) {
-          // if(state_object.account_email && state_object.account_email !== account_email) {
-          //   //user authorized a different account then expected
-          // }
           google_auth_save_tokens(account_email, tokens_object, state_object.scopes, function () {
             safe_respond(auth_responder, {
               account_email: account_email,
@@ -210,7 +213,7 @@ function google_auth_window_result_handler(auth_code_window_result, sender, clos
           message_id: state_object.message_id,
         });
       }
-    });
+    }, 2);
     break;
   case 'Denied':
   case 'Error':
