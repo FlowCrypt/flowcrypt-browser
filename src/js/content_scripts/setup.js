@@ -100,11 +100,13 @@ function content_script_setup_if_vacant(webmail_specific) {
             initialize(account_email, tab_id);
             clearInterval(wait_for_setup_interval);
           } else if(!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-            var set_up_link = tool.env.url_create('_PLUGIN/settings/index.htm', { account_email: account_email });
-            var set_up_notification = '<a href="' + set_up_link + '" target="cryptup">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+            var set_up_notification = '<a href="#" class="action_open_settings">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
             notifications.show(set_up_notification, {
               notification_setup_needed_dismiss: function () {
                 account_storage_set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
+              },
+              action_open_settings: function () {
+                tool.browser.message.send(null, 'settings', { account_email: account_email });
               },
               close: function () {
                 show_setup_needed_notification_if_setup_not_done = false;
