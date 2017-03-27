@@ -1,5 +1,9 @@
 <div>
 
+<b>version 3.8.8 on March 26, 2017: Setup Issues</b>
+setup: people sometimes having issues with google auth
+setup: link in webmail notification didn't work for some people
+
 <b>version 3.8.7 on March 24, 2017: Inbox Bugfixes</b>
 reading: problems decrypting attached messages in Inbox
 reading: better mime message recognition
