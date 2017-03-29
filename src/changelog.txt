@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.8.9 on March 28, 2017: Fix xss</b>
+security: fix xss issue outside of pgp blocks
+
 <b>version 3.8.8 on March 26, 2017: Setup Issues</b>
 setup: people sometimes having issues with google auth
 setup: link in webmail notification didn't work for some people
