@@ -286,6 +286,7 @@
       html_attribute_decode: str_html_attribute_decode,
       html_escape: str_html_escape,
       html_unescape: str_html_unescape,
+      as_safe_html: str_untrusted_text_as_sanitized_html,
       base64url_encode: str_base64url_encode,
       base64url_decode: str_base64url_decode,
       from_uint8: str_from_uint8,
@@ -402,7 +403,6 @@
         verify_detached: crypto_message_verify_detached,
         decrypt: crypto_message_decrypt,
         encrypt: crypto_message_encrypt,
-        format_text: crypto_message_format_text,
       },
     },
     api: {
@@ -513,10 +513,16 @@
     return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
   }
 
-  function str_inner_text(html_text) {
-    var e = document.createElement('div');
-    e.innerHTML = html_text;
-    return e.innerText;
+  function str_inner_text(html_text, callback) { // extracts innerText from a html text in a safe way without executing any contained js
+    var e = document.createElement('iframe');
+    e.sandbox = 'allow-same-origin';
+    e.srcdoc = html_text;
+    e.style['display'] = 'none';
+    e.onload = function() {
+      callback(e.contentDocument.body.innerText);
+      document.body.removeChild(e);
+    };
+    document.body.append(e);
   }
 
   function str_normalize_spaces(str) {
@@ -552,8 +558,17 @@
     return id;
   }
 
+  function str_untrusted_text_as_sanitized_html(text_or_html, callback) {
+    var nl = '_cryptup_newline_placeholder_' + str_random(3) + '_';
+    str_inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'), function(plain) {
+      callback(plain.trim().replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
+        return '&nbsp;'.repeat(spaces.length);
+      }));
+    });
+  }
+
   function str_html_escape(str) { // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
-    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   }
 
   function str_html_unescape(str){
@@ -1601,6 +1616,7 @@
 
   function crypto_armor_replace_blocks(factory, original_text, message_id, sender_email, is_outgoing) {
     original_text = str_normalize_spaces(original_text);
+    original_text = str_html_escape(original_text);
     var replacement_text = original_text;
     var has_password;
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
@@ -2081,14 +2097,6 @@
       console.log(error);
       alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
       //todo: make the UI behave well on errors
-    });
-  }
-
-  function crypto_message_format_text(text_or_html) {
-    var nl = '_cryptup_newline_placeholder_' + str_random(3) + '_';
-    var plain = str_inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>')).trim();
-    return plain.replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
-      return '&nbsp;'.repeat(spaces.length);
     });
   }
 

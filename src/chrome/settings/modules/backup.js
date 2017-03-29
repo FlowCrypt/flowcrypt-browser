@@ -190,7 +190,7 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
       if(success) {
         write_backup_done_and_render(false, 'inbox');
       } else {
-        $(self).html(btn_text);
+        $(self).text(btn_text);
         alert('Need internet connection to finish. Please click the button again to retry.');
       }
     });
@@ -217,7 +217,7 @@ function backup_on_email_provider() {
       if(success) {
         write_backup_done_and_render(false, 'inbox');
       } else {
-        $(self).html(btn_text);
+        $(self).text(btn_text);
         alert('Need internet connection to finish. Please click the button again to retry.');
       }
     });

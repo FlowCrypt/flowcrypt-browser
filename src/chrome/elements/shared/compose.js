@@ -265,18 +265,20 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       }
       // todo: should be using tool.crypto.message.decrypt() function
       openpgp.decrypt({ message: openpgp.message.readArmored(encrypted_draft), format: 'utf8', privateKey: private_key, }).then(function (plaintext) {
-        S.cached('input_text').html(plaintext.data.replace(/(?:\r\n|\r|\n)/g, '<br />'));
-        if(headers && headers.to && headers.to.length) {
-          S.cached('input_to').focus();
-          S.cached('input_to').val(headers.to.join(','));
-          S.cached('input_text').focus();
-        }
-        if(headers && headers.from) {
-          S.now('input_from').val(headers.from);
-        }
-        if(render_function) {
-          render_function();
-        }
+        tool.str.as_safe_html(plaintext.data, function(safe_html_draft) {
+          S.cached('input_text').html(safe_html_draft);
+          if(headers && headers.to && headers.to.length) {
+            S.cached('input_to').focus();
+            S.cached('input_to').val(headers.to.join(','));
+            S.cached('input_text').focus();
+          }
+          if(headers && headers.from) {
+            S.now('input_from').val(headers.from);
+          }
+          if(render_function) {
+            render_function();
+          }
+        });
       }).catch(function (error) {
         console.log('openpgp.decrypt(options).catch(error)');
         console.log(error);
@@ -1221,7 +1223,9 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   S.cached('input_text').get(0).onpaste = function (e) {
     if(e.clipboardData.getData('text/html')) {
-      simulate_ctrl_v(tool.str.inner_text(e.clipboardData.getData('text/html')).replace(/\n/g, '<br>'));
+      tool.str.inner_text(e.clipboardData.getData('text/html'), function (text) {
+        simulate_ctrl_v(text.replace(/\n/g, '<br>'));
+      });
       return false;
     }
   };

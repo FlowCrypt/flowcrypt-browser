@@ -29,6 +29,8 @@ function process_attest() {
     packet: url_params.attest_packet,
     passphrase: get_passphrase(url_params.account_email),
   }, function(attestation) {
-    $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.inner_text(attestation.result.replace(/\n/g, '<br>')).replace(/\n/g, '<br>'));
+    tool.str.inner_text(attestation.result.replace(/\n/g, '<br>'), function (text) {
+      $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
+    });
   });
 }

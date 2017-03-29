@@ -65,7 +65,7 @@ db_open(function (db) {
     if(!is_infinite_resize_loop()) {
       tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
         selector: 'iframe#' + url_params.frame_id,
-        css: { height: new_height, }
+        css: { height: new_height },
       });
     }
   }
@@ -75,14 +75,16 @@ db_open(function (db) {
       if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
         account_storage_set(url_params.account_email, { successfully_received_at_leat_one_message: true });
       }
-      $('#pgp_block').html(is_error ? content : anchorme(tool.crypto.message.format_text(content), { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
-      if(callback) {
-        callback();
-      }
-      setTimeout(function () {
-        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
-      }, 1000);
-      send_resize_message();
+      tool.str.as_safe_html(content, function(safe_html) {
+        $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
+        if(callback) {
+          callback();
+        }
+        setTimeout(function () {
+          $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
+        }, 1000);
+        send_resize_message();
+      });
     });
   }
 
