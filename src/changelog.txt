@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.9.0 on March 30, 2017: Experimental Client</b>
+settings: alternative email client
+reading: improve MIME support
+setup: mention in backup email that it's protected by pass phrase
+
 <b>version 3.8.9 on March 28, 2017: Fix xss</b>
 security: fix xss issue outside of pgp blocks
 
