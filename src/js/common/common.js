@@ -421,6 +421,9 @@
         reply_correspondents: api_common_reply_correspondents,
       },
       gmail: {
+        query: {
+          or: api_gmail_query_or,
+        },
         scope: api_gmail_scope,
         has_scope: api_gmail_has_scope,
         thread_get: api_gmail_thread_get,
@@ -435,6 +438,7 @@
         attachment_get: api_gmail_message_attachment_get,
         find_header: api_gmail_find_header,
         find_attachments: api_gmail_find_attachments,
+        find_bodies: api_gmail_find_bodies,
         fetch_attachments: api_gmail_fetch_attachments,
         search_contacts: api_gmail_search_contacts,
         extract_armored_block: gmail_api_extract_armored_block,
@@ -1348,6 +1352,11 @@
   /* tools.browser.message */
 
   var background_script_shortcut_handlers;
+  var standard_handlers = {
+    set_css: function (data) {
+      $(data.selector).css(data.css);
+    },
+  };
 
   function destination_parse(destination_string) {
     var parsed = { tab: null, frame: null, };
@@ -1412,6 +1421,11 @@
   }
 
   function browser_message_listen(handlers, listen_for_tab_id) {
+    $.each(standard_handlers, function(name, handler) {
+      if(typeof handlers[name] !== 'function') {
+        handlers[name] = handler;
+      }
+    });
     var processed = [];
     chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
       return catcher.try(function () {
@@ -2744,6 +2758,14 @@
         error_callback('connection');
       }
     });
+  }
+
+  function api_gmail_query_or(arr, quoted) {
+    if(quoted) {
+      return '("' + arr.join('") OR ("') + '")';
+    } else {
+      return '(' + arr.join(') OR (') + ')';
+    }
   }
 
   /* tool.api.outlook */

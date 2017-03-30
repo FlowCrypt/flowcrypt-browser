@@ -88,4 +88,8 @@ if(url_params.account_email) {
     show_settings_page('/chrome/dev/storage.htm', tool.env.url_create('', {filter: url_params.account_email, keys: 'attest_log', title: 'Attest Log - ' + url_params.account_email}).replace('?', '&'));
   });
 
+  $('.action_email_client').click(function () {
+    tool.browser.message.send(url_params.parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email: url_params.account_email})});
+  })
+
 }

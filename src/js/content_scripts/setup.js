@@ -133,9 +133,6 @@ function content_script_setup_if_vacant(webmail_specific) {
       reinsert_reply_box: function (data) {
         webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id);
       },
-      set_css: function (data) {
-        $(data.selector).css(data.css);
-      },
       passphrase_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog.passphrase(data.longids, data.type));
@@ -179,7 +176,7 @@ function content_script_setup_if_vacant(webmail_specific) {
     TrySetDestryableTimeout(function () {
       var full_name = webmail_specific.get_user_full_name();
       if(full_name) {
-        account_storage_set(account_email, { full_name: full_name, });
+        account_storage_set(account_email, { full_name: full_name });
       } else {
         save_account_email_full_name(account_email);
       }

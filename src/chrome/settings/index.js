@@ -23,6 +23,9 @@ tool.browser.message.tab_id(function (tab_id) {
     open_page: function (data, sender, respond) {
       show_settings_page(data.page, data.add_url_text);
     },
+    redirect: function (data) {
+      window.location = data.location;
+    },
     close_page: function () {
       $('.featherlight-close').click();
     },

@@ -85,13 +85,13 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       skip_click_prompt: Boolean(skip_click_prompt),
       ignore_draft: Boolean(ignore_draft),
       parent_tab_id: parent_tab_id,
+      thread_message_id: conversation_params.thread_message_id,
     };
     if(conversation_params.reply_to) { // for gmail and inbox. Outlook gets this from API
       var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
       params.to = headers.to;
       params.from = headers.from;
       params.subject = conversation_params.subject;
-      params.thread_message_id = conversation_params.thread_message_id;
     }
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/reply_message.htm'), params);
   }
