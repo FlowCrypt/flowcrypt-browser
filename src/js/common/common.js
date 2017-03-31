@@ -527,7 +527,7 @@
       callback(e.contentDocument.body.innerText);
       document.body.removeChild(e);
     };
-    document.body.append(e);
+    document.body.appendChild(e);
   }
 
   function str_normalize_spaces(str) {
