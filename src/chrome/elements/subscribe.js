@@ -2,6 +2,8 @@
 
 'use strict';
 
+tool.ui.event.protect();
+
 var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
 
 var PRODUCTS = {

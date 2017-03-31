@@ -2,6 +2,8 @@
 
 'use strict';
 
+tool.ui.event.protect();
+
 var url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
 
 if(get_passphrase(url_params.account_email) !== null) {

@@ -354,6 +354,7 @@
       build_jquery_selectors: ui_build_jquery_selectors,
       scroll: ui_scroll,
       event: {
+        protect: ui_event_stop_propagation_to_parent_frame,
         double: ui_event_double,
         parallel: ui_event_parallel,
         spree: ui_event_spree,
@@ -1198,6 +1199,19 @@
   }
 
   /* tool.ui */
+
+  function  ui_event_stop_propagation_to_parent_frame() {
+    // prevent events that could potentially leak information about sensitive info from bubbling above the frame
+    $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', function(e) {
+      // don't ask me how come Chrome allows it to bubble cross-domain
+      // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
+      // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
+      // so this indeed seems like the only defense
+      // happened on only one machine, but could potentially happen to other users as well
+      // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
+      e.stopPropagation();
+    });
+  }
 
   var events_fired = {};
   var DOUBLE_MS = 1000;

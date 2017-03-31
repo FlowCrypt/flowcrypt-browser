@@ -2,6 +2,8 @@
 
 'use strict';
 
+tool.ui.event.protect();
+
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id']);
 
 storage_cryptup_subscription(function(subscription_level, subscription_expire, subscription_active) {

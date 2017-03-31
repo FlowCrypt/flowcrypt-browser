@@ -2,6 +2,8 @@
 
 'use strict';
 
+tool.ui.event.protect();
+
 var url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'frame_id']);
 
 var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];

@@ -2,6 +2,8 @@
 
 'use strict';
 
+tool.ui.event.protect();
+
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
 
 if(url_params.type === 'embedded') {
