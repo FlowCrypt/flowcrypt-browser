@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.9.1 on March 31, 2017: Compose Bugfixes</b>
+composing: drafts lose newlines
+composing: pubkey sent in title when signing after passphrase entry
+composing: prevent events to bubble out of iframes
+internal: document.body.append is not a function bug
+
 <b>version 3.9.0 on March 30, 2017: Experimental Client</b>
 settings: alternative email client
 reading: improve MIME support
