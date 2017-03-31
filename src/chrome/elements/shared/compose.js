@@ -264,8 +264,8 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         tool.crypto.key.decrypt(private_key, my_passphrase);
       }
       // todo: should be using tool.crypto.message.decrypt() function
-      openpgp.decrypt({ message: openpgp.message.readArmored(encrypted_draft), format: 'utf8', privateKey: private_key, }).then(function (plaintext) {
-        tool.str.as_safe_html(plaintext.data, function(safe_html_draft) {
+      openpgp.decrypt({ message: openpgp.message.readArmored(encrypted_draft), format: 'utf8', privateKey: private_key }).then(function (plaintext) {
+        tool.str.as_safe_html(plaintext.data.replace(/\n/g, '<br>\n'), function(safe_html_draft) {
           S.cached('input_text').html(safe_html_draft);
           if(headers && headers.to && headers.to.length) {
             S.cached('input_to').focus();
