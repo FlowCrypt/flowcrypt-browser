@@ -442,7 +442,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'sign', longids: 'primary' });
         when_master_passphrase_entered(function (passphrase) {
           if(passphrase) {
-            sign_and_send(url_params.account_email, recipients, armored_pubkeys, subject, plaintext, challenge, _active);
+            sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active);
           } else { // timeout - reset
             clearInterval(passphrase_interval);
             reset_send_btn();
