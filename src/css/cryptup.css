@@ -44,7 +44,7 @@ i.large_spinner img { position: relative; width: 75px; height: 75px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
 .featherlight .featherlight-close-icon { background: none !important; border: none !important; }
 .featherlight.new_message_featherlight .featherlight-content { background: none !important; }
-.featherlight .featherlight-content > .line { color: white; text-align: center; opacity: 0.75; font-weight: 200; letter-spacing: 0.25px;}
+.featherlight .featherlight-content > .line { color: white; text-align: center; font-weight: 200; letter-spacing: 0.25px;}
 .good { color: #088447; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }

@@ -457,6 +457,7 @@
         initial_confirm: api_attester_initial_confirm,
         replace_request: api_attester_replace_request,
         replace_confirm: api_attester_replace_confirm,
+        test_welcome: api_attester_test_welcome,
         packet: {
           create_sign: api_attester_packet_create_sign,
           parse: api_attester_packet_parse,
@@ -3029,6 +3030,13 @@
   function api_attester_replace_confirm(signed_attest_packet, callback) {
     return api_attester_call('replace/confirm', {
       signed_message: signed_attest_packet,
+    }, callback);
+  }
+
+  function api_attester_test_welcome(email, pubkey, callback) {
+    return api_attester_call('test/welcome', {
+      email: email,
+      pubkey: pubkey,
     }, callback);
   }
 

@@ -127,6 +127,11 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
 function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
   account_storage_get(account_email, ['addresses'], function (storage) {
     if(options.submit_main) {
+      tool.api.attester.test_welcome(account_email, armored_pubkey, function(success, response) {
+        if(!(success && response && response.sent)) {
+          catcher.log('tool.api.attester.test_welcome: failed', response);
+        }
+      });
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
         var addresses = storage.addresses.concat(account_email);
       } else {
