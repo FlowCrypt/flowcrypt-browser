@@ -578,7 +578,7 @@
   }
 
   function str_html_unescape(str){
-    return str.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
   function str_html_attribute_encode(values) {
@@ -1648,25 +1648,25 @@
     var replacement_text = original_text;
     var has_password;
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
-      return factory.embedded.pubkey(crypto_armor_normalize(armored, 'public_key'), is_outgoing);
+      return factory.embedded.pubkey(crypto_armor_normalize(str_html_unescape(armored), 'public_key'), is_outgoing);
     });
     if(tool.value(sender_email).in(['attest@cryptup.org'])) {
       replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('attest_packet'), true, function(armored) {
-        return factory.embedded.attest(armored);
+        return factory.embedded.attest(str_html_unescape(armored));
       });
     }
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('cryptup_verification'), false, function(armored) {
-      return factory.embedded.subscribe(armored, 'embedded', null);
+      return factory.embedded.subscribe(str_html_unescape(armored), 'embedded', null);
     });
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('signed_message'), true, function(armored) {
       //todo - for now doesn't work with clipped signed messages because not tested yet
-      return factory.embedded.message(armored, message_id, is_outgoing, sender_email, false);
+      return factory.embedded.message(str_html_unescape(armored), message_id, is_outgoing, sender_email, false);
     });
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('message'), false, function(armored, has_end) {
       if(typeof has_password === 'undefined') {
         has_password = original_text.match(password_sentence_present_test) !== null;
       }
-      return factory.embedded.message(has_end ? crypto_armor_normalize(armored, 'message') : '', message_id, is_outgoing, sender_email, has_password || false);
+      return factory.embedded.message(has_end ? crypto_armor_normalize(str_html_unescape(armored), 'message') : '', message_id, is_outgoing, sender_email, has_password || false);
     });
     if(replacement_text !== original_text) {
       if(has_password) {

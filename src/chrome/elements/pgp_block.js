@@ -13,7 +13,7 @@ var l = {
   account_info_outdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
   wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
   ask_resend: 'Please ask them to send a new message.',
-  receivers_hidden: 'We cannot tell if the message was encrypted correctly for you. ',
+  receivers_hidden: 'Cannot tell if the message was encrypted correctly for you. ',
   bad_format: 'Message is either badly formatted or not compatible with CryptUp. ',
   no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
   refresh_page: 'Refresh page to see more information.',
