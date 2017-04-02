@@ -196,6 +196,14 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
       with_cryptup: function() {
         return '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + src_logo(true, 16) + '"/></span>';
       },
+      recipients_use_encryption: function (count, webmail_name) {
+        if(webmail_name !== 'gmail') {
+          catcher.log('switch_to_secure not implemented for ' + webmail_name);
+          return '';
+        } else {
+          return '<div class="aoD az6 recipients_use_encryption">Your ' + (count > 1 ? 'recipients seem' : 'recipient seems') + ' to have encryption set up! <a href="#">Secure Compose</a></div>';
+        }
+      },
     }
   };
 }
