@@ -466,6 +466,7 @@
         auth_error: api_cryptup_auth_error,
         error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
+        help_uninstall: api_cryptup_help_uninstall,
         account_check: api_cryptup_account_check,
         account_login: api_cryptup_account_login,
         account_subscribe: api_cryptup_account_subscribe,
@@ -3156,6 +3157,14 @@
     return api_cryptup_call('help/feedback', {
       email: account_email,
       message: message,
+    }, api_cryptup_response_formatter(callback));
+  }
+
+  function api_cryptup_help_uninstall(email, client, metrics, callback) {
+    return api_cryptup_call('help/uninstall', {
+      email: email,
+      client: client,
+      metrics: metrics,
     }, api_cryptup_response_formatter(callback));
   }
 
