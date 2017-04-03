@@ -1138,8 +1138,8 @@
 
   function mime_parse_message_with_detached_signature(mime_message) {
     /*
-      Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
-      Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
+     Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
+     Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
 
      --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
      Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
@@ -2172,12 +2172,16 @@
       timeout: typeof progress.upload === 'function' || typeof progress.download === 'function' ? undefined : 20000,
       success: function (response) {
         catcher.try(function () {
-          callback(true, response);
+          if(typeof callback === 'function') {
+            callback(true, response);
+          }
         })();
       },
       error: function (XMLHttpRequest, status, error) {
         catcher.try(function () {
-          callback(false, { request: XMLHttpRequest, status: status, error: error });
+          if(typeof callback === 'function') {
+            callback(false, {request: XMLHttpRequest, status: status, error: error});
+          }
         })();
       },
     });
@@ -3144,13 +3148,15 @@
   }
 
   function api_cryptup_response_formatter(callback) {
-    return function (success, response) {
-      if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
-        callback(api_cryptup_auth_error);
-      } else {
-        callback(success, response);
-      }
-    };
+    if(typeof callback === 'function') {
+      return function (success, response) {
+        if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
+          callback(api_cryptup_auth_error);
+        } else {
+          callback(success, response);
+        }
+      };
+    }
   }
 
   function api_cryptup_help_feedback(account_email, message, callback) {
