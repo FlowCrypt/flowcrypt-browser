@@ -99,19 +99,6 @@ function account_update_status_pks(account_email) { // checks if any new emails 
   });
 }
 
-function schedule_keyserver_fingerprint_check() {
-  setTimeout(function() {
-    if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {
-      // update may happen to many people at the same time -- server overload
-      setTimeout(catcher.try(tool.diagnose.keyserver_fingerprints), tool.time.hours(Math.random() * 3)); // random 0-3 hours
-    } else {
-      // the user just installed the plugin or started their browser, no risk of overloading servers
-      catcher.try(tool.diagnose.keyserver_fingerprints)(); // now
-    }
-  }, 10 * 60 * 1000); // 10 minutes
-  setInterval(catcher.try(tool.diagnose.keyserver_fingerprints), tool.time.hours(23 + Math.random())); // random 23-24 hours
-}
-
 function schedule_cryptup_subscription_level_check() {
   setTimeout(function() {
     if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {

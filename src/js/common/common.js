@@ -372,7 +372,6 @@
     },
     diagnose: {
       message_pubkeys: giagnose_message_pubkeys,
-      keyserver_fingerprints: diagnose_keyserver_fingerprints,
       keyserver_pubkeys: diagnose_keyserver_pubkeys,
     },
     crypto: {
@@ -1499,30 +1498,6 @@
           callback();
         }
       });
-    });
-  }
-
-  function diagnose_keyserver_fingerprints() {
-    get_account_emails(function (account_emails) {
-      if(account_emails && account_emails.length) {
-        account_storage_get(account_emails, ['setup_done'], function (multi_storage) {
-          var emails_setup_done = [];
-          $.each(multi_storage, function (account_email, storage) {
-            if(storage.setup_done) {
-              emails_setup_done.push(account_email);
-            }
-          });
-          api_attester_legacy_keys_check(emails_setup_done, function (success, response) {
-            if(success && response.fingerprints && response.fingerprints.length === emails_setup_done.length) {
-              var save_result = {};
-              $.each(emails_setup_done, function (i, account_email) {
-                save_result[account_email] = response.fingerprints[i];
-              });
-              account_storage_set(null, { keyserver_fingerprints: save_result });
-            }
-          });
-        });
-      }
     });
   }
 
@@ -3005,12 +2980,6 @@
       pubkey: pubkey.trim(),
       attest: attest || false,
     }, callback);
-  }
-
-  function api_attester_legacy_keys_check(emails, callback) {
-    api_call('https://cryptup-keyserver.herokuapp.com/', 'keys/check', { // should deprecate it soon
-      emails: emails.map(tool.str.trim_lower),
-    }, callback, 'JSON');
   }
 
   function api_attester_initial_confirm(signed_attest_packet, callback) {
