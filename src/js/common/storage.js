@@ -284,7 +284,9 @@ function add_account_email_to_list_of_accounts(account_email, callback) { //todo
     }
     if(!tool.value(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);
-      account_storage_set(null, { account_emails: JSON.stringify(account_emails) }, callback);
+      account_storage_set(null, { account_emails: JSON.stringify(account_emails) }, function () {
+        tool.browser.message.send(null, 'update_uninstall_url', null, callback);
+      });
     } else if(typeof callback !== 'undefined') {
       callback();
     }
