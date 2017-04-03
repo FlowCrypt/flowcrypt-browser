@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.9.2 on April 2, 2017: Welcome Message</b>
+setup: send encrypted email to each new user
+composing: show who uses encryption in standard compose
+reading: copy-pasting pubkey from settings makes it badly formatted
+
 <b>version 3.9.1 on March 31, 2017: Compose Bugfixes</b>
 composing: drafts lose newlines
 composing: pubkey sent in title when signing after passphrase entry
