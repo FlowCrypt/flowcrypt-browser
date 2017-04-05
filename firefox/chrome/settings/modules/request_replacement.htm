@@ -1,0 +1,46 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+  <div id="content" class="setup page">
+    <div id="status" class="setup"></div>
+    <div id="step_2b_manual_enter" class="manual">
+      <div class="aligncenter">
+        <div class="line">
+          Your email can be re-attested so that others can easily retrieve your updated public key. At the moment, emails can be re-attested only ONE TIME.
+        </div>
+        <div class="line">
+          To confirm this change, please enter your original private key below. It will only be used inside your browser to sign re-attestation request, and then immediately forgotten.
+        </div>
+        <div class="line">
+          <textarea class="input_private_key" placeholder="ASCII Armored Private Key (original/PREVIOUSLY USED)"></textarea>
+        </div>
+        <div class="line" style="text-align: left; padding-left: 22px;">
+          <input class="input_passphrase" type="password" placeholder="ORIGINAL Private Key Passphrase" />
+        </div>
+        <div class="line">
+          <div class="button long green action_request_replacement">Request re-attestation</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/require.js"></script>
+    <script src="/js/common/mnemonic.js"></script>
+    <script src="/js/common/storage.js"></script>
+    <script src="/js/common/common.js"></script>
+    <script src="../settings.js"></script>
+    <script src="request_replacement.js"></script>
+</body>
+
+</html>

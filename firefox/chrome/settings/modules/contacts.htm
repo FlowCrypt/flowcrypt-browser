@@ -1,0 +1,72 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+  <div id="content" class="pubkeys page">
+    <div class="line">
+      <h1></h1>
+    </div>
+    <div class="separator"></div>
+    <div class="line hide_when_rendering_subpage">
+      You can add new contacts while composing encrypted emails. If recipient's public key<br/>
+      is not available, you will be prompted to enter it yourself. Alternatively, try <a href="#" class="action_view_bulk_import">bulk import</a>.
+    </div>
+    <table id="emails" class="hide_when_rendering_subpage">
+
+    </table>
+
+    <div id="bulk_import" style="display: none;">
+      <div id="processed"></div>
+      <div class="line">
+        <textarea class="input_pubkey" placeholder="Enter one or more ASCII Armored Public Keys to import"></textarea>
+      </div>
+      <div class="line">
+        <div class="button green action_process long">show contents</div>
+      </div>
+    </div>
+
+
+    <div id="view_contact" style="display: none;">
+      <div class="line">
+        Public KeyWords: <span class="key_words good"></span>
+        <br/> Pubkey Fingerprint: <span class="key_fingerprint gray"></span>
+      </div>
+      <div class="line">
+        <pre class="key_dump good"></pre>
+      </div>
+    </div>
+
+    <div id="edit_contact" style="display: none;">
+      <div class="line">
+        <textarea class="input_pubkey" placeholder="Enter a new Public Key for this contact"></textarea>
+      </div>
+      <div class="line">
+        <div class="button green action_save_edited_pubkey long">SAVE</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/mnemonic.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="/js/content_scripts/factory.js"></script>
+  <script src="../settings.js"></script>
+  <script src="contacts.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+
+  <div id="content" class="page">
+    <div class="line">
+      <h1>Fixing Google Chrome Content Settings</h1>
+    </div>
+    <div class="line">
+      Please review <em>Chrome Settings -> Additional Settings -> Privacy -> Content Settings</em>
+    </div>
+    <div class="line">
+      Or open the settings page directly at <span class="good" style="padding-left: 10px;">chrome://settings/content</span>
+    </div>
+    <div class="line">
+      <h2>Simple fix</h2>
+    </div>
+    <div class="line">
+      <img src="/img/screens/content-settings-simple.png" class="screen" />
+    </div>
+    <div class="line">
+      Un-check <em>Block third-party cookies and site data</em> in Cookies section
+    </div>
+    <div class="line">
+      When the checkbox is empty, close your web mail window and open it again.
+    </div>
+    <div class="line">
+      <h2>Advanced method</h2>
+    </div>
+    <div class="line">
+      Select <em>Manage Exceptions</em> at <span style="padding-left: 10px;">chrome://settings/content</span>
+    </div>
+    <div class="line">
+      <img src="/img/screens/content-settings-advanced-1.png" class="screen" />
+    </div>
+    <div class="line">
+      Copy and paste into <em>Hostname</em>: <span style="padding-left: 10px;" class="good">chrome-extension://bnjglocicdkmhmoohhfkfkbbkejdhdgc/</span>
+    </div>
+    <div class="line">
+      <img src="/img/screens/content-settings-advanced-2.png" class="screen" />
+    </div>
+    <div class="line">
+      Make sure that <em>Allow</em> is selected, then click <em>Done</em>. Refresh your web mail window.
+    </div>
+
+
+    <div class="show_if_setup_done" style="display: none;">
+      <div class="line">
+        &nbsp;
+      </div>
+      <div class="line">
+        <div class="button long green action_auth_proceed">UPDATE PERMISSIONS</div>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <div class="button long gray close_page">LATER</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="../settings.js"></script>
+
+</body>
+
+</html>

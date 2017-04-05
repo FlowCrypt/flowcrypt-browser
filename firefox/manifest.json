@@ -1,0 +1,112 @@
+{
+  "manifest_version": 2,
+  "name": "CryptUp: Encrypt Gmail with PGP",
+  "description": "Free end-to-end encryption to secure email and attachments on Google.",
+  "version": "3.9.2",
+  "browser_action": {
+    "default_icon": "img/logo-19-19-white-green.png",
+    "default_title": "CryptUp Encryption for Gmail",
+    "default_popup": "/chrome/popups/default.htm"
+  },
+  "icons": {
+    "16": "/img/logo-16-16-white-green.png",
+    "48": "/img/logo-48-48-white-green.png",
+    "128": "/img/logo-128-128-white-green.png"
+  },
+  "permissions": ["storage", "tabs", "*://*/*", "unlimitedStorage", "clipboardWrite", "webRequest"],
+  "content_scripts": [
+    {
+      "matches": ["*://mail.google.com/*"],
+      "css": ["/css/webmail.css"],
+      "js": [
+        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
+        "/js/content_scripts/gmail_tab/replace.js", "/js/content_scripts/gmail_tab/gmail.js"
+      ]
+    },
+    {
+      "matches": ["*://inbox.google.com/*"],
+      "css": ["/css/webmail.css"],
+      "js": [
+        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
+        "/js/content_scripts/inbox_tab/replace.js", "/js/content_scripts/inbox_tab/inbox.js"
+      ]
+    },
+    {
+      "matches": ["*://outlook.live.com/*"],
+      "css": ["/css/webmail.css"],
+      "js": [
+        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
+        "/js/content_scripts/outlook_tab/replace.js", "/js/content_scripts/outlook_tab/outlook.js"
+      ]
+    },
+    {
+      "matches": ["*://accounts.google.com/o/oauth2/approval*"],
+      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/oauth_window.js"]
+    },
+    {
+      "matches": ["https://outlook.office.com/noop/cryptup"],
+      "css": ["/css/hide.css"],
+      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/microsoft.js"],
+      "all_frames": true
+    },
+    {
+      "matches": ["https://cryptup.org/stripe*", "https://cryptup.io/stripe*"],
+      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/checkout/stripe.js"],
+      "all_frames": true
+    }
+  ],
+  "background": {
+    "scripts": [
+      "/lib/jquery.min.js",
+      "/lib/openpgp.js",
+      "/lib/require.js",
+      "/js/common/mnemonic.js",
+      "/js/common/storage.js",
+      "/js/common/common.js",
+      "/js/background_process/inject.js",
+      "/js/background_process/attests.js",
+      "/js/background_process/google_auth.js",
+      "/js/background_process/migrations.js",
+      "/js/background_process/background_process.js"
+    ]
+  },
+  "web_accessible_resources": [
+    "/css/webmail.css",
+    "/img/logo-19-14-white.png",
+    "/img/svgs/reply-icon.svg",
+    "/img/svgs/spinner-white-small.svg",
+    "/img/svgs/spinner-green-small.svg",
+    "/img/logo-19-19-white-green.png",
+    "/chrome/elements/new_message.htm",
+    "/chrome/elements/reply_message.htm",
+    "/chrome/elements/pgp_block.htm",
+    "/chrome/elements/setup_dialog.htm",
+    "/chrome/elements/attachment.htm",
+    "/chrome/elements/passphrase.htm",
+    "/chrome/elements/add_pubkey.htm",
+    "/chrome/elements/pgp_pubkey.htm",
+    "/chrome/elements/subscribe.htm",
+    "/chrome/elements/attest.htm",
+    "/chrome/elements/shared/footer.htm"
+  ],
+  "oauth2": {
+    "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
+    "url_code": "https://accounts.google.com/o/oauth2/auth",
+    "url_tokens": "https://www.googleapis.com/oauth2/v4/token",
+    "url_redirect": "urn:ietf:wg:oauth:2.0:oob:auto",
+    "state_header": "CRYPTUP_STATE_",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.compose",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "applications": {
+    "gecko": {
+      "id": "test@cryptup.org"
+    }
+  }
+}

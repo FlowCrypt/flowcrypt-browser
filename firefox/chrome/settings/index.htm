@@ -1,0 +1,256 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css">
+  <link rel="stylesheet" href="settings.css">
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
+  <link rel="stylesheet" href="/lib/bootstrap/bootstrap.css">
+  <link rel="stylesheet" href="/css/animate.css">
+  <link rel="stylesheet" href="/css/open-sans.css">
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+  <br>
+  <section id="header-row">
+    <div class="container">
+      <div class="row ">
+        <div class="col-sm-7 text-left logo-row">
+          <a href="#" class="cryptup-logo-row" title="Click to see what is new in this version">
+            <img class="cryptup-logo" src="/img/logo-203-64-full.png" alt="">
+            <span id="v"></span>
+          </a>
+          <span class="subscription">
+            <span class="level green_label short">free forever</span>
+            <span class="expire"></span>
+            <span class="upgrade gray_label short show_settings_page" page="/chrome/elements/subscribe.htm" addurltext="&placement=settings">upgrade</span>
+          </span>
+        </div>
+
+        <div class="col-sm-5 text-right" style="padding-right:0;">
+          <div class="profile-row">
+            <span class="email-address"></span>
+            <span id="toggle-accounts-profile-img">
+              <img src="/img/svgs/profile-icon.svg" class="profile-img" alt="Profile Image">
+            </span>
+            <a href="#" class="add-account action_add_account hide_if_setup_not_done">+ Add account</a>
+          </div>
+          <div id="alt-accounts" class="accounts-row">
+            <div class="separator"></div>
+            <div class="row alt-accounts accounts-options-row text-center">
+              <div class="col-sm-offset-6 col-sm-5 btn">
+                <a href="#" class="action_add_account">Add Account</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="settings-row">
+    <div class="container basic">
+      <div class="row hide_if_setup_not_done">
+        <h1 class="text-center">CryptUp Settings</h1>
+        <div class="separator" style="background: none;"></div>
+      </div>
+
+      <div class="row show_if_setup_not_done">
+        <h1 class="text-center">Set up CryptUp</h1>
+        <div class="separator"></div>
+      </div>
+
+      <div class="show_if_setup_not_done">
+        <div class="line">Your browser needs access to Gmail to help you send your first encrypted message.</div>
+        <div class="line"><div class="signin_button gmail action_google_auth display_none">Continue with Gmail</div></div>
+        <div class="line"><div class="signin_button outlook action_microsoft_auth display_none">Continue with Outlook</div></div>
+        <div class="line">Learn more about <a href="#" data-featherlight="/chrome/texts/email_provider_auth_security.htm">webmail access security</a> and <a href="#" class="show_settings_page" page="/chrome/texts/privacy.htm">privacy policy</a>.</div>
+        <div class="line">Using other email provider? <a href="#" class="show_settings_page" page="modules/help.htm">Let me know</a>.</div>
+      </div>
+
+      <div class="row settings-icons-rows hide_if_setup_not_done">
+        <div class="col-xs-offset-2 col-xs-2">
+          <a href="#" class="show_settings_page" page="/chrome/elements/new_message.htm">
+            <span class="box">
+              <img src="/img/svgs/new-email-icon.svg" class="new-email-icon" alt="Send a new encrypted email">
+            </span>
+            <p class="text-center">New Email</p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/security.htm">
+            <span class="box">
+              <img src="/img/svgs/security-icon.svg" class="security-icon" alt="CryptUp Security and Settings">
+            </span>
+            <p class="text-center">
+              Security
+            </p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/backup.htm">
+            <span class="box">
+              <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="CryptUp, set up and backup your Keys">
+            </span>
+            <p class="text-center">
+              Backup
+            </p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/help.htm">
+            <span class="box">
+              <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on CryptUp">
+            </span>
+            <p class="text-center">
+              Feedback
+            </p>
+          </a>
+        </div>
+      </div>
+      <div class="line auth_denied_warning" style="display: none;">
+        <br/>
+        <br/>
+        <br/><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted attachments, encrypted replies, alternative "From" email addresses and more.
+        <br/>
+        <br/>
+        <div class="button long green action_go_auth_denied">revise permissions</div>
+      </div>
+
+    </div>
+
+    <div class="container-fluid advanced">
+      <div class="row">
+        <h1 class="text-center">CryptUp Settings</h1>
+        <div class="separator" style="background: none;"></div>
+      </div>
+
+      <div class="row settings-icons-rows">
+        <div class="col-xs-offset-1 col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/my_key.htm">
+            <span class="box">
+              <img src="/img/svgs/pub-key-icon.svg" class="pub-key-icon" alt="Your Public Keys">
+            </span>
+            <p class="text-center">Public Key</p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/contacts.htm">
+            <span class="box">
+              <img src="/img/svgs/contacts-icon.svg" class="contacts-icon" alt="Your Contacts and their public keys">
+            </span>
+            <p class="text-center">
+              Contacts
+            </p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/keyserver.htm">
+            <span class="box">
+              <img src="/img/svgs/servers-icon.svg" class="servers-icon" alt="Let others encrypt for you easier">
+            </span>
+            <p class="text-center">
+              Servers
+            </p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/backup.htm">
+            <span class="box">
+              <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="CryptUp, set up and backup your Keys">
+            </span>
+            <p class="text-center">
+              Backup
+            </p>
+          </a>
+        </div>
+
+        <div class="col-xs-2">
+          <a href="#" class="show_settings_page" page="modules/help.htm">
+            <span class="box">
+              <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on CryptUp">
+            </span>
+            <p class="text-center">
+              Feedback
+            </p>
+          </a>
+        </div>
+      </div>
+      <!--<div class="line">-->
+        <!--<br/><b>Coming soon:</b> ..-->
+      <!--</div>-->
+      <div class="row my-keys-row">
+        <div class="col-xs-6 settings-border key_list">
+          <div class="row abs-row">
+            <div class="col-sm-12" style="padding-left:0;">
+              <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon">
+              <span class="my-keys-copy">My Keys</span>
+              <span class="text-right change-passphrase">
+                <a href="#" class="show_settings_page add_key" page="/chrome/settings/modules/add_key.htm">Add Key</a>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xs-6 settings-border">
+          <div class="row abs-row">
+            <div class="col-sm-12" style="padding-left:0;">
+              <img src="/img/svgs/shield-icon.svg" class="shield-icon" alt="shield icon">
+              <span class="security-copy">Security</span>
+              <span class="text-right change-passphrase">
+                <a href="#" class="show_settings_page" page="/chrome/settings/modules/change_passphrase.htm">Change pass phrase</a>
+              </span>
+            </div>
+          </div>
+          <iframe id="security_module" style="border: none; width: 100%;"></iframe>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="footer-row">
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-2  text-left">
+          <a href="#" class="show_settings_page" page="modules/help.htm">Need Help?</a>
+        </div>
+        <div class="col-xs-8">
+          <a href="#" class="show_settings_page gray_link" page="/chrome/texts/terms.htm">Terms</a>
+          <a href="#" class="show_settings_page gray_link" page="/chrome/texts/privacy.htm">Privacy</a>
+          <a href="#" class="show_settings_page gray_link hide_if_setup_not_done" page="/chrome/texts/hiring.htm">CryptUp is Hiring</a>
+          <a href="https://github.com/tomholub/cryptup-chrome" target="_blank" class="gray_link advanced">Source</a>
+          <span class="hide_if_setup_not_done">
+            <a href="#" class="show_settings_page gray_link advanced" page="modules/experimental.htm">Experimental</a>
+          </span>
+        </div>
+        <div class="col-xs-2 text-right hide_if_setup_not_done">
+          <a class="toggle-settings advanced" href="#">Basic Settings</a><a class="toggle-settings basic" href="#">Additional Settings</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</body>
+<script src="/lib/jquery.min.js"></script>
+<script src="/lib/openpgp.js"></script>
+<script src="/lib/bootstrap/bootstrap.js"></script>
+<script src="/lib/featherlight/featherlight.js"></script>
+<script src="/js/common/mnemonic.js"></script>
+<script src="/js/common/storage.js"></script>
+<script src="/js/common/common.js"></script>
+<script src="/js/common/mnemonic.js"></script>
+<script src="/js/content_scripts/factory.js"></script>
+<script src="settings.js"></script>
+<script src="index.js"></script>
+
+</html>

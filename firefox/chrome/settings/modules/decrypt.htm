@@ -1,0 +1,41 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+  <style>iframe { width: 100%; height: 270px; border: 1px dashed #999; }</style>
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+
+  <div id="content" class="decrypt page">
+    <h1>Decrypt a file</h1>
+
+    <div class="line">CryptUp will decrypt messages and files in your web mail inbox automatically.</div>
+    <div class="line">You should only use this form if your encrypted file comes from elsewhere, or have other good reason to inconvenience yourself.</div>
+    <div class="line">To report issues, write me at tom@cryptup.org.</div>
+    <div class="line passphrase_dialog"></div>
+    <div class="line" id="fineuploader"></div>
+    <div class="line"><a href="#" id="fineuploader_button">choose a file</a></div>
+    <div class="line"><div class="button green large action_decrypt_and_download">download decrypted</div></div>
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="/js/content_scripts/factory.js"></script>
+  <script src="/lib/fine-uploader.js"></script>
+  <script src="/chrome/elements/shared/attach.js"></script>
+  <script src="../settings.js"></script>
+  <script src="decrypt.js"></script>
+
+</body>
+
+</html>

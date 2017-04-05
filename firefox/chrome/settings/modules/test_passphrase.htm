@@ -1,0 +1,47 @@
+<!-- Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE -->
+
+<html>
+
+<head>
+  <title>CryptUp</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <link rel="stylesheet" href="/css/animate.css" />
+  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
+  <link rel="icon" href="/img/logo-19-19-white-green.png" />
+</head>
+
+<body id="settings">
+
+  <div id="content" class="test_passphrase">
+
+    <div class="line">Lost pass phrase might lock you out of your encrypted messages.</div>
+    <div class="line">We <b class="red">STRONGLY</b> encourage you to check that you remember your passphrase correctly.</div>
+    <div class="line">
+      <input id="password" type="text" placeholder="Your pass phrase" />
+    </div>
+    <div class="line">
+      <div class="button green long action_verify">VERIFY</div>
+    </div>
+    <div class="line">
+      &nbsp;
+    </div>
+    <div class="line">
+      Cannot remember? <a href="#" class="action_change_passphrase">Change your pass phrase</a>
+    </div>
+
+  </div>
+
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/mnemonic.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="../settings.js"></script>
+  <script src="test_passphrase.js"></script>
+
+</body>
+
+</html>
