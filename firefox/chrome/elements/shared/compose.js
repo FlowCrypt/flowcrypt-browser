@@ -848,7 +848,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function auth_drafts() {
-    tool.browser.message.send(null, 'google_auth', { account_email: url_params.account_email, scopes: tool.api.gmail.scope(['compose']) }, function (google_auth_response) {
+    tool.api.google.auth({ account_email: url_params.account_email, scopes: tool.api.gmail.scope(['compose']) }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         S.cached('send_btn_note').text('');
         can_save_drafts = true;
@@ -867,7 +867,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   function auth_contacts(account_email) {
     S.cached('input_to').val($('.recipients span').last().text());
     $('.recipients span').last().remove();
-    tool.browser.message.send(null, 'google_auth', { account_email: account_email, scopes: tool.api.gmail.scope(['read']) }, function (google_auth_response) {
+    tool.api.google.auth({ account_email: account_email, scopes: tool.api.gmail.scope(['read']) }, function (google_auth_response) {
       if(google_auth_response.success === true) {
         can_read_emails = true;
         search_contacts();

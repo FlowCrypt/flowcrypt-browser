@@ -18,8 +18,6 @@ migrate_global(function () {
 
 tool.browser.message.listen_background({
   migrate_account: migrate_account,
-  google_auth: google_auth,
-  gmail_auth_code_result: google_auth_window_result_handler,
   settings: open_settings_page_handler,
   attest_requested: attest_requested_handler,
   attest_packet_received: attest_packet_received_handler,
@@ -70,6 +68,23 @@ function get_active_tab_info(request, sender, respond) {
   });
 }
 
+function get_cryptup_settings_tab_id_if_open(callback) {
+  chrome.tabs.query({ currentWindow: true }, function (tabs) {
+    var extension = chrome.extension.getURL('/');
+    var found = false;
+    $.each(tabs, function (i, tab) {
+      if(tool.value(extension).in(tab.url)) {
+        callback(tab.id);
+        found = true;
+        return false;
+      }
+    });
+    if(!found) {
+      callback(null);
+    }
+  });
+}
+
 function update_uninstall_url(request, sender, respond) {
   get_account_emails(function (account_emails) {
     account_storage_get(null, ['metrics'], function (storage) {
@@ -88,13 +103,16 @@ function update_uninstall_url(request, sender, respond) {
   });
 }
 
-function open_settings_page(path, account_email, page) { // todo - put directly into open_settings_page_handler
+function open_settings_page(path, account_email, page) {
   var base_path = chrome.extension.getURL('chrome/settings/' + (path || 'index.htm'));
-  if(account_email) {
-    window.open(tool.env.url_create(base_path, { account_email: account_email, page: page }), 'cryptup');
-  } else {
-    get_account_emails(function (account_emails) {
-      window.open(tool.env.url_create(base_path, { account_email: account_emails[0], page: page }), 'cryptup');
-    });
-  }
+  get_cryptup_settings_tab_id_if_open(function(opened_tab) {
+    var open_tab = opened_tab ? function(url) { chrome.tabs.update(opened_tab, {url: url, active: true}); } : function(url) { chrome.tabs.create({url: url}); };
+    if(account_email) {
+      open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page }));
+    } else {
+      get_account_emails(function (account_emails) {
+        open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page }));
+      });
+    }
+  });
 }

@@ -2,273 +2,6 @@
 
 'use strict';
 
-(function ( /* ERROR HANDLING */ ) {
-
-  var original_on_error = window.onerror;
-  window.onerror = handle_error;
-
-  function handle_error(error_message, url, line, col, error, is_manually_called, version, env) {
-    if(typeof error === 'string') {
-      error_message = error;
-      error = { name: 'thrown_string', message: error_message, stack: error_message };
-    }
-    if(error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called && !version && !env) { // safari has limited support
-      error = { name: 'safari_error', message: error_message, stack: error_message };
-    }
-    var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
-    var ignored_errors = [
-      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
-      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
-    ];
-    if(!error) {
-      return;
-    }
-    if(ignored_errors.indexOf(error.message) !== -1) {
-      return true;
-    }
-    if(error.stack) {
-      console.log('%c' + error.stack, 'color: #F00; font-weight: bold;');
-    } else {
-      console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
-    }
-    if(is_manually_called !== true && original_on_error && original_on_error !== handle_error) {
-      original_on_error.apply(this, arguments); // Call any previously assigned handler
-    }
-    if((error.stack || '').indexOf('PRIVATE') !== -1) {
-      return;
-    }
-    try {
-      $.ajax({
-        url: 'https://api.cryptup.io/help/error',
-        method: 'POST',
-        data: JSON.stringify({
-          name: (error.name || '').substring(0, 50),
-          message: (error_message || '').substring(0, 200),
-          url: (url || '').substring(0, 100),
-          line: line || 0,
-          col: col || 0,
-          trace: error.stack || '',
-          version: version || cryptup_version() || 'unknown',
-          environment: env || environment(),
-        }),
-        dataType: 'json',
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        success: function (response) {
-          if(response.saved === true) {
-            console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
-          } else {
-            console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
-          }
-        },
-        error: function (XMLHttpRequest, status, error) {
-          console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
-        },
-      });
-    } catch(ajax_err) {
-      console.log(ajax_err.message);
-      console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
-    }
-    try {
-      if(typeof account_storage_get === 'function' && typeof account_storage_set === 'function') {
-        tool.env.increment('error');
-        account_storage_get(null, ['errors'], function (storage) {
-          if(typeof storage.errors === 'undefined') {
-            storage.errors = [];
-          }
-          storage.errors.unshift(error.stack || error_message);
-          account_storage_set(null, storage);
-        });
-      }
-    } catch (storage_err) {
-      console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
-    }
-    return true;
-  }
-
-  function try_wrapper(code) {
-    return function () {
-      try {
-        return code();
-      } catch(code_err) {
-        handle_exception(code_err);
-      }
-    };
-  }
-
-  function handle_exception(exception) {
-    try {
-      var caller_line = exception.stack.split('\n')[1];
-      var matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
-      var line = Number(matched[1]);
-      var col = Number(matched[2]);
-    } catch(line_err) {
-      var line = 0;
-      var col = 0;
-    }
-    try {
-      tool.browser.message.send(null, 'runtime', null, function (runtime) {
-        handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
-      });
-    } catch(message_err) {
-      handle_error(exception.message, window.location.href, line, col, exception, true);
-    }
-  }
-
-  function log(name, details) {
-    try {
-      throw new Error(name);
-    } catch(e) {
-      if(typeof details !== 'string') {
-        try {
-          details = JSON.stringify(details);
-        } catch(stringify_error) {
-          details = '(could not stringify details "' + String(details) + '" in catcher.log because: ' + stringify_error.message + ')';
-        }
-      }
-      e.stack = e.stack + '\n\n\ndetails: ' + details;
-      handle_exception(e);
-    }
-  }
-
-  function info(name, details) {
-    name = 'INFO: ' + name;
-    console.log(name);
-    try {
-      throw new Error(name);
-    } catch(e) {
-      if(typeof details !== 'string') {
-        try {
-          details = JSON.stringify(details);
-        } catch(stringify_error) {
-          details = '(could not stringify details "' + String(details) + '" in catcher.info because: ' + stringify_error.message + ')';
-        }
-      }
-      e.stack = e.stack + '\n\n\ndetails: ' + details;
-      try {
-        account_storage_get(null, ['errors'], function (storage) {
-          if(typeof storage.errors === 'undefined') {
-            storage.errors = [];
-          }
-          storage.errors.unshift(e.stack || error_message);
-          account_storage_set(null, storage);
-        });
-      } catch (storage_err) {
-        console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
-      }
-    }
-  }
-
-  function environment(url) {
-    if(!url) {
-      url = window.location.href;
-    }
-    if(url.indexOf('bnjglocicd') !== -1) {
-      return 'prod';
-    } else if(url.indexOf('nmelpmhpel') !== -1) {
-      return 'dev';
-    } else if(url.indexOf('himcfccebk') !== -1) {
-      return 'test';
-    } else if (url.indexOf('l.cryptup.org') !== -1 || url.indexOf('l.cryptup.io') !== -1) {
-      return 'local';
-    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('cryptup.io') !== -1) {
-      return 'web';
-    } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
-      return 'fork';
-    } else if (url.indexOf('mail.google.com') !== -1) {
-      return 'script:gmail';
-    } else if (url.indexOf('inbox.google.com') !== -1) {
-      return 'script:inbox';
-    } else if (url.indexOf('outlook.live.com') !== -1) {
-      return 'script:outlook';
-    } else {
-      return 'unknown';
-    }
-  }
-
-  function test() {
-    this_will_fail();
-  }
-
-  function cryptup_version(format) {
-    try {
-      var v = window.chrome.runtime.getManifest().version;
-      if(format === 'int') {
-        return Number(v.replace(/\./g, ''));
-      } else {
-        return v;
-      }
-    } catch(err) {}
-  }
-
-  window.catcher = {
-    handle_error: handle_error,
-    handle_exception: handle_exception,
-    log: log,
-    info: info,
-    version: cryptup_version,
-    try: try_wrapper,
-    environment: environment,
-    test: test,
-  };
-
-})();
-
-(function ( /* EXTENSIONS AND CONFIG */ ) {
-
-  if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
-    window.openpgp.config.versionstring = 'CryptUp ' + (catcher.version() || '') + ' Easy Gmail Encryption https://cryptup.org';
-    window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
-  }
-
-  RegExp.escape = function (s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  };
-
-  String.prototype.repeat = String.prototype.repeat || function(count) {
-    if (this == null) {
-      throw new TypeError('can\'t convert ' + this + ' to object');
-    }
-    var str = '' + this;
-    count = +count;
-    if (count != count) {
-      count = 0;
-    }
-    if (count < 0) {
-      throw new RangeError('repeat count must be non-negative');
-    }
-    if (count == Infinity) {
-      throw new RangeError('repeat count must be less than infinity');
-    }
-    count = Math.floor(count);
-    if (str.length == 0 || count == 0) {
-      return '';
-    }
-    // Ensuring count is a 31-bit integer allows us to heavily optimize the
-    // main part. But anyway, most current (August 2014) browsers can't handle
-    // strings 1 << 28 chars or longer, so:
-    if (str.length * count >= 1 << 28) {
-      throw new RangeError('repeat count must not overflow maximum string size');
-    }
-    var rpt = '';
-    for (;;) {
-      if ((count & 1) == 1) {
-        rpt += str;
-      }
-      count >>>= 1;
-      if (count == 0) {
-        break;
-      }
-      str += str;
-    }
-    // Could we try:
-    // return Array(count + 1).join(this);
-    return rpt;
-  };
-
-})();
-
 (function ( /* ALL TOOLS */ ) {
 
   window.tool = {
@@ -302,6 +35,8 @@
     },
     env: {
       browser: env_browser,
+      runtime_id: env_extension_runtime_id,
+      is_background_script: env_is_background_script,
       url_params: env_url_params,
       url_create: env_url_create,
       key_codes: env_key_codes,
@@ -415,6 +150,7 @@
       },
       google: {
         user_info: api_google_user_info,
+        auth: api_google_auth,
       },
       common: {
         message: api_common_email_message_object,
@@ -762,6 +498,21 @@
     } else {
       return {name: 'unknown', v: null};
     }
+  }
+
+  function env_extension_runtime_id(original) {
+    if(window.chrome && window.chrome.runtime && window.chrome.runtime.id) {
+      if(original === true) {
+        return window.chrome.runtime.id;
+      } else {
+        return window.chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
+      }
+    }
+    return null;
+  }
+
+  function env_is_background_script() {
+    return tool.value('_generated_background_page.html').in(window.location.href);
   }
 
   var env_url_param_decode_dict = {
@@ -1383,7 +1134,7 @@
 
   function browser_message_send(destination_string, name, data, callback) {
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10) };
-    var is_background_page = tool.value('_generated_background_page.html').in(window.location.href);
+    var is_background_page = env_is_background_script();
     if (is_background_page && background_script_shortcut_handlers && msg.to === null) {
       background_script_shortcut_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
     } else if(is_background_page) {
@@ -2231,6 +1982,205 @@
 
   /* tool.api.google */
 
+  var google_oauth2 = chrome.runtime.getManifest().oauth2;
+  var api_google_auth_responders = {};
+  var API_GOOGLE_AUTH_RESPONDED = 'RESPONDED';
+
+  function api_google_auth(auth_request, respond) {
+    account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
+      if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || api_google_has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
+        google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+      } else {
+        google_auth_refresh_token(storage.google_token_refresh, function (success, result) {
+          if(!success && result === tool.api.error.network) {
+            respond({ success: false, error: tool.api.error.network });
+          } else if(typeof result.access_token !== 'undefined') {
+            google_auth_save_tokens(auth_request.account_email, result, storage.google_token_scopes, function () {
+              respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
+            });
+          } else {
+            google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+          }
+        });
+      }
+    });
+  }
+
+  function api_google_has_new_scope(new_scopes, original_scopes, omit_read_scope) {
+    if(!(original_scopes || []).length) { // no original scopes
+      return true;
+    }
+    if(!(new_scopes || []).length) { // no new scopes specified
+      return(original_scopes.length === 2 && !omit_read_scope); // however, previously there were only two of three scopes, and third was not omitted this time
+    }
+    for(var i = 0; i < new_scopes.length; i++) {
+      if(!tool.value(new_scopes[i]).in(original_scopes)) {
+        return true; // found a new scope
+      }
+    }
+    return false; // no new scope found
+  }
+
+  function api_google_auth_state_pack(status_object) {
+    return google_oauth2.state_header + JSON.stringify(status_object);
+  }
+
+  function api_google_auth_code_url(auth_request) {
+    return env_url_create(google_oauth2.url_code, {
+      client_id: google_oauth2.client_id,
+      response_type: 'code',
+      access_type: 'offline',
+      state: api_google_auth_state_pack(auth_request),
+      redirect_uri: google_oauth2.url_redirect,
+      scope: auth_request.scopes.join(' '),
+      login_hint: auth_request.account_email,
+    });
+  }
+
+  function google_auth_window_show_and_respond_to_auth_request(auth_request, current_scopes, respond) {
+    browser_message_tab_id(function(tab_id) {
+      auth_request.auth_responder_id = tool.str.random(20);
+      auth_request.tab_id = tab_id;
+      api_google_auth_responders[auth_request.auth_responder_id] = respond;
+      auth_request.scopes = auth_request.scopes || [];
+      $.each(google_oauth2.scopes, function (i, scope) {
+        if(!tool.value(scope).in(auth_request.scopes)) {
+          if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
+            auth_request.scopes.push(scope);
+          }
+        }
+      });
+      $.each(current_scopes || [], function (i, scope) {
+        if(!tool.value(scope).in(auth_request.scopes)) {
+          auth_request.scopes.push(scope);
+        }
+      });
+      browser_message_listen({
+        google_auth_window_result: function(result, sender, respond) {
+          google_auth_window_result_handler(auth_request.auth_responder_id, result, respond);
+        },
+      }, tab_id);
+      var auth_code_window = window.open(api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+      // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+      // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
+      var window_closed_timer = setInterval(api_google_auth_window_closed_watcher, 200);
+
+      function api_google_auth_window_closed_watcher() {
+        if(auth_code_window !== null && auth_code_window.closed) { // on firefox it seems to be returning a null, probably due to popup blocking
+          clearInterval(window_closed_timer);
+          if(api_google_auth_responders[auth_request.auth_responder_id] !== API_GOOGLE_AUTH_RESPONDED) {
+            // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
+            // thus it's impossible for another process to try to respond before the next line
+            // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
+            api_google_auth_responders[auth_request.auth_responder_id]({success: false, result: 'closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+            api_google_auth_responders[auth_request.auth_responder_id] = API_GOOGLE_AUTH_RESPONDED;
+          }
+        }
+      }
+    });
+  }
+
+  function google_auth_save_tokens(account_email, tokens_object, scopes, callback) {
+    var to_save = {
+      google_token_access: tokens_object.access_token,
+      google_token_expires: new Date().getTime() + tokens_object.expires_in * 1000,
+      google_token_scopes: scopes,
+    };
+    if(typeof tokens_object.refresh_token !== 'undefined') {
+      to_save.google_token_refresh = tokens_object.refresh_token;
+    }
+    account_storage_set(account_email, to_save, callback);
+  }
+
+  function google_auth_get_tokens(code, callback, retries_left) {
+    $.ajax({
+      url: tool.env.url_create(google_oauth2.url_tokens, { grant_type: 'authorization_code', code: code, client_id: google_oauth2.client_id, redirect_uri: google_oauth2.url_redirect }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+      success: function (response) {
+        callback(response);
+      },
+      error: function (XMLHttpRequest, status, error) {
+        if(!retries_left) {
+          callback({ request: XMLHttpRequest, status: status, error: error });
+        } else {
+          setTimeout(function () { // retry again
+            google_auth_get_tokens(code, callback, retries_left - 1);
+          }, 2000);
+        }
+      },
+    });
+  }
+
+  function google_auth_refresh_token(refresh_token, callback) {
+    $.ajax({
+      url: tool.env.url_create(google_oauth2.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: google_oauth2.client_id }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+      success: function (response) {
+        callback(true, response);
+      },
+      error: function (XMLHttpRequest, status, error) {
+        if(XMLHttpRequest.status === 0 && status === 'error') { // connection error
+          callback(false, tool.api.error.network);
+        } else {
+          callback(false, { request: XMLHttpRequest, status: status, error: error });
+        }
+      },
+    });
+  }
+
+  function google_auth_check_email(expected_email, access_token, callback) {
+    $.ajax({
+      url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + access_token },
+      crossDomain: true,
+      contentType: 'application/json; charset=UTF-8',
+      async: true,
+      success: function (response) {
+        callback(response.emailAddress);
+      },
+      error: function (response) {
+        console.log('google_auth_check_email error');
+        console.log(expected_email);
+        console.log(response);
+        callback(expected_email); //todo - handle better. On a network error, this could result in saving this wrongly. Should re-try two times with some delay, then call back.
+      },
+    });
+  }
+
+  function google_auth_window_result_handler(expected_responder_id, result, close_auth_window) {
+    if(result.state.auth_responder_id === expected_responder_id) {
+      var auth_responder = api_google_auth_responders[result.state.auth_responder_id];
+      api_google_auth_responders[result.state.auth_responder_id] = API_GOOGLE_AUTH_RESPONDED;
+      close_auth_window();
+      switch(result.result) {
+        case 'Success':
+          google_auth_get_tokens(result.params.code, function (tokens_object) {
+            if(typeof tokens_object.access_token !== 'undefined') {
+              google_auth_check_email(result.state.account_email, tokens_object.access_token, function (account_email) {
+                google_auth_save_tokens(account_email, tokens_object, result.state.scopes, function () {
+                  auth_responder({account_email: account_email, success: true, result: 'success', message_id: result.state.message_id});
+                });
+              });
+            } else { // got code but failed to use the code to fetch tokens
+              auth_responder({success: false, result: 'success', account_email: result.state.account_email, message_id: result.state.message_id});
+            }
+          }, 2);
+          break;
+        case 'Denied':
+          auth_responder({success: false, result: 'denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
+          break;
+        case 'Error':
+          auth_responder({success: false, result: 'error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
+          break;
+      }
+    }
+  }
+
   function api_google_call(account_email, method, url, parameters, callback, fail_on_auth) {
     account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
       var data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
@@ -2372,7 +2322,7 @@
 
   function google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, error_response, base_api_function, progress, content_type) {
     if(fail_on_auth !== true) {
-      tool.browser.message.send(null, 'google_auth', { account_email: account_email }, function (response) {
+      api_google_auth({ account_email: account_email }, function (response) {
         if(response && response.success === false && response.error === tool.api.error.network) {
           callback(false, tool.api.error.network);
         } else { //todo: error handling for other bad situations
@@ -3389,5 +3339,287 @@
       }});
     });
   }
+
+})();
+
+
+(function ( /* ERROR HANDLING */ ) {
+
+  var RUNTIME = {};
+  figure_out_cryptup_runtime();
+
+  var original_on_error = window.onerror;
+  window.onerror = handle_error;
+
+  function handle_error(error_message, url, line, col, error, is_manually_called, version, env) {
+    if(typeof error === 'string') {
+      error_message = error;
+      error = { name: 'thrown_string', message: error_message, stack: error_message };
+    }
+    if(error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called && !version && !env) { // safari has limited support
+      error = { name: 'safari_error', message: error_message, stack: error_message };
+    }
+    var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
+    var ignored_errors = [
+      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+    ];
+    if(!error) {
+      return;
+    }
+    if(ignored_errors.indexOf(error.message) !== -1) {
+      return true;
+    }
+    if(error.stack) {
+      console.log('%c[' + error_message + ']\n' + error.stack, 'color: #F00; font-weight: bold;');
+    } else {
+      console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
+    }
+    if(is_manually_called !== true && original_on_error && original_on_error !== handle_error) {
+      original_on_error.apply(this, arguments); // Call any previously assigned handler
+    }
+    if((error.stack || '').indexOf('PRIVATE') !== -1) {
+      return;
+    }
+    try {
+      $.ajax({
+        url: 'https://api.cryptup.io/help/error',
+        method: 'POST',
+        data: JSON.stringify({
+          name: (error.name || '').substring(0, 50),
+          message: (error_message || '').substring(0, 200),
+          url: (url || '').substring(0, 100),
+          line: line || 0,
+          col: col || 0,
+          trace: error.stack || '',
+          version: version || cryptup_version() || 'unknown',
+          environment: env || environment(),
+        }),
+        dataType: 'json',
+        crossDomain: true,
+        contentType: 'application/json; charset=UTF-8',
+        async: true,
+        success: function (response) {
+          if(response.saved === true) {
+            console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
+          } else {
+            console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
+          }
+        },
+        error: function (XMLHttpRequest, status, error) {
+          console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
+        },
+      });
+    } catch(ajax_err) {
+      console.log(ajax_err.message);
+      console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
+    }
+    try {
+      if(typeof account_storage_get === 'function' && typeof account_storage_set === 'function') {
+        tool.env.increment('error');
+        account_storage_get(null, ['errors'], function (storage) {
+          if(typeof storage.errors === 'undefined') {
+            storage.errors = [];
+          }
+          storage.errors.unshift(error.stack || error_message);
+          account_storage_set(null, storage);
+        });
+      }
+    } catch (storage_err) {
+      console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
+    }
+    return true;
+  }
+
+  function try_wrapper(code) {
+    return function () {
+      try {
+        return code();
+      } catch(code_err) {
+        handle_exception(code_err);
+      }
+    };
+  }
+
+  function handle_exception(exception) {
+    try {
+      var caller_line = exception.stack.split('\n')[1];
+      var matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      var line = Number(matched[1]);
+      var col = Number(matched[2]);
+    } catch(line_err) {
+      var line = 0;
+      var col = 0;
+    }
+    try {
+      tool.browser.message.send(null, 'runtime', null, function (runtime) {
+        handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
+      });
+    } catch(message_err) {
+      handle_error(exception.message, window.location.href, line, col, exception, true);
+    }
+  }
+
+  function log(name, details) {
+    try {
+      throw new Error(name);
+    } catch(e) {
+      if(typeof details !== 'string') {
+        try {
+          details = JSON.stringify(details);
+        } catch(stringify_error) {
+          details = '(could not stringify details "' + String(details) + '" in catcher.log because: ' + stringify_error.message + ')';
+        }
+      }
+      e.stack = e.stack + '\n\n\ndetails: ' + details;
+      handle_exception(e);
+    }
+  }
+
+  function info(name, details) {
+    name = 'INFO: ' + name;
+    console.log(name);
+    try {
+      throw new Error(name);
+    } catch(e) {
+      if(typeof details !== 'string') {
+        try {
+          details = JSON.stringify(details);
+        } catch(stringify_error) {
+          details = '(could not stringify details "' + String(details) + '" in catcher.info because: ' + stringify_error.message + ')';
+        }
+      }
+      e.stack = e.stack + '\n\n\ndetails: ' + details;
+      try {
+        account_storage_get(null, ['errors'], function (storage) {
+          if(typeof storage.errors === 'undefined') {
+            storage.errors = [];
+          }
+          storage.errors.unshift(e.stack || error_message);
+          account_storage_set(null, storage);
+        });
+      } catch (storage_err) {
+        console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
+      }
+    }
+  }
+
+  function environment(url) {
+    if(!url) {
+      url = window.location.href;
+    }
+    if(url.indexOf('bnjglocicd') !== -1) {
+      return 'ch-prod';
+    } else if(url.indexOf('nmelpmhpel') !== -1) {
+      return 'ch-dev';
+    } else if(url.indexOf('himcfccebk') !== -1) {
+      return 'ch-test';
+    } else if (url.indexOf('l.cryptup.org') !== -1 || url.indexOf('l.cryptup.io') !== -1) {
+      return 'web-local';
+    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('cryptup.io') !== -1) {
+      return 'web';
+    } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
+      return 'ch-fork';
+    } else if (url.indexOf('mail.google.com') !== -1) {
+      return 'script:gmail';
+    } else if (url.indexOf('inbox.google.com') !== -1) {
+      return 'script:inbox';
+    } else if (url.indexOf('outlook.live.com') !== -1) {
+      return 'script:outlook';
+    } else if (/moz-extension:\/\/.+/.test(url)) {
+      return 'ff-dev';
+    } else {
+      return 'unknown';
+    }
+  }
+
+  function test() {
+    this_will_fail();
+  }
+
+  function cryptup_version(format) {
+    if(format === 'int') {
+      return RUNTIME.version ? Number(RUNTIME.version.replace(/\./g, '')) : null;
+    } else {
+      return RUNTIME.version || null;
+    }
+  }
+
+  function figure_out_cryptup_runtime() {
+    try {
+      RUNTIME.version = window.chrome.runtime.getManifest().version;
+    } catch(err) {}
+    RUNTIME.environment = environment();
+    if(!tool.env.is_background_script()) {
+      tool.browser.message.send(null, 'runtime', null, function (extension_runtime) {
+        RUNTIME = extension_runtime;
+      });
+    }
+  }
+
+  window.catcher = {
+    handle_error: handle_error,
+    handle_exception: handle_exception,
+    log: log,
+    info: info,
+    version: cryptup_version,
+    try: try_wrapper,
+    environment: environment,
+    test: test,
+  };
+
+})();
+
+(function ( /* EXTENSIONS AND CONFIG */ ) {
+
+  if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
+    window.openpgp.config.versionstring = 'CryptUp ' + (catcher.version() || '') + ' Easy Gmail Encryption https://cryptup.org';
+    window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
+  }
+
+  RegExp.escape = function (s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  };
+
+  String.prototype.repeat = String.prototype.repeat || function(count) {
+      if (this == null) {
+        throw new TypeError('can\'t convert ' + this + ' to object');
+      }
+      var str = '' + this;
+      count = +count;
+      if (count != count) {
+        count = 0;
+      }
+      if (count < 0) {
+        throw new RangeError('repeat count must be non-negative');
+      }
+      if (count == Infinity) {
+        throw new RangeError('repeat count must be less than infinity');
+      }
+      count = Math.floor(count);
+      if (str.length == 0 || count == 0) {
+        return '';
+      }
+      // Ensuring count is a 31-bit integer allows us to heavily optimize the
+      // main part. But anyway, most current (August 2014) browsers can't handle
+      // strings 1 << 28 chars or longer, so:
+      if (str.length * count >= 1 << 28) {
+        throw new RangeError('repeat count must not overflow maximum string size');
+      }
+      var rpt = '';
+      for (;;) {
+        if ((count & 1) == 1) {
+          rpt += str;
+        }
+        count >>>= 1;
+        if (count == 0) {
+          break;
+        }
+        str += str;
+      }
+      // Could we try:
+      // return Array(count + 1).join(this);
+      return rpt;
+    };
 
 })();
