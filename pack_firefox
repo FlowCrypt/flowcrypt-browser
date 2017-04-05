@@ -1,0 +1,24 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+import os
+
+os.system('rm -rf ./firefox')
+os.system('cp -r ./src ./firefox')
+
+with open('./firefox/manifest.json', 'r') as fp:
+    lines = fp.readlines()
+    lines.pop()
+    lines.pop()
+
+append = """  },
+  "applications": {
+    "gecko": {
+      "id": "test@cryptup.org"
+    }
+  }
+}
+"""
+
+with open('./firefox/manifest.json', 'w') as fp:
+    lines = fp.write(''.join(lines) + append)
