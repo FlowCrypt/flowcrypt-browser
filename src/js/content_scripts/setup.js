@@ -10,9 +10,9 @@ function content_script_setup_if_vacant(webmail_specific) {
     window.account_email_global = null; // used by background script
     window.same_world_global = true; // used by background_script
 
-    window.destruction_event = chrome.runtime.id + '_destroy';
-    window.destroyable_class = chrome.runtime.id + '_destroyable';
-    window.reloadable_class = chrome.runtime.id + '_reloadable';
+    window.destruction_event = tool.env.runtime_id() + '_destroy';
+    window.destroyable_class = tool.env.runtime_id() + '_destroyable';
+    window.reloadable_class = tool.env.runtime_id() + '_reloadable';
     window.destroyable_intervals = [];
     window.destroyable_timeouts = [];
 
@@ -66,7 +66,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   function wait_for_account_email_then_setup() {
     var account_email = webmail_specific.get_user_account_email();
     if(!window.account_email_global) {
-      if(typeof account_email !== 'undefined') {
+      if(typeof account_email !== 'undefined' && catcher.version()) {
         console.log('Loading CryptUp ' + catcher.version());
         window.account_email_global = account_email;
         if(tool.value(webmail_specific.name).in(tool.env.webmails)) {
@@ -87,7 +87,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   // called by wait_for_account_email_then_setup
   function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
-      factory = element_factory(account_email, tab_id, chrome.runtime.id, reloadable_class, destroyable_class);
+      factory = element_factory(account_email, tab_id, tool.env.runtime_id(), reloadable_class, destroyable_class);
       inject = content_script_element_injector(webmail_specific.name, factory);
       inject.meta();
       add_account_email_to_list_of_accounts(account_email);

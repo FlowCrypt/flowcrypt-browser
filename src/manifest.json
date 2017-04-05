@@ -44,7 +44,7 @@
     },
     {
       "matches": ["*://accounts.google.com/o/oauth2/approval*"],
-      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/oauth_window.js"]
+      "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/google.js"]
     },
     {
       "matches": ["https://outlook.office.com/noop/cryptup"],
@@ -68,7 +68,6 @@
       "/js/common/common.js",
       "/js/background_process/inject.js",
       "/js/background_process/attests.js",
-      "/js/background_process/google_auth.js",
       "/js/background_process/migrations.js",
       "/js/background_process/background_process.js"
     ]

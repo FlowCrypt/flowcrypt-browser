@@ -186,7 +186,7 @@ function add_key_rows_html(private_keys) {
 }
 
 function new_google_account_authentication_prompt(account_email, omit_read_scope) {
-  tool.browser.message.send(null, 'google_auth', { account_email: account_email || '', omit_read_scope: omit_read_scope }, function (response) {
+  tool.api.google.auth({ account_email: account_email || '', omit_read_scope: omit_read_scope }, function (response) {
     if(response && response.success === true && response.account_email) {
       add_account_email_to_list_of_accounts(response.account_email, function () {
         account_storage_get(response.account_email, ['setup_done'], function (storage) {
@@ -218,9 +218,9 @@ function new_microsoft_account_authentication_prompt(account_email) {
   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
 }
 
-$.get('/changelog.txt', null, function (data) {
+$.get(chrome.extension.getURL('/changelog.txt'), null, function (data) {
   $('.cryptup-logo-row').featherlight(data.replace(/\n/g, '<br>'));
-});
+}, 'html');
 
 $('.action_send_email').click(function () {
   window.open('https://mail.google.com');
