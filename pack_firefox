@@ -2,23 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 
-os.system('rm -rf ./firefox')
-os.system('cp -r ./src ./firefox')
-
-with open('./firefox/manifest.json', 'r') as fp:
-    lines = fp.readlines()
-    lines.pop()
-    lines.pop()
-
-append = """  },
-  "applications": {
-    "gecko": {
-      "id": "test@cryptup.org"
-    }
-  }
-}
-"""
-
-with open('./firefox/manifest.json', 'w') as fp:
-    lines = fp.write(''.join(lines) + append)
+if 'reverse' not in sys.argv:  # mirror chrome -> firefox
+    os.system('rm -rf ./firefox')
+    os.system('cp -r ./src ./firefox')
+    with open('./firefox/manifest.json', 'r') as fp:
+        lines = fp.readlines()
+        lines.pop()
+        lines.pop()
+    append = '  },\n  "applications": {\n    "gecko": {\n      "id": "test@cryptup.org"\n    }\n  }\n}\n'
+    with open('./firefox/manifest.json', 'w') as fp:
+        lines = fp.write(''.join(lines) + append)
+else:  # mirror firefox -> chrome
+    os.system('rm -rf ./src')
+    os.system('cp -r ./firefox ./src')
+    os.system('git checkout ./src/manifest.json')
