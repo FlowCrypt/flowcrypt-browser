@@ -1,5 +1,12 @@
 <div>
 
+<b>version 3.9.3 on April 5, 2017: Firefox</b>
+firefox: basic firefox compatibility
+setup: update uninstall url when adding account email
+setup: limit aliases to emails max 1 year old
+internal: remove outdated api calls
+composing: option to obfuscate one time password
+
 <b>version 3.9.2 on April 2, 2017: Welcome Message</b>
 setup: send encrypted email to each new user
 composing: show who uses encryption in standard compose
