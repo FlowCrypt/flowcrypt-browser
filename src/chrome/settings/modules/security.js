@@ -50,3 +50,12 @@ $('#passphrase_to_open_email').change(function () {
   $('.passhprase_checkbox_container').css('display', 'none');
   $('.passphrase_entry_container').css('display', 'block');
 });
+
+account_storage_get(url_params.account_email, ['hide_message_password'], function(storage) {
+  $('#hide_message_password').prop('checked', storage.hide_message_password === true);
+  $('#hide_message_password').change(function () {
+    account_storage_set(url_params.account_email, {hide_message_password: $(this).is(':checked')}, function () {
+      window.location.reload();
+    });
+  });
+});

@@ -116,7 +116,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   S.cached('icon_pubkey').attr('title', L.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
-  account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider'], function (storage) {
+  account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password'], function (storage) {
     email_provider = storage.email_provider || 'gmail';
     my_addresses_on_pks = storage.addresses_pks || [];
     my_addresses_on_keyserver = storage.addresses_keyserver || [];
@@ -129,6 +129,9 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     if(!can_save_drafts) {
       S.cached('send_btn_note').html('<a href="#" class="auth_drafts hover_underline">Enable encrypted drafts</a>');
       S.cached('send_btn_note').find('a.auth_drafts').click(auth_drafts);
+    }
+    if(storage.hide_message_password) {
+      S.cached('input_password').attr('type', 'password');
     }
   });
 
