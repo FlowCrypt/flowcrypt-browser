@@ -22,8 +22,11 @@ get_account_emails(function (account_emails) {
         } else {
           $('ul.emails').prepend('<li><a target="cryptup" href="' + tool.env.url_create('/chrome/settings/index.htm', { account_email: email }) + '">' + email + '</a></li>');
         }
-        $('a').click(function () {
-          window.close();
+        $('html').css('height', $('.content').height() + 40);
+        $('a').off().click(function () {
+          setTimeout(function () {
+            window.close();
+          }, 0);
         });
       }
     });
