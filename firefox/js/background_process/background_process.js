@@ -17,6 +17,7 @@ migrate_global(function () {
 });
 
 tool.browser.message.listen_background({
+  close_popup: close_popup_handler,
   migrate_account: migrate_account,
   settings: open_settings_page_handler,
   attest_requested: attest_requested_handler,
@@ -30,7 +31,8 @@ tool.browser.message.listen_background({
     respond(true);
   },
   _tab_: function (request, sender, respond) {
-    respond(sender.tab.id + ':' + sender.frameId);
+    // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+    respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
   },
 });
 
@@ -114,5 +116,11 @@ function open_settings_page(path, account_email, page) {
         open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page }));
       });
     }
+  });
+}
+
+function close_popup_handler(request, sender, respond) {
+  chrome.tabs.query(request, function (tabs) {
+    chrome.tabs.remove(tool.arr.select(tabs, 'id'));
   });
 }

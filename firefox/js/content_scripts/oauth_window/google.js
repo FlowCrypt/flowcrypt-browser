@@ -13,7 +13,9 @@ if(tool.value(google_oauth2.state_header).in(document.title)) { // this is crypt
   var result = parts[0];
   var params = tool.env.url_params(['code', 'state', 'error'], parts[1]);
   var state_object = api_google_auth_state_unpack(params.state);
-  tool.browser.message.send('broadcast', 'google_auth_window_result', { result: result, params: params, state: state_object }, function() {
-    window.close();
+  tool.browser.message.send('broadcast', 'google_auth_window_result', { result: result, params: params, state: state_object }, function () {
+    var close_title = 'Close this window';
+    $('title').text(close_title);
+    tool.browser.message.send(null, 'close_popup', {title: close_title});
   });
 }

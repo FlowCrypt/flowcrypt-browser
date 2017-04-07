@@ -5,6 +5,7 @@
 var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
 var tab_id_global;
 var microsoft_auth_attempt = {};
+var google_token_scopes;
 
 tool.time.wait(function() { if(typeof catcher !== 'undefined') { return true; }}).then(function() {
   $('.logo-row span#v').text(catcher.version());
@@ -95,6 +96,7 @@ function initialize() {
     $('.email-address').text(url_params.account_email);
     $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
     account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
+      google_token_scopes = storage.google_token_scopes;
       if(storage.setup_done) {
         render_subscription_status_header();
         if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
@@ -186,7 +188,7 @@ function add_key_rows_html(private_keys) {
 }
 
 function new_google_account_authentication_prompt(account_email, omit_read_scope) {
-  tool.api.google.auth({ account_email: account_email || '', omit_read_scope: omit_read_scope }, function (response) {
+  tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope: omit_read_scope, tab_id: tab_id_global }, google_token_scopes, function (response) {
     if(response && response.success === true && response.account_email) {
       add_account_email_to_list_of_accounts(response.account_email, function () {
         account_storage_get(response.account_email, ['setup_done'], function (storage) {
