@@ -151,6 +151,7 @@
       google: {
         user_info: api_google_user_info,
         auth: api_google_auth,
+        auth_popup: google_auth_window_show_and_respond_to_auth_request,
       },
       common: {
         message: api_common_email_message_object,
@@ -1025,10 +1026,8 @@
   }
 
   function ui_spinner(color, placeholder_class) {
-    var url = '/img/svgs/spinner-' + color + '-small.svg';
-    if (window.chrome && window.chrome.runtime && window.chrome.runtime.id) {
-      var url = 'chrome-extension://' + chrome.runtime.id + url;
-    }
+    var path = '/img/svgs/spinner-' + color + '-small.svg';
+    var url = window.chrome && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
     return '<i class="' + (placeholder_class || 'small_spinner') + '"><img src="' + url + '" /></i>';
   }
 
@@ -1127,7 +1126,7 @@
     var parsed = { tab: null, frame: null, };
     if(destination_string) {
       parsed.tab = Number(destination_string.split(':')[0]);
-      parsed.frame = Number(destination_string.split(':')[1]);
+      parsed.frame = Number(destination_string.split(':')[1]) || null;
     }
     return parsed;
   }
@@ -1200,7 +1199,11 @@
             if(typeof handlers[msg.name] !== 'undefined') {
               handlers[msg.name](msg.data, sender, respond);
             } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              catcher.log('tool.browser.message.listen error: handler "' + msg.name + '" not set');
+              if(destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+                catcher.log('tool.browser.message.listen error: handler "' + msg.name + '" not set');
+              } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
+                console.log('tool.browser.message.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
+              }
             }
           }
         }
@@ -1987,22 +1990,25 @@
   var API_GOOGLE_AUTH_RESPONDED = 'RESPONDED';
 
   function api_google_auth(auth_request, respond) {
-    account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
-      if(typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || api_google_has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
-        google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
-      } else {
-        google_auth_refresh_token(storage.google_token_refresh, function (success, result) {
-          if(!success && result === tool.api.error.network) {
-            respond({ success: false, error: tool.api.error.network });
-          } else if(typeof result.access_token !== 'undefined') {
-            google_auth_save_tokens(auth_request.account_email, result, storage.google_token_scopes, function () {
-              respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
-            });
-          } else {
-            google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
-          }
-        });
-      }
+    browser_message_tab_id(function(tab_id) {
+      auth_request.tab_id = tab_id;
+      account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
+        if (typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || api_google_has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
+          google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+        } else {
+          google_auth_refresh_token(storage.google_token_refresh, function (success, result) {
+            if (!success && result === tool.api.error.network) {
+              respond({success: false, error: tool.api.error.network});
+            } else if (typeof result.access_token !== 'undefined') {
+              google_auth_save_tokens(auth_request.account_email, result, storage.google_token_scopes, function () {
+                respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
+              });
+            } else {
+              google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+            }
+          });
+        }
+      });
     });
   }
 
@@ -2037,47 +2043,46 @@
     });
   }
 
-  function google_auth_window_show_and_respond_to_auth_request(auth_request, current_scopes, respond) {
-    browser_message_tab_id(function(tab_id) {
-      auth_request.auth_responder_id = tool.str.random(20);
-      auth_request.tab_id = tab_id;
-      api_google_auth_responders[auth_request.auth_responder_id] = respond;
-      auth_request.scopes = auth_request.scopes || [];
-      $.each(google_oauth2.scopes, function (i, scope) {
-        if(!tool.value(scope).in(auth_request.scopes)) {
-          if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
-            auth_request.scopes.push(scope);
-          }
-        }
-      });
-      $.each(current_scopes || [], function (i, scope) {
-        if(!tool.value(scope).in(auth_request.scopes)) {
+  function google_auth_window_show_and_respond_to_auth_request(auth_request, current_google_token_scopes, respond) {
+    auth_request.auth_responder_id = tool.str.random(20);
+    api_google_auth_responders[auth_request.auth_responder_id] = respond;
+    auth_request.scopes = auth_request.scopes || [];
+    $.each(google_oauth2.scopes, function (i, scope) {
+      if(!tool.value(scope).in(auth_request.scopes)) {
+        if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
           auth_request.scopes.push(scope);
-        }
-      });
-      browser_message_listen({
-        google_auth_window_result: function(result, sender, respond) {
-          google_auth_window_result_handler(auth_request.auth_responder_id, result, respond);
-        },
-      }, tab_id);
-      var auth_code_window = window.open(api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-      // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-      // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
-      var window_closed_timer = setInterval(api_google_auth_window_closed_watcher, 200);
-
-      function api_google_auth_window_closed_watcher() {
-        if(auth_code_window !== null && auth_code_window.closed) { // on firefox it seems to be returning a null, probably due to popup blocking
-          clearInterval(window_closed_timer);
-          if(api_google_auth_responders[auth_request.auth_responder_id] !== API_GOOGLE_AUTH_RESPONDED) {
-            // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
-            // thus it's impossible for another process to try to respond before the next line
-            // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
-            api_google_auth_responders[auth_request.auth_responder_id]({success: false, result: 'closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
-            api_google_auth_responders[auth_request.auth_responder_id] = API_GOOGLE_AUTH_RESPONDED;
-          }
         }
       }
     });
+    $.each(current_google_token_scopes || [], function (i, scope) {
+      if(!tool.value(scope).in(auth_request.scopes)) {
+        auth_request.scopes.push(scope);
+      }
+    });
+    browser_message_listen({
+      google_auth_window_result: function(result, sender, respond) {
+        google_auth_window_result_handler(auth_request.auth_responder_id, result, respond);
+      },
+    }, auth_request.tab_id);
+    var auth_code_window = window.open(api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+    // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+    // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
+    if(env_browser().name !== 'firefox') {
+      var window_closed_timer = setInterval(api_google_auth_window_closed_watcher, 250);
+    }
+
+    function api_google_auth_window_closed_watcher() {
+      if(auth_code_window !== null && auth_code_window.closed) { // on firefox it seems to be sometimes returning a null, due to popup blocking
+        clearInterval(window_closed_timer);
+        if(api_google_auth_responders[auth_request.auth_responder_id] !== API_GOOGLE_AUTH_RESPONDED) {
+          // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
+          // thus it's impossible for another process to try to respond before the next line
+          // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
+          api_google_auth_responders[auth_request.auth_responder_id]({success: false, result: 'closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+          api_google_auth_responders[auth_request.auth_responder_id] = API_GOOGLE_AUTH_RESPONDED;
+        }
+      }
+    }
   }
 
   function google_auth_save_tokens(account_email, tokens_object, scopes, callback) {
