@@ -2,6 +2,7 @@
 .idea
 *.zip
 *.crx
+*.xpi
 *.pem
 /temp/
 .DS_Store
