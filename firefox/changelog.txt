@@ -1,6 +1,11 @@
 <div>
 
-<b>version 3.9.3 on April 5, 2017: Firefox</b>
+<b>version 3.9.4 on April 8, 2017: Firefox Fixes</b>
+firefox: messaging, spinner, auth window, browser action
+firefox: newlines and minor ux fixes
+firefox: plugin self-publish auto-update
+
+<b>version 3.9.3 on April 5, 2017: Firefox Tests</b>
 firefox: basic firefox compatibility
 setup: update uninstall url when adding account email
 setup: limit aliases to emails max 1 year old
