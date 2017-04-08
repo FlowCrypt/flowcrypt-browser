@@ -3,6 +3,7 @@
 
 import os
 import sys
+import subprocess
 import json
 import boto.s3.key
 
@@ -27,7 +28,7 @@ with open(config['firefox']['path']['signed'] % version, 'r') as fp:
 	if sent != size:
 		raise Exception('File did not upload successfully')
 
-hash = os.system('sha256sum ' + config['firefox']['path']['signed'] % version)
+hash = subprocess.check_output(['sha256sum', config['firefox']['path']['signed'] % version]).split('  ')[0]
 
 print "uploaded %s%s" % (config['aws']['base_url'], config['firefox']['path']['upload'] % version)
 print "('%s', '%s')," % (version, hash)
