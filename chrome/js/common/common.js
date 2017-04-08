@@ -577,8 +577,6 @@
         'emailjs-mime-types': './emailjs/emailjs-mime-types',
         'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
         'punycode': './emailjs/punycode',
-        'sinon': './emailjs/sinon',
-        'quoted-printable': './emailjs/quoted-printable',
       }
     });
   }
