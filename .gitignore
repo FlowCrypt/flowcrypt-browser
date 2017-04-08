@@ -6,3 +6,6 @@
 *.pem
 /temp/
 .DS_Store
+!.gitignore
+!/release/.gitignore
+!/config/.gitignore
