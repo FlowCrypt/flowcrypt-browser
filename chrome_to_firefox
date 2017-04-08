@@ -1,0 +1,20 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+
+if 'reverse' not in sys.argv:  # mirror chrome -> firefox
+    os.system('rm -rf ./firefox')
+    os.system('cp -r ./chrome ./firefox')
+    with open('./firefox/manifest.json', 'r') as fp:
+        lines = fp.readlines()
+        lines.pop()
+        lines.pop()
+    append = '  },\n  "applications": {\n    "gecko": {\n      "id": "test@cryptup.org",\n      "update_url": "https://api.cryptup.io/update/firefox"\n    }\n  }\n}\n'
+    with open('./firefox/manifest.json', 'w') as fp:
+        lines = fp.write(''.join(lines) + append)
+else:  # mirror firefox -> chrome
+    os.system('rm -rf ./chrome')
+    os.system('cp -r ./firefox ./chrome')
+    os.system('git checkout ./chrome/manifest.json')

@@ -2,19 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
+import json
 
-if 'reverse' not in sys.argv:  # mirror chrome -> firefox
-    os.system('rm -rf ./firefox')
-    os.system('cp -r ./src ./firefox')
-    with open('./firefox/manifest.json', 'r') as fp:
-        lines = fp.readlines()
-        lines.pop()
-        lines.pop()
-    append = '  },\n  "applications": {\n    "gecko": {\n      "id": "test@cryptup.org"\n    }\n  }\n}\n'
-    with open('./firefox/manifest.json', 'w') as fp:
-        lines = fp.write(''.join(lines) + append)
-else:  # mirror firefox -> chrome
-    os.system('rm -rf ./src')
-    os.system('cp -r ./firefox ./src')
-    os.system('git checkout ./src/manifest.json')
+with open('firefox/manifest.json', 'r') as fp:
+    manifest = json.load(fp)
+
+filename = 'cryptup-io-firefox-%s.zip' % ''.join(c for c in manifest['version'] if c in '0123456789.')
+os.system('rm -rf %s' % filename)
+os.system('cd firefox && zip -rq ../%s ./* && cd ..' % filename)
+print 'PACKED FIREFOX RELEASE INTO %s\n' % filename

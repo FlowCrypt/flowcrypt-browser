@@ -5,6 +5,6 @@ import os
 
 os.system('./update_licence')
 os.system('rm -rf cryptup-chrome.zip')
-os.system('zip -rq cryptup-chrome.zip src/*')
-print 'PACKED RELEASE INTO cryptup-chrome.zip\n'
+os.system('zip -rq cryptup-chrome.zip chrome/*')
+print 'CHROME ---> cryptup-chrome.zip\n'
 os.system('./../cryptup-test/chrome/test')
