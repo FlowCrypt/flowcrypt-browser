@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.9.5 on April 8, 2017: Cleanup</b>
+internal: removed unneeded libraries
+
 <b>version 3.9.4 on April 8, 2017: Firefox Fixes</b>
 firefox: messaging, spinner, auth window, browser action
 firefox: newlines and minor ux fixes
