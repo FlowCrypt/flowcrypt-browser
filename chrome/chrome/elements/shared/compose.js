@@ -1226,7 +1226,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   S.cached('input_text').get(0).onpaste = function (e) {
     if(e.clipboardData.getData('text/html')) {
-      tool.str.inner_text(e.clipboardData.getData('text/html'), function (text) {
+      tool.str.html_as_text(e.clipboardData.getData('text/html'), function (text) {
         simulate_ctrl_v(text.replace(/\n/g, '<br>'));
       });
       return false;

@@ -2,7 +2,7 @@
 
 'use strict';
 
-function element_factory(account_email, parent_tab_id, chrome_runtime_id, reloadable_class, destroyable_class) {
+function element_factory(account_email, parent_tab_id, chrome_runtime_extension_url, reloadable_class, destroyable_class) {
 
   reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
@@ -15,11 +15,11 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_id, reload
   }
 
   function src_img(relative_path) {
-    if(!chrome_runtime_id) {
+    if(!chrome_runtime_extension_url) {
       catcher.log('Attempting to load an image without knowing runtime_id: ' + relative_path); // which will probably not work
       return '/img/' + relative_path;
     } else {
-      return 'chrome-extension://' + chrome_runtime_id + '/img/' + relative_path;
+      return chrome_runtime_extension_url + '/img/' + relative_path;
     }
   }
 

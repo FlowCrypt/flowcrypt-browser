@@ -9,7 +9,7 @@
       trim_lower: str_trim_lower, //todo - deprecate in favor of parse_email
       parse_email: str_parse_email,
       pretty_print: str_pretty_print,
-      inner_text: str_inner_text,
+      html_as_text: str_html_as_text,
       normalize_spaces: str_normalize_spaces,
       number_format: str_number_format,
       is_email_valid: str_is_email_valid,
@@ -256,13 +256,31 @@
     return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
   }
 
-  function str_inner_text(html_text, callback) { // extracts innerText from a html text in a safe way without executing any contained js
+  function str_html_as_text(html_text, callback) {
+    // extracts innerText from a html text in a safe way without executing any contained js
+    // firefox does not preserve line breaks of iframe.contentDocument.body.innerText due to a bug - have to guess the newlines with regexes
+    // this is still safe because Firefox does strip all other tags
+    if(env_browser().name === 'firefox') {
+      var br = 'CU_BR_' + str_random(5);
+      var block_start = 'CU_BS_' + str_random(5);
+      var block_end = 'CU_BE_' + str_random(5);
+      html_text = html_text.replace(/<br[^>]*>/gi, br);
+      html_text = html_text.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
+      html_text = html_text.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
+    }
     var e = document.createElement('iframe');
     e.sandbox = 'allow-same-origin';
     e.srcdoc = html_text;
     e.style['display'] = 'none';
     e.onload = function() {
-      callback(e.contentDocument.body.innerText);
+      var text = e.contentDocument.body.innerText;
+      if(env_browser().name === 'firefox') {
+        text = text.replace(RegExp('(' + block_start + ')+', 'g'), block_start).replace(RegExp('(' + block_end + ')+', 'g'), block_end);
+        text = text.split(block_end + block_start).join(br).split(br + block_end).join(br);
+        text = text.split(br).join('\n').split(block_start).filter(function(v){return !!v}).join('\n').split(block_end).filter(function(v){return !!v}).join('\n');
+        text = text.replace(/\n{2,}/g, '\n\n');
+      }
+      callback(text.trim());
       document.body.removeChild(e);
     };
     document.body.appendChild(e);
@@ -303,7 +321,7 @@
 
   function str_untrusted_text_as_sanitized_html(text_or_html, callback) {
     var nl = '_cryptup_newline_placeholder_' + str_random(3) + '_';
-    str_inner_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'), function(plain) {
+    str_html_as_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'), function(plain) {
       callback(plain.trim().replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
         return '&nbsp;'.repeat(spaces.length);
       }));
