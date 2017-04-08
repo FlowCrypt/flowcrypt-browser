@@ -3,7 +3,8 @@
 
 import os
 
-os.system('./update_licence')
+os.system('./scripts/chrome_update_licence')
+
 os.system('rm -rf release/cryptup-chrome.zip')
 os.system('zip -rq release/cryptup-chrome.zip chrome/*')
 print 'CHROME ---> release/cryptup-chrome.zip\n'

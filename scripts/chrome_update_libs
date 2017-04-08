@@ -51,8 +51,9 @@ def download_all(path, temp, libs):
             os.system('unzip ' + local_zip_path + ' -d ' + unzip_path + ' > /dev/null')
             os.system('cp %s %s' % (unzip_path + inside_zip_path, path + lib['name']))
 
+
 os.system('rm -rf ./temp/')
 download_all('./temp/lib/', './temp/', LIBS)
-os.system('mv ./src/lib ./temp/lib.backup')
-print "* replacing src/libs"
-os.system('mv ./temp/lib ./src/lib')
+os.system('mv ./chrome/lib ./temp/lib.backup')
+print "* replacing chrome/libs"
+os.system('mv ./temp/lib ./chrome/lib')

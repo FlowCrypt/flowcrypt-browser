@@ -1,0 +1,10 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import json
+
+os.system('rm -rf ./chrome')
+os.system('cp -r ./firefox ./chrome')
+os.system('git checkout ./chrome/manifest.json')

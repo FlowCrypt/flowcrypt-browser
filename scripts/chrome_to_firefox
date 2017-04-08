@@ -1,0 +1,15 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import json
+
+os.system('rm -rf ./firefox')
+os.system('cp -r ./chrome ./firefox')
+with open('./firefox/manifest.json', 'r') as fp:
+    manifest = json.load(fp)
+manifest['applications'] = {'gecko': {'id': 'firefox@cryptup.io', 'update_url': 'https://api.cryptup.io/update/firefox'}}
+manifest['permissions'] = [p for p in manifest['permissions'] if p not in ['unlimitedStorage']]
+with open('./firefox/manifest.json', 'w') as fp:
+    lines = json.dump(manifest, fp, sort_keys=True, indent=2)

@@ -5,14 +5,14 @@ import os
 import io
 
 licence_line = u'Business Source License 1.0 © 2016 Tom James Holub (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/tomholub/cryptup-chrome/tree/master/src/LICENCE'
-source_dirs = ['./src/chrome', './src/js']
+source_dirs = ['./chrome/chrome', './chrome/js']
 source_extension_patterns = {
 	'js': '/* %s */\n',
 	'css': '/* %s */\n',
 	'htm': '<!-- %s -->\n',
 }
-source_file_paths = ['./src/css/cryptup.css', './src/css/webmail.css']
-source_file_blacklist = ['./src/chrome/elements/shared/attach.template.htm', './src/chrome/gmail_elements/shared/attach.template.htm']
+source_file_paths = ['./chrome/css/cryptup.css', './chrome/css/webmail.css']
+source_file_blacklist = ['./chrome/chrome/elements/shared/attach.template.htm', './chrome/chrome/gmail_elements/shared/attach.template.htm']
 
 
 def extension(filename):
@@ -25,9 +25,9 @@ for source_dir in source_dirs:
 			if extension(filename) in source_extension_patterns and path + '/' + filename not in source_file_blacklist:
 				source_file_paths.append(path + '/' + filename)
 
+print "Updating source LICENCE"
 
 for source_file_path in source_file_paths:
-	print source_file_path,
 	with io.open(source_file_path, 'r', encoding='utf8') as fp:
 		lines = fp.readlines()
 	commented_licence_line = source_extension_patterns[extension(source_file_path)] % licence_line
@@ -39,3 +39,5 @@ for source_file_path in source_file_paths:
 		lines.insert(1, '\n')
 	with io.open(source_file_path, 'w', encoding='utf8') as fp:
 		fp.write(''.join(lines))
+
+print 'Licence files reviewed/updated: %d' % len(source_file_paths)
