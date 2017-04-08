@@ -105,7 +105,8 @@
   },
   "applications": {
     "gecko": {
-      "id": "test@cryptup.org"
+      "id": "firefox@cryptup.io",
+      "update_url": "https://api.cryptup.io/update/firefox"
     }
   }
 }
