@@ -4,7 +4,7 @@
 import os
 
 os.system('./update_licence')
-os.system('rm -rf cryptup-chrome.zip')
-os.system('zip -rq cryptup-chrome.zip chrome/*')
-print 'CHROME ---> cryptup-chrome.zip\n'
+os.system('rm -rf release/cryptup-chrome.zip')
+os.system('zip -rq release/cryptup-chrome.zip chrome/*')
+print 'CHROME ---> release/cryptup-chrome.zip\n'
 os.system('./../cryptup-test/chrome/test')

@@ -6,8 +6,9 @@ import json
 
 with open('firefox/manifest.json', 'r') as fp:
     manifest = json.load(fp)
+    version = ''.join(c for c in manifest['version'] if c in '0123456789.')
 
-filename = 'cryptup-io-firefox-%s.zip' % ''.join(c for c in manifest['version'] if c in '0123456789.')
-os.system('rm -rf %s' % filename)
-os.system('cd firefox && zip -rq ../%s ./* && cd ..' % filename)
-print 'PACKED FIREFOX RELEASE INTO %s\n' % filename
+filename = 'cryptup-io-firefox-%s.zip' % version
+os.system('rm -rf release/%s' % filename)
+os.system('cd firefox && zip -rq ../release/%s ./* && cd ..' % filename)
+print 'PACKED FIREFOX RELEASE INTO release/%s\n' % filename
