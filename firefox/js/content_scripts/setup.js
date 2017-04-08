@@ -87,7 +87,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   // called by wait_for_account_email_then_setup
   function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
-      factory = element_factory(account_email, tab_id, tool.env.runtime_id(), reloadable_class, destroyable_class);
+      factory = element_factory(account_email, tab_id, chrome.runtime.getURL('').replace(/\/$/, ''), reloadable_class, destroyable_class);
       inject = content_script_element_injector(webmail_specific.name, factory);
       inject.meta();
       add_account_email_to_list_of_accounts(account_email);
