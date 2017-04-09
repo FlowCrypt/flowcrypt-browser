@@ -12,7 +12,6 @@ choices = [
 	('fu', 'firefox_upload', '\tsigned package to s3'),
 	('lib', 'chrome_update_libs', 'very possibly a broken script'),
 	('bsl', 'chrome_update_licence', 'update licence statements in all project files'),
-
 ]
 
 for c in choices:
