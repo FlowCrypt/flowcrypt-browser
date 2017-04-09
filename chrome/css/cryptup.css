@@ -407,8 +407,7 @@ table#compose #error_container_reply_message #error_text_reply_message { display
 .inline_loader {  display: inline; width: 120px; margin: 0 auto!important; padding: 0!important; position: relative;}
 .inline_loader svg { display: inline; position: absolute; left:0; right: 0; top: -2px;}
 
-body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; background-image: url(/img/attachment-corner.png);
-  background-repeat: no-repeat; background-position: bottom right; z-index: 0; }
+body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; z-index: 0; }
 body.attachment:hover { border-color: #eaeaea; }
 body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; right:13px; opacity: 1; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
