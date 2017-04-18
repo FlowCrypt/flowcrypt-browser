@@ -2598,8 +2598,7 @@
   function api_gmail_search_contacts(account_email, user_query, known_contacts, callback) {
     var gmail_query = ['is:sent', USELESS_CONTACTS_FILTER];
     if(user_query) {
-      gmail_query.push();
-      var variations_of_to = user_query.split(/[ \.]/g);
+      var variations_of_to = user_query.split(/[ \.]/g).filter(function(v) {!tool.value(v).in(['com', 'org', 'net']);});
       if(!tool.value(user_query).in(variations_of_to)) {
         variations_of_to.push(user_query);
       }
