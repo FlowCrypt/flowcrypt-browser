@@ -36,6 +36,7 @@ db_open(function (db) {
   var passphrase_interval = undefined;
   var missing_or_wrong_passprases = {};
   var can_read_emails = undefined;
+  var unsecure_mdc_ignored = false;
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -79,6 +80,10 @@ db_open(function (db) {
       }
       tool.str.as_safe_html(content, function(safe_html) {
         $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
+        if(unsecure_mdc_ignored && !is_error) {
+          set_frame_color('red');
+          $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">This message was badly encrypted. Do not consider it private. The sender should update their encryption software.<br><br>It allows for a known vulnerability to be exploited (missing MDC in combination with modern cipher) that may allow unintended parties to read the contents.</div><br>');
+        }
         if(callback) {
           callback();
         }
@@ -290,6 +295,10 @@ db_open(function (db) {
         } else if(result.counts.wrong_password) {
           alert('Incorrect answer, please try again');
           render_password_prompt();
+        } else if(result.counts.unsecure_mdc && !unsecure_mdc_ignored) {
+          openpgp.config.ignore_mdc_error = true;
+          unsecure_mdc_ignored = true;
+          initialize(); // try again with mdc missing error ignored
         } else if(result.counts.errors) {
           render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
         } else {

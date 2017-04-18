@@ -1674,7 +1674,7 @@
   }
 
   function zeroed_decrypt_error_counts(keys) {
-    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, };
+    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, unsecure_mdc: 0 };
   }
 
   function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
@@ -1684,6 +1684,8 @@
       counts.key_mismatch++; // attempted opening password only message with key
     } else if(one_time_message_password && tool.value(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
       counts.wrong_password++; // wrong password
+    } else if(String(decrypt_error) === 'Error: Error decrypting message: Decryption failed due to missing MDC in combination with modern cipher.') {
+      counts.unsecure_mdc++;
     } else {
       other_errors.push(String(decrypt_error));
     }
@@ -1702,6 +1704,7 @@
             signature: null,
             message: message,
             counts: counts,
+            unsecure_mdc: !!counts.unsecure_mdc,
             encrypted_for: private_keys.encrypted_for,
             missing_passphrases: private_keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; }),
             errors: other_errors,
