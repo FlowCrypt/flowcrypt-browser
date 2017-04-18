@@ -3529,29 +3529,30 @@
     if(!url) {
       url = window.location.href;
     }
+    var browser_name = tool.env.browser().name;
+    var env = 'unknown';
     if(url.indexOf('bnjglocicd') !== -1) {
-      return 'ch-prod';
-    } else if(url.indexOf('nmelpmhpel') !== -1) {
-      return 'ch-dev';
+      env = 'ex:prod';
+    } else if(url.indexOf('nmelpmhpel') !== -1 || url.indexOf('blfdgihad') !== -1) {
+      env = 'ex:dev';
     } else if(url.indexOf('himcfccebk') !== -1) {
-      return 'ch-test';
+      env = 'ex:test';
     } else if (url.indexOf('l.cryptup.org') !== -1 || url.indexOf('l.cryptup.io') !== -1) {
-      return 'web-local';
+      env = 'web:local';
     } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('cryptup.io') !== -1) {
-      return 'web';
+      env = 'web:prod';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
-      return 'ch-fork';
+      env = 'ex:fork';
     } else if (url.indexOf('mail.google.com') !== -1) {
-      return 'script:gmail';
+      env = 'ex:script:gmail';
     } else if (url.indexOf('inbox.google.com') !== -1) {
-      return 'script:inbox';
+      env = 'ex:script:inbox';
     } else if (url.indexOf('outlook.live.com') !== -1) {
-      return 'script:outlook';
+      env = 'ex:script:outlook';
     } else if (/moz-extension:\/\/.+/.test(url)) {
-      return 'ff-dev';
-    } else {
-      return 'unknown';
+      env = 'ex';
     }
+    return browser_name + ':' + env;
   }
 
   function test() {
