@@ -108,11 +108,11 @@ db_open(function (db) {
 
   function set_frame_color(c) {
     if(c === 'red') {
-      $('body').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
+      $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
     } else if(c === 'green') {
-      $('body').removeClass('pgp_neutral').removeClass('pgp_insecure').addClass('pgp_secure');
+      $('#pgp_background').removeClass('pgp_neutral').removeClass('pgp_insecure').addClass('pgp_secure');
     } else {
-      $('body').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
+      $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
     }
   }
 

@@ -228,31 +228,31 @@ html {  padding:0; margin: 0; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0;
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
-body.pgp_secure, div.replied_body.pgp_secure { border: 1px solid #f0f0f0; border-left: 4px solid #31A217; padding-left:10px; min-height: 38px;
+.pgp_secure { border: 1px solid #f0f0f0; border-left: 4px solid #31A217; padding-left:10px; min-height: 38px;
   background-image: url(/img/lock-seamless-bg-alpha.png); padding-top: 6px; padding-bottom: 6px; }
-body.pgp_neutral, div.replied_body.pgp_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; min-height: 25px; }
-body.pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; min-height: 25px; }
-body > #pgp_block { height: auto; }
-body > #pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 270px; }
-body > #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
-body > #pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px; font-family: monospace;}
-body > #pgp_block input#answer { padding: 8px 8px; width: 232px; }
-body > #pgp_block #attachments { margin-top: 20px; }
-body > #pgp_block #attachments .attachment { background: #f3f3f3; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; padding: 12px; }
-body > #pgp_block > .block_pubkey_full { display: none; }
-body > #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
-body > #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
-body > #pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; }
-body > #pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
-body > #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 200px; float: right; }
-body > #pgp_signature.neutral, body > #pgp_signature.bad, body > #pgp_signature:hover { opacity: 1; }
-body > #pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #B7B7B7; }
-body > #pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }
-body > #pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
+.pgp_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; min-height: 25px; }
+.pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; min-height: 25px; }
+#pgp_block { height: auto; }
+#pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 270px; }
+#pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
+#pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px; font-family: monospace;}
+#pgp_block input#answer { padding: 8px 8px; width: 232px; }
+#pgp_block #attachments { margin-top: 20px; }
+#pgp_block #attachments .attachment { background: #f3f3f3; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; padding: 12px; }
+#pgp_block > .block_pubkey_full { display: none; }
+#pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
+#pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
+#pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; }
+#pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
+#pgp_signature > .result { font-size: 10px; font-family: monospace; width: 200px; float: right; }
+#pgp_signature.neutral, #pgp_signature.bad, #pgp_signature:hover { opacity: 1; }
+#pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #B7B7B7; }
+#pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }
+#pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
 
-body > #pgp_block.pgp_pubkey { padding-top: 7px; }
-body > #pgp_block.pgp_pubkey .line { margin: 0; }
-body > #pgp_block.pgp_pubkey pre.pubkey { display: none; }
+#pgp_block.pgp_pubkey { padding-top: 7px; }
+#pgp_block.pgp_pubkey .line { margin: 0; }
+#pgp_block.pgp_pubkey pre.pubkey { display: none; }
 
 table#compose { height: 100%; border-spacing: 0; border-collapse: collapse; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
