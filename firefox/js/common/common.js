@@ -1132,6 +1132,7 @@
   /* tools.browser.message */
 
   var background_script_shortcut_handlers;
+  var frame_registered_handlers = {};
   var standard_handlers = {
     set_css: function (data) {
       $(data.selector).css(data.css);
@@ -1139,10 +1140,10 @@
   };
 
   function destination_parse(destination_string) {
-    var parsed = { tab: null, frame: null, };
+    var parsed = { tab: null, frame: null };
     if(destination_string) {
       parsed.tab = Number(destination_string.split(':')[0]);
-      parsed.frame = Number(destination_string.split(':')[1]) || null;
+      parsed.frame = !isNaN(destination_string.split(':')[1]) ? Number(destination_string.split(':')[1]) : null;
     }
     return parsed;
   }
@@ -1201,9 +1202,14 @@
   }
 
   function browser_message_listen(handlers, listen_for_tab_id) {
+    $.each(handlers, function(name, handler) {
+      // newly registered handlers with the same name will overwrite the old ones if browser_message_listen is declared twice for the same frame
+      // original handlers not mentioned in newly set handlers will continue to work
+      frame_registered_handlers[name] = handler;
+    });
     $.each(standard_handlers, function(name, handler) {
-      if(typeof handlers[name] !== 'function') {
-        handlers[name] = handler;
+      if(frame_registered_handlers[name] !== 'function') {
+        frame_registered_handlers[name] = handler; // standard handlers are only added if not already set above
       }
     });
     var processed = [];
@@ -1212,8 +1218,8 @@
         if(msg.to === listen_for_tab_id || msg.to === 'broadcast') {
           if(!tool.value(msg.uid).in(processed)) {
             processed.push(msg.uid);
-            if(typeof handlers[msg.name] !== 'undefined') {
-              handlers[msg.name](msg.data, sender, respond);
+            if(typeof frame_registered_handlers[msg.name] !== 'undefined') {
+              frame_registered_handlers[msg.name](msg.data, sender, respond);
             } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
               if(destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
                 catcher.log('tool.browser.message.listen error: handler "' + msg.name + '" not set');
@@ -2179,28 +2185,32 @@
   function google_auth_window_result_handler(expected_responder_id, result, close_auth_window) {
     if(result.state.auth_responder_id === expected_responder_id) {
       var auth_responder = api_google_auth_responders[result.state.auth_responder_id];
-      api_google_auth_responders[result.state.auth_responder_id] = API_GOOGLE_AUTH_RESPONDED;
-      close_auth_window();
-      switch(result.result) {
-        case 'Success':
-          google_auth_get_tokens(result.params.code, function (tokens_object) {
-            if(typeof tokens_object.access_token !== 'undefined') {
-              google_auth_check_email(result.state.account_email, tokens_object.access_token, function (account_email) {
-                google_auth_save_tokens(account_email, tokens_object, result.state.scopes, function () {
-                  auth_responder({account_email: account_email, success: true, result: 'success', message_id: result.state.message_id});
+      if(auth_responder !== API_GOOGLE_AUTH_RESPONDED) {
+        api_google_auth_responders[result.state.auth_responder_id] = API_GOOGLE_AUTH_RESPONDED;
+        close_auth_window();
+        switch(result.result) {
+          case 'Success':
+            google_auth_get_tokens(result.params.code, function (tokens_object) {
+              if(typeof tokens_object.access_token !== 'undefined') {
+                google_auth_check_email(result.state.account_email, tokens_object.access_token, function (account_email) {
+                  google_auth_save_tokens(account_email, tokens_object, result.state.scopes, function () {
+                    auth_responder({account_email: account_email, success: true, result: 'success', message_id: result.state.message_id});
+                  });
                 });
-              });
-            } else { // got code but failed to use the code to fetch tokens
-              auth_responder({success: false, result: 'success', account_email: result.state.account_email, message_id: result.state.message_id});
-            }
-          }, 2);
-          break;
-        case 'Denied':
-          auth_responder({success: false, result: 'denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
-          break;
-        case 'Error':
-          auth_responder({success: false, result: 'error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
-          break;
+              } else { // got code but failed to use the code to fetch tokens
+                auth_responder({success: false, result: 'success', account_email: result.state.account_email, message_id: result.state.message_id});
+              }
+            }, 2);
+            break;
+          case 'Denied':
+            auth_responder({success: false, result: 'denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
+            break;
+          case 'Error':
+            auth_responder({success: false, result: 'error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
+            break;
+        }
+      } else {
+        console.log('Ignoring expected_responder_id ' + expected_responder_id + ': API_GOOGLE_AUTH_RESPONDED previously');
       }
     }
   }
