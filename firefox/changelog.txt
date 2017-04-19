@@ -1,5 +1,13 @@
 <div>
 
+<b>version 3.9.6 on April 18, 2017: Refactoring</b>
+reading: revise mdc message flag
+composing: searching contacts can cycle up (fixed)
+settings: re-word hide one time messages
+internal: revise environment detection
+internal: remove remaining unused files
+internal: better listener handling
+
 <b>version 3.9.5 on April 8, 2017: Cleanup</b>
 internal: removed unneeded libraries
 
