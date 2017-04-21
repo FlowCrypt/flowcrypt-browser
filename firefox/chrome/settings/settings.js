@@ -13,7 +13,7 @@ tool.browser.message.tab_id(function (tab_id) {
 
 function fetch_account_aliases_from_gmail(account_email, callback, query, from_emails) {
   from_emails = from_emails || [];
-  query = query || 'newer_than:1y in:sent';
+  query = query || 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
   tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
       fetch_account_aliases_from_gmail(account_email, callback, query + ' -from:"' + tool.str.trim_lower(headers.from) + '"', from_emails.concat(tool.str.trim_lower(headers.from)));
