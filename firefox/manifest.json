@@ -119,7 +119,7 @@
       ]
     }
   ], 
-  "description": "Free end-to-end encryption to secure email and attachments on Google.", 
+  "description": "Simple end-to-end encryption to secure email and attachments on Google.", 
   "icons": {
     "128": "/img/logo-128-128-white-green.png", 
     "16": "/img/logo-16-16-white-green.png", 
