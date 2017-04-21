@@ -11,8 +11,11 @@ function content_script_notifications() {
           content_script_notification_show('CryptUp was successfully set up for this account. <a href="#" class="close">close</a>');
         });
       } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
-        var backup_url = tool.env.url_create('_PLUGIN/settings/modules/backup.htm', { account_email: account_email });
-        content_script_notification_show('<a href="' + backup_url + '">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>');
+        content_script_notification_show('<a href="#" class="action_backup">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
+          action_backup: function() {
+            tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/backup.htm' });
+          },
+        });
       }
     });
   }
@@ -22,7 +25,7 @@ function content_script_notifications() {
   }
 
   function content_script_notification_show(text, callbacks) {
-    $('.webmail_notifications').html('<div class="webmail_notification">' + text.replace(/_PLUGIN/g, chrome.extension.getURL('/chrome')) + '</div>');
+    $('.webmail_notifications').html('<div class="webmail_notification">' + text + '</div>');
     if(!callbacks) {
       callbacks = {};
     }
