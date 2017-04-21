@@ -1,5 +1,11 @@
 <div>
 
+<b>version 3.9.7 on April 20, 2017: Firefox styles</b>
+setup; firefox backup prompt notification doesn't work
+setup: exclude google standard email addresses from send-from
+setup: Differentiate browsers when submitting help message
+reading: Firefox pgp block styling overflow
+
 <b>version 3.9.6 on April 18, 2017: Refactoring</b>
 reading: revise mdc message flag
 composing: searching contacts can cycle up (fixed)
