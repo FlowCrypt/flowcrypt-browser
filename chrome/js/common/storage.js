@@ -64,9 +64,8 @@ function get_storage(storage_type) {
 
 function notify_about_storage_access_error(account_email, parent_tab_id) {
   if(parent_tab_id) {
-    var update_settings_link = tool.env.url_create('chrome-extension://bnjglocicdkmhmoohhfkfkbbkejdhdgc/chrome/settings/index.htm', { account_email: account_email, page: '/chrome/texts/chrome_content_settings.htm' });
-    var msg = 'Some browser settings are keeping CryptUp from working properly. <a href="' + update_settings_link + '" target="cryptup">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
-    tool.browser.message.send(parent_tab_id, 'notification_show', { notification: msg });
+    var msg = 'Your browser settings are keeping CryptUp from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
+    tool.browser.message.send(parent_tab_id, 'notification_show', {notification: msg});
   } else {
     console.log('SecurityError: cannot access localStorage or sessionStorage');
   }
@@ -329,7 +328,15 @@ function db_denied() {
 }
 
 function db_open(callback) {
-  var open_db = indexedDB.open('cryptup', 2);
+  try {
+    var open_db = indexedDB.open('cryptup', 2);
+  } catch (error) {
+    if(error.name === 'SecurityError') { // firefox
+      callback(db_denied);
+      return;
+    }
+    throw error;
+  }
   open_db.onupgradeneeded = function (event) {
     if(event.oldVersion < 1) {
       var contacts = open_db.result.createObjectStore('contacts', { keyPath: 'email', });
@@ -352,7 +359,7 @@ function db_open(callback) {
     db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
   });
   open_db.onerror = catcher.try(function () {
-    if(open_db.error.message === 'The user denied permission to access the database.') {
+    if(open_db.error.message === 'The user denied permission to access the database.') { // chrome
       callback(db_denied);
     } else {
       db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);

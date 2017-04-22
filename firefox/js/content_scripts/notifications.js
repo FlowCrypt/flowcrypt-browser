@@ -24,7 +24,7 @@ function content_script_notifications() {
     $('.webmail_notifications').html('');
   }
 
-  function content_script_notification_show(text, callbacks) {
+  function content_script_notification_show(text, callbacks, account_email) {
     $('.webmail_notifications').html('<div class="webmail_notification">' + text + '</div>');
     if(!callbacks) {
       callbacks = {};
@@ -41,6 +41,11 @@ function content_script_notifications() {
     if(typeof callbacks.reload === 'undefined') {
       callbacks.reload = catcher.try(function () {
         window.location.reload();
+      });
+    }
+    if(typeof callbacks.content_settings === 'undefined') {
+      callbacks.content_settings = catcher.try(function () {
+        tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/texts/' + tool.env.browser().name + '_content_settings.htm' });
       });
     }
     $.each(callbacks, function (name, callback) {

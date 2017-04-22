@@ -149,7 +149,7 @@ function content_script_setup_if_vacant(webmail_specific) {
         }
       },
       notification_show: function (data) {
-        notifications.show(data.notification, data.callbacks);
+        notifications.show(data.notification, data.callbacks, account_email);
         $('body').one('click', catcher.try(notifications.clear));
       },
       close_dialog: function (data) {
