@@ -1,5 +1,8 @@
 <div>
 
+<b>version 3.9.8 on April 21, 2017: Firefox reload</b>
+setup: firefox extension init and reload
+
 <b>version 3.9.7 on April 20, 2017: Firefox styles</b>
 setup; firefox backup prompt notification doesn't work
 setup: exclude google standard email addresses from send-from
