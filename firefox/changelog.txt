@@ -1,5 +1,10 @@
 <div>
 
+<b>version 3.9.9 on April 22, 2017: Bugfixes</b>
+settings: problem viewing messages in firefox - cookie settings
+settings: remove simple fix from chrome content settings
+internal: refreshing auth token on the background page
+
 <b>version 3.9.8 on April 21, 2017: Firefox reload</b>
 setup: firefox extension init and reload
 
