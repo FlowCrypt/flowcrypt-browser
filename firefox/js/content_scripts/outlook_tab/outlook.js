@@ -4,7 +4,8 @@
 
 catcher.try(function() {
 
-  var replace_pgp_elements_interval = 1000;
+  var replace_pgp_elements_interval_ms = 1000;
+  var replace_pgp_elements_interval;
   var replacer;
 
   content_script_setup_if_vacant({
@@ -24,15 +25,20 @@ catcher.try(function() {
     start: start,
   });
 
-  function start(account_email, inject, notifications, factory) {
+  function start(account_email, inject, notifications, factory, notify_murdered) {
     account_storage_get(account_email, ['addresses'], function (storage) {
       inject.buttons();
       replacer = outlook_element_replacer(factory, account_email, storage.addresses || [account_email]);
       notifications.show_initial(account_email);
       replacer.everything();
-      TrySetDestroyableInterval(function () {
-        replacer.everything();
-      }, replace_pgp_elements_interval);
+      replace_pgp_elements_interval = TrySetDestroyableInterval(function () {
+        if(typeof window.$ === 'function') {
+          replacer.everything();
+        } else { // firefox will unload jquery when extension is restarted or updated.
+          clearInterval(replace_pgp_elements_interval);
+          notify_murdered();
+        }
+      }, replace_pgp_elements_interval_ms);
     });
   }
 

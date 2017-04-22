@@ -158,7 +158,7 @@ function content_script_setup_if_vacant(webmail_specific) {
     }, tab_id);
 
     tool.browser.message.send(null, 'migrate_account', { account_email: account_email }, function () {
-      webmail_specific.start(account_email, inject, notifications, factory);
+      webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
     });
   }
 
@@ -181,6 +181,10 @@ function content_script_setup_if_vacant(webmail_specific) {
         save_account_email_full_name(account_email);
       }
     }, 1000);
+  }
+
+  function notify_murdered() {
+    document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">CryptUp has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>';
   }
 
 }
