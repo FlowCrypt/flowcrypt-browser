@@ -31,8 +31,11 @@ tool.browser.message.listen_background({
     respond(true);
   },
   _tab_: function (request, sender, respond) {
-    // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-    respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
+    if(sender === null) {
+      respond(null); // background script
+    } else { // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+      respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
+    }
   },
 });
 

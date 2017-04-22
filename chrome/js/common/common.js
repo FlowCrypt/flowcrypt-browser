@@ -1131,7 +1131,7 @@
 
   /* tools.browser.message */
 
-  var background_script_shortcut_handlers;
+  var background_script_registered_handlers;
   var frame_registered_handlers = {};
   var standard_handlers = {
     set_css: function (data) {
@@ -1151,8 +1151,8 @@
   function browser_message_send(destination_string, name, data, callback) {
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10) };
     var is_background_page = env_is_background_script();
-    if (is_background_page && background_script_shortcut_handlers && msg.to === null) {
-      background_script_shortcut_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
+    if (is_background_page && background_script_registered_handlers && msg.to === null) {
+      background_script_registered_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
     } else if(is_background_page) {
       chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, function(r) {
         catcher.try(function() {
@@ -1177,7 +1177,13 @@
   }
 
   function browser_message_listen_background(handlers) {
-    background_script_shortcut_handlers = handlers;
+    if(!background_script_registered_handlers) {
+      background_script_registered_handlers = handlers;
+    } else {
+      $.each(handlers, function(name, handler) {
+        background_script_registered_handlers[name] = handler;
+      });
+    }
     chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
       var safe_respond = function (response) {
         try { // avoiding unnecessary errors when target tab gets closed
@@ -1192,8 +1198,8 @@
       if(msg.to && msg.to !== 'broadcast') {
         msg.sender = sender;
         chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, safe_respond);
-      } else if(tool.value(msg.name).in(Object.keys(handlers))) {
-        handlers[msg.name](msg.data, sender, safe_respond);
+      } else if(tool.value(msg.name).in(Object.keys(background_script_registered_handlers))) {
+        background_script_registered_handlers[msg.name](msg.data, sender, safe_respond);
       } else if(msg.to !== 'broadcast') {
         catcher.log('tool.browser.message.listen_background error: handler "' + msg.name + '" not set');
       }
@@ -2084,11 +2090,12 @@
         auth_request.scopes.push(scope);
       }
     });
-    browser_message_listen({
-      google_auth_window_result: function(result, sender, respond) {
-        google_auth_window_result_handler(auth_request.auth_responder_id, result, respond);
-      },
-    }, auth_request.tab_id);
+    var result_listener = { google_auth_window_result: function(result, sender, respond) { google_auth_window_result_handler(auth_request.auth_responder_id, result, respond); } };
+    if(auth_request.tab_id !== null) {
+      browser_message_listen(result_listener, auth_request.tab_id);
+    } else {
+      browser_message_listen_background(result_listener);
+    }
     var auth_code_window = window.open(api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
     // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
     // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
