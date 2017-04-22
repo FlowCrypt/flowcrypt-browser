@@ -3586,7 +3586,11 @@
     RUNTIME.environment = environment();
     if(!tool.env.is_background_script()) {
       tool.browser.message.send(null, 'runtime', null, function (extension_runtime) {
-        RUNTIME = extension_runtime;
+        if(typeof extension_runtime !== 'undefined') {
+          RUNTIME = extension_runtime;
+        } else {
+          setTimeout(figure_out_cryptup_runtime, 50);
+        }
       });
     }
   }
