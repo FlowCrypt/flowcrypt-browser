@@ -2,9 +2,10 @@
 
 'use strict';
 
+
 (function ( /* ALL TOOLS */ ) {
 
-  window.tool = {
+  var tool = window.tool = {
     str: {
       trim_lower: str_trim_lower, //todo - deprecate in favor of parse_email
       parse_email: str_parse_email,
@@ -229,6 +230,15 @@
     },
     e: function(name, attrs) {
       return $('<' + name + ' />', attrs)[0].outerHTML;
+    },
+    each: function(iterable, looper) {
+      for (var k in iterable) {
+        if(iterable.hasOwnProperty(k)){
+          if(looper(k, iterable[k]) === false) {
+            break;
+          }
+        }
+      }
     },
   };
 
@@ -491,13 +501,13 @@
   function str_message_difference(msg_1, msg_2) {
     var msg = [message_to_comparable_format(msg_1), message_to_comparable_format(msg_2)];
     var difference = [0, 0];
-    $.each(msg[0], function(i, word) {
+    tool.each(msg[0], function(i, word) {
       difference[0] += !tool.value(word).in(msg[1]);
     });
     if(!difference[0]) {
       return 0;
     }
-    $.each(msg[1], function(i, word) {
+    tool.each(msg[1], function(i, word) {
       difference[1] += !tool.value(word).in(msg[0]);
     });
     return Math.min(difference[0], difference[1]);
@@ -533,7 +543,7 @@
   }
 
   function env_is_background_script() {
-    return tool.value('_generated_background_page.html').in(window.location.href);
+    return window.location && tool.value('_generated_background_page.html').in(window.location.href);
   }
 
   function env_is_extension() {
@@ -549,7 +559,7 @@
   function env_url_params(expected_keys, string) {
     var raw_url_data = (string || window.location.search.replace('?', '')).split('&');
     var url_data = {};
-    $.each(raw_url_data, function (i, pair_string) {
+    tool.each(raw_url_data, function (i, pair_string) {
       var pair = pair_string.split('=');
       if(tool.value(pair[0]).in(expected_keys)) {
         url_data[pair[0]] = typeof env_url_param_decode_dict[pair[1]] !== 'undefined' ? env_url_param_decode_dict[pair[1]] : decodeURIComponent(pair[1]);
@@ -559,7 +569,7 @@
   }
 
   function env_url_create(link, params) {
-    $.each(params, function(key, value) {
+    tool.each(params, function(key, value) {
       if(typeof value !== 'undefined') {
         var transformed = obj_key_by_value(env_url_param_decode_dict, value);
         link += (!tool.value('?').in(link) ? '?' : '&') + key + '=' + encodeURIComponent(typeof transformed !== 'undefined' ? transformed : value);
@@ -631,7 +641,7 @@
 
   function arr_unique(array) {
     var unique = [];
-    $.each(array, function (i, v) {
+    tool.each(array, function (i, v) {
       if(!tool.value(v).in(unique)) {
         unique.push(v);
       }
@@ -654,7 +664,7 @@
 
   function arr_without_value(array, without_value) {
     var result = [];
-    $.each(array, function (i, value) {
+    tool.each(array, function (i, value) {
       if(value !== without_value) {
         result.push(value);
       }
@@ -688,7 +698,7 @@
 
   function obj_map(original_obj, f) {
     var mapped = {};
-    $.each(original_obj, function(k, v) {
+    tool.each(original_obj, function(k, v) {
       mapped[k] = f(v);
     });
     return mapped;
@@ -820,7 +830,7 @@
       header_from = parsed_mime_message.headers.from[0].address;
     }
     if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
-      $.each(parsed_mime_message.headers.to, function (i, to) {
+      tool.each(parsed_mime_message.headers.to, function (i, to) {
         if(to.address) {
           header_to.push(to.address);
         }
@@ -866,7 +876,7 @@
         var parsed = {};
         parser.onheader = function (node) {
           if(!String(node.path.join("."))) { // root node headers
-            $.each(node.headers, function (name, header) {
+            tool.each(node.headers, function (name, header) {
               mime_message_contents.headers[name] = header[0].value;
             });
           }
@@ -878,7 +888,7 @@
           }
         };
         parser.onend = function () {
-          $.each(parsed, function (path, node) {
+          tool.each(parsed, function (path, node) {
             if(node_type(node) === 'application/pgp-signature') {
               mime_message_contents.signature = tool.str.uint8_as_utf(node.content);
             } else if(node_type(node) === 'text/html' && !node_filename(node)) {
@@ -1057,7 +1067,7 @@
     var el = $(selector).first()[0];
     if(el) {
       el.scrollIntoView();
-      $.each(repeat, function(i, delay) { // useful if mobile keyboard is about to show up
+      tool.each(repeat, function(i, delay) { // useful if mobile keyboard is about to show up
         setTimeout(function() {
           el.scrollIntoView();
         }, delay);
@@ -1076,7 +1086,7 @@
       } else {
         var show = !storage.hide_pass_phrases;
       }
-      $.each(pass_phrase_input_ids, function (i, id) {
+      tool.each(pass_phrase_input_ids, function (i, id) {
         $('#' + id).addClass('toggled_passphrase');
         if(show) {
           $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
@@ -1186,7 +1196,7 @@
     if(!background_script_registered_handlers) {
       background_script_registered_handlers = handlers;
     } else {
-      $.each(handlers, function(name, handler) {
+      tool.each(handlers, function(name, handler) {
         background_script_registered_handlers[name] = handler;
       });
     }
@@ -1214,12 +1224,12 @@
   }
 
   function browser_message_listen(handlers, listen_for_tab_id) {
-    $.each(handlers, function(name, handler) {
+    tool.each(handlers, function(name, handler) {
       // newly registered handlers with the same name will overwrite the old ones if browser_message_listen is declared twice for the same frame
       // original handlers not mentioned in newly set handlers will continue to work
       frame_registered_handlers[name] = handler;
     });
-    $.each(standard_handlers, function(name, handler) {
+    tool.each(standard_handlers, function(name, handler) {
       if(frame_registered_handlers[name] !== 'function') {
         frame_registered_handlers[name] = handler; // standard handlers are only added if not already set above
       }
@@ -1252,8 +1262,8 @@
     var message_key_ids = message.getEncryptionKeyIds();
     var local_key_ids = crypto_key_ids(private_storage_get('local', account_email, 'master_public_key'));
     var diagnosis = { found_match: false, receivers: message_key_ids.length, };
-    $.each(message_key_ids, function (i, msg_k_id) {
-      $.each(local_key_ids, function (j, local_k_id) {
+    tool.each(message_key_ids, function (i, msg_k_id) {
+      tool.each(local_key_ids, function (j, local_k_id) {
         if(msg_k_id === local_k_id) {
           diagnosis.found_match = true;
           return false;
@@ -1268,7 +1278,7 @@
     account_storage_get(account_email, ['addresses'], function (storage) {
       api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
         if(success) {
-          $.each(pubkey_search_results.results, function (i, pubkey_search_result) {
+          tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
               diagnosis.has_pubkey_missing = true;
               diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, };
@@ -1304,21 +1314,21 @@
     var newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
     var spaces = [/&nbsp;/g];
     var removes = [/<wbr ?\/?>/g, /<\/?div>/g];
-    $.each(newlines, function (i, newline) {
+    tool.each(newlines, function (i, newline) {
       pgp_block_text = pgp_block_text.replace(newline, '\n');
     });
     if(debug) {
       console.log('pgp_block_2');
       console.log(pgp_block_text);
     }
-    $.each(removes, function (i, remove) {
+    tool.each(removes, function (i, remove) {
       pgp_block_text = pgp_block_text.replace(remove, '');
     });
     if(debug) {
       console.log('pgp_block_3');
       console.log(pgp_block_text);
     }
-    $.each(spaces, function (i, space) {
+    tool.each(spaces, function (i, space) {
       pgp_block_text = pgp_block_text.replace(space, ' ');
     });
     if(debug) {
@@ -1434,7 +1444,7 @@
     });
     if(replacement_text !== original_text) {
       if(has_password) {
-        $.each(password_sentences, function(i, remove_sentence_re) {
+        tool.each(password_sentences, function(i, remove_sentence_re) {
           replacement_text = replacement_text.replace(remove_sentence_re, '');
         });
       }
@@ -1503,7 +1513,7 @@
         var subkes_succeeded = 0;
         var subkeys_unusable = 0;
         var unknown_exception;
-        $.each(prv.subKeys, function(i, subkey) {
+        tool.each(prv.subKeys, function(i, subkey) {
           try {
             subkes_succeeded += subkey.subKey.decrypt(passphrase);
           } catch(subkey_e) {
@@ -1532,7 +1542,7 @@
       return true;
     }
     var found_expired_subkey = false;
-    $.each(key.subKeys, function (i, sub_key) {
+    tool.each(key.subKeys, function (i, sub_key) {
       if(sub_key.verify(key) === openpgp.enums.keyStatus.expired && openpgpjs_original_isValidEncryptionKeyPacket(sub_key.subKey, sub_key.bindingSignature)) {
         found_expired_subkey = true;
         return false;
@@ -1661,7 +1671,7 @@
     }
     keys.with_passphrases = [];
     keys.without_passphrases = [];
-    $.each(keys.potentially_matching, function (i, keyinfo) {
+    tool.each(keys.potentially_matching, function (i, keyinfo) {
       var passphrase = get_passphrase(account_email, keyinfo.longid);
       if(passphrase !== null) {
         var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
@@ -1745,7 +1755,7 @@
   function crypto_message_verify(message, keys_for_verification, optional_contact) {
     var signature = { signer: null, contact: optional_contact || null,  match: null, error: null };
     try {
-      $.each(message.verify(keys_for_verification), function (i, verify_result) {
+      tool.each(message.verify(keys_for_verification), function (i, verify_result) {
         signature.match = tool.value(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
         if(!signature.signer) {
           signature.signer = crypto_key_longid(verify_result.keyid.bytes);
@@ -1808,7 +1818,7 @@
           signature: crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]),
         });
       } else {
-        $.each(keys.with_passphrases, function (i, keyinfo) {
+        tool.each(keys.with_passphrases, function (i, keyinfo) {
           if(!counts.decrypted) {
             try {
               openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password, force_output_format)).then(function (decrypted) {
@@ -1852,8 +1862,8 @@
       var verifyResult = this.verify(primaryKey);
       return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
     }
-    $.each(keys, function (i, key) {
-      $.each(key.subKeys || [], function (i, sub_key) {
+    tool.each(keys, function (i, key) {
+      tool.each(key.subKeys || [], function (i, sub_key) {
         sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
       });
     });
@@ -1867,7 +1877,7 @@
     var used_challange = false;
     if(armored_pubkeys) {
       options.publicKeys = [];
-      $.each(armored_pubkeys, function (i, armored_pubkey) {
+      tool.each(armored_pubkeys, function (i, armored_pubkey) {
         options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
       });
       patch_public_keys_to_ignore_expiration(options.publicKeys);
@@ -1936,7 +1946,7 @@
       var content_type = 'application/json; charset=UTF-8';
     } else if(format === 'FORM') {
       var formatted_values = new FormData();
-      $.each(values, function (name, value) {
+      tool.each(values, function (name, value) {
         if(typeof value === 'object' && value.name && value.content && value.type) {
           formatted_values.append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
         } else {
@@ -2005,7 +2015,7 @@
     var reply_to_estimate = [last_message_sender].concat(last_message_recipients);
     var reply_to = [];
     var my_email = account_email;
-    $.each(reply_to_estimate, function (i, email) {
+    tool.each(reply_to_estimate, function (i, email) {
       if(email) {
         if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
           my_email = email;
@@ -2084,14 +2094,14 @@
     auth_request.auth_responder_id = tool.str.random(20);
     api_google_auth_responders[auth_request.auth_responder_id] = respond;
     auth_request.scopes = auth_request.scopes || [];
-    $.each(google_oauth2.scopes, function (i, scope) {
+    tool.each(google_oauth2.scopes, function (i, scope) {
       if(!tool.value(scope).in(auth_request.scopes)) {
         if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
           auth_request.scopes.push(scope);
         }
       }
     });
-    $.each(current_google_token_scopes || [], function (i, scope) {
+    tool.each(current_google_token_scopes || [], function (i, scope) {
       if(!tool.value(scope).in(auth_request.scopes)) {
         auth_request.scopes.push(scope);
       }
@@ -2398,7 +2408,7 @@
     tool.env.set_up_require();
     require(['emailjs-mime-builder'], function (MimeBuilder) {
       var root_node = new MimeBuilder('multipart/mixed');
-      $.each(headers, function (key, header) {
+      tool.each(headers, function (key, header) {
         root_node.addHeader(key, header);
       });
       if(typeof body === 'string') {
@@ -2408,12 +2418,12 @@
         var content_node = mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0]]);
       } else {
         var content_node = new MimeBuilder('multipart/alternative');
-        $.each(body, function (type, content) {
+        tool.each(body, function (type, content) {
           content_node.appendChild(mime_content_node(MimeBuilder, type, content));
         });
       }
       root_node.appendChild(content_node);
-      $.each(attachments || [], function (i, attachment) {
+      tool.each(attachments || [], function (i, attachment) {
         root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
           'Content-Disposition': 'attachment',
           'X-Attachment-Id': 'f_' + tool.str.random(10),
@@ -2466,7 +2476,7 @@
   function encode_as_multipart_related(parts) { // todo - this could probably be achieved with emailjs-mime-builder
     var boundary = 'this_sucks_' + str_random(10);
     var body = '';
-    $.each(parts, function(type, data) {
+    tool.each(parts, function(type, data) {
       body += '--' + boundary + '\n';
       body += 'Content-Type: ' + type + '\n';
       if(tool.value('json').in(type)) {
@@ -2533,7 +2543,7 @@
       api_gmail_find_attachments(gmail_email_object.payload, internal_results, internal_message_id);
     }
     if(typeof gmail_email_object.parts !== 'undefined') {
-      $.each(gmail_email_object.parts, function (i, part) {
+      tool.each(gmail_email_object.parts, function (i, part) {
         api_gmail_find_attachments(part, internal_results, internal_message_id);
       });
     }
@@ -2576,7 +2586,7 @@
       api_gmail_find_bodies(gmail_email_object.payload, internal_results);
     }
     if(typeof gmail_email_object.parts !== 'undefined') {
-      $.each(gmail_email_object.parts, function (i, part) {
+      tool.each(gmail_email_object.parts, function (i, part) {
         api_gmail_find_bodies(part, internal_results);
       });
     }
@@ -2627,7 +2637,7 @@
       }
       gmail_query.push('(to:' + variations_of_to.join(' OR to:') + ')');
     }
-    $.each(known_contacts, function (i, contact) {
+    tool.each(known_contacts, function (i, contact) {
       gmail_query.push('-to:"' + contact.email + '"');
     });
     api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), callback);
@@ -2670,7 +2680,7 @@
       var header_values = {};
       var missing_header = false;
       if(success) { // non-mission critical - just skip failed requests
-        $.each(header_names, function (i, header_name) {
+        tool.each(header_names, function (i, header_name) {
           header_values[header_name] = api_gmail_find_header(message_get_response, header_name);
           if(!header_values[header_name]) {
             missing_header = true;
@@ -2705,7 +2715,7 @@
             success_callback(armored_message_from_bodies);
           } else if(attachments.length) {
             var found = false;
-            $.each(attachments, function (i, attachment_meta) {
+            tool.each(attachments, function (i, attachment_meta) {
               if(attachment_meta.name.match(/\.asc$/) || attachment_meta.name === 'message') {
                 found = true;
                 api_gmail_fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
@@ -3016,7 +3026,7 @@
 
   function api_attester_packet_create_sign(values, decrypted_prv, callback) {
     var lines = [];
-    $.each(values, function (key, value) {
+    tool.each(values, function (key, value) {
       lines.push(key + ':' + value);
     });
     var content_text = lines.join('\n');
@@ -3050,7 +3060,7 @@
     if(matches && matches[1]) {
       result.text = matches[1].replace(/^\s+|\s+$/g, '');
       var lines = result.text.split('\n');
-      $.each(lines, function (i, line) {
+      tool.each(lines, function (i, line) {
         var line_parts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
         if(line_parts.length !== 2) {
           result.error = 'Wrong content line format';
@@ -3124,7 +3134,7 @@
   function api_cryptup_error_text(server_call_response) {
     if(server_call_response instanceof Array) {
       var results;
-      $.each(server_call_response, function(i, v) {
+      tool.each(server_call_response, function(i, v) {
         results += (i + 1) + ': ' + api_cryptup_error_text(v) + '\n';
       });
       return results.trim();
@@ -3374,7 +3384,7 @@
     }
     var results = new Array(items.length);
     var progress = arr_zeroes(items.length);
-    $.each(items, function (i, item) {
+    tool.each(items, function (i, item) {
       var values = item.fields;
       values.file = file_attachment('encrpted_attachment', 'application/octet-stream', item.attachment.content);
       api_call(item.base_url, '', values, function(success, s3_result) {
@@ -3598,39 +3608,44 @@
   }
 
   function figure_out_cryptup_runtime() {
-    try {
-      RUNTIME.version = window.chrome.runtime.getManifest().version;
-    } catch(err) {
-    }
-    RUNTIME.environment = environment();
-    if(!tool.env.is_background_script() && tool.env.is_extension()) {
-      tool.browser.message.send(null, 'runtime', null, function (extension_runtime) {
-        if(typeof extension_runtime !== 'undefined') {
-          RUNTIME = extension_runtime;
-        } else {
-          setTimeout(figure_out_cryptup_runtime, 50);
-        }
-      });
+    if(window.is_bare_engine !== true) {
+      try {
+        RUNTIME.version = window.chrome.runtime.getManifest().version;
+      } catch(err) {
+      }
+      RUNTIME.environment = environment();
+      if(!tool.env.is_background_script() && tool.env.is_extension()) {
+        tool.browser.message.send(null, 'runtime', null, function (extension_runtime) {
+          if(typeof extension_runtime !== 'undefined') {
+            RUNTIME = extension_runtime;
+          } else {
+            setTimeout(figure_out_cryptup_runtime, 50);
+          }
+        });
+      }
     }
   }
 
-  window.catcher = {
-    handle_error: handle_error,
-    handle_exception: handle_exception,
-    log: log,
-    info: info,
-    version: cryptup_version,
-    try: try_wrapper,
-    environment: environment,
-    test: test,
-  };
+  if(window.is_bare_engine !== true) {
+    window.catcher = { // web and extension code
+      handle_error: handle_error,
+      handle_exception: handle_exception,
+      log: log,
+      info: info,
+      version: cryptup_version,
+      try: try_wrapper,
+      environment: environment,
+      test: test,
+    };
+  }
 
 })();
+
 
 (function ( /* EXTENSIONS AND CONFIG */ ) {
 
   if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
-    window.openpgp.config.versionstring = 'CryptUp ' + (catcher.version() || '') + ' Easy Gmail Encryption https://cryptup.org';
+    window.openpgp.config.versionstring = 'CryptUp ' + (catcher.version() || '') + ' Gmail Encryption https://cryptup.org';
     window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
   }
 
