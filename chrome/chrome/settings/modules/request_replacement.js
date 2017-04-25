@@ -30,7 +30,7 @@ tool.api.attester.lookup_email(url_params.account_email, function (success, keys
         alert('This is your current key. Look for an older one. It will look very similar.');
       } else if(tool.crypto.key.fingerprint(old_key) !== tool.crypto.key.fingerprint(keyserver_result.pubkey)) {
         alert('Key does not match. Please try another key if you have multiple.');
-      } else if(tool.crypto.key.decrypt(old_key, $('.input_passphrase').val()) === false) {
+      } else if(!tool.crypto.key.decrypt(old_key, $('.input_passphrase').val()).success) {
         alert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
       } else {
         var request_replacement = {

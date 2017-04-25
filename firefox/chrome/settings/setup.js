@@ -287,7 +287,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
     var worked = false;
     $.each(recovered_keys, function (i, recovered_key) {
       var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
-      if(tool.crypto.key.decrypt(recovered_key, passphrase) === true) {
+      if(tool.crypto.key.decrypt(recovered_key, passphrase).success) {
         var options = {
           submit_main: false, // todo - think about submitting when recovering
           submit_all: false,
@@ -396,11 +396,9 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
   } else {
     var decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(normalized_armored_key).keys[0], passphrase);
-    if(decrypt_result === false) {
-      alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
-      $('#step_2b_manual_enter .input_passphrase').val('');
-      $('#step_2b_manual_enter .input_passphrase').focus();
-    } else if(decrypt_result === true) {
+    if(decrypt_result.error) {
+      alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.error + ')');
+    } else if (decrypt_result.success) {
       if(prv.getEncryptionKeyPacket() !== null) {
         $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
         var options = {
@@ -418,7 +416,9 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
         alert('This looks like a valid key but it cannot be used for encryption. Please write me at tom@cryptup.org to see why is that. I\'m VERY prompt to respond.');
       }
     } else {
-      alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.message + ')');
+      alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
+      $('#step_2b_manual_enter .input_passphrase').val('');
+      $('#step_2b_manual_enter .input_passphrase').focus();
     }
   }
 });

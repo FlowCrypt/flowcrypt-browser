@@ -1503,12 +1503,12 @@
     return openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds();
   }
 
-  function crypto_key_decrypt(prv, passphrase) { // returns true, false, or RETURNS a caught known exception
+  function crypto_key_decrypt(prv, passphrase) { // {success: true|false, error: undefined|str}
     try {
-      return prv.decrypt(passphrase);
+      return {success: prv.decrypt(passphrase)};
     } catch(primary_e) {
       if(!tool.value(primary_e.message).in(['Unknown s2k type.', 'Invalid enum value.'])) {
-        return new Error('primary decrypt error: "' + primary_e.message + '"'); // unknown exception for master key
+        return {success: false, error: 'primary decrypt error: "' + primary_e.message + '"'}; // unknown exception for master key
       } else if(prv.subKeys.length) {
         var subkes_succeeded = 0;
         var subkeys_unusable = 0;
@@ -1525,11 +1525,11 @@
           }
         });
         if(unknown_exception) {
-          return new Error('subkey decrypt error: "' + unknown_exception.message + '"');
+          return {success: false, error: 'subkey decrypt error: "' + unknown_exception.message + '"'};
         }
-        return subkes_succeeded > 0 && (subkes_succeeded + subkeys_unusable) === prv.subKeys.length;
+        return {success: subkes_succeeded > 0 && (subkes_succeeded + subkeys_unusable) === prv.subKeys.length};
       } else {
-        return new Error('primary decrypt error and no subkeys to try: "' + primary_e.message + '"');
+        return {success: false, error: 'primary decrypt error and no subkeys to try: "' + primary_e.message + '"'};
       }
     }
   }
@@ -1675,8 +1675,7 @@
       var passphrase = get_passphrase(account_email, keyinfo.longid);
       if(passphrase !== null) {
         var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
-        var decrypted = crypto_key_decrypt(key, passphrase);
-        if(decrypted === true) {
+        if(crypto_key_decrypt(key, passphrase).success) {
           keyinfo.decrypted = key;
           keys.with_passphrases.push(keyinfo);
         } else {

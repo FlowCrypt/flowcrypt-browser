@@ -29,9 +29,9 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
       alert('This is one of your current keys.');
     } else {
       var decrypt_result = tool.crypto.key.decrypt(new_key, passphrase);
-      if(decrypt_result === false) {
-        alert('The pass phrase does not match. Please try a different pass phrase.');
-      } else if(decrypt_result === true) {
+      if(decrypt_result.error) {
+        alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
+      } else if(decrypt_result.success) {
         private_keys_add(url_params.account_email, normalized_armored_key);
         if($('#step_2b_manual_enter .input_passphrase_save').prop('checked')) {
           save_passphrase('local', url_params.account_email, new_key_longid, passphrase);
@@ -40,7 +40,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
         }
         tool.browser.message.send(url_params.parent_tab_id, 'reload', { advanced: true });
       } else {
-        alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.message + ')');
+        alert('The pass phrase does not match. Please try a different pass phrase.');
       }
     }
   }

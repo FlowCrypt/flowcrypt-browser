@@ -34,7 +34,7 @@ function display_block(name) {
 
 $('.action_enter').click(function () {
   var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
-  if(tool.crypto.key.decrypt(key, $('#original_password').val()) === true) {
+  if(tool.crypto.key.decrypt(key, $('#original_password').val()).success) {
     original_passphrase = $('#original_password').val();
     display_block('step_1_password');
   } else {

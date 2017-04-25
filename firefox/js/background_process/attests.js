@@ -74,8 +74,7 @@ function process_attest_packet_text(account_email, attest_packet_text, passphras
   var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
   is_already_attested(account_email, attest.attester, function (is_attested) {
     if (!is_attested) {
-      var decrypted = tool.crypto.key.decrypt(key, passphrase || get_passphrase(account_email));
-      if (decrypted) {
+      if (tool.crypto.key.decrypt(key, passphrase || get_passphrase(account_email)).success) {
         var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
         var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.trim_lower(account_email));
         if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {

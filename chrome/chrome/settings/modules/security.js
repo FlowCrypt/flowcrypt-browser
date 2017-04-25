@@ -32,7 +32,7 @@ $('.confirm_passphrase_requirement_change').click(function () {
     }
   } else { // save pass phrase
     var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
-    if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()) === true) {
+    if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {
       private_storage_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
       window.location.reload();
     } else {

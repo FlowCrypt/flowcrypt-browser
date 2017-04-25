@@ -14,7 +14,7 @@ $.each(private_keys_get(url_params.account_email), function (i, keyinfo) {
 });
 
 $('.action_verify').click(function () {
-  if(tool.crypto.key.decrypt(key, $('#password').val()) === true) {
+  if(tool.crypto.key.decrypt(key, $('#password').val()).success) {
     $('#content').html('<div class="line">Your pass phrase matches. Good job! You\'re all set.</div><div class="line"><div class="button green close">close</div></div>');
     $('.close').click(function () {
       tool.browser.message.send(url_params.parent_tab_id, 'close_page');
