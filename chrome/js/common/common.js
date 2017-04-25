@@ -37,6 +37,7 @@
       browser: env_browser,
       runtime_id: env_extension_runtime_id,
       is_background_script: env_is_background_script,
+      is_extension: env_is_extension,
       url_params: env_url_params,
       url_create: env_url_create,
       key_codes: env_key_codes,
@@ -214,6 +215,7 @@
         message_reply: api_cryptup_message_reply,
         message_contact: api_cryptup_message_contact,
         link_message: api_cryptup_link_message,
+        link_me: api_cryptup_link_me,
         account_update: api_cryptup_account_update,
       },
       aws: {
@@ -321,7 +323,7 @@
 
   function str_untrusted_text_as_sanitized_html(text_or_html, callback) {
     var nl = '_cryptup_newline_placeholder_' + str_random(3) + '_';
-    str_html_as_text(text_or_html.replace(/<br ?\/?>[\r?\n]/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'), function(plain) {
+    str_html_as_text(text_or_html.replace(/<br ?\/?> ?\r?\n/gm, nl).replace(/\r?\n/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'), function(plain) {
       callback(plain.trim().replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, function (spaces) {
         return '&nbsp;'.repeat(spaces.length);
       }));
@@ -532,6 +534,10 @@
 
   function env_is_background_script() {
     return tool.value('_generated_background_page.html').in(window.location.href);
+  }
+
+  function env_is_extension() {
+    return env_extension_runtime_id() !== null;
   }
 
   var env_url_param_decode_dict = {
@@ -2016,7 +2022,7 @@
 
   /* tool.api.google */
 
-  var google_oauth2 = chrome.runtime.getManifest().oauth2;
+  var google_oauth2 = window.chrome && window.chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().oauth2 : null;
   var api_google_auth_responders = {};
   var API_GOOGLE_AUTH_RESPONDED = 'RESPONDED';
 
@@ -3306,10 +3312,15 @@
     }, api_cryptup_response_formatter(callback));
   }
 
-
   function api_cryptup_link_message(short, callback) {
     return api_cryptup_call('link/message', {
       short: short,
+    }, api_cryptup_response_formatter(callback));
+  }
+
+  function api_cryptup_link_me(alias, callback) {
+    return api_cryptup_call('link/me', {
+      alias: alias,
     }, api_cryptup_response_formatter(callback));
   }
 
@@ -3589,9 +3600,10 @@
   function figure_out_cryptup_runtime() {
     try {
       RUNTIME.version = window.chrome.runtime.getManifest().version;
-    } catch(err) {}
+    } catch(err) {
+    }
     RUNTIME.environment = environment();
-    if(!tool.env.is_background_script()) {
+    if(!tool.env.is_background_script() && tool.env.is_extension()) {
       tool.browser.message.send(null, 'runtime', null, function (extension_runtime) {
         if(typeof extension_runtime !== 'undefined') {
           RUNTIME = extension_runtime;
