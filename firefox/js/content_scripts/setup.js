@@ -4,6 +4,13 @@
 
 function content_script_setup_if_vacant(webmail_specific) {
 
+  /*
+   This tries to deal with initial environment setup and plugin updtates in a running tab.
+   - vacant: no influence of previous script is apparent in the DOM
+   - destroy: script from old world will receive destroy event from new script (DOM event) and tear itself down. Should cause tab to be vacant.
+   - murdered: what Firefox does to detached scripts. Will NOT cause tab to be vacant.
+   */
+
   if(!window.injected) {
 
     window.injected = true; // background script will use this to test if scripts were already injected, and inject if not
@@ -54,6 +61,8 @@ function content_script_setup_if_vacant(webmail_specific) {
 
     if(window.vacant()) {
       wait_for_account_email_then_setup();
+    } else if(tool.env.browser().name === 'firefox') {
+      notify_murdered();
     }
 
   }
