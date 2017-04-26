@@ -147,6 +147,7 @@
       auth: {
         window: api_auth_window,
         process_fragment: api_auth_process_and_save_fragment,
+        parse_id_token: api_auth_parse_id_token,
       },
       error: {
         network: 'API_ERROR_NETWORK',
