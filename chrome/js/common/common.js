@@ -2129,7 +2129,7 @@
     }
 
     function api_google_auth_window_closed_watcher() {
-      if(auth_code_window !== null && auth_code_window.closed) { // on firefox it seems to be sometimes returning a null, due to popup blocking
+      if(auth_code_window !== null && typeof auth_code_window !== 'undefined' && auth_code_window.closed) { // on firefox it seems to be sometimes returning a null, due to popup blocking
         clearInterval(window_closed_timer);
         if(api_google_auth_responders[auth_request.auth_responder_id] !== API_GOOGLE_AUTH_RESPONDED) {
           // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
