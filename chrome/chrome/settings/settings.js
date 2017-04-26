@@ -5,8 +5,6 @@
 var settings_url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'embedded']);
 var settings_tab_id_global = undefined;
 
-var recovery_email_subjects = ['Your CryptUp Backup', 'Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
-
 tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
@@ -116,13 +114,7 @@ function fetch_email_key_backups(account_email, email_provider, callback) {
     catcher.log('fetch_email_key_backups not implemented for ' + email_provider);
     callback(false, 'fetch_email_key_backups not implemented for ' + email_provider);
   } else {
-    var q = [
-      'from:' + account_email,
-      'to:' + account_email,
-      '(subject:"' + recovery_email_subjects.join('" OR subject: "') + '")',
-      '-is:spam',
-    ];
-    tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
+    tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true, function (success, response) {
       if(success) {
         if(response.messages) {
           var message_ids = [];
