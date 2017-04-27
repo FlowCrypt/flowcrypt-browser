@@ -407,20 +407,20 @@ table#compose #error_container_reply_message #error_text_reply_message { display
 .inline_loader {  display: inline; width: 120px; margin: 0 auto!important; padding: 0!important; position: relative;}
 .inline_loader svg { display: inline; position: absolute; left:0; right: 0; top: -2px;}
 
-body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; z-index: 0; }
+body.attachment { border: 1px solid #dadada; border-radius: 2px; text-align: center; font-size: 11px; z-index: 0; height: 118px; width: 178px; overflow: hidden; }
 body.attachment:hover { border-color: #eaeaea; }
-body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; right:13px; opacity: 1; color: #444; visibility: hidden; }
+body.attachment #download { position: absolute; width: 100px;  z-index: 1; background-color: white; height: 80px; left:68px; opacity: 1; color: #444; visibility: hidden; }
 body.attachment #download:hover, body.attachment:hover #download { visibility: visible; cursor: pointer; }
 body.attachment #download.visible { visibility: visible; }
 body.attachment #download .large_spinner { margin-top: 7px; margin-left: 20px; }
 body.attachment #download .download-icon { margin-top: 15px; margin-bottom: 8px; }
 body.attachment #download .download-prompt { margin-top:1px; font-size: 14px; }
 body.attachment #download .download_progress { position: absolute; top: 39px; margin-left: -1px; font-weight: bold; }
-body.attachment #header { margin-top:10px; padding-bottom: 0; font-weight: 400; font-size: 14px; width: 100px; text-align: left; position: absolute; right: 5px; line-height: 1.5;
+body.attachment #header { margin-top:10px; padding-bottom: 0; font-weight: 400; font-size: 14px; width: 100px; text-align: left; position: absolute; left: 75px; line-height: 1.5;
   top:15px; overflow: hidden;}
 body.attachment #type { padding: 10px 0; color: #999; }
-body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; bottom: 0; left: 0; right: 0; border: 1px solid #dadada; overflow: hidden; white-space: nowrap;
-  text-overflow: ellipsis; }
+body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolute; border: 1px solid #dadada; overflow: hidden; white-space: nowrap;
+  text-overflow: ellipsis; top: 92px; width: 154px; left: 0; }
 body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
 body.attachment .file-format-holder img#file-format { width: 45px; height: auto; margin-top: 12px; opacity: .2; margin-left: 10px;}
 

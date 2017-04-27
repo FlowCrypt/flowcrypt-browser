@@ -116,27 +116,27 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function replace_attachments() {
     $('div.aQH').each(function (i, attachments_container) {
       attachments_container = $(attachments_container);
-      var new_pgp_messages = attachments_container.children(tool.file.pgp_name_patterns().map(get_attachment_selector).join(',')).not('.evaluated').addClass('evaluated');
-      if(new_pgp_messages.length) {
+      var new_pgp_attachments = filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
+      if(new_pgp_attachments.length) {
         var message_id = determine_message_id('attachment', attachments_container);
         if(message_id) {
           if(can_read_emails) {
-            $(new_pgp_messages).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner('green')));
+            $(new_pgp_attachments).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner('green')));
             tool.api.gmail.message_get(account_email, message_id, 'full', function (success, message) {
               if(success) {
                 process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container);
               } else {
-                $(new_pgp_messages).find('.attachment_loader').text('Failed to load');
+                $(new_pgp_attachments).find('.attachment_loader').text('Failed to load');
               }
             });
           } else {
             var status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_messages).prepend(factory.embedded.attachment_status(status_message)).children('a.auth_settings').click(catcher.try(function () {
+            $(new_pgp_attachments).prepend(factory.embedded.attachment_status(status_message)).children('a.auth_settings').click(catcher.try(function () {
               tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {
-          $(new_pgp_messages).prepend(factory.embedded.attachment_status('Unknown message id'));
+          $(new_pgp_attachments).prepend(factory.embedded.attachment_status('Unknown message id'));
         }
       }
     });
@@ -149,7 +149,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     attachments_container.parent().find('span.aVW').css('visibility', 'hidden'); // original gmail header showing amount of attachments
     $.each(attachment_metas, function(i, attachment_meta) {
       if(attachment_meta.treat_as !== 'original') {
-        var attachment_selector = attachments_container.find(get_attachment_selector(attachment_meta.name || 'noname')).first();
+        var attachment_selector = filter_attachments(attachments_container.children(), [attachment_meta.name || 'noname']).first();
         hide_attachment(attachment_selector, attachments_container);
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
           attachments_container.prepend(factory.embedded.attachment(attachment_meta));
@@ -193,8 +193,20 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     }
   }
 
-  function get_attachment_selector(file_name_filter) {
-    return 'span[download_url*="' + (file_name_filter.indexOf('*.') === 0 ? file_name_filter.substr(1) : ':' + file_name_filter).replace(/@/g, '%40') + ':https"]:visible';
+  function filter_attachments(potential_matches, patterns) {
+    return potential_matches.filter('span.aZo, span.a5r').find('span.aV3').filter(function() {
+      var name = this.innerText.trim();
+      for(var i = 0; i < patterns.length; i++) {
+        if(patterns[i].indexOf('*.') === 0) { // wildcard
+          if(name.endsWith(patterns[i].substr(1))) {
+            return true;
+          }
+        } else if (name === patterns[i]){ // exact match
+          return true;
+        }
+      }
+      return false;
+    }).closest('span.aZo, span.a5r');
   }
 
   function hide_attachment(atachment_element, attachments_container_selector) {

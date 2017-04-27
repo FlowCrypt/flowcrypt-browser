@@ -4,12 +4,13 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'download']);
 if(url_params.size) {
   url_params.size = parseInt(url_params.size);
 }
 
 var original_content;
+var button = $('#download');
 
 db_open(function (db) {
 
@@ -98,12 +99,12 @@ db_open(function (db) {
         $('#download').html(original_content).removeClass('visible');
         if(result.success) {
           tool.file.save_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
+          if(url_params.download) { // it was downloaded automatically in a new window: close the window
+            setTimeout(function() { window.close(); }, 1000);
+          }
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
-          tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {
-            type: 'attachment',
-            longids: result.missing_passphrases,
-          });
+          tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.missing_passphrases});
           clearInterval(passphrase_interval);
           passphrase_interval = setInterval(check_passphrase_entered, 1000);
         } else {
@@ -134,11 +135,11 @@ db_open(function (db) {
     }
   }
 
-  $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+  function download() {
     tool.env.increment('download');
-    original_content = $(self).html();
-    $(self).addClass('visible');
-    $(self).html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
+    original_content = button.html();
+    button.addClass('visible');
+    button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
     progress_element = $('.download_progress');
     if(url_params.attachment_id) {
       tool.api.gmail.attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
@@ -151,6 +152,18 @@ db_open(function (db) {
     } else {
       throw Error('Missing both attachment_id and url');
     }
-  }));
+  }
+
+  if(url_params.download) {
+    download();
+  } else {
+    $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
+      if(tool.env.browser().name !== 'firefox') { // download from within iframe in all browsers except firefox
+        download();
+      } else { // download in a new tab in firefox
+        window.open(window.location.href + tool.env.url_create('', {download: true}).replace('?', '&'), '_blank');
+      }
+    }));
+  }
 
 });
