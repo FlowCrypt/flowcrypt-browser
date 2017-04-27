@@ -1,5 +1,14 @@
 <div>
 
+<b>version 4.0.0 on April 26, 2017: Firefox Release</b>
+setup: firefox fixing update notification
+reading: fix encrypted attachments in Firefox
+composing: fix firefox message password entry
+internal: firefox chrome compatibility
+internal: problem watching for closed auth window from background script
+internal: refactor crypto_key_decrypt
+internal: update tool for web and Android
+
 <b>version 3.9.9 on April 22, 2017: Bugfixes</b>
 settings: problem viewing messages in firefox - cookie settings
 settings: remove simple fix from chrome content settings
