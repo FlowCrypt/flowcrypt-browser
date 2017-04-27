@@ -1126,6 +1126,9 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function on_render() {
+    if(tool.env.browser().name === 'firefox') { // the padding cause issues in firefoxx where user cannot click on the message password
+      S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
+    }
     $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), extract_process_encrypt_and_send_message)).keypress(tool.ui.enter(extract_process_encrypt_and_send_message));
     S.cached('input_to').keydown(respond_to_input_hotkeys);
     S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
