@@ -204,18 +204,23 @@ db_open(function (db) {
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       var attachment = included_attachments[$(self).attr('index')];
-      if(attachment.content) {
-        tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
+      if(tool.env.browser().name !== 'firefox') {
+        if(attachment.content) {
+          tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
+        } else {
+          $(self).find('.progress').prepend(tool.ui.spinner('green'));
+          tool.file.download_as_uint8(attachment.url, function(percent, load, total) {
+            render_progress($(self).find('.progress .percent'), percent, load, total || attachment.size);
+          }, function (success, downloaded) {
+            setTimeout(function() {
+              $(self).find('.progress').html('');
+            }, 200);
+            decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
+          });
+        }
       } else {
-        $(self).find('.progress').prepend(tool.ui.spinner('green'));
-        tool.file.download_as_uint8(attachment.url, function(percent, load, total) {
-          render_progress($(self).find('.progress .percent'), percent, load, total || attachment.size);
-        }, function (success, downloaded) {
-          setTimeout(function() {
-            $(self).find('.progress').html('');
-          }, 200);
-          decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
-        });
+        var aup = {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, download: true, name: attachment.name, type: attachment.type, size: attachment.size, url: attachment.url};
+        window.open(tool.env.url_create('/chrome/elements/attachment.htm',  aup), '_blank');
       }
     }));
   }
