@@ -204,7 +204,7 @@ db_open(function (db) {
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       var attachment = included_attachments[$(self).attr('index')];
-      if(tool.env.browser().name !== 'firefox') {
+      if(tool.env.browser().name !== 'firefox') { // non-firefox: download directly
         if(attachment.content) {
           tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
         } else {
@@ -218,9 +218,14 @@ db_open(function (db) {
             decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
           });
         }
-      } else {
-        var aup = {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, download: true, name: attachment.name, type: attachment.type, size: attachment.size, url: attachment.url};
-        window.open(tool.env.url_create('/chrome/elements/attachment.htm',  aup), '_blank');
+      } else { // firefox: open in another tab
+        var p = {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, download: true, name: attachment.name, type: attachment.type, size: attachment.size};
+        if(attachment.url) {
+          p.url = attachment.url;
+        } else {
+          p.content = tool.str.base64url_encode((typeof attachment.content === 'string') ? attachment.content : tool.str.from_uint8(attachment.content));
+        }
+        window.open(tool.env.url_create('/chrome/elements/attachment.htm',  p), '_blank');
       }
     }));
   }

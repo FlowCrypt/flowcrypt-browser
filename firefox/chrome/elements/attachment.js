@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'download']);
+var url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'download', 'content']);
 if(url_params.size) {
   url_params.size = parseInt(url_params.size);
 }
@@ -155,7 +155,12 @@ db_open(function (db) {
   }
 
   if(url_params.download) {
-    download();
+    if(url_params.content) {
+      tool.file.save_to_downloads(url_params.name, url_params.type, tool.str.to_uint8(tool.str.base64url_decode(url_params.content)));
+      setTimeout(function() { window.close(); }, 1000);
+    } else {
+      download();
+    }
   } else {
     $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
       if(tool.env.browser().name !== 'firefox') { // download from within iframe in all browsers except firefox
