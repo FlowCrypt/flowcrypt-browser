@@ -3145,8 +3145,7 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    api_call('https://api.cryptup.io/', path, values, callback, format || 'JSON');
-    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
+    api_call('https://api.cryptup.io/', path, values, callback, format || 'JSON', null, {'api-version': 1});
   }
 
   function api_cryptup_auth_error() {
