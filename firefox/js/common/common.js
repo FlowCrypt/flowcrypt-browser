@@ -867,18 +867,20 @@
     return text;
   }
 
+  function mime_require(callback) {
+    if(typeof MimeParser !== 'undefined') {
+      callback(MimeParser);
+    } else {
+      tool.env.set_up_require();
+      require(['emailjs-mime-parser'], callback);
+    }
+  }
+
   function mime_decode(mime_message, callback) {
-    tool.env.set_up_require();
-    var mime_message_contents = {
-      attachments: [],
-      headers: {},
-      text: undefined,
-      html: undefined,
-      signature: undefined,
-    };
-    require(['emailjs-mime-parser'], function (MimeParser) {
+    var mime_message_contents = {attachments: [], headers: {}, text: undefined, html: undefined, signature: undefined};
+    mime_require(function (emailjs_mime_parser) {
       try {
-        var parser = new MimeParser();
+        var parser = new emailjs_mime_parser();
         var parsed = {};
         parser.onheader = function (node) {
           if(!String(node.path.join("."))) { // root node headers
