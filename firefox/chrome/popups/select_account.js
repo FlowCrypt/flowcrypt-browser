@@ -4,8 +4,10 @@
 
 var url_params = tool.env.url_params(['action']);
 
+var page = null;
 if(url_params.action === 'new_message') {
-  $('#title').text('Choose account for new message')
+  $('#title').text('Choose account for new message');
+  page = '/chrome/elements/new_message.htm';
 } else if(url_params.action === 'settings') {
   $('#title').text('Select account to see settings')
 } else {
@@ -13,22 +15,20 @@ if(url_params.action === 'new_message') {
 }
 
 get_account_emails(function (account_emails) {
-  $.each(account_emails, function (i, email) {
-    account_storage_get(account_emails, ['setup_done'], function (account_storages) {
-      if(account_storages[email]['setup_done'] === true) {
-        if(url_params.action === 'new_message') {
-          var new_message_link = tool.env.url_create('/chrome/settings/index.htm', { account_email: email, page: '/chrome/elements/new_message.htm' });
-          $('ul.emails').prepend('<li><a target="cryptup" href="' + new_message_link + '">' + email + '</a></li>');
-        } else {
-          $('ul.emails').prepend('<li><a target="cryptup" href="' + tool.env.url_create('/chrome/settings/index.htm', { account_email: email }) + '">' + email + '</a></li>');
-        }
-        $('html').css('height', $('.content').height() + 40);
-        $('a').off().click(function () {
-          setTimeout(function () {
-            window.close();
-          }, 0);
-        });
+  account_storage_get(account_emails, ['setup_done'], function (account_storages) {
+    var ul_emails = '';
+    $.each(account_storages, function(email, storage) {
+      if(storage.setup_done === true) {
+        console.log(email);
+        ul_emails += '<li><a target="cryptup" class="button gray2 long" href="' + tool.env.url_create('/chrome/settings/index.htm', { account_email: email, page: page }) + '">' + email + '</a></li>';
       }
     });
+    console.log(ul_emails);
+    $('ul.emails').html(ul_emails).find('a').click(function () {
+      setTimeout(function () {
+        window.close();
+      }, 0);
+    });
+    $('html, body').css('height', $('.content').height() + (tool.env.browser().name === 'firefox' ? 40 : 0));
   });
 });

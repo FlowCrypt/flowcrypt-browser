@@ -148,12 +148,9 @@ ul {
 li {
   list-style: none;
   font-size: 14px;
+  height: 44px;
+  padding-top: 6px;
 }
 li a {
-  text-decoration: none;
-  padding: 4px;
-  margin: 6px;
-  display: inline-block;
-  padding-left: 0px;
-  margin-left: 0px;
+  margin-top: 0 !important;
 }
