@@ -1391,11 +1391,16 @@
     signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
     message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----' },
+    password_message: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}/},
   };
 
   function crypto_armor_headers(block_type, format) {
     if(format === 're') {
-      return obj_map(crypto_armor_headers_dict[block_type || null], function (header_value) {
+      var h = crypto_armor_headers_dict[block_type || null];
+      if(typeof h.exec === 'function') {
+        return h;
+      }
+      return obj_map(h, function (header_value) {
         return header_value.replace(/ /g, '\\\s'); // regexp match friendly
       });
     } else {
@@ -1439,6 +1444,7 @@
     original_text = str_html_escape(original_text);
     var replacement_text = original_text;
     var has_password;
+    var has_pgp_message;
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
       return factory.embedded.pubkey(crypto_armor_normalize(str_html_unescape(armored), 'public_key'), is_outgoing);
     });
@@ -1458,7 +1464,15 @@
       if(typeof has_password === 'undefined') {
         has_password = original_text.match(password_sentence_present_test) !== null;
       }
+      has_pgp_message = true;
       return factory.embedded.message(has_end ? crypto_armor_normalize(str_html_unescape(armored), 'message') : '', message_id, is_outgoing, sender_email, has_password || false);
+    });
+    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('password_message'), true, function (armored) {
+      var short = armored.substr(armored.length - 10);
+      if(!has_pgp_message && short.match(/^[a-zA-Z0-9]{10}$/) !== null) {
+        return '</div>' + factory.embedded.message('', message_id, is_outgoing, sender_email, true, null, short);
+      }
+      return armored;
     });
     if(replacement_text !== original_text) {
       if(has_password) {
@@ -1475,15 +1489,27 @@
     if(begin_index < 0) {
       return text;
     }
-    var end_found = text.indexOf(block_headers.end, begin_index);
+    var end_found = -1;
+    var end_len = 0;
+    if(typeof block_headers.end.exec === 'undefined') { // end defined by string
+      end_found = text.indexOf(block_headers.end, begin_index);
+      end_len = block_headers.end.length;
+    } else {
+      var regex_end_found = block_headers.end.exec(text);
+      if(regex_end_found) {
+        end_found = regex_end_found.index;
+        end_len = regex_end_found[0].length;
+      }
+    }
+    var end_index;
     if(end_found < 0) {
       if(end_required) {
         return text;
       } else {
-        var end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
+        end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
       }
     } else {
-      var end_index = end_found + block_headers.end.length;
+      end_index = end_found + end_len;
     }
     var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
     var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length);

@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature']);
+var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
 
 var l = {
   cant_open: 'Could not open this message with CryptUp.\n\n',
@@ -37,6 +37,7 @@ db_open(function (db) {
   var missing_or_wrong_passprases = {};
   var can_read_emails = undefined;
   var unsecure_mdc_ignored = false;
+  var password_mesage_meta;
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -187,7 +188,7 @@ db_open(function (db) {
   }
 
   function render_progress(element, percent, received, size) {
-    var size = size || url_params.size;
+    size = size || url_params.size;
     if(percent) {
       element.text(percent + '%');
     } else if(size) {
@@ -249,6 +250,10 @@ db_open(function (db) {
     }
   }
 
+  function render_future_expiration(date) {
+    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.str.html_escape(date.substr(0, 10))}));
+  }
+
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature_result) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
@@ -259,6 +264,9 @@ db_open(function (db) {
       render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message), false, function () {
         if(cryptup_attachments.length) {
           render_inner_attachments(cryptup_attachments);
+        }
+        if(password_mesage_meta && password_mesage_meta.expire) {
+          render_future_expiration(password_mesage_meta.expire);
         }
       });
     } else {
@@ -364,6 +372,16 @@ db_open(function (db) {
     });
   }
 
+  function render_password_encrypted_message_load_fail(meta) {
+    if(meta.expired) {
+      render_error('This password encrypted message expired on ' + tool.str.html_escape(meta.expire) + '.\n\nOnly messages sent to recipients who don\'t use encryption expire this way. See settings');
+    } else if (!meta.url) {
+      render_error('Could not locate this message. It seems it contains a broken link.');
+    } else {
+      render_error('Could not locate this message. Please write me at tom@cryptup.org to fix it. Details:\n\n' + tool.str.html_escape(JSON.stringify(meta)));
+    }
+  }
+
   function initialize(force_pull_message_from_api) {
     if(can_read_emails && url_params.message && url_params.signature === true) {
       $('#pgp_block').text('Loading signature...');
@@ -392,7 +410,28 @@ db_open(function (db) {
     } else if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
       $('#pgp_block').text(url_params.signature ? 'Verifying..' : 'Decrypting...');
       decrypt_and_render();
-    } else { // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
+    } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from CryptUp API
+      $('#pgp_block').text('Loading message...');
+      tool.api.cryptup.link_message(url_params.short, function(success, result) {
+        if(success && result && typeof result.url !== 'undefined') {
+          password_mesage_meta = result;
+          if (result.url) {
+            tool.file.download_as_uint8(result.url, null, function (success, result) {
+              if(success) {
+                url_params.message = tool.str.from_uint8(result);
+                decrypt_and_render();
+              } else {
+                $('#pgp_block').text('Could not load message (network issue). Please try again.');
+              }
+            });
+          } else {
+            render_password_encrypted_message_load_fail(password_mesage_meta);
+          }
+        } else {
+          $('#pgp_block').text('Failed to load message info (network issue). Please try again.');
+        }
+      });
+    } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
       if(can_read_emails) {
         $('#pgp_block').text('Retrieving message...');
         var format = (!message_fetched_from_api) ? 'full' : 'raw';

@@ -607,7 +607,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         if(challenge) {
           upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
             if(short_id) {
-              body = format_password_protected_email(short_id, body);
+              body = format_password_protected_email(short_id, body, armored_pubkeys);
               body = format_email_text_footer(body);
               do_send_message(tool.api.common.message(url_params.account_email, url_params.from || get_sender_from_dom(), recipients, subject, body, attachments, url_params.thread_id), plaintext);
             } else {
@@ -1157,7 +1157,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
   }
 
-  function format_password_protected_email(short_id, original_body) {
+  function format_password_protected_email(short_id, original_body, armored_pubkeys) {
     var decrypt_url = CRYPTUP_WEB_URL + '/' + short_id;
     var a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + L.open_message + '</a>';
     var intro = S.cached('input_intro').length ? S.cached('input_intro').get(0).innerText.trim() : '';
@@ -1169,12 +1169,15 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
     text.push(L.message_encrypted_text + decrypt_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
+    html.push('<div style="display: none;">' + tool.crypto.armor.headers(null).begin + '</div>');
     html.push(L.message_encrypted_html + a + '<br><br>');
     html.push(L.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
     text.push(original_body['text/plain']);
     var html_cryptup_web_url_link = '<a href="' + tool.str.html_escape(CRYPTUP_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(CRYPTUP_WEB_URL) + '</a>';
-    var html_pgp_message = original_body['text/html'] ? original_body['text/html'] : original_body['text/plain'].replace(CRYPTUP_WEB_URL, html_cryptup_web_url_link).replace(/\n/g, '<br>\n');
-    html.push('<div style="color: #999;">' + html_pgp_message + '</div>');
+    if(armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
+      var html_pgp_message = original_body['text/html'] ? original_body['text/html'] : original_body['text/plain'].replace(CRYPTUP_WEB_URL, html_cryptup_web_url_link).replace(/\n/g, '<br>\n');
+      html.push('<div style="color: #999;">' + html_pgp_message + '</div>');
+    }
     html.push('</div>');
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
