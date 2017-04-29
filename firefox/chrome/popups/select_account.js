@@ -19,7 +19,6 @@ get_account_emails(function (account_emails) {
     var ul_emails = '';
     $.each(account_storages, function(email, storage) {
       if(storage.setup_done === true) {
-        console.log(email);
         ul_emails += '<li><a target="cryptup" class="button gray2 long" href="' + tool.env.url_create('/chrome/settings/index.htm', { account_email: email, page: page }) + '">' + email + '</a></li>';
       }
     });
