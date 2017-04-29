@@ -59,13 +59,17 @@ $('.action_show_group').click(function() {
   $('.hide_on_checkout').css('display', 'none');
 });
 
+$('.action_contact_page').click(function () {
+  tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email});
+});
+
 function stripe_credit_card_entered_handler(data, sender, respond) {
   $('.stripe_checkout').html('').css('display', 'none');
   chosen_product = PRODUCTS.advanced_monthly;
   chosen_product.source = data.token;
   storage_cryptup_auth_info(function(email, uuid, verified) {
     if(verified) {
-      tool.api.cryptup.account_update()
+      tool.api.cryptup.account_check_sync();
       tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, data.token, handle_subscribe_result);
     } else {
       register_and_subscribe(PRODUCTS.advanced_monthly, data.token);
@@ -73,7 +77,7 @@ function stripe_credit_card_entered_handler(data, sender, respond) {
   });
 }
 
-tool.api.cryptup.account_update(function() {
+tool.api.cryptup.account_check_sync(function() {
   account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     storage_cryptup_subscription(function (level, expire, active, method) {

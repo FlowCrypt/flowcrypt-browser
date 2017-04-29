@@ -33,6 +33,7 @@
       strip_cryptup_reply_token: str_strip_cryptup_reply_token,
       int_to_hex: str_int_to_hex,
       message_difference: str_message_difference,
+      capitalize: str_capitalize,
     },
     env: {
       browser: env_browser,
@@ -205,12 +206,15 @@
         },
       },
       cryptup: {
+        url: api_cryptup_url,
         auth_error: api_cryptup_auth_error,
         error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
         help_uninstall: api_cryptup_help_uninstall,
-        account_check: api_cryptup_account_check,
         account_login: api_cryptup_account_login,
+        account_check: api_cryptup_account_check,
+        account_check_sync: api_cryptup_account_check_sync,
+        account_update: api_cryptup_account_update,
         account_subscribe: api_cryptup_account_subscribe,
         message_presign_files: api_cryptup_message_presign_files,
         message_confirm_files: api_cryptup_message_confirm_files,
@@ -220,7 +224,7 @@
         message_contact: api_cryptup_message_contact,
         link_message: api_cryptup_link_message,
         link_me: api_cryptup_link_me,
-        account_update: api_cryptup_account_update,
+
       },
       aws: {
         s3_upload: api_aws_s3_upload, // ([{base_url, fields, attachment}, ...], cb)
@@ -517,6 +521,12 @@
       difference[1] += !tool.value(word).in(msg[0]);
     });
     return Math.min(difference[0], difference[1]);
+  }
+
+  function str_capitalize(string) {
+    return string.trim().split(' ').map(function(s) {
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }).join(' ');
   }
 
   /* tool.env */
@@ -3145,7 +3155,18 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    api_call('https://api.cryptup.io/', path, values, callback, format || 'JSON', null, {'api-version': 1});
+    api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
+    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
+  }
+
+  function api_cryptup_url(type, variable) {
+    return {
+      'api': 'https://api.cryptup.io/',
+      'me': 'https://cryptup.org/me/' + variable,
+      'pubkey': 'https://cryptup.org/me/' + variable + '/pub',
+      'decrypt': 'https://cryptup.org/' + variable,
+      'web': 'https://cryptup.org/',
+    }[type];
   }
 
   function api_cryptup_auth_error() {
@@ -3256,6 +3277,20 @@
     });
   }
 
+  function api_cryptup_account_update(update_values, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        var request = {account: email, uuid: uuid};
+        tool.each(update_values, function(k, v) { request[k] = v; });
+        api_cryptup_call('account/update', request, api_cryptup_response_formatter(function (success_or_auth_error, result) {
+          callback(success_or_auth_error, result);
+        }));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
+
   function api_cryptup_message_presign_files(attachments, callback, message_token) {
     if(!message_token) {
       storage_cryptup_auth_info(function (email, uuid, verified) {
@@ -3355,7 +3390,7 @@
     }, api_cryptup_response_formatter(callback));
   }
 
-  function api_cryptup_account_update(callback) {
+  function api_cryptup_account_check_sync(callback) {
     if(typeof callback !== 'function') {
       callback = function() {};
     }

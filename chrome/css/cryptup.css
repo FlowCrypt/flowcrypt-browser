@@ -210,7 +210,7 @@ body#settings > div#content .list_table table tr td { padding-bottom: 2px; text-
 body#settings > div#content .list_table table tr td:first-child { padding-left: 20px; }
 body#settings > div#content .list_table table tr:hover td { background-color: #f6f6f6; }
 
-body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 120px; text-align: center; }
+body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 110px; text-align: center; }
 body#settings > div#content.subscribe .stripe_checkout { display: none; }
 body#settings > div#content.subscribe .stripe_checkout iframe { width: 500px; border: none; }
 
