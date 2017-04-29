@@ -251,7 +251,11 @@ db_open(function (db) {
   }
 
   function render_future_expiration(date) {
-    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.str.html_escape(date.substr(0, 10))}));
+    var s = url_params.is_outgoing ? '. <a href="#" class="expire_settings">settings</a>' : '';
+    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.str.html_escape(date.substr(0, 10)) + s}));
+    $('.expire_settings').click(function() {
+      tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/security.htm'});
+    });
   }
 
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature_result) {

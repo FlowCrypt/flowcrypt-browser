@@ -3181,8 +3181,8 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    // api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
-    api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
+    api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
+    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
   }
 
   function api_cryptup_url(type, variable) {
@@ -3350,13 +3350,28 @@
     }, api_cryptup_response_formatter(callback));
   }
 
-  function api_cryptup_message_upload(encrypted_data_armored, callback) { // todo - DEPRECATE THIS. Send as JSON to message/store
+  function api_cryptup_message_upload(encrypted_data_armored, callback, auth_method) { // todo - DEPRECATE THIS. Send as JSON to message/store
     if(encrypted_data_armored.length > 100000) {
       callback(false, {error: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
     } else {
-      api_cryptup_call('message/upload', {
-        content: file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored),
-      }, api_cryptup_response_formatter(callback), 'FORM');
+      var content = file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
+      if(!auth_method) {
+        api_cryptup_call('message/upload', {
+          content: content,
+        }, api_cryptup_response_formatter(callback), 'FORM');
+      } else {
+        storage_cryptup_auth_info(function (email, uuid, verified) {
+          if(verified) {
+            api_cryptup_call('message/upload', {
+              account: email,
+              uuid: uuid,
+              content: content,
+            }, api_cryptup_response_formatter(callback), 'FORM');
+          } else {
+            callback(api_cryptup_auth_error);
+          }
+        });
+      }
     }
   }
 

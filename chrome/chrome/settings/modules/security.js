@@ -6,7 +6,37 @@ tool.ui.passphrase_toggle(['passphrase_entry']);
 
 if(url_params.embedded) {
   $('.change_passhrase_container').css('display', 'none');
+  $('.line').css('padding', '7px 0');
 }
+
+storage_cryptup_subscription(function (level, expire, active, method) {
+  if(active) {
+    $('.select_loader_container').html(tool.ui.spinner('green'));
+    tool.api.cryptup.account_update({}, function (success, result) {
+      $('.select_loader_container').html('');
+      if(success === true && result && result.result) {
+        $('.default_message_expire').val(Number(result.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
+        $('.default_message_expire').change(function () {
+          $('.select_loader_container').html(tool.ui.spinner('green'));
+          $('.default_message_expire').css('display', 'none');
+          tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}, function () {
+            window.location.reload();
+          });
+        });
+      } else if(success === tool.api.cryptup.auth_error && !url_params.embedded) {
+        alert('Your account information is outdated. Please add this device to your account.');
+        show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
+      } else {
+        $('.default_message_expire').replaceWith('(unknown)');
+      }
+    });
+  } else {
+    $('.default_message_expire').val('3').css('display', 'inline-block');
+    $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(function() {
+      show_settings_page('/chrome/elements/subscribe.htm');
+    });
+  }
+});
 
 if(!private_storage_get('local', url_params.account_email, 'master_passphrase')) {
   $('#passphrase_to_open_email').prop('checked', true);

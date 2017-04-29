@@ -411,7 +411,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
             upload_attachments_to_cryptup(attachments, _active, function (all_good, upload_results, upload_error_message) {
               if(all_good === true) {
                 plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
-                do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject);
+                do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject, _active);
               } else if(all_good === tool.api.cryptup.auth_error) {
                 if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
                   tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
@@ -423,7 +423,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
               }
             });
           } else {
-            do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject);
+            do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, _active);
           }
         });
       });
@@ -563,14 +563,16 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
   }
 
-  function upload_encrypted_message_to_cryptup(encrypted_data, callback) {
+  function upload_encrypted_message_to_cryptup(encrypted_data, _active, callback) {
     S.now('send_btn_span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
-    // the encrypted data goes through CryptUp and recipients get a link. They also get the encrypted data in message body.
+    // the encrypted data goes through CryptUp and recipients get a link.
     tool.api.cryptup.message_upload(encrypted_data, function(success, response) {
-      if (success && response && response.short) {
+      if (success === true && response && response.short) {
         callback(response.short);
+      } else if(success === tool.api.cryptup.auth_error) {
+        callback(null, tool.api.cryptup.auth_error);
       } else if(response && response.error) {
         try {
           var err = JSON.stringify(response.error);
@@ -581,7 +583,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       } else {
         callback(null, 'internet dropped');
       }
-    });
+    }, _active ? 'uuid' : null);
   }
 
   function with_attached_pubkey_if_needed(encrypted) {
@@ -591,7 +593,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     return encrypted;
   }
 
-  function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject) {
+  function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, _active) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
       encrypted.data = with_attached_pubkey_if_needed(encrypted.data);
       var body = { 'text/plain': encrypted.data };
@@ -600,13 +602,19 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       }, 500);
       db_contact_update(db, recipients, { last_use: Date.now() }, function () {
         if(challenge) {
-          upload_encrypted_message_to_cryptup(encrypted.data, function(short_id, error) {
+          upload_encrypted_message_to_cryptup(encrypted.data, _active, function(short_id, error) {
             if(short_id) {
               body = format_password_protected_email(short_id, body, armored_pubkeys);
               body = format_email_text_footer(body);
               do_send_message(tool.api.common.message(url_params.account_email, url_params.from || get_sender_from_dom(), recipients, subject, body, attachments, url_params.thread_id), plaintext);
             } else {
-              alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+              if(error === tool.api.cryptup.auth_error) {
+                if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+                  tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+                }
+              } else {
+                alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+              }
               reset_send_btn();
             }
           });
