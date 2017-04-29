@@ -33,6 +33,7 @@
       strip_cryptup_reply_token: str_strip_cryptup_reply_token,
       int_to_hex: str_int_to_hex,
       message_difference: str_message_difference,
+      capitalize: str_capitalize,
     },
     env: {
       browser: env_browser,
@@ -205,12 +206,15 @@
         },
       },
       cryptup: {
+        url: api_cryptup_url,
         auth_error: api_cryptup_auth_error,
         error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
         help_uninstall: api_cryptup_help_uninstall,
-        account_check: api_cryptup_account_check,
         account_login: api_cryptup_account_login,
+        account_check: api_cryptup_account_check,
+        account_check_sync: api_cryptup_account_check_sync,
+        account_update: api_cryptup_account_update,
         account_subscribe: api_cryptup_account_subscribe,
         message_presign_files: api_cryptup_message_presign_files,
         message_confirm_files: api_cryptup_message_confirm_files,
@@ -220,7 +224,7 @@
         message_contact: api_cryptup_message_contact,
         link_message: api_cryptup_link_message,
         link_me: api_cryptup_link_me,
-        account_update: api_cryptup_account_update,
+
       },
       aws: {
         s3_upload: api_aws_s3_upload, // ([{base_url, fields, attachment}, ...], cb)
@@ -517,6 +521,12 @@
       difference[1] += !tool.value(word).in(msg[0]);
     });
     return Math.min(difference[0], difference[1]);
+  }
+
+  function str_capitalize(string) {
+    return string.trim().split(' ').map(function(s) {
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }).join(' ');
   }
 
   /* tool.env */
@@ -1381,11 +1391,16 @@
     signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
     message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----' },
+    password_message: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}/},
   };
 
   function crypto_armor_headers(block_type, format) {
     if(format === 're') {
-      return obj_map(crypto_armor_headers_dict[block_type || null], function (header_value) {
+      var h = crypto_armor_headers_dict[block_type || null];
+      if(typeof h.exec === 'function') {
+        return h;
+      }
+      return obj_map(h, function (header_value) {
         return header_value.replace(/ /g, '\\\s'); // regexp match friendly
       });
     } else {
@@ -1429,6 +1444,7 @@
     original_text = str_html_escape(original_text);
     var replacement_text = original_text;
     var has_password;
+    var has_pgp_message;
     replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
       return factory.embedded.pubkey(crypto_armor_normalize(str_html_unescape(armored), 'public_key'), is_outgoing);
     });
@@ -1448,7 +1464,15 @@
       if(typeof has_password === 'undefined') {
         has_password = original_text.match(password_sentence_present_test) !== null;
       }
+      has_pgp_message = true;
       return factory.embedded.message(has_end ? crypto_armor_normalize(str_html_unescape(armored), 'message') : '', message_id, is_outgoing, sender_email, has_password || false);
+    });
+    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('password_message'), true, function (armored) {
+      var short = armored.substr(armored.length - 10);
+      if(!has_pgp_message && short.match(/^[a-zA-Z0-9]{10}$/) !== null) {
+        return '</div>' + factory.embedded.message('', message_id, is_outgoing, sender_email, true, null, short);
+      }
+      return armored;
     });
     if(replacement_text !== original_text) {
       if(has_password) {
@@ -1465,15 +1489,27 @@
     if(begin_index < 0) {
       return text;
     }
-    var end_found = text.indexOf(block_headers.end, begin_index);
+    var end_found = -1;
+    var end_len = 0;
+    if(typeof block_headers.end.exec === 'undefined') { // end defined by string
+      end_found = text.indexOf(block_headers.end, begin_index);
+      end_len = block_headers.end.length;
+    } else {
+      var regex_end_found = block_headers.end.exec(text);
+      if(regex_end_found) {
+        end_found = regex_end_found.index;
+        end_len = regex_end_found[0].length;
+      }
+    }
+    var end_index;
     if(end_found < 0) {
       if(end_required) {
         return text;
       } else {
-        var end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
+        end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
       }
     } else {
-      var end_index = end_found + block_headers.end.length;
+      end_index = end_found + end_len;
     }
     var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
     var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length);
@@ -3145,8 +3181,18 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    api_call('https://api.cryptup.io/', path, values, callback, format || 'JSON');
-    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON');
+    api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
+    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
+  }
+
+  function api_cryptup_url(type, variable) {
+    return {
+      'api': 'https://api.cryptup.io/',
+      'me': 'https://cryptup.org/me/' + variable,
+      'pubkey': 'https://cryptup.org/me/' + variable + '/pub',
+      'decrypt': 'https://cryptup.org/' + variable,
+      'web': 'https://cryptup.org/',
+    }[type];
   }
 
   function api_cryptup_auth_error() {
@@ -3257,14 +3303,33 @@
     });
   }
 
-  function api_cryptup_message_presign_files(attachments, callback, message_token) {
-    if(!message_token) {
+  function api_cryptup_account_update(update_values, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        var request = {account: email, uuid: uuid};
+        tool.each(update_values, function(k, v) { request[k] = v; });
+        api_cryptup_call('account/update', request, api_cryptup_response_formatter(function (success_or_auth_error, result) {
+          callback(success_or_auth_error, result);
+        }));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
+  }
+
+  function api_cryptup_message_presign_files(attachments, callback, auth_method) {
+    var lengths = attachments.map(function (a) { return a.size; });
+    if(!auth_method) {
+      api_cryptup_call('message/presign_files', {
+        lengths: lengths,
+      }, api_cryptup_response_formatter(callback));
+    } else if(auth_method === 'uuid') {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('message/presign_files', {
             account: email,
             uuid: uuid,
-            lengths: attachments.map(function(a) { return a.size; }),
+            lengths: lengths,
           }, api_cryptup_response_formatter(callback));
         } else {
           callback(api_cryptup_auth_error);
@@ -3272,42 +3337,41 @@
       });
     } else {
       api_cryptup_call('message/presign_files', {
-        message_token_account: message_token.account,
-        message_token: message_token.token,
+        message_token_account: auth_method.account,
+        message_token: auth_method.token,
         lengths: attachments.map(function(a) { return a.size; }),
       }, api_cryptup_response_formatter(callback));
     }
   }
 
-  function api_cryptup_message_confirm_files(identifiers, callback, message_token) {
-    if(!message_token) {
-      storage_cryptup_auth_info(function (email, uuid, verified) {
-        if(verified) {
-          api_cryptup_call('message/confirm_files', {
-            account: email,
-            uuid: uuid,
-            identifiers: identifiers,
-          }, api_cryptup_response_formatter(callback));
-        } else {
-          callback(api_cryptup_auth_error);
-        }
-      });
-    } else {
-      api_cryptup_call('message/confirm_files', {
-        message_token_account: message_token.account,
-        message_token: message_token.token,
-        identifiers: identifiers,
-      }, api_cryptup_response_formatter(callback));
-    }
+  function api_cryptup_message_confirm_files(identifiers, callback) {
+    api_cryptup_call('message/confirm_files', {
+      identifiers: identifiers,
+    }, api_cryptup_response_formatter(callback));
   }
 
-  function api_cryptup_message_upload(encrypted_data_armored, callback) { // todo - DEPRECATE THIS. Send as JSON to message/store
+  function api_cryptup_message_upload(encrypted_data_armored, callback, auth_method) { // todo - DEPRECATE THIS. Send as JSON to message/store
     if(encrypted_data_armored.length > 100000) {
       callback(false, {error: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
     } else {
-      api_cryptup_call('message/upload', {
-        content: file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored),
-      }, api_cryptup_response_formatter(callback), 'FORM');
+      var content = file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
+      if(!auth_method) {
+        api_cryptup_call('message/upload', {
+          content: content,
+        }, api_cryptup_response_formatter(callback), 'FORM');
+      } else {
+        storage_cryptup_auth_info(function (email, uuid, verified) {
+          if(verified) {
+            api_cryptup_call('message/upload', {
+              account: email,
+              uuid: uuid,
+              content: content,
+            }, api_cryptup_response_formatter(callback), 'FORM');
+          } else {
+            callback(api_cryptup_auth_error);
+          }
+        });
+      }
     }
   }
 
@@ -3356,7 +3420,7 @@
     }, api_cryptup_response_formatter(callback));
   }
 
-  function api_cryptup_account_update(callback) {
+  function api_cryptup_account_check_sync(callback) {
     if(typeof callback !== 'function') {
       callback = function() {};
     }

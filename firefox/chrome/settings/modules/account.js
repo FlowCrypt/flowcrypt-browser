@@ -6,7 +6,7 @@ var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 $('.loading').html(tool.ui.spinner('green', 'large_spinner'));
 
-tool.api.cryptup.account_update(function () {
+tool.api.cryptup.account_check_sync(function () {
   storage_cryptup_auth_info(function (email, uuid, verified){
     storage_cryptup_subscription(function(level, expire, active, method) {
       $('.email').text(email);

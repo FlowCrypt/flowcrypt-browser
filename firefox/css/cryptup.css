@@ -210,7 +210,7 @@ body#settings > div#content .list_table table tr td { padding-bottom: 2px; text-
 body#settings > div#content .list_table table tr td:first-child { padding-left: 20px; }
 body#settings > div#content .list_table table tr:hover td { background-color: #f6f6f6; }
 
-body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 120px; text-align: center; }
+body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 110px; text-align: center; }
 body#settings > div#content.subscribe .stripe_checkout { display: none; }
 body#settings > div#content.subscribe .stripe_checkout iframe { width: 500px; border: none; }
 
@@ -242,6 +242,8 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block > .block_pubkey_full { display: none; }
 #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
 #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
+#pgp_block > .future_expiration { padding-right: 8px; text-align: right; font-family: monospace; font-size: 11px; opacity: 0.7; color: #31A217; font-weight: 500; }
+#pgp_block > .future_expiration:hover { opacity: 1; }
 #pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; }
 #pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
 #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 200px; float: right; }
