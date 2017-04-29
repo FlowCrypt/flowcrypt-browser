@@ -915,12 +915,7 @@
               mime_message_contents.text = tool.str.uint8_as_utf(node.content);
             } else {
               var node_content = tool.str.from_uint8(node.content);
-              mime_message_contents.attachments.push({
-                name: node_filename(node),
-                size: node_content.length,
-                type: node_type(node),
-                data: node_content,
-              });
+              mime_message_contents.attachments.push(file_attachment(node_filename(node), node_type(node), node_content)); //data: ,
             }
           });
           catcher.try(function () {

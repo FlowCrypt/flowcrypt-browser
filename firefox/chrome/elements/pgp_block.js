@@ -278,9 +278,7 @@ db_open(function (db) {
       tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           if(result.attachments.length) {
-            render_inner_attachments(result.attachments.map(function (mime_attachment) {
-              return tool.file.attachment(mime_attachment.name, mime_attachment.type, mime_attachment.data, mime_attachment.size);
-            }));
+            render_inner_attachments(result.attachments);
           }
         });
       });
