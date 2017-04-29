@@ -3181,8 +3181,8 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, callback, format) {
-    api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
-    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
+    // api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
+    api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
   }
 
   function api_cryptup_url(type, variable) {
@@ -3317,14 +3317,19 @@
     });
   }
 
-  function api_cryptup_message_presign_files(attachments, callback, message_token) {
-    if(!message_token) {
+  function api_cryptup_message_presign_files(attachments, callback, auth_method) {
+    var lengths = attachments.map(function (a) { return a.size; });
+    if(!auth_method) {
+      api_cryptup_call('message/presign_files', {
+        lengths: lengths,
+      }, api_cryptup_response_formatter(callback));
+    } else if(auth_method === 'uuid') {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('message/presign_files', {
             account: email,
             uuid: uuid,
-            lengths: attachments.map(function(a) { return a.size; }),
+            lengths: lengths,
           }, api_cryptup_response_formatter(callback));
         } else {
           callback(api_cryptup_auth_error);
@@ -3332,33 +3337,17 @@
       });
     } else {
       api_cryptup_call('message/presign_files', {
-        message_token_account: message_token.account,
-        message_token: message_token.token,
+        message_token_account: auth_method.account,
+        message_token: auth_method.token,
         lengths: attachments.map(function(a) { return a.size; }),
       }, api_cryptup_response_formatter(callback));
     }
   }
 
-  function api_cryptup_message_confirm_files(identifiers, callback, message_token) {
-    if(!message_token) {
-      storage_cryptup_auth_info(function (email, uuid, verified) {
-        if(verified) {
-          api_cryptup_call('message/confirm_files', {
-            account: email,
-            uuid: uuid,
-            identifiers: identifiers,
-          }, api_cryptup_response_formatter(callback));
-        } else {
-          callback(api_cryptup_auth_error);
-        }
-      });
-    } else {
-      api_cryptup_call('message/confirm_files', {
-        message_token_account: message_token.account,
-        message_token: message_token.token,
-        identifiers: identifiers,
-      }, api_cryptup_response_formatter(callback));
-    }
+  function api_cryptup_message_confirm_files(identifiers, callback) {
+    api_cryptup_call('message/confirm_files', {
+      identifiers: identifiers,
+    }, api_cryptup_response_formatter(callback));
   }
 
   function api_cryptup_message_upload(encrypted_data_armored, callback) { // todo - DEPRECATE THIS. Send as JSON to message/store

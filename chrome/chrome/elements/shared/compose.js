@@ -76,6 +76,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   var subscribe_result_listener;
   var additional_message_headers = {};
   var email_provider;
+  var button_update_timeout;
 
   tool.browser.message.tab_id(function (id) {
     tab_id = id;
@@ -142,7 +143,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         size: 5 * 1024 * 1024,
         count: 10,
         oversize: function(combined_size) {
-          if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. Try it free for 3 months.')) {
+          if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. Try it free for 90 days.')) {
             show_subscribe_dialog_and_wait_for_response(null, null, function(new_subscription_active) {
               if(new_subscription_active) {
                 alert('You\'re all set, now you can add your file again.');
@@ -167,6 +168,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     var do_reset = function() {
       S.cached('send_btn').html('<i class=""></i><span tabindex="4">' + (S.cached('icon_sign').is('.active') ? BTN_SIGN_AND_SEND : BTN_ENCRYPT_AND_SEND) + '</span>');
     };
+    clearTimeout(button_update_timeout);
     if(!delay) {
       do_reset();
     } else {
@@ -340,13 +342,13 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       } else if(!recipients || !recipients.length) {
         alert('Please add a recipient first');
       } else {
-        alert('Please wait, information about recipients is still loading.');
+        alert('Still working, please wait.');
       }
       return false;
     }
   }
 
-  function are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, subscription_active) {
+  function are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge) {
     var is_encrypt = !S.cached('icon_sign').is('.active');
     if(!recipients.length) {
       alert('Please add receiving email address.');
@@ -354,13 +356,6 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     } else if(is_encrypt && emails_without_pubkeys.length && !challenge.answer) {
       alert('Some recipients don\'t have encryption set up. Please add a password.');
       S.cached('input_password').focus();
-      return false;
-    } else if(is_encrypt && attach.has_attachment() && emails_without_pubkeys.length && !subscription_active) {
-      tool.env.increment('upgrade_notify_attach_nonpgp', function () {
-        if(confirm('Sending password encrypted attachments is possible with CryptUp Advanced.\n\nTry it free for 3 months.')) {
-          show_subscribe_dialog_and_wait_for_response();
-        }
-      });
       return false;
     } else if((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?'))) {
       return true; //todo - tailor for replying w/o subject
@@ -390,7 +385,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       storage_cryptup_subscription(function (_l, _e, _active) { // todo - this should be removed. subscribtion_subscribe should be dynamically updated, and used here
         collect_all_available_public_keys(url_params.account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           var challenge = emails_without_pubkeys.length ? { answer: S.cached('input_password').val() } : null;
-          if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge, _active)) {
+          if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
             if(S.cached('icon_sign').is('.active')) {
               sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active);
             } else {
@@ -410,10 +405,10 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       handle_send_btn_processing_error(function () {
         attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
           if(attachments.length && challenge) { // these will be password encrypted attachments
-            setTimeout(function() {
+            button_update_timeout = setTimeout(function() {
               S.now('send_btn_span').text('sending');
             }, 500);
-            upload_attachments_to_cryptup(attachments, function (all_good, upload_results, upload_error_message) {
+            upload_attachments_to_cryptup(attachments, _active, function (all_good, upload_results, upload_error_message) {
               if(all_good === true) {
                 plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                 do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject);
@@ -491,7 +486,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
   }
 
-  function upload_attachments_to_cryptup(attachments, callback) {
+  function upload_attachments_to_cryptup(attachments, _active, callback) {
     tool.api.cryptup.message_presign_files(attachments, function (pf_success, pf_result) {
       if(pf_success === true && pf_result && pf_result.approvals && pf_result.approvals.length === attachments.length) {
         var items = [];
@@ -521,7 +516,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       } else {
         callback(false, null, tool.api.cryptup.error_text(pf_result));
       }
-    });
+    }, _active ? 'uuid' : null);
   }
 
   function render_upload_progress(progress) {
@@ -600,7 +595,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
       encrypted.data = with_attached_pubkey_if_needed(encrypted.data);
       var body = { 'text/plain': encrypted.data };
-      setTimeout(function() {
+      button_update_timeout = setTimeout(function() {
         S.now('send_btn_span').text('sending');
       }, 500);
       db_contact_update(db, recipients, { last_use: Date.now() }, function () {
