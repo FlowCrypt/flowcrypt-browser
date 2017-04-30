@@ -1,5 +1,14 @@
 <div>
 
+<b>version 4.0.1 on April 29, 2017: Free Attachments</b>
+composing: allow sending attachments w/o Advanced + expiration
+composing: make intro button more prominent
+settings: setting up & editing public contact page
+settings: better UI when selecting account in browser action popup
+settings: browser button seems to show only one account
+internal: add api version with each request to the cryptup api
+internal: refactor mime_decode to work on Android
+
 <b>version 4.0.0 on April 26, 2017: Firefox Release</b>
 setup: firefox fixing update notification
 reading: fix encrypted attachments in Firefox
