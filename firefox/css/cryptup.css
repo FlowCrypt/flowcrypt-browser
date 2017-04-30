@@ -237,8 +237,9 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
 #pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px; font-family: monospace;}
 #pgp_block input#answer { padding: 8px 8px; width: 232px; }
-#pgp_block #attachments { margin-top: 20px; }
-#pgp_block #attachments .attachment { background: #f3f3f3; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; padding: 12px; }
+#pgp_block #attachments { margin-top: 8px; }
+#pgp_block #attachments .attachment { background: #f8f8f8; border: 1px solid #ccc; margin-bottom: 8px; cursor: pointer; padding: 8px 8px; border-left: 4px solid #31A217;
+  margin-right: 12px; width: fit-content; height: 15px; }
 #pgp_block > .block_pubkey_full { display: none; }
 #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
 #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
