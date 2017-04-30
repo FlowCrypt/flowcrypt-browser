@@ -1744,7 +1744,7 @@
   }
 
   function zeroed_decrypt_error_counts(keys) {
-    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, unsecure_mdc: 0 };
+    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, rounds: keys ? keys.with_passphrases.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, unsecure_mdc: 0 };
   }
 
   function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
@@ -1762,26 +1762,12 @@
     counts.attempts++;
   }
 
-  function wait_and_callback_decrypt_errors_if_failed(message, private_keys, counts, other_errors, callback) {
-    var wait_for_all_attempts_interval = setInterval(function () { //todo - promises are better
-      if(counts.decrypted) {
-        clearInterval(wait_for_all_attempts_interval);
-      } else {
-        if(counts.attempts === private_keys.with_passphrases.length) { // decrypting attempted with all keys, no need to wait longer - can evaluate result now, otherwise wait
-          clearInterval(wait_for_all_attempts_interval);
-          callback({
-            success: false,
-            signature: null,
-            message: message,
-            counts: counts,
-            unsecure_mdc: !!counts.unsecure_mdc,
-            encrypted_for: private_keys.encrypted_for,
-            missing_passphrases: private_keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; }),
-            errors: other_errors,
-          });
-        }
-      }
-    }, 100);
+  function finally_callback_result(callback, result) {
+    if(result.success) {
+      callback(result); // callback the moment there is successful decrypt
+    } else if(result.counts.attempts === result.counts.rounds && !result.counts.decrypted) {
+      callback(result); // or callback if no success and this was the last attempt
+    }
   }
 
   function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password, force_output_format) {
@@ -1835,14 +1821,7 @@
         var message = openpgp.message.read(tool.str.to_uint8(encrypted_data));
       }
     } catch(format_error) {
-      callback({
-        success: false,
-        counts: zeroed_decrypt_error_counts(),
-        format_error: format_error.message,
-        errors: other_errors,
-        encrypted: null,
-        signature: null,
-      });
+      callback({success: false, counts: zeroed_decrypt_error_counts(), format_error: format_error.message, errors: other_errors, encrypted: null, signature: null});
       return;
     }
     get_sorted_keys_for_message(db, account_email, message, function (keys) {
@@ -1853,13 +1832,9 @@
           var text = encrypted_data.match(RegExp(sm_headers.begin + '\nHash:\s[A-Z0-9]+\n([^]+)\n' + sm_headers.middle + '[^]+' + sm_headers.end, 'm'));
           message.text = text && text.length === 2 ? text[1] : encrypted_data;
         }
-        callback({
-          success: true,
-          content: { data: message.text },
-          encrypted: false,
-          signature: crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]),
-        });
+        callback({success: true, content: { data: message.text }, encrypted: false, signature: crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0])});
       } else {
+        var missing_passphrases = keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; });
         tool.each(keys.with_passphrases, function (i, keyinfo) {
           if(!counts.decrypted) {
             try {
@@ -1867,30 +1842,27 @@
                 catcher.try(function () {
                   if(decrypted.data !== null) {
                     if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                      callback({
-                        success: true,
-                        content: decrypted,
-                        encrypted: true,
-                        signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false,
-                      });
+                      finally_callback_result(callback, {success: true, content: decrypted, encrypted: true, signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false});
                     }
                   } else {
                     other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at tom@cryptup.org to fix this.');
                     counts.attempts++;
+                    finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
                   }
                 })();
               }).catch(function (decrypt_error) {
                 catcher.try(function () {
                   increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
+                  finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
                 })();
               });
             } catch(decrypt_exception) {
               other_errors.push(String(decrypt_exception));
               counts.attempts++;
+              finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
             }
           }
         });
-        wait_and_callback_decrypt_errors_if_failed(message, keys, counts, other_errors, callback);
       }
     });
   }
