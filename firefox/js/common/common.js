@@ -225,7 +225,6 @@
         message_contact: api_cryptup_message_contact,
         link_message: api_cryptup_link_message,
         link_me: api_cryptup_link_me,
-
       },
       aws: {
         s3_upload: api_aws_s3_upload, // ([{base_url, fields, attachment}, ...], cb)
