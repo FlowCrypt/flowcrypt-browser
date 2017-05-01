@@ -11,7 +11,7 @@ var l = {
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
   single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
   account_info_outdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
-  wrong_pubkey_used: 'It looks like it was encrypted for someone else. ', //todo - suggest adding key?
+  wrong_pubkey_used: 'It looks like it was encrypted for someone else. If you have more keys that may help decrypt this message, you can add them in the settings. ',
   ask_resend: 'Please ask them to send a new message.',
   receivers_hidden: 'Cannot tell if the message was encrypted correctly for you. ',
   bad_format: 'Message is either badly formatted or not compatible with CryptUp. ',
@@ -252,7 +252,7 @@ db_open(function (db) {
 
   function render_future_expiration(date) {
     var s = url_params.is_outgoing ? '. <a href="#" class="expire_settings">settings</a>' : '';
-    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.str.html_escape(date.substr(0, 10)) + s}));
+    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + s}));
     $('.expire_settings').click(function() {
       tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/security.htm'});
     });
@@ -376,7 +376,12 @@ db_open(function (db) {
 
   function render_password_encrypted_message_load_fail(meta) {
     if(meta.expired) {
-      render_error('This password encrypted message expired on ' + tool.str.html_escape(meta.expire) + '.\n\nOnly messages sent to recipients who don\'t use encryption expire this way. See settings');
+      render_error('Message expired on ' + tool.time.expiration_format(meta.expire) + '. Messages don\'t expire if recipients also have encryption set up.\n\n\n<div class="button gray2 action_security">security settings</div>', null, function() {
+        set_frame_color('gray');
+        $('.action_security').click(function() {
+          tool.browser.message.send(null, 'settings', {page: '/chrome/settings/modules/security.htm'});
+        });
+      });
     } else if (!meta.url) {
       render_error('Could not locate this message. It seems it contains a broken link.');
     } else {

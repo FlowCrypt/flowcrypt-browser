@@ -70,6 +70,7 @@
       wait: time_wait,
       get_future_timestamp_in_months: time_get_future_timestamp_in_months,
       hours: time_hours,
+      expiration_format: time_expiration_format,
     },
     file: {
       download_as_uint8: file_download_as_uint8,
@@ -761,6 +762,10 @@
 
   function time_hours(h) {
     return h * 1000 * 60 * 60; // hours in miliseconds
+  }
+
+  function time_expiration_format(date) {
+    return str_html_escape(date.substr(0, 10));
   }
 
   /* tools.file */
