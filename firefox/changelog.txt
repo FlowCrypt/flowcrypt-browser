@@ -1,5 +1,10 @@
 <div>
 
+<b>version 4.0.2 on May 1, 2017: Expiration</b>
+reading: new design for internal attachments
+reading: update message expiration note
+internal: refactor crypto_message_decrypt
+
 <b>version 4.0.1 on April 29, 2017: Free Attachments</b>
 composing: allow sending attachments w/o Advanced + expiration
 composing: make intro button more prominent
