@@ -1744,7 +1744,7 @@
   }
 
   function zeroed_decrypt_error_counts(keys) {
-    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, rounds: keys ? keys.with_passphrases.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, format_error: 0, unsecure_mdc: 0 };
+    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, rounds: keys ? keys.with_passphrases.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, unsecure_mdc: 0 };
   }
 
   function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
@@ -1835,34 +1835,38 @@
         callback({success: true, content: { data: message.text }, encrypted: false, signature: crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0])});
       } else {
         var missing_passphrases = keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; });
-        tool.each(keys.with_passphrases, function (i, keyinfo) {
-          if(!counts.decrypted) {
-            try {
-              openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password, force_output_format)).then(function (decrypted) {
-                catcher.try(function () {
-                  if(decrypted.data !== null) {
-                    if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                      finally_callback_result(callback, {success: true, content: decrypted, encrypted: true, signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false});
+        if(!keys.with_passphrases.length && !one_time_message_password) {
+          callback({success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
+        } else {
+          tool.each(keys.with_passphrases, function (i, keyinfo) {
+            if(!counts.decrypted) {
+              try {
+                openpgp.decrypt(get_decrypt_options(message, keyinfo, armored_encrypted || armored_signed_only, one_time_message_password, force_output_format)).then(function (decrypted) {
+                  catcher.try(function () {
+                    if(decrypted.data !== null) {
+                      if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
+                        finally_callback_result(callback, {success: true, content: decrypted, encrypted: true, signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false});
+                      }
+                    } else {
+                      other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at tom@cryptup.org to fix this.');
+                      counts.attempts++;
+                      finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
                     }
-                  } else {
-                    other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at tom@cryptup.org to fix this.');
-                    counts.attempts++;
+                  })();
+                }).catch(function (decrypt_error) {
+                  catcher.try(function () {
+                    increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
                     finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
-                  }
-                })();
-              }).catch(function (decrypt_error) {
-                catcher.try(function () {
-                  increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error);
-                  finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
-                })();
-              });
-            } catch(decrypt_exception) {
-              other_errors.push(String(decrypt_exception));
-              counts.attempts++;
-              finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
+                  })();
+                });
+              } catch(decrypt_exception) {
+                other_errors.push(String(decrypt_exception));
+                counts.attempts++;
+                finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
+              }
             }
-          }
-        });
+          });
+        }
       }
     });
   }
