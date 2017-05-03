@@ -5,7 +5,7 @@ var url_params = tool.env.url_params(['account_email', 'embedded', 'parent_tab_i
 tool.ui.passphrase_toggle(['passphrase_entry']);
 
 if(url_params.embedded) {
-  $('.change_passhrase_container').css('display', 'none');
+  $('.change_passhrase_container, .title_container').css('display', 'none');
   $('.line').css('padding', '7px 0');
 }
 
