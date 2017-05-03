@@ -314,16 +314,16 @@ function normalize_string(str) {
   return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
 }
 
+function db_denied() {
+  throw new Error('db_denied is not callable');
+}
+
 function db_error_handle(exception, error_stack, callback) {
   exception.stack = error_stack.replace(/^Error/, String(exception));
   catcher.handle_exception(exception);
   if(typeof callback === 'function') {
-    callback();
+    callback(db_denied);
   }
-}
-
-function db_denied() {
-  throw new Error('db_denied is not callable');
 }
 
 function db_open(callback) {
