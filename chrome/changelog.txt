@@ -1,5 +1,14 @@
 <div>
 
+<b>version 4.0.3 on May 3, 2017: Subscriptions</b>
+reading: fix inner attachments that don't have any name
+reading: fix noname attachments that actually have message in it
+reading: fix pulling messages in experimental inbox
+settings: add title to security settings
+settings: set trial to 30 days for new users
+internal: check subscription expiration
+internal: firefox - db is not defined
+
 <b>version 4.0.2 on May 1, 2017: Expiration</b>
 reading: new design for internal attachments
 reading: update message expiration note
