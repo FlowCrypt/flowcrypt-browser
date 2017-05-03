@@ -61,7 +61,7 @@ tool.browser.message.tab_id(function(tab_id) {
     } else {
       display_block('inbox', 'CryptUp Email Inbox');
       tool.api.gmail.message_list(url_params.account_email, q_encrypted_messages, false, function(list_success, list_result) {
-        if(!list_success) {
+        if(!list_success || typeof list_result.messages === 'undefined') {
           $('body').text('Connection error trying to get list of messages');
         } else {
           var thread_ids = tool.arr.unique(tool.arr.select(list_result.messages, 'threadId'));
