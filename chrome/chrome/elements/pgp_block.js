@@ -200,7 +200,9 @@ db_open(function (db) {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
     $.each(attachments, function (i, attachment) {
-      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + attachment.name.replace(/(\.pgp)|(\.gpg)$/, '') + '</b>&nbsp;&nbsp;&nbsp;' + tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB<span class="progress"><span class="percent"></span></span></div>');
+      var name = (attachment.name ? tool.str.html_escape(attachment.name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      var size = tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB';
+      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + name + '</b>&nbsp;&nbsp;&nbsp;' + size + '<span class="progress"><span class="percent"></span></span></div>');
     });
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
