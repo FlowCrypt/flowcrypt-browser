@@ -247,7 +247,7 @@ function handle_login_result(registered, verified, subscription, error, cryptup_
     });
   } else if(registered) {
     if(verified) {
-      if(subscription && subscription.level !== null) { //todo - check expiration
+      if(subscription && subscription.level !== null && !subscription.expired) {
         notify_upgraded_and_close();
       } else {
         render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
