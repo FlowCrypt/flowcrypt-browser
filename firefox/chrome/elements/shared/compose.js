@@ -143,7 +143,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         size: 5 * 1024 * 1024,
         count: 10,
         oversize: function(combined_size) {
-          if(confirm('Combined attachment size is limited to 5 MB for Forever Free users. Advanced users can send files up to 25 MB. Try it free for 90 days.')) {
+          if(confirm('The files are over 5 MB. Advanced users can send files up to 25 MB. Try it free for 30 days.')) {
             show_subscribe_dialog_and_wait_for_response(null, null, function(new_subscription_active) {
               if(new_subscription_active) {
                 alert('You\'re all set, now you can add your file again.');

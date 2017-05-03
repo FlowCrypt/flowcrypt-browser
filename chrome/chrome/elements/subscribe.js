@@ -7,7 +7,7 @@ tool.ui.event.protect();
 var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
 
 var PRODUCTS = {
-  trial: { id: 'free_quarter', method: 'trial', name: 'trial', level: 'pro' },
+  trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
   advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
 };
 
