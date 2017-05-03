@@ -2585,8 +2585,10 @@
   }
 
   function attachment_get_treat_as(attachment) {
-    if(tool.value(attachment.name).in(['', 'PGPexch.htm.pgp', 'PGPMIME version identification'])) {
+    if(tool.value(attachment.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
+    } else if(attachment.name === '') {
+      return attachment.size < 100 ? 'hidden' :  'message';
     } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
       return 'encrypted';
     } else if(attachment.name === 'signature.asc') {
@@ -2738,7 +2740,7 @@
           } else if(attachments.length) {
             var found = false;
             tool.each(attachments, function (i, attachment_meta) {
-              if(attachment_meta.name.match(/\.asc$/) || attachment_meta.name === 'message') {
+              if(attachment_meta.treat_as === 'message') {
                 found = true;
                 api_gmail_fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success, attachment) {
                   if(fetch_attachments_success) {

@@ -194,7 +194,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function filter_attachments(potential_matches, patterns) {
-    return potential_matches.filter('span.aZo, span.a5r').find('span.aV3').filter(function() {
+    return potential_matches.filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function() {
       var name = this.innerText.trim();
       for(var i = 0; i < patterns.length; i++) {
         if(patterns[i].indexOf('*.') === 0) { // wildcard
