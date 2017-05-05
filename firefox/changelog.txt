@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.0.5 on May 5, 2017: Hyphens</b>
+setup: added support for hyphens in emails
+
 <b>version 4.0.4 on May 3, 2017: Google Auth Fix</b>
 setup: fixed google auth sign up loop
 
