@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.0.4 on May 3, 2017: Google Auth Fix</b>
+setup: fixed google auth sign up loop
+
 <b>version 4.0.3 on May 3, 2017: Subscriptions</b>
 reading: fix inner attachments that don't have any name
 reading: fix noname attachments that actually have message in it
