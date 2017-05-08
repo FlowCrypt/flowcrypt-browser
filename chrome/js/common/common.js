@@ -58,6 +58,7 @@
       sum: arr_sum,
       average: arr_average,
       zeroes: arr_zeroes,
+      is: arr_is,
     },
     obj: {
       map: obj_map,
@@ -701,6 +702,10 @@
 
   function arr_zeroes(length) {
     return new Array(length).map(function() { return 0 });
+  }
+
+  function arr_is(object_to_identify) { // http://stackoverflow.com/questions/4775722/check-if-object-is-array
+    return Object.prototype.toString.call(object_to_identify) === '[object Array]';
   }
 
   function arr_sum(arr) {

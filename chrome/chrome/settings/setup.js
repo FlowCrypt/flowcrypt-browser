@@ -160,10 +160,11 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
   });
 }
 
-function render_setup_done(account_email, key_backup_prompt) {
+function render_setup_done(account_email, key_backup_prompt, recovered) {
   if(key_backup_prompt) {
     window.location = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
   } else {
+    // if (recovered) { } else { }
     display_block('step_4_done');
     $('h1').text('Setup done!');
     $('.email').text(account_email);
@@ -183,26 +184,26 @@ function finalize_setup(account_email, armored_pubkey, options) {
       is_newly_created_key: options.is_newly_created_key === true,
     };
     account_storage_set(account_email, storage, function () {
-      render_setup_done(account_email, options.key_backup_prompt);
+      render_setup_done(account_email, options.key_backup_prompt, options.recovered);
     });
   });
 }
 
-function save_key(account_email, prv, options, callback) {
-  private_storage_set('local', account_email, 'master_private_key', prv.armor());
-  if(options.save_passphrase) {
-    private_storage_set('local', account_email, 'master_passphrase', options.passphrase || '');
-  } else {
-    private_storage_set('session', account_email, 'master_passphrase', options.passphrase || '');
-  }
+function save_keys(account_email, prvs, options, callback) {
+  private_storage_set('local', account_email, 'master_private_key', prvs[0].armor());
+  private_storage_set(options.save_passphrase ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
   private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
-  private_storage_set('local', account_email, 'master_public_key', prv.toPublic().armor());
+  private_storage_set('local', account_email, 'master_public_key', prvs[0].toPublic().armor());
   private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
+  for(var i = 1; i < prvs.length; i++) { // if got more keys, save em too
+    private_keys_add(account_email, prvs[i].armor());
+    save_passphrase(options.save_passphrase ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
+  }
   var contacts = [];
   $.each(all_addresses, function (i, address) {
-    var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prv.toPublic().armor()));
-    contacts.push(db_contact_object(address, options.full_name, 'cryptup', prv.toPublic().armor(), attested, false, Date.now()));
+    var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
+    contacts.push(db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
   });
   db_open(function (db) {
     db_contact_save(db, contacts, callback);
@@ -218,7 +219,7 @@ function create_save_key_pair(account_email, options) {
     options.is_newly_created_key = true;
     var prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
     test_private_key_and_handle(url_params.account_email, prv, options, function () {
-      save_key(account_email, prv, options, function () {
+      save_keys(account_email, [prv], options, function () {
         finalize_setup(account_email, key.publicKeyArmored, options);
       });
     });
@@ -281,29 +282,29 @@ $('.back').off().click(function () {
 
 $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var passphrase = $('#recovery_pasword').val();
+  var matching_keys = [];
   if(passphrase) {
     var btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    var worked = false;
     $.each(recovered_keys, function (i, recovered_key) {
-      var key_copy = openpgp.key.readArmored(recovered_key.armor()).keys[0];
       if(tool.crypto.key.decrypt(recovered_key, passphrase).success) {
-        var options = {
-          submit_main: false, // todo - think about submitting when recovering
-          submit_all: false,
-          passphrase: passphrase,
-          save_passphrase: true, //todo - think about saving passphrase when recovering
-          setup_simple: true,
-          key_backup_prompt: false,
-        };
-        save_key(url_params.account_email, key_copy, options, function () {
-          finalize_setup(url_params.account_email, key_copy.toPublic().armor(), options);
-        });
-        worked = true;
-        return false;
+        matching_keys.push(openpgp.key.readArmored(recovered_key.armor()).keys[0]);
       }
     });
-    if(!worked) {
+    if(matching_keys.length) {
+      var options = {
+        submit_main: false, // todo - think about submitting when recovering
+        submit_all: false,
+        passphrase: passphrase,
+        save_passphrase: true, //todo - think about saving passphrase when recovering
+        setup_simple: true,
+        key_backup_prompt: false,
+        recovered: true,
+      };
+      save_keys(url_params.account_email, matching_keys, options, function () {
+        finalize_setup(url_params.account_email, matching_keys[0].toPublic().armor(), options);
+      });
+    } else {
       $(self).text(btn_text);
       if(recovered_keys.length > 1) {
         alert('This password did not match any of your ' + recovered_keys.length + ' backups. Please try again.');
@@ -408,8 +409,9 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
           submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
           submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
           save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+          recovered: false,
         };
-        save_key(url_params.account_email, prv, options, function () {
+        save_keys(url_params.account_email, [prv], options, function () {
           finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
         });
       } else {
@@ -451,6 +453,7 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
         submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
         setup_simple: false,
         key_backup_prompt: Date.now(),
+        recovered: false,
       });
     });
   }
