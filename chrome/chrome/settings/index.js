@@ -107,8 +107,8 @@ function initialize() {
         var private_keys = private_keys_get(url_params.account_email);
         if(!private_keys.length) {
           render_storage_inconsistency_error(url_params.account_email, 'No private key found for this account');
-        } else if(private_keys.length > 1) {
-          $('.add_key').css('display', 'none');
+        } else if(private_keys.length > 4) {
+          $('.key_list').css('overflow-y', 'scroll');
         }
         add_key_rows_html(private_keys);
       } else {

@@ -272,11 +272,21 @@ body#settings .settings-border {
   border: 1px solid rgba(0, 0, 0, .2);
   width: 47%;
   margin: 10px;
-  min-height: 220px;
+  height: 220px;
   text-align: left;
+  padding-right: 0;
 }
 body#settings .settings-border .row {
   padding: 10px 0;
+}
+body#settings .settings-border .key-content-row {
+  padding: 7px 0;
+  border-bottom: 1px solid #e6e6e6;
+}
+body#settings .settings-border .key_list {
+  overflow-x: hidden;
+  overflow-y: hidden; /* will be overriden to scroll if > 4 keys */
+  height: 219px;
 }
 #settings-row .box img.security-icon {
   width: 70px;
