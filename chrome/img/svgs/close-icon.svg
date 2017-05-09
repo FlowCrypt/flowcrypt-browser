@@ -1,10 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="20px" height="20px" viewBox="0 0 66 66" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
-    <title>close-icon</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <polygon id="close-icon" fill="#ffffff" fill-rule="nonzero" points="65.3656667 2.99947368 62.7733333 0.394736842 32.9596667 30.3547368 3.14233333 0.394736842 0.55 2.99947368 30.3673333 32.9594737 0.55 62.9194737 3.14233333 65.5242105 32.9596667 35.5642105 62.7733333 65.5242105 65.3656667 62.9194737 35.552 32.9594737"></polygon>
-    </g>
-</svg>
+<svg width="20" height="20" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg"><title>close-icon</title><path fill="#fff" fill-rule="nonzero" d="M65.366 3L62.773.394 32.96 30.355 3.142.395.55 2.999l29.817 29.96L.55 62.92l2.592 2.605 29.818-29.96 29.813 29.96 2.593-2.605-29.814-29.96z"/></svg>

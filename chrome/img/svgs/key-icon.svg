@@ -1,14 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="84px" height="44px" viewBox="0 0 84 44" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
-    <title>noun_687053</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="noun_687053" transform="translate(0.000000, -1.000000)" fill-rule="nonzero" fill="#3AA621">
-            <g id="Group" transform="translate(0.000000, 0.637830)">
-                <path d="M22,0.36217 C9.849735,0.36217 0,10.211905 0,22.36217 C0,34.512435 9.849735,44.36217 22,44.36217 C30.547991,44.36217 37.951699,39.483647 41.59375,32.36217 L48,32.36217 L53,26.36217 L58,32.36217 L62,32.36217 L67,26.36217 L72,32.36217 L76,32.36217 L84,22.36217 L76,12.36217 L41.59375,12.36217 C37.951699,5.240693 30.547991,0.36217 22,0.36217 Z M22,13.36217 C26.970568,13.36217 31,17.391602 31,22.36217 C31,27.332738 26.970568,31.36217 22,31.36217 C17.029432,31.36217 13,27.332738 13,22.36217 C13,17.391602 17.029432,13.36217 22,13.36217 Z" id="Shape"></path>
-            </g>
-        </g>
-    </g>
-</svg>
+<svg width="84" height="44" viewBox="0 0 84 44" xmlns="http://www.w3.org/2000/svg"><title>noun_687053</title><path d="M22 0C9.85 0 0 9.85 0 22s9.85 22 22 22c8.548 0 15.952-4.879 19.594-12H48l5-6 5 6h4l5-6 5 6h4l8-10-8-10H41.594C37.952 4.879 30.548 0 22 0zm0 13a9 9 0 1 1 0 18 9 9 0 0 1 0-18z" fill-rule="nonzero" fill="#3AA621"/></svg>
