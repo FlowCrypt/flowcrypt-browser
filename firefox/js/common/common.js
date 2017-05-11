@@ -82,6 +82,7 @@
     },
     mime: {
       headers_to_from: mime_headers_to_from,
+      reply_headers: mime_reply_headers,
       resembles_message: mime_resembles_message,
       format_content_to_display: mime_format_content_to_display, // todo - should be refactored into two
       decode: mime_decode,
@@ -842,19 +843,61 @@
 
   /* tool.mime */
 
-  function node_type(node) {
+  function mime_node_type(node) {
     if(node.headers['content-type'] && node.headers['content-type'][0]) {
       return node.headers['content-type'][0].value;
     }
   }
 
-  function node_filename(node) {
+  function mime_node_filename(node) {
     if(node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
       return node.headers['content-disposition'][0].params.filename;
     }
     if(node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
       return node.headers['content-type'][0].params.name;
     }
+  }
+
+  function mime_content_node(MimeBuilder, type, content) {
+    var node = new MimeBuilder(type).setContent(content);
+    if(type === 'text/plain') {
+      node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
+    }
+    return node;
+  }
+
+  /*
+   body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
+   headers: at least {To, From, Subject}
+   attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
+   */
+  function mime_encode(body, headers, attachments, mime_message_callback) {
+    mime_require('builder', function (MimeBuilder) {
+      var root_node = new MimeBuilder('multipart/mixed');
+      tool.each(headers, function (key, header) {
+        root_node.addHeader(key, header);
+      });
+      if(typeof body === 'string') {
+        body = {'text/plain': body};
+      }
+      if(Object.keys(body).length === 1) {
+        var content_node = mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0]]);
+      } else {
+        var content_node = new MimeBuilder('multipart/alternative');
+        tool.each(body, function (type, content) {
+          content_node.appendChild(mime_content_node(MimeBuilder, type, content));
+        });
+      }
+      root_node.appendChild(content_node);
+      tool.each(attachments || [], function (i, attachment) {
+        root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
+          'Content-Disposition': 'attachment',
+          'X-Attachment-Id': 'f_' + tool.str.random(10),
+          'Content-Transfer-Encoding': 'base64',
+        }).setContent(attachment.content));
+      });
+      mime_message_callback(root_node.build());
+    });
   }
 
   function mime_headers_to_from(parsed_mime_message) {
@@ -871,6 +914,12 @@
       });
     }
     return { from: header_from, to: header_to };
+  }
+
+  function mime_reply_headers(parsed_mime_message) {
+    var message_id = parsed_mime_message.headers['message-id'] || '';
+    var references = parsed_mime_message.headers['in-reply-to'] || '';
+    return { 'in-reply-to': message_id, 'references': references + ' ' + message_id };
   }
 
   function mime_resembles_message(message) {
@@ -934,15 +983,15 @@
         };
         parser.onend = function () {
           tool.each(parsed, function (path, node) {
-            if(node_type(node) === 'application/pgp-signature') {
+            if(mime_node_type(node) === 'application/pgp-signature') {
               mime_message_contents.signature = tool.str.uint8_as_utf(node.content);
-            } else if(node_type(node) === 'text/html' && !node_filename(node)) {
+            } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
               mime_message_contents.html = tool.str.uint8_as_utf(node.content);
-            } else if(node_type(node) === 'text/plain' && !node_filename(node)) {
+            } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
               mime_message_contents.text = tool.str.uint8_as_utf(node.content);
             } else {
               var node_content = tool.str.from_uint8(node.content);
-              mime_message_contents.attachments.push(file_attachment(node_filename(node), node_type(node), node_content)); //data: ,
+              mime_message_contents.attachments.push(file_attachment(mime_node_filename(node), mime_node_type(node), node_content)); //data: ,
             }
           });
           catcher.try(function () {
@@ -2435,48 +2484,6 @@
     } else {
       callback(false, error_response);
     }
-  }
-
-  function mime_content_node(MimeBuilder, type, content) {
-    var node = new MimeBuilder(type).setContent(content);
-    if(type === 'text/plain') {
-      node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
-    }
-    return node;
-  }
-
-  /*
-   body: either string (plaintext) or a dict {'text/plain': ..., 'text/html': ...}
-   headers: at least {To, From, Subject}
-   attachments: [{name: 'some.txt', type: 'text/plain', content: uint8}]
-   */
-  function mime_encode(body, headers, attachments, mime_message_callback) {
-    mime_require('builder', function (MimeBuilder) {
-      var root_node = new MimeBuilder('multipart/mixed');
-      tool.each(headers, function (key, header) {
-        root_node.addHeader(key, header);
-      });
-      if(typeof body === 'string') {
-        body = {'text/plain': body};
-      }
-      if(Object.keys(body).length === 1) {
-        var content_node = mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0]]);
-      } else {
-        var content_node = new MimeBuilder('multipart/alternative');
-        tool.each(body, function (type, content) {
-          content_node.appendChild(mime_content_node(MimeBuilder, type, content));
-        });
-      }
-      root_node.appendChild(content_node);
-      tool.each(attachments || [], function (i, attachment) {
-        root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
-          'Content-Disposition': 'attachment',
-          'X-Attachment-Id': 'f_' + tool.str.random(10),
-          'Content-Transfer-Encoding': 'base64',
-        }).setContent(attachment.content));
-      });
-      mime_message_callback(root_node.build());
-    });
   }
 
   function api_gmail_thread_get(account_email, thread_id, format, get_thread_callback) {
