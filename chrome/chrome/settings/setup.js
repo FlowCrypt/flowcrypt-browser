@@ -15,6 +15,9 @@ tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manu
 
 var account_email_attested_fingerprint = undefined;
 var recovered_keys = undefined;
+var recovered_key_matching_passphrases = [];
+var recovered_keys_longid_count = 0;
+var recovered_keys_successful_longids = [];
 var tab_id_global = undefined;
 var all_addresses = [url_params.account_email];
 var email_provider;
@@ -71,12 +74,16 @@ function display_block(name) {
     'step_1_easy_or_manual',
     'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
     'step_3_test_failed',
+    'step_4_more_to_recover',
     'step_4_done',
   ];
   if(name) { //set
     $('#' + blocks.join(', #')).css('display', 'none');
     $('#' + name).css('display', 'block');
     $('.back').css('visibility', tool.value(name).in(['step_2b_manual_enter', 'step_2a_manual_create']) ? 'visible' : 'hidden');
+    if(name === 'step_2_recovery') {
+      $('.backups_count_words').text(recovered_keys.length > 1 ? recovered_keys.length + ' backups' : 'a backup')
+    }
   } else { //get
     return $('#' + blocks.join(', #')).filter(':visible').first().attr('id') || null;
   }
@@ -102,6 +109,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
             fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
               if(success && keys) {
                 recovered_keys = keys;
+                recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
                 display_block('step_2_recovery');
               } else {
                 display_block('step_0_found_key');
@@ -160,14 +168,21 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
   });
 }
 
-function render_setup_done(account_email, key_backup_prompt, recovered) {
+function render_setup_done(account_email, key_backup_prompt) {
   if(key_backup_prompt) {
     window.location = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
   } else {
-    // if (recovered) { } else { }
-    display_block('step_4_done');
-    $('h1').text('Setup done!');
-    $('.email').text(account_email);
+    if (recovered_keys_longid_count > private_keys_get(account_email).length) { // recovery where not all keys were processed: some may have other pass phrase
+      display_block('step_4_more_to_recover');
+      $('h1').text('More keys to recover');
+      $('.email').text(account_email);
+      $('.private_key_count').text(private_keys_get(account_email).length);
+      $('.backups_count').text(recovered_keys.length);
+    } else { // successful and complete setup
+      display_block('step_4_done');
+      $('h1').text('Setup done!');
+      $('.email').text(account_email);
+    }
   }
 }
 
@@ -184,7 +199,7 @@ function finalize_setup(account_email, armored_pubkey, options) {
       is_newly_created_key: options.is_newly_created_key === true,
     };
     account_storage_set(account_email, storage, function () {
-      render_setup_done(account_email, options.key_backup_prompt, options.recovered);
+      render_setup_done(account_email, options.key_backup_prompt);
     });
   });
 }
@@ -283,11 +298,13 @@ $('.back').off().click(function () {
 $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   var passphrase = $('#recovery_pasword').val();
   var matching_keys = [];
-  if(passphrase) {
-    var btn_text = $(self).text();
-    $(self).html(tool.ui.spinner('white'));
+  if(passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
+    alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
+  } else if(passphrase) {
     $.each(recovered_keys, function (i, recovered_key) {
-      if(tool.crypto.key.decrypt(recovered_key, passphrase).success) {
+      var longid = tool.crypto.key.longid(recovered_key);
+      if(!tool.value(longid).in(recovered_keys_successful_longids) && tool.crypto.key.decrypt(recovered_key, passphrase).success) {
+        recovered_keys_successful_longids.push(longid);
         matching_keys.push(openpgp.key.readArmored(recovered_key.armor()).keys[0]);
       }
     });
@@ -301,11 +318,17 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
         key_backup_prompt: false,
         recovered: true,
       };
+      recovered_key_matching_passphrases.push(passphrase);
       save_keys(url_params.account_email, matching_keys, options, function () {
-        finalize_setup(url_params.account_email, matching_keys[0].toPublic().armor(), options);
+        account_storage_get(url_params.account_email, ['setup_done'], function (storage) {
+          if(!storage.setup_done) { // normal situation
+            finalize_setup(url_params.account_email, matching_keys[0].toPublic().armor(), options);
+          } else { // setup was finished before, just added more keys now
+            render_setup_done(url_params.account_email, options.key_backup_prompt);
+          }
+        });
       });
     } else {
-      $(self).text(btn_text);
       if(recovered_keys.length > 1) {
         alert('This password did not match any of your ' + recovered_keys.length + ' backups. Please try again.');
       } else {
@@ -317,6 +340,19 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
     alert('Please enter the password you used when you first set up CryptUp, so that we can recover your original keys.');
   }
 }));
+
+$('#step_4_more_to_recover .action_recover_remaining').click(function () {
+  display_block('step_2_recovery');
+  $('#recovery_pasword').val('');
+  var got = private_keys_get(url_params.account_email).length;
+  var bups = recovered_keys.length;
+  var left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
+  $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
+  $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+  $('#step_2_recovery .skip_recover_remaining').click(function () {
+    window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
+  });
+});
 
 $('.action_skip_recovery').click(function () {
   if(confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {

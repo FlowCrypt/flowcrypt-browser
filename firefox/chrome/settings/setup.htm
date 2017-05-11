@@ -176,7 +176,7 @@
     </div>
 
     <div id="step_2_recovery">
-      <div class="line">Found a backup of your account key. Enter your pass phrase to continue.</div>
+      <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your pass phrase to continue.</div>
       <div class="line">
         <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase" />
       </div>
@@ -208,6 +208,32 @@
     <div id="step_4_done">
       <div class="line">
         <div class="button long green action_send">COMPOSE ENCRYPTED EMAIL</div>
+      </div>
+      <div class="line">
+        <div class="button long gray action_account_settings">MORE SETTINGS</div>
+      </div>
+      <div class="line auth_denied_warning" style="display: none;">
+        <br/>
+        <br/>
+        <br/><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted attachments, encrypted replies, alternative "From" email addresses and more.
+        <br/>
+        <br/>
+        <div class="button long green action_go_auth_denied">revise permissions</div>
+      </div>
+    </div>
+
+    <div id="step_4_more_to_recover">
+      <div class="line">
+        You successfully recovered <span class="private_key_count"></span> out of <span class="backups_count"></span> available backups.
+      </div>
+      <div class="line">
+        Try to recover the remaining keys to make sure all your encrypted email is readable.
+      </div>
+      <div class="line">
+        <div class="button long green action_recover_remaining">RECOVER REMAINING KEYS</div>
+      </div>
+      <div class="line">
+        <div class="button long gray action_send">COMPOSE ENCRYPTED EMAIL</div>
       </div>
       <div class="line">
         <div class="button long gray action_account_settings">MORE SETTINGS</div>

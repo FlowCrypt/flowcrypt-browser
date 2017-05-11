@@ -129,6 +129,7 @@ body#settings > div#content.setup div#step_3_back { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
 body#settings > div#content.setup div#step_3_test_failed { display: none; }
 body#settings > div#content.setup div#step_4_done { display: none; }
+body#settings > div#content.setup div#step_4_more_to_recover { display: none; }
 body#settings > div#content.setup div.loading { width: 100%; margin: 10px auto; padding-left: 0; padding-right: 0; }
 
 body#settings > div#content.backup div#step_0_enter { display: none; }
