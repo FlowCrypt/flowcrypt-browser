@@ -1,14 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="116px" height="140px" viewBox="0 0 116 140" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
-    <title>noun_874624</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="noun_874624" fill-rule="nonzero" fill="#31A217">
-            <g id="Group" transform="translate(0.000000, 0.053145)">
-                <path d="M57.9999983,0.597968605 C76.3107641,14.6174965 95.7702612,24.6422012 116.000002,31.9700616 C116.000002,105.812291 85.4192498,121.805288 57.9999983,139.295726 C30.5807469,121.805288 -1.657143e-06,105.812291 -1.657143e-06,31.9700616 C20.2297355,24.6422012 39.6892326,14.6174965 57.9999983,0.597968605 L57.9999983,0.597968605 Z" id="Shape"></path>
-            </g>
-        </g>
-    </g>
-</svg>
+<svg width="116" height="140" viewBox="0 0 116 140" xmlns="http://www.w3.org/2000/svg"><title>noun_874624</title><path d="M58 .651c18.31 14.02 37.77 24.044 58 31.372 0 73.842-30.58 89.835-58 107.326-27.42-17.49-58-33.484-58-107.326C20.23 24.695 39.69 14.671 58 .651z" fill-rule="nonzero" fill="#31A217"/></svg>

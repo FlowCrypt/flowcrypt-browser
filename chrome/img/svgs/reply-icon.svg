@@ -1,14 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="31px" height="33px" viewBox="0 0 31 33" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
-    <title>Shape</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="noun_847900" transform="translate(-20.000000, -30.000000)" fill-rule="nonzero" fill="#FFFFFF">
-            <g id="Untitled-2">
-                <path d="M39.0176354,62.2274416 C39.6794403,61.9939185 42.8234859,60.8055316 44.5267991,57.3807365 C44.8416445,56.7462588 46.226964,53.7809565 45.1634164,50.4480599 C44.0154903,46.8539448 40.4690724,44.2430185 36.2016587,43.8433227 L36.2016587,48.4634286 L20.1615481,39.2339173 L36.1305037,30 L36.1305037,34.487923 C40.6466452,34.662908 44.347967,36.3579959 47.1311998,39.8381819 C49.3080404,42.55989 50.2588734,45.6957712 50.153715,49.1809927 C49.9698453,55.3614859 45.064555,61.2499178 39.0176354,62.2274416 Z" id="Shape"></path>
-            </g>
-        </g>
-    </g>
-</svg>
+<svg width="31" height="33" viewBox="0 0 31 33" xmlns="http://www.w3.org/2000/svg"><title>Shape</title><path d="M19.018 32.227c.661-.233 3.805-1.421 5.509-4.846.315-.635 1.7-3.6.636-6.933-1.148-3.594-4.694-6.205-8.961-6.605v4.62L.162 9.233 16.13 0v4.488c4.516.175 8.217 1.87 11 5.35 2.177 2.722 3.128 5.858 3.023 9.343-.184 6.18-5.09 12.069-11.136 13.046z" fill-rule="nonzero" fill="#FFF"/></svg>
