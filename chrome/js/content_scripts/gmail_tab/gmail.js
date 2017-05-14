@@ -11,7 +11,7 @@ catcher.try(function() {
   content_script_setup_if_vacant({
     name: 'gmail',
     get_user_account_email:  function () {
-      var account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._][a-z0-9._\-]+@[^…< ]+/gi);
+      var account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
       return account_email_loading_match !== null ? account_email_loading_match[0].replace(/^[\s.]+|[\s.]+$/gm, '').toLowerCase() : undefined;
     },
     get_user_full_name: function () {
