@@ -356,6 +356,10 @@ $('#step_4_more_to_recover .action_recover_remaining').click(function () {
 
 $('.action_skip_recovery').click(function () {
   if(confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
+    recovered_keys = undefined;
+    recovered_key_matching_passphrases = [];
+    recovered_keys_longid_count = 0;
+    recovered_keys_successful_longids = [];
     display_block('step_1_easy_or_manual');
   }
 });
