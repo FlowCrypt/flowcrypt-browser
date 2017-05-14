@@ -1,5 +1,13 @@
 <div>
 
+<b>version 4.0.6 on May 13, 2017: Multiple Key Recovery</b>
+setup: when loading key from backup, import ALL matching keys
+setup: emails like i@something.com will not work - fixed
+settings: unlimited private keys per account
+settings: take down hiring notice
+settings: update license info
+internal: Android compatibility updates
+
 <b>version 4.0.5 on May 5, 2017: Hyphens</b>
 setup: added support for hyphens in emails
 
