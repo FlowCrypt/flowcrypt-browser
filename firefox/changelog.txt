@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.0.7 on May 22, 2017: Fix Inbox</b>
+setup: fixed google inbox support
+
 <b>version 4.0.6 on May 13, 2017: Multiple Key Recovery</b>
 setup: when loading key from backup, import ALL matching keys
 setup: emails like i@something.com will not work - fixed
