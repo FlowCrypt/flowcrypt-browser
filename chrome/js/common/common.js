@@ -2625,7 +2625,7 @@
       return  'signature';
     } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?\.asc$/g)) { // name starts with a key id
       return 'public_key';
-    } else if((attachment.name.match(/\.asc$/) && attachment.size < 100000 && !attachment.inline) || tool.value(attachment.name).in(['message', 'message.asc'])) {
+    } else if((attachment.name.match(/\.asc$/) && attachment.size < 100000 && !attachment.inline) || tool.value(attachment.name).in(['message', 'message.asc', 'encrypted.asc'])) {
       return 'message';
     } else {
       return 'standard';
