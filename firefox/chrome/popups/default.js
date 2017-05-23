@@ -3,7 +3,7 @@
 'use strict';
 
 tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab) {
-  if(active_tab.account_email !== null) {
+  if(active_tab && active_tab.account_email !== null) {
     account_storage_get(active_tab.account_email, ['setup_done'], function (storage) {
       if(storage.setup_done) {
         choose_email_or_settings_popup(active_tab.account_email);
@@ -11,7 +11,7 @@ tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab)
         set_up_accont_prompt_popup(active_tab.account_email);
       }
     });
-  } else if(active_tab.provider !== null && active_tab.same_world === true) {
+  } else if(active_tab && active_tab.provider !== null && active_tab.same_world === true) {
     set_up_accont_prompt_popup(active_tab.account_email);
   } else {
     get_account_emails(function (account_emails) {
