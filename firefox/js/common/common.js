@@ -1350,7 +1350,7 @@
   function giagnose_message_pubkeys(account_email, message) {
     var message_key_ids = message.getEncryptionKeyIds();
     var local_key_ids = crypto_key_ids(private_storage_get('local', account_email, 'master_public_key'));
-    var diagnosis = { found_match: false, receivers: message_key_ids.length, };
+    var diagnosis = { found_match: false, receivers: message_key_ids.length };
     tool.each(message_key_ids, function (i, msg_k_id) {
       tool.each(local_key_ids, function (j, local_k_id) {
         if(msg_k_id === local_k_id) {
@@ -1363,22 +1363,21 @@
   }
 
   function diagnose_keyserver_pubkeys(account_email, callback) {
-    var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {}, };
+    var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
     account_storage_get(account_email, ['addresses'], function (storage) {
       api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
         if(success) {
           tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if(!pubkey_search_result.pubkey) {
               diagnosis.has_pubkey_missing = true;
-              diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false, };
+              diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false };
             } else {
               var match = true;
-              var local_fingerprint = crypto_key_fingerprint(private_storage_get('local', account_email, 'master_public_key'));
-              if(crypto_key_fingerprint(pubkey_search_result.pubkey) !== local_fingerprint) {
+              if(!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(arr_select(private_keys_get(account_email), 'longid'))) {
                 diagnosis.has_pubkey_mismatch = true;
                 match = false;
               }
-              diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match, };
+              diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match };
             }
           });
           callback(diagnosis);
