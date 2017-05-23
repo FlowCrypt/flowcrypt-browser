@@ -1,5 +1,12 @@
 <div>
 
+<b>version 4.0.8 on May 23, 2017: Bugfixes</b>
+composing: improve reply message headers
+reading: facebook emails don't display properly in Inbox
+reading: google drive attachments fix
+settings: don't show error on server page if attest matches any of loaded keys
+settings: errors in popup fixed
+
 <b>version 4.0.7 on May 22, 2017: Fix Inbox</b>
 setup: fixed google inbox support
 
