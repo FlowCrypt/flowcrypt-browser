@@ -94,7 +94,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
       params.to = headers.to;
       params.from = headers.from;
-      params.subject = conversation_params.subject;
+      params.subject = 'Re: ' + conversation_params.subject;
     }
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/reply_message.htm'), params);
   }
