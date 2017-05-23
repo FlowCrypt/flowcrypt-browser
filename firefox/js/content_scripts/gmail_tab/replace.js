@@ -186,8 +186,13 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
       var google_drive_attachments = [];
       not_processed_attachments_loaders.each(function (i, loader_element) {
-        var meta = $(loader_element).parent().attr('download_url').split(':');
-        google_drive_attachments.push({ message_id: message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted'});
+        var download_url = $(loader_element).parent().attr('download_url');
+        if(download_url) {
+          var meta = download_url.split(':');
+          google_drive_attachments.push({ message_id: message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted'});
+        } else {
+          console.log('Missing Google Drive attachments download_url');
+        }
       });
       process_attachments(message_id, google_drive_attachments, attachments_container, true);
     }
