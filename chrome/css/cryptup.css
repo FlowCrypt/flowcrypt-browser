@@ -428,6 +428,18 @@ body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolu
 body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
 body.attachment .file-format-holder img#file-format { width: 45px; height: auto; margin-top: 12px; opacity: .2; margin-left: 10px;}
 
+/* Select Account */
+body#select_account { font-family: 'Open Sans', sans-serif; }
+body#select_account #title { margin-bottom: 0!important; padding-bottom: 0; font-weight: 600;}
+body#select_account { width: 340px;padding: 12px;font-size: 14px;zoom: reset; }
+body#select_account ul.emails { margin-top: 0; -webkit-animation: fadeIn .5s; animation: fadeIn .5s; }
+body#select_account .emails li { margin: 5px 0; position: relative;}
+body#select_account .emails li a { display: block; background: #F5F5F5; border-radius: 4px; border: 1px solid rgba(0,0,0,.07); width: 99%; padding: 10px 0; text-align: left; text-indent: 55px; font-size: 13px; text-transform: none; font-weight: 500; color: #0A9FD3; transition: .5s;}
+body#select_account .emails li a:hover { background: #f0f0f0; }
+body#select_account .emails li:before { position: absolute; content: ''; width: 30px; height: 30px;border: 1px solid #ccc; border-radius: 120px; top: 14px; left: 12px; }
+body#select_account .add-account-link { display: block; padding: 15px 0; text-indent: 55px; position: relative; margin-top: -5px; font-size: 13px; text-decoration: none; -webkit-animation: fadeIn .5s; animation: fadeIn .5s; }
+body#select_account .add-account-link:before { background: url('../img/svgs/plus-sign.svg'); width: 30px; height: 30px; background-repeat: no-repeat; position: absolute; content: ''; left: 19px; top: 13px; }
+
 /* cryptup dialog */
 div#cryptup_dialog { position: absolute; top:0; width: 100%; height: 100%; margin: 0 auto; z-index: 10; background-color:rgba(255, 255, 255, 0.85); }
 div#cryptup_dialog iframe { position: absolute; width: 640px; height: 370px; top: 50%; left: 50%; margin-left: -300px; margin-top: -200px; border: none;
