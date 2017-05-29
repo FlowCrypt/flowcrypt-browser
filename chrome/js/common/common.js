@@ -45,8 +45,7 @@
       key_codes: env_key_codes,
       set_up_require: env_set_up_require,
       increment: env_increment,
-      webmails: ['gmail', 'inbox'],
-      // webmails: ['gmail', 'inbox', 'outlook'],
+      webmails: env_webmails,
     },
     arr: {
       unique: arr_unique,
@@ -654,6 +653,12 @@
     } else if (typeof callback === 'function') {
       callback();
     }
+  }
+
+  function env_webmails(cb) {
+    account_storage_get(null, ['dev_outlook_allow'], function(storage) {
+      cb(storage.dev_outlook_allow ? ['gmail', 'inbox', 'outlook'] : ['gmail', 'inbox']);
+    });
   }
 
   /* tool.arr */

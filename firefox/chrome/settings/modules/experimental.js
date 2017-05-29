@@ -46,8 +46,19 @@ function collect_info_for_account_backup(account_email, callback) {
 
 
 if(url_params.account_email) {
+  account_storage_get(null, ['dev_outlook_allow'], function (storage) {
+    if(storage.dev_outlook_allow === true) {
+      $('.action_allow_outlook').prop('checked', true);
+    }
+  });
 
   $('.email').text(url_params.account_email);
+
+  $('.action_allow_outlook').change(function () {
+    account_storage_set(null, {'dev_outlook_allow': $(this).prop('checked')}, function (storage) {
+      window.location.reload();
+    });
+  });
 
   $('.action_open_decrypt').click(function () {
     show_settings_page('/chrome/settings/modules/decrypt.htm');

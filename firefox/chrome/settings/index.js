@@ -11,8 +11,10 @@ tool.time.wait(function() { if(typeof catcher !== 'undefined') { return true; }}
   $('.logo-row span#v').text(catcher.version());
 });
 
-$.each(tool.env.webmails, function(i, webmail_name) {
-  $('.signin_button.' + webmail_name).css('display', 'inline-block');
+tool.env.webmails(function(webmails) {
+  $.each(webmails, function(i, webmail_name) {
+    $('.signin_button.' + webmail_name).css('display', 'inline-block');
+  });
 });
 
 tool.browser.message.tab_id(function (tab_id) {
