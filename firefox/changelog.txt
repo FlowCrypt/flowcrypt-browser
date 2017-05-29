@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.0.9 on May 28, 2017: Firefox setup</b>
+setup: fixed account setup in Firefox
+
 <b>version 4.0.8 on May 23, 2017: Bugfixes</b>
 composing: improve reply message headers
 reading: facebook emails don't display properly in Inbox
