@@ -97,11 +97,11 @@ function initialize() {
   if(url_params.account_email) {
     $('.email-address').text(url_params.account_email);
     $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
-    account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
+    account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], function (storage) {
       google_token_scopes = storage.google_token_scopes;
       if(storage.setup_done) {
         render_subscription_status_header();
-        if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+        if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         display_original('.hide_if_setup_not_done');
