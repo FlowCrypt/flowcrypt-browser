@@ -2622,8 +2622,8 @@
     if(tool.value(attachment.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if(attachment.name === '') {
-      return attachment.size < 100 ? 'hidden' :  'message';
-    } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)/g)) {
+      return attachment.size < 100 ? 'hidden' : 'message';
+    } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
     } else if(attachment.name === 'signature.asc') {
       return  'signature';
