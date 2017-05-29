@@ -344,6 +344,9 @@ table#compose .intro_container > td { height: 90px; }
 table#compose .intro_container > td >  p { padding: 8px; margin: 0; color: #999; padding-bottom: 0; }
 table#compose .intro_container > td > .input_intro { padding: 8px; border: none; height: 50px; -webkit-box-shadow: none !important;
   -moz-box-shadow: none !important; box-shadow: none !important; outline: none; word-wrap: break-word; overflow-y: auto; }
+table#compose td.text div#input_text.dragging-attachment { /*filter: blur(0.5px);*/ -webkit-animation: fadeIn 0.5s ease;  animation: fadeIn 0.5s ease;}
+table#compose td.text div#input_text.dragging-attachment::after { background: rgba(49, 162, 23, .2); width: 97%; height: 96%; content: ''; position: absolute; top: 3px; left: 3px; border: 5px dashed #31A217; }
+table#compose td.text div#input_text.dragging-attachment::before { position: absolute; content: 'Drop files here'; left: 0; right: 0; top: 35%; bottom: 0; width: 100%; height: 100%; text-align: center; font-size: 18px; font-weight: 500; font-size: 45px; color: #31A217; }
 
 table#compose #fineuploader { position: absolute; bottom: 5px; right: 0; }
 table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
