@@ -160,7 +160,7 @@ function backup_key_on_gmail(account_email, armored_key, callback) { // todo - r
     var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
     var message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
     tool.api.gmail.message_send(account_email, message, callback);
-  });
+  }, 'html');
 }
 
 function backup_key_on_outlook(account_email, armored_key, callback) {
@@ -168,7 +168,7 @@ function backup_key_on_outlook(account_email, armored_key, callback) {
     var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
     var message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
     tool.api.outlook.message_send(account_email, message, callback);
-  });
+  }, 'html');
 }
 
 $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
