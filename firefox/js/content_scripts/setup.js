@@ -71,10 +71,6 @@ function content_script_setup_if_vacant(webmail_specific) {
   var factory;
   var inject;
   var notifications = content_script_notifications();
-  var webmails = [];
-  tool.env.webmails(function (allowed_webmails) {
-    webmails = allowed_webmails;
-  });
 
   function wait_for_account_email_then_setup() {
     var account_email = webmail_specific.get_user_account_email();
@@ -82,11 +78,13 @@ function content_script_setup_if_vacant(webmail_specific) {
       if(typeof account_email !== 'undefined' && catcher.version()) {
         console.log('Loading CryptUp ' + catcher.version());
         window.account_email_global = account_email;
-        if(tool.value(webmail_specific.name).in(webmails)) {
-          setup(account_email);
-        } else {
-          console.log('CryptUp disabled: ' + webmail_specific.name + ' integration currently for development only');
-        }
+        tool.env.webmails(function (webmails) {
+          if(tool.value(webmail_specific.name).in(webmails)) {
+            setup(account_email);
+          } else {
+            console.log('CryptUp disabled: ' + webmail_specific.name + ' integration currently for development only');
+          }
+        });
       } else {
         if(account_email_interval > 6000) {
           console.log('Cannot load CryptUp yet. Page: ' + window.location + ' (' + document.title + ')');
