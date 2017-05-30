@@ -42,7 +42,7 @@ function outlook_element_replacer(factory, account_email, addresses) {
   }
 
   function replace_standard_reply_box(editable, force_replace_even_if_pgp_block_is_not_present) {
-    $('div._rp_s6').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
+    $('div._rp_s6, div._rp_t6').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
       if($('iframe.pgp_block').filter(':visible').length || force_replace_even_if_pgp_block_is_not_present) {
         var iframe = factory.embedded.reply({thread_id: dom_extract_selected_conversation_id()}, editable);
         $(reply_box).addClass('reply_message_iframe_container').html(iframe).children(':not(iframe)').css('display', 'none');
