@@ -1633,7 +1633,7 @@
     } catch(primary_e) {
       if(!tool.value(primary_e.message).in(['Unknown s2k type.', 'Invalid enum value.'])) {
         return {success: false, error: 'primary decrypt error: "' + primary_e.message + '"'}; // unknown exception for master key
-      } else if(prv.subKeys.length) {
+      } else if(prv.subKeys !== null && prv.subKeys.length) {
         var subkes_succeeded = 0;
         var subkeys_unusable = 0;
         var unknown_exception;
