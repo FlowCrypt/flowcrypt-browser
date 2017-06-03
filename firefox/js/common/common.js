@@ -250,7 +250,7 @@
       }
     },
     enums: {
-      recovery_email_subjects: ['Your CryptUp Backup', 'Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
+      recovery_email_subjects: ['Your CryptUp Backup', 'Your FlowCrypt Backup', 'Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
     },
   };
 
