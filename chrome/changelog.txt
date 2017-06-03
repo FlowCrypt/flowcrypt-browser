@@ -1,5 +1,9 @@
 <div>
 
+<b>version 4.1.0 on June 1, 2017: Decrypting Key</b>
+setup: fixed error decrypting a key
+reading: recognize xxx.zip.asc as a an attachment and not a message
+
 <b>version 4.0.9 on May 28, 2017: Firefox setup</b>
 setup: fixed account setup in Firefox
 
