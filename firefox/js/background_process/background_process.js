@@ -57,7 +57,7 @@ inject_cryptup_into_webmail_if_needed();
 schedule_cryptup_subscription_level_check();
 
 function open_settings_page_handler(message, sender, respond) {
-  open_settings_page(message.path, message.account_email, message.page);
+  open_settings_page(message.path, message.account_email, message.page, message.page_url_params);
   respond();
 }
 
@@ -108,15 +108,15 @@ function update_uninstall_url(request, sender, respond) {
   });
 }
 
-function open_settings_page(path, account_email, page) {
+function open_settings_page(path, account_email, page, page_url_params) {
   var base_path = chrome.extension.getURL('chrome/settings/' + (path || 'index.htm'));
   get_cryptup_settings_tab_id_if_open(function(opened_tab) {
     var open_tab = opened_tab ? function(url) { chrome.tabs.update(opened_tab, {url: url, active: true}); } : function(url) { chrome.tabs.create({url: url}); };
     if(account_email) {
-      open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page }));
+      open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
     } else {
       get_account_emails(function (account_emails) {
-        open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page }));
+        open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
       });
     }
   });

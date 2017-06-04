@@ -78,6 +78,7 @@
       save_to_downloads: file_save_to_downloads,
       attachment: file_attachment,
       pgp_name_patterns: file_pgp_name_patterns,
+      keyinfo_as_pubkey_attachment: file_keyinfo_as_pubkey_attachment,
     },
     mime: {
       headers_to_from: mime_headers_to_from,
@@ -844,6 +845,11 @@
 
   function file_pgp_name_patterns() {
     return ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification'];
+  }
+
+  function file_keyinfo_as_pubkey_attachment(keyinfo) {
+    var k = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    return file_attachment('0x' + keyinfo.longid + '.asc', 'application/pgp-keys', k.toPublic().armor());
   }
 
   /* tool.mime */
