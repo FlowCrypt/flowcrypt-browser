@@ -2,7 +2,7 @@
 
 'use strict';
 
-function init_shared_compose_js(url_params, db, subscription, message_sent_callback) {
+function init_shared_compose_js(url_params, db, subscription, message_sent_callback, disable_automatic_behavior) {
 
   var L = {
     message_encrypted_html: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ',
@@ -53,7 +53,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   var CRYPTUP_WEB_URL = 'https://cryptup.org';
 
   var factory;
-  var attach = init_shared_attach_js(get_max_attachment_size_and_oversize_notice);
+  var attach = !disable_automatic_behavior ? init_shared_attach_js(get_max_attachment_size_and_oversize_notice) : null;
 
   var last_draft = '';
   var draft_id;
@@ -62,7 +62,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   var last_reply_box_table_height;
   var contact_search_in_progress = false;
   var added_pubkey_db_lookup_interval;
-  var save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
+  var save_draft_interval = !disable_automatic_behavior ? setInterval(draft_save, SAVE_DRAFT_FREQUENCY) : null;
   var save_draft_in_process = false;
   var passphrase_interval;
   var include_pubkey_toggled_manually = false;
@@ -80,7 +80,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   tool.browser.message.tab_id(function (id) {
     tab_id = id;
-    factory = element_factory(url_params.account_email, tab_id);
+    factory = !disable_automatic_behavior ? element_factory(url_params.account_email, tab_id) : null;
     tool.browser.message.listen({
       close_dialog: function (data) {
         $('.featherlight.featherlight-iframe').remove();
@@ -104,6 +104,11 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         if(data && data.entered === false) {
           clearInterval(passphrase_interval);
           reset_send_btn();
+        }
+      },
+      reply_pubkey_mismatch: function(data) {
+        if(is_reply_box) {
+          window.location = tool.env.url_create('reply_pubkey_mismatch.htm', url_params);
         }
       },
     }, tab_id);

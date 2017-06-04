@@ -8,11 +8,12 @@ var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'p
 
 var l = {
   cant_open: 'Could not open this message with CryptUp.\n\n',
+  your_key_cant_open_import_if_have: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
   encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
   single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
   account_info_outdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
   wrong_pubkey_used: 'It looks like it was encrypted for someone else. If you have more keys that may help decrypt this message, you can add them in the settings. ',
-  ask_resend: 'Please ask them to send a new message.',
+  ask_resend: 'Please ask them to send a new message.\n',
   receivers_hidden: 'Cannot tell if the message was encrypted correctly for you. ',
   bad_format: 'Message is either badly formatted or not compatible with CryptUp. ',
   no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
@@ -85,6 +86,13 @@ db_open(function (db) {
           set_frame_color('red');
           $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">This message was badly encrypted. Do not consider it private. The sender should update their encryption software.<br><br>It allows for a known vulnerability to be exploited (missing MDC in combination with modern cipher) that may allow unintended parties to read the contents.</div><br>');
         }
+        if(is_error) {
+          $('.action_show_raw_pgp_block').click(function () {
+            $('.raw_pgp_block').css('display', 'block');
+            $(this).css('display', 'none');
+            send_resize_message();
+          });
+        }
         if(callback) {
           callback();
         }
@@ -97,12 +105,12 @@ db_open(function (db) {
   }
 
   function button_html(text, add_classes) {
-    return '<br><div class="button long ' + add_classes + '" style="margin:30px 0;" target="cryptup">' + text + '</div>';
+    return '<div class="button long ' + add_classes + '" style="margin:30px 0;" target="cryptup">' + text + '</div>';
   }
 
   function armored_message_as_html(raw_message_substitute) {
     if(raw_message_substitute || url_params.message) {
-      return '<div class="raw_pgp_block">' + (raw_message_substitute || url_params.message).replace(/\n/g, '<br>') + '</div>';
+      return '<div class="raw_pgp_block" style="display: none;">' + (raw_message_substitute || url_params.message).replace(/\n/g, '<br>') + '</div><a href="#" class="action_show_raw_pgp_block">show original message</a>';
     }
     return '';
   }
@@ -121,15 +129,17 @@ db_open(function (db) {
     set_frame_color('red');
     render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true, function () {
       $('.button.settings_keyserver').click(function () {
-        tool.browser.message.send(null, 'settings', {
-          account_email: url_params.account_email,
-          page: '/chrome/settings/modules/keyserver.htm',
-        });
+        tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/keyserver.htm'});
       });
       $('.button.settings').click(function () {
-        tool.browser.message.send(null, 'settings', {
-          account_email: url_params.account_email,
-        });
+        tool.browser.message.send(null, 'settings', {account_email: url_params.account_email});
+      });
+      $('.button.settings_add_key').click(function () {
+        tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/add_key.htm'});
+      });
+      $('.button.reply_pubkey_mismatch').click(function () {
+        alert('You should tell the sender to update their settings and send a new message.');
+        tool.browser.message.send('broadcast', 'reply_pubkey_mismatch');
       });
       if(callback) {
         callback();
@@ -145,25 +155,7 @@ db_open(function (db) {
       if(msg_diagnosis.receivers === 1) {
         render_error(l.cant_open + l.single_sender + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
       } else {
-        tool.diagnose.keyserver_pubkeys(account_email, function (ksrv_diagnosis) {
-          if(!ksrv_diagnosis) {
-            render_error(l.cant_open + l.refresh_page);
-          } else {
-            if(msg_diagnosis.receivers) {
-              if(ksrv_diagnosis.has_pubkey_mismatch) {
-                render_error(l.cant_open + l.account_info_outdated + button_html('review outdated information', 'green settings_keyserver'));
-              } else {
-                render_error(l.cant_open + l.wrong_pubkey_used + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
-              }
-            } else {
-              if(ksrv_diagnosis.has_pubkey_mismatch) {
-                render_error(l.cant_open + l.receivers_hidden + l.account_info_outdated + button_html('review outdated information', 'green settings_keyserver'));
-              } else {
-                render_error(l.cant_open + l.receivers_hidden + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
-              }
-            }
-          }
-        });
+        render_error(l.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
       }
     }
   }

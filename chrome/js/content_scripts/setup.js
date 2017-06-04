@@ -166,6 +166,9 @@ function content_script_setup_if_vacant(webmail_specific) {
       close_dialog: function (data) {
         $('#cryptup_dialog').remove();
       },
+      scroll: function(data) {
+        tool.ui.scroll(data.selector, data.repeat);
+      },
     }, tab_id);
 
     tool.browser.message.send(null, 'migrate_account', { account_email: account_email }, function () {

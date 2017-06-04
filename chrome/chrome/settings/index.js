@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'page', 'advanced']);
+var url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
 var tab_id_global;
 var microsoft_auth_attempt = {};
 var google_token_scopes;
@@ -79,7 +79,7 @@ tool.browser.message.tab_id(function (tab_id) {
     if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
       show_settings_page(url_params.page, '&use_account_email=1');
     } else {
-      show_settings_page(url_params.page);
+      show_settings_page(url_params.page, url_params.page_url_params ? JSON.parse(url_params.page_url_params) : null);
     }
   }
 });

@@ -25,7 +25,8 @@ $('.show_when_showing_public').css('display', '');
 $('.show_when_showing_private').css('display', 'none');
 
 $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  tool.file.save_to_downloads('0x' + keyinfo.longid + '.asc', 'text/plain', key.toPublic().armor());
+  var file = tool.file.keyinfo_as_pubkey_attachment(keyinfo);
+  tool.file.save_to_downloads(file.name, file.type, file.content);
 }));
 
 $('.action_show_other_type').click(function () {

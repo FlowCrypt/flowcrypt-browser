@@ -238,10 +238,18 @@ function openpgp_key_encrypt(key, passphrase) {
   }
 }
 
-function show_settings_page(page, add_url_text) {
-  var new_location = tool.env.url_create(page, { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global }) + (add_url_text || '');
+function show_settings_page(page, add_url_text_or_params) {
+  console.log(add_url_text_or_params);
+  var page_params = { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global };
+  if(typeof add_url_text_or_params === 'object') { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
+    $.each(add_url_text_or_params, function(k, v) {
+      page_params[k] = v;
+    });
+    add_url_text_or_params = null;
+  }
+  var new_location = tool.env.url_create(page, page_params) + (add_url_text_or_params || '');
   if(settings_url_params.embedded) { //embedded on the main page
-    tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', { page: page, add_url_text: add_url_text });
+    tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', { page: page, add_url_text: add_url_text_or_params });
   } else if(!settings_url_params.parent_tab_id) { // on a main page
     if(page !== '/chrome/elements/new_message.htm') {
       var width = Math.min(800, $('body').width() - 200);
