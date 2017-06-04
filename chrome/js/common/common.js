@@ -2610,7 +2610,7 @@
       });
     }
     if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {
-      var attachemnt = {
+      var attachment = {
         message_id: internal_message_id,
         id: gmail_email_object.body.attachmentId,
         size: gmail_email_object.body.size,
@@ -2618,8 +2618,8 @@
         type: gmail_email_object.mimeType,
         inline: (api_gmail_find_header(gmail_email_object, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
       };
-      attachemnt.treat_as = attachment_get_treat_as(attachemnt);
-      internal_results.push(attachemnt);
+      attachment.treat_as = attachment_get_treat_as(attachment);
+      internal_results.push(attachment);
     }
     return internal_results;
   }

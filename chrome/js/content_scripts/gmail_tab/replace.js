@@ -117,6 +117,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     $('div.aQH').each(function (i, attachments_container) {
       attachments_container = $(attachments_container);
       var new_pgp_attachments = filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
+      var new_pgp_attachments_names = new_pgp_attachments.find('.aV3').map(function () { return $.trim($(this).text()); });
       if(new_pgp_attachments.length) {
         var message_id = determine_message_id('attachment', attachments_container);
         if(message_id) {
@@ -124,7 +125,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
             $(new_pgp_attachments).prepend(factory.embedded.attachment_status('Getting file info..' + tool.ui.spinner('green')));
             tool.api.gmail.message_get(account_email, message_id, 'full', function (success, message) {
               if(success) {
-                process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container);
+                process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
               } else {
                 $(new_pgp_attachments).find('.attachment_loader').text('Failed to load');
               }
@@ -142,7 +143,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     });
   }
 
-  function process_attachments(message_id, attachment_metas, attachments_container, skip_google_drive) {
+  function process_attachments(message_id, attachment_metas, attachments_container, skip_google_drive, new_pgp_attachments_names) {
     var message_element = get_message_body_element(message_id);
     var sender_email = get_sender_email(message_element);
     var is_outgoing = tool.value(sender_email).in(addresses);
@@ -154,7 +155,9 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
           attachments_container.prepend(factory.embedded.attachment(attachment_meta));
         } else if(attachment_meta.treat_as === 'message') {
-          message_element.append(factory.embedded.message('', message_id, false, sender_email, false)).css('display', 'block');
+          if(!(attachment_meta.name === 'encrypted.asc') && !tool.value(attachment_meta.name).in(new_pgp_attachments_names)) { // prevent doubling of enigmail emails
+            message_element.append(factory.embedded.message('', message_id, false, sender_email, false)).css('display', 'block');
+          }
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           tool.api.gmail.attachment_get(account_email, message_id, attachment_meta.id, function (success, downloaded_attachment) {
             if(success) {
