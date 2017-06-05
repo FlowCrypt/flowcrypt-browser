@@ -12,10 +12,23 @@ $.each(private_keys, function (i, keyinfo) {
   private_keys_long_ids.push(keyinfo.longid);
 });
 
+var attach_js = init_shared_attach_js(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
+attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+attach_js.set_attachment_added_callback(function (file) {
+  var content = tool.str.from_uint8(file.content);
+  var k = openpgp.key.readArmored(content).keys[0];
+  if(typeof k !== 'undefined') {
+    $('.input_private_key').val(k.armor()).prop('disabled', true);
+    $('.source_paste_container').css('display', 'block');
+  } else {
+    alert('Not able to read this key. Is it a valid PGP private key?');
+  }
+});
+
 $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  var normalized_armored_key = tool.crypto.key.normalize($('#step_2b_manual_enter .input_private_key').val());
+  var normalized_armored_key = tool.crypto.key.normalize($('.input_private_key').val());
   var new_key = openpgp.key.readArmored(normalized_armored_key).keys[0];
-  var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
+  var passphrase = $('.input_passphrase').val();
   var prv_headers = tool.crypto.armor.headers('private_key');
   if(typeof new_key === 'undefined') {
     alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
@@ -33,7 +46,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
         alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
       } else if(decrypt_result.success) {
         private_keys_add(url_params.account_email, normalized_armored_key);
-        if($('#step_2b_manual_enter .input_passphrase_save').prop('checked')) {
+        if($('.input_passphrase_save').prop('checked')) {
           save_passphrase('local', url_params.account_email, new_key_longid, passphrase);
         } else {
           save_passphrase('session', url_params.account_email, new_key_longid, passphrase);
@@ -45,3 +58,15 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
     }
   }
 }));
+
+$('input[type=radio][name=source]').change(function() {
+  if(this.value === 'file') {
+    $('.source_paste_container').css('display', 'none');
+    $('#fineuploader_button > input').click()
+  } else if(this.value === 'paste') {
+    $('.input_private_key').val('').prop('disabled', false);
+    $('.source_paste_container').css('display', 'block');
+  } else if(this.value === 'backup') {
+    // ..
+  }
+});
