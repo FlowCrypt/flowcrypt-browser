@@ -144,6 +144,11 @@ function content_script_setup_if_vacant(webmail_specific) {
       reinsert_reply_box: function (data) {
         webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id);
       },
+      render_public_keys: function (data) {
+        $.each(data.public_keys, function(i, armored_pubkey) {
+          $('iframe#' + data.after_frame_id).after(factory.embedded.pubkey(armored_pubkey, false));
+        });
+      },
       passphrase_dialog: function (data) {
         if(!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog.passphrase(data.longids, data.type));

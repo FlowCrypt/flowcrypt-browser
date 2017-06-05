@@ -31,6 +31,7 @@
       extract_cryptup_attachments: str_extract_cryptup_attachments,
       extract_cryptup_reply_token: str_extract_cryptup_reply_token,
       strip_cryptup_reply_token: str_strip_cryptup_reply_token,
+      strip_public_keys: str_strip_public_keys,
       int_to_hex: str_int_to_hex,
       message_difference: str_message_difference,
       capitalize: str_capitalize,
@@ -482,6 +483,13 @@
 
   function str_strip_cryptup_reply_token(decrypted_content) {
     return decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  }
+
+  function str_strip_public_keys(decrypted_content, found_public_keys) {
+    return replace_armored_block_type(decrypted_content, crypto_armor_headers('public_key'), true, function (armored_public_key) {
+      found_public_keys.push(armored_public_key);
+      return '';
+    });
   }
 
   function str_extract_cryptup_reply_token(decrypted_content) {
