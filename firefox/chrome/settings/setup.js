@@ -202,7 +202,7 @@ function render_setup_done(account_email, key_backup_prompt) {
       $('.backups_count').text(recovered_keys.length);
     } else { // successful and complete setup
       display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
-      $('h1').text('Recovered all keys!');
+      $('h1').text(url_params.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
       $('.email').text(account_email);
     }
   }
