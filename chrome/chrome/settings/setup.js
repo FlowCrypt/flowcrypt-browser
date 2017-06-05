@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email']);
+var url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
 
 if(url_params.account_email) {
   tool.browser.message.send(null, 'update_uninstall_url');
@@ -76,6 +76,7 @@ function display_block(name) {
     'step_3_test_failed',
     'step_4_more_to_recover',
     'step_4_done',
+    'step_4_close',
   ];
   if(name) { //set
     $('#' + blocks.join(', #')).css('display', 'none');
@@ -98,7 +99,11 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     email_provider = storage.email_provider || 'gmail';
 
     if(storage.setup_done) {
-      render_setup_done(url_params.account_email);
+      if(url_params.action !== 'add_key') {
+        render_setup_done(url_params.account_email);
+      } else {
+        prepare_and_render_add_key_from_backup();
+      }
     } else {
       tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, keyserver_result) {
         if(keyserver_success && keyserver_result.pubkey) {
@@ -127,6 +132,23 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
           display_block('step_1_easy_or_manual');
         }
       });
+    }
+  });
+}
+
+function prepare_and_render_add_key_from_backup() { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+  $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
+  $('h1').parent().html('<h1>Recover key from backup</h1>');
+  $('.action_recover_account').text('load key from backup');
+  fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
+    if(success && keys) {
+      recovered_keys = keys;
+      recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+      recovered_keys_successful_longids = private_keys_get(url_params.account_email).map(function(ki) { return ki.longid; });
+      render_setup_done(url_params.account_email);
+      $('#step_4_more_to_recover .action_recover_remaining').click();
+    } else {
+      window.location = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
     }
   });
 }
@@ -179,8 +201,8 @@ function render_setup_done(account_email, key_backup_prompt) {
       $('.private_key_count').text(private_keys_get(account_email).length);
       $('.backups_count').text(recovered_keys.length);
     } else { // successful and complete setup
-      display_block('step_4_done');
-      $('h1').text('Setup done!');
+      display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
+      $('h1').text('Recovered all keys!');
       $('.email').text(account_email);
     }
   }
@@ -347,11 +369,16 @@ $('#step_4_more_to_recover .action_recover_remaining').click(function () {
   var got = private_keys_get(url_params.account_email).length;
   var bups = recovered_keys.length;
   var left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
-  $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
-  $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
-  $('#step_2_recovery .skip_recover_remaining').click(function () {
-    window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
-  });
+  if(url_params.action !== 'add_key') {
+    $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
+    $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+    $('#step_2_recovery .skip_recover_remaining').click(function () {
+      window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
+    });
+  } else {
+    $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try a different pass phrases to unlock all backups.');
+    $('#step_2_recovery .line_skip_recovery').css('display', 'none');
+  }
 });
 
 $('.action_skip_recovery').click(function () {
@@ -498,5 +525,9 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
     });
   }
 }));
+
+$('#step_4_close .action_close').click(function () {
+  tool.browser.message.send(url_params.parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});
+});
 
 setup_dialog_init();
