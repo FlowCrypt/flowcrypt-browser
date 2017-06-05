@@ -1,5 +1,14 @@
 <div>
 
+<b>version 4.1.2 on June 5, 2017: Pubkeys, Attachments, Fixes</b>
+composing: drag and drop attachments
+reading: recognize public keys sent as inner attachment of pgp message
+reading: recognize pubkeys inside encrypted messages
+reading: Compatibility issues with encrypted.asc
+reading: enter pass phrase misbehaved with "show original message"
+reading: "Forget passphrase when I close chrome" in firefox fixed
+setup: fix wording after setup done
+
 <b>version 4.1.1 on June 4, 2017: Key Mismatch</b>
 reading: messages from enigmail doubled up
 reading: simplify + improve handling of messages encrypted for wrong key
