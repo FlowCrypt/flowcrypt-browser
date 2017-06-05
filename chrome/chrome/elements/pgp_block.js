@@ -359,7 +359,7 @@ db_open(function (db) {
 
   function check_passphrase_changed() {
     $.each(missing_or_wrong_passprases, function (i, longid) {
-      if(missing_or_wrong_passprases[longid] !== get_passphrase(url_params.account_email, longid)) {
+      if((missing_or_wrong_passprases[longid] || null) !== get_passphrase(url_params.account_email, longid)) {
         missing_or_wrong_passprases = {};
         clearInterval(passphrase_interval);
         decrypt_and_render();
