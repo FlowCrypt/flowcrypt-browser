@@ -80,6 +80,7 @@
       attachment: file_attachment,
       pgp_name_patterns: file_pgp_name_patterns,
       keyinfo_as_pubkey_attachment: file_keyinfo_as_pubkey_attachment,
+      treat_as: file_treat_as,
     },
     mime: {
       headers_to_from: mime_headers_to_from,
@@ -2635,13 +2636,13 @@
         type: gmail_email_object.mimeType,
         inline: (api_gmail_find_header(gmail_email_object, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
       };
-      attachment.treat_as = attachment_get_treat_as(attachment);
+      attachment.treat_as = file_treat_as(attachment);
       internal_results.push(attachment);
     }
     return internal_results;
   }
 
-  function attachment_get_treat_as(attachment) {
+  function file_treat_as(attachment) {
     if(tool.value(attachment.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if(attachment.name === '') {

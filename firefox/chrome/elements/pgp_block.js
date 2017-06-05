@@ -255,9 +255,9 @@ db_open(function (db) {
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature_result) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
+    var public_keys = [];
     if(!tool.mime.resembles_message(decrypted_content)) {
       var cryptup_attachments = [];
-      var public_keys = [];
       decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
       decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content);
       decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
@@ -276,8 +276,19 @@ db_open(function (db) {
       $('#pgp_block').text('Formatting...');
       tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
-          if(result.attachments.length) {
+          var renderable_attachments = [];
+          $.each(result.attachments, function(i, attachment) {
+            if(tool.file.treat_as(attachment) !== 'public_key') {
+              renderable_attachments.push(attachment);
+            } else {
+              public_keys.push(attachment.content);
+            }
+          });
+          if(renderable_attachments.length) {
             render_inner_attachments(result.attachments);
+          }
+          if(public_keys.length) {
+            tool.browser.message.send(url_params.parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys: public_keys});
           }
         });
       });
