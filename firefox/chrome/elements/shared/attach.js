@@ -6,6 +6,7 @@ function init_shared_attach_js(get_limits) {
 
   var attached_files = {};
   var uploader = undefined;
+  var attachment_added_callback;
 
   function initialize_attach_dialog(element_id, button_id) {
     $('#qq-template').load('/chrome/elements/shared/attach.template.htm', function () {
@@ -32,6 +33,10 @@ function init_shared_attach_js(get_limits) {
       };
       uploader = new qq.FineUploader(config);
     });
+  }
+
+  function set_attachment_added_callback(cb) {
+    attachment_added_callback = cb;
   }
 
   function get_attachment_ids() {
@@ -120,6 +125,9 @@ function init_shared_attach_js(get_limits) {
         return;
       }
       attached_files[id] = new_file;
+      if(typeof attachment_added_callback === 'function') {
+        collect_attachment(id, attachment_added_callback);
+      }
     }
   }
 
@@ -134,5 +142,6 @@ function init_shared_attach_js(get_limits) {
     collect_attachments: collect_attachments,
     get_attachment_ids: get_attachment_ids,
     collect_attachment: collect_attachment,
+    set_attachment_added_callback: set_attachment_added_callback,
   };
 }
