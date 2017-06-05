@@ -1261,6 +1261,8 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
   });
 
+  S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
+
   S.cached('icon_sign').click(toggle_sign_icon);
 
   function set_additional_headers(headers) {

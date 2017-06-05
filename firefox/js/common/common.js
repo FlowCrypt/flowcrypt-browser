@@ -96,6 +96,7 @@
       build_jquery_selectors: ui_build_jquery_selectors,
       scroll: ui_scroll,
       event: {
+        stop: ui_event_stop,
         protect: ui_event_stop_propagation_to_parent_frame,
         double: ui_event_double,
         parallel: ui_event_parallel,
@@ -1155,6 +1156,14 @@
         delete events_fired[id];
       }
     }
+  }
+
+  function ui_event_stop() {
+    return function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
   }
 
   function ui_spinner(color, placeholder_class) {

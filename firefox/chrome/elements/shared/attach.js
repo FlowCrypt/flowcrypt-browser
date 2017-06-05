@@ -16,7 +16,7 @@ function init_shared_attach_js(get_limits) {
         element: $('#' + element_id).get(0),
         button: $('#' + button_id).get(0),
         dragAndDrop: {
-          extraDropzones: [$('#compose').get(0)],
+          extraDropzones: $('#input_text'),
         },
         callbacks: {
           onSubmitted: function(id, name) {

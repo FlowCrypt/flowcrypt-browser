@@ -146,9 +146,9 @@
     min-height: 40px;
 }
 .qq-upload-drop-area-active {
-    background: #FDFDFD;
-    border-radius: 4px;
-    border: 1px dashed #CCCCCC;
+    /*background: #FDFDFD;*/
+    /*border-radius: 4px;*/
+    /*border: 1px dashed #CCCCCC;*/
 }
 .qq-upload-list {
     margin: 0;
