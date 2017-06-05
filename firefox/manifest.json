@@ -146,7 +146,7 @@
     "clipboardWrite", 
     "webRequest"
   ], 
-  "version": "4.1.0", 
+  "version": "4.1.1", 
   "web_accessible_resources": [
     "/css/webmail.css", 
     "/img/logo-19-14-white.png", 
