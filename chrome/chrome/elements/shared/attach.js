@@ -15,9 +15,9 @@ function init_shared_attach_js(get_limits) {
         // debug: true,
         element: $('#' + element_id).get(0),
         button: $('#' + button_id).get(0),
-        // dragAndDrop: {
-        //   extraDropzones: [$('#body').get(0)]
-        // },
+        dragAndDrop: {
+          extraDropzones: [$('#compose').get(0)],
+        },
         callbacks: {
           onSubmitted: function(id, name) {
             catcher.try(function() {
