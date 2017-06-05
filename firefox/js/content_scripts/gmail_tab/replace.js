@@ -117,7 +117,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     $('div.aQH').each(function (i, attachments_container) {
       attachments_container = $(attachments_container);
       var new_pgp_attachments = filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
-      var new_pgp_attachments_names = new_pgp_attachments.find('.aV3').map(function () { return $.trim($(this).text()); });
+      var new_pgp_attachments_names = tool.arr.from_dome_node_list(new_pgp_attachments.find('.aV3')).map(function (x) { return $.trim($(x).text()); });
       if(new_pgp_attachments.length) {
         var message_id = determine_message_id('attachment', attachments_container);
         if(message_id) {
@@ -155,7 +155,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
           attachments_container.prepend(factory.embedded.attachment(attachment_meta));
         } else if(attachment_meta.treat_as === 'message') {
-          if(!(attachment_meta.name === 'encrypted.asc') && !tool.value(attachment_meta.name).in(new_pgp_attachments_names)) { // prevent doubling of enigmail emails
+          if(!(attachment_meta.name === 'encrypted.asc' && !tool.value(attachment_meta.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
             message_element.append(factory.embedded.message('', message_id, false, sender_email, false)).css('display', 'block');
           }
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
