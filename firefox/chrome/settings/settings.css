@@ -17,7 +17,7 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-left: 20px; }
 
 .public-profile-container {position: absolute; left: 120px; top: 7px;}
-#public-profile-indicator { border-radius: 4px; border: 1px solid #ccc; display: inline-block; position: relative; width: 175px; height: 32px; opacity: 0; animation: fadeInUp 1s 1s ease; animation-fill-mode:forwards;}
+#public-profile-indicator { border-radius: 4px; border: 1px solid #ccc; display: inline-block; position: relative; width: 175px; height: 32px; opacity: 0; animation: fadeIn 1s 1s ease; animation-fill-mode:forwards;}
 #public-profile-indicator a { color: #337ab7;}
 #public-profile-indicator .status-indicator { position: absolute; left: 7px; top: 6px; display: inline-block; width: 17px; height: 17px; background: #ccc; border-radius: 120px; }
 #public-profile-indicator .status-indicator.active { background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%); }
