@@ -3,6 +3,8 @@
 'use strict';
 
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+var attach_js = init_shared_attach_js(function () { return { size_mb: 5, size: 5 * 1024 * 1024, count: 1 }; });
+var new_photo_file;
 
 var S = tool.ui.build_jquery_selectors({
   'status': '.status',
@@ -17,6 +19,7 @@ var S = tool.ui.build_jquery_selectors({
   'action_update': '.action_update',
   'action_close': '.action_close',
   'management_account': '.management_account',
+  'photo': '.profile_photo img',
 });
 
 S.cached('status').html('Loading..' + tool.ui.spinner('green'));
@@ -44,6 +47,14 @@ function render_fields(result) {
     S.cached('input_intro').val(result.intro);
     S.cached('input_alias').val(result.alias);
     S.cached('input_name').val(result.name);
+    if(result.photo) {
+      S.cached('photo').attr('src', result.photo);
+    }
+    attach_js.initialize_attach_dialog('fineuploader', 'select_photo');
+    attach_js.set_attachment_added_callback(function (file) {
+      new_photo_file = file;
+      $('#select_photo').replaceWith(tool.e('span', {text: file.name}));
+    });
   } else {
     S.cached('management_account').text(result.email).parent().removeClass('display_none');
     S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
@@ -76,7 +87,11 @@ S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), fu
   } else {
     S.cached('show_if_active').css('display', 'none');
     S.cached('status').html('Updating' + tool.ui.spinner('green'));
-    tool.api.cryptup.account_update({name: S.cached('input_name').val(), intro: S.cached('input_intro').val()}, function () {
+    var update = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
+    if(new_photo_file) {
+      update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content));
+    }
+    tool.api.cryptup.account_update(update, function (success) {
       window.location.reload();
     });
   }
