@@ -16,17 +16,16 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 #header-row .logo-row .cryptup-logo-row:hover span { opacity: 1;}
 a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-left: 20px; }
 
-.public-profile-container { position: absolute; top: -80px; left: 0; right: 0; }
-#public-profile-indicator { border-radius: 4px; border: 1px solid #ccc; display: inline-block; padding: 6px 10px 5px 35px; position: relative; width: 222px; height: 35px; opacity: 0; animation: fadeInUp 1s 1s ease; animation-fill-mode:forwards;}
-#public-profile-indicator .status-indicator { position: absolute; left: 15px; top: 7px; display: inline-block; width: 18px; height: 18px; background: #ccc; border-radius: 120px; }
+.public-profile-container {position: absolute; left: 120px; top: 7px;}
+#public-profile-indicator { border-radius: 4px; border: 1px solid #ccc; display: inline-block; position: relative; width: 175px; height: 32px; opacity: 0; animation: fadeInUp 1s 1s ease; animation-fill-mode:forwards;}
+#public-profile-indicator a { color: #337ab7;}
+#public-profile-indicator .status-indicator { position: absolute; left: 7px; top: 6px; display: inline-block; width: 17px; height: 17px; background: #ccc; border-radius: 120px; }
 #public-profile-indicator .status-indicator.active { background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%); }
 #public-profile-indicator .status-indicator.inactive { background-image: radial-gradient(50% 81%, #FF0000 50%, #C90202 81%);}
-#public-profile-indicator .status-indicator::before { content: "Encrypted Contact Page"; position: absolute; text-align: left; left: 30px; width: 200px; font-style: normal;}
-#public-profile-indicator .status-indicator .status-indicator-text { visibility: hidden; width: 650px; background-color: rgba(0,0,0,.85); letter-spacing: 0.3px; color: #fff; padding: 50px; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; height: 70px; bottom: 150%; left: -1300%; top: -90px; padding-top: 25px; font-style: normal; font-size: 13px; font-weight: 200!important; transition: .4s; opacity: .7; }
-#public-profile-indicator .status-indicator .status-indicator-text:before { position: absolute; top: 12px; content: ' '; width: 40px; height: 40px; opacity: .2; left:15px; background: url('/img/svgs/caution.svg');}
-#public-profile-indicator .status-indicator .status-indicator-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: black transparent transparent transparent;}
+#public-profile-indicator .status-indicator::before { content: "Encrypted Contact Page"; position: absolute; text-align: left; left: 24px; width: 180px; font-size: 12px; font-style: normal;}
+#public-profile-indicator .status-indicator .status-indicator-text { visibility: hidden; width: 600px; background-color: rgba(0,0,0,.85); letter-spacing: 0.3px; color: #fff; padding: 50px; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; height: 70px; bottom: 150%; left: -1300%; top: 45px; padding-top: 25px; font-style: normal; font-size: 13px; font-weight: 200!important; transition: .4s; opacity: .7; }
+#public-profile-indicator .status-indicator .status-indicator-text::after { content: ""; position: absolute; top: -20px; left: 50%; margin-left: -5px; border-width: 10px; border-style: solid; border-color: transparent transparent rgba(0,0,0, .85) transparent;}
 #public-profile-indicator .status-indicator:hover .status-indicator-text { visibility: visible; }
-
 
 #security_module { min-height: 216px; }
 #alt-accounts .separator { background: black; width: 90%; margin: 5px auto 10px auto!important;height: 1px; opacity: .2; }
@@ -328,10 +327,26 @@ body#settings .settings-border .key_list {
   top: 28px;
 }
 
+@media (max-width: 1200px) {
+  #public-profile-indicator {
+    left: -70px;
+  }
+}
+
 @media (max-width: 991px) {
   .my-keys-row .settings-border {
     margin: 35px auto!important;
     width: 100%!important;
+  }
+  #public-profile-indicator {
+    left: -170px;
+  }
+}
+
+@media (max-width: 776px) {
+  #public-profile-indicator {
+    left: 0;
+    right: 0;
   }
 }
 @media (max-width: 448px) {
