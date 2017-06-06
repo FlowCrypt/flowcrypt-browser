@@ -323,6 +323,11 @@ body#settings .settings-border .key_list {
   width: 84px;
   top: 23px;
 }
+#settings-row .box img.public-profile-icon {
+  width: 73px;
+  top: 28px;
+}
+
 @media (max-width: 991px) {
   .my-keys-row .settings-border {
     margin: 35px auto!important;
