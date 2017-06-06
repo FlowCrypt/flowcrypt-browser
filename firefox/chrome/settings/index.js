@@ -101,6 +101,7 @@ function initialize() {
       google_token_scopes = storage.google_token_scopes;
       if(storage.setup_done) {
         render_subscription_status_header();
+        render_encrypted_contact_page_status();
         if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
@@ -128,6 +129,19 @@ function initialize() {
       }
     });
   }
+}
+
+function render_encrypted_contact_page_status() {
+  tool.api.cryptup.account_update({}, function(success, result) {
+    if (success && result && result.result) {
+      var status_container = $('.public_profile_indicator_container');
+      status_container.find('.status-indicator').addClass(result.result.alias ? 'active' : 'inactive');
+      if(result.result.alias) {
+        status_container.find('.status-indicator-text').css('display', 'none');
+      }
+      status_container.css('visibility', 'visible');
+    }
+  });
 }
 
 function render_subscription_status_header() {

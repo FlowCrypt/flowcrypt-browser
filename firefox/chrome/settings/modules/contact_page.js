@@ -16,6 +16,7 @@ var S = tool.ui.build_jquery_selectors({
   'action_enable': '.action_enable',
   'action_update': '.action_update',
   'action_close': '.action_close',
+  'management_account': '.management_account',
 });
 
 S.cached('status').html('Loading..' + tool.ui.spinner('green'));
@@ -44,6 +45,7 @@ function render_fields(result) {
     S.cached('input_alias').val(result.alias);
     S.cached('input_name').val(result.name);
   } else {
+    S.cached('management_account').text(result.email).parent().removeClass('display_none');
     S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
     S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       S.cached('status').html('Enabling..' + tool.ui.spinner('green'));

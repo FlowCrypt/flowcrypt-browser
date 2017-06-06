@@ -1,4 +1,4 @@
- /* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
 
 body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: relative; height: 100%; width: auto; }
 .new_message_featherlight .featherlight-content, .new_message_featherlight .featherlight-content iframe { overflow: hidden !important;}
@@ -241,14 +241,10 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   width: 18px;
   margin-top: -4px;
 }
-.security-copy {
-   margin-left: 5px;
-   font-weight: 600;
-}
+.security-copy { margin-left: 5px; font-weight: 600;}
 
-#footer-row { position: fixed; bottom: 0; padding-bottom: 20px; padding-top: 20px; text-align: center; right: 0; left: 0; font-weight: 600; -webkit-animation: fadeInUp .4s; background: white; border-top: 1px solid #f3f3f3;}
+#footer-row { position: fixed; bottom: 0; padding-bottom: 20px; padding-top: 20px; text-align: center; right: 0; left: 0; font-weight: 600; -webkit-animation: fadeInUp .4s; background: white; border-top: 1px solid #f3f3f3; }
 #footer-row .container { position: relative;}
-
 input#passphrase-to-open-email {
   margin-left: 15px;
   margin-right: 5px;
