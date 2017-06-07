@@ -3224,7 +3224,7 @@
     return {
       'api': 'https://api.cryptup.io/',
       'me': 'https://cryptup.org/me/' + variable,
-      'pubkey': 'https://cryptup.org/me/' + variable + '/pub',
+      'pubkey': 'https://cryptup.org/pub/' + variable,
       'decrypt': 'https://cryptup.org/' + variable,
       'web': 'https://cryptup.org/',
     }[type];
