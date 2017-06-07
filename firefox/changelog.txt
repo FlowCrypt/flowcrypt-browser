@@ -1,5 +1,10 @@
 <div>
 
+<b>version 4.1.3 on June 6, 2017: Encrypted Contact Page</b>
+settings: public contact page - settings button and indicator
+settings: profile page choose a photo
+settings: advanced features on account page were outdated
+
 <b>version 4.1.2 on June 5, 2017: Pubkeys, Attachments, Fixes</b>
 composing: drag and drop attachments
 reading: recognize public keys sent as inner attachment of pgp message
