@@ -417,15 +417,17 @@
     var binary_char = '';
     for(var i = 0; i < length; i++) {
       if(a[i] < 128) {
-        if(bytes_left_in_char) {
-          console.log('uint8_to_utf_str: utf-8 continuation byte missing, multi-byte character cut short and omitted');
+        if(bytes_left_in_char) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
+          utf8_string += String.fromCharCode(a[i-1]);
         }
         bytes_left_in_char = 0;
         binary_char = '';
         utf8_string += String.fromCharCode(a[i]);
       } else {
         if(!bytes_left_in_char) { // beginning of new multi-byte character
-          if(a[i] >= 192 && a[i] < 224) { //110x xxxx
+          if(a[i] >= 128 && a[i] < 192) { //10xx xxxx
+            utf8_string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
+          } else if(a[i] >= 192 && a[i] < 224) { //110x xxxx
             bytes_left_in_char = 1;
             binary_char = a[i].toString(2).substr(3);
           } else if(a[i] >= 224 && a[i] < 240) { //1110 xxxx
@@ -441,7 +443,7 @@
             bytes_left_in_char = 5;
             binary_char = a[i].toString(2).substr(7);
           } else {
-            console.log('uint8_to_utf_str: invalid utf-8 character beginning byte: ' + a[i]);
+            console.log('str_uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
           }
         } else { // continuation of a multi-byte character
           binary_char += a[i].toString(2).substr(2);

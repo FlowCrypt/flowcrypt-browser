@@ -28,3 +28,6 @@ flaticon.com
 
 Anthony Maki (https://github.com/4cm4k1)
  - removing address aliases
+
+Guillaume Boudreau (https://github.com/gboudreau)
+ - better support for extended ASCII when processing UTF
