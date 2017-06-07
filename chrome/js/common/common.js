@@ -418,14 +418,18 @@
     for(var i = 0; i < length; i++) {
       if(a[i] < 128) {
         if(bytes_left_in_char) {
-          console.log('uint8_to_utf_str: utf-8 continuation byte missing, multi-byte character cut short and omitted');
+          console.log('uint8_to_utf_str: utf-8 continuation byte missing, assuming the last character was a single-byte ASCII character: ' + String.fromCharCode(a[i-1]));
+          utf8_string += String.fromCharCode(a[i-1]);
         }
         bytes_left_in_char = 0;
         binary_char = '';
         utf8_string += String.fromCharCode(a[i]);
       } else {
         if(!bytes_left_in_char) { // beginning of new multi-byte character
-          if(a[i] >= 192 && a[i] < 224) { //110x xxxx
+          if(a[i] < 192) { //110x xxxx
+            // Is a single-byte ASCII character
+            utf8_string += String.fromCharCode(a[i]);
+          } else if(a[i] >= 192 && a[i] < 224) { //110x xxxx
             bytes_left_in_char = 1;
             binary_char = a[i].toString(2).substr(3);
           } else if(a[i] >= 224 && a[i] < 240) { //1110 xxxx
