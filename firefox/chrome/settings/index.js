@@ -109,7 +109,7 @@ function initialize() {
         $('.show_if_setup_not_done').css('display', 'none');
         var private_keys = private_keys_get(url_params.account_email);
         if(!private_keys.length) {
-          render_storage_inconsistency_error(url_params.account_email, 'No private key found for this account');
+          render_storage_read_error();
         } else if(private_keys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -161,23 +161,13 @@ function render_subscription_status_header() {
   });
 }
 
-function render_storage_inconsistency_error(account_email, text_reason) {
-  if(!account_email) {
-    throw new Error('Missing account_email to render inconsistency for');
-  }
-  var html = '<div class="line">CryptUp is not set up correctly for ' + account_email + ':<br/><b class="bad">' + text_reason + '</b></div>';
-  html += '<div class="line">This happens when users manually change values in browser extension storage or when developers (that is myself) make a mistake.</div>';
-  html += '<div class="line">Email me at tom@cryptup.org if you think this one is on me.</div>';
-  html += '<div class="line">&nbsp;</div>';
-  html += '<div class="line"><div class="button red reset_account">Reset cryptup for ' + account_email + '</div></div>';
+function render_storage_read_error() {
+  var html = '<div class="line">CryptUp is not able to access local browser storage. </div>';
+  html += '<div class="line">Certain browser privacy or security settings can cause this.</div>';
+  html += '<div class="line">Private Browsing Mode (Incognito mode) can also cause this issue.</div>';
+  html += '<div class="line">If you have changed any browser settings recently, try to set them back.</div>';
+  html += '<div class="line">Email me at tom@cryptup.org if you have questions.</div>';
   $('#settings-row').html(html);
-  $('.reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-    if(confirm('This will reset all your encryption settings for ' + account_email + '\n\nAre you sure?')) {
-      reset_cryptup_account_storages(account_email, function () {
-        window.location.reload();
-      });
-    }
-  }));
 }
 
 function add_key_rows_html(private_keys) {
