@@ -318,6 +318,10 @@ function db_denied() {
   throw new Error('db_denied is not callable');
 }
 
+function db_private_mode_error() {
+  throw new Error('db_private_mode_error is not callable');
+}
+
 function db_error_handle(exception, error_stack, callback) {
   exception.stack = error_stack.replace(/^Error/, String(exception));
   catcher.handle_exception(exception);
@@ -360,6 +364,8 @@ function db_open(callback) {
   open_db.onerror = catcher.try(function () {
     if(open_db.error.message === 'The user denied permission to access the database.') { // chrome
       callback(db_denied);
+    } else if(open_db.error.message === 'A mutation operation was attempted on a database that did not allow mutations.') { // firefox
+      callback(db_private_mode_error);
     } else {
       db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
     }

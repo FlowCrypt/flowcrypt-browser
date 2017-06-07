@@ -95,41 +95,47 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   if(!url_params.account_email) {
     window.location = 'index.htm';
   }
-  account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], function (storage) {
-    email_provider = storage.email_provider || 'gmail';
-
-    if(storage.setup_done) {
-      if(url_params.action !== 'add_key') {
-        render_setup_done(url_params.account_email);
-      } else {
-        prepare_and_render_add_key_from_backup();
-      }
+  db_open(function (db) {
+    if(db === db_private_mode_error) {
+      $('#loading').text('CryptUp does not work in Private Browsing Mode. Please use it in a standard browser window.');
     } else {
-      tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, keyserver_result) {
-        if(keyserver_success && keyserver_result.pubkey) {
-          if(keyserver_result.attested) {
-            account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
+      account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], function (storage) {
+        email_provider = storage.email_provider || 'gmail';
+
+        if(storage.setup_done) {
+          if(url_params.action !== 'add_key') {
+            render_setup_done(url_params.account_email);
+          } else {
+            prepare_and_render_add_key_from_backup();
           }
-          if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-            fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
-              if(success && keys) {
-                recovered_keys = keys;
-                recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-                display_block('step_2_recovery');
-              } else {
-                display_block('step_0_found_key');
+        } else {
+          tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, keyserver_result) {
+            if(keyserver_success && keyserver_result.pubkey) {
+              if(keyserver_result.attested) {
+                account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
               }
-            });
-          } else { // cannot read gmail to find a backup, or this is outlook
-            if(keyserver_result.has_cryptup) {
-              display_block('step_2b_manual_enter');
-              $('#step_2b_manual_enter').prepend('<div class="line red">CryptUp can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUp Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+              if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+                fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
+                  if(success && keys) {
+                    recovered_keys = keys;
+                    recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+                    display_block('step_2_recovery');
+                  } else {
+                    display_block('step_0_found_key');
+                  }
+                });
+              } else { // cannot read gmail to find a backup, or this is outlook
+                if(keyserver_result.has_cryptup) {
+                  display_block('step_2b_manual_enter');
+                  $('#step_2b_manual_enter').prepend('<div class="line red">CryptUp can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUp Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+                } else {
+                  display_block('step_1_easy_or_manual');
+                }
+              }
             } else {
               display_block('step_1_easy_or_manual');
             }
-          }
-        } else {
-          display_block('step_1_easy_or_manual');
+          });
         }
       });
     }
