@@ -227,6 +227,7 @@
         message_confirm_files: api_cryptup_message_confirm_files,
         message_upload: api_cryptup_message_upload,  // todo - DEPRECATE THIS. Send as JSON to message/store
         message_token: api_cryptup_message_token,
+        message_expiration: api_cryptup_message_expiration,
         message_reply: api_cryptup_message_reply,
         message_contact: api_cryptup_message_contact,
         link_message: api_cryptup_link_message,
@@ -3410,6 +3411,21 @@
         });
       }
     }
+  }
+
+  function api_cryptup_message_expiration(admin_codes, add_days, callback) {
+    storage_cryptup_auth_info(function (email, uuid, verified) {
+      if(verified) {
+        api_cryptup_call('message/expiration', {
+          account: email,
+          uuid: uuid,
+          admin_codes: admin_codes,
+          add_days: add_days || null,
+        }, api_cryptup_response_formatter(callback));
+      } else {
+        callback(api_cryptup_auth_error);
+      }
+    });
   }
 
   function api_cryptup_message_token(callback) {

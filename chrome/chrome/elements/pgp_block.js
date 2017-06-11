@@ -39,6 +39,7 @@ db_open(function (db) {
   var can_read_emails = undefined;
   var unsecure_mdc_ignored = false;
   var password_mesage_meta;
+  var admin_codes;
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -244,11 +245,50 @@ db_open(function (db) {
     }
   }
 
-  function render_future_expiration(date) {
-    var s = url_params.is_outgoing ? '. <a href="#" class="expire_settings">settings</a>' : '';
-    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + s}));
-    $('.expire_settings').click(function() {
-      tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/security.htm'});
+  function render_future_expiration(date, deleted) {
+    account_storage_get(null, ['admin_codes'], function (storage) {
+      var btns = '';
+      if(!deleted && url_params.short && storage.admin_codes && storage.admin_codes[url_params.short] && storage.admin_codes[url_params.short].codes) {
+        admin_codes = storage.admin_codes[url_params.short].codes;
+        btns += ' <a href="#" class="extend_expiration">extend</a>';
+      }
+      if(url_params.is_outgoing) {
+        btns += ' <a href="#" class="expire_settings">settings</a>';
+      }
+      $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + '. ' + btns}));
+      $('.expire_settings').click(function() {
+        tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/security.htm'});
+      });
+      $('.extend_expiration').click(function() {
+        storage_cryptup_subscription(function (level, expire, expired, method) {
+          if(level && !expired) {
+            $('.future_expiration').html('Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>');
+            $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
+          } else {
+            if (level && expired && method === 'trial') {
+              alert('Your trial has ended. Please renew your subscription to proceed.');
+            } else {
+              alert('CryptUp Advanced users can choose expiration of password encrypted messages.');
+            }
+            tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
+          }
+        });
+      });
+    });
+  }
+
+  function handle_extend_message_expiration_clicked(self) {
+    var n_days = Number($(self).attr('href').replace('#', ''));
+    $('.future_expiration').html('Updating..' + tool.ui.spinner('green'));
+    tool.api.cryptup.message_expiration(admin_codes, n_days, function (success, result) {
+      if(success === tool.api.cryptup.auth_error) {
+        alert('Your CryptUp account information is outdated, please review your account settings.');
+        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+      } else if(success && result && result.updated) {
+        window.location.reload();
+      } else {
+        $('.future_expiration').text('Error updating expiration, please try again').addClass('bad');
+      }
     });
   }
 
@@ -269,7 +309,7 @@ db_open(function (db) {
           render_inner_attachments(cryptup_attachments);
         }
         if(password_mesage_meta && password_mesage_meta.expire) {
-          render_future_expiration(password_mesage_meta.expire);
+          render_future_expiration(password_mesage_meta.expire, password_mesage_meta.deleted);
         }
       });
     } else {
