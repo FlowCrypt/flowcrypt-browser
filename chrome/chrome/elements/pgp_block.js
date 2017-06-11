@@ -38,7 +38,7 @@ db_open(function (db) {
   var missing_or_wrong_passprases = {};
   var can_read_emails = undefined;
   var unsecure_mdc_ignored = false;
-  var password_mesage_meta;
+  var password_message_link_result;
   var admin_codes;
 
   if(db === db_denied) {
@@ -245,41 +245,49 @@ db_open(function (db) {
     }
   }
 
-  function render_future_expiration(date, deleted) {
+  function render_future_expiration(date) {
+    var btns = '';
+    if(admin_codes && admin_codes.length) {
+      btns += ' <a href="#" class="extend_expiration">extend</a>';
+    }
+    if(url_params.is_outgoing) {
+      btns += ' <a href="#" class="expire_settings">settings</a>';
+    }
+    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + '. ' + btns}));
+    $('.expire_settings').click(function() {
+      tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/security.htm'});
+    });
+    $('.extend_expiration').click(render_message_expiration_renew_options);
+  }
+
+  function recover_stored_admin_codes() {
     account_storage_get(null, ['admin_codes'], function (storage) {
-      var btns = '';
-      if(!deleted && url_params.short && storage.admin_codes && storage.admin_codes[url_params.short] && storage.admin_codes[url_params.short].codes) {
+      if(url_params.short && storage.admin_codes && storage.admin_codes[url_params.short] && storage.admin_codes[url_params.short].codes) {
         admin_codes = storage.admin_codes[url_params.short].codes;
-        btns += ' <a href="#" class="extend_expiration">extend</a>';
       }
-      if(url_params.is_outgoing) {
-        btns += ' <a href="#" class="expire_settings">settings</a>';
+    });
+  }
+
+  function render_message_expiration_renew_options() {
+    var parent = $(this).parent();
+    storage_cryptup_subscription(function (level, expire, expired, method) {
+      if(level && !expired) {
+        parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
+        $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
+      } else {
+        if (level && expired && method === 'trial') {
+          alert('Your trial has ended. Please renew your subscription to proceed.');
+        } else {
+          alert('CryptUp Advanced users can choose expiration of password encrypted messages. Try it free.');
+        }
+        tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
       }
-      $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + '. ' + btns}));
-      $('.expire_settings').click(function() {
-        tool.browser.message.send(null, 'settings', {account_email: url_params.account_email, page: '/chrome/settings/modules/security.htm'});
-      });
-      $('.extend_expiration').click(function() {
-        storage_cryptup_subscription(function (level, expire, expired, method) {
-          if(level && !expired) {
-            $('.future_expiration').html('Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>');
-            $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
-          } else {
-            if (level && expired && method === 'trial') {
-              alert('Your trial has ended. Please renew your subscription to proceed.');
-            } else {
-              alert('CryptUp Advanced users can choose expiration of password encrypted messages.');
-            }
-            tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
-          }
-        });
-      });
     });
   }
 
   function handle_extend_message_expiration_clicked(self) {
     var n_days = Number($(self).attr('href').replace('#', ''));
-    $('.future_expiration').html('Updating..' + tool.ui.spinner('green'));
+    $(self).parent().html('Updating..' + tool.ui.spinner('green'));
     tool.api.cryptup.message_expiration(admin_codes, n_days, function (success, result) {
       if(success === tool.api.cryptup.auth_error) {
         alert('Your CryptUp account information is outdated, please review your account settings.');
@@ -287,7 +295,7 @@ db_open(function (db) {
       } else if(success && result && result.updated) {
         window.location.reload();
       } else {
-        $('.future_expiration').text('Error updating expiration, please try again').addClass('bad');
+        $(self).parent().text('Error updating expiration, please try again').addClass('bad');
       }
     });
   }
@@ -308,8 +316,8 @@ db_open(function (db) {
         if(cryptup_attachments.length) {
           render_inner_attachments(cryptup_attachments);
         }
-        if(password_mesage_meta && password_mesage_meta.expire) {
-          render_future_expiration(password_mesage_meta.expire, password_mesage_meta.deleted);
+        if(password_message_link_result && password_message_link_result.expire) {
+          render_future_expiration(password_message_link_result.expire);
         }
       });
     } else {
@@ -424,18 +432,28 @@ db_open(function (db) {
     });
   }
 
-  function render_password_encrypted_message_load_fail(meta) {
-    if(meta.expired) {
-      render_error('Message expired on ' + tool.time.expiration_format(meta.expire) + '. Messages don\'t expire if recipients also have encryption set up.\n\n\n<div class="button gray2 action_security">security settings</div>', null, function() {
+  function render_password_encrypted_message_load_fail(link_result) {
+    if(link_result.expired) {
+      var expiration_m = 'Message expired on ' + tool.time.expiration_format(link_result.expire) + '. Messages don\'t expire if recipients also have encryption set up.\n\n';
+      if(link_result.deleted) {
+        expiration_m += 'Message was destroyed 30 days after expiration and cannot be renewed.';
+      } else if(url_params.is_outgoing && admin_codes) {
+        expiration_m += '<div class="button gray2 extend_expiration">renew message</div>';
+      } else if(!url_params.is_outgoing) {
+        expiration_m += 'Please ask the sender to renew the message if you still need the contents';
+      }
+      expiration_m += '\n\n<div class="button gray2 action_security">security settings</div>';
+      render_error(expiration_m, null, function() {
         set_frame_color('gray');
         $('.action_security').click(function() {
           tool.browser.message.send(null, 'settings', {page: '/chrome/settings/modules/security.htm'});
         });
+        $('.extend_expiration').click(render_message_expiration_renew_options);
       });
-    } else if (!meta.url) {
+    } else if (!link_result.url) {
       render_error('Could not locate this message. It seems it contains a broken link.');
     } else {
-      render_error('Could not locate this message. Please write me at tom@cryptup.org to fix it. Details:\n\n' + tool.str.html_escape(JSON.stringify(meta)));
+      render_error('Could not locate this message. Please write me at tom@cryptup.org to fix it. Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
     }
   }
 
@@ -469,9 +487,10 @@ db_open(function (db) {
       decrypt_and_render();
     } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from CryptUp API
       $('#pgp_block').text('Loading message...');
+      recover_stored_admin_codes();
       tool.api.cryptup.link_message(url_params.short, function(success, result) {
         if(success && result && typeof result.url !== 'undefined') {
-          password_mesage_meta = result;
+          password_message_link_result = result;
           if (result.url) {
             tool.file.download_as_uint8(result.url, null, function (success, result) {
               if(success) {
@@ -482,7 +501,7 @@ db_open(function (db) {
               }
             });
           } else {
-            render_password_encrypted_message_load_fail(password_mesage_meta);
+            render_password_encrypted_message_load_fail(password_message_link_result);
           }
         } else {
           $('#pgp_block').text('Failed to load message info (network issue). Please try again.');
