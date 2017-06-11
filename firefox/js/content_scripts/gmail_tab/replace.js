@@ -273,11 +273,16 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_standard_reply_box(editable, force) {
-    $('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').first().each(function (i, reply_box) {
+    $('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').reverse().each(function (i, reply_box) {
       var root_element = get_conversation_root_element(reply_box);
-      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) {
-        var iframe = factory.embedded.reply(get_conversation_params(root_element), editable);
-        $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container').append(iframe).children(':not(iframe)').css('display', 'none');
+      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // should be replaced
+        var prepared_reply_box = $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container');
+        if(i === 0) { // last box
+          var iframe = factory.embedded.reply(get_conversation_params(root_element), editable);
+          prepared_reply_box.append(iframe).children(':not(iframe)').css('display', 'none');
+        } else {
+          prepared_reply_box.append('<font>Skipping plain text draft</font>').children(':not(font)').css('display', 'none');
+        }
       }
     });
   }
@@ -295,7 +300,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
 
   function reinsert_reply_box(subject, my_email, reply_to, thread_id) {
     var params = { subject: subject, reply_to: reply_to, addresses: addresses, my_email: my_email, thread_id: thread_id, thread_message_id: thread_id };
-    $('.reply_message_iframe_container').append(factory.embedded.reply(params, false, true));
+    $('.reply_message_iframe_container:visible').last().append(factory.embedded.reply(params, false, true));
   }
 
   function evaluate_standard_compose_receivers() {
