@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.1.6 on June 10, 2017: Renewal</b>
+reading: fixed renewing expired messages
+
 <b>version 4.1.5 on June 10, 2017: Expiration</b>
 reading: a way to extend expiration of password encrypted messages
 reading: utf8 extended ASCII compatibility improvements
