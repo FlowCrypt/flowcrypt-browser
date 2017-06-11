@@ -98,7 +98,11 @@ db_open(function (db) {
       tool.crypto.message.decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         $('#download').html(original_content).removeClass('visible');
         if(result.success) {
-          tool.file.save_to_downloads(url_params.name.replace(/(\.pgp)|(\.gpg)$/, ''), url_params.type, result.content.data);
+          var filename = result.content.filename;
+          if(tool.value(filename).in(['msg.txt'])) {
+            filename = url_params.name.replace(/(\.pgp)|(\.gpg)$/, '');
+          }
+          tool.file.save_to_downloads(filename, url_params.type, result.content.data);
           if(url_params.download) { // it was downloaded automatically in a new window: close the window
             setTimeout(function() { window.close(); }, 1000);
           }
