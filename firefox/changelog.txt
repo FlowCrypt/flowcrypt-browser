@@ -1,5 +1,11 @@
 <div>
 
+<b>version 4.1.5 on June 10, 2017: Expiration</b>
+reading: a way to extend expiration of password encrypted messages
+reading: utf8 extended ASCII compatibility improvements
+reading: attachments inner names should be preferred
+reading: drafts in the middle of convos add unwanted extra reply box
+
 <b>version 4.1.4 on June 6, 2017: Browser Settings</b>
 settings: shareable pubkey link
 settings: notify when in private browsing mode
