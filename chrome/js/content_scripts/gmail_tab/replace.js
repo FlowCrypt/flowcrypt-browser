@@ -281,7 +281,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
           var iframe = factory.embedded.reply(get_conversation_params(root_element), editable);
           prepared_reply_box.append(iframe).children(':not(iframe)').css('display', 'none');
         } else {
-          prepared_reply_box.append('<font>Skipping plain text draft</font>').children(':not(font)').css('display', 'none');
+          prepared_reply_box.append('<font>Draft skipped</font>').children(':not(font)').css('display', 'none');
         }
       }
     });
