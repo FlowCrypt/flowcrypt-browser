@@ -101,6 +101,13 @@ if(url_params.account_email) {
 
   $('.action_email_client').click(function () {
     tool.browser.message.send(url_params.parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email: url_params.account_email})});
-  })
+  });
+
+  $('.action_flush_attest_info').click(function () {
+    account_storage_remove(url_params.account_email, ['attests_requested', 'attests_processed', 'attest_log'], function () {
+      alert('Internal attest info flushed');
+      window.location.reload();
+    });
+  });
 
 }
