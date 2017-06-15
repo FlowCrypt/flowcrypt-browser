@@ -133,11 +133,13 @@ function initialize() {
 
 function render_encrypted_contact_page_status() {
   tool.api.cryptup.account_update({}, function(success, result) {
-    if (success && result && result.result) {
+    if (success) {
       var status_container = $('.public_profile_indicator_container');
-      status_container.find('.status-indicator').addClass(result.result.alias ? 'active' : 'inactive');
-      if(result.result.alias) {
+      if(result && result.result && result.result.alias) {
         status_container.find('.status-indicator-text').css('display', 'none');
+        status_container.find('.status-indicator').addClass('active');
+      } else {
+        status_container.find('.status-indicator').addClass('inactive');
       }
       status_container.css('visibility', 'visible');
     }
