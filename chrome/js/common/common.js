@@ -1639,7 +1639,6 @@
   function crypto_armor_detect_blocks(original_text) {
     var structure = [];
     original_text = str_normalize_spaces(original_text);
-    original_text = str_html_escape(original_text);
     var start_at = 0;
     while(true) {
       var r = crypto_armor_detect_block_next(original_text, start_at);
