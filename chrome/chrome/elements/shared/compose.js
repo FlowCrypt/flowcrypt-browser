@@ -559,8 +559,12 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
             token: result.token,
           })}));
         } else {
-          alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + ((result || {}).error || 'unknown error'));
-          reset_send_btn();
+          if((result || {}).error === 'Only users with active subscription can request a token') {
+            callback(plaintext);
+          } else {
+            alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + ((result || {}).error || 'unknown error'));
+            reset_send_btn();
+          }
         }
       });
     } else {
