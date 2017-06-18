@@ -99,7 +99,7 @@ db_open(function (db) {
         $('#download').html(original_content).removeClass('visible');
         if(result.success) {
           var filename = result.content.filename;
-          if(tool.value(filename).in(['msg.txt'])) {
+          if(!filename || tool.value(filename).in(['msg.txt', 'null'])) {
             filename = url_params.name.replace(/(\.pgp)|(\.gpg)$/, '');
           }
           tool.file.save_to_downloads(filename, url_params.type, result.content.data);
