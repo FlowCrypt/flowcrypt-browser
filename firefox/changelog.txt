@@ -1,5 +1,10 @@
 <div>
 
+<b>version 4.1.8 on June 18, 2017: Expired subscription</b>
+reading: attachment names compatibility
+composing: fix token error response on expired subscription
+internal: libsync detect_blocks
+
 <b>version 4.1.7 on June 15, 2017: Bugfixes</b>
 settings: public page indicator should also show to Free Forever users
 settings: option to flush attest info
