@@ -495,10 +495,13 @@
   }
 
   function str_strip_public_keys(decrypted_content, found_public_keys) {
-    return replace_armored_block_type(decrypted_content, crypto_armor_headers('public_key'), true, function (armored_public_key) {
-      found_public_keys.push(armored_public_key);
-      return '';
+    $.each(crypto_armor_detect_blocks(decrypted_content), function(i, block) {
+      if(block.type === 'public_key') {
+        found_public_keys.push(block.content);
+        decrypted_content = decrypted_content.replace(block.content, '');
+      }
     });
+    return decrypted_content;
   }
 
   function str_extract_cryptup_reply_token(decrypted_content) {
@@ -1658,81 +1661,31 @@
   }
 
   function crypto_armor_replace_blocks(factory, original_text, message_id, sender_email, is_outgoing) {
-    original_text = str_normalize_spaces(original_text);
-    original_text = str_html_escape(original_text);
-    var replacement_text = original_text;
-    var has_password;
-    var has_pgp_message;
-    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('public_key'), false, function(armored) {
-      return factory.embedded.pubkey(crypto_armor_normalize(str_html_unescape(armored), 'public_key'), is_outgoing);
-    });
-    if(tool.value(sender_email).in(['attest@cryptup.org'])) {
-      replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('attest_packet'), true, function(armored) {
-        return factory.embedded.attest(str_html_unescape(armored));
-      });
+    var blocks = crypto_armor_detect_blocks(original_text);
+    if(blocks.length === 1 && blocks[0].type === 'text') {
+      return;
     }
-    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('cryptup_verification'), false, function(armored) {
-      return factory.embedded.subscribe(str_html_unescape(armored), 'embedded', null);
-    });
-    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('signed_message'), true, function(armored) {
-      //todo - for now doesn't work with clipped signed messages because not tested yet
-      return factory.embedded.message(str_html_unescape(armored), message_id, is_outgoing, sender_email, false);
-    });
-    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('message'), false, function(armored, has_end) {
-      if(typeof has_password === 'undefined') {
-        has_password = original_text.match(password_sentence_present_test) !== null;
-      }
-      has_pgp_message = true;
-      return factory.embedded.message(has_end ? crypto_armor_normalize(str_html_unescape(armored), 'message') : '', message_id, is_outgoing, sender_email, has_password || false);
-    });
-    replacement_text = replace_armored_block_type(replacement_text, crypto_armor_headers('password_message'), true, function (armored) {
-      armored = armored.trim();
-      var short = armored.substr(armored.length - 10);
-      if(!has_pgp_message && short.match(/^[a-zA-Z0-9]{10}$/) !== null) {
-        return '</div>' + factory.embedded.message('', message_id, is_outgoing, sender_email, true, null, short);
-      }
-      return armored;
-    });
-    if(replacement_text !== original_text) {
-      if(has_password) {
-        tool.each(password_sentences, function(i, remove_sentence_re) {
-          replacement_text = replacement_text.replace(remove_sentence_re, '');
-        });
-      }
-      return replacement_text.trim();
-    }
-  }
-
-  function replace_armored_block_type(text, block_headers, end_required, block_processor, optional_search_after_index) {
-    var begin_index = text.indexOf(block_headers.begin, optional_search_after_index);
-    if(begin_index < 0) {
-      return text;
-    }
-    var end_found = -1;
-    var end_len = 0;
-    if(typeof block_headers.end.exec === 'undefined') { // end defined by string
-      end_found = text.indexOf(block_headers.end, begin_index);
-      end_len = block_headers.end.length;
-    } else {
-      var regex_end_found = block_headers.end.exec(text);
-      if(regex_end_found) {
-        end_found = regex_end_found.index;
-        end_len = regex_end_found[0].length;
-      }
-    }
-    var end_index;
-    if(end_found < 0) {
-      if(end_required) {
-        return text;
+    var r = '';
+    tool.each(blocks, function(i, block) {
+      if(block.type === 'text') {
+        r += str_html_escape(block.content);
+      } else if (block.type === 'message') {
+        r += factory.embedded.message(block.complete ? crypto_armor_normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
+      } else if (block.type === 'signed_message') {
+        r += factory.embedded.message(block.content, message_id, is_outgoing, sender_email, false);
+      } else if (block.type === 'public_key') {
+        r += factory.embedded.pubkey(crypto_armor_normalize(block.content, 'public_key'), is_outgoing);
+      } else if (block.type === 'password_message') {
+        r += factory.embedded.message('', message_id, is_outgoing, sender_email, true, null, block.content); // here block.content is message short id
+      } else if (block.type === 'attest_packet') {
+        r += factory.embedded.attest(block.content);
+      } else if (block.type === 'cryptup_verification') {
+        r += factory.embedded.subscribe(block.content, 'embedded', null);
       } else {
-        end_index = text.length - 1; // end not found + not required, get everything (happens for long clipped messages)
+        catcher.log('dunno how to process block type: ' + block.type);
       }
-    } else {
-      end_index = end_found + end_len;
-    }
-    var block_replacement = '\n' + block_processor(text.substring(begin_index, end_index), end_found > 0) + '\n';
-    var text_with_replaced_block = text.substring(0, begin_index) + block_replacement + text.substring(end_index, text.length);
-    return replace_armored_block_type(text_with_replaced_block, block_headers, end_required, block_processor, begin_index + block_replacement.length);
+    });
+    return r;
   }
 
   /* tool.crypto.hash */
