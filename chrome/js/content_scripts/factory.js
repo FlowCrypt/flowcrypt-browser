@@ -105,7 +105,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
 
   function iframe(src, classes, additional_attributes) {
     var attributes = { id: tool.env.url_params(['frame_id'], src).frame_id, class: (classes || []).concat(reloadable_class).join(' '), src: src };
-    $.each(additional_attributes, function(a, v) {
+    tool.each(additional_attributes, function(a, v) {
       attributes[a] = v;
     });
     return tool.e('iframe', attributes);

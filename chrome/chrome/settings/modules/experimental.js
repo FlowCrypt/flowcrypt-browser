@@ -32,7 +32,7 @@ function collect_info_for_account_backup(account_email, callback) {
       text.push('global_storage: ' + JSON.stringify(global_storage));
       text.push('account_storage: ' + JSON.stringify(account_storage));
       text.push('');
-      $.each(private_keys_get(account_email), function (i, keyinfo) {
+      tool.each(private_keys_get(account_email), function (i, keyinfo) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);
         text.push('key_primary: ' + keyinfo.primary);

@@ -325,7 +325,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     db_contact_get(db, recipients, function (contacts) {
       var armored_pubkeys = [private_storage_get('local', account_email, 'master_public_key', url_params.parent_tab_id)];
       var emails_without_pubkeys = [];
-      $.each(contacts, function (i, contact) {
+      tool.each(contacts, function (i, contact) {
         if(contact && contact.has_pgp) {
           armored_pubkeys.push(contact.pubkey);
         } else if(contact && keyserver_lookup_results_by_email[contact.email] && keyserver_lookup_results_by_email[contact.email].has_pgp) {
@@ -495,14 +495,14 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     tool.api.cryptup.message_presign_files(attachments, function (pf_success, pf_result) {
       if(pf_success === true && pf_result && pf_result.approvals && pf_result.approvals.length === attachments.length) {
         var items = [];
-        $.each(pf_result.approvals, function (i, approval) {
+        tool.each(pf_result.approvals, function (i, approval) {
           items.push({base_url: approval.base_url, fields: approval.fields, attachment: attachments[i]});
         });
         tool.api.aws.s3_upload(items, function (all_uploaded, s3_results) {
           if(all_uploaded) {
             tool.api.cryptup.message_confirm_files(items.map(function(item) {return item.fields.key;}), function(cf_success, cf_result) {
               if(cf_success && cf_result && cf_result.confirmed && cf_result.confirmed.length === items.length) {
-                $.each(attachments, function(i) {
+                tool.each(attachments, function(i) {
                   attachments[i].url = pf_result.approvals[i].base_url + pf_result.approvals[i].fields.key;
                 });
                 callback(true, attachments, cf_result.admin_codes);
@@ -533,7 +533,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   function add_uploaded_file_links_to_message_body(plaintext, attachments) {
     plaintext += '\n\n';
-    $.each(attachments, function (i, attachment) {
+    tool.each(attachments, function (i, attachment) {
       var size_mb = attachment.size / (1024 * 1024);
       var size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
       var link_text = 'Attachment: ' + attachment.name + ' (' + attachment.type + ')' + size_text;
@@ -647,7 +647,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function do_send_message(message, plaintext) {
-    $.each(additional_message_headers, function (k, h) {
+    tool.each(additional_message_headers, function (k, h) {
       message.headers[k] = h;
     });
     tool.api[email_provider].message_send(url_params.account_email, message, function (success, response) {
@@ -921,7 +921,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     renderable_contacts.splice(8);
     if(renderable_contacts.length > 0 || contact_search_in_progress) {
       var ul_html = '';
-      $.each(renderable_contacts, function (i, contact) {
+      tool.each(renderable_contacts, function (i, contact) {
         ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
         if(contact.has_pgp) {
           ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
@@ -966,7 +966,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
           tool.api.gmail.search_contacts(url_params.account_email, query.substring, contacts, function (search_contacts_results) {
             var re_rendering_needed = false;
             if(search_contacts_results.new.length) {
-              $.each(search_contacts_results.new, function (i, contact) {
+              tool.each(search_contacts_results.new, function (i, contact) {
                 db_contact_get(db, contact.email, function (in_db) {
                   if(!in_db) {
                     db_contact_save(db, db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
@@ -1225,7 +1225,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     }
     clearInterval(added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
     added_pubkey_db_lookup_interval = setInterval(function () {
-      $.each(get_recipients_from_dom('no_pgp'), function (i, email) {
+      tool.each(get_recipients_from_dom('no_pgp'), function (i, email) {
         db_contact_get(db, email, function (contact) {
           if(contact && contact.has_pgp) {
             $("span.recipients span.no_pgp:contains('" + email + "') i").remove();

@@ -192,7 +192,7 @@ db_open(function (db) {
   function render_inner_attachments(attachments) {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
-    $.each(attachments, function (i, attachment) {
+    tool.each(attachments, function (i, attachment) {
       var name = (attachment.name ? tool.str.html_escape(attachment.name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
       var size = tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB';
       $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + name + '</b>&nbsp;&nbsp;&nbsp;' + size + '<span class="progress"><span class="percent"></span></span></div>');
@@ -325,7 +325,7 @@ db_open(function (db) {
       tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
           var renderable_attachments = [];
-          $.each(result.attachments, function(i, attachment) {
+          tool.each(result.attachments, function(i, attachment) {
             if(tool.file.treat_as(attachment) !== 'public_key') {
               renderable_attachments.push(attachment);
             } else {
@@ -393,7 +393,7 @@ db_open(function (db) {
 
   function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids) {
     missing_or_wrong_passprases = {};
-    $.each(missing_or_wrong_passphrase_key_longids, function (i, longid) {
+    tool.each(missing_or_wrong_passphrase_key_longids, function (i, longid) {
       missing_or_wrong_passprases[longid] = get_passphrase(url_params.account_email, longid);
     });
     render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function () {
@@ -422,7 +422,7 @@ db_open(function (db) {
   }
 
   function check_passphrase_changed() {
-    $.each(missing_or_wrong_passprases, function (i, longid) {
+    tool.each(missing_or_wrong_passprases, function (i, longid) {
       if((missing_or_wrong_passprases[longid] || null) !== get_passphrase(url_params.account_email, longid)) {
         missing_or_wrong_passprases = {};
         clearInterval(passphrase_interval);

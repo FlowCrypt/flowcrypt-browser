@@ -6,7 +6,7 @@ tool.ui.event.protect();
 
 var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
 
-$.each(url_params.emails.split(','), function (i, email) {
+tool.each(url_params.emails.split(','), function (i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');
 });
 
@@ -14,7 +14,7 @@ db_open(function (db) {
   db_contact_search(db, { has_pgp: true }, function (contacts) {
 
     $('select.copy_from_email').append('<option value=""></option>');
-    $.each(contacts, function (i, contact) {
+    tool.each(contacts, function (i, contact) {
       $('select.copy_from_email').append('<option value="' + contact.email + '">' + contact.email + '</option>');
     });
 

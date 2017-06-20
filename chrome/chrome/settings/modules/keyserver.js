@@ -29,7 +29,7 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
 });
 
 function render_diagnosis(diagnosis, attests_requested, attests_processed) {
-  $.each(diagnosis.results, function (email, result) {
+  tool.each(diagnosis.results, function (email, result) {
     if(result.pubkey === null) {
       var note = 'Missing record. Your contacts will not know you have encryption set up.';
       var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';

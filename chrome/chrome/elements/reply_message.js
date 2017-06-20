@@ -172,7 +172,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
               if (success) {
                 $('#attachments').css('display', 'block');
                 var attachment_metas = tool.api.gmail.find_attachments(gmail_message_object);
-                $.each(attachment_metas, function (i, attachment_meta) {
+                tool.each(attachment_metas, function (i, attachment_meta) {
                   $('#attachments').append(factory.embedded.attachment(attachment_meta, []));
                 });
               } else {

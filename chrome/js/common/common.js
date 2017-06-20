@@ -495,7 +495,7 @@
   }
 
   function str_strip_public_keys(decrypted_content, found_public_keys) {
-    $.each(crypto_armor_detect_blocks(decrypted_content), function(i, block) {
+    tool.each(crypto_armor_detect_blocks(decrypted_content), function(i, block) {
       if(block.type === 'public_key') {
         found_public_keys.push(block.content);
         decrypted_content = decrypted_content.replace(block.content, '');

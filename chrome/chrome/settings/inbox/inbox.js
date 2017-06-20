@@ -65,7 +65,7 @@ tool.browser.message.tab_id(function(tab_id) {
           $('body').text('Connection error trying to get list of messages');
         } else {
           var thread_ids = tool.arr.unique(tool.arr.select(list_result.messages, 'threadId'));
-          $.each(thread_ids, function(i, thread_id) {
+          tool.each(thread_ids, function(i, thread_id) {
             thread_element_add(thread_id);
             tool.api.gmail.message_get(url_params.account_email, thread_id, 'metadata', function(item_success, item_result) {
               var thread_item = $('.threads #' + thread_list_item_id(thread_id));

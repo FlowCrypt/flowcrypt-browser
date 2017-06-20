@@ -72,7 +72,7 @@ function init_shared_attach_js(get_limits) {
     if(!Object.keys(attached_files).length) {
       callback(attachments);
     } else {
-      $.each(attached_files, function (id) {
+      tool.each(attached_files, function (id) {
         collect_attachment(id, add);
       });
     }
@@ -89,7 +89,7 @@ function init_shared_attach_js(get_limits) {
     if(!Object.keys(attached_files).length) {
       callback(attachments);
     } else {
-      $.each(attached_files, function (id, file) {
+      tool.each(attached_files, function (id, file) {
         read_attachment_data_as_uint8(id, function (file_data) {
           tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false, function (encrypted_file_content) {
             add(tool.file.attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted_file_content.message.packets.write()));
@@ -101,7 +101,7 @@ function init_shared_attach_js(get_limits) {
 
   function get_file_size_sum() {
     var sum = 0;
-    $.each(attached_files, function(id, file) {
+    tool.each(attached_files, function(id, file) {
       sum += file.size;
     });
     return sum;

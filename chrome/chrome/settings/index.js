@@ -12,7 +12,7 @@ tool.time.wait(function() { if(typeof catcher !== 'undefined') { return true; }}
 });
 
 tool.env.webmails(function(webmails) {
-  $.each(webmails, function(i, webmail_name) {
+  tool.each(webmails, function(i, webmail_name) {
     $('.signin_button.' + webmail_name).css('display', 'inline-block');
   });
 });
@@ -174,7 +174,7 @@ function render_storage_read_error() {
 
 function add_key_rows_html(private_keys) {
   var html = '';
-  $.each(private_keys, function (i, keyinfo) {
+  tool.each(private_keys, function (i, keyinfo) {
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     var date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
     var primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + keyinfo.longid + '">remove</a>)';
@@ -279,7 +279,7 @@ $("#switch-account, #toggle-accounts-profile-img").click(function (event) {
 });
 
 get_account_emails(function (account_emails) {
-  $.each(account_emails, function (i, email) {
+  tool.each(account_emails, function (i, email) {
     $('#alt-accounts').prepend(menu_account_html(email));
   });
   $('.action_select_account').click(function () {

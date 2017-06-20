@@ -47,7 +47,7 @@ account_storage_get(url_params.account_email, ['setup_simple', 'email_provider']
 
 function display_block(name) {
   var blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
-  $.each(blocks, function (i, block) {
+  tool.each(blocks, function (i, block) {
     $('#' + block).css('display', 'none');
   });
   $('#' + name).css('display', 'block');

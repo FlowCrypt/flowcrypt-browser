@@ -18,7 +18,7 @@ tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab)
       if(account_emails && account_emails.length) {
         account_storage_get(account_emails, ['setup_done'], function (account_storages) {
           var functioning_accounts = 0;
-          $.each(account_storages, function (email, storage) {
+          tool.each(account_storages, function (email, storage) {
             functioning_accounts += storage.setup_done === true;
           });
           if(!functioning_accounts) {

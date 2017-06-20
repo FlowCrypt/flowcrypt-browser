@@ -75,7 +75,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
         var addresses = order_addresses(url_params.account_email, storage.addresses);
         $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
         $('#input_from').change(compose.update_pubkey_icon);
-        $.each(addresses, function (i, address) {
+        tool.each(addresses, function (i, address) {
           $('#input_from').append('<option value="' + address + '">' + address + '</option>');
         });
       }

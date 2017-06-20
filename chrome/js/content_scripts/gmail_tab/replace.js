@@ -103,7 +103,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     var message_id = null; // todo: maybe need to traverse through all children elements classes of the whole message to get to /^m([0-9a-f]{16})$/ - as a backup
     var found = [selectors[base_element_type].get(0), selectors[base_element_type].find('div.a3s').get(0)];
     var classes = [].concat(found[0] ? tool.arr.from_dome_node_list(found[0].classList) : [], found[1] ? tool.arr.from_dome_node_list(found[1].classList) : []);
-    $.each(classes, function (i, message_class) {
+    tool.each(classes, function (i, message_class) {
       var match = message_class.match(/^m([0-9a-f]{16})$/);
       if(match) {
         message_id = match[1];
@@ -148,7 +148,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     var sender_email = get_sender_email(message_element);
     var is_outgoing = tool.value(sender_email).in(addresses);
     attachments_container.parent().find('span.aVW').css('visibility', 'hidden'); // original gmail header showing amount of attachments
-    $.each(attachment_metas, function(i, attachment_meta) {
+    tool.each(attachment_metas, function(i, attachment_meta) {
       if(attachment_meta.treat_as !== 'original') {
         var attachment_selector = filter_attachments(attachments_container.children(), [attachment_meta.name || 'noname']).first();
         hide_attachment(attachment_selector, attachments_container);

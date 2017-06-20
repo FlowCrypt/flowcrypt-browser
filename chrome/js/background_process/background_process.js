@@ -77,7 +77,7 @@ function get_cryptup_settings_tab_id_if_open(callback) {
   chrome.tabs.query({ currentWindow: true }, function (tabs) {
     var extension = chrome.extension.getURL('/');
     var found = false;
-    $.each(tabs, function (i, tab) {
+    tool.each(tabs, function (i, tab) {
       if(tool.value(extension).in(tab.url)) {
         callback(tab.id);
         found = true;

@@ -8,7 +8,7 @@ var keyinfo = undefined;
 if(url_params.longid) {
   keyinfo = private_keys_get(url_params.account_email, url_params.longid);
 } else {
-  $.each(private_keys_get(url_params.account_email), function (i, k) {
+  tool.each(private_keys_get(url_params.account_email), function (i, k) {
     if(k.primary) {
       keyinfo = k;
     }

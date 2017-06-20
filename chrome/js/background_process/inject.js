@@ -5,9 +5,9 @@
 var responses = {};
 
 function inject_cryptup_into_webmail_if_needed() {
-  $.each(chrome.runtime.getManifest().content_scripts, function (i, group) {
+  tool.each(chrome.runtime.getManifest().content_scripts, function (i, group) {
     get_content_script_tab_ids(group.matches, function (tab_ids) {
-      $.each(tab_ids, function (i, tab_id) {
+      tool.each(tab_ids, function (i, tab_id) {
         is_content_script_injection_needed(tab_id, function (already_injected) {
           if(!already_injected) {
             console.log("Injecting CryptUp into tab " + tab_id);

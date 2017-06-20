@@ -43,7 +43,7 @@ function evaluate_password_strength(parent_selector, input_selector, button_sele
     $(parent_selector + button_selector).addClass('gray');
   }
   // $('.password_feedback > ul').html('');
-  // $.each(result.suggestions, function(i, suggestion) {
+  // tool.each(result.suggestions, function(i, suggestion) {
   //   $('.password_feedback > ul').append('<li>' + suggestion + '</li>');
   // });
 }
@@ -118,18 +118,18 @@ function fetch_email_key_backups(account_email, email_provider, callback) {
       if(success) {
         if(response.messages) {
           var message_ids = [];
-          $.each(response.messages, function (i, message) {
+          tool.each(response.messages, function (i, message) {
             message_ids.push(message.id);
           });
           tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
             if(success) {
               var attachments = [];
-              $.each(messages, function (i, message) {
+              tool.each(messages, function (i, message) {
                 attachments = attachments.concat(tool.api.gmail.find_attachments(message));
               });
               tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
                 var keys = [];
-                $.each(downloaded_attachments, function (i, downloaded_attachment) {
+                tool.each(downloaded_attachments, function (i, downloaded_attachment) {
                   try {
                     var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
                     var key = openpgp.key.readArmored(armored_key).keys[0];
@@ -228,7 +228,7 @@ function crack_time_result(zxcvbn_result) {
 function openpgp_key_encrypt(key, passphrase) {
   if(key.isPrivate() && passphrase) {
     var keys = key.getAllKeyPackets();
-    $.each(keys, function (i, key) {
+    tool.each(keys, function (i, key) {
       key.encrypt(passphrase);
     });
   } else if(!passphrase) {
@@ -242,7 +242,7 @@ function show_settings_page(page, add_url_text_or_params) {
   console.log(add_url_text_or_params);
   var page_params = { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global };
   if(typeof add_url_text_or_params === 'object') { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
-    $.each(add_url_text_or_params, function(k, v) {
+    tool.each(add_url_text_or_params, function(k, v) {
       page_params[k] = v;
     });
     add_url_text_or_params = null;
@@ -283,18 +283,18 @@ function reset_cryptup_account_storages(account_email, callback) {
       throw new Error('Filter is empty for account_email"' + account_email + '"');
     }
     chrome.storage.local.get(function (storage) {
-      $.each(storage, function (key, value) {
+      tool.each(storage, function (key, value) {
         if(key.indexOf(filter) === 0) {
           keys_to_remove.push(key.replace(filter, ''));
         }
       });
       account_storage_remove(account_email, keys_to_remove, function () {
-        $.each(localStorage, function (key, value) {
+        tool.each(localStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
             private_storage_set('local', account_email, key.replace(filter, ''), undefined);
           }
         });
-        $.each(sessionStorage, function (key, value) {
+        tool.each(sessionStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
             private_storage_set('session', account_email, key.replace(filter, ''), undefined);
           }

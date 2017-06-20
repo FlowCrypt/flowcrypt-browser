@@ -27,7 +27,7 @@ function global_migrate_v_300(callback) {
   db_open(function (db) {
     var tx = db.transaction('contacts', 'readwrite');
     var contacts = tx.objectStore('contacts');
-    $.each(JSON.parse(localStorage.pubkey_cache || '{}'), function (email, contact) {
+    tool.each(JSON.parse(localStorage.pubkey_cache || '{}'), function (email, contact) {
       if(typeof email === 'string') {
         contacts.put(db_contact_object(email, null, contact.has_cryptup ? 'cryptup' : 'pgp', contact.pubkey, contact.attested, false, Date.now()));
       }
@@ -60,7 +60,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
       tool.api.attester.lookup_email(storage.addresses, function (success, results) {
         if(success) {
           var addresses_keyserver = [];
-          $.each(results.results, function (i, result) {
+          tool.each(results.results, function (i, result) {
             if(result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
               addresses_keyserver.push(result.email);
             }
@@ -77,7 +77,7 @@ function account_update_status_pks(account_email) { // checks if any new emails 
   var hkp = new openpgp.HKP('http://keys.gnupg.net');
   account_storage_get(account_email, ['addresses', 'addresses_pks'], function (storage) {
     var addresses_pks = storage.addresses_pks || [];
-    $.each(storage.addresses || [account_email], function (i, email) {
+    tool.each(storage.addresses || [account_email], function (i, email) {
       if(!tool.value(email).in(addresses_pks)) {
         try {
           hkp.lookup({ query: email }).then(function (pubkey) {

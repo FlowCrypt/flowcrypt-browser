@@ -25,7 +25,7 @@ tool.browser.message.tab_id(function(tab_id) {
         $('h1').text('Contacts and their Public Keys');
         $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
 
-        $.each(contacts, function (i, contact) {
+        tool.each(contacts, function (i, contact) {
           $('table#emails').append('<tr email="' + contact.email + '"><td>' + contact.email + '</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>');
         });
 

@@ -7,7 +7,7 @@ var global_storage_scope = 'global';
 function account_storage_key(account_key_or_list, key) {
   if(typeof account_key_or_list === 'object') {
     var all_results = [];
-    $.each(account_key_or_list, function (i, account_key) {
+    tool.each(account_key_or_list, function (i, account_key) {
       all_results = all_results.concat(account_storage_key(account_key, key));
     });
     return all_results;
@@ -15,7 +15,7 @@ function account_storage_key(account_key_or_list, key) {
     var prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
     if(typeof key === 'object') {
       var account_storage_keys = [];
-      $.each(key, function (i, k) {
+      tool.each(key, function (i, k) {
         account_storage_keys.push(prefix + k);
       });
       return account_storage_keys;
@@ -28,7 +28,7 @@ function account_storage_key(account_key_or_list, key) {
 function account_storage_object_keys_to_original(account_or_accounts, storage_object) {
   if(typeof account_or_accounts === 'string') {
     var fixed_keys_object = {};
-    $.each(storage_object, function (k, v) {
+    tool.each(storage_object, function (k, v) {
       var fixed_key = k.replace(account_storage_key(account_or_accounts, ''), '');
       if(fixed_key !== k) {
         fixed_keys_object[fixed_key] = v;
@@ -37,7 +37,7 @@ function account_storage_object_keys_to_original(account_or_accounts, storage_ob
     return fixed_keys_object;
   } else {
     var results_by_account = {};
-    $.each(account_or_accounts, function (i, account) {
+    tool.each(account_or_accounts, function (i, account) {
       results_by_account[account] = account_storage_object_keys_to_original(account, storage_object);
     });
     return results_by_account;
@@ -159,7 +159,7 @@ function private_keys_get(account_email, longid) {
   var keys = [];
   var private_keys = private_storage_get('local', account_email, 'private_keys');
   var contains_primary = false;
-  $.each(private_keys || [], function (i, keyinfo) {
+  tool.each(private_keys || [], function (i, keyinfo) {
     if(keyinfo.primary === true) {
       contains_primary = true;
     }
@@ -172,14 +172,14 @@ function private_keys_get(account_email, longid) {
   if(typeof longid !== 'undefined') { // looking for a specific key(s)
     if(typeof longid === 'object') { // looking for an array of keys
       var found = [];
-      $.each(keys, function (i, keyinfo) {
+      tool.each(keys, function (i, keyinfo) {
         if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
           found.push(keyinfo);
         }
       });
     } else { // looking for a single key
       var found = null;
-      $.each(keys, function (i, keyinfo) {
+      tool.each(keys, function (i, keyinfo) {
         if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
           found = keyinfo;
         }
@@ -196,7 +196,7 @@ function private_keys_add(account_email, new_key_armored) {
   var do_add = true;
   var new_key_longid = tool.crypto.key.longid(new_key_armored);
   if(new_key_longid) {
-    $.each(private_keys, function (i, keyinfo) {
+    tool.each(private_keys, function (i, keyinfo) {
       if(new_key_longid === keyinfo.longid) {
         do_add = false;
       }
@@ -213,7 +213,7 @@ function private_keys_add(account_email, new_key_armored) {
 function private_keys_remove(account_email, remove_longid) {
   var private_keys = private_keys_get(account_email);
   var filtered_private_keys = [];
-  $.each(private_keys, function (i, keyinfo) {
+  tool.each(private_keys, function (i, keyinfo) {
     if(keyinfo.longid !== remove_longid) {
       filtered_private_keys.push(keyinfo);
     }
@@ -226,7 +226,7 @@ function account_storage_set(account_email, values, callback) {
     account_email = global_storage_scope;
   }
   var storage_update = {};
-  $.each(values, function (key, value) {
+  tool.each(values, function (key, value) {
     storage_update[account_storage_key(account_email, key)] = value;
   });
   chrome.storage.local.set(storage_update, function () {
@@ -266,7 +266,7 @@ function get_account_emails(callback) {
   account_storage_get(null, ['account_emails'], function (storage) {
     var account_emails = [];
     if(typeof storage.account_emails !== 'undefined') {
-      $.each(JSON.parse(storage.account_emails), function (i, account_email) {
+      tool.each(JSON.parse(storage.account_emails), function (i, account_email) {
         if(!tool.value(account_email.toLowerCase()).in(account_emails)) {
           account_emails.push(account_email.toLowerCase());
         }
@@ -386,10 +386,10 @@ function db_create_search_index_list(email, name, has_pgp) {
   parts = parts.concat(email.split(/[^a-z0-9]/));
   parts = parts.concat(name.split(/[^a-z0-9]/));
   var index = [];
-  $.each(parts, function (i, part) {
+  tool.each(parts, function (i, part) {
     if(part) {
       var substring = '';
-      $.each(part.split(''), function (i, letter) {
+      tool.each(part.split(''), function (i, letter) {
         substring += letter;
         var normalized = normalize_string(substring);
         if(!tool.value(normalized).in(index)) {
@@ -421,7 +421,7 @@ function db_contact_object(email, name, client, pubkey, attested, pending_lookup
 function db_contact_save(db, contact, callback) {
   if(Array.isArray(contact)) {
     var processed = 0;
-    $.each(contact, function (i, single_contact) {
+    tool.each(contact, function (i, single_contact) {
       db_contact_save(db, single_contact, function () {
         if(++processed === contact.length && typeof callback === 'function') {
           callback();
@@ -443,7 +443,7 @@ function db_contact_save(db, contact, callback) {
 function db_contact_update(db, email, update, callback) {
   if(Array.isArray(email)) {
     var processed = 0;
-    $.each(email, function (i, single_email) {
+    tool.each(email, function (i, single_email) {
       db_contact_update(db, single_email, update, function () {
         if(++processed === email.length && typeof callback === 'function') {
           callback();
@@ -453,7 +453,7 @@ function db_contact_update(db, email, update, callback) {
   } else {
     db_contact_get(db, email, function (original) {
       var updated = {};
-      $.each(original, function (k, original_value) {
+      tool.each(original, function (k, original_value) {
         if(k in update) {
           updated[k] = update[k];
         } else {
@@ -493,7 +493,7 @@ function db_contact_get(db, email_or_longid, callback) {
   } else {
     var results = Array(email_or_longid.length);
     var finished = 0;
-    $.each(email_or_longid, function (i, single_email_or_longid) {
+    tool.each(email_or_longid, function (i, single_email_or_longid) {
       db_contact_get(db, single_email_or_longid, function (contact) {
         results[i] = contact;
         if(++finished >= email_or_longid.length) {
@@ -508,7 +508,7 @@ var db_query_keys = ['limit', 'substring', 'has_pgp'];
 
 // query: substring, has_pgp, limit. All voluntary
 function db_contact_search(db, query, callback) {
-  $.each(query, function (key, value) {
+  tool.each(query, function (key, value) {
     if(!tool.value(key).in(db_query_keys)) {
       throw new Error('db_contact_search: unknown key: ' + key);
     }

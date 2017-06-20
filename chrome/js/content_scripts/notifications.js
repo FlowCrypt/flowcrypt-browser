@@ -48,7 +48,7 @@ function content_script_notifications() {
         tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/texts/' + tool.env.browser().name + '_content_settings.htm' });
       });
     }
-    $.each(callbacks, function (name, callback) {
+    tool.each(callbacks, function (name, callback) {
       $('.webmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
     });
   }

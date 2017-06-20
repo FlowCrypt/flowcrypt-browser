@@ -54,7 +54,7 @@ function check_email_for_attests_and_respond(account_email) {
       if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email]) {
         fetch_attest_emails(account_email, function (success, messages) {
           if(success && messages) {
-            $.each(messages, function (id, message) {
+            tool.each(messages, function (id, message) {
               process_attest_email(account_email, message);
             });
           }
@@ -131,7 +131,7 @@ function fetch_attest_emails(account_email, callback) {
     if(success) {
       if(response.messages) {
         var message_ids = [];
-        $.each(response.messages, function (i, message) {
+        tool.each(response.messages, function (i, message) {
           message_ids.push(message.id);
         });
         tool.api.gmail.message_get(account_email, message_ids, 'full', callback);
@@ -147,7 +147,7 @@ function fetch_attest_emails(account_email, callback) {
 function refresh_attest_requests_and_privileges(process_account_email_callback, refresh_done_callback) {
   get_account_emails(function (account_emails) {
     account_storage_get(account_emails, ['attests_requested', 'google_token_scopes'], function (multi_storage) {
-      $.each(multi_storage, function (account_email, storage) {
+      tool.each(multi_storage, function (account_email, storage) {
         can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
         if(process_account_email_callback) {
           process_account_email_callback(account_email, storage.attests_requested);
@@ -162,7 +162,7 @@ function refresh_attest_requests_and_privileges(process_account_email_callback, 
 
 function get_attester_emails() {
   var emails = [];
-  $.each(ATTESTERS, function (id, attester) {
+  tool.each(ATTESTERS, function (id, attester) {
     emails.push(attester.email);
   });
   return emails;

@@ -8,7 +8,7 @@ var attachment = tool.file.keyinfo_as_pubkey_attachment(keyinfo);
 var compose = init_shared_compose_js(url_params, null, {}, null, true);
 var additional_message_headers;
 
-$.each(url_params.to.split(','), function(i, to) {
+tool.each(url_params.to.split(','), function(i, to) {
   $('.recipients').append(tool.e('span', {text: to}));
 });
 
@@ -31,7 +31,7 @@ tool.api.gmail.thread_get(url_params.account_email, url_params.thread_id, 'full'
 $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   $('#send_btn').text('sending..');
   var message = tool.api.common.message(url_params.account_email, url_params.from, url_params.to, url_params.subject, $('#input_text').get(0).innerText, [attachment], url_params.thread_id);
-  $.each(additional_message_headers, function (k, h) {
+  tool.each(additional_message_headers, function (k, h) {
     message.headers[k] = h;
   });
   tool.api.gmail.message_send(url_params.account_email, message, function (success, response) {

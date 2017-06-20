@@ -16,7 +16,7 @@ if(controls) {
     $('.emails').append('<a href="' + tool.env.url_create('storage.htm', {controls: url_params.controls || ''}) + '">all</a>');
     $('.emails').append('<a href="' + tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}) + '">global</a>');
     $('.namespace').append('<option value="global">global</option>');
-    $.each(account_emails, function (i, account_email) {
+    tool.each(account_emails, function (i, account_email) {
       $('.emails').append('<a href="' + tool.env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}) + '">' + account_email + '</a>');
       $('.namespace').append('<option value="' + encodeURIComponent(account_email) + '">' + account_email + '</option>');
     });
@@ -24,7 +24,7 @@ if(controls) {
 }
 
 function render(obj) {
-  $.each(obj, function(filtered_key, data) {
+  tool.each(obj, function(filtered_key, data) {
     var del = controls ? ' <span class="bad delete" key="' + data.key + '" style="cursor: pointer;">[X]</span>' : '';
     $('.pre').append('<div><b>' + filtered_key + del + '</b> ' + tool.str.pretty_print(data.value) + '</div>');
   });
@@ -42,7 +42,7 @@ chrome.storage.local.get(function (storage) {
     var real_filter = '';
   }
   var filtered = {};
-  $.each(storage, function (key, value) {
+  tool.each(storage, function (key, value) {
     if(tool.value(real_filter).in(key)) {
       filtered[key.replace(real_filter, '')] = {key: key, value: value};
     }

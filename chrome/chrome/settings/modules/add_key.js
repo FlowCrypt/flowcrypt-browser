@@ -8,7 +8,7 @@ tool.ui.passphrase_toggle(['input_passphrase']);
 
 var private_keys = private_keys_get(url_params.account_email);
 var private_keys_long_ids = [];
-$.each(private_keys, function (i, keyinfo) {
+tool.each(private_keys, function (i, keyinfo) {
   private_keys_long_ids.push(keyinfo.longid);
 });
 
@@ -18,7 +18,7 @@ fetch_email_key_backups(url_params.account_email, 'gmail', function (success, ke
   if(success) {
     if(keys && keys.length) {
       var not_imported_backup_longids = [];
-      $.each(tool.arr.unique(keys.map(tool.crypto.key.longid)), function (i, longid) {
+      tool.each(tool.arr.unique(keys.map(tool.crypto.key.longid)), function (i, longid) {
         if(!tool.value(longid).in(private_keys_long_ids)) {
           not_imported_backup_longids.push(longid);
         }

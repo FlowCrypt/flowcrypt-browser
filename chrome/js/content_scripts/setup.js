@@ -27,10 +27,10 @@ function content_script_setup_if_vacant(webmail_specific) {
       catcher.try(function () {
         console.log('Updating CryptUp');
         document.removeEventListener(destruction_event, destroy);
-        $.each(destroyable_intervals, function (i, id) {
+        tool.each(destroyable_intervals, function (i, id) {
           clearInterval(id);
         });
-        $.each(destroyable_timeouts, function (i, id) {
+        tool.each(destroyable_timeouts, function (i, id) {
           clearTimeout(id);
         });
         $('.' + destroyable_class).remove();
@@ -145,7 +145,7 @@ function content_script_setup_if_vacant(webmail_specific) {
         webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id);
       },
       render_public_keys: function (data) {
-        $.each(data.public_keys, function(i, armored_pubkey) {
+        tool.each(data.public_keys, function(i, armored_pubkey) {
           $('iframe#' + data.after_frame_id).after(factory.embedded.pubkey(armored_pubkey, false));
         });
       },

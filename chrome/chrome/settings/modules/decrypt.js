@@ -19,7 +19,7 @@ db_open(function (db) {
     tool.browser.message.listen({
       close_dialog: function () {
         $('.passphrase_dialog').html('');
-        $.each(missing_passprase_longids, function (i, longid) {
+        tool.each(missing_passprase_longids, function (i, longid) {
           // todo - copy pasted from attachment.js, unify into a single function
           // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
           // see pgp_block.js for proper common implmenetation

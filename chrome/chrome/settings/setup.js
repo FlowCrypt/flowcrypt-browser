@@ -244,7 +244,7 @@ function save_keys(account_email, prvs, options, callback) {
     save_passphrase(options.save_passphrase ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
   }
   var contacts = [];
-  $.each(all_addresses, function (i, address) {
+  tool.each(all_addresses, function (i, address) {
     var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
     contacts.push(db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
   });
@@ -329,7 +329,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
   if(passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
     alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
   } else if(passphrase) {
-    $.each(recovered_keys, function (i, recovered_key) {
+    tool.each(recovered_keys, function (i, recovered_key) {
       var longid = tool.crypto.key.longid(recovered_key);
       if(!tool.value(longid).in(recovered_keys_successful_longids) && tool.crypto.key.decrypt(recovered_key, passphrase).success) {
         recovered_keys_successful_longids.push(longid);

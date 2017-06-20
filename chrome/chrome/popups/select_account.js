@@ -17,7 +17,7 @@ if(url_params.action === 'new_message') {
 get_account_emails(function (account_emails) {
   account_storage_get(account_emails, ['setup_done'], function (account_storages) {
     var ul_emails = '';
-    $.each(account_storages, function(email, storage) {
+    tool.each(account_storages, function(email, storage) {
       if(storage.setup_done === true) {
         ul_emails += '<li><a target="cryptup" class="button gray2 long" href="' + tool.env.url_create('/chrome/settings/index.htm', { account_email: email, page: page }) + '">' + email + '</a></li>';
       }

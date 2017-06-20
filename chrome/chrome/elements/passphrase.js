@@ -32,7 +32,7 @@ if(all_private_keys.length > 1) {
     var html = 'For the following key: <span class="good">' + mnemonic(private_keys[0].longid) + '</span> (KeyWords)';
   } else {
     var html = 'Pass phrase needed for any of the following keys:';
-    $.each(private_keys, function (i, keyinfo) {
+    tool.each(private_keys, function (i, keyinfo) {
       html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + mnemonic(private_keys[i].longid) + '</div>';
     });
   }
@@ -61,7 +61,7 @@ $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function 
 $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   var pass = $('#passphrase').val();
   var is_correct = false;
-  $.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
+  tool.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
     var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     if(tool.crypto.key.decrypt(prv, pass).success) {
       is_correct = true;

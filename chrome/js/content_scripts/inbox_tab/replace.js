@@ -69,7 +69,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function process_attachments(message_id, message_element, attachment_metas, attachments_container, skip_google_drive) {
     var sender_email = dom_extract_sender_email(message_element);
     var is_outgoing = tool.value(sender_email).in(addresses);
-    $.each(attachment_metas, function(i, attachment_meta) {
+    tool.each(attachment_metas, function(i, attachment_meta) {
       if(attachment_meta.treat_as !== 'original') {
         var attachment_selector = attachments_container.find(get_attachment_selector(attachment_meta.name)).first();
         hide_attachment(attachment_selector, attachments_container);
