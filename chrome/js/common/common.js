@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2017 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. See https://github.com/FlowCrypt/flowcrypt-desktop/blob/master/LICENSE */
 
 'use strict';
 
@@ -259,6 +259,10 @@
       recovery_email_subjects: ['Your CryptUp Backup', 'Your FlowCrypt Backup', 'Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
     },
   };
+
+  if(typeof exports === 'object') {
+    exports.tool = tool;
+  }
 
   /* tool.str */
 
@@ -3657,6 +3661,8 @@
 
 (function ( /* ERROR HANDLING */ ) {
 
+  var tool = typeof tool === 'object' ? tool : window.tool;
+
   var RUNTIME = {};
   figure_out_cryptup_runtime();
 
@@ -3816,6 +3822,13 @@
     }
   }
 
+  function promise_error_alert(note) {
+    return function (error) {
+      console.log(error);
+      alert(note);
+    };
+  }
+
   function environment(url) {
     if(!url) {
       url = window.location.href;
@@ -3877,17 +3890,24 @@
     }
   }
 
+  var _c = { // web and extension code
+    handle_error: handle_error,
+    handle_exception: handle_exception,
+    log: log,
+    info: info,
+    version: cryptup_version,
+    try: try_wrapper,
+    environment: environment,
+    test: test,
+    promise: promise_error_alert,
+  };
+
   if(window.is_bare_engine !== true) {
-    window.catcher = { // web and extension code
-      handle_error: handle_error,
-      handle_exception: handle_exception,
-      log: log,
-      info: info,
-      version: cryptup_version,
-      try: try_wrapper,
-      environment: environment,
-      test: test,
-    };
+    window.catcher = _c;
+  }
+
+  if(typeof exports === 'object') {
+    exports.catcher = _c;
   }
 
 })();
