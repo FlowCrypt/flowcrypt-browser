@@ -1660,7 +1660,7 @@
     var r = '';
     tool.each(blocks, function(i, block) {
       if(block.type === 'text') {
-        r += str_html_escape(block.content);
+        r += (Number(i) ? '\n\n' : '') + str_html_escape(block.content) + '\n\n';
       } else if (block.type === 'message') {
         r += factory.embedded.message(block.complete ? crypto_armor_normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
       } else if (block.type === 'signed_message') {
