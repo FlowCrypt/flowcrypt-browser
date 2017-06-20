@@ -711,7 +711,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   function evaluate_receivers() {
     $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').each(function () {
       var email_element = this;
-      var email = tool.str.trim_lower($(email_element).text());
+      var email = tool.str.parse_email($(email_element).text()).email;
       if(tool.str.is_email_valid(email)) {
         S.now('send_btn_span').text(BTN_LOADING);
         lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, function (pubkey_lookup_result) {
@@ -846,14 +846,14 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   function select_contact(email, from_query) {
     var possibly_bogus_recipient = $('.recipients span.wrong').last();
-    var possibly_bogus_address = tool.str.trim_lower(possibly_bogus_recipient.text());
-    var q = tool.str.trim_lower(from_query.substring);
+    var possibly_bogus_address = tool.str.parse_email(possibly_bogus_recipient.text()).email;
+    var q = tool.str.parse_email(from_query.substring).email;
     if(possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
     setTimeout(function() {
       if(!tool.value(email).in(get_recipients_from_dom())) {
-        S.cached('input_to').val(tool.str.trim_lower(email));
+        S.cached('input_to').val(tool.str.parse_email(email).email);
         render_receivers();
         S.cached('input_to').focus();
       }
@@ -945,7 +945,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         ul_html += '<li class="loading">loading...</li>';
       }
       $('#contacts ul').html(ul_html);
-      $('#contacts ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) { select_contact(tool.str.trim_lower($(self).attr('email')), query); }));
+      $('#contacts ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) { select_contact(tool.str.parse_email($(self).attr('email')).email, query); }));
       $('#contacts ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
       $('#contacts ul li.auth_contacts').click(function () { auth_contacts(url_params.account_email); });
       $('#contacts').css({ display: 'block', top: ($('#compose > tbody > tr:first').height() + $('#input_addresses_container > div:first').height() + 10) + 'px' });
@@ -955,7 +955,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function search_contacts(db_only) {
-    var query = { substring: tool.str.trim_lower(S.cached('input_to').val()) };
+    var query = { substring: tool.str.parse_email(S.cached('input_to').val()).email };
     if(query.substring !== '') {
       db_contact_search(db, query, function (contacts) {
         if(db_only || !can_read_emails) {
@@ -997,7 +997,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function did_i_ever_send_pubkey_to_or_receive_encrypted_message_from(their_email, callback) {
-    their_email = tool.str.trim_lower(their_email);
+    their_email = tool.str.parse_email(their_email).email;
     account_storage_get(url_params.account_email, ['pubkey_sent_to'], function (storage) {
       if(tool.value(their_email).in(storage.pubkey_sent_to)) {
         callback(true);

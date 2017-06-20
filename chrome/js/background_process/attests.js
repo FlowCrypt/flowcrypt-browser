@@ -76,7 +76,7 @@ function process_attest_packet_text(account_email, attest_packet_text, passphras
     if (!is_attested) {
       if (tool.crypto.key.decrypt(key, passphrase || get_passphrase(account_email)).success) {
         var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-        var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.trim_lower(account_email));
+        var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
         if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
           tool.crypto.message.sign(key, attest.text, true, function (success, result) {
             if (success) {

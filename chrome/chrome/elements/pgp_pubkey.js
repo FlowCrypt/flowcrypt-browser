@@ -43,8 +43,8 @@ db_open(function (db) {
       $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
       $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
     } else {
-      $('.input_email').val(tool.str.trim_lower(pubkey.users[0].userId.userid));
-      $('.email').text(tool.str.trim_lower(pubkey.users[0].userId.userid));
+      $('.input_email').val(tool.str.parse_email(pubkey.users[0].userId.userid).email);
+      $('.email').text(tool.str.parse_email(pubkey.users[0].userId.userid).email);
       set_button_text(db);
     }
   } else {

@@ -7,7 +7,6 @@
 
   var tool = window.tool = {
     str: {
-      trim_lower: str_trim_lower, //todo - deprecate in favor of parse_email
       parse_email: str_parse_email,
       pretty_print: str_pretty_print,
       html_as_text: str_html_as_text,
@@ -265,13 +264,6 @@
   }
 
   /* tool.str */
-
-  function str_trim_lower(email) {
-    if(tool.value('<').in(email) && tool.value('>').in(email)) {
-      email = email.substr(email.indexOf('<') + 1, email.indexOf('>') - email.indexOf('<') - 1);
-    }
-    return email.trim().toLowerCase();
-  }
 
   function str_parse_email(email_string) {
     if(tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
@@ -2212,10 +2204,10 @@
     var my_email = account_email;
     tool.each(reply_to_estimate, function (i, email) {
       if(email) {
-        if(tool.value(tool.str.trim_lower(email)).in(addresses)) { // my email
+        if(tool.value(tool.str.parse_email(email).email).in(addresses)) { // my email
           my_email = email;
-        } else if(!tool.value(tool.str.trim_lower(email)).in(reply_to)) { // skip duplicates
-          reply_to.push(tool.str.trim_lower(email)); // reply to all except my emails
+        } else if(!tool.value(tool.str.parse_email(email).email).in(reply_to)) { // skip duplicates
+          reply_to.push(tool.str.parse_email(email).email); // reply to all except my emails
         }
       }
     });
@@ -3146,13 +3138,13 @@
 
   function api_attester_lookup_email(email, callback) {
     return api_attester_call('lookup/email', {
-      email: (typeof email === 'string') ? tool.str.trim_lower(email) : email.map(tool.str.trim_lower),
+      email: (typeof email === 'string') ? tool.str.parse_email(email).email : email.map(function(a) {return tool.str.parse_email(a).email; }),
     }, callback);
   }
 
   function api_attester_initial_legacy_submit(email, pubkey, attest, callback) {
     return api_attester_call('initial/legacy_submit', {
-      email: tool.str.trim_lower(email),
+      email: tool.str.parse_email(email).email,
       pubkey: pubkey.trim(),
       attest: attest || false,
     }, callback);
