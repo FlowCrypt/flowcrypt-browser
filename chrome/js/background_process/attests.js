@@ -90,7 +90,7 @@ function process_attest_packet_text(account_email, attest_packet_text, passphras
               });
             } else {
               attest.packet_text = attest_packet_text;
-              catcher.report('Error signing ' + attest.content.action + ' attest packet: ' + result, attest);
+              catcher.log('Error signing ' + attest.content.action + ' attest packet: ' + result, attest);
               callback(account_email, attest_packet_text, false, 'Error signing the attest. Write me at tom@cryptup.org to find out why:' + result);
             }
           });
