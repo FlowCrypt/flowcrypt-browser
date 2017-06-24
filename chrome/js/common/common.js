@@ -194,12 +194,6 @@
         extract_armored_block: gmail_api_extract_armored_block,
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
       },
-      // outlook: {
-      //   oauth_url: api_outlook_oauth_url,
-      //   message_send: api_outlook_sendmail,
-      //   message_get: api_outlook_message_get,
-      //   message_thread: api_outlook_message_thread,
-      // },
       attester: {
         lookup_email: api_attester_lookup_email,
         initial_legacy_submit: api_attester_initial_legacy_submit,
@@ -670,9 +664,7 @@
   }
 
   function env_webmails(cb) {
-    account_storage_get(null, ['dev_outlook_allow'], function(storage) {
-      cb(storage.dev_outlook_allow ? ['gmail', 'inbox', 'outlook'] : ['gmail', 'inbox']);
-    });
+    cb(['gmail', 'inbox']);
   }
 
   /* tool.arr */
@@ -2929,210 +2921,6 @@
     ].join(' ');
   }
 
-  /* tool.api.outlook */
-  //
-  // var outlook_api_endpoint = 'https://outlook.office.com/api/v2.0/';
-  //
-  // var api_outlook_oauth_config = {
-  //   oauth_url: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  //   client_id: '5c22daa5-737e-440b-8dd1-e4e9d0f4a1a9',
-  //   redirect_uri: 'https://outlook.office.com/noop/cryptup',
-  //   scopes_init: ['openid', 'email', 'https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
-  //   scopes_refresh: ['https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
-  //   state_header: 'CRYPTUP_STATE_',
-  // };
-  //
-  // function api_auth_process_and_save_fragment(fragment, renewing_tokens_on_account_email, state_must_match_this_frame_id, callback) {
-  //   var token_response = env_url_params(['error', 'error_description', 'access_token', 'token_type', 'expires_in', 'id_token', 'scope', 'state'], fragment.replace('#', ''));
-  //   if(!tool.value(api_outlook_oauth_config.state_header).in(token_response.state)) {
-  //     callback(false, 'CryptUp state not present in this result');
-  //   } else {
-  //     var state = str_html_attribute_decode(token_response.state.replace(api_outlook_oauth_config.state_header, ''));
-  //     if(state_must_match_this_frame_id && state.frame !== state_must_match_this_frame_id) {
-  //       callback(false, 'Does not match expected frame id', null, state);
-  //     } else {
-  //       if(token_response.error) {
-  //         if(token_response.error === 'login_required') {
-  //           callback(false, 'login_required', null, state);
-  //         } else {
-  //           callback(false, token_response.error + ':' + decodeURIComponent(token_response.error_description), null, state);
-  //         }
-  //       } else {
-  //         var token_account_email_claim = token_response.id_token ? api_auth_parse_id_token(token_response.id_token).email : null;
-  //         token_response.expires_in = Number(token_response.expires_in);
-  //         token_response.expires_on = Date.now() + token_response.expires_in * 1000;
-  //         if(renewing_tokens_on_account_email) {
-  //           account_storage_get(renewing_tokens_on_account_email, ['microsoft_auth'], function (storage) {
-  //             storage.microsoft_auth.expires_in = token_response.expires_in;
-  //             storage.microsoft_auth.expires_on = token_response.expires_on;
-  //             storage.microsoft_auth.access_token = token_response.access_token;
-  //             account_storage_set(renewing_tokens_on_account_email, {microsoft_auth: storage.microsoft_auth}, function () {
-  //               callback(true, storage.microsoft_auth, renewing_tokens_on_account_email, state);
-  //             });
-  //           });
-  //         } else {
-  //           if(token_account_email_claim) {
-  //             add_account_email_to_list_of_accounts(token_account_email_claim, function() {
-  //               account_storage_set(token_account_email_claim, {microsoft_auth: token_response}, function () {
-  //                 callback(true, token_response, token_account_email_claim, state);
-  //               });
-  //             });
-  //           } else {
-  //             callback(false, 'Could not get email from initial auth request', null, state);
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  //
-  // function silent_implicit_token_refresh_in_hidden_iframe(account_email, callback) {
-  //   var frame_id = 'frame_' + str_random(20);
-  //   browser_message_tab_id(function(tab_id) {
-  //     $('body').append(tool.e('iframe', {class: 'display_none', id: frame_id, src: api_outlook_oauth_url(account_email, frame_id, tab_id, true)}));
-  //     browser_message_listen({
-  //       microsoft_access_token_result: function (message) {
-  //         api_auth_process_and_save_fragment(message.fragment, account_email, frame_id, function (success, result, email, state) {
-  //           if(state.frame === frame_id && state.tab === tab_id) {
-  //             $('#' + frame_id).remove();
-  //             callback(success, result);
-  //           } else {
-  //             console.log('Ignoring auth request with a wrong frame or tab id: ' + [frame_id, tab_id, state.frame, state.tab].join(','));
-  //           }
-  //         });
-  //       },
-  //     }, tab_id);
-  //   });
-  // }
-  //
-  // function verbose_implicit_token_refresh_in_window_popup(account_email, callback) {
-  //   var window_id = 'popup_' + tool.str.random(20);
-  //   browser_message_tab_id(function (tab_id) {
-  //     var close_auth_window = tool.api.auth.window(api_outlook_oauth_url(account_email, window_id, tab_id, false), function () {
-  //       callback(false, 'Outlook login required');
-  //     });
-  //     browser_message_listen({
-  //       microsoft_access_token_result: function (message) {
-  //         api_auth_process_and_save_fragment(message.fragment, account_email, window_id, function (success, result, _, state) {
-  //           if(state.frame === window_id && state.tab === tab_id) {
-  //             close_auth_window();
-  //             callback(success, result);
-  //           } else {
-  //             console.log('Ignoring auth request with a wrong frame or tab id: ' + [window_id, tab_id, state.frame, state.tab].join(','));
-  //           }
-  //         });
-  //       },
-  //     }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
-  //   });
-  //
-  // }
-  //
-  // function api_outlook_oauth_url(suggested_account_email, window_or_frame_id, result_tab_id, silent_refresh) {
-  //   return env_url_create(api_outlook_oauth_config.oauth_url, {
-  //     client_id: api_outlook_oauth_config.client_id,
-  //     response_type: silent_refresh === true ? 'token' : 'token id_token',
-  //     redirect_uri: api_outlook_oauth_config.redirect_uri,
-  //     nonce: tool.str.random(20),
-  //     response_mode: 'fragment',
-  //     scope: silent_refresh ? api_outlook_oauth_config.scopes_refresh.join(' ') : api_outlook_oauth_config.scopes_init.join(' '),
-  //     state: api_outlook_oauth_config.state_header + str_html_attribute_encode({frame: window_or_frame_id, tab: result_tab_id}),
-  //     login_hint: suggested_account_email || '',
-  //     prompt: silent_refresh === true ? 'none' : '',
-  //   });
-  // }
-  //
-  // function api_outlook_call(account_email, resource, values, response_format, callback, progress, method) {
-  //   account_storage_get(account_email, ['microsoft_auth'], function (storage) {
-  //     if(Date.now() < storage.microsoft_auth.expires_on) {
-  //       api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format, method);
-  //     } else { // token refresh needed
-  //       silent_implicit_token_refresh_in_hidden_iframe(account_email, function(auth_success, auth_result) {
-  //         if(auth_success) {
-  //           api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format, method);
-  //         } else if(auth_result === 'login_required') {
-  //           alert('Outlook needs you to sign in again to continue using CryptUp.');
-  //           verbose_implicit_token_refresh_in_window_popup(account_email, function (verbose_auth_succcess, verbose_auth_result) {
-  //             if(verbose_auth_succcess) {
-  //               api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + verbose_auth_result.access_token}, response_format, method);
-  //             } else {
-  //               callback(false, 'Could not get permission from Outlook');
-  //             }
-  //           });
-  //         } else {
-  //           callback(false, 'error refreshing cryptup token: ' + auth_result);
-  //         }
-  //       });
-  //     }
-  //   });
-  // }
-  //
-  // var api_outlook_body_types = {'text/plain': 'Text', 'text/html': 'HTML'};
-  //
-  // function api_outlook_sendmail(account_email, message, callback, progress_callback) {
-  //   var body_type = typeof message.body['text/html'] !== 'undefined' ? 'text/html' : 'text/plain';
-  //   var body = { ContentType: api_outlook_body_types[body_type], Content: message.body[body_type] };
-  //   var to = message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; });
-  //   var attachments = message.attachments.map(function (attachment) {
-  //     return {
-  //       "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
-  //       "Name": attachment.name,
-  //       "ContentBytes": btoa(typeof attachment.content === 'string' ? attachment.content : str_from_uint8(attachment.content)),
-  //       "ContentType": attachment.type,
-  //       "IsInline": false,
-  //       "Size": attachment.size,
-  //     };
-  //   });
-  //   if(!message.thread || !message.thread.length) { // new message or reply message fallback
-  //     api_outlook_call(account_email, 'me/sendmail', {Message: { ToRecipients: to, Subject: message.subject, Body: body, Attachments: attachments }}, 'text', callback, progress_callback);
-  //   } else { // reply. Create a draftt as a reply to message.thread, Outlook will automatically populate headers. Just need to update body and attachments (also recipients - user could have edited them)
-  //     api_outlook_call(account_email, 'me/messages/' + message.thread.pop() + '/createreplyall', {}, 'json', function (create_reply_success, create_reply_result) { // message.thread.pop() gets last message id in the thread
-  //       if(create_reply_success && create_reply_result && create_reply_result.Id) { // progress callback belongs below because that's where we update attachments
-  //         api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id, { Body: body, Attachments: attachments, ToRecipients: to }, 'json', function (update_reply_success, update_reply_result) {
-  //           if(update_reply_success) {
-  //             api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id + '/send', null, 'text', callback);
-  //           } else {
-  //             catcher.log('failed to update a reply message on outlook', update_reply_result);
-  //             callback(false, 'Failed to update a reply message on Outlook.');
-  //           }
-  //         }, progress_callback, 'PATCH');
-  //       } else if (create_reply_result && create_reply_result.request && create_reply_result.request.responseJSON && create_reply_result.request.responseJSON.error && create_reply_result.request.responseJSON.error.code === 'ErrorInvalidReferenceItem') {
-  //
-  //         // Outlook does not allow replying to sent messages (or has a similar restriction of this sort)
-  //         // POST message_id/createreplyall -> 400 {"code":"ErrorInvalidReferenceItem","message":"The reference item does not support the requested operation."}
-  //         // that is why message.thread reference contains all message ids in the thread, and this recursive call will try them one by one until Outlook API doesn't complain
-  //         // eventually, it will find a message in the thread that can be replied to
-  //         // if not, it will fall back to me/sendmail and send a fresh new email instead replying to a thread
-  //         // if you are a member of the Microsoft Office API team and are reading this, please fix it! This awful and ugly code makes me cry every morning.
-  //
-  //         console.log('Outlook API ErrorInvalidReferenceItem: ' + (create_reply_result.thread.length ? 'retrying createreplyall with a previous message id, ' + create_reply_result.thread.length + ' left' : 'sending reply as a new message'));
-  //         api_outlook_sendmail(account_email, message, callback, progress_callback);
-  //
-  //       } else {
-  //         catcher.log('failed to create a reply message on outlook', create_reply_result);
-  //         callback(false, 'Failed to create a reply message on Outlook.');
-  //       }
-  //     });
-  //   }
-  // }
-  //
-  // /*
-  //  Each message in the response contains multiple properties, including the Body property. The message body can be either HTML or text.
-  //  If the body is HTML, by default, any potentially unsafe HTML (for example, JavaScript) embedded in the Body property would be removed before the body content is returned in a REST response.
-  //  To get the entire, original HTML content, include the following HTTP request header:
-  //  Prefer: outlook.allow-unsafe-html
-  //  */
-  // function api_outlook_message_get(account_email, message_id, callback, progress_callback) {
-  //   api_outlook_call(account_email, 'me/messages/' + message_id, null, 'json', callback, progress_callback);
-  // }
-  //
-  // function api_outlook_message_thread(account_email, conversation_id, callback) {
-  //   // http://stackoverflow.com/questions/41125652/fetch-messages-filtered-by-conversationid-via-office365-api
-  //   // string finalUrl = "https://outlook.office.com/api/beta/me/Messages?$filter=" + HttpUtility.UrlEncode(string.Format("ConversationId eq '{0}'", conversationId));
-  //   api_outlook_call(account_email, env_url_create('me/messages', {
-  //     '$filter': "ConversationId eq '" + conversation_id + "'",
-  //   }), null, 'json', callback, null, 'GET');
-  // }
-
   /* tool.api.attester */
 
   function api_attester_call(path, values, format) {
@@ -3301,28 +3089,6 @@
   }
 
   var api_cryptup_auth_error = {code: 401, message: 'Could not log in', internal: 'auth'};
-
-  // function api_cryptup_error_text(server_call_response) {
-  //   if(server_call_response instanceof Array) {
-  //     var results;
-  //     tool.each(server_call_response, function(i, v) {
-  //       results += (i + 1) + ': ' + api_cryptup_error_text(v) + '\n';
-  //     });
-  //     return results.trim();
-  //   } else {
-  //     if(server_call_response && server_call_response.error) {
-  //       if(typeof server_call_response.error === 'object' && (server_call_response.error.internal_msg || server_call_response.error.public_msg)) {
-  //         return String(server_call_response.error.public_msg) + ' (' + server_call_response.error.internal_msg + ')';
-  //       } else {
-  //         return String(server_call_response.error);
-  //       }
-  //     } else if(server_call_response) {
-  //       return 'unknown';
-  //     } else {
-  //       return 'Internet connection problem, please try again';
-  //     }
-  //   }
-  // }
 
   function api_cryptup_help_feedback(account_email, message) {
     return api_cryptup_call('help/feedback', {
@@ -3784,8 +3550,6 @@
       env = 'ex:script:gmail';
     } else if (url.indexOf('inbox.google.com') !== -1) {
       env = 'ex:script:inbox';
-    } else if (url.indexOf('outlook.live.com') !== -1) {
-      env = 'ex:script:outlook';
     } else if (/moz-extension:\/\/.+/.test(url)) {
       env = 'ex';
     }
