@@ -1,5 +1,12 @@
 <div>
 
+<b>version 4.2.0 on June 24, 2017: Technical Debt</b>
+settings: extend period to refresh attestation
+settings: add "later" button for stripe screen
+settings: account subscription should renew whenever opening settings
+settings: should show trial expired when appropriate
+internal: large amount of code cleaning, refactoring, etc
+
 <b>version 4.1.8 on June 18, 2017: Expired subscription</b>
 reading: attachment names compatibility
 composing: fix token error response on expired subscription
