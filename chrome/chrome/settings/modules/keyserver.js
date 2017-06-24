@@ -107,8 +107,6 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
       }, 30000);
     });
   }));
-  var armored_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key');
-  var pubkey = openpgp.key.readArmored(armored_pubkey);
 }
 
 function action_submit_or_request_attestation(email) {
