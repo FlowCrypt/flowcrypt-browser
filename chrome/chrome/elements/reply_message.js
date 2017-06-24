@@ -242,7 +242,7 @@ storage_cryptup_subscription(function(subscription_level, subscription_expire, s
                 } else {
                   reply_message_render_table();
                   if (response.status === 404) {
-                    catcher.log('about to reload reply_message automatically: get draft 404', url_params.account_email);
+                    catcher.report('about to reload reply_message automatically: get draft 404', url_params.account_email);
                     setTimeout(function () {
                       compose.draft_meta_store(false, storage.drafts_reply[url_params.thread_id], url_params.thread_id, null, null, function () {
                         console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');

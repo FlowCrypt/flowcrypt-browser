@@ -486,7 +486,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
                 });
               });
             } else {
-              catcher.log('error signing message. Error:' + signing_result);
+              catcher.report('error signing message. Error:' + signing_result);
               alert('There was an error signing this message. Please write me at tom@cryptup.org, I resolve similar issues very quickly.\n\n' + signing_result);
               reset_send_btn();
             }
@@ -670,7 +670,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
       });
     } else {
-      catcher.log('tool.api.' + email_provider + '.message_send error response from ' +  email_provider, response);
+      catcher.report('tool.api.' + email_provider + '.message_send error response from ' +  email_provider, response);
       alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
     }
   }

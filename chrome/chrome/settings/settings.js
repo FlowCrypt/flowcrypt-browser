@@ -111,7 +111,7 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
 
 function fetch_email_key_backups(account_email, email_provider, callback) {
   if(email_provider !== 'gmail') {
-    catcher.log('fetch_email_key_backups not implemented for ' + email_provider);
+    catcher.report('fetch_email_key_backups not implemented for ' + email_provider);
     callback(false, 'fetch_email_key_backups not implemented for ' + email_provider);
   } else {
     tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true, function (success, response) {

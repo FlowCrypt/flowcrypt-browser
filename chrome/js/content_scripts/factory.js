@@ -16,7 +16,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
 
   function src_img(relative_path) {
     if(!chrome_runtime_extension_url) {
-      catcher.log('Attempting to load an image without knowing runtime_id: ' + relative_path); // which will probably not work
+      catcher.report('Attempting to load an image without knowing runtime_id: ' + relative_path); // which will probably not work
       return '/img/' + relative_path;
     } else {
       return chrome_runtime_extension_url + '/img/' + relative_path;
@@ -209,7 +209,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       },
       recipients_use_encryption: function (count, webmail_name) {
         if(webmail_name !== 'gmail') {
-          catcher.log('switch_to_secure not implemented for ' + webmail_name);
+          catcher.report('switch_to_secure not implemented for ' + webmail_name);
           return '';
         } else {
           return '<div class="aoD az6 recipients_use_encryption">Your ' + (count > 1 ? 'recipients seem' : 'recipient seems') + ' to have encryption set up! <a href="#">Secure Compose</a></div>';

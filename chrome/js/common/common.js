@@ -642,7 +642,7 @@
   function env_increment(type, callback) {
     if(typeof account_storage_get === 'function') {
       if(!known_metric_types[type]) {
-        catcher.log('Unknown metric type "' + type + '"');
+        catcher.report('Unknown metric type "' + type + '"');
       }
       account_storage_get(null, ['metrics'], function (storage) {
         var metrics_k = known_metric_types[type];
@@ -1266,7 +1266,7 @@
       cached: function(name) {
         if(!cache[name]) {
           if(typeof selectors[name] === 'undefined') {
-            catcher.log('unknown selector name: ' + name);
+            catcher.report('unknown selector name: ' + name);
           }
           cache[name] = $(selectors[name]);
         }
@@ -1274,13 +1274,13 @@
       },
       now: function(name) {
         if(typeof selectors[name] === 'undefined') {
-          catcher.log('unknown selector name: ' + name);
+          catcher.report('unknown selector name: ' + name);
         }
         return $(selectors[name]);
       },
       selector: function (name) {
         if(typeof selectors[name] === 'undefined') {
-          catcher.log('unknown selector name: ' + name);
+          catcher.report('unknown selector name: ' + name);
         }
         return selectors[name];
       }
@@ -1359,7 +1359,7 @@
       } else if(tool.value(msg.name).in(Object.keys(background_script_registered_handlers))) {
         background_script_registered_handlers[msg.name](msg.data, sender, safe_respond);
       } else if(msg.to !== 'broadcast') {
-        catcher.log('tool.browser.message.listen_background error: handler "' + msg.name + '" not set');
+        catcher.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set');
       }
       return msg.respondable === true;
     });
@@ -1386,7 +1386,7 @@
               frame_registered_handlers[msg.name](msg.data, sender, respond);
             } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
               if(destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-                catcher.log('tool.browser.message.listen error: handler "' + msg.name + '" not set');
+                catcher.report('tool.browser.message.listen error: handler "' + msg.name + '" not set');
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
                 console.log('tool.browser.message.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
               }
@@ -1668,7 +1668,7 @@
       } else if (block.type === 'cryptup_verification') {
         r += factory.embedded.verification(block.content);
       } else {
-        catcher.log('dunno how to process block type: ' + block.type);
+        catcher.report('dunno how to process block type: ' + block.type);
       }
     });
     return r;
@@ -3495,7 +3495,7 @@
     }
   }
 
-  function log(name, details) {
+  function report(name, details) {
     try {
       throw new Error(name);
     } catch(e) {
@@ -3503,7 +3503,7 @@
         try {
           details = JSON.stringify(details);
         } catch(stringify_error) {
-          details = '(could not stringify details "' + String(details) + '" in catcher.log because: ' + stringify_error.message + ')';
+          details = '(could not stringify details "' + String(details) + '" in catcher.report because: ' + stringify_error.message + ')';
         }
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
@@ -3608,7 +3608,7 @@
   var _c = { // web and extension code
     handle_error: handle_error,
     handle_exception: handle_exception,
-    log: log,
+    report: report,
     info: info,
     version: cryptup_version,
     try: try_wrapper,
@@ -3694,7 +3694,7 @@
           if(validity_checker(response)) {
             resolve(response);
           } else {
-            catcher.log('result did not pass validation', response);
+            catcher.report('result did not pass validation', response);
             reject({code: null, message: 'Could not validate result', internal: 'validate'});
           }
         } else {

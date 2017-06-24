@@ -279,7 +279,7 @@ function get_account_emails(callback) {
 function add_account_email_to_list_of_accounts(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
   get_account_emails(function (account_emails) {
     if(!account_email) {
-      catcher.log('attempting to save empty account_email: ' + account_email);
+      catcher.report('attempting to save empty account_email: ' + account_email);
     }
     if(!tool.value(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);

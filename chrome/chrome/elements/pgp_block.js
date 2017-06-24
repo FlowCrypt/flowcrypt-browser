@@ -295,7 +295,7 @@ db_open(function (db) {
         alert('Your CryptUp account information is outdated, please review your account settings.');
         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       } else {
-        catcher.log(error);
+        catcher.report('error when extending message expiration', error);
         $(self).parent().text('Error updating expiration, please try again').addClass('bad');
       }
     });

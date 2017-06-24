@@ -163,7 +163,7 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
 function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
   account_storage_get(account_email, ['addresses'], function (storage) {
     if(options.submit_main) {
-      tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.log('tool.api.attester.test_welcome: failed', error));
+      tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
         var addresses = storage.addresses.concat(account_email);
       } else {
@@ -432,7 +432,7 @@ $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
   }).then(function (key) {
     var armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
     tool.crypto.key.test(armored, 'stockholm', function (key_works, error_message) {
-      catcher.log(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
+      catcher.report(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
       setTimeout(function () {
         $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
       }, 5000);
