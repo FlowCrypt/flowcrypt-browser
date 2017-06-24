@@ -154,7 +154,6 @@
     api: {
       auth: {
         window: api_auth_window,
-        // process_fragment: api_auth_process_and_save_fragment,
         parse_id_token: api_auth_parse_id_token,
       },
       error: {
@@ -207,9 +206,8 @@
         },
       },
       cryptup: {
-        url: api_cryptup_url,
         auth_error: api_cryptup_auth_error,
-        // error_text: api_cryptup_error_text,
+        url: api_cryptup_url,
         help_feedback: api_cryptup_help_feedback,
         help_uninstall: api_cryptup_help_uninstall,
         account_login: api_cryptup_account_login,
