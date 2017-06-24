@@ -4,17 +4,6 @@
 
 function init_shared_compose_js(url_params, db, subscription, message_sent_callback, disable_automatic_behavior) {
 
-  var L = {
-    message_encrypted_html: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ',
-    message_encrypted_text: 'This message is encrypted. Follow this link to open it: ',
-    alternatively_copy_paste: 'Alternatively copy and paste the following link: ',
-    open_message: 'Open Message',
-    include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
-    include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-CryptUp encryption to reply to you.',
-    header_title_compose_encrypt: 'New Secure Message',
-    header_title_compose_sign: 'New Signed Message (not encrypted)',
-  };
-
   var S = tool.ui.build_jquery_selectors({
     body: 'body',
     compose_table: 'table#compose',
@@ -119,7 +108,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', {subscribe_result_tab_id: tab_id});
   }
 
-  S.cached('icon_pubkey').attr('title', L.include_pubkey_icon_title);
+  S.cached('icon_pubkey').attr('title', window.lang.compose.include_pubkey_icon_title);
 
   // set can_save_drafts, addresses_pks
   account_storage_get(url_params.account_email, ['google_token_scopes', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password'], function (storage) {
@@ -1023,9 +1012,9 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       }
     } else { // set icon to specific state
       if(include) {
-        S.cached('icon_pubkey').addClass('active').attr('title', L.include_pubkey_icon_title_active);
+        S.cached('icon_pubkey').addClass('active').attr('title', window.lang.compose.include_pubkey_icon_title_active);
       } else {
-        S.cached('icon_pubkey').removeClass('active').attr('title', L.include_pubkey_icon_title);
+        S.cached('icon_pubkey').removeClass('active').attr('title', window.lang.compose.include_pubkey_icon_title);
       }
     }
   }
@@ -1046,12 +1035,12 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     if(!S.cached('icon_sign').is('.active')) {
       S.cached('icon_sign').addClass('active');
       S.cached('compose_table').addClass('sign');
-      S.cached('title').text(L.header_title_compose_sign);
+      S.cached('title').text(window.lang.compose.header_title_compose_sign);
       S.cached('input_password').val('');
     } else {
       S.cached('icon_sign').removeClass('active');
       S.cached('compose_table').removeClass('sign');
-      S.cached('title').text(L.header_title_compose_encrypt);
+      S.cached('title').text(window.lang.compose.header_title_compose_encrypt);
     }
     if(tool.value(S.now('send_btn_span').text()).in([BTN_SIGN_AND_SEND, BTN_ENCRYPT_AND_SEND])) {
       reset_send_btn();
@@ -1179,7 +1168,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   function format_password_protected_email(short_id, original_body, armored_pubkeys) {
     var decrypt_url = CRYPTUP_WEB_URL + '/' + short_id;
-    var a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + L.open_message + '</a>';
+    var a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + window.lang.compose.open_message + '</a>';
     var intro = S.cached('input_intro').length ? S.cached('input_intro').get(0).innerText.trim() : '';
     var text = [];
     var html = [];
@@ -1187,11 +1176,11 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       text.push(intro + '\n');
       html.push(intro.replace(/\n/, '<br>') + '<br><br>');
     }
-    text.push(L.message_encrypted_text + decrypt_url + '\n');
+    text.push(window.lang.compose.message_encrypted_text + decrypt_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="display: none;">' + tool.crypto.armor.headers(null).begin + '</div>');
-    html.push(L.message_encrypted_html + a + '<br><br>');
-    html.push(L.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
+    html.push(window.lang.compose.message_encrypted_html + a + '<br><br>');
+    html.push(window.lang.compose.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
     text.push(original_body['text/plain']);
     var html_cryptup_web_url_link = '<a href="' + tool.str.html_escape(CRYPTUP_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(CRYPTUP_WEB_URL) + '</a>';
     if(armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well

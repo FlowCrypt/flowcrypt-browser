@@ -26,9 +26,6 @@
       advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
     },
     CAN_READ_EMAIL: true,
-    L: {
-      credit_or_debit: 'Enter credit or debit card to use. You can cancel anytime.',
-    },
   };
 
   function subscribe(account_email, chosen_product, source) {

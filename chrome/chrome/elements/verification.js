@@ -6,10 +6,6 @@ tool.ui.event.protect();
 
 var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
 
-var L = {
-  welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send larger attachments, to anyone.',
-};
-
 var token = window.flowcrypt_account.parse_token_email_text(url_params.verification_email_text);
 
 if(!token) {

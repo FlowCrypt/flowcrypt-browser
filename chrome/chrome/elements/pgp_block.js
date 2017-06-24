@@ -6,29 +6,6 @@ tool.ui.event.protect();
 
 var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
 
-var l = {
-  cant_open: 'Could not open this message with CryptUp.\n\n',
-  your_key_cant_open_import_if_have: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
-  encrypted_correctly_file_bug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
-  single_sender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
-  account_info_outdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
-  wrong_pubkey_used: 'It looks like it was encrypted for someone else. If you have more keys that may help decrypt this message, you can add them in the settings. ',
-  ask_resend: 'Please ask them to send a new message.\n',
-  receivers_hidden: 'Cannot tell if the message was encrypted correctly for you. ',
-  bad_format: 'Message is either badly formatted or not compatible with CryptUp. ',
-  no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
-  refresh_page: 'Refresh page to see more information.',
-  question_decryt_prompt: 'Please enter password to decrypt the message',
-  connection_error: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-  dont_know_how_open: 'Please submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
-  enter_passphrase: 'Enter passphrase',
-  to_open_message: 'to open this message.',
-  write_me: 'Please write me at tom@cryptup.org so that I can fix it. I respond very promptly. ',
-  refresh_window: 'Please refresh your web mail window to read encrypted messages. ',
-  update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
-  not_properly_set_up: 'CryptUp is not properly set up to decrypt messages. ',
-};
-
 db_open(function (db) {
 
   var included_attachments = [];
@@ -43,7 +20,7 @@ db_open(function (db) {
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
-    render_error(l.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function () {
+    render_error(window.lang.pgp_block.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function () {
       $('.review_settings').click(function () {
         tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/texts/chrome_content_settings.htm' });
       });
@@ -151,12 +128,12 @@ db_open(function (db) {
   function handle_private_key_mismatch(account_email, message) { //todo - make it work for multiple stored keys
     var msg_diagnosis = tool.diagnose.message_pubkeys(account_email, message);
     if(msg_diagnosis.found_match) {
-      render_error(l.cant_open + l.encrypted_correctly_file_bug);
+      render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.encrypted_correctly_file_bug);
     } else {
       if(msg_diagnosis.receivers === 1) {
-        render_error(l.cant_open + l.single_sender + l.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
+        render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.single_sender + window.lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
       } else {
-        render_error(l.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
+        render_error(window.lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
       }
     }
   }
@@ -357,12 +334,12 @@ db_open(function (db) {
             console.log('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
             initialize(true);
           } else {
-            render_error(l.bad_format + '\n\n' + result.format_error);
+            render_error(window.lang.pgp_block.bad_format + '\n\n' + result.format_error);
           }
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
-          render_error(l.not_properly_set_up + button_html('cryptup settings', 'green settings'));
+          render_error(window.lang.pgp_block.not_properly_set_up + button_html('cryptup settings', 'green settings'));
         } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
           if(url_params.has_password && !optional_password) {
             render_password_prompt();
@@ -377,10 +354,10 @@ db_open(function (db) {
           unsecure_mdc_ignored = true;
           initialize(); // try again with mdc missing error ignored
         } else if(result.counts.errors) {
-          render_error(l.cant_open + l.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
+          render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
         } else {
           delete result.message;
-          render_error(l.cant_open + l.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+          render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
         }
       });
     } else {
@@ -395,7 +372,7 @@ db_open(function (db) {
     tool.each(missing_or_wrong_passphrase_key_longids, function (i, longid) {
       missing_or_wrong_passprases[longid] = get_passphrase(url_params.account_email, longid);
     });
-    render_error('<a href="#" class="enter_passphrase">' + l.enter_passphrase + '</a> ' + l.to_open_message, undefined, function () {
+    render_error('<a href="#" class="enter_passphrase">' + window.lang.pgp_block.enter_passphrase + '</a> ' + window.lang.pgp_block.to_open_message, undefined, function () {
       clearInterval(passphrase_interval);
       passphrase_interval = setInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
@@ -407,7 +384,7 @@ db_open(function (db) {
   }
 
   function render_password_prompt() {
-    var prompt = '<p>' + l.question_decryt_prompt + '</p>';
+    var prompt = '<p>' + window.lang.pgp_block.question_decryt_prompt + '</p>';
     prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
     render_content(prompt, true, function () {
@@ -518,10 +495,10 @@ db_open(function (db) {
             if(tool.value(tool.crypto.armor.headers('public_key').end).in(url_formatted_data_block)) {
               window.location = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: url_formatted_data_block, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
             } else {
-              render_error(l.cant_open + l.dont_know_how_open, url_formatted_data_block);
+              render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.dont_know_how_open, url_formatted_data_block);
             }
           } else if(error_type === 'connection') {
-            render_error(l.connection_error, url_formatted_data_block);
+            render_error(window.lang.pgp_block.connection_error, url_formatted_data_block);
           } else {
             alert('Unknown error type: ' + error_type);
           }
@@ -540,7 +517,7 @@ db_open(function (db) {
     if(storage.setup_done) {
       initialize();
     } else {
-      render_error(l.refresh_window, url_params.message || '');
+      render_error(window.lang.pgp_block.refresh_window, url_params.message || '');
     }
   });
 });
