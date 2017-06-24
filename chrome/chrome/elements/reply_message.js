@@ -6,8 +6,8 @@ tool.ui.event.protect();
 
 var url_params = tool.env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
 
-storage_cryptup_subscription(function(subscription_level, subscription_expire, subscription_active) {
-  var subscription = {level: subscription_level, expire: subscription_expire, active: subscription_active};
+storage_cryptup_subscription(function(subscription_level, subscription_expire, subscription_active, subscription_method) {
+  var subscription = { level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method };
   db_open(function (db) {
 
     account_storage_get(url_params.account_email, ['email_provider', 'addresses'], function(storage) {

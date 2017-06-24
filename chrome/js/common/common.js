@@ -3298,18 +3298,36 @@
         tool.api.cryptup.account_check(emails).then(function(response) {
           storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
             storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
+              console.log([cryptup_account_email, stored_level, stored_expire, stored_active, stored_method]);
+              console.log(response);
               var local_storage_update = {};
-              if(response.email && response.subscription && (response.subscription.level !== stored_level || response.subscription.method !== stored_method || response.subscription.expire !== stored_expire)) {
-                local_storage_update['cryptup_account_subscription'] = response.subscription;
+              if(response.email) {
+                if((response.email && !cryptup_account_email) || (response.email && cryptup_account_email !== response.email)) {
+                  // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
+                  local_storage_update['cryptup_account_email'] = response.email;
+                  local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
+                  local_storage_update['cryptup_account_verified'] = true;
+                }
+              } else {
+                if(cryptup_account_email) {
+                  local_storage_update['cryptup_account_email'] = null;
+                  local_storage_update['cryptup_account_uuid'] = null;
+                  local_storage_update['cryptup_account_verified'] = false;
+                }
               }
-              if((response.email && !cryptup_account_email) || (response.email && cryptup_account_email !== response.email)) {
-                // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
-                local_storage_update['cryptup_account_email'] = response.email;
-                local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
-                local_storage_update['cryptup_account_verified'] = true;
+              if(response.subscription) {
+                var rs = response.subscription;
+                if(rs.level !== stored_level || rs.method !== stored_method || rs.expire !== stored_expire || stored_active !== !rs.expired) {
+                  local_storage_update['cryptup_account_subscription'] = response.subscription;
+                }
+              } else {
+                if(stored_level || stored_expire || stored_active || stored_method) {
+                  local_storage_update['cryptup_account_subscription'] = null;
+                }
               }
+              console.log(local_storage_update);
               if(Object.keys(local_storage_update).length) {
-                catcher.info('updating account subscription from ' + stored_level + ' to ' + response.subscription.level, response);
+                catcher.info('updating account subscription from ' + stored_level + ' to ' + (response.subscription ? response.subscription.level : null), response);
                 account_storage_set(null, local_storage_update, function() {
                   callback(true);
                 });

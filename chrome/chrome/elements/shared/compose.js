@@ -148,7 +148,15 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         size: 5 * 1024 * 1024,
         count: 10,
         oversize: function(combined_size) {
-          if(confirm('The files are over 5 MB. Advanced users can send files up to 25 MB. Try it free for 30 days.')) {
+          var get_advanced = 'The files are over 5 MB. Advanced users can send files up to 25 MB.';
+          if(!subscription.method) {
+            get_advanced += '\n\nTry it free for 30 days.';
+          } else if(subscription.method === 'trial') {
+            get_advanced += '\n\nYour trial has expired, please consider supporting our efforts by upgrading.';
+          } else {
+            get_advanced += '\n\nPlease renew your subscription to continue sending large files.';
+          }
+          if(confirm(get_advanced)) {
             show_subscribe_dialog_and_wait_for_response(null, null, function(new_subscription_active) {
               if(new_subscription_active) {
                 alert('You\'re all set, now you can add your file again.');

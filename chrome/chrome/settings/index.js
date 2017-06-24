@@ -59,18 +59,6 @@ tool.browser.message.tab_id(function (tab_id) {
     close_dialog: function (data) {
       $('#cryptup_dialog').remove();
     },
-    microsoft_access_token_result: function (message) {
-      // tool.api.auth.process_fragment(message.fragment, null, microsoft_auth_attempt.window_id, function (success, result, authed_email, state) {
-      //   if(state.frame === microsoft_auth_attempt.window_id && state.tab === tab_id) {
-      //     microsoft_auth_attempt.close_auth_window();
-      //     account_storage_set(authed_email, {email_provider: 'outlook'}, function () {
-      //       window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: authed_email });
-      //     });
-      //   } else {
-      //     console.log('Ignoring auth request with a wrong frame or tab id: ' + [microsoft_auth_attempt.window_id, tab_id, state.frame, state.tab].join(','));
-      //   }
-      // });
-    },
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
   initialize();
@@ -145,19 +133,27 @@ function render_encrypted_contact_page_status() {
 }
 
 function render_subscription_status_header() {
-  storage_cryptup_subscription(function (level, expire, active, method) {
-    if(active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(function () {
-        show_settings_page('/chrome/settings/modules/account.htm');
-      }).css('cursor', 'pointer');
-      if(method === 'trial') {
-        $('.logo-row .subscription .expire').text(expire ? ('trial until ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+  tool.api.cryptup.account_check_sync(updated_with_new_info => {
+    storage_cryptup_subscription(function (level, expire, active, method) {
+      if(active) {
+        $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(function () {
+          show_settings_page('/chrome/settings/modules/account.htm');
+        }).css('cursor', 'pointer');
+        if(method === 'trial') {
+          $('.logo-row .subscription .expire').text(expire ? ('trial until ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+          $('.logo-row .subscription .upgrade').css('display', 'inline-block');
+        }
+      } else {
+        $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
+        if(level && expire && method) {
+          if(method === 'trial') {
+            $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
+          }
+          $('.logo-row .subscription .upgrade').text('renew');
+        }
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
       }
-    } else {
-      $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
-      $('.logo-row .subscription .upgrade').css('display', 'inline-block');
-    }
+    });
   });
 }
 
