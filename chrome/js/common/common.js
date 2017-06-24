@@ -273,7 +273,11 @@
   }
 
   function str_pretty_print(obj) {
-    return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
+    if(typeof obj === 'object') {
+      return JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>');
+    } else {
+      return String(obj);
+    }
   }
 
   function str_html_as_text(html_text, callback) {
@@ -840,7 +844,7 @@
 
   function file_attachment(name, type, content, size, url) { // todo - refactor as (content, name, type, LENGTH, url), making all but content voluntary
     return { // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
-      name: name,
+      name: name || '',
       type: type || 'application/octet-stream',
       content: content,
       size: size || content.length,
@@ -3398,6 +3402,7 @@
     var ignored_errors = [
       'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
     ];
     if(!error) {
       return;
