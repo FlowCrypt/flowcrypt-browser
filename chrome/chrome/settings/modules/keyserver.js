@@ -104,7 +104,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     tool.browser.message.send(null, 'attest_requested', { account_email: url_params.account_email, }, function () {
       setTimeout(function () {
         window.location.reload();
-      }, 10000);
+      }, 30000);
     });
   }));
   var armored_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key');
