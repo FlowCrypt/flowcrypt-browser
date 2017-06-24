@@ -104,7 +104,7 @@ function handle_error_response(error) {
     button_restore();
   } else {
     alert('Could not complete action: ' + error.message);
-    catcher.info('problem during subscribe.js', error);
+    catcher.report('problem during subscribe.js', error);
     window.location.reload()
   }
 }

@@ -35,7 +35,7 @@ if(!token) {
 
 function handle_error_response(error) {
   render_status('Could not complete: ' + error.message);
-  catcher.info('problem in verification.js', error);
+  catcher.log('problem in verification.js', error);
 }
 
 function render_status(content, spinner) {

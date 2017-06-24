@@ -3327,7 +3327,7 @@
               }
               console.log(local_storage_update);
               if(Object.keys(local_storage_update).length) {
-                catcher.info('updating account subscription from ' + stored_level + ' to ' + (response.subscription ? response.subscription.level : null), response);
+                catcher.log('updating account subscription from ' + stored_level + ' to ' + (response.subscription ? response.subscription.level : null), response);
                 account_storage_set(null, local_storage_update, function() {
                   callback(true);
                 });
@@ -3337,7 +3337,7 @@
             });
           });
         }, function(error) {
-          catcher.info('could not check account subscription', error);
+          catcher.log('could not check account subscription', error);
           callback(null);
         });
       } else {
@@ -3511,8 +3511,8 @@
     }
   }
 
-  function info(name, details) {
-    name = 'INFO: ' + name;
+  function log(name, details) {
+    name = 'catcher.log: ' + name;
     console.log(name);
     try {
       throw new Error(name);
@@ -3521,7 +3521,7 @@
         try {
           details = JSON.stringify(details);
         } catch(stringify_error) {
-          details = '(could not stringify details "' + String(details) + '" in catcher.info because: ' + stringify_error.message + ')';
+          details = '(could not stringify details "' + String(details) + '" in catcher.log because: ' + stringify_error.message + ')';
         }
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
@@ -3609,7 +3609,7 @@
     handle_error: handle_error,
     handle_exception: handle_exception,
     report: report,
-    info: info,
+    log: log,
     version: cryptup_version,
     try: try_wrapper,
     environment: environment,

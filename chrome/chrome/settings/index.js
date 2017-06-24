@@ -207,7 +207,7 @@ function new_google_account_authentication_prompt(account_email, omit_read_scope
     } else if(response && response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
       show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
     } else {
-      catcher.info('failed to log into google', response);
+      catcher.log('failed to log into google', response);
       alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at tom@cryptup.org to fix it.');
       window.location.reload();
     }
