@@ -85,7 +85,7 @@ S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), fu
     if(new_photo_file) {
       update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content));
     }
-    tool.api.cryptup.account_update(update).done(_ => window.location.reload());
+    tool.api.cryptup.account_update(update).done(() => window.location.reload());
   }
 }));
 

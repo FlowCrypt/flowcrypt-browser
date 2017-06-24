@@ -288,9 +288,7 @@ db_open(function (db) {
   function handle_extend_message_expiration_clicked(self) {
     var n_days = Number($(self).attr('href').replace('#', ''));
     $(self).parent().html('Updating..' + tool.ui.spinner('green'));
-    tool.api.cryptup.message_expiration(admin_codes, n_days).validate(r => r.updated).then(response => {
-      window.location.reload();
-    }, error => {
+    tool.api.cryptup.message_expiration(admin_codes, n_days).validate(r => r.updated).then(response => window.location.reload(), error => {
       if(error.internal === 'auth') {
         alert('Your CryptUp account information is outdated, please review your account settings.');
         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
