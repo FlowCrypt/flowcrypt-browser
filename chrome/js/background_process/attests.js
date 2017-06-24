@@ -80,19 +80,13 @@ function process_attest_packet_text(account_email, attest_packet_text, passphras
         if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
           tool.crypto.message.sign(key, attest.text, true, function (success, result) {
             if (success) {
-              if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
-                var keyserver_api_endpoint = tool.api.attester.initial_confirm;
-              } else {
-                var keyserver_api_endpoint = tool.api.attester.replace_confirm;
-              }
-              keyserver_api_endpoint(result, function (success, response) {
-                if (success && response && response.attested) {
-                  account_storage_mark_as_attested(account_email, attest.content.attester, function () {
-                    callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
-                  });
-                } else {
-                  callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at tom@cryptup.org to find out why.\n\n' + JSON.stringify(response));
-                }
+              var keyserver_api_request = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(result) : tool.api.attester.replace_confirm(result);
+              keyserver_api_request.validate(r => r.attested).then(response => {
+                account_storage_mark_as_attested(account_email, attest.content.attester, function () {
+                  callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
+                });
+              }, error => {
+                callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at tom@cryptup.org to find out why.\n\n' + error.message);
               });
             } else {
               attest.packet_text = attest_packet_text;

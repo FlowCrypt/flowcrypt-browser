@@ -492,36 +492,32 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
   }
 
   function upload_attachments_to_cryptup(attachments, _active, callback) {
-    tool.api.cryptup.message_presign_files(attachments, function (pf_success, pf_result) {
-      if(pf_success === true && pf_result && pf_result.approvals && pf_result.approvals.length === attachments.length) {
-        var items = [];
-        tool.each(pf_result.approvals, function (i, approval) {
-          items.push({base_url: approval.base_url, fields: approval.fields, attachment: attachments[i]});
-        });
-        tool.api.aws.s3_upload(items, function (all_uploaded, s3_results) {
-          if(all_uploaded) {
-            tool.api.cryptup.message_confirm_files(items.map(function(item) {return item.fields.key;}), function(cf_success, cf_result) {
-              if(cf_success && cf_result && cf_result.confirmed && cf_result.confirmed.length === items.length) {
-                tool.each(attachments, function(i) {
-                  attachments[i].url = pf_result.approvals[i].base_url + pf_result.approvals[i].fields.key;
-                });
-                callback(true, attachments, cf_result.admin_codes);
-              } else if(cf_success && cf_result && cf_result.confirmed) { // todo - retry confirming one more time, it may have been a timeout
-                callback(false, null, null, 'Could not verify that all files were uploaded properly, please try again.');
-              } else {
-                callback(false, null, null, tool.api.cryptup.error_text(cf_result));
-              }
-            });
-          } else { // todo - retry just the failed problematic files
-            callback(false, null, null, 'Some files failed to upload, please try again');
+    tool.api.cryptup.message_presign_files(attachments, _active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
+      var items = [];
+      tool.each(pf_response.approvals, function (i, approval) {
+        items.push({base_url: approval.base_url, fields: approval.fields, attachment: attachments[i]});
+      });
+      tool.api.aws.s3_upload(items, render_upload_progress).then(s3_results_successful => {
+        tool.api.cryptup.message_confirm_files(items.map(function(item) {return item.fields.key;})).validate(r => r.confirmed && r.confirmed.length === items.length).then(cf_response => {
+          tool.each(attachments, function (i) {
+            attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
+          });
+          callback(true, attachments, cf_response.admin_codes);
+        }, error => {
+          if(error.internal === 'validate') {
+            callback(false, null, null, 'Could not verify that all files were uploaded properly, please try again.');
+          } else {
+            callback(false, null, null, error.message);
           }
-        }, render_upload_progress);
-      } else if (pf_success === tool.api.cryptup.auth_error) {
-        callback(tool.api.cryptup.auth_error);
+        });
+      }, s3_results_has_failure => callback(false, null, null, 'Some files failed to upload, please try again') );
+    }, error => {
+      if (error.internal === 'auth') {
+        callback(error);
       } else {
-        callback(false, null, null, tool.api.cryptup.error_text(pf_result));
+        callback(false, null, null, error.message);
       }
-    }, _active ? 'uuid' : null);
+    });
   }
 
   function render_upload_progress(progress) {
@@ -545,26 +541,26 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
 
   function add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription_active, callback) {
     if(challenge && subscription_active) {
-      tool.api.cryptup.message_token(function(success, result) {
-        if(success === tool.api.cryptup.auth_error) {
+      tool.api.cryptup.message_token().validate(r => r.token).then(response => {
+        callback(plaintext + '\n\n' + tool.e('div', {
+            'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
+              sender: url_params.from || get_sender_from_dom(),
+              recipient: tool.arr.without_value(tool.arr.without_value(recipients, url_params.from || get_sender_from_dom()), url_params.account_email),
+              subject: subject,
+              token: response.token,
+            })
+          }));
+      }, error => {
+        if(error.internal === 'auth') {
           if(confirm('Your CryptUp account information is outdated, please review your account settings.')) {
             tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
           }
           reset_send_btn();
-        } else if(success === true && result && result.token) {
-          callback(plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
-            sender: url_params.from || get_sender_from_dom(),
-            recipient: tool.arr.without_value(tool.arr.without_value(recipients, url_params.from || get_sender_from_dom()), url_params.account_email),
-            subject: subject,
-            token: result.token,
-          })}));
+        } else if(error.internal === 'subscription') {
+          callback(plaintext); // just skip and leave as is
         } else {
-          if((result || {}).error === 'Only users with active subscription can request a token') {
-            callback(plaintext);
-          } else {
-            alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + ((result || {}).error || 'unknown error'));
-            reset_send_btn();
-          }
+          alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + error.message);
+          reset_send_btn();
         }
       });
     } else {
@@ -578,22 +574,15 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through CryptUp and recipients get a link.
     // admin_code stays locally and helps the sender extend life of the message or delete it
-    tool.api.cryptup.message_upload(encrypted_data, function(success, response) {
-      if (success === true && response && response.short && response.admin_code) {
-        callback(response.short, response.admin_code);
-      } else if(success === tool.api.cryptup.auth_error) {
+    tool.api.cryptup.message_upload(encrypted_data,  _active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
+      callback(response.short, response.admin_code);
+    }, error => {
+      if(error.internal === 'auth') {
         callback(null, null, tool.api.cryptup.auth_error);
-      } else if(response && response.error) {
-        try {
-          var err = JSON.stringify(response.error);
-        } catch(e) {
-          var err = String(response.error);
-        }
-        callback(null, null, typeof response.error === 'object' && response.error.internal_msg ? response.error.internal_msg : err);
       } else {
-        callback(null, null, 'internet dropped');
+        callback(null, null, error.internal || error.message);
       }
-    }, _active ? 'uuid' : null);
+    });
   }
 
   function with_attached_pubkey_if_needed(encrypted) {
@@ -683,8 +672,8 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
       if(db_contact && db_contact.has_pgp && db_contact.pubkey) {
         callback(db_contact);
       } else {
-        tool.api.attester.lookup_email(email, function (success, result) {
-          if(success && result.email) {
+        tool.api.attester.lookup_email(email).done((success, result) => {
+          if(success && result && result.email) {
             if(result.pubkey) {
               var parsed = openpgp.key.readArmored(result.pubkey);
               if(!parsed.keys[0]) {

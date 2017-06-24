@@ -24,14 +24,12 @@ var S = tool.ui.build_jquery_selectors({
 
 S.cached('status').html('Loading..' + tool.ui.spinner('green'));
 
-tool.api.cryptup.account_update({}, function(success, result) {
-  if(success === tool.api.cryptup.auth_error) {
+tool.api.cryptup.account_update().then(response => render_fields(response.result), error => {
+  if(error.internal === 'auth') {
     S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
     S.now('subscribe').click(function () {
       show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
     });
-  } else if (success && result && result.result) {
-    render_fields(result.result);
   } else {
     S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at tom@cryptup.org if this persists.');
   }
@@ -64,13 +62,9 @@ function render_fields(result) {
         account_storage_get(email, ['full_name'], function(storage) {
           find_available_alias(email, function(alias) {
             var initial = {alias: alias, name: storage.full_name || tool.str.capitalize(email.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
-            tool.api.cryptup.account_update(initial, function (s, r) {
-              if(s && r && r.updated && r.result && r.result.alias && r.result.token) {
-                window.location.reload();
-              } else {
-                alert('Failed to enable your Contact Page. Please try again.\n\n' + (s && r && r.error && r.error.message ? r.error.message : 'Network error'));
-                window.location.reload();
-              }
+            tool.api.cryptup.account_update(initial).validate(r => r.updated).then(response => window.location.reload(), error => {
+              alert('Failed to enable your Contact Page. Please try again.\n\n' + error.message);
+              window.location.reload();
             });
           });
         });
@@ -91,9 +85,7 @@ S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), fu
     if(new_photo_file) {
       update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content));
     }
-    tool.api.cryptup.account_update(update, function (success) {
-      window.location.reload();
-    });
+    tool.api.cryptup.account_update(update).done(_ => window.location.reload());
   }
 }));
 

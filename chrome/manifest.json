@@ -89,6 +89,7 @@
     "/chrome/elements/add_pubkey.htm",
     "/chrome/elements/pgp_pubkey.htm",
     "/chrome/elements/subscribe.htm",
+    "/chrome/elements/verification.htm",
     "/chrome/elements/attest.htm",
     "/chrome/elements/shared/footer.htm"
   ],

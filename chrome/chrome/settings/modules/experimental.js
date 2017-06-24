@@ -110,4 +110,10 @@ if(url_params.account_email) {
     });
   });
 
+  $('.action_reset_managing_auth').click(() => {
+    account_storage_remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified'], () => {
+      tool.browser.message.send(url_params.parent_tab_id, 'reload');
+    });
+  });
+
 }

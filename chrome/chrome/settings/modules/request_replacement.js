@@ -9,7 +9,7 @@ $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('gre
 var my_pubkey = private_storage_get('local', url_params.account_email, 'master_public_key');
 var prv_headers = tool.crypto.armor.headers('private_key');
 
-tool.api.attester.lookup_email(url_params.account_email, function (success, keyserver_result) {
+tool.api.attester.lookup_email(url_params.account_email).done(function (success, keyserver_result) {
   if(!success) {
     $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>');
     $('.reload').click(function () {
@@ -40,22 +40,18 @@ tool.api.attester.lookup_email(url_params.account_email, function (success, keys
           'OLD': tool.crypto.key.fingerprint(old_key),
           'PUB': tool.crypto.key.fingerprint(my_pubkey),
         };
-        tool.api.attester.packet.create_sign(request_replacement, old_key, function (sign_success, sign_result) {
-          if(sign_success) {
-            tool.api.attester.replace_request(url_params.account_email, sign_result, my_pubkey, function (request_success, request_result) {
-              if(request_success && request_result.saved) {
-                save_attest_request(url_params.account_email, 'CRYPTUP', function () { //todo - should be the original attester
-                  alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
-                  show_settings_page('/chrome/settings/modules/keyserver.htm');
-                });
-              } else {
-                alert('Error requesting Re-Attestation. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(request_result));
-              }
+        tool.api.attester.packet.create_sign(request_replacement, old_key).then(signed_packet => {
+          tool.api.attester.replace_request(url_params.account_email, signed_packet, my_pubkey).validate(r => r.saved).then(response => {
+            save_attest_request(url_params.account_email, 'CRYPTUP', function () { //todo - should be the original attester
+              alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
+              show_settings_page('/chrome/settings/modules/keyserver.htm');
             });
-          } else {
-            catcher.log('Error signing REQUEST_REPLACEMENT:' + sign_result);
-            alert('Error signing request. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(sign_result));
-          }
+          }, error => {
+            alert('Error requesting Re-Attestation. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(error.message));
+          });
+        }, error => {
+          catcher.log('Error signing REQUEST_REPLACEMENT: ' + error.message);
+          alert('Error signing request. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(error.message));
         });
       }
     }));

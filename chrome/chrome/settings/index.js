@@ -60,16 +60,16 @@ tool.browser.message.tab_id(function (tab_id) {
       $('#cryptup_dialog').remove();
     },
     microsoft_access_token_result: function (message) {
-      tool.api.auth.process_fragment(message.fragment, null, microsoft_auth_attempt.window_id, function (success, result, authed_email, state) {
-        if(state.frame === microsoft_auth_attempt.window_id && state.tab === tab_id) {
-          microsoft_auth_attempt.close_auth_window();
-          account_storage_set(authed_email, {email_provider: 'outlook'}, function () {
-            window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: authed_email });
-          });
-        } else {
-          console.log('Ignoring auth request with a wrong frame or tab id: ' + [microsoft_auth_attempt.window_id, tab_id, state.frame, state.tab].join(','));
-        }
-      });
+      // tool.api.auth.process_fragment(message.fragment, null, microsoft_auth_attempt.window_id, function (success, result, authed_email, state) {
+      //   if(state.frame === microsoft_auth_attempt.window_id && state.tab === tab_id) {
+      //     microsoft_auth_attempt.close_auth_window();
+      //     account_storage_set(authed_email, {email_provider: 'outlook'}, function () {
+      //       window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: authed_email });
+      //     });
+      //   } else {
+      //     console.log('Ignoring auth request with a wrong frame or tab id: ' + [microsoft_auth_attempt.window_id, tab_id, state.frame, state.tab].join(','));
+      //   }
+      // });
     },
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
@@ -132,17 +132,15 @@ function initialize() {
 }
 
 function render_encrypted_contact_page_status() {
-  tool.api.cryptup.account_update({}, function(success, result) {
-    if (success) {
-      var status_container = $('.public_profile_indicator_container');
-      if(result && result.result && result.result.alias) {
-        status_container.find('.status-indicator-text').css('display', 'none');
-        status_container.find('.status-indicator').addClass('active');
-      } else {
-        status_container.find('.status-indicator').addClass('inactive');
-      }
-      status_container.css('visibility', 'visible');
+  tool.api.cryptup.account_update().done((success, response) => {
+    var status_container = $('.public_profile_indicator_container');
+    if(success && response && response.result && response.result.alias) {
+      status_container.find('.status-indicator-text').css('display', 'none');
+      status_container.find('.status-indicator').addClass('active');
+    } else {
+      status_container.find('.status-indicator').addClass('inactive');
     }
+    status_container.css('visibility', 'visible');
   });
 }
 

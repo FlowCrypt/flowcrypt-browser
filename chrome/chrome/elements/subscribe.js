@@ -4,26 +4,11 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
+var url_params = tool.env.url_params(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
+var original_button_content;
+var original_button_selector;
 
-var PRODUCTS = {
-  trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
-  advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
-};
-
-var chosen_product;
-var original_content;
-var cryptup_verification_email_sender = 'verify@cryptup.org';
-var can_read_emails;
-var L = {
-  welcome: 'Welcome to CryptUp Advanced.<br/><br/>You can now send larger attachments, to anyone.',
-  credit_or_debit: 'Enter credit or debit card to use. You can cancel anytime.',
-};
-if(url_params.placement === 'embedded') {
-  tool.env.increment('upgrade_verification_embedded_show');
-  $('#content').html('One moment..').css({ 'width': '460px', 'padding': '30px 20px', 'height': '100px', 'margin-bottom': '0px' });
-  $('body').css({'width': '460px', 'overflow': 'hidden'});
-} else if(url_params.placement === 'settings') {
+if(url_params.placement === 'settings') {
   $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
   if(url_params.source !== 'auth_error') {
     $('.list_table').css('display', 'block');
@@ -38,14 +23,9 @@ if(url_params.placement === 'embedded') {
   $('body').css('overflow', 'hidden');
 }
 $('#content').css('display', 'block');
-
-tool.browser.message.tab_id(function (tab_id) {
-  var factory = element_factory(url_params.account_email, tab_id);
-  tool.browser.message.listen({
-    stripe_result: stripe_credit_card_entered_handler,
-  }, tab_id);
-  $('.stripe_checkout').html(L.credit_or_debit + '<br><br>' + factory.embedded.stripe_checkout());
-});
+if(url_params.source === 'auth_error') {
+  $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').text('Add Device');
+}
 
 $('.action_show_stripe').click(function() {
   $('.status').text('You are subscribing to a $5 monthly payment for CryptUp Advanced.');
@@ -63,23 +43,26 @@ $('.action_contact_page').click(function () {
   tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email});
 });
 
-function stripe_credit_card_entered_handler(data, sender, respond) {
-  $('.stripe_checkout').html('').css('display', 'none');
-  chosen_product = PRODUCTS.advanced_monthly;
-  chosen_product.source = data.token;
-  storage_cryptup_auth_info(function(email, uuid, verified) {
-    if(verified) {
-      tool.api.cryptup.account_check_sync();
-      tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, data.token, handle_subscribe_result);
-    } else {
-      register_and_subscribe(PRODUCTS.advanced_monthly, data.token);
-    }
-  });
-}
+$('.action_close').click(close_dialog);
+
+$('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
+  button_spin(self);
+  tool.env.increment('upgrade_dialog_register_click');
+  window.flowcrypt_account.subscribe(url_params.account_email, window.flowcrypt_account.PRODUCTS.trial, null).then(handle_successful_upgrade, handle_error_response);
+}));
+
+$('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
+  button_spin(self);
+  tool.env.increment('upgrade_dialog_register_click');
+  window.flowcrypt_account.register_new_device(url_params.account_email).then(close_dialog, handle_error_response);
+}));
 
 tool.api.cryptup.account_check_sync(function() {
   account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
-    can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+    window.flowcrypt_account.config({
+      render_status: render_status,
+      CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes, 'read'),
+    });
     storage_cryptup_subscription(function (level, expire, active, method) {
       if(!active) {
         $('.status').text('After the trial period, your account will automatically switch back to Free Forever.');
@@ -88,236 +71,72 @@ tool.api.cryptup.account_check_sync(function() {
       } else {
         // todo - upgrade to business
       }
-      if(url_params.placement !== 'embedded') {
-        render_dialog(level, expire, active, method);
-      } else {
-        render_embedded(level, expire, active, method);
+      if(active) {
+        if(url_params.source !== 'auth_error') {
+          if(method === 'trial') {
+            $('.list_table').css('display', 'none');
+            $('.action_get_trial').css('display', 'none');
+            $('.action_show_stripe').removeClass('gray').addClass('green');
+          } else {
+            $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+          }
+        } else {
+          $('h1').text('New Device');
+          $('.action_show_stripe, .action_show_group').css('display', 'none');
+          $('.status').text('This browser or device is not registered on your CryptUp Account.');
+          $('.action_get_trial, .action_close').addClass('long');
+        }
       }
     });
   });
 });
 
-function repair_auth_error_get_new_installation() {
-  account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, function () {
-    render_status('checking..', true);
-    tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
-  });
-}
-
-function render_embedded(level, expire, active, method) {
-  $('#content').html('<div class="line status"></div>');
-  if(active) {
-    render_status(L.welcome);
-  } else if(url_params.verification_email_text) {
-    account_storage_get(null, ['cryptup_subscription_attempt'], function (storage) {
-      chosen_product = storage.cryptup_subscription_attempt;
-      tool.api.cryptup.account_login(url_params.account_email, parse_account_verification_text(url_params.verification_email_text), handle_login_result);
-    });
-  } else { // not really tested or expected
-    catcher.log('embedded subscribe.htm but has no verification_email_text');
-  }
-}
-
-function render_dialog(level, expire, active, method) {
-  if(active) {
-    if(url_params.source !== 'auth_error') {
-      if(method === 'trial') {
-        $('.list_table').css('display', 'none');
-        $('.action_ok').css('display', 'none');
-        $('.action_show_stripe').removeClass('gray').addClass('green');
-      } else {
-        $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
-      }
-    } else {
-      $('h1').text('New Device');
-      $('.action_show_stripe, .action_show_group').css('display', 'none');
-      $('.status').text('This browser or device is not registered on your CryptUp Account.');
-      $('.action_ok').text('Add Device');
-      $('.action_ok, .action_close').addClass('long');
-    }
+function handle_error_response(error) {
+  if(error.internal === 'email') {
+    $('.action_get_trial').css('display', 'none');
+    $('.action_close').text('ok');
+    render_status(error.message);
+    button_restore();
   } else {
-
-  }
-
-  $('.action_close').click(close_dialog);
-
-  $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
-    original_content = $(self).html();
-    tool.env.increment('upgrade_dialog_register_click');
-    if(active && url_params.source === 'auth_error') {
-      repair_auth_error_get_new_installation();
-    } else {
-      register_and_subscribe(PRODUCTS.trial);
-    }
-  }));
-}
-
-function render_status(content, spinner) {
-  $(url_params.placement === 'embedded' ? 'body .status' : '.action_ok').html(content + (spinner ? ' ' + tool.ui.spinner('white') : ''));
-}
-
-function register_and_subscribe(product, source_token) {
-  render_status('registering..', true);
-  chosen_product = product;
-  chosen_product.source = source_token || null;
-  account_storage_set(null, { 'cryptup_subscription_attempt': chosen_product }, function () {
-    tool.api.cryptup.account_login(url_params.account_email, null, handle_login_result);
-  });
-}
-
-function wait_for_token_email(timeout, callback) {
-  if(timeout < 20) {
-    $('.status').text('Still working..');
-  } else if(timeout < 10) {
-    $('.status').text('A little while more..');
-  }
-  var end = Date.now() + timeout * 1000;
-  storage_cryptup_auth_info(function (account, uuid, verified) {
-    fetch_token_emails_and_find_matching_token(account, uuid, function (success, tokens) {
-      if(success && tokens) {
-        callback(tokens);
-      } else if(Date.now() < end) {
-        setTimeout(function () {
-          wait_for_token_email((end - Date.now()) / 1000, callback);
-        }, 5000);
-      } else {
-        callback(null);
-      }
-    });
-  });
-}
-
-function fetch_token_emails_and_find_matching_token(account_email, uuid, callback) {
-  var called_back = false;
-  function callback_once(v1, v2) {
-    if(!called_back) {
-      called_back = true;
-      callback(v1, v2);
-    }
-  }
-  var tokens = [];
-  tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function (list_success, response) {
-    if(list_success) {
-      if(response.messages) {
-        tool.api.gmail.message_get(account_email, response.messages.map(function (m) { return m.id; }), 'full', function (get_success, messages) {
-          if(get_success) {
-            tool.each(messages, function (id, gmail_message_object) {
-              if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-                var token = parse_account_verification_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
-                if(token) {
-                  tokens.push(token);
-                }
-              }
-            });
-            tokens.reverse();
-            callback_once(Boolean(tokens.length), tokens.length ? tokens : null);
-          } else {
-            callback_once(false, null);
-          }
-        });
-      } else {
-        callback_once(true, null);
-      }
-    } else {
-      callback_once(false, null);
-    }
-  });
-}
-
-function parse_account_verification_text(verification_email_text, stored_uuid_to_cross_check) {
-  var token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
-  if(token_link_match !== null) {
-    var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
-    if((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
-      return token_link_params.token;
-    }
+    alert('Could not complete action: ' + error.message);
+    catcher.info('problem during subscribe.js', error);
+    window.location.reload()
   }
 }
 
-function render_open_verification_email_message() {
-  $('.action_ok').css('display', 'none');
-  $('.action_close').text('ok');
-  $('.status').text('Please check your inbox for a verification email.');
+tool.browser.message.tab_id(function (tab_id) {
+  tool.browser.message.listen({
+    stripe_result: stripe_credit_card_entered_handler,
+  }, tab_id);
+  $('.stripe_checkout').html(window.flowcrypt_account.L.credit_or_debit + '<br><br>' + element_factory(url_params.account_email, tab_id).embedded.stripe_checkout());
+});
+
+function stripe_credit_card_entered_handler(data, sender, respond) {
+  $('.stripe_checkout').html('').css('display', 'none');
+  window.flowcrypt_account.subscribe(url_params.account_email, window.flowcrypt_account.PRODUCTS.advanced_monthly, data.token).then(handle_successful_upgrade, handle_error_response);
 }
 
-function handle_login_result(registered, verified, subscription, error, cryptup_email_verification_tokens) {
-  if(!registered && cryptup_email_verification_tokens && cryptup_email_verification_tokens.length) {
-    tool.api.cryptup.account_login(url_params.account_email, cryptup_email_verification_tokens.pop(), function(r, v, s, e) {
-      handle_login_result(r, v, s, e, cryptup_email_verification_tokens);
-    });
-  } else if(registered) {
-    if(verified) {
-      if(subscription && subscription.level !== null && !subscription.expired) {
-        notify_upgraded_and_close();
-      } else {
-        render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-        tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, chosen_product.source, handle_subscribe_result);
-      }
-    } else {
-      render_status('verifying..', true);
-      if(can_read_emails && !cryptup_email_verification_tokens) {
-        $('.status').html('This may take a minute.. ' + tool.ui.spinner('green'));
-        wait_for_token_email(30, function (tokens) {
-          if(tokens) {
-            tool.api.cryptup.account_login(url_params.account_email, tokens.pop(), function(r, v, s, e) {
-              handle_login_result(r, v, s, e, tokens);
-            });
-          } else {
-            render_open_verification_email_message();
-          }
-        });
-      } else {
-        render_open_verification_email_message();
-      }
-    }
-  } else {
-    if(url_params.placement !== 'embedded') {
-      alert('There was a problem registering (' + error + '). Write me at tom@cryptup.org if this persists.');
-      window.location.reload();
-    } else {
-      render_status('There was a problem registering (' + error + '). Write me at tom@cryptup.org if this persists.');
-    }
-  }
+function render_status(content) {
+  $('.status').html(content);
 }
 
-function handle_subscribe_result(success, response) {
-  account_storage_remove(null, 'cryptup_subscription_attempt', function () {
-    if(success && response && response.subscription && response.subscription.level) {
-      if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
-        notify_upgraded_and_close();
-      } else if(response.error) {
-        catcher.log('unexpected error subscribing: ' + chosen_product.id + ':' + chosen_product.method + ':' + url_params.account_email, response);
-        alert('There was an error while subscribing. Please write me at tom@cryptup.org to fix this.\n\n' + response.error);
-        setTimeout(function() {
-          window.location.reload();
-        }, 500);
-      } else {
-        catcher.log('unexpected issue subscribing: ' + chosen_product.id + ':' + chosen_product.method + ':' + url_params.account_email, response);
-        alert('There was an issue subscribing. Please write me at tom@cryptup.org to fix this.\n\n' + response.error);
-        setTimeout(function() {
-          window.location.reload();
-        }, 500);
-      }
-    } else if(success === tool.api.cryptup.auth_error) {
-      register_and_subscribe(chosen_product, chosen_product.source);
-    } else {
-      alert('There was a problem upgrading CryptUp (' + ((response && response.error) ? response.error : 'unknown reason') + '). Please try again. Write me at tom@cryptup.org if this persists.');
-      window.location.reload();
-    }
-  });
+function button_spin(selector) {
+  original_button_content = $(selector).html();
+  original_button_selector = $(selector);
+  $(selector).html(tool.ui.spinner('white'));
 }
 
-function notify_upgraded_and_close() {
+function button_restore() {
+  original_button_selector.html(original_button_content);
+}
+
+function handle_successful_upgrade() {
   tool.env.increment('upgrade_done');
-  if(url_params.placement !== 'embedded') {
-    tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to CryptUp Advanced.' });
-    if(url_params.subscribe_result_tab_id) {
-      tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});
-    }
-    close_dialog();
-  } else {
-    render_status(L.welcome);
+  tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to CryptUp Advanced.' });
+  if(url_params.subscribe_result_tab_id) {
+    tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});
   }
+  close_dialog();
 }
 
 function close_dialog() {

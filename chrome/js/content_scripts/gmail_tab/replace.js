@@ -321,12 +321,10 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
             } if(typeof status === 'undefined') {
               results.unknown.push(email);
               recipient_has_pgp[email] = null; // loading
-              tool.api.attester.lookup_email(email, function (success, response) {
-                if(!success || !response || !response.email) {
-                  recipient_has_pgp[email] = undefined; // unknown
-                } else {
-                  recipient_has_pgp[email] = !!response.pubkey; // true or false
-                }
+              tool.api.attester.lookup_email(email).validate(r => r.email).then(response => {
+                recipient_has_pgp[email] = !!response.pubkey; // true or false
+              }, error => {
+                recipient_has_pgp[email] = undefined; // unknown
               });
             } else if (status === null) {
               results.loading.push(email);

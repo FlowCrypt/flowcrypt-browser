@@ -109,8 +109,8 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
             prepare_and_render_add_key_from_backup();
           }
         } else {
-          tool.api.attester.lookup_email(url_params.account_email, function (keyserver_success, keyserver_result) {
-            if(keyserver_success && keyserver_result.pubkey) {
+          tool.api.attester.lookup_email(url_params.account_email).done((keyserver_success, keyserver_result) => {
+            if(keyserver_success && keyserver_result && keyserver_result.pubkey) {
               if(keyserver_result.attested) {
                 account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
               }
@@ -163,11 +163,7 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
 function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
   account_storage_get(account_email, ['addresses'], function (storage) {
     if(options.submit_main) {
-      tool.api.attester.test_welcome(account_email, armored_pubkey, function(success, response) {
-        if(!(success && response && response.sent)) {
-          catcher.log('tool.api.attester.test_welcome: failed', response);
-        }
-      });
+      tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.log('tool.api.attester.test_welcome: failed', error));
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
         var addresses = storage.addresses.concat(account_email);
       } else {
@@ -185,10 +181,9 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
         });
       }
     } else {
-      tool.api.attester.lookup_email(account_email, function (success, result) {
-        if(success && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
-          // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
-          private_storage_set('local', account_email, 'master_public_key_submitted', true);
+      tool.api.attester.lookup_email(account_email).done((success, result) => {
+        if(success && result && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
+          private_storage_set('local', account_email, 'master_public_key_submitted', true);  // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
         }
         callback();
       });

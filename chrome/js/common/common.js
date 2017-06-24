@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2017 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. See https://github.com/FlowCrypt/flowcrypt-desktop/blob/master/LICENSE */
+/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
 
 'use strict';
 
@@ -154,7 +154,7 @@
     api: {
       auth: {
         window: api_auth_window,
-        process_fragment: api_auth_process_and_save_fragment,
+        // process_fragment: api_auth_process_and_save_fragment,
         parse_id_token: api_auth_parse_id_token,
       },
       error: {
@@ -194,12 +194,12 @@
         extract_armored_block: gmail_api_extract_armored_block,
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
       },
-      outlook: {
-        oauth_url: api_outlook_oauth_url,
-        message_send: api_outlook_sendmail,
-        message_get: api_outlook_message_get,
-        message_thread: api_outlook_message_thread,
-      },
+      // outlook: {
+      //   oauth_url: api_outlook_oauth_url,
+      //   message_send: api_outlook_sendmail,
+      //   message_get: api_outlook_message_get,
+      //   message_thread: api_outlook_message_thread,
+      // },
       attester: {
         lookup_email: api_attester_lookup_email,
         initial_legacy_submit: api_attester_initial_legacy_submit,
@@ -215,7 +215,7 @@
       cryptup: {
         url: api_cryptup_url,
         auth_error: api_cryptup_auth_error,
-        error_text: api_cryptup_error_text,
+        // error_text: api_cryptup_error_text,
         help_feedback: api_cryptup_help_feedback,
         help_uninstall: api_cryptup_help_uninstall,
         account_login: api_cryptup_account_login,
@@ -1426,25 +1426,27 @@
   function diagnose_keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
     account_storage_get(account_email, ['addresses'], function (storage) {
-      api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || [])), function (success, pubkey_search_results) {
-        if(success) {
-          tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
-            if(!pubkey_search_result.pubkey) {
-              diagnosis.has_pubkey_missing = true;
-              diagnosis.results[pubkey_search_result.email] = { attested: false, pubkey: null, match: false };
-            } else {
-              var match = true;
-              if(!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(arr_select(private_keys_get(account_email), 'longid'))) {
-                diagnosis.has_pubkey_mismatch = true;
-                match = false;
-              }
-              diagnosis.results[pubkey_search_result.email] = { pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match };
+      api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || []))).then(pubkey_search_results => {
+        tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
+          if (!pubkey_search_result.pubkey) {
+            diagnosis.has_pubkey_missing = true;
+            diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
+          } else {
+            var match = true;
+            if (!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(arr_select(private_keys_get(account_email), 'longid'))) {
+              diagnosis.has_pubkey_mismatch = true;
+              match = false;
             }
-          });
-          callback(diagnosis);
-        } else {
-          callback();
-        }
+            diagnosis.results[pubkey_search_result.email] = {
+              pubkey: pubkey_search_result.pubkey,
+              attested: pubkey_search_result.attested,
+              match: match
+            };
+          }
+        });
+        callback(diagnosis);
+      }, error => {
+        callback();
       });
     });
   }
@@ -1672,7 +1674,7 @@
       } else if (block.type === 'attest_packet') {
         r += factory.embedded.attest(block.content);
       } else if (block.type === 'cryptup_verification') {
-        r += factory.embedded.subscribe(block.content, 'embedded', null);
+        r += factory.embedded.verification(block.content);
       } else {
         catcher.log('dunno how to process block type: ' + block.type);
       }
@@ -2123,7 +2125,7 @@
     };
   }
 
-  function api_call(base_url, path, values, callback, format, progress, headers, response_format, method) {
+  function api_call(base_url, path, values, format, progress, headers, response_format, method) {
     progress = progress || {};
     if(format === 'JSON' && values === null) {
       var formatted_values = undefined;
@@ -2144,34 +2146,36 @@
     } else {
       throw Error('unknown format:' + String(format));
     }
-    return $.ajax({
-      xhr: function() {
-        return get_ajax_progress_xhr(progress);
-      },
-      url: base_url + path,
-      method: method || 'POST',
-      data: formatted_values,
-      dataType: response_format || 'json',
-      crossDomain: true,
-      headers: headers || undefined,
-      processData: false,
-      contentType: content_type,
-      async: true,
-      timeout: typeof progress.upload === 'function' || typeof progress.download === 'function' ? undefined : 20000,
-      success: function (response) {
-        catcher.try(function () {
-          if(typeof callback === 'function') {
-            callback(true, response);
-          }
-        })();
-      },
-      error: function (XMLHttpRequest, status, error) {
-        catcher.try(function () {
-          if(typeof callback === 'function') {
-            callback(false, {request: XMLHttpRequest, status: status, error: error});
-          }
-        })();
-      },
+    return new Promise(function(resolve, reject) {
+      $.ajax({
+        xhr: function() {
+          return get_ajax_progress_xhr(progress);
+        },
+        url: base_url + path,
+        method: method || 'POST',
+        data: formatted_values,
+        dataType: response_format || 'json',
+        crossDomain: true,
+        headers: headers || undefined,
+        processData: false,
+        contentType: content_type,
+        async: true,
+        timeout: typeof progress.upload === 'function' || typeof progress.download === 'function' ? undefined : 20000,
+        success: function (response) {
+          catcher.try(function () {
+            if(response && typeof response === 'object' && typeof response.error === 'object') {
+              reject(response.error);
+            } else {
+              resolve(response);
+            }
+          })();
+        },
+        error: function (XMLHttpRequest, status, error) {
+          catcher.try(function () {
+            reject({code: status, message: String(error)});
+          })();
+        },
+      });
     });
   }
 
@@ -2926,275 +2930,277 @@
   }
 
   /* tool.api.outlook */
-
-  var outlook_api_endpoint = 'https://outlook.office.com/api/v2.0/';
-
-  var api_outlook_oauth_config = {
-    oauth_url: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-    client_id: '5c22daa5-737e-440b-8dd1-e4e9d0f4a1a9',
-    redirect_uri: 'https://outlook.office.com/noop/cryptup',
-    scopes_init: ['openid', 'email', 'https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
-    scopes_refresh: ['https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
-    state_header: 'CRYPTUP_STATE_',
-  };
-
-  function api_auth_process_and_save_fragment(fragment, renewing_tokens_on_account_email, state_must_match_this_frame_id, callback) {
-    var token_response = env_url_params(['error', 'error_description', 'access_token', 'token_type', 'expires_in', 'id_token', 'scope', 'state'], fragment.replace('#', ''));
-    if(!tool.value(api_outlook_oauth_config.state_header).in(token_response.state)) {
-      callback(false, 'CryptUp state not present in this result');
-    } else {
-      var state = str_html_attribute_decode(token_response.state.replace(api_outlook_oauth_config.state_header, ''));
-      if(state_must_match_this_frame_id && state.frame !== state_must_match_this_frame_id) {
-        callback(false, 'Does not match expected frame id', null, state);
-      } else {
-        if(token_response.error) {
-          if(token_response.error === 'login_required') {
-            callback(false, 'login_required', null, state);
-          } else {
-            callback(false, token_response.error + ':' + decodeURIComponent(token_response.error_description), null, state);
-          }
-        } else {
-          var token_account_email_claim = token_response.id_token ? api_auth_parse_id_token(token_response.id_token).email : null;
-          token_response.expires_in = Number(token_response.expires_in);
-          token_response.expires_on = Date.now() + token_response.expires_in * 1000;
-          if(renewing_tokens_on_account_email) {
-            account_storage_get(renewing_tokens_on_account_email, ['microsoft_auth'], function (storage) {
-              storage.microsoft_auth.expires_in = token_response.expires_in;
-              storage.microsoft_auth.expires_on = token_response.expires_on;
-              storage.microsoft_auth.access_token = token_response.access_token;
-              account_storage_set(renewing_tokens_on_account_email, {microsoft_auth: storage.microsoft_auth}, function () {
-                callback(true, storage.microsoft_auth, renewing_tokens_on_account_email, state);
-              });
-            });
-          } else {
-            if(token_account_email_claim) {
-              add_account_email_to_list_of_accounts(token_account_email_claim, function() {
-                account_storage_set(token_account_email_claim, {microsoft_auth: token_response}, function () {
-                  callback(true, token_response, token_account_email_claim, state);
-                });
-              });
-            } else {
-              callback(false, 'Could not get email from initial auth request', null, state);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  function silent_implicit_token_refresh_in_hidden_iframe(account_email, callback) {
-    var frame_id = 'frame_' + str_random(20);
-    browser_message_tab_id(function(tab_id) {
-      $('body').append(tool.e('iframe', {class: 'display_none', id: frame_id, src: api_outlook_oauth_url(account_email, frame_id, tab_id, true)}));
-      browser_message_listen({
-        microsoft_access_token_result: function (message) {
-          api_auth_process_and_save_fragment(message.fragment, account_email, frame_id, function (success, result, email, state) {
-            if(state.frame === frame_id && state.tab === tab_id) {
-              $('#' + frame_id).remove();
-              callback(success, result);
-            } else {
-              console.log('Ignoring auth request with a wrong frame or tab id: ' + [frame_id, tab_id, state.frame, state.tab].join(','));
-            }
-          });
-        },
-      }, tab_id);
-    });
-  }
-
-  function verbose_implicit_token_refresh_in_window_popup(account_email, callback) {
-    var window_id = 'popup_' + tool.str.random(20);
-    browser_message_tab_id(function (tab_id) {
-      var close_auth_window = tool.api.auth.window(api_outlook_oauth_url(account_email, window_id, tab_id, false), function () {
-        callback(false, 'Outlook login required');
-      });
-      browser_message_listen({
-        microsoft_access_token_result: function (message) {
-          api_auth_process_and_save_fragment(message.fragment, account_email, window_id, function (success, result, _, state) {
-            if(state.frame === window_id && state.tab === tab_id) {
-              close_auth_window();
-              callback(success, result);
-            } else {
-              console.log('Ignoring auth request with a wrong frame or tab id: ' + [window_id, tab_id, state.frame, state.tab].join(','));
-            }
-          });
-        },
-      }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
-    });
-
-  }
-
-  function api_outlook_oauth_url(suggested_account_email, window_or_frame_id, result_tab_id, silent_refresh) {
-    return env_url_create(api_outlook_oauth_config.oauth_url, {
-      client_id: api_outlook_oauth_config.client_id,
-      response_type: silent_refresh === true ? 'token' : 'token id_token',
-      redirect_uri: api_outlook_oauth_config.redirect_uri,
-      nonce: tool.str.random(20),
-      response_mode: 'fragment',
-      scope: silent_refresh ? api_outlook_oauth_config.scopes_refresh.join(' ') : api_outlook_oauth_config.scopes_init.join(' '),
-      state: api_outlook_oauth_config.state_header + str_html_attribute_encode({frame: window_or_frame_id, tab: result_tab_id}),
-      login_hint: suggested_account_email || '',
-      prompt: silent_refresh === true ? 'none' : '',
-    });
-  }
-
-  function api_outlook_call(account_email, resource, values, response_format, callback, progress, method) {
-    account_storage_get(account_email, ['microsoft_auth'], function (storage) {
-      if(Date.now() < storage.microsoft_auth.expires_on) {
-        api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format, method);
-      } else { // token refresh needed
-        silent_implicit_token_refresh_in_hidden_iframe(account_email, function(auth_success, auth_result) {
-          if(auth_success) {
-            api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format, method);
-          } else if(auth_result === 'login_required') {
-            alert('Outlook needs you to sign in again to continue using CryptUp.');
-            verbose_implicit_token_refresh_in_window_popup(account_email, function (verbose_auth_succcess, verbose_auth_result) {
-              if(verbose_auth_succcess) {
-                api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + verbose_auth_result.access_token}, response_format, method);
-              } else {
-                callback(false, 'Could not get permission from Outlook');
-              }
-            });
-          } else {
-            callback(false, 'error refreshing cryptup token: ' + auth_result);
-          }
-        });
-      }
-    });
-  }
-
-  var api_outlook_body_types = {'text/plain': 'Text', 'text/html': 'HTML'};
-
-  function api_outlook_sendmail(account_email, message, callback, progress_callback) {
-    var body_type = typeof message.body['text/html'] !== 'undefined' ? 'text/html' : 'text/plain';
-    var body = { ContentType: api_outlook_body_types[body_type], Content: message.body[body_type] };
-    var to = message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; });
-    var attachments = message.attachments.map(function (attachment) {
-      return {
-        "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
-        "Name": attachment.name,
-        "ContentBytes": btoa(typeof attachment.content === 'string' ? attachment.content : str_from_uint8(attachment.content)),
-        "ContentType": attachment.type,
-        "IsInline": false,
-        "Size": attachment.size,
-      };
-    });
-    if(!message.thread || !message.thread.length) { // new message or reply message fallback
-      api_outlook_call(account_email, 'me/sendmail', {Message: { ToRecipients: to, Subject: message.subject, Body: body, Attachments: attachments }}, 'text', callback, progress_callback);
-    } else { // reply. Create a draftt as a reply to message.thread, Outlook will automatically populate headers. Just need to update body and attachments (also recipients - user could have edited them)
-      api_outlook_call(account_email, 'me/messages/' + message.thread.pop() + '/createreplyall', {}, 'json', function (create_reply_success, create_reply_result) { // message.thread.pop() gets last message id in the thread
-        if(create_reply_success && create_reply_result && create_reply_result.Id) { // progress callback belongs below because that's where we update attachments
-          api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id, { Body: body, Attachments: attachments, ToRecipients: to }, 'json', function (update_reply_success, update_reply_result) {
-            if(update_reply_success) {
-              api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id + '/send', null, 'text', callback);
-            } else {
-              catcher.log('failed to update a reply message on outlook', update_reply_result);
-              callback(false, 'Failed to update a reply message on Outlook.');
-            }
-          }, progress_callback, 'PATCH');
-        } else if (create_reply_result && create_reply_result.request && create_reply_result.request.responseJSON && create_reply_result.request.responseJSON.error && create_reply_result.request.responseJSON.error.code === 'ErrorInvalidReferenceItem') {
-
-          // Outlook does not allow replying to sent messages (or has a similar restriction of this sort)
-          // POST message_id/createreplyall -> 400 {"code":"ErrorInvalidReferenceItem","message":"The reference item does not support the requested operation."}
-          // that is why message.thread reference contains all message ids in the thread, and this recursive call will try them one by one until Outlook API doesn't complain
-          // eventually, it will find a message in the thread that can be replied to
-          // if not, it will fall back to me/sendmail and send a fresh new email instead replying to a thread
-          // if you are a member of the Microsoft Office API team and are reading this, please fix it! This awful and ugly code makes me cry every morning.
-
-          console.log('Outlook API ErrorInvalidReferenceItem: ' + (create_reply_result.thread.length ? 'retrying createreplyall with a previous message id, ' + create_reply_result.thread.length + ' left' : 'sending reply as a new message'));
-          api_outlook_sendmail(account_email, message, callback, progress_callback);
-
-        } else {
-          catcher.log('failed to create a reply message on outlook', create_reply_result);
-          callback(false, 'Failed to create a reply message on Outlook.');
-        }
-      });
-    }
-  }
-
-  /*
-   Each message in the response contains multiple properties, including the Body property. The message body can be either HTML or text.
-   If the body is HTML, by default, any potentially unsafe HTML (for example, JavaScript) embedded in the Body property would be removed before the body content is returned in a REST response.
-   To get the entire, original HTML content, include the following HTTP request header:
-   Prefer: outlook.allow-unsafe-html
-   */
-  function api_outlook_message_get(account_email, message_id, callback, progress_callback) {
-    api_outlook_call(account_email, 'me/messages/' + message_id, null, 'json', callback, progress_callback);
-  }
-
-  function api_outlook_message_thread(account_email, conversation_id, callback) {
-    // http://stackoverflow.com/questions/41125652/fetch-messages-filtered-by-conversationid-via-office365-api
-    // string finalUrl = "https://outlook.office.com/api/beta/me/Messages?$filter=" + HttpUtility.UrlEncode(string.Format("ConversationId eq '{0}'", conversationId));
-    api_outlook_call(account_email, env_url_create('me/messages', {
-      '$filter': "ConversationId eq '" + conversation_id + "'",
-    }), null, 'json', callback, null, 'GET');
-  }
+  //
+  // var outlook_api_endpoint = 'https://outlook.office.com/api/v2.0/';
+  //
+  // var api_outlook_oauth_config = {
+  //   oauth_url: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+  //   client_id: '5c22daa5-737e-440b-8dd1-e4e9d0f4a1a9',
+  //   redirect_uri: 'https://outlook.office.com/noop/cryptup',
+  //   scopes_init: ['openid', 'email', 'https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
+  //   scopes_refresh: ['https://outlook.office.com/Mail.ReadWrite', 'https://outlook.office.com/Mail.Send'],
+  //   state_header: 'CRYPTUP_STATE_',
+  // };
+  //
+  // function api_auth_process_and_save_fragment(fragment, renewing_tokens_on_account_email, state_must_match_this_frame_id, callback) {
+  //   var token_response = env_url_params(['error', 'error_description', 'access_token', 'token_type', 'expires_in', 'id_token', 'scope', 'state'], fragment.replace('#', ''));
+  //   if(!tool.value(api_outlook_oauth_config.state_header).in(token_response.state)) {
+  //     callback(false, 'CryptUp state not present in this result');
+  //   } else {
+  //     var state = str_html_attribute_decode(token_response.state.replace(api_outlook_oauth_config.state_header, ''));
+  //     if(state_must_match_this_frame_id && state.frame !== state_must_match_this_frame_id) {
+  //       callback(false, 'Does not match expected frame id', null, state);
+  //     } else {
+  //       if(token_response.error) {
+  //         if(token_response.error === 'login_required') {
+  //           callback(false, 'login_required', null, state);
+  //         } else {
+  //           callback(false, token_response.error + ':' + decodeURIComponent(token_response.error_description), null, state);
+  //         }
+  //       } else {
+  //         var token_account_email_claim = token_response.id_token ? api_auth_parse_id_token(token_response.id_token).email : null;
+  //         token_response.expires_in = Number(token_response.expires_in);
+  //         token_response.expires_on = Date.now() + token_response.expires_in * 1000;
+  //         if(renewing_tokens_on_account_email) {
+  //           account_storage_get(renewing_tokens_on_account_email, ['microsoft_auth'], function (storage) {
+  //             storage.microsoft_auth.expires_in = token_response.expires_in;
+  //             storage.microsoft_auth.expires_on = token_response.expires_on;
+  //             storage.microsoft_auth.access_token = token_response.access_token;
+  //             account_storage_set(renewing_tokens_on_account_email, {microsoft_auth: storage.microsoft_auth}, function () {
+  //               callback(true, storage.microsoft_auth, renewing_tokens_on_account_email, state);
+  //             });
+  //           });
+  //         } else {
+  //           if(token_account_email_claim) {
+  //             add_account_email_to_list_of_accounts(token_account_email_claim, function() {
+  //               account_storage_set(token_account_email_claim, {microsoft_auth: token_response}, function () {
+  //                 callback(true, token_response, token_account_email_claim, state);
+  //               });
+  //             });
+  //           } else {
+  //             callback(false, 'Could not get email from initial auth request', null, state);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // function silent_implicit_token_refresh_in_hidden_iframe(account_email, callback) {
+  //   var frame_id = 'frame_' + str_random(20);
+  //   browser_message_tab_id(function(tab_id) {
+  //     $('body').append(tool.e('iframe', {class: 'display_none', id: frame_id, src: api_outlook_oauth_url(account_email, frame_id, tab_id, true)}));
+  //     browser_message_listen({
+  //       microsoft_access_token_result: function (message) {
+  //         api_auth_process_and_save_fragment(message.fragment, account_email, frame_id, function (success, result, email, state) {
+  //           if(state.frame === frame_id && state.tab === tab_id) {
+  //             $('#' + frame_id).remove();
+  //             callback(success, result);
+  //           } else {
+  //             console.log('Ignoring auth request with a wrong frame or tab id: ' + [frame_id, tab_id, state.frame, state.tab].join(','));
+  //           }
+  //         });
+  //       },
+  //     }, tab_id);
+  //   });
+  // }
+  //
+  // function verbose_implicit_token_refresh_in_window_popup(account_email, callback) {
+  //   var window_id = 'popup_' + tool.str.random(20);
+  //   browser_message_tab_id(function (tab_id) {
+  //     var close_auth_window = tool.api.auth.window(api_outlook_oauth_url(account_email, window_id, tab_id, false), function () {
+  //       callback(false, 'Outlook login required');
+  //     });
+  //     browser_message_listen({
+  //       microsoft_access_token_result: function (message) {
+  //         api_auth_process_and_save_fragment(message.fragment, account_email, window_id, function (success, result, _, state) {
+  //           if(state.frame === window_id && state.tab === tab_id) {
+  //             close_auth_window();
+  //             callback(success, result);
+  //           } else {
+  //             console.log('Ignoring auth request with a wrong frame or tab id: ' + [window_id, tab_id, state.frame, state.tab].join(','));
+  //           }
+  //         });
+  //       },
+  //     }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+  //   });
+  //
+  // }
+  //
+  // function api_outlook_oauth_url(suggested_account_email, window_or_frame_id, result_tab_id, silent_refresh) {
+  //   return env_url_create(api_outlook_oauth_config.oauth_url, {
+  //     client_id: api_outlook_oauth_config.client_id,
+  //     response_type: silent_refresh === true ? 'token' : 'token id_token',
+  //     redirect_uri: api_outlook_oauth_config.redirect_uri,
+  //     nonce: tool.str.random(20),
+  //     response_mode: 'fragment',
+  //     scope: silent_refresh ? api_outlook_oauth_config.scopes_refresh.join(' ') : api_outlook_oauth_config.scopes_init.join(' '),
+  //     state: api_outlook_oauth_config.state_header + str_html_attribute_encode({frame: window_or_frame_id, tab: result_tab_id}),
+  //     login_hint: suggested_account_email || '',
+  //     prompt: silent_refresh === true ? 'none' : '',
+  //   });
+  // }
+  //
+  // function api_outlook_call(account_email, resource, values, response_format, callback, progress, method) {
+  //   account_storage_get(account_email, ['microsoft_auth'], function (storage) {
+  //     if(Date.now() < storage.microsoft_auth.expires_on) {
+  //       api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + storage.microsoft_auth.access_token}, response_format, method);
+  //     } else { // token refresh needed
+  //       silent_implicit_token_refresh_in_hidden_iframe(account_email, function(auth_success, auth_result) {
+  //         if(auth_success) {
+  //           api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + auth_result.access_token}, response_format, method);
+  //         } else if(auth_result === 'login_required') {
+  //           alert('Outlook needs you to sign in again to continue using CryptUp.');
+  //           verbose_implicit_token_refresh_in_window_popup(account_email, function (verbose_auth_succcess, verbose_auth_result) {
+  //             if(verbose_auth_succcess) {
+  //               api_call(outlook_api_endpoint, resource, values, callback, 'JSON', progress, {Authorization: 'Bearer ' + verbose_auth_result.access_token}, response_format, method);
+  //             } else {
+  //               callback(false, 'Could not get permission from Outlook');
+  //             }
+  //           });
+  //         } else {
+  //           callback(false, 'error refreshing cryptup token: ' + auth_result);
+  //         }
+  //       });
+  //     }
+  //   });
+  // }
+  //
+  // var api_outlook_body_types = {'text/plain': 'Text', 'text/html': 'HTML'};
+  //
+  // function api_outlook_sendmail(account_email, message, callback, progress_callback) {
+  //   var body_type = typeof message.body['text/html'] !== 'undefined' ? 'text/html' : 'text/plain';
+  //   var body = { ContentType: api_outlook_body_types[body_type], Content: message.body[body_type] };
+  //   var to = message.to.map(function(email) { return {"EmailAddress": {"Address": email} }; });
+  //   var attachments = message.attachments.map(function (attachment) {
+  //     return {
+  //       "@odata.type": "#Microsoft.OutlookServices.FileAttachment",
+  //       "Name": attachment.name,
+  //       "ContentBytes": btoa(typeof attachment.content === 'string' ? attachment.content : str_from_uint8(attachment.content)),
+  //       "ContentType": attachment.type,
+  //       "IsInline": false,
+  //       "Size": attachment.size,
+  //     };
+  //   });
+  //   if(!message.thread || !message.thread.length) { // new message or reply message fallback
+  //     api_outlook_call(account_email, 'me/sendmail', {Message: { ToRecipients: to, Subject: message.subject, Body: body, Attachments: attachments }}, 'text', callback, progress_callback);
+  //   } else { // reply. Create a draftt as a reply to message.thread, Outlook will automatically populate headers. Just need to update body and attachments (also recipients - user could have edited them)
+  //     api_outlook_call(account_email, 'me/messages/' + message.thread.pop() + '/createreplyall', {}, 'json', function (create_reply_success, create_reply_result) { // message.thread.pop() gets last message id in the thread
+  //       if(create_reply_success && create_reply_result && create_reply_result.Id) { // progress callback belongs below because that's where we update attachments
+  //         api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id, { Body: body, Attachments: attachments, ToRecipients: to }, 'json', function (update_reply_success, update_reply_result) {
+  //           if(update_reply_success) {
+  //             api_outlook_call(account_email, 'me/messages/' + create_reply_result.Id + '/send', null, 'text', callback);
+  //           } else {
+  //             catcher.log('failed to update a reply message on outlook', update_reply_result);
+  //             callback(false, 'Failed to update a reply message on Outlook.');
+  //           }
+  //         }, progress_callback, 'PATCH');
+  //       } else if (create_reply_result && create_reply_result.request && create_reply_result.request.responseJSON && create_reply_result.request.responseJSON.error && create_reply_result.request.responseJSON.error.code === 'ErrorInvalidReferenceItem') {
+  //
+  //         // Outlook does not allow replying to sent messages (or has a similar restriction of this sort)
+  //         // POST message_id/createreplyall -> 400 {"code":"ErrorInvalidReferenceItem","message":"The reference item does not support the requested operation."}
+  //         // that is why message.thread reference contains all message ids in the thread, and this recursive call will try them one by one until Outlook API doesn't complain
+  //         // eventually, it will find a message in the thread that can be replied to
+  //         // if not, it will fall back to me/sendmail and send a fresh new email instead replying to a thread
+  //         // if you are a member of the Microsoft Office API team and are reading this, please fix it! This awful and ugly code makes me cry every morning.
+  //
+  //         console.log('Outlook API ErrorInvalidReferenceItem: ' + (create_reply_result.thread.length ? 'retrying createreplyall with a previous message id, ' + create_reply_result.thread.length + ' left' : 'sending reply as a new message'));
+  //         api_outlook_sendmail(account_email, message, callback, progress_callback);
+  //
+  //       } else {
+  //         catcher.log('failed to create a reply message on outlook', create_reply_result);
+  //         callback(false, 'Failed to create a reply message on Outlook.');
+  //       }
+  //     });
+  //   }
+  // }
+  //
+  // /*
+  //  Each message in the response contains multiple properties, including the Body property. The message body can be either HTML or text.
+  //  If the body is HTML, by default, any potentially unsafe HTML (for example, JavaScript) embedded in the Body property would be removed before the body content is returned in a REST response.
+  //  To get the entire, original HTML content, include the following HTTP request header:
+  //  Prefer: outlook.allow-unsafe-html
+  //  */
+  // function api_outlook_message_get(account_email, message_id, callback, progress_callback) {
+  //   api_outlook_call(account_email, 'me/messages/' + message_id, null, 'json', callback, progress_callback);
+  // }
+  //
+  // function api_outlook_message_thread(account_email, conversation_id, callback) {
+  //   // http://stackoverflow.com/questions/41125652/fetch-messages-filtered-by-conversationid-via-office365-api
+  //   // string finalUrl = "https://outlook.office.com/api/beta/me/Messages?$filter=" + HttpUtility.UrlEncode(string.Format("ConversationId eq '{0}'", conversationId));
+  //   api_outlook_call(account_email, env_url_create('me/messages', {
+  //     '$filter': "ConversationId eq '" + conversation_id + "'",
+  //   }), null, 'json', callback, null, 'GET');
+  // }
 
   /* tool.api.attester */
 
-  function api_attester_call(path, values, callback, format) {
-    api_call('https://attester.cryptup.io/', path, values, callback, format || 'JSON');
-    // api_call('http://127.0.0.1:5002/', path, values, callback, format || 'JSON');
+  function api_attester_call(path, values, format) {
+    return api_call('https://attester.cryptup.io/', path, values, format || 'JSON', null, {'api-version': 3});
+    // return api_call('http://127.0.0.1:5002/', path, values, format || 'JSON', null, {'api-version': 3});
   }
 
-  function api_attester_lookup_email(email, callback) {
+  function api_attester_lookup_email(email) {
     return api_attester_call('lookup/email', {
       email: (typeof email === 'string') ? tool.str.parse_email(email).email : email.map(function(a) {return tool.str.parse_email(a).email; }),
-    }, callback);
+    });
   }
 
-  function api_attester_initial_legacy_submit(email, pubkey, attest, callback) {
+  function api_attester_initial_legacy_submit(email, pubkey, attest) {
     return api_attester_call('initial/legacy_submit', {
       email: tool.str.parse_email(email).email,
       pubkey: pubkey.trim(),
       attest: attest || false,
-    }, callback);
+    });
   }
 
-  function api_attester_initial_confirm(signed_attest_packet, callback) {
+  function api_attester_initial_confirm(signed_attest_packet) {
     return api_attester_call('initial/confirm', {
       signed_message: signed_attest_packet,
-    }, callback);
+    });
   }
 
-  function api_attester_replace_request(email, signed_attest_packet, new_pubkey, callback) {
+  function api_attester_replace_request(email, signed_attest_packet, new_pubkey) {
     return api_attester_call('replace/request', {
       signed_message: signed_attest_packet,
       new_pubkey: new_pubkey,
       email: email,
-    }, callback);
+    });
   }
 
-  function api_attester_replace_confirm(signed_attest_packet, callback) {
+  function api_attester_replace_confirm(signed_attest_packet) {
     return api_attester_call('replace/confirm', {
       signed_message: signed_attest_packet,
-    }, callback);
+    });
   }
 
-  function api_attester_test_welcome(email, pubkey, callback) {
+  function api_attester_test_welcome(email, pubkey) {
     return api_attester_call('test/welcome', {
       email: email,
       pubkey: pubkey,
-    }, callback);
+    });
   }
 
   function api_attester_packet_armor(content_text) {
     return crypto_armor_headers('attest_packet').begin + '\n' + content_text + '\n' + crypto_armor_headers('attest_packet').end;
   }
 
-  function api_attester_packet_create_sign(values, decrypted_prv, callback) {
-    var lines = [];
-    tool.each(values, function (key, value) {
-      lines.push(key + ':' + value);
-    });
-    var content_text = lines.join('\n');
-    var packet = api_attester_packet_parse(api_attester_packet_armor(content_text));
-    if(packet.success !== true) {
-      callback(false, packet.error);
-    } else {
-      crypto_message_sign(decrypted_prv, content_text, true, function (success, signed_attest_packet) {
-        callback(success, signed_attest_packet);
+  function api_attester_packet_create_sign(values, decrypted_prv) {
+    return new Promise(function (resolve, reject) {
+      var lines = [];
+      tool.each(values, function (key, value) {
+        lines.push(key + ':' + value);
       });
-    }
+      var content_text = lines.join('\n');
+      var packet = api_attester_packet_parse(api_attester_packet_armor(content_text));
+      if(packet.success !== true) {
+        reject({code: null, message: packet.error, internal: 'parse'});
+      } else {
+        crypto_message_sign(decrypted_prv, content_text, true, function (success, signed_attest_packet) {
+          resolve(signed_attest_packet);
+        });
+      }
+    });
   }
 
   function api_attester_packet_parse(text) {
@@ -3279,9 +3285,9 @@
 
   /* tool.api.cryptup */
 
-  function api_cryptup_call(path, values, callback, format) {
-    api_call(api_cryptup_url('api'), path, values, callback, format || 'JSON', null, {'api-version': 1});
-    // api_call('http://127.0.0.1:5001/', path, values, callback, format || 'JSON', null, {'api-version': 1});
+  function api_cryptup_call(path, values, format) {
+    return api_call(api_cryptup_url('api'), path, values, format || 'JSON', null, {'api-version': 3});
+    // return api_call('http://127.0.0.1:5001/', path, values, format || 'JSON', null, {'api-version': 3});
   }
 
   function api_cryptup_url(type, variable) {
@@ -3294,238 +3300,223 @@
     }[type];
   }
 
-  function api_cryptup_auth_error() {
-    throw Error('tool.api.cryptup.auth_error not callable');
-  }
+  var api_cryptup_auth_error = {code: 401, message: 'Could not log in', internal: 'auth'};
 
-  function api_cryptup_error_text(server_call_response) {
-    if(server_call_response instanceof Array) {
-      var results;
-      tool.each(server_call_response, function(i, v) {
-        results += (i + 1) + ': ' + api_cryptup_error_text(v) + '\n';
-      });
-      return results.trim();
-    } else {
-      if(server_call_response && server_call_response.error) {
-        if(typeof server_call_response.error === 'object' && (server_call_response.error.internal_msg || server_call_response.error.public_msg)) {
-          return String(server_call_response.error.public_msg) + ' (' + server_call_response.error.internal_msg + ')';
-        } else {
-          return String(server_call_response.error);
-        }
-      } else if(server_call_response) {
-        return 'unknown';
-      } else {
-        return 'Internet connection problem, please try again';
-      }
-    }
-  }
+  // function api_cryptup_error_text(server_call_response) {
+  //   if(server_call_response instanceof Array) {
+  //     var results;
+  //     tool.each(server_call_response, function(i, v) {
+  //       results += (i + 1) + ': ' + api_cryptup_error_text(v) + '\n';
+  //     });
+  //     return results.trim();
+  //   } else {
+  //     if(server_call_response && server_call_response.error) {
+  //       if(typeof server_call_response.error === 'object' && (server_call_response.error.internal_msg || server_call_response.error.public_msg)) {
+  //         return String(server_call_response.error.public_msg) + ' (' + server_call_response.error.internal_msg + ')';
+  //       } else {
+  //         return String(server_call_response.error);
+  //       }
+  //     } else if(server_call_response) {
+  //       return 'unknown';
+  //     } else {
+  //       return 'Internet connection problem, please try again';
+  //     }
+  //   }
+  // }
 
-  function api_cryptup_response_formatter(callback) {
-    if(typeof callback === 'function') {
-      return function (success, response) {
-        if(response && response.error && typeof response.error === 'object' && response.error.internal_msg === 'auth') {
-          callback(api_cryptup_auth_error);
-        } else {
-          callback(success, response);
-        }
-      };
-    }
-  }
-
-  function api_cryptup_help_feedback(account_email, message, callback) {
+  function api_cryptup_help_feedback(account_email, message) {
     return api_cryptup_call('help/feedback', {
       email: account_email,
       message: message,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
-  function api_cryptup_help_uninstall(email, client, metrics, callback) {
+  function api_cryptup_help_uninstall(email, client, metrics) {
     return api_cryptup_call('help/uninstall', {
       email: email,
       client: client,
       metrics: metrics,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
-  function api_cryptup_account_check(emails, callback) {
-    api_cryptup_call('account/check', {
+  function api_cryptup_account_check(emails) {
+    return api_cryptup_call('account/check', {
       emails: emails,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
-  function api_cryptup_account_login(account_email, token, callback) {
-    storage_cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
-      var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
-      var email = registered_email || account_email;
-      api_cryptup_call('account/login', { account: email, uuid: uuid, token: token || null, }, function (success, result) {
-        if(success) {
-          if(result.registered === true) {
-            account_storage_set(null, { cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: result.verified === true, cryptup_account_subscription: result.subscription }, function () {
-              callback(true, result.verified === true, result.subscription);
-            });
-          } else {
-            if(typeof result.error === 'object') {
-              catcher.log('account/login fail response: ' + JSON.stringify(result.error));
-              callback(false, false, null, result.error.public_msg);
-            } else {
-              callback(false, false, null, result.error);
-            }
-          }
-        } else {
-          callback(false, false, null, 'connection error');
-        }
+  function api_cryptup_account_login(account_email, token) {
+    return new Promise(function(resolve, reject) {
+      storage_cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
+        var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
+        var email = registered_email || account_email;
+        api_cryptup_call('account/login', {
+          account: email,
+          uuid: uuid, token: token || null,
+        }).validate(function (r) {return r.registered === true;}).then(function (response) {
+          var to_save = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
+          account_storage_set(null, to_save, function () {
+            resolve({verified: response.verified === true, subscription: response.subscription});
+          });
+        }, reject);
       });
     });
   }
 
-  function api_cryptup_account_subscribe(product, method, payment_source_token, callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        api_cryptup_call('account/subscribe', {
-          account: email,
-          uuid: uuid,
-          method: method,
-          source: payment_source_token,
-          product: product,
-        }, api_cryptup_response_formatter(function (success_or_auth_error, result) {
-          if(success_or_auth_error === true) {
-            account_storage_set(null, { cryptup_account_subscription: result.subscription }, function () {
-              callback(true, result);
-            });
-          } else {
-            callback(success_or_auth_error, result);
-          }
-        }));
-      } else {
-        callback(api_cryptup_auth_error);
-      }
-    });
-  }
-
-  function api_cryptup_account_update(update_values, callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        var request = {account: email, uuid: uuid};
-        tool.each(update_values, function(k, v) { request[k] = v; });
-        api_cryptup_call('account/update', request, api_cryptup_response_formatter(function (success_or_auth_error, result) {
-          callback(success_or_auth_error, result);
-        }));
-      } else {
-        callback(api_cryptup_auth_error);
-      }
-    });
-  }
-
-  function api_cryptup_message_presign_files(attachments, callback, auth_method) {
-    var lengths = attachments.map(function (a) { return a.size; });
-    if(!auth_method) {
-      api_cryptup_call('message/presign_files', {
-        lengths: lengths,
-      }, api_cryptup_response_formatter(callback));
-    } else if(auth_method === 'uuid') {
+  function api_cryptup_account_subscribe(product, method, payment_source_token) {
+    return new Promise(function(resolve, reject) {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
-          api_cryptup_call('message/presign_files', {
+          api_cryptup_call('account/subscribe', {
             account: email,
             uuid: uuid,
-            lengths: lengths,
-          }, api_cryptup_response_formatter(callback));
+            method: method,
+            source: payment_source_token,
+            product: product,
+          }).then(function(response) {
+            account_storage_set(null, { cryptup_account_subscription: response.subscription }, function () {
+              resolve(response);
+            });
+          }, reject);
         } else {
-          callback(api_cryptup_auth_error);
+          reject(api_cryptup_auth_error);
         }
       });
-    } else {
-      api_cryptup_call('message/presign_files', {
-        message_token_account: auth_method.account,
-        message_token: auth_method.token,
-        lengths: attachments.map(function(a) { return a.size; }),
-      }, api_cryptup_response_formatter(callback));
-    }
+    });
   }
 
-  function api_cryptup_message_confirm_files(identifiers, callback) {
-    api_cryptup_call('message/confirm_files', {
-      identifiers: identifiers,
-    }, api_cryptup_response_formatter(callback));
+  function api_cryptup_account_update(update_values) {
+    return new Promise(function(resolve, reject) {
+      storage_cryptup_auth_info(function (email, uuid, verified) {
+        if(verified) {
+          var request = {account: email, uuid: uuid};
+          tool.each(update_values || {}, function(k, v) { request[k] = v; });
+          api_cryptup_call('account/update', request).validate(function(r) {return typeof r.result === 'object' }).then(resolve, reject);
+        } else {
+          reject(api_cryptup_auth_error);
+        }
+      });
+    });
   }
 
-  function api_cryptup_message_upload(encrypted_data_armored, callback, auth_method) { // todo - DEPRECATE THIS. Send as JSON to message/store
-    if(encrypted_data_armored.length > 100000) {
-      callback(false, {error: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
-    } else {
-      var content = file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
+  function api_cryptup_message_presign_files(attachments, auth_method) {
+    return new Promise(function (resolve, reject) {
+      var lengths = attachments.map(function (a) { return a.size; });
       if(!auth_method) {
-        api_cryptup_call('message/upload', {
-          content: content,
-        }, api_cryptup_response_formatter(callback), 'FORM');
-      } else {
+        api_cryptup_call('message/presign_files', {
+          lengths: lengths,
+        }).then(resolve, reject);
+      } else if(auth_method === 'uuid') {
         storage_cryptup_auth_info(function (email, uuid, verified) {
           if(verified) {
-            api_cryptup_call('message/upload', {
+            api_cryptup_call('message/presign_files', {
               account: email,
               uuid: uuid,
-              content: content,
-            }, api_cryptup_response_formatter(callback), 'FORM');
+              lengths: lengths,
+            }).then(resolve, reject);
           } else {
-            callback(api_cryptup_auth_error);
+            reject(api_cryptup_auth_error);
           }
         });
-      }
-    }
-  }
-
-  function api_cryptup_message_expiration(admin_codes, add_days, callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        api_cryptup_call('message/expiration', {
-          account: email,
-          uuid: uuid,
-          admin_codes: admin_codes,
-          add_days: add_days || null,
-        }, api_cryptup_response_formatter(callback));
       } else {
-        callback(api_cryptup_auth_error);
+        api_cryptup_call('message/presign_files', {
+          message_token_account: auth_method.account,
+          message_token: auth_method.token,
+          lengths: attachments.map(function(a) { return a.size; }),
+        }).then(resolve, reject);
       }
     });
   }
 
-  function api_cryptup_message_token(callback) {
-    storage_cryptup_auth_info(function (email, uuid, verified) {
-      if(verified) {
-        api_cryptup_call('message/token', {
-          account: email,
-          uuid: uuid,
-        }, api_cryptup_response_formatter(callback));
+  function api_cryptup_message_confirm_files(identifiers) {
+    return api_cryptup_call('message/confirm_files', {
+      identifiers: identifiers,
+    });
+  }
+
+  function api_cryptup_message_upload(encrypted_data_armored, auth_method) { // todo - DEPRECATE THIS. Send as JSON to message/store
+    return new Promise(function (resolve, reject) {
+      if(encrypted_data_armored.length > 100000) {
+        reject({code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
       } else {
-        callback(api_cryptup_auth_error);
+        var content = file_attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
+        if(!auth_method) {
+          api_cryptup_call('message/upload', {
+            content: content,
+          }, 'FORM').then(resolve, reject);
+        } else {
+          storage_cryptup_auth_info(function (email, uuid, verified) {
+            if(verified) {
+              api_cryptup_call('message/upload', {
+                account: email,
+                uuid: uuid,
+                content: content,
+              }, 'FORM').then(resolve, reject);
+            } else {
+              reject(api_cryptup_auth_error);
+            }
+          });
+        }
       }
     });
   }
 
-  function api_cryptup_message_reply(short, token, from, to, subject, message, callback) {
-    api_cryptup_call('message/reply', {
+  function api_cryptup_message_expiration(admin_codes, add_days) {
+    return new Promise(function (resolve, reject) {
+      storage_cryptup_auth_info(function (email, uuid, verified) {
+        if(verified) {
+          api_cryptup_call('message/expiration', {
+            account: email,
+            uuid: uuid,
+            admin_codes: admin_codes,
+            add_days: add_days || null,
+          }).then(resolve, reject);
+        } else {
+          reject(api_cryptup_auth_error);
+        }
+      });
+    });
+  }
+
+  function api_cryptup_message_token() {
+    return new Promise(function (resolve, reject) {
+      storage_cryptup_auth_info(function (email, uuid, verified) {
+        if(verified) {
+          api_cryptup_call('message/token', {
+            account: email,
+            uuid: uuid,
+          }).then(resolve, reject);
+        } else {
+          reject(api_cryptup_auth_error);
+        }
+      });
+    });
+  }
+
+  function api_cryptup_message_reply(short, token, from, to, subject, message) {
+    return api_cryptup_call('message/reply', {
       short: short,
       token: token,
       from: from,
       to: to,
       subject: subject,
       message: message,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
-  function api_cryptup_message_contact(sender, message, callback, message_token) {
-    api_cryptup_call('message/contact', {
+  function api_cryptup_message_contact(sender, message, message_token) {
+    return api_cryptup_call('message/contact', {
       message_token_account: message_token.account,
       message_token: message_token.token,
       sender: sender,
       message: message,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
   function api_cryptup_link_message(short, callback) {
     return api_cryptup_call('link/message', {
       short: short,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
   function api_cryptup_link_me(alias, callback) {
@@ -3534,40 +3525,36 @@
     }, api_cryptup_response_formatter(callback));
   }
 
-  function api_cryptup_account_check_sync(callback) {
-    if(typeof callback !== 'function') {
-      callback = function() {};
-    }
+  function api_cryptup_account_check_sync(callback) { // callbacks true on updated, false not updated, null for could not fetch
+    callback = typeof callback === 'function' ? callback : function() {};
     get_account_emails(function(emails) {
       if(emails.length) {
-        tool.api.cryptup.account_check(emails, function(success, result) {
-          if(success) {
-            storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
-              storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
-                var local_storage_update = {};
-                if(result.email && result.subscription && (result.subscription.level !== stored_level || result.subscription.method !== stored_method || result.subscription.expire !== stored_expire)) {
-                  local_storage_update['cryptup_account_subscription'] = result.subscription;
-                }
-                if((result.email && !cryptup_account_email) || (result.email && cryptup_account_email !== result.email)) {
-                  // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
-                  local_storage_update['cryptup_account_email'] = result.email;
-                  local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
-                  local_storage_update['cryptup_account_verified'] = true;
-                }
-                if(Object.keys(local_storage_update).length) {
-                  catcher.info('updating account subscription from ' + stored_level + ' to ' + result.subscription.level, result);
-                  account_storage_set(null, local_storage_update, function() {
-                    callback(true);
-                  });
-                } else {
-                  callback(false);
-                }
-              });
+        tool.api.cryptup.account_check(emails).then(function(response) {
+          storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
+            storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
+              var local_storage_update = {};
+              if(response.email && response.subscription && (response.subscription.level !== stored_level || response.subscription.method !== stored_method || response.subscription.expire !== stored_expire)) {
+                local_storage_update['cryptup_account_subscription'] = response.subscription;
+              }
+              if((response.email && !cryptup_account_email) || (response.email && cryptup_account_email !== response.email)) {
+                // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
+                local_storage_update['cryptup_account_email'] = response.email;
+                local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
+                local_storage_update['cryptup_account_verified'] = true;
+              }
+              if(Object.keys(local_storage_update).length) {
+                catcher.info('updating account subscription from ' + stored_level + ' to ' + response.subscription.level, response);
+                account_storage_set(null, local_storage_update, function() {
+                  callback(true);
+                });
+              } else {
+                callback(false);
+              }
             });
-          } else {
-            catcher.info('could not check account subscription', result);
-            callback(null);
-          }
+          });
+        }, function(error) {
+          catcher.info('could not check account subscription', error);
+          callback(null);
         });
       } else {
         callback(null);
@@ -3577,28 +3564,24 @@
 
   /* tool.api.aws */
 
-  function api_aws_s3_upload(items, callback, progress_callback) {
+  function api_aws_s3_upload(items, progress_callback) {
     if (!items.length) {
       callback(false);
       return;
     }
-    var results = new Array(items.length);
     var progress = arr_zeroes(items.length);
+    var promises = [];
     tool.each(items, function (i, item) {
       var values = item.fields;
       values.file = file_attachment('encrpted_attachment', 'application/octet-stream', item.attachment.content);
-      api_call(item.base_url, '', values, function(success, s3_result) {
-        results[i] = success;
-        if(results.reduce(function(sum, r) { return sum + (typeof r !== 'undefined') }, 0) === results.length) { // no undefined left
-          callback(results.reduce(function(s, v) { return s + v; }, 0) === results.length, results); // callback(all_good, results);
-        }
-      }, 'FORM', {upload: function(single_file_progress) {
+      promises.push(api_call(item.base_url, '', values, 'FORM', {upload: function(single_file_progress) {
         progress[i] = single_file_progress;
         ui_event_prevent(ui_event_spree(), function() {
           progress_callback(arr_average(progress)); // this should of course be weighted average. How many years until someone notices?
         })();
-      }});
+      }}));
     });
+    return Promise.all(promises);
   }
 
 })();
@@ -3613,6 +3596,11 @@
 
   var original_on_error = window.onerror;
   window.onerror = handle_error;
+  window.onunhandledrejection = handle_promise_error;
+
+  function handle_promise_error(e) {
+    handle_exception(e.reason);
+  }
 
   function handle_error(error_message, url, line, col, error, is_manually_called, version, env) {
     if(typeof error === 'string') {
@@ -3915,5 +3903,31 @@
       // return Array(count + 1).join(this);
       return rpt;
     };
+
+  Promise.prototype.validate = Promise.prototype.validate || function(validity_checker) {
+    var original_promise = this;
+    return new Promise(function(resolve, reject) {
+      original_promise.then(function(response) {
+        if(typeof response === 'object') {
+          if(validity_checker(response)) {
+            resolve(response);
+          } else {
+            catcher.log('result did not pass validation', response);
+            reject({code: null, message: 'Could not validate result', internal: 'validate'});
+          }
+        } else {
+          reject({code: null, message: 'Could not validate result: not an object', internal: 'validate'});
+        }
+      }, reject);
+    });
+  };
+
+  Promise.prototype.done = Promise.prototype.done || function(next) {
+    return this.then(function(x) {
+      next(true, x);
+    }, function(x) {
+      next(false, x);
+    });
+  };
 
 })();

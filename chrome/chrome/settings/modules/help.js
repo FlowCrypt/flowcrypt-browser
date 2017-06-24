@@ -9,19 +9,14 @@ $('.action_send_feedback').click(function () {
   var button = this;
   $(this).html(tool.ui.spinner('white'));
   setTimeout(function () { // this is so that spinner starts spinning before a potential failed connection alert shows up
-    tool.api.cryptup.help_feedback(url_params.account_email, $('#input_text').val() + '\n\n\nCryptUp ' + tool.env.browser().name +  ' ' +  catcher.version(), function (success, response) {
-      if(success && response.sent === true) {
-        $(button).text('sent!');
-        alert('Message sent! You will find your response in ' + url_params.account_email + ', check your email later. Thanks!');
-        tool.browser.message.send(url_params.parent_tab_id, 'close_page');
-      } else {
-        $(button).text(original_button_text);
-        if(success && response.sent === false) {
-          alert(response.text);
-        } else {
-          alert('Connection failed, please try to send it one more time. My direct email is tom@cryptup.org');
-        }
-      }
+    var msg = $('#input_text').val() + '\n\n\nCryptUp ' + tool.env.browser().name +  ' ' +  catcher.version();
+    tool.api.cryptup.help_feedback(url_params.account_email, msg).validate(r => r.sent).then(response => {
+      $(button).text('sent!');
+      alert('Message sent! You will find your response in ' + url_params.account_email + ', check your email later. Thanks!');
+      tool.browser.message.send(url_params.parent_tab_id, 'close_page');
+    }, error => {
+      $(button).text(original_button_text);
+      alert('There was an error sending message. My direct email is tom@cryptup.org\n\n' + error.message);
     });
   }, 50);
 });

@@ -46,6 +46,11 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/subscribe.htm'), params);
   }
 
+  function src_verification_dialog(verification_email_text) {
+    var params = { account_email: account_email, verification_email_text: verification_email_text, parent_tab_id: parent_tab_id };
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/verification.htm'), params);
+  }
+
   function src_attest(attest_packet) {
     var params = { account_email: account_email, attest_packet: attest_packet, parent_tab_id: parent_tab_id };
     return tool.env.url_create(chrome.extension.getURL('chrome/elements/attest.htm'), params);
@@ -154,6 +159,9 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       },
       subscribe: function(verification_email_text, source) {
         return iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'});
+      },
+      verification: function(verification_email_text) {
+        return iframe(src_verification_dialog(verification_email_text), ['short', 'embedded'], {scrolling: 'no'});
       },
       attachment: function(meta) {
         return tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))});

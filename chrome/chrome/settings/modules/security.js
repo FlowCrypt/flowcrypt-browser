@@ -12,24 +12,23 @@ if(url_params.embedded) {
 storage_cryptup_subscription(function (level, expire, active, method) {
   if(active) {
     $('.select_loader_container').html(tool.ui.spinner('green'));
-    tool.api.cryptup.account_update({}, function (success, result) {
+    tool.api.cryptup.account_update().then(response => {
       $('.select_loader_container').html('');
-      if(success === true && result && result.result) {
-        $('.default_message_expire').val(Number(result.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-        $('.default_message_expire').change(function () {
-          $('.select_loader_container').html(tool.ui.spinner('green'));
-          $('.default_message_expire').css('display', 'none');
-          tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}, function () {
-            window.location.reload();
-          });
-        });
-      } else if(success === tool.api.cryptup.auth_error && !url_params.embedded) {
+      $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
+      $('.default_message_expire').change(function () {
+        $('.select_loader_container').html(tool.ui.spinner('green'));
+        $('.default_message_expire').css('display', 'none');
+        tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}).done(_ => window.location.reload());
+      });
+    }, error => {
+      if(error.internal === 'auth' && !url_params.embedded) {
         alert('Your account information is outdated. Please add this device to your account.');
         show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
       } else {
+        $('.select_loader_container').html('');
         $('.default_message_expire').replaceWith('(unknown)');
       }
-    });
+    }).catch(catcher.handle_exception);
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
     $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(function() {

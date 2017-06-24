@@ -288,13 +288,14 @@ db_open(function (db) {
   function handle_extend_message_expiration_clicked(self) {
     var n_days = Number($(self).attr('href').replace('#', ''));
     $(self).parent().html('Updating..' + tool.ui.spinner('green'));
-    tool.api.cryptup.message_expiration(admin_codes, n_days, function (success, result) {
-      if(success === tool.api.cryptup.auth_error) {
+    tool.api.cryptup.message_expiration(admin_codes, n_days).validate(r => r.updated).then(response => {
+      window.location.reload();
+    }, error => {
+      if(error.internal === 'auth') {
         alert('Your CryptUp account information is outdated, please review your account settings.');
         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
-      } else if(success && result && result.updated) {
-        window.location.reload();
       } else {
+        catcher.log(error);
         $(self).parent().text('Error updating expiration, please try again').addClass('bad');
       }
     });
@@ -488,24 +489,22 @@ db_open(function (db) {
     } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from CryptUp API
       $('#pgp_block').text('Loading message...');
       recover_stored_admin_codes();
-      tool.api.cryptup.link_message(url_params.short, function(success, result) {
-        if(success && result && typeof result.url !== 'undefined') {
-          password_message_link_result = result;
-          if (result.url) {
-            tool.file.download_as_uint8(result.url, null, function (success, result) {
-              if(success) {
-                url_params.message = tool.str.from_uint8(result);
-                decrypt_and_render();
-              } else {
-                $('#pgp_block').text('Could not load message (network issue). Please try again.');
-              }
-            });
-          } else {
-            render_password_encrypted_message_load_fail(password_message_link_result);
-          }
+      tool.api.cryptup.link_message(url_params.short).validate(r => typeof r.url !== 'undefined').then(response => {
+        password_message_link_result = response;
+        if (response.url) {
+          tool.file.download_as_uint8(response.url, null, function (success, result) {
+            if(success) {
+              url_params.message = tool.str.from_uint8(result);
+              decrypt_and_render();
+            } else {
+              $('#pgp_block').text('Could not load message (network issue). Please try again.');
+            }
+          });
         } else {
-          $('#pgp_block').text('Failed to load message info (network issue). Please try again.');
+          render_password_encrypted_message_load_fail(password_message_link_result);
         }
+      }, error => {
+        $('#pgp_block').text('Failed to load message info (network issue). Please try again.');
       });
     } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
       if(can_read_emails) {

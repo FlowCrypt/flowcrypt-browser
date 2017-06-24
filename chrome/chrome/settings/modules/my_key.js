@@ -17,13 +17,11 @@ if(url_params.longid) {
 
 var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
 
-tool.api.attester.lookup_email(url_params.account_email, function (success, response) {
-  if(success && response && response.pubkey && tool.crypto.key.longid(response.pubkey) === keyinfo.longid) {
-    var url = tool.api.cryptup.url('pubkey', url_params.account_email);
-    $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
-  } else {
-    $('.pubkey_link_container').remove();
-  }
+tool.api.attester.lookup_email(url_params.account_email).validate(r => r.pubkey && tool.crypto.key.longid(r.pubkey) === keyinfo.longid).then(response => {
+  var url = tool.api.cryptup.url('pubkey', url_params.account_email);
+  $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
+}, error => {
+  $('.pubkey_link_container').remove();
 });
 
 $('.email').text(url_params.account_email);

@@ -88,8 +88,8 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
       success = true;
     }
     var address = addresses.pop();
-    var attest = (address == settings_url_params.account_email); // only request attestation of main email
-    tool.api.attester.initial_legacy_submit(address, pubkey, attest, function (key_submitted, response) {
+    var attest = (address === settings_url_params.account_email); // only request attestation of main email
+    tool.api.attester.initial_legacy_submit(address, pubkey, attest).done((key_submitted, response) => {
       if(attest && key_submitted) {
         if(!response.attested) {
           save_attest_request(settings_url_params.account_email, 'CRYPTUP', function () {
@@ -239,7 +239,6 @@ function openpgp_key_encrypt(key, passphrase) {
 }
 
 function show_settings_page(page, add_url_text_or_params) {
-  console.log(add_url_text_or_params);
   var page_params = { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global };
   if(typeof add_url_text_or_params === 'object') { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
     tool.each(add_url_text_or_params, function(k, v) {

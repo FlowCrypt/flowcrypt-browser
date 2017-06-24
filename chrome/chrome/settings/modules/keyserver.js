@@ -114,13 +114,9 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
 function action_submit_or_request_attestation(email) {
   if(email === url_params.account_email) { // request attestation
     save_attest_request(url_params.account_email, 'CRYPTUP', function () {
-      tool.api.attester.initial_legacy_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true, function () {
-        window.location.reload();
-      });
+      tool.api.attester.initial_legacy_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), true).done(_ => window.location.reload());
     });
   } else { // submit only
-    tool.api.attester.initial_legacy_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false, function () {
-      window.location.reload();
-    });
+    tool.api.attester.initial_legacy_submit(email, private_storage_get('local', url_params.account_email, 'master_public_key'), false).done(_ => window.location.reload());
   }
 }
