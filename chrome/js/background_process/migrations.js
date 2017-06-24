@@ -44,7 +44,7 @@ function account_consistency_fixes(account_email) {
     // re-submitting pubkey if failed
     if(storage.setup_done && private_storage_get('local', account_email, 'master_public_key_submit') && !private_storage_get('local', account_email, 'master_public_key_submitted')) {
       console.log('consistency_fixes: submitting pubkey');
-      tool.api.attester.initial_legacy_submit(account_email, private_storage_get('local', account_email, 'master_public_key'), false).validate(r => r.saved).then(_ => private_storage_set('local', account_email, 'master_public_key_submitted', true));
+      tool.api.attester.initial_legacy_submit(account_email, private_storage_get('local', account_email, 'master_public_key'), false).validate(r => r.saved).then(() => private_storage_set('local', account_email, 'master_public_key_submitted', true));
     }
   });
 }

@@ -18,7 +18,7 @@ storage_cryptup_subscription(function (level, expire, active, method) {
       $('.default_message_expire').change(function () {
         $('.select_loader_container').html(tool.ui.spinner('green'));
         $('.default_message_expire').css('display', 'none');
-        tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}).done(_ => window.location.reload());
+        tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}).done(() => window.location.reload());
       });
     }, error => {
       if(error.internal === 'auth' && !url_params.embedded) {
