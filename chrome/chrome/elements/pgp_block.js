@@ -62,7 +62,7 @@ db_open(function (db) {
         $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
         if(unsecure_mdc_ignored && !is_error) {
           set_frame_color('red');
-          $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">This message was badly encrypted. Do not consider it private. The sender should update their encryption software.<br><br>It allows for a known vulnerability to be exploited (missing MDC in combination with modern cipher) that may allow unintended parties to read the contents.</div><br>');
+          $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + window.lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
         }
         if(is_error) {
           $('.action_show_raw_pgp_block').click(function () {
@@ -410,13 +410,13 @@ db_open(function (db) {
 
   function render_password_encrypted_message_load_fail(link_result) {
     if(link_result.expired) {
-      var expiration_m = 'Message expired on ' + tool.time.expiration_format(link_result.expire) + '. Messages don\'t expire if recipients also have encryption set up.\n\n';
+      var expiration_m = window.lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + window.lang.pgp_block.messages_dont_expire + '\n\n';
       if(link_result.deleted) {
-        expiration_m += 'Message was destroyed 30 days after expiration and cannot be renewed.';
+        expiration_m += window.lang.pgp_block.message_destroyed;
       } else if(url_params.is_outgoing && admin_codes) {
         expiration_m += '<div class="button gray2 extend_expiration">renew message</div>';
       } else if(!url_params.is_outgoing) {
-        expiration_m += 'Please ask the sender to renew the message if you still need the contents';
+        expiration_m += window.lang.pgp_block.ask_sender_renew;
       }
       expiration_m += '\n\n<div class="button gray2 action_security">security settings</div>';
       render_error(expiration_m, null, function() {
@@ -427,9 +427,9 @@ db_open(function (db) {
         $('.extend_expiration').click(render_message_expiration_renew_options);
       });
     } else if (!link_result.url) {
-      render_error('Could not locate this message. It seems it contains a broken link.');
+      render_error(window.lang.pgp_block.cannot_locate + window.lang.pgp_block.broken_link);
     } else {
-      render_error('Could not locate this message. Please write me at tom@cryptup.org to fix it. Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
+      render_error(window.lang.pgp_block.cannot_locate + window.lang.general.write_me_to_fix_it + ' Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
     }
   }
 

@@ -30,6 +30,13 @@
       refresh_window: 'Please refresh your web mail window to read encrypted messages. ',
       update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
       not_properly_set_up: 'CryptUp is not properly set up to decrypt messages. ',
+      mdc_warning: 'This message was badly encrypted. Do not consider it private. The sender should update their encryption software.\n\nIt allows for a known vulnerability to be exploited (missing MDC in combination with modern cipher) that may allow unintended parties to read the contents.',
+      message_expired_on: 'Message expired on ',
+      messages_dont_expire: 'Messages don\'t expire if recipients also have encryption set up.',
+      message_destroyed: 'Message was destroyed 30 days after expiration and cannot be renewed.',
+      ask_sender_renew: 'Please ask the sender to renew the message if you still need the contents',
+      cannot_locate: 'Could not locate this message.',
+      broken_link: 'It seems it contains a broken link.',
     },
     compose: {
       message_encrypted_html: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ',
@@ -41,6 +48,10 @@
       header_title_compose_encrypt: 'New Secure Message',
       header_title_compose_sign: 'New Signed Message (not encrypted)',
     },
+    general: {
+      something_went_wrong_try_again: 'Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it. ',
+      write_me_to_fix_it: 'Please write me at tom@cryptup.org to fix this if it happens repeatedly. ',
+    }
   };
 
 

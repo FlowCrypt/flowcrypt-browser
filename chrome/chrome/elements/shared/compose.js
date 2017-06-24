@@ -871,7 +871,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         alert('CryptUp needs this permission save your encrypted drafts automatically.');
       } else {
         console.log(google_auth_response);
-        alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
+        alert(window.lang.general.something_went_wrong_try_again);
       }
     });
   }
@@ -887,7 +887,7 @@ function init_shared_compose_js(url_params, db, subscription, message_sent_callb
         alert('CryptUp needs this permission to search your contacts on Gmail. Without it, CryptUp will keep a separate contact list.');
       } else {
         console.log(google_auth_response);
-        alert('Something went wrong, please try again. If this happens again, please write me at tom@cryptup.org to fix it.');
+        alert(window.lang.general.something_went_wrong_try_again);
       }
     });
   }
