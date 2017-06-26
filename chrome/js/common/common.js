@@ -3494,7 +3494,7 @@
         handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
       });
     } catch(message_err) {
-      handle_error(exception.message, window.location.href, line, col, exception, true);
+      handle_error((exception || {message: 'catcher.handle_exception: supplied exception is not an object'}).message, window.location.href, line, col, exception, true);
     }
   }
 

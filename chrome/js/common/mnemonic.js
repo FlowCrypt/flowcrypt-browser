@@ -2080,7 +2080,7 @@
   }
 
   if(typeof exports === 'object') {
-    exports.mnemonic = mnemonic;
+    exports.from_hex = mnemonic;
   }
 
 })();
