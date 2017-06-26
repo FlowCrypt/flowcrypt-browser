@@ -1,5 +1,9 @@
 <div>
 
+<b>version 4.2.1 on June 25, 2017: Bugfixes</b>
+internal: several bugfixes after previous release
+internal: put all language dicts into a single file
+
 <b>version 4.2.0 on June 24, 2017: Technical Debt</b>
 settings: extend period to refresh attestation
 settings: add "later" button for stripe screen
