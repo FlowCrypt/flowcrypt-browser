@@ -3697,7 +3697,6 @@
           if(validity_checker(response)) {
             resolve(response);
           } else {
-            catcher.report('result did not pass validation', response);
             reject({code: null, message: 'Could not validate result', internal: 'validate'});
           }
         } else {
