@@ -98,16 +98,14 @@ function find_available_alias(email, callback, i) {
   while(alias.length < 3) {
     alias += tool.str.random(1).toLowerCase();
   }
-  tool.api.cryptup.link_me(alias + (i || ''), function(success, result) {
-    if(success && result) {
-      if(!result.profile) {
-        callback(alias);
-      } else {
-        find_available_alias(callback, (i || 0) + tool.int.random(1, 9));
-      }
+  tool.api.cryptup.link_me(alias + (i || '')).then(response => {
+    if(!response.profile) {
+      callback(alias);
     } else {
-      alert('Failed to create account, possibly a network issue. Please try again.');
-      window.location.reload();
+      find_available_alias(callback, (i || 0) + tool.int.random(1, 9));
     }
+  }, error => {
+    alert('Failed to create account, possibly a network issue. Please try again.');
+    window.location.reload();
   });
 }

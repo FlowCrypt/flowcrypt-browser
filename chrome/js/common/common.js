@@ -3281,16 +3281,16 @@
     });
   }
 
-  function api_cryptup_link_message(short, callback) {
+  function api_cryptup_link_message(short) {
     return api_cryptup_call('link/message', {
       short: short,
     });
   }
 
-  function api_cryptup_link_me(alias, callback) {
+  function api_cryptup_link_me(alias) {
     return api_cryptup_call('link/me', {
       alias: alias,
-    }, api_cryptup_response_formatter(callback));
+    });
   }
 
   function api_cryptup_account_check_sync(callback) { // callbacks true on updated, false not updated, null for could not fetch
