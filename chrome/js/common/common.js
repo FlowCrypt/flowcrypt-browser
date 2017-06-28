@@ -27,6 +27,7 @@
       from_equal_sign_notation_as_utf: str_from_equal_sign_notation_as_utf,
       uint8_as_utf: str_uint8_as_utf,
       to_hex: str_to_hex,
+      from_hex: str_from_hex,
       extract_cryptup_attachments: str_extract_cryptup_attachments,
       extract_cryptup_reply_token: str_extract_cryptup_reply_token,
       strip_cryptup_reply_token: str_strip_cryptup_reply_token,
@@ -251,8 +252,10 @@
     },
   };
 
+  var openpgp = window.openpgp;
   if(typeof exports === 'object') {
     exports.tool = tool;
+    openpgp = require('openpgp')
   }
 
   /* tool.str */
@@ -460,6 +463,15 @@
       o += n.length < 2 ? '0' + n : n;
     }
     return o;
+  }
+
+  function str_from_hex(hex) {
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2) {
+      var v = parseInt(hex.substr(i, 2), 16);
+      if (v) str += String.fromCharCode(v);
+    }
+    return str;
   }
 
   function str_int_to_hex(int_as_string) { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
@@ -3395,6 +3407,15 @@
     }
     if(error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called && !version && !env) { // safari has limited support
       error = { name: 'safari_error', message: error_message, stack: error_message };
+    }
+    if(typeof error_message === 'undefined' && line === 0 && col === 0 && is_manually_called && typeof error === 'object' && !(error instanceof Error)) {
+      try { // this sometimes happen with unhandled Promise.then(_, reject)
+        var stringified = JSON.stringify(error);
+      } catch(cannot) {
+        var stringified = 'typeof: ' + (typeof error) + '\n' + String(error);
+      }
+      error = { name: 'thrown_object', message: error.message || '(unknown)', stack: stringified};
+      error_message = 'thrown_object'
     }
     var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
     var ignored_errors = [
