@@ -189,11 +189,11 @@
       S.cached('header').remove();
       S.cached('subject').remove();
       S.cached('contacts').css('top', '39px');
-      S.cached('body').css('overflow', 'hidden');
+      S.cached('compose_table').css({'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf'});
+      S.cached('input_text').css('overflow-y', 'hidden');
       $(document).ready(function () {
         resize_reply_box();
       });
-      S.cached('body').css('overflow', 'hidden');
     } else {
       S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       S.cached('compose_table').css('display', 'table');
