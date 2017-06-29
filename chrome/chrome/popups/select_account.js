@@ -7,7 +7,7 @@ var url_params = tool.env.url_params(['action']);
 var page = null;
 if(url_params.action === 'new_message') {
   $('#title').text('Choose account for new message');
-  page = '/chrome/elements/new_message.htm';
+  page = '/chrome/elements/compose.htm';
 } else if(url_params.action === 'settings') {
   $('#title').text('Select account to see settings')
 } else {

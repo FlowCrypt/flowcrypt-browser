@@ -32,8 +32,8 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
   }
 
   function src_compose_message(draft_id) {
-    var params = { account_email: account_email, parent_tab_id: parent_tab_id, draft_id: draft_id, placement: 'gmail' };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/new_message.htm'), params);
+    var params = { is_reply_box: false, account_email: account_email, parent_tab_id: parent_tab_id, draft_id: draft_id, placement: 'gmail' };
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/compose.htm'), params);
   }
 
   function src_passphrase_dialog(longids, type) {
@@ -86,6 +86,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
 
   function src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft) {
     var params = {
+      is_reply_box: true,
       account_email: account_email,
       frame_id: 'frame_' + tool.str.random(10),
       placement: 'gmail',
@@ -101,7 +102,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       params.from = headers.from;
       params.subject = 'Re: ' + conversation_params.subject;
     }
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/reply_message.htm'), params);
+    return tool.env.url_create(chrome.extension.getURL('chrome/elements/compose.htm'), params);
   }
 
   function src_stripe_checkout() {

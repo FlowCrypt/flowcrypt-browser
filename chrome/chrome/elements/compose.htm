@@ -1,6 +1,6 @@
 <!-- Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE -->
 
-<html style="overflow: hidden;">
+<html>
 
 <head>
   <title>CryptUp</title>
@@ -12,12 +12,20 @@
 </head>
 
 <body id="new_message">
+
+  <div id="reply_message_prompt" class="display_none">
+    <p id="reply_links">
+      Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#" id="a_forward">Forward</a> encrypted
+    <div id="reply_click_area"></div>
+    </p>
+  </div>
+
   <div id="contacts">
     <ul></ul>
   </div>
 
-  <table id="compose">
-    <tr>
+  <table id="compose" class="display_none">
+    <tr id="section_header">
       <th>
         <!-- header -->
         <span class="close_new_message"><img src="/img/svgs/close-icon.svg" tabindex="-1"></span>
@@ -34,7 +42,7 @@
         </div>
       </td>
     </tr>
-    <tr>
+    <tr id="section_subject">
       <td class="input">
         <!-- subject -->
         <input id="input_subject" spellcheck="true" tabindex="2" placeholder="Subject" />
@@ -73,6 +81,31 @@
     </tr>
   </table>
 
+  <div id="reply_message_successful_container">
+    <table>
+      <tr class="first">
+        <td>
+          <!-- to -->
+          <div class="replied_from"></div>
+          <div class="replied_to">to <span></span></div>
+        </td>
+        <td class="right">
+          <div class="replied_time"></div>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <!-- body -->
+          <div class="replied_body pgp_secure"></div>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" class="email_footer"></td>
+      </tr>
+    </table>
+    <div id="attachments"></div>
+  </div>
+
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/jquery.min.js"></script>
   <script src="/lib/require.js"></script>
@@ -83,9 +116,10 @@
   <script src="/js/common/mnemonic.js"></script>
   <script src="/js/common/common.js"></script>
   <script src="/js/content_scripts/factory.js"></script>
-  <script src="shared/compose.js"></script>
   <script src="shared/attach.js"></script>
-  <script src="new_message.js"></script>
+  <script src="/js/common/composer.js"></script>
+  <script src="compose.js"></script>
+
 </body>
 
 </html>
