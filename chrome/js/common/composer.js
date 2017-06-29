@@ -1361,7 +1361,7 @@
     }
     text.push(window.lang.compose.message_encrypted_text + decrypt_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
-    html.push('<div style="display: none;">' + tool.crypto.armor.headers(null).begin + '</div>');
+    html.push('<div style="opacity: 0;">' + tool.crypto.armor.headers(null).begin + '</div>');
     html.push(window.lang.compose.message_encrypted_html + a + '<br><br>');
     html.push(window.lang.compose.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
     text.push(original_body['text/plain']);
