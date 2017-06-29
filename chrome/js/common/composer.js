@@ -1364,11 +1364,11 @@
     html.push('<div style="opacity: 0;">' + tool.crypto.armor.headers(null).begin + '</div>');
     html.push(window.lang.compose.message_encrypted_html + a + '<br><br>');
     html.push(window.lang.compose.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
-    text.push(original_body['text/plain']);
     const html_cryptup_web_url_link = '<a href="' + tool.str.html_escape(CRYPTUP_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(CRYPTUP_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : original_body['text/plain'].replace(CRYPTUP_WEB_URL, html_cryptup_web_url_link).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + html_pgp_message + '</div>');
+      text.push(original_body['text/plain']);
     }
     html.push('</div>');
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
