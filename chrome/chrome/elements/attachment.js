@@ -4,13 +4,13 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'download', 'content']);
+let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'download', 'content']);
 if(url_params.size) {
   url_params.size = parseInt(url_params.size);
 }
 
-var original_content;
-var button = $('#download');
+let original_content;
+let button = $('#download');
 
 db_open(function (db) {
 
@@ -20,8 +20,8 @@ db_open(function (db) {
     return;
   }
 
-  var passphrase_interval = undefined;
-  var missing_passprase_longids = [];
+  let passphrase_interval = undefined;
+  let missing_passprase_longids = [];
 
   $('#type').text(url_params.type);
   $('#name').text(url_params.name);
@@ -31,8 +31,8 @@ db_open(function (db) {
     function p(name) {
       return '/img/fileformat/' + name + '.png';
     }
-    var name_split = url_params.name.replace(/\.(pgp|gpg)$/ig, '').split('.');
-    var extension = name_split[name_split.length - 1].toLowerCase();
+    let name_split = url_params.name.replace(/\.(pgp|gpg)$/ig, '').split('.');
+    let extension = name_split[name_split.length - 1].toLowerCase();
     switch(extension) {
     case 'jpg':
     case 'jpeg':
@@ -64,25 +64,26 @@ db_open(function (db) {
   function get_url_file_size(original_url, callback) {
     console.log('trying to figure out file size');
     // will only call callback on success
+    let url;
     if(tool.value('docs.googleusercontent.com/docs/securesc').in(url_params.url)) {
       try {
-        var google_drive_file_id = original_url.split('/').pop().split('?').shift();
+        let google_drive_file_id = original_url.split('/').pop().split('?').shift();
         if(google_drive_file_id) {
-          var url = 'https://drive.google.com/uc?export=download&id=' + google_drive_file_id; // this one can actually give us headers properly
+          url = 'https://drive.google.com/uc?export=download&id=' + google_drive_file_id; // this one can actually give us headers properly
         } else {
-          var url =  original_url;
+          url =  original_url;
         }
       } catch (e) {
-        var url =  original_url;
+        url =  original_url;
       }
     } else {
-      var url = original_url;
+      url = original_url;
     }
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.open("HEAD", url, true);
     xhr.onreadystatechange = function() {
-      if(this.readyState == this.DONE) {
-        var size = xhr.getResponseHeader("Content-Length");
+      if(this.readyState === this.DONE) {
+        let size = xhr.getResponseHeader("Content-Length");
         if(size !== null) {
           callback(parseInt(size));
         } else {
@@ -98,7 +99,7 @@ db_open(function (db) {
       tool.crypto.message.decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
         $('#download').html(original_content).removeClass('visible');
         if(result.success) {
-          var filename = result.content.filename;
+          let filename = result.content.filename;
           if(!filename || tool.value(filename).in(['msg.txt', 'null'])) {
             filename = url_params.name.replace(/(\.pgp)|(\.gpg)$/, '');
           }
@@ -128,10 +129,10 @@ db_open(function (db) {
     });
   }
 
-  var progress_element;
+  let progress_element;
 
   function render_progress(percent, received, size) {
-    var size = size || url_params.size;
+    size = size || url_params.size;
     if(percent) {
       progress_element.text(percent + '%');
     } else if(size) {
@@ -144,17 +145,39 @@ db_open(function (db) {
     original_content = button.html();
     button.addClass('visible');
     button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
-    progress_element = $('.download_progress');
-    if(url_params.attachment_id) {
-      tool.api.gmail.attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
-        decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
-      }, render_progress);
-    } else if(url_params.url) {
-      tool.file.download_as_uint8(url_params.url, render_progress, function (success, data) {
-        decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(data)); //toto - have to convert to str because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
+    recover_missing_attachment_id_if_needed(() => {
+      progress_element = $('.download_progress');
+      if(url_params.attachment_id) {
+        tool.api.gmail.attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
+          decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
+        }, render_progress);
+      } else if(url_params.url) {
+        tool.file.download_as_uint8(url_params.url, render_progress, function (success, data) {
+          decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(data)); //toto - have to convert to str because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
+        });
+      } else {
+        throw Error('Missing both attachment_id and url');
+      }
+    });
+  }
+
+  function recover_missing_attachment_id_if_needed(cb) {
+    if(!url_params.url && !url_params.attachment_id && url_params.message_id) {
+      tool.api.gmail.message_get(url_params.account_email, url_params.message_id, 'full', (success, result) => {
+        if(success && result && result.payload && result.payload.parts) {
+          tool.each(result.payload.parts, (i, attachment_meta) => {
+            if(attachment_meta.filename === url_params.name && attachment_meta.body && attachment_meta.body.size === url_params.size && attachment_meta.body.attachmentId) {
+              url_params.attachment_id = attachment_meta.body.attachmentId;
+              return false;
+            }
+          });
+          cb();
+        } else {
+          window.location.reload();
+        }
       });
     } else {
-      throw Error('Missing both attachment_id and url');
+      cb();
     }
   }
 

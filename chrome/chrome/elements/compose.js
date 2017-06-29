@@ -6,8 +6,6 @@ tool.ui.event.protect();
 
 let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
 
-console.log(url_params);
-
 storage_cryptup_subscription((subscription_level, subscription_expire, subscription_active, subscription_method) => {
   let subscription = { level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method };
   db_open(db => {
@@ -22,8 +20,6 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
     account_storage_get(url_params.account_email, storage_keys, storage => {
 
       recover_missing_url_params(() => {
-
-        console.log(url_params);
 
         tool.browser.message.tab_id(tab_id => {
 

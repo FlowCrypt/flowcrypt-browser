@@ -191,9 +191,7 @@
       S.cached('contacts').css('top', '39px');
       S.cached('compose_table').css({'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf'});
       S.cached('input_text').css('overflow-y', 'hidden');
-      $(document).ready(function () {
-        resize_reply_box();
-      });
+      $(document).ready(() => resize_reply_box());
     } else {
       S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       S.cached('compose_table').css('display', 'table');
@@ -1280,7 +1278,7 @@
     S.cached('reply_message_successful').find('div.replied_time').text(time);
     S.cached('reply_message_successful').css('display', 'block');
     if (message.attachments.length) {
-      S.cached('replied_attachments').html(message.attachments.map(a => app.factory_attachment(a)).join('')).css('display', 'block');
+      S.cached('replied_attachments').html(message.attachments.map(a => {a.message_id = message_id; return app.factory_attachment(a)}).join('')).css('display', 'block');
     }
     resize_reply_box();
   }
