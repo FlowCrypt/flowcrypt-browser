@@ -2178,7 +2178,11 @@
         },
         error: function (XMLHttpRequest, status, error) {
           catcher.try(function () {
-            reject({code: status, message: String(error)});
+            if(XMLHttpRequest.status === 0) {
+              reject({code: null, message: 'Internet connection not available', internal: 'network'});
+            } else {
+              reject({code: XMLHttpRequest.status, message: String(error)});
+            }
           })();
         },
       });
@@ -3088,8 +3092,8 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, format) {
-    return api_call(api_cryptup_url('api'), path, values, format || 'JSON', null, {'api-version': 3});
-    // return api_call('http://127.0.0.1:5001/', path, values, format || 'JSON', null, {'api-version': 3});
+    // return api_call(api_cryptup_url('api'), path, values, format || 'JSON', null, {'api-version': 3});
+    return api_call('http://127.0.0.1:5001/', path, values, format || 'JSON', null, {'api-version': 3});
   }
 
   function api_cryptup_url(type, variable) {
