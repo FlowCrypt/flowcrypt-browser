@@ -52,19 +52,11 @@
 
   const _self = {
     init: init,
-    draft_set_id: draft_set_id,
-    draft_delete: draft_delete,
-    decrypt_and_render_draft: decrypt_and_render_draft,
-    evaluate_receivers: evaluate_receivers,
     resize_reply_box: resize_reply_box,
-    get_recipients_from_dom: get_recipients_from_dom,
-    render_compose_table: render_compose_table,
-    headers: set_additional_headers,
     update_footer_icon: update_footer_icon,
-    update_pubkey_icon: update_pubkey_icon,
     show_subscribe_dialog_and_wait_for_response: show_subscribe_dialog_and_wait_for_response,
     process_subscribe_result: process_subscribe_result,
-    reset_send_btn: reset_send_btn,
+    passphrase_entry: passphrase_entry,
     S: S,
   };
 
@@ -193,6 +185,7 @@
     } else {
       S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       S.cached('compose_table').css('display', 'table');
+      render_compose_table();
     }
   }
 
@@ -205,7 +198,7 @@
         let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '');
         if(armored) {
           S.cached('input_subject').val(parsed_message.headers.subject || '');
-          decrypt_and_render_draft(account_email, armored, is_reply_box ? render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
+          decrypt_and_render_draft(armored, is_reply_box ? render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
         } else {
           console.log('tool.api.gmail.draft_get tool.mime.decode else {}');
           if(is_reply_box) {
@@ -217,7 +210,7 @@
       if (is_reply_box && error.status === 404) {
         catcher.log('about to reload reply_message automatically: get draft 404', account_email);
         setTimeout(function () {
-          app.storage_set_draft_meta(false, draft_id, thread_id, null, null, () => {
+          app.storage_set_draft_meta(false, draft_id, thread_id, null, null).then(() => {
             console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
             window.location.reload();
           });
@@ -295,8 +288,11 @@
     }
   }
 
-  function draft_set_id(id) {
-    draft_id = id;
+  function passphrase_entry(entered) {
+    if(!entered) {
+      reset_send_btn();
+      clearInterval(passphrase_interval);
+    }
   }
 
   function draft_save(force_save) {
@@ -357,7 +353,7 @@
     });
   }
 
-  function decrypt_and_render_draft(account_email, encrypted_draft, render_function, headers) {
+  function decrypt_and_render_draft(encrypted_draft, render_function, headers) {
     if (app.storage_get_passphrase() !== null) {
       tool.crypto.message.decrypt(db, account_email, encrypted_draft, null, (result) => {
         if(result.success) {
@@ -385,7 +381,7 @@
       if (is_reply_box) {
         S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
         when_master_passphrase_entered(function () {
-          decrypt_and_render_draft(account_email, encrypted_draft);
+          decrypt_and_render_draft(encrypted_draft, render_function, headers);
         });
       }
     }
@@ -395,7 +391,7 @@
     clearInterval(passphrase_interval);
     const timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
     passphrase_interval = setInterval(function () {
-      const passphrase = get_passphrase(account_email);
+      let passphrase = app.storage_get_passphrase();
       if (passphrase !== null) {
         clearInterval(passphrase_interval);
         callback(passphrase);
@@ -525,7 +521,7 @@
     const keyinfo = private_keys_get(account_email, 'primary');
     if (keyinfo) {
       const prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-      const passphrase = get_passphrase(account_email);
+      const passphrase = app.storage_get_passphrase();
       if (passphrase === null) {
         app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         when_master_passphrase_entered(function (passphrase) {
@@ -1330,7 +1326,7 @@
       let addresses = order_addresses(account_email, app.storage_get_addresses());
       if(addresses.length > 1) {
         $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
-        $('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(window.flowcrypt_compose.update_pubkey_icon);
+        $('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
       }
     }
   }
@@ -1448,9 +1444,5 @@
   S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
 
   S.cached('icon_sign').click(toggle_sign_icon);
-
-  function set_additional_headers(headers) {
-    additional_message_headers = headers;
-  }
 
 })();

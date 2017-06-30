@@ -207,10 +207,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
               window.flowcrypt_compose.process_subscribe_result(new_subscription);
             },
             passphrase_entry: function (data) {
-              if (data && data.entered === false) {
-                clearInterval(passphrase_interval);
-                window.flowcrypt_compose.reset_send_btn();
-              }
+              window.flowcrypt_compose.passphrase_entry(data && data.entered);
             },
             reply_pubkey_mismatch: function (data) {
               if (url_params.is_reply_box) {
@@ -221,10 +218,6 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
 
           if(url_params.placement === 'popup') {
             $('body').addClass('popup');
-          }
-
-          if(!url_params.is_reply_box) {
-            window.flowcrypt_compose.render_compose_table();
           }
         });
 
@@ -252,7 +245,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             tool.api.gmail.message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
               if (success) {
                 url_params.thread_id = gmail_message_object.threadId;
-                var reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+                let reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
                 if(!url_params.to) {
                   url_params.to = reply.to;
                 }
