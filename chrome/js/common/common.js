@@ -3316,8 +3316,6 @@
         tool.api.cryptup.account_check(emails).then(function(response) {
           storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
             storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
-              console.log([cryptup_account_email, stored_level, stored_expire, stored_active, stored_method]);
-              console.log(response);
               var local_storage_update = {};
               if(response.email) {
                 if((response.email && !cryptup_account_email) || (response.email && cryptup_account_email !== response.email)) {
