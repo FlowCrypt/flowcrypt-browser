@@ -9,9 +9,8 @@
   <link rel="stylesheet" href="/css/animate.css" />
 </head>
 
-<body id="reply_message">
+<body id="new_message">
 
-<div id="reply_message_table_container" style="display: block;">
   <table id="compose" class="sign">
     <tr>
       <td class="input" id="input_addresses_container">
@@ -37,17 +36,16 @@
       </td>
     </tr>
   </table>
-</div>
 
-
-<script src="/lib/jquery.min.js"></script>
-<script src="/lib/openpgp.js"></script>
-<script src="/lib/require.js"></script>
-<script src="/js/common/lang.js"></script>
-<script src="/js/common/storage.js"></script>
-<script src="/js/common/common.js"></script>
-<script src="shared/compose.js"></script>
-<script src="reply_pubkey_mismatch.js"></script>
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/require.js"></script>
+  <script src="/js/common/lang.js"></script>
+  <script src="/js/common/storage.js"></script>
+  <script src="/js/common/common.js"></script>
+  <script src="/chrome/elements/shared/attach.js"></script>
+  <script src="/js/common/composer.js"></script>
+  <script src="reply_pubkey_mismatch.js"></script>
 
 </body>
 
