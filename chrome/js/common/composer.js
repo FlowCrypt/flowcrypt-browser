@@ -98,7 +98,6 @@
   let my_addresses_on_keyserver = [];
   let recipients_missing_my_key = [];
   let keyserver_lookup_results_by_email = {};
-  let email_footer;
   let subscribe_result_listener;
   let additional_message_headers = {};
   let button_update_timeout;
@@ -156,7 +155,6 @@
     my_addresses_on_keyserver = app.storage_get_addresses_keyserver() || [];
     can_read_emails = app.can_read_email();
     if (app.storage_get_subscription_info().active) {
-      email_footer = app.storage_get_email_footer();
       update_footer_icon();
     }
     if (app.storage_get_hide_message_password()) {
@@ -724,7 +722,7 @@
       draft_delete(() => {
         tool.env.increment('compose', function () {
           if(is_reply_box) {
-            render_reply_success(message, plaintext, email_footer, response ? response.id : null);
+            render_reply_success(message, plaintext, response ? response.id : null);
           } else {
             app.close_message();
           }
@@ -1142,7 +1140,7 @@
 
   function update_footer_icon(include) {
     if (include === null || typeof include === 'undefined') { // decide if pubkey should be included
-      update_footer_icon(!!email_footer);
+      update_footer_icon(!!app.storage_get_email_footer());
     } else { // set icon to specific state
       if (include) {
         S.cached('icon_footer').addClass('active');
@@ -1255,7 +1253,7 @@
     draft_delete(app.close_message);
   });
 
-  function render_reply_success(message, plaintext, email_footer, message_id) {
+  function render_reply_success(message, plaintext, message_id) {
     let is_signed = S.cached('icon_sign').is('.active');
     app.render_reinsert_reply_box(message_id, message.headers.To.split(',').map(a => tool.str.parse_email(a).email));
     if(is_signed) {
@@ -1266,6 +1264,7 @@
     S.cached('reply_message_successful').find('div.replied_from').text(supplied_from);
     S.cached('reply_message_successful').find('div.replied_to span').text(supplied_to);
     S.cached('reply_message_successful').find('div.replied_body').html(plaintext.replace(/\n/g, '<br>'));
+    const email_footer = app.storage_get_email_footer();
     if (email_footer) {
       if(is_signed) {
         S.cached('replied_body').append('<br><br>' + email_footer.replace(/\n/g, '<br>'));
@@ -1375,6 +1374,7 @@
   }
 
   function format_email_text_footer(original_body) {
+    const email_footer = app.storage_get_email_footer();
     const body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
     if (typeof original_body['text/html'] !== 'undefined') {
       body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
