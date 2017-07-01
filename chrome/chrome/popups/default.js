@@ -4,7 +4,7 @@
 
 tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab) {
   if(active_tab && active_tab.account_email !== null) {
-    account_storage_get(active_tab.account_email, ['setup_done'], function (storage) {
+    account_storage_get(active_tab.account_email, ['setup_done'], storage => {
       if(storage.setup_done) {
         choose_email_or_settings_popup(active_tab.account_email);
       } else {
@@ -17,7 +17,7 @@ tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab)
     get_account_emails(function (account_emails) {
       if(account_emails && account_emails.length) {
         account_storage_get(account_emails, ['setup_done'], function (account_storages) {
-          var functioning_accounts = 0;
+          let functioning_accounts = 0;
           tool.each(account_storages, function (email, storage) {
             functioning_accounts += storage.setup_done === true;
           });

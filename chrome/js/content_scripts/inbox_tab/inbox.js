@@ -2,16 +2,16 @@
 
 'use strict';
 
-catcher.try(function() {
+catcher.try(() => {
 
-  var replace_pgp_elements_interval_ms = 1000;
-  var replace_pgp_elements_interval;
-  var replacer;
+  const replace_pgp_elements_interval_ms = 1000;
+  let replace_pgp_elements_interval;
+  let replacer;
 
   content_script_setup_if_vacant({
     name: 'inbox',
     get_user_account_email:  function () {
-      var account_email_loading_match = $('div.gb_xb, div.gb_wb').text().match(/^[a-z0-9._\-]+@[a-z0-9\-_.]+$/gi);
+      let account_email_loading_match = $('div.gb_xb, div.gb_wb').text().match(/^[a-z0-9._\-]+@[a-z0-9\-_.]+$/gi);
       return account_email_loading_match !== null ? account_email_loading_match[0].toLowerCase() : undefined;
     },
     get_user_full_name: function () {
@@ -24,8 +24,8 @@ catcher.try(function() {
   });
 
   function start(account_email, inject, notifications, factory, notify_murdered) {
-    account_storage_get(account_email, ['addresses', 'google_token_scopes'], function (storage) {
-      var can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+    account_storage_get(account_email, ['addresses', 'google_token_scopes'], storage => {
+      let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       inject.buttons();
       replacer = gmail_element_replacer(factory, account_email, storage.addresses || [account_email], can_read_emails);
       notifications.show_initial(account_email);

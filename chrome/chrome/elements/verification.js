@@ -4,15 +4,15 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
+let url_params = tool.env.url_params(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
 
-var token = window.flowcrypt_account.parse_token_email_text(url_params.verification_email_text);
+let token = window.flowcrypt_account.parse_token_email_text(url_params.verification_email_text);
 
 if(!token) {
   render_status('This verification email seems to have wrong format. Please write me at tom@cryptup.org to fix this.');
 } else {
-  account_storage_get(null, ['cryptup_subscription_attempt'], function (storage) {
-    var product_to_subscribe_to = storage.cryptup_subscription_attempt;
+  account_storage_get(null, ['cryptup_subscription_attempt'], storage => {
+    let product_to_subscribe_to = storage.cryptup_subscription_attempt;
     window.flowcrypt_account.verify(url_params.account_email, [token]).then(response => {
       if(product_to_subscribe_to) {
         window.flowcrypt_account.subscribe(url_params.account_email, product_to_subscribe_to, product_to_subscribe_to.source).then(subscription => {

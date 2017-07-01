@@ -97,7 +97,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       thread_message_id: conversation_params.thread_message_id,
     };
     if(conversation_params.reply_to) { // for gmail and inbox. Outlook gets this from API
-      var headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
+      let headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
       params.to = headers.to;
       params.from = headers.from;
       params.subject = 'Re: ' + conversation_params.subject;
@@ -110,8 +110,8 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
   }
 
   function iframe(src, classes, additional_attributes) {
-    var attributes = { id: tool.env.url_params(['frame_id'], src).frame_id, class: (classes || []).concat(reloadable_class).join(' '), src: src };
-    tool.each(additional_attributes, function(a, v) {
+    let attributes = {id: tool.env.url_params(['frame_id'], src).frame_id, class: (classes || []).concat(reloadable_class).join(' '), src: src};
+    tool.each(additional_attributes, (a, v) => {
       attributes[a] = v;
     });
     return tool.e('iframe', attributes);
@@ -136,61 +136,29 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       reply_message_iframe: src_reply_message_iframe,
     },
     meta: {
-      notification_container: function() {
-        return '<center class="' + destroyable_class + ' webmail_notifications"></center>';
-      },
-      stylesheet: function(file) {
-        return '<link class="' + destroyable_class + '" rel="stylesheet" href="' + chrome.extension.getURL('css/' + file + '.css') + '" />';
-      },
+      notification_container: () => '<center class="' + destroyable_class + ' webmail_notifications"></center>',
+      stylesheet: file => '<link class="' + destroyable_class + '" rel="stylesheet" href="' + chrome.extension.getURL('css/' + file + '.css') + '" />',
     },
     dialog: {
-      passphrase: function(longids, type) {
-        return dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}))
-      },
-      subscribe: function(verification_email_text, source, subscribe_result_tab_id) {
-        return dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source, subscribe_result_tab_id), ['mediumtall'], {scrolling: 'no'}));
-      },
-      add_pubkey: function(emails) {
-        return dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
-      }
+      passphrase: (longids, type) => dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'})),
+      subscribe: (verification_email_text, source, subscribe_result_tab_id) => dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source, subscribe_result_tab_id), ['mediumtall'], {scrolling: 'no'})),
+      add_pubkey: (emails) => dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'})),
     },
     embedded: {
-      compose: function(draft_id) {
-        return tool.e('div', {id: 'new_message', class: 'new_message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})});
-      },
-      subscribe: function(verification_email_text, source) {
-        return iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'});
-      },
-      verification: function(verification_email_text) {
-        return iframe(src_verification_dialog(verification_email_text), ['short', 'embedded'], {scrolling: 'no'});
-      },
-      attachment: function(meta) {
-        return tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))});
-      },
-      message: function(armored, message_id, is_outgoing, sender, has_password, signature, short) {
-        return iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short), ['pgp_block']) + hide_gmail_new_message_in_thread_notification;
-      },
-      pubkey: function(armored_pubkey, is_outgoing) {
-        return iframe(src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']);
-      },
-      reply: function(conversation_params, skip_click_prompt, ignore_draft) {
-        return iframe(src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']);
-      },
-      passphrase: function(longids) {
-        return dialog(iframe(src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}))
-      },
-      attachment_status: function(content) {
-        return tool.e('div', {class: 'attachment_loader', html: content});
-      },
-      attest: function(attest_packet) {
-        return iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'});
-      },
-      stripe_checkout: function() {
-        return iframe(src_stripe_checkout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'});
-      },
+      compose: (draft_id) => tool.e('div', {id: 'new_message', class: 'new_message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})}),
+      subscribe: (verification_email_text, source) => iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'}),
+      verification: (verification_email_text) => iframe(src_verification_dialog(verification_email_text), ['short', 'embedded'], {scrolling: 'no'}),
+      attachment: (meta) => tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))}),
+      message: (armored, message_id, is_outgoing, sender, has_password, signature, short) => iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short), ['pgp_block']) + hide_gmail_new_message_in_thread_notification,
+      pubkey: (armored_pubkey, is_outgoing) => iframe(src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']),
+      reply: (conversation_params, skip_click_prompt, ignore_draft) => iframe(src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']),
+      passphrase: (longids) => dialog(iframe(src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'})),
+      attachment_status: (content) => tool.e('div', {class: 'attachment_loader', html: content}),
+      attest: (attest_packet) => iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'}),
+      stripe_checkout: () => iframe(src_stripe_checkout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'}),
     },
     button: {
-      compose: function(webmail_name) {
+      compose: (webmail_name) => {
         if(webmail_name === 'inbox') {
           return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
         } else if(webmail_name === 'outlook') {
@@ -199,16 +167,10 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
           return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
         }
       },
-      reply: function() {
-        return '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>';
-      },
-      without_cryptup: function() {
-        return '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show conversation without CryptUp"><span>see original</span></span>';
-      },
-      with_cryptup: function() {
-        return '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + src_logo(true, 16) + '"/></span>';
-      },
-      recipients_use_encryption: function (count, webmail_name) {
+      reply: () => '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>',
+      without_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show conversation without CryptUp"><span>see original</span></span>',
+      with_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + src_logo(true, 16) + '"/></span>',
+      recipients_use_encryption: (count, webmail_name) => {
         if(webmail_name !== 'gmail') {
           catcher.report('switch_to_secure not implemented for ' + webmail_name);
           return '';

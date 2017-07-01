@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
 
 if(url_params.type === 'embedded') {
   $('h1').parent().css('display', 'none');
@@ -18,20 +18,22 @@ if(url_params.type === 'embedded') {
 }
 tool.ui.passphrase_toggle(['passphrase']);
 
-var all_private_keys = private_keys_get(url_params.account_email);
+let all_private_keys = private_keys_get(url_params.account_email);
 
+let private_keys;
 if(url_params.longids) {
-  var private_keys = private_keys_get(url_params.account_email, url_params.longids.split(','));
+  private_keys = private_keys_get(url_params.account_email, url_params.longids.split(','));
 } else {
-  var private_keys = all_private_keys;
+  private_keys = all_private_keys;
 }
 
 
 if(all_private_keys.length > 1) {
+  let html;
   if(private_keys.length === 1) {
-    var html = 'For the following key: <span class="good">' + mnemonic(private_keys[0].longid) + '</span> (KeyWords)';
+    html = 'For the following key: <span class="good">' + mnemonic(private_keys[0].longid) + '</span> (KeyWords)';
   } else {
-    var html = 'Pass phrase needed for any of the following keys:';
+    html = 'Pass phrase needed for any of the following keys:';
     tool.each(private_keys, function (i, keyinfo) {
       html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + mnemonic(private_keys[i].longid) + '</div>';
     });
@@ -59,10 +61,10 @@ $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function 
 }));
 
 $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  var pass = $('#passphrase').val();
-  var is_correct = false;
+  let pass = $('#passphrase').val();
+  let is_correct = false;
   tool.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
-    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    let prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
     if(tool.crypto.key.decrypt(prv, pass).success) {
       is_correct = true;
       if($('.forget').prop('checked')) {

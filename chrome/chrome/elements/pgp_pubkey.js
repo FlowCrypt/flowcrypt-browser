@@ -4,9 +4,9 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'frame_id']);
+let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'frame_id']);
 
-var pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
+let pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
 render();
 
@@ -48,7 +48,7 @@ db_open(function (db) {
       set_button_text(db);
     }
   } else {
-    var fixed = url_params.armored_pubkey;
+    let fixed = url_params.armored_pubkey;
     while(/\n> |\n>\n/.test(fixed)) {
       fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
     }

@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
+let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
 
 if(url_params.account_email) {
   tool.browser.message.send(null, 'update_uninstall_url');
@@ -13,14 +13,14 @@ $('.back').css('visibility', 'hidden');
 tool.ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
 tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-var account_email_attested_fingerprint = undefined;
-var recovered_keys = undefined;
-var recovered_key_matching_passphrases = [];
-var recovered_keys_longid_count = 0;
-var recovered_keys_successful_longids = [];
-var tab_id_global = undefined;
-var all_addresses = [url_params.account_email];
-var email_provider;
+let account_email_attested_fingerprint = undefined;
+let recovered_keys = undefined;
+let recovered_key_matching_passphrases = [];
+let recovered_keys_longid_count = 0;
+let recovered_keys_successful_longids = [];
+let tab_id_global = undefined;
+let all_addresses = [url_params.account_email];
+let email_provider;
 
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
@@ -36,7 +36,7 @@ tool.browser.message.tab_id(function (tab_id) {
 });
 
 // show alternative account addresses in setup form + save them for later
-account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes', 'email_provider'], function (storage) {
+account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes', 'email_provider'], storage => {
   if(storage.email_provider === 'gmail') {
     if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
       $('.auth_denied_warning').css('display', 'block');
@@ -68,7 +68,7 @@ function save_and_fill_submit_option(addresses) {
 }
 
 function display_block(name) {
-  var blocks = [
+  let blocks = [
     'loading',
     'step_0_found_key',
     'step_1_easy_or_manual',
@@ -99,7 +99,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     if(db === db_private_mode_error) {
       $('#loading').text('CryptUp does not work in Private Browsing Mode. Please use it in a standard browser window.');
     } else {
-      account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], function (storage) {
+      account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
         email_provider = storage.email_provider || 'gmail';
 
         if(storage.setup_done) {
@@ -161,13 +161,14 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
 
 // options: {submit_main, submit_all}
 function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
-  account_storage_get(account_email, ['addresses'], function (storage) {
+  account_storage_get(account_email, ['addresses'], storage => {
     if(options.submit_main) {
       tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
+      let addresses;
       if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
-        var addresses = storage.addresses.concat(account_email);
+        addresses = storage.addresses.concat(account_email);
       } else {
-        var addresses = [account_email];
+        addresses = [account_email];
       }
       if(account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(armored_pubkey)) {
         // already submitted and ATTESTED another pubkey for this email
@@ -213,7 +214,7 @@ function render_setup_done(account_email, key_backup_prompt) {
 function finalize_setup(account_email, armored_pubkey, options) {
   submit_public_key_if_needed(account_email, armored_pubkey, options, function () {
     tool.env.increment('setup');
-    var storage = {
+    let storage = {
       setup_date: Date.now(),
       setup_done: true,
       cryptup_enabled: true,
@@ -234,13 +235,13 @@ function save_keys(account_email, prvs, options, callback) {
   private_storage_set('local', account_email, 'master_public_key', prvs[0].toPublic().armor());
   private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
-  for(var i = 1; i < prvs.length; i++) { // if got more keys, save em too
+  for(let i = 1; i < prvs.length; i++) { // if got more keys, save em too
     private_keys_add(account_email, prvs[i].armor());
     save_passphrase(options.save_passphrase ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
   }
-  var contacts = [];
+  let contacts = [];
   tool.each(all_addresses, function (i, address) {
-    var attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
+    let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
     contacts.push(db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
   });
   db_open(function (db) {
@@ -255,7 +256,7 @@ function create_save_key_pair(account_email, options) {
     passphrase: options.passphrase,
   }).then(key => {
     options.is_newly_created_key = true;
-    var prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
+    let prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
     test_private_key_and_handle(url_params.account_email, prv, options, function () {
       save_keys(account_email, [prv], options, function () {
         finalize_setup(account_email, key.publicKeyArmored, options);
@@ -268,7 +269,7 @@ function create_save_key_pair(account_email, options) {
 }
 
 function get_and_save_google_user_info(account_email, callback) {
-  var result = { full_name: '' };
+  let result = { full_name: '' };
   if(email_provider === 'gmail') {
     tool.api.google.user_info(account_email, function (success, response) {
       if(success) {
@@ -344,7 +345,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
       };
       recovered_key_matching_passphrases.push(passphrase);
       save_keys(url_params.account_email, matching_keys, options, function () {
-        account_storage_get(url_params.account_email, ['setup_done'], function (storage) {
+        account_storage_get(url_params.account_email, ['setup_done'], storage => {
           if(!storage.setup_done) { // normal situation
             finalize_setup(url_params.account_email, matching_keys[0].toPublic().armor(), options);
           } else { // setup was finished before, just added more keys now
@@ -368,9 +369,9 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
 $('#step_4_more_to_recover .action_recover_remaining').click(function () {
   display_block('step_2_recovery');
   $('#recovery_pasword').val('');
-  var got = private_keys_get(url_params.account_email).length;
-  var bups = recovered_keys.length;
-  var left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
+  let got = private_keys_get(url_params.account_email).length;
+  let bups = recovered_keys.length;
+  let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
   if(url_params.action !== 'add_key') {
     $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
     $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
@@ -406,7 +407,7 @@ $('.action_go_auth_denied').click(function () {
 });
 
 $('.input_submit_key').click(function () {
-  var input_submit_all = $(this).closest('.manual').find('.input_submit_all').first();
+  let input_submit_all = $(this).closest('.manual').find('.input_submit_all').first();
   if($(this).prop('checked')) {
     if(input_submit_all.closest('div.line').css('visibility') === 'visible') {
       input_submit_all.prop({ checked: true, disabled: false });
@@ -431,7 +432,7 @@ $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
     userIds: [{ name: 'pass phrase is stockholm', email: 'bad@key.com', }],
     passphrase: 'stockholm',
   }).then(function (key) {
-    var armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
+    let armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
     tool.crypto.key.test(armored, 'stockholm', function (key_works, error_message) {
       catcher.report(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
       setTimeout(function () {
@@ -456,22 +457,22 @@ function test_private_key_and_handle(account_email, key, options, success_callba
 }
 
 $('#step_2b_manual_enter .action_save_private').click(function () {
-  var normalized_armored_key = tool.crypto.key.normalize($('#step_2b_manual_enter .input_private_key').val());
-  var prv = openpgp.key.readArmored(normalized_armored_key).keys[0];
-  var passphrase = $('#step_2b_manual_enter .input_passphrase').val();
-  var prv_headers = tool.crypto.armor.headers('private_key');
+  let normalized_armored_key = tool.crypto.key.normalize($('#step_2b_manual_enter .input_private_key').val());
+  let prv = openpgp.key.readArmored(normalized_armored_key).keys[0];
+  let passphrase = $('#step_2b_manual_enter .input_passphrase').val();
+  let prv_headers = tool.crypto.armor.headers('private_key');
   if(typeof prv === 'undefined') {
     alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
   } else if(prv.isPublic()) {
     alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
   } else {
-    var decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(normalized_armored_key).keys[0], passphrase);
+    let decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(normalized_armored_key).keys[0], passphrase);
     if(decrypt_result.error) {
       alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.error + ')');
     } else if (decrypt_result.success) {
       if(prv.getEncryptionKeyPacket() !== null) {
         $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
-        var options = {
+        let options = {
           passphrase: passphrase,
           setup_simple: false,
           key_backup_prompt: false,

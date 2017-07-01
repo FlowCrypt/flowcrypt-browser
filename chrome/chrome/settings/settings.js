@@ -2,8 +2,8 @@
 
 'use strict';
 
-var settings_url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'embedded']);
-var settings_tab_id_global = undefined;
+let settings_url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'embedded']);
+let settings_tab_id_global = undefined;
 
 tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
@@ -23,7 +23,7 @@ function fetch_account_aliases_from_gmail(account_email, callback, query, from_e
 
 function evaluate_password_strength(parent_selector, input_selector, button_selector) {
   parent_selector += ' ';
-  var result = crack_time_result(zxcvbn($(parent_selector + input_selector).val()), [
+  let result = crack_time_result(zxcvbn($(parent_selector + input_selector).val()), [
     'crypt', 'up', 'cryptup', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
     'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
     'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
@@ -49,7 +49,7 @@ function evaluate_password_strength(parent_selector, input_selector, button_sele
 }
 
 function save_attest_request(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], storage => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if(!tool.value(attester).in(storage.attests_requested)) {
@@ -67,7 +67,7 @@ function save_attest_request(account_email, attester, callback) {
 }
 
 function mark_as_attested(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], storage => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if(tool.value(attester).in(storage.attests_requested)) {
@@ -87,8 +87,8 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
     if(typeof success === 'undefined') {
       success = true;
     }
-    var address = addresses.pop();
-    var attest = (address === settings_url_params.account_email); // only request attestation of main email
+    let address = addresses.pop();
+    let attest = (address === settings_url_params.account_email); // only request attestation of main email
     tool.api.attester.initial_legacy_submit(address, pubkey, attest).done((key_submitted, response) => {
       if(attest && key_submitted) {
         if(!response.attested) {
@@ -114,35 +114,35 @@ function readable_crack_time(total_seconds) { // http://stackoverflow.com/questi
     return(number > 1) ? 's' : '';
   }
   total_seconds = Math.round(total_seconds);
-  var millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
+  let millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
   if(millennia) {
     return millennia === 1 ? 'a millennium' : 'millennia';
   }
-  var centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
+  let centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
   if(centuries) {
     return centuries === 1 ? 'a century' : 'centuries';
   }
-  var years = Math.round(total_seconds / (86400 * 30 * 12));
+  let years = Math.round(total_seconds / (86400 * 30 * 12));
   if(years) {
     return years + ' year' + numberEnding(years);
   }
-  var months = Math.round(total_seconds / (86400 * 30));
+  let months = Math.round(total_seconds / (86400 * 30));
   if(months) {
     return months + ' month' + numberEnding(months);
   }
-  var days = Math.round(total_seconds / 86400);
+  let days = Math.round(total_seconds / 86400);
   if(days) {
     return days + ' day' + numberEnding(days);
   }
-  var hours = Math.round(total_seconds / 3600);
+  let hours = Math.round(total_seconds / 3600);
   if(hours) {
     return hours + ' hour' + numberEnding(hours);
   }
-  var minutes = Math.round(total_seconds / 60);
+  let minutes = Math.round(total_seconds / 60);
   if(minutes) {
     return minutes + ' minute' + numberEnding(minutes);
   }
-  var seconds = total_seconds % 60;
+  let seconds = total_seconds % 60;
   if(seconds) {
     return seconds + ' second' + numberEnding(seconds);
   }
@@ -151,8 +151,8 @@ function readable_crack_time(total_seconds) { // http://stackoverflow.com/questi
 
 // https://threatpost.com/how-much-does-botnet-cost-022813/77573/
 // https://www.abuse.ch/?p=3294
-var guesses_per_second = 10000 * 2 * 4000; //(10k ips) * (2 cores p/machine) * (4k guesses p/core)
-var crack_time_words = [
+let guesses_per_second = 10000 * 2 * 4000; //(10k ips) * (2 cores p/machine) * (4k guesses p/core)
+let crack_time_words = [
   ['millenni', 'perfect', 100, 'green', true],
   ['centu', 'great', 80, 'green', true],
   ['year', 'good', 60, 'orange', true],
@@ -162,9 +162,9 @@ var crack_time_words = [
 ]; // word search, word rating, bar percent, color, pass
 
 function crack_time_result(zxcvbn_result) {
-  var time_to_crack = zxcvbn_result.guesses / guesses_per_second;
-  for(var i = 0; i < crack_time_words.length; i++) {
-    var readable_time = readable_crack_time(time_to_crack);
+  let time_to_crack = zxcvbn_result.guesses / guesses_per_second;
+  for(let i = 0; i < crack_time_words.length; i++) {
+    let readable_time = readable_crack_time(time_to_crack);
     if(tool.value(crack_time_words[i][0]).in(readable_time)) {
       return {
         word: crack_time_words[i][1],
@@ -181,7 +181,7 @@ function crack_time_result(zxcvbn_result) {
 
 function openpgp_key_encrypt(key, passphrase) {
   if(key.isPrivate() && passphrase) {
-    var keys = key.getAllKeyPackets();
+    let keys = key.getAllKeyPackets();
     tool.each(keys, function (i, key) {
       key.encrypt(passphrase);
     });
@@ -193,27 +193,28 @@ function openpgp_key_encrypt(key, passphrase) {
 }
 
 function show_settings_page(page, add_url_text_or_params) {
-  var page_params = { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global };
+  let page_params = { account_email: settings_url_params.account_email, placement: 'settings', parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global };
   if(typeof add_url_text_or_params === 'object') { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
     tool.each(add_url_text_or_params, function(k, v) {
       page_params[k] = v;
     });
     add_url_text_or_params = null;
   }
-  var new_location = tool.env.url_create(page, page_params) + (add_url_text_or_params || '');
+  let new_location = tool.env.url_create(page, page_params) + (add_url_text_or_params || '');
   if(settings_url_params.embedded) { //embedded on the main page
     tool.browser.message.send(settings_url_params.parent_tab_id, 'open_page', { page: page, add_url_text: add_url_text_or_params });
   } else if(!settings_url_params.parent_tab_id) { // on a main page
+    let width, height, variant, close_on_click;
     if(page !== '/chrome/elements/compose.htm') {
-      var width = Math.min(800, $('body').width() - 200);
-      var height = $('html').height() - ($('html').height() > 800 ? 150 : 75);
-      var variant = null;
-      var close_on_click = 'background';
+      width = Math.min(800, $('body').width() - 200);
+      height = $('html').height() - ($('html').height() > 800 ? 150 : 75);
+      variant = null;
+      close_on_click = 'background';
     } else {
-      var width = 542;
-      var height = Math.min(600, $('html').height() - 150);
-      var variant = 'new_message_featherlight';
-      var close_on_click = false;
+      width = 542;
+      height = Math.min(600, $('html').height() - 150);
+      variant = 'new_message_featherlight';
+      close_on_click = false;
     }
     $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant: variant, });
     $('.new_message_featherlight .featherlight-content').prepend('<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
@@ -230,12 +231,12 @@ function reset_cryptup_account_storages(account_email, callback) {
     if(!tool.value(account_email).in(account_emails)) {
       throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
     }
-    var keys_to_remove = [];
-    var filter = account_storage_key(account_email, '');
+    let keys_to_remove = [];
+    let filter = account_storage_key(account_email, '');
     if(!filter) {
       throw new Error('Filter is empty for account_email"' + account_email + '"');
     }
-    chrome.storage.local.get(function (storage) {
+    chrome.storage.local.get(storage => {
       tool.each(storage, function (key, value) {
         if(key.indexOf(filter) === 0) {
           keys_to_remove.push(key.replace(filter, ''));

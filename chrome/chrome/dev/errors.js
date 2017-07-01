@@ -2,7 +2,7 @@
 
 'use strict';
 
-account_storage_get(null, 'errors', function (storage) {
+account_storage_get(null, 'errors', storage => {
   if(storage.errors && storage.errors.length) {
     var errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
     $('.pre').html(errors);

@@ -52,7 +52,7 @@ tool.browser.message.tab_id(function(tab_id) {
     },
   }, tab_id);
 
-  account_storage_get(url_params.account_email, ['email_provider'], function (storage) {
+  account_storage_get(url_params.account_email, ['email_provider'], storage => {
     email_provider = storage.email_provider || 'gmail';
     factory = element_factory(url_params.account_email, tab_id);
     S.cached('body').prepend(factory.meta.notification_container());

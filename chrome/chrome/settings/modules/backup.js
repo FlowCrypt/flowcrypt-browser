@@ -2,12 +2,12 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
-var email_provider;
+let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
+let email_provider;
 
 tool.ui.passphrase_toggle(['password', 'password2']);
 
-account_storage_get(url_params.account_email, ['setup_simple', 'email_provider'], function (storage) {
+account_storage_get(url_params.account_email, ['setup_simple', 'email_provider'], storage => {
   email_provider = storage.email_provider || 'gmail';
 
   if(url_params.action === 'setup') {
@@ -22,7 +22,7 @@ account_storage_get(url_params.account_email, ['setup_simple', 'email_provider']
   } else if(url_params.action === 'passphrase_change_gmail_backup') {
     if(storage.setup_simple) {
       display_block('loading');
-      var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
+      let armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
       (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, armored_private_key, function (success) {
         if(success) {
           $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
@@ -46,7 +46,7 @@ account_storage_get(url_params.account_email, ['setup_simple', 'email_provider']
 });
 
 function display_block(name) {
-  var blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
+  let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
   tool.each(blocks, function (i, block) {
     $('#' + block).css('display', 'none');
   });
@@ -61,7 +61,7 @@ function show_status() {
   $('.hide_if_backup_done').css('display', 'none');
   $('h1').text('Key Backups');
   display_block('loading');
-  account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth'], function (storage) {
+  account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth'], storage => {
     if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
       tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
         if(success) {
@@ -126,7 +126,7 @@ function show_status() {
     } else { // gmail read permission not granted - cannot check for backups
       display_block('step_0_status');
       $('.status_summary').html('CryptUp cannot check your backups.');
-      var pemissions_button_if_gmail = email_provider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
+      let pemissions_button_if_gmail = email_provider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
       $('#step_0_status .container').html(pemissions_button_if_gmail + '<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>');
       $('.action_go_manual').click(function () {
         display_block('step_3_manual');
@@ -157,31 +157,31 @@ $('.action_reset_password').click(function () {
 
 function backup_key_on_gmail(account_email, armored_key, callback) { // todo - refactor into single function as backup_key_on_outlook that takes api function as argument
   $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
-    var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
-    var message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
+    let email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
+    let message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
     tool.api.gmail.message_send(account_email, message, callback);
   }, 'html');
 }
 
 function backup_key_on_outlook(account_email, armored_key, callback) {
   $.get('/chrome/emails/email_intro.template.htm', null, function (email_message) {
-    var email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
-    var message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
+    let email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
+    let message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
     tool.api.outlook.message_send(account_email, message, callback);
   }, 'html');
 }
 
 $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-  var new_passphrase = $('#password').val();
+  let new_passphrase = $('#password').val();
   if(new_passphrase !== $('#password2').val()) {
     alert('The two pass phrases do not match, please try again.');
     $('#password2').val('');
     $('#password2').focus();
   } else {
-    var btn_text = $(self).text();
+    let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
-    var prv = openpgp.key.readArmored(armored_private_key).keys[0];
+    let armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
+    let prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, new_passphrase);
     private_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
     private_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
@@ -201,7 +201,7 @@ function is_master_private_key_encrypted(account_email) {
   if(private_storage_get('local', account_email, 'master_passphrase_needed') !== true) {
     return false;
   } else {
-    var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
+    let key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
     return key.primaryKey.isDecrypted === false && !tool.crypto.key.decrypt(key, '').success;
   }
 }
@@ -210,9 +210,9 @@ function backup_on_email_provider() {
   if(!is_master_private_key_encrypted(url_params.account_email)) {
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
-    var btn_text = $(self).text();
+    let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
+    let armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, armored_private_key, function (success) {
       if(success) {
         write_backup_done_and_render(false, 'inbox');
@@ -228,9 +228,9 @@ function backup_as_file() { //todo - add a non-encrypted download option
   if(!is_master_private_key_encrypted(url_params.account_email)) {
     alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
   } else {
-    var btn_text = $(self).text();
+    let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    var armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
+    let armored_private_key = private_storage_get('local', url_params.account_email, 'master_private_key');
     tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');
   }
@@ -255,7 +255,7 @@ function write_backup_done_and_render(prompt, method) {
 }
 
 $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-  var selected = $('input[type=radio][name=input_backup_choice]:checked').val();
+  let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
   if(selected === 'inbox') {
     backup_on_email_provider();
   } else if(selected === 'file') {

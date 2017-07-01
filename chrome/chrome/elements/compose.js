@@ -68,7 +68,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
               return subscription;
             },
             storage_get_armored_public_key: (sender_email) => private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id),
-            storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => new Promise((resolve, reject) => {
+            storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {
               account_storage_get(url_params.account_email, ['drafts_reply', 'drafts_compose'], function (draft_storage) {
                 let drafts;
                 if (thread_id) { // it's a reply
@@ -110,32 +110,32 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             storage_contact_save: (contact, callback) => db_contact_save(db, contact, callback),
             storage_contact_search: (query, callback) => db_contact_search(db, query, callback),
             storage_contact_object: db_contact_object,
-            email_provider_draft_get: (draft_id) => new Promise((resolve, reject) => {
+            email_provider_draft_get: (draft_id) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_get(url_params.account_email, draft_id, 'raw', (success, response) => {
                 (success ? resolve : reject)(response);
               });
             }),
-            email_provider_draft_create: (mime_message) => new Promise((resolve, reject) => {
+            email_provider_draft_create: (mime_message) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_create(url_params.account_email, mime_message, url_params.thread_id, (success, response) => {
                 (success ? resolve : reject)(response);
               });
             }),
-            email_provider_draft_update: (draft_id, mime_message) => new Promise((resolve, reject) => {
+            email_provider_draft_update: (draft_id, mime_message) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_update(url_params.account_email, draft_id, mime_message, (success, response) => {
                 (success ? resolve : reject)(response);
               });
             }),
-            email_provider_draft_delete: (draft_id) => new Promise((resolve, reject) => {
+            email_provider_draft_delete: (draft_id) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_delete(url_params.account_email, draft_id, (success, response) => {
                 (success ? resolve : reject)(response);
               });
             }),
-            email_provider_message_send: (message, render_upload_progress) => new Promise((resolve, reject) => {
+            email_provider_message_send: (message, render_upload_progress) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.message_send(url_params.account_email, message, function (success, response) {
                 (success ? resolve : reject)(response);
               }, render_upload_progress);
             }),
-            email_provider_search_contacts: (query, known_contacts) => new Promise((resolve, reject) => {
+            email_provider_search_contacts: (query, known_contacts) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.search_contacts(url_params.account_email, query, known_contacts, resolve);
             }),
             email_provider_determine_reply_message_header_variables: (callback) => {

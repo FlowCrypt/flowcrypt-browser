@@ -2,19 +2,19 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 db_open(function (db) {
   tool.browser.message.tab_id(function (tab_id) {
 
-    var original_content;
-    var missing_passprase_longids = [];
+    let original_content;
+    let missing_passprase_longids = [];
 
-    var attach_js = init_shared_attach_js(function() {
+    let attach_js = init_shared_attach_js(function() {
       return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
     });
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    var factory = element_factory(url_params.account_email, tab_id);
+    let factory = element_factory(url_params.account_email, tab_id);
 
     tool.browser.message.listen({
       close_dialog: function () {
@@ -33,7 +33,7 @@ db_open(function (db) {
     }, tab_id);
 
     $('.action_decrypt_and_download').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-      var ids = attach_js.get_attachment_ids();
+      let ids = attach_js.get_attachment_ids();
       if(ids.length === 1) {
         original_content = $(self).html();
         $(self).html('Decrypting.. ' + tool.ui.spinner('white'));

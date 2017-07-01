@@ -2,11 +2,11 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email']);
+let url_params = tool.env.url_params(['account_email']);
 
 tool.browser.message.tab_id(function(tab_id) {
 
-  var factory = element_factory(url_params.account_email, tab_id);
+  let factory = element_factory(url_params.account_email, tab_id);
 
   tool.browser.message.listen({
     set_css: function (data) {
@@ -48,7 +48,7 @@ tool.browser.message.tab_id(function(tab_id) {
 
         $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
           $('.hide_when_rendering_subpage').css('display', 'none');
-          var email = $(self).closest('tr').attr('email');
+          let email = $(self).closest('tr').attr('email');
           $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + email + '&nbsp;&nbsp;&nbsp;&nbsp;(edit)');
           $('#edit_contact').css('display', 'block');
           $('#edit_contact .input_pubkey').val('').attr('email', email);
@@ -56,8 +56,8 @@ tool.browser.message.tab_id(function(tab_id) {
         }));
 
         $('#edit_contact .action_save_edited_pubkey').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-          var armored_pubkey = $('#edit_contact .input_pubkey').val();
-          var email = $('#edit_contact .input_pubkey').attr('email');
+          let armored_pubkey = $('#edit_contact .input_pubkey').val();
+          let email = $('#edit_contact .input_pubkey').attr('email');
           if(!armored_pubkey || !email) {
             alert('No public key entered');
           } else if(tool.crypto.key.fingerprint(armored_pubkey) !== null) {
@@ -79,7 +79,7 @@ tool.browser.message.tab_id(function(tab_id) {
         }));
 
         $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-          var replaced = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val());
+          let replaced = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val());
           if(!replaced || replaced === $('#bulk_import .input_pubkey').val()) {
             alert('Could not find any new public keys');
           } else {

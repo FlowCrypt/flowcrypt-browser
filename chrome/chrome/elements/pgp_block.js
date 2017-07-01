@@ -4,19 +4,19 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
+let url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
 
 db_open(function (db) {
 
-  var included_attachments = [];
-  var height_history = [];
-  var message_fetched_from_api = false;
-  var passphrase_interval = undefined;
-  var missing_or_wrong_passprases = {};
-  var can_read_emails = undefined;
-  var unsecure_mdc_ignored = false;
-  var password_message_link_result;
-  var admin_codes;
+  let included_attachments = [];
+  let height_history = [];
+  let message_fetched_from_api = false;
+  let passphrase_interval = undefined;
+  let missing_or_wrong_passprases = {};
+  let can_read_emails = undefined;
+  let unsecure_mdc_ignored = false;
+  let password_message_link_result;
+  let admin_codes;
 
   if(db === db_denied) {
     notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
@@ -31,11 +31,11 @@ db_open(function (db) {
   tool.env.increment('view');
 
   function send_resize_message() {
-    var new_height = $('#pgp_block').height() + 40;
+    let new_height = $('#pgp_block').height() + 40;
 
     function is_infinite_resize_loop() {
       height_history.push(new_height);
-      var len = height_history.length;
+      let len = height_history.length;
       if(len < 4) {
         return false;
       }
@@ -54,7 +54,7 @@ db_open(function (db) {
   }
 
   function render_content(content, is_error, callback) {
-    account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], function (storage) {
+    account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], storage => {
       if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
         account_storage_set(url_params.account_email, { successfully_received_at_leat_one_message: true });
       }
@@ -126,7 +126,7 @@ db_open(function (db) {
   }
 
   function handle_private_key_mismatch(account_email, message) { //todo - make it work for multiple stored keys
-    var msg_diagnosis = tool.diagnose.message_pubkeys(account_email, message);
+    let msg_diagnosis = tool.diagnose.message_pubkeys(account_email, message);
     if(msg_diagnosis.found_match) {
       render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.encrypted_correctly_file_bug);
     } else {
@@ -170,13 +170,13 @@ db_open(function (db) {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
     tool.each(attachments, function (i, attachment) {
-      var name = (attachment.name ? tool.str.html_escape(attachment.name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
-      var size = tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB';
+      let name = (attachment.name ? tool.str.html_escape(attachment.name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      let size = tool.str.number_format(Math.ceil(attachment.size / 1024)) + 'KB';
       $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + name + '</b>&nbsp;&nbsp;&nbsp;' + size + '<span class="progress"><span class="percent"></span></span></div>');
     });
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-      var attachment = included_attachments[$(self).attr('index')];
+      let attachment = included_attachments[$(self).attr('index')];
       if(tool.env.browser().name !== 'firefox') { // non-firefox: download directly
         if(attachment.content) {
           tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
@@ -192,7 +192,7 @@ db_open(function (db) {
           });
         }
       } else { // firefox: open in another tab
-        var p = {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, download: true, name: attachment.name, type: attachment.type, size: attachment.size};
+        let p = {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, download: true, name: attachment.name, type: attachment.type, size: attachment.size};
         if(attachment.url) {
           p.url = attachment.url;
         } else {
@@ -205,7 +205,7 @@ db_open(function (db) {
 
   function render_pgp_signature_check_result(signature) {
     if(signature) {
-      var signer_email = signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email;
+      let signer_email = signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email;
       $('#pgp_signature > .cursive > span').text(signer_email || 'Unknown Signer');
       if(signature.signer && !signature.contact) {
         $('#pgp_signature').addClass('neutral');
@@ -223,7 +223,7 @@ db_open(function (db) {
   }
 
   function render_future_expiration(date) {
-    var btns = '';
+    let btns = '';
     if(admin_codes && admin_codes.length) {
       btns += ' <a href="#" class="extend_expiration">extend</a>';
     }
@@ -238,7 +238,7 @@ db_open(function (db) {
   }
 
   function recover_stored_admin_codes() {
-    account_storage_get(null, ['admin_codes'], function (storage) {
+    account_storage_get(null, ['admin_codes'], storage => {
       if(url_params.short && storage.admin_codes && storage.admin_codes[url_params.short] && storage.admin_codes[url_params.short].codes) {
         admin_codes = storage.admin_codes[url_params.short].codes;
       }
@@ -246,7 +246,7 @@ db_open(function (db) {
   }
 
   function render_message_expiration_renew_options() {
-    var parent = $(this).parent();
+    let parent = $(this).parent();
     storage_cryptup_subscription(function (level, expire, expired, method) {
       if(level && !expired) {
         parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
@@ -263,7 +263,7 @@ db_open(function (db) {
   }
 
   function handle_extend_message_expiration_clicked(self) {
-    var n_days = Number($(self).attr('href').replace('#', ''));
+    let n_days = Number($(self).attr('href').replace('#', ''));
     $(self).parent().html('Updating..' + tool.ui.spinner('green'));
     tool.api.cryptup.message_expiration(admin_codes, n_days).validate(r => r.updated).then(response => window.location.reload(), error => {
       if(error.internal === 'auth') {
@@ -279,9 +279,9 @@ db_open(function (db) {
   function decide_decrypted_content_formatting_and_render(decrypted_content, is_encrypted, signature_result) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
-    var public_keys = [];
+    let public_keys = [];
     if(!tool.mime.resembles_message(decrypted_content)) {
-      var cryptup_attachments = [];
+      let cryptup_attachments = [];
       decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
       decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content);
       decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
@@ -300,7 +300,7 @@ db_open(function (db) {
       $('#pgp_block').text('Formatting...');
       tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
-          var renderable_attachments = [];
+          let renderable_attachments = [];
           tool.each(result.attachments, function(i, attachment) {
             if(tool.file.treat_as(attachment) !== 'public_key') {
               renderable_attachments.push(attachment);
@@ -384,7 +384,7 @@ db_open(function (db) {
   }
 
   function render_password_prompt() {
-    var prompt = '<p>' + window.lang.pgp_block.question_decryt_prompt + '</p>';
+    let prompt = '<p>' + window.lang.pgp_block.question_decryt_prompt + '</p>';
     prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
     render_content(prompt, true, function () {
@@ -410,7 +410,7 @@ db_open(function (db) {
 
   function render_password_encrypted_message_load_fail(link_result) {
     if(link_result.expired) {
-      var expiration_m = window.lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + window.lang.pgp_block.messages_dont_expire + '\n\n';
+      let expiration_m = window.lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + window.lang.pgp_block.messages_dont_expire + '\n\n';
       if(link_result.deleted) {
         expiration_m += window.lang.pgp_block.message_destroyed;
       } else if(url_params.is_outgoing && admin_codes) {
@@ -439,8 +439,8 @@ db_open(function (db) {
       tool.api.gmail.message_get(url_params.account_email, url_params.message_id, 'raw', function(success, result) {
         message_fetched_from_api = 'raw';
         if(success && result.raw) {
-          var mime_message = tool.str.base64url_decode(result.raw);
-          var parsed = tool.mime.signed(mime_message);
+          let mime_message = tool.str.base64url_decode(result.raw);
+          let parsed = tool.mime.signed(mime_message);
           if(parsed) {
             url_params.signature = parsed.signature;
             url_params.message = parsed.signed;
@@ -484,7 +484,7 @@ db_open(function (db) {
     } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
       if(can_read_emails) {
         $('#pgp_block').text('Retrieving message...');
-        var format = (!message_fetched_from_api) ? 'full' : 'raw';
+        let format = (!message_fetched_from_api) ? 'full' : 'raw';
         tool.api.gmail.extract_armored_block(url_params.account_email, url_params.message_id, format, function (message_raw) {
           $('#pgp_block').text('Decrypting...');
           url_params.message = message_raw;
@@ -512,7 +512,7 @@ db_open(function (db) {
     }
   }
 
-  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], function (storage) {
+  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], storage => {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     if(storage.setup_done) {
       initialize();

@@ -2,19 +2,19 @@
 
 'use strict';
 
-var l = {
+const l = {
   all_good: 'Your account is well set up. If you cannot open some of your received email, please inform your contacts to update their information about your public key. ',
   mismatch: 'There is at least one incorrect pubkey record. Your encrypted email may be unreadable as a result. ',
   missing: 'Some receiving emails are not registered for encryption, and your contancts will not know they can send you encrypted email. ',
 };
 
-var url_params = tool.env.url_params(['account_email']);
+let url_params = tool.env.url_params(['account_email']);
 
 $('.email-address').text(url_params.account_email);
 
 $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
-account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], function (storage) {
+account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], storage => {
   tool.diagnose.keyserver_pubkeys(url_params.account_email, function (diagnosis) {
     if(diagnosis) {
       $('.summary').html('');
@@ -30,56 +30,57 @@ account_storage_get(url_params.account_email, ['attests_processed', 'attests_req
 
 function render_diagnosis(diagnosis, attests_requested, attests_processed) {
   tool.each(diagnosis.results, function (email, result) {
+    let note, action, remove, color;
     if(result.pubkey === null) {
-      var note = 'Missing record. Your contacts will not know you have encryption set up.';
-      var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';
-      var remove = '&nbsp; <b class="bad action_remove_alias" email="' + email + '" title="Remove address from list of send-from addresses.">[x]</b>';
-      var color = 'orange';
+      note = 'Missing record. Your contacts will not know you have encryption set up.';
+      action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';
+      remove = '&nbsp; <b class="bad action_remove_alias" email="' + email + '" title="Remove address from list of send-from addresses.">[x]</b>';
+      color = 'orange';
     } else if(result.match) {
       if(email === url_params.account_email && !result.attested) {
         if(attests_requested && attests_requested.length) {
-          var note = 'Submitted. Attestation was requested from ' + attests_requested.join(', ') + ' and should process shortly.';
-          var action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
-          var remove = '';
-          var color = 'orange';
+          note = 'Submitted. Attestation was requested from ' + attests_requested.join(', ') + ' and should process shortly.';
+          action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
+          remove = '';
+          color = 'orange';
         } else {
-          var note = 'Found but not attested.';
-          var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
-          var remove = '';
-          var color = 'orange';
+          note = 'Found but not attested.';
+          action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
+          remove = '';
+          color = 'orange';
         }
       } else if(email === url_params.account_email && result.attested) {
-        var note = 'Submitted, can receive encrypted email. Attested by CRYPTUP.';
-        var action = '';
-        var remove = '';
-        var color = 'green';
+        note = 'Submitted, can receive encrypted email. Attested by CRYPTUP.';
+        action = '';
+        remove = '';
+        color = 'green';
       } else {
-        var note = 'Submitted, can receive encrypted email.';
-        var action = '';
-        var remove = '';
-        var color = 'green';
+        note = 'Submitted, can receive encrypted email.';
+        action = '';
+        remove = '';
+        color = 'green';
       }
     } else {
       if(email === url_params.account_email && !result.attested) {
-        var note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-        var action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
-        var remove = '';
-        var color = 'red';
+        note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
+        action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
+        remove = '';
+        color = 'red';
       } else if(email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
-        var note = 'Re-Attestation requested. This should process shortly.';
-        var action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
-        var remove = '';
-        var color = 'orange';
+        note = 'Re-Attestation requested. This should process shortly.';
+        action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
+        remove = '';
+        color = 'orange';
       } else if(email === url_params.account_email && result.attested) {
-        var note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-        var action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
-        var remove = '';
-        var color = 'red';
+        note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
+        action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
+        remove = '';
+        color = 'red';
       } else {
-        var note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-        var action = '';
-        var remove = '';
-        var color = 'red';
+        note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
+        action = '';
+        remove = '';
+        color = 'red';
       }
     }
     $('table#emails').append('<tr><td>' + email + remove + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
@@ -89,7 +90,7 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     action_submit_or_request_attestation($(self).attr('email'));
   }));
   $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-    account_storage_get(url_params.account_email, ['addresses'], function (storage) {
+    account_storage_get(url_params.account_email, ['addresses'], storage => {
       account_storage_set(url_params.account_email, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}, function () {
         window.location.reload();
       });

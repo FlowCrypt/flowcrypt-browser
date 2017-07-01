@@ -35,7 +35,7 @@ function render(obj) {
   });
 }
 
-chrome.storage.local.get(function (storage) {
+chrome.storage.local.get(storage => {
   if(url_params.filter) {
     var real_filter = account_storage_key(url_params.filter, url_params.keys || '');
   } else {

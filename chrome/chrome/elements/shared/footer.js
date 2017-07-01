@@ -4,11 +4,11 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'placement']); // placement: compose||settings
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'placement']); // placement: compose||settings
 
 storage_cryptup_subscription(function (level, expire, active) {
   if(active) {
-    account_storage_get(url_params.account_email, ['email_footer'], function (storage) {
+    account_storage_get(url_params.account_email, ['email_footer'], storage => {
       $('.input_email_footer').val(storage.email_footer);
     });
     $('.user_subscribed').css('display', 'block');

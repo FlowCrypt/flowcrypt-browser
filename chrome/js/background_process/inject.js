@@ -2,13 +2,13 @@
 
 'use strict';
 
-var responses = {};
+let responses = {};
 
 function inject_cryptup_into_webmail_if_needed() {
-  tool.each(chrome.runtime.getManifest().content_scripts, function (i, group) {
-    get_content_script_tab_ids(group.matches, function (tab_ids) {
-      tool.each(tab_ids, function (i, tab_id) {
-        is_content_script_injection_needed(tab_id, function (already_injected) {
+  tool.each(chrome.runtime.getManifest().content_scripts, (i, group) => {
+    get_content_script_tab_ids(group.matches, (tab_ids) => {
+      tool.each(tab_ids, (i, tab_id) => {
+        is_content_script_injection_needed(tab_id, (already_injected) => {
           if(!already_injected) {
             console.log("Injecting CryptUp into tab " + tab_id);
             inject_content_scripts(tab_id, group.js);
@@ -20,7 +20,7 @@ function inject_cryptup_into_webmail_if_needed() {
 }
 
 function get_content_script_tab_ids(matches, callback) {
-  chrome.tabs.query({ 'url': matches }, function (result) {
+  chrome.tabs.query({ 'url': matches }, result => {
     callback(result.map(function (tab) {
       return tab.id;
     }));
@@ -28,14 +28,14 @@ function get_content_script_tab_ids(matches, callback) {
 }
 
 function is_content_script_injection_needed(tab_id, callback) {
-  chrome.tabs.executeScript(tab_id, { code: 'Boolean(window.injected)' }, function (results) {
+  chrome.tabs.executeScript(tab_id, { code: 'Boolean(window.injected)' }, results => {
     callback(results[0]);
   });
 }
 
 function inject_content_scripts(tab_id, files, callback) {
-  var files_copy = files.slice();
-  chrome.tabs.executeScript(tab_id, { file: files_copy.shift() }, function (results) {
+  let files_copy = files.slice();
+  chrome.tabs.executeScript(tab_id, { file: files_copy.shift() }, results => {
     if(files_copy.length) {
       inject_content_scripts(tab_id, files_copy, callback);
     } else if(callback) {

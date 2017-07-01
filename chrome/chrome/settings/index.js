@@ -2,10 +2,10 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
-var tab_id_global;
-var microsoft_auth_attempt = {};
-var google_token_scopes;
+let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
+let tab_id_global;
+let microsoft_auth_attempt = {};
+let google_token_scopes;
 
 tool.time.wait(function() { if(typeof catcher !== 'undefined') { return true; }}).then(function() {
   $('.logo-row span#v').text(catcher.version());
@@ -20,7 +20,7 @@ tool.env.webmails(function(webmails) {
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
 
-  var factory = element_factory(url_params.account_email, tab_id);
+  let factory = element_factory(url_params.account_email, tab_id);
 
   tool.browser.message.listen({
     open_page: function (data, sender, respond) {
@@ -73,7 +73,7 @@ tool.browser.message.tab_id(function (tab_id) {
 });
 
 function display_original(selector) {
-  var filterable = $(selector);
+  let filterable = $(selector);
   filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
   filterable.filter('table').css('display', 'table');
   filterable.filter('tr').css('display', 'table-row');
@@ -85,7 +85,7 @@ function initialize() {
   if(url_params.account_email) {
     $('.email-address').text(url_params.account_email);
     $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
-    account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], function (storage) {
+    account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], storage => {
       google_token_scopes = storage.google_token_scopes;
       if(storage.setup_done) {
         render_subscription_status_header();
@@ -95,7 +95,7 @@ function initialize() {
         }
         display_original('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
-        var private_keys = private_keys_get(url_params.account_email);
+        let private_keys = private_keys_get(url_params.account_email);
         if(!private_keys.length) {
           render_storage_read_error();
         } else if(private_keys.length > 4) {
@@ -121,7 +121,7 @@ function initialize() {
 
 function render_encrypted_contact_page_status() {
   tool.api.cryptup.account_update().done((success, response) => {
-    var status_container = $('.public_profile_indicator_container');
+    let status_container = $('.public_profile_indicator_container');
     if(success && response && response.result && response.result.alias) {
       status_container.find('.status-indicator-text').css('display', 'none');
       status_container.find('.status-indicator').addClass('active');
@@ -158,7 +158,7 @@ function render_subscription_status_header() {
 }
 
 function render_storage_read_error() {
-  var html = '<div class="line">CryptUp is not able to access local browser storage. </div>';
+  let html = '<div class="line">CryptUp is not able to access local browser storage. </div>';
   html += '<div class="line">Certain browser privacy or security settings can cause this.</div>';
   html += '<div class="line">Private Browsing Mode (Incognito mode) can also cause this issue.</div>';
   html += '<div class="line">If you have changed any browser settings recently, try to set them back.</div>';
@@ -167,11 +167,11 @@ function render_storage_read_error() {
 }
 
 function add_key_rows_html(private_keys) {
-  var html = '';
+  let html = '';
   tool.each(private_keys, function (i, keyinfo) {
-    var prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-    var date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-    var primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + keyinfo.longid + '">remove</a>)';
+    let prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    let date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
+    let primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + keyinfo.longid + '">remove</a>)';
     html += '<div class="row key-content-row key_' + keyinfo.longid + '">';
     html += '  <div class="col-sm-12"><a href="#" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + keyinfo.longid + '">' + tool.str.parse_email(prv.users[0].userId.userid).email + '</a> from ' + date + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
     html += '  <div class="col-sm-12">KeyWords: <span class="good">' + mnemonic(keyinfo.longid) + '</span></div>';
@@ -193,7 +193,7 @@ function new_google_account_authentication_prompt(account_email, omit_read_scope
   tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope: omit_read_scope, tab_id: tab_id_global }, google_token_scopes, function (response) {
     if(response && response.success === true && response.account_email) {
       add_account_email_to_list_of_accounts(response.account_email, function () {
-        account_storage_get(response.account_email, ['setup_done'], function (storage) {
+        account_storage_get(response.account_email, ['setup_done'], storage => {
           if(storage.setup_done) { // this was just an additional permission
             alert('You\'re all set.');
             window.location = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
@@ -215,8 +215,8 @@ function new_google_account_authentication_prompt(account_email, omit_read_scope
 }
 
 function new_microsoft_account_authentication_prompt(account_email) {
-  var window_id = 'popup_' + tool.str.random(20);
-  var close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function () {
+  let window_id = 'popup_' + tool.str.random(20);
+  let close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function () {
     show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=outlook' : '');
   });
   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};

@@ -24,7 +24,7 @@ function content_script_setup_if_vacant(webmail_specific) {
     window.destroyable_timeouts = [];
 
     window.destroy = function () {
-      catcher.try(function () {
+      catcher.try(() => {
         console.log('Updating CryptUp');
         document.removeEventListener(destruction_event, destroy);
         tool.each(destroyable_intervals, function (i, id) {
@@ -45,13 +45,13 @@ function content_script_setup_if_vacant(webmail_specific) {
     };
 
     window.TrySetDestroyableInterval = function (code, ms) {
-      var id = setInterval(window.catcher.try(code), ms);
+      let id = setInterval(window.catcher.try(code), ms);
       destroyable_intervals.push(id);
       return id;
     };
 
     window.TrySetDestryableTimeout = function (code, ms) {
-      var id = setTimeout(window.catcher.try(code), ms);
+      let id = setTimeout(window.catcher.try(code), ms);
       destroyable_timeouts.push(id);
       return id;
     };
@@ -67,13 +67,13 @@ function content_script_setup_if_vacant(webmail_specific) {
 
   }
 
-  var account_email_interval = 1000;
-  var factory;
-  var inject;
-  var notifications = content_script_notifications();
+  let account_email_interval = 1000;
+  let factory;
+  let inject;
+  let notifications = content_script_notifications();
 
   function wait_for_account_email_then_setup() {
-    var account_email = webmail_specific.get_user_account_email();
+    let account_email = webmail_specific.get_user_account_email();
     if(!window.account_email_global) {
       if(typeof account_email !== 'undefined' && catcher.version()) {
         console.log('Loading CryptUp ' + catcher.version());
@@ -103,15 +103,15 @@ function content_script_setup_if_vacant(webmail_specific) {
       inject.meta();
       add_account_email_to_list_of_accounts(account_email);
       save_account_email_full_name_if_needed(account_email);
-      var show_setup_needed_notification_if_setup_not_done = true;
-      var wait_for_setup_interval = TrySetDestroyableInterval(function () {
-        account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], function (storage) {
+      let show_setup_needed_notification_if_setup_not_done = true;
+      let wait_for_setup_interval = TrySetDestroyableInterval(function () {
+        account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], storage => {
           if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
             notifications.clear();
             initialize(account_email, tab_id);
             clearInterval(wait_for_setup_interval);
           } else if(!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-            var set_up_notification = '<a href="#" class="action_open_settings">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+            let set_up_notification = '<a href="#" class="action_open_settings">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
             notifications.show(set_up_notification, {
               notification_setup_needed_dismiss: function () {
                 account_storage_set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
@@ -132,57 +132,41 @@ function content_script_setup_if_vacant(webmail_specific) {
   // called by setup
   function initialize(account_email, tab_id) {
     tool.browser.message.listen({
-      open_new_message: function (data) {
-        inject.open_compose_window();
-      },
-      close_new_message: function (data) {
-        $('div.new_message').remove();
-      },
-      close_reply_message: function (data) {
-        $('iframe#' + data.frame_id).remove();
-      },
-      reinsert_reply_box: function (data) {
-        webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id);
-      },
-      render_public_keys: function (data) {
-        tool.each(data.public_keys, function(i, armored_pubkey) {
-          $('iframe#' + data.after_frame_id).after(factory.embedded.pubkey(armored_pubkey, false));
-        });
-      },
-      passphrase_dialog: function (data) {
+      open_new_message: data => inject.open_compose_window(),
+      close_new_message: data => $('div.new_message').remove(),
+      close_reply_message: data => $('iframe#' + data.frame_id).remove(),
+      reinsert_reply_box: data => webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id),
+      render_public_keys: data => tool.each(data.public_keys, (i, armored_pubkey) => $('iframe#' + data.after_frame_id).after(factory.embedded.pubkey(armored_pubkey, false))),
+      close_dialog: (data) => $('#cryptup_dialog').remove(),
+      scroll: data => tool.ui.scroll(data.selector, data.repeat),
+      passphrase_dialog: data => {
         if(!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog.passphrase(data.longids, data.type));
         }
       },
-      subscribe_dialog: function (data) {
+      subscribe_dialog: data => {
         if(!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog.subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
         }
       },
-      add_pubkey_dialog: function (data) {
+      add_pubkey_dialog: data => {
         if(!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog.add_pubkey(data.emails));
         }
       },
-      notification_show: function (data) {
+      notification_show: data => {
         notifications.show(data.notification, data.callbacks, account_email);
         $('body').one('click', catcher.try(notifications.clear));
       },
-      close_dialog: function (data) {
-        $('#cryptup_dialog').remove();
-      },
-      scroll: function(data) {
-        tool.ui.scroll(data.selector, data.repeat);
-      },
     }, tab_id);
 
-    tool.browser.message.send(null, 'migrate_account', { account_email: account_email }, function () {
+    tool.browser.message.send(null, 'migrate_account', { account_email: account_email }, () => {
       webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
     });
   }
 
   function save_account_email_full_name_if_needed(account_email) {
-    account_storage_get(account_email, 'full_name', function (value) {
+    account_storage_get(account_email, 'full_name', value => {
       if(typeof value === 'undefined') {
         save_account_email_full_name(account_email);
       }
@@ -193,7 +177,7 @@ function content_script_setup_if_vacant(webmail_specific) {
     // will cycle until page loads and name is accessible
     // todo - create general event on_webmail_finished_loading for similar actions
     TrySetDestryableTimeout(function () {
-      var full_name = webmail_specific.get_user_full_name();
+      let full_name = webmail_specific.get_user_full_name();
       if(full_name) {
         account_storage_set(account_email, { full_name: full_name });
       } else {

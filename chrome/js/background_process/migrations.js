@@ -3,7 +3,7 @@
 'use strict';
 
 function migrate_account(data, sender, respond_done) {
-  account_storage_get(data.account_email, ['version'], function (account_storage) {
+  account_storage_get(data.account_email, ['version'], account_storage => {
     // if account_storage.version < ....
     account_storage_set(data.account_email, { version: catcher.version('int') }, respond_done);
     account_consistency_fixes(data.account_email);
@@ -13,7 +13,7 @@ function migrate_account(data, sender, respond_done) {
 }
 
 function migrate_global(callback) {
-  account_storage_get(null, ['version'], function (global_storage) {
+  account_storage_get(null, ['version'], global_storage => {
     if(!localStorage.resolved_naked_key_vulnerability) {
       catcher.log('checking NKV');
       global_migrate_v_422(resolved => {
@@ -84,7 +84,7 @@ function global_migrate_v_422_do_fix_account_keys(account_email, fixable_keyinfo
   let count_resolved = 0;
   return catcher.Promise((resolve, reject) => {
     catcher.try(() => {
-      tool.api.gmail.fetch_key_backups(account_email, function (success, backed_keys) {
+      tool.api.gmail.fetch_key_backups(account_email, (success, backed_keys) => {
         if(success) {
           if(backed_keys) {
             $.each(fixable_keyinfos, (i, fixable_keyinfo) => {
@@ -110,7 +110,7 @@ function global_migrate_v_422_do_fix_account_keys(account_email, fixable_keyinfo
 }
 
 function account_consistency_fixes(account_email) {
-  account_storage_get(account_email, ['setup_done'], function (storage) {
+  account_storage_get(account_email, ['setup_done'], storage => {
     // re-submitting pubkey if failed
     if(storage.setup_done && private_storage_get('local', account_email, 'master_public_key_submit') && !private_storage_get('local', account_email, 'master_public_key_submitted')) {
       console.log('consistency_fixes: submitting pubkey');
@@ -124,12 +124,12 @@ function account_consistency_fixes(account_email) {
 }
 
 function account_update_status_keyserver(account_email) { // checks which emails were registered on cryptup keyserver.
-  var my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
-  account_storage_get(account_email, ['addresses', 'addresses_keyserver'], function (storage) {
+  let my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
+  account_storage_get(account_email, ['addresses', 'addresses_keyserver'], storage => {
     if(storage.addresses && storage.addresses.length) {
       tool.api.attester.lookup_email(storage.addresses).then(results => {
-        var addresses_keyserver = [];
-        tool.each(results.results, function (i, result) {
+        let addresses_keyserver = [];
+        tool.each(results.results, (i, result) => {
           if(result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
             addresses_keyserver.push(result.email);
           }
@@ -141,14 +141,14 @@ function account_update_status_keyserver(account_email) { // checks which emails
 }
 
 function account_update_status_pks(account_email) { // checks if any new emails were registered on pks lately
-  var my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
-  var hkp = new openpgp.HKP('http://keys.gnupg.net');
-  account_storage_get(account_email, ['addresses', 'addresses_pks'], function (storage) {
-    var addresses_pks = storage.addresses_pks || [];
-    tool.each(storage.addresses || [account_email], function (i, email) {
+  let my_longids = tool.arr.select(private_keys_get(account_email), 'longid');
+  let hkp = new openpgp.HKP('http://keys.gnupg.net');
+  account_storage_get(account_email, ['addresses', 'addresses_pks'], storage => {
+    let addresses_pks = storage.addresses_pks || [];
+    tool.each(storage.addresses || [account_email], (i, email) => {
       if(!tool.value(email).in(addresses_pks)) {
         try {
-          hkp.lookup({ query: email }).then(function (pubkey) {
+          hkp.lookup({ query: email }).then(pubkey => {
             if(typeof pubkey !== 'undefined') {
               if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
                 addresses_pks.push(email);
@@ -156,7 +156,7 @@ function account_update_status_pks(account_email) { // checks if any new emails 
                 account_storage_set(account_email, { addresses_pks: addresses_pks, });
               }
             }
-          }).catch(function (error) {
+          }).catch(error => {
             console.log('Error fetching keys from PKS: ' + error.message);
           });
         } catch(error) {
@@ -168,7 +168,7 @@ function account_update_status_pks(account_email) { // checks if any new emails 
 }
 
 function schedule_cryptup_subscription_level_check() {
-  setTimeout(function() {
+  setTimeout(() => {
     if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
       setTimeout(catcher.try(tool.api.cryptup.account_check_sync), tool.time.hours(Math.random() * 3)); // random 0-3 hours

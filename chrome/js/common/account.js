@@ -3,16 +3,11 @@
 'use strict';
 
 
-(function(){
+(function() {
 
-  var callbacks = {
-    render_status: function () {},
-    find_matching_tokens_from_email: fetch_token_emails_on_gmail_and_find_matching_token,
-  };
+  const cryptup_verification_email_sender = 'verify@cryptup.org';
 
-  var cryptup_verification_email_sender = 'verify@cryptup.org';
-
-  var _self = {
+  const _self = {
     parse_token_email_text: parse_token_email_text,
     save_subscription_attempt: save_subscription_attempt,
     config: set_event_handlers,
@@ -26,6 +21,11 @@
       advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
     },
     CAN_READ_EMAIL: true,
+  };
+
+  let callbacks = {
+    render_status: function () {},
+    find_matching_tokens_from_email: fetch_token_emails_on_gmail_and_find_matching_token,
   };
 
   function subscribe(account_email, chosen_product, source) {
@@ -49,7 +49,7 @@
 
   function do_subscribe(chosen_product, source) {
     return catcher.Promise((resolve, reject) => {
-      account_storage_remove(null, 'cryptup_subscription_attempt', function () {
+      account_storage_remove(null, 'cryptup_subscription_attempt', () => {
         return tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, source || null).then(response => {
           if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
             resolve(response.subscription);
@@ -62,9 +62,9 @@
   }
 
   function parse_token_email_text(verification_email_text, stored_uuid_to_cross_check) {
-    var token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
+    let token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
     if(token_link_match !== null) {
-      var token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
+      let token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
       if ((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
         return token_link_params.token;
       }
@@ -72,22 +72,22 @@
   }
 
   function fetch_token_emails_on_gmail_and_find_matching_token(account_email, uuid, callback) {
-    var called_back = false;
+    let called_back = false;
     function callback_once(v1, v2) {
       if(!called_back) {
         called_back = true;
         callback(v1, v2);
       }
     }
-    var tokens = [];
-    tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, function (list_success, response) {
+    let tokens = [];
+    tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, (list_success, response) => {
       if(list_success) {
         if(response.messages) {
-          tool.api.gmail.message_get(account_email, response.messages.map(function (m) { return m.id; }), 'full', function (get_success, messages) {
+          tool.api.gmail.message_get(account_email, response.messages.map(m => m.id), 'full', (get_success, messages) => {
             if(get_success) {
-              tool.each(messages, function (id, gmail_message_object) {
+              tool.each(messages, (id, gmail_message_object) => {
                 if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-                  var token = parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
+                  let token = parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
                   if(token) {
                     tokens.push(token);
                   }
@@ -115,15 +115,13 @@
     } else if(timeout < 10) {
       callbacks.render_status('A little while more..');
     }
-    var end = Date.now() + timeout * 1000;
-    storage_cryptup_auth_info(function (account, uuid, verified) {
-      callbacks.find_matching_tokens_from_email(account, uuid, function (success, tokens) {
+    let end = Date.now() + timeout * 1000;
+    storage_cryptup_auth_info((account, uuid, verified) => {
+      callbacks.find_matching_tokens_from_email(account, uuid, (success, tokens) => {
         if(success && tokens) {
           callback(tokens);
         } else if(Date.now() < end) {
-          setTimeout(function () {
-            wait_for_token_email((end - Date.now()) / 1000, callback);
-          }, 5000);
+          setTimeout(() => wait_for_token_email((end - Date.now()) / 1000, callback), 5000);
         } else {
           callback(null);
         }
@@ -171,7 +169,7 @@
 
   function register_new_device(account_email) {
     return catcher.Promise((resolve, reject) => {
-      account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, function () {
+      account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
         render_status('checking..', true);
         register_and_attempt_to_verify(account_email).then(resolve, reject);
       });
@@ -179,7 +177,7 @@
   }
 
   function set_event_handlers(_callbacks) {
-    $.each(_callbacks, function (name, handler) {
+    $.each(_callbacks, (name, handler) => {
       callbacks[name] = handler;
     });
   }
@@ -189,7 +187,7 @@
   }
 
   if(typeof exports === 'object') {
-    $.each(_self, function (k, f) {
+    $.each(_self, (k, f) => {
       exports[a] = f;
     });
   }

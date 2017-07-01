@@ -20,12 +20,12 @@ function init_shared_attach_js(get_limits) {
         },
         callbacks: {
           onSubmitted: function(id, name) {
-            catcher.try(function() {
+            catcher.try(() => {
               process_new_attachment(id, name);
             })();
           },
           onCancel: function(id) {
-            catcher.try(function() {
+            catcher.try(() => {
               cancel_attachment(id);
             })();
           },

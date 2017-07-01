@@ -4,9 +4,9 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
-var original_button_content;
-var original_button_selector;
+let url_params = tool.env.url_params(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
+let original_button_content;
+let original_button_selector;
 
 if(url_params.placement === 'settings') {
   $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -53,7 +53,7 @@ $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), fu
 }));
 
 tool.api.cryptup.account_check_sync(function() {
-  account_storage_get(url_params.account_email, ['google_token_scopes'], function (storage) {
+  account_storage_get(url_params.account_email, ['google_token_scopes'], storage => {
     window.flowcrypt_account.config({
       render_status: render_status,
       CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes, 'read'),
@@ -113,7 +113,7 @@ tool.browser.message.tab_id(function (tab_id) {
   tool.browser.message.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id);
-  var html = window.lang.account.credit_or_debit + '<br><br>' + element_factory(url_params.account_email, tab_id).embedded.stripe_checkout() + '<br><a href="#">back</a>';
+  let html = window.lang.account.credit_or_debit + '<br><br>' + element_factory(url_params.account_email, tab_id).embedded.stripe_checkout() + '<br><a href="#">back</a>';
   $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
 });
 

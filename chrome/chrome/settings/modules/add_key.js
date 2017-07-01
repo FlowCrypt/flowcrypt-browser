@@ -6,8 +6,8 @@ var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 tool.ui.passphrase_toggle(['input_passphrase']);
 
-var private_keys = private_keys_get(url_params.account_email);
-var private_keys_long_ids = [];
+let private_keys = private_keys_get(url_params.account_email);
+let private_keys_long_ids = [];
 tool.each(private_keys, function (i, keyinfo) {
   private_keys_long_ids.push(keyinfo.longid);
 });
@@ -17,7 +17,7 @@ $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
 tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
   if(success) {
     if(keys && keys.length) {
-      var not_imported_backup_longids = [];
+      let not_imported_backup_longids = [];
       tool.each(tool.arr.unique(keys.map(tool.crypto.key.longid)), function (i, longid) {
         if(!tool.value(longid).in(private_keys_long_ids)) {
           not_imported_backup_longids.push(longid);
@@ -41,11 +41,11 @@ tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, ke
   $('#spinner_container').text('');
 });
 
-var attach_js = init_shared_attach_js(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
+let attach_js = init_shared_attach_js(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
 attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
 attach_js.set_attachment_added_callback(function (file) {
-  var content = tool.str.from_uint8(file.content);
-  var k = openpgp.key.readArmored(content).keys[0];
+  let content = tool.str.from_uint8(file.content);
+  let k = openpgp.key.readArmored(content).keys[0];
   if(typeof k !== 'undefined') {
     $('.input_private_key').val(k.armor()).prop('disabled', true);
     $('.source_paste_container').css('display', 'block');
@@ -55,14 +55,14 @@ attach_js.set_attachment_added_callback(function (file) {
 });
 
 $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-  var normalized_armored_key = tool.crypto.key.normalize($('.input_private_key').val());
-  var new_key = openpgp.key.readArmored(normalized_armored_key).keys[0];
-  var passphrase = $('.input_passphrase').val();
-  var prv_headers = tool.crypto.armor.headers('private_key');
+  let normalized_armored_key = tool.crypto.key.normalize($('.input_private_key').val());
+  let new_key = openpgp.key.readArmored(normalized_armored_key).keys[0];
+  let passphrase = $('.input_passphrase').val();
+  let prv_headers = tool.crypto.armor.headers('private_key');
   if(typeof new_key === 'undefined') {
     alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
   } else {
-    var new_key_longid = tool.crypto.key.longid(new_key);
+    let new_key_longid = tool.crypto.key.longid(new_key);
     if(new_key.isPublic()) {
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
     } else if(!new_key_longid) {
@@ -70,7 +70,7 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
     } else if(tool.value(new_key_longid).in(private_keys_long_ids)) {
       alert('This is one of your current keys.');
     } else {
-      var decrypt_result = tool.crypto.key.decrypt(new_key, passphrase);
+      let decrypt_result = tool.crypto.key.decrypt(new_key, passphrase);
       if(decrypt_result.error) {
         alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
       } else if(decrypt_result.success) {

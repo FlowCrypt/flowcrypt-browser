@@ -5,16 +5,14 @@
 function content_script_notifications() {
 
   function show_initial_notifications(account_email) {
-    account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], function (storage) {
+    account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], storage => {
       if(!storage.notification_setup_done_seen) {
-        account_storage_set(account_email, { notification_setup_done_seen: true }, function () {
+        account_storage_set(account_email, { notification_setup_done_seen: true }, () => {
           content_script_notification_show('CryptUp was successfully set up for this account. <a href="#" class="close">close</a>');
         });
       } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {
         content_script_notification_show('<a href="#" class="action_backup">Back up your CryptUp key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
-          action_backup: function() {
-            tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/backup.htm' });
-          },
+          action_backup: event => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/backup.htm' }),
         });
       }
     });
@@ -31,7 +29,7 @@ function content_script_notifications() {
     }
     if(typeof callbacks.close !== 'undefined') {
       var original_close_callback = callbacks.close;
-      callbacks.close = catcher.try(function () {
+      callbacks.close = catcher.try(() => {
         original_close_callback();
         content_script_notification_clear();
       });
@@ -39,18 +37,12 @@ function content_script_notifications() {
       callbacks.close = catcher.try(content_script_notification_clear);
     }
     if(typeof callbacks.reload === 'undefined') {
-      callbacks.reload = catcher.try(function () {
-        window.location.reload();
-      });
+      callbacks.reload = catcher.try(() => window.location.reload());
     }
     if(typeof callbacks.content_settings === 'undefined') {
-      callbacks.content_settings = catcher.try(function () {
-        tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/texts/' + tool.env.browser().name + '_content_settings.htm' });
-      });
+      callbacks.content_settings = catcher.try(() => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/texts/' + tool.env.browser().name + '_content_settings.htm' }));
     }
-    tool.each(callbacks, function (name, callback) {
-      $('.webmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback)));
-    });
+    tool.each(callbacks, (name, callback) => $('.webmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback))));
   }
 
   return {

@@ -6,16 +6,16 @@ const global_storage_scope = 'global';
 
 function account_storage_key(account_key_or_list, key) {
   if(typeof account_key_or_list === 'object') {
-    var all_results = [];
-    tool.each(account_key_or_list, function (i, account_key) {
+    let all_results = [];
+    tool.each(account_key_or_list, (i, account_key) => {
       all_results = all_results.concat(account_storage_key(account_key, key));
     });
     return all_results;
   } else {
-    var prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
+    let prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
     if(typeof key === 'object') {
-      var account_storage_keys = [];
-      tool.each(key, function (i, k) {
+      let account_storage_keys = [];
+      tool.each(key, (i, k) => {
         account_storage_keys.push(prefix + k);
       });
       return account_storage_keys;
@@ -27,17 +27,17 @@ function account_storage_key(account_key_or_list, key) {
 
 function account_storage_object_keys_to_original(account_or_accounts, storage_object) {
   if(typeof account_or_accounts === 'string') {
-    var fixed_keys_object = {};
-    tool.each(storage_object, function (k, v) {
-      var fixed_key = k.replace(account_storage_key(account_or_accounts, ''), '');
+    let fixed_keys_object = {};
+    tool.each(storage_object, (k, v) => {
+      let fixed_key = k.replace(account_storage_key(account_or_accounts, ''), '');
       if(fixed_key !== k) {
         fixed_keys_object[fixed_key] = v;
       }
     });
     return fixed_keys_object;
   } else {
-    var results_by_account = {};
-    tool.each(account_or_accounts, function (i, account) {
+    let results_by_account = {};
+    tool.each(account_or_accounts, (i, account) => {
       results_by_account[account] = account_storage_object_keys_to_original(account, storage_object);
     });
     return results_by_account;
@@ -64,7 +64,7 @@ function get_storage(storage_type) {
 
 function notify_about_storage_access_error(account_email, parent_tab_id) {
   if(parent_tab_id) {
-    var msg = 'Your browser settings are keeping CryptUp from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
+    let msg = 'Your browser settings are keeping CryptUp from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
     tool.browser.message.send(parent_tab_id, 'notification_show', {notification: msg});
   } else {
     console.log('SecurityError: cannot access localStorage or sessionStorage');
@@ -72,12 +72,12 @@ function notify_about_storage_access_error(account_email, parent_tab_id) {
 }
 
 function private_storage_get(storage_type, account_email, key, parent_tab_id) {
-  var storage = get_storage(storage_type);
+  let storage = get_storage(storage_type);
   if(storage === null) {
     notify_about_storage_access_error(account_email, parent_tab_id);
     return;
   }
-  var value = storage[account_storage_key(account_email, key)];
+  let value = storage[account_storage_key(account_email, key)];
   if(typeof value === 'undefined') {
     return value;
   } else if(value === 'null#null') {
@@ -96,8 +96,8 @@ function private_storage_get(storage_type, account_email, key, parent_tab_id) {
 }
 
 function private_storage_set(storage_type, account_email, key, value) {
-  var storage = get_storage(storage_type);
-  var account_key = account_storage_key(account_email, key);
+  let storage = get_storage(storage_type);
+  let account_key = account_storage_key(account_email, key);
   if(typeof value === 'undefined') {
     storage.removeItem(account_key);
   } else if(value === null) {
@@ -114,7 +114,7 @@ function private_storage_set(storage_type, account_email, key, value) {
 }
 
 function save_passphrase(storage_type, account_email, longid, passphrase) {
-  var master_prv_longid = tool.crypto.key.longid(private_storage_get('local', account_email, 'master_public_key')); //todo - migration needed
+  let master_prv_longid = tool.crypto.key.longid(private_storage_get('local', account_email, 'master_public_key')); //todo - migration needed
   if(longid && longid !== master_prv_longid) {
     private_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
   } else {
@@ -124,11 +124,11 @@ function save_passphrase(storage_type, account_email, longid, passphrase) {
 
 function get_passphrase(account_email, longid) {
   if(longid) {
-    var stored = private_storage_get('local', account_email, 'passphrase_' + longid);
+    let stored = private_storage_get('local', account_email, 'passphrase_' + longid);
     if(stored) {
       return stored;
     } else {
-      var temporary = private_storage_get('session', account_email, 'passphrase_' + longid);
+      let temporary = private_storage_get('session', account_email, 'passphrase_' + longid);
       if(temporary) {
         return temporary;
       } else {
@@ -143,11 +143,11 @@ function get_passphrase(account_email, longid) {
     if(private_storage_get('local', account_email, 'master_passphrase_needed') === false) {
       return '';
     }
-    var stored = private_storage_get('local', account_email, 'master_passphrase');
+    let stored = private_storage_get('local', account_email, 'master_passphrase');
     if(stored) {
       return stored;
     }
-    var temporary = private_storage_get('session', account_email, 'master_passphrase');
+    let temporary = private_storage_get('session', account_email, 'master_passphrase');
     if(temporary) {
       return temporary;
     }
@@ -156,30 +156,31 @@ function get_passphrase(account_email, longid) {
 }
 
 function private_keys_get(account_email, longid) {
-  var keys = [];
-  var private_keys = private_storage_get('local', account_email, 'private_keys');
-  var contains_primary = false;
-  tool.each(private_keys || [], function (i, keyinfo) {
+  let keys = [];
+  let private_keys = private_storage_get('local', account_email, 'private_keys');
+  let contains_primary = false;
+  tool.each(private_keys || [], (i, keyinfo) => {
     if(keyinfo.primary === true) {
       contains_primary = true;
     }
     keys.push(keyinfo);
   });
-  var primary_key_armored = private_storage_get('local', account_email, 'master_private_key');
+  let primary_key_armored = private_storage_get('local', account_email, 'master_private_key');
   if(!contains_primary && (primary_key_armored || '').trim()) {
     keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
   }
   if(typeof longid !== 'undefined') { // looking for a specific key(s)
+    let found;
     if(typeof longid === 'object') { // looking for an array of keys
-      var found = [];
-      tool.each(keys, function (i, keyinfo) {
+      found = [];
+      tool.each(keys, (i, keyinfo) => {
         if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
           found.push(keyinfo);
         }
       });
     } else { // looking for a single key
-      var found = null;
-      tool.each(keys, function (i, keyinfo) {
+      found = null;
+      tool.each(keys, (i, keyinfo) => {
         if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
           found = keyinfo;
         }
@@ -201,7 +202,7 @@ function private_keys_add(account_email, new_key_armored, replace_if_exists) {
       catcher.report('private_keys_add: attempting to add a naked key, aborted');
       return;
     }
-    tool.each(private_keys, function (i, keyinfo) {
+    tool.each(private_keys, (i, keyinfo) => {
       if(new_key_longid === keyinfo.longid) {
         do_add = false;
         if(replace_if_exists === true) {
@@ -226,9 +227,9 @@ function private_keys_add(account_email, new_key_armored, replace_if_exists) {
 }
 
 function private_keys_remove(account_email, remove_longid) {
-  var private_keys = private_keys_get(account_email);
-  var filtered_private_keys = [];
-  tool.each(private_keys, function (i, keyinfo) {
+  let private_keys = private_keys_get(account_email);
+  let filtered_private_keys = [];
+  tool.each(private_keys, (i, keyinfo) => {
     if(keyinfo.longid !== remove_longid) {
       filtered_private_keys.push(keyinfo);
     }
@@ -240,12 +241,12 @@ function account_storage_set(account_email, values, callback) {
   if(!account_email) {
     account_email = global_storage_scope;
   }
-  var storage_update = {};
-  tool.each(values, function (key, value) {
+  let storage_update = {};
+  tool.each(values, (key, value) => {
     storage_update[account_storage_key(account_email, key)] = value;
   });
-  chrome.storage.local.set(storage_update, function () {
-    catcher.try(function () {
+  chrome.storage.local.set(storage_update, () => {
+    catcher.try(() => {
       if(typeof callback !== 'undefined') {
         callback();
       }
@@ -257,8 +258,8 @@ function account_storage_get(account_or_accounts, keys, callback) {
   if(!account_or_accounts) {
     account_or_accounts = global_storage_scope;
   }
-  chrome.storage.local.get(account_storage_key(account_or_accounts, keys), function (storage_object) {
-    catcher.try(function () {
+  chrome.storage.local.get(account_storage_key(account_or_accounts, keys), storage_object => {
+    catcher.try(() => {
       callback(account_storage_object_keys_to_original(account_or_accounts, storage_object));
     })();
   });
@@ -268,8 +269,8 @@ function account_storage_remove(account_email, key_or_keys, callback) {
   if(!account_email) {
     account_email = global_storage_scope;
   }
-  chrome.storage.local.remove(account_storage_key(account_email, key_or_keys), function () {
-    catcher.try(function () {
+  chrome.storage.local.remove(account_storage_key(account_email, key_or_keys), () => {
+    catcher.try(() => {
       if(typeof callback !== 'undefined') {
         callback();
       }
@@ -278,8 +279,8 @@ function account_storage_remove(account_email, key_or_keys, callback) {
 }
 
 function get_account_emails(callback) {
-  account_storage_get(null, ['account_emails'], function (storage) {
-    var account_emails = [];
+  account_storage_get(null, ['account_emails'], storage => {
+    let account_emails = [];
     if(typeof storage.account_emails !== 'undefined') {
       tool.each(JSON.parse(storage.account_emails), function (i, account_email) {
         if(!tool.value(account_email.toLowerCase()).in(account_emails)) {
@@ -298,7 +299,7 @@ function add_account_email_to_list_of_accounts(account_email, callback) { //todo
     }
     if(!tool.value(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);
-      account_storage_set(null, { account_emails: JSON.stringify(account_emails) }, function () {
+      account_storage_set(null, { account_emails: JSON.stringify(account_emails) }, () => {
         tool.browser.message.send(null, 'update_uninstall_url', null, callback);
       });
     } else if(typeof callback !== 'undefined') {
@@ -308,13 +309,13 @@ function add_account_email_to_list_of_accounts(account_email, callback) { //todo
 }
 
 function storage_cryptup_auth_info(callback) {
-  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], function (storage) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], storage => {
     callback(storage.cryptup_account_email, storage.cryptup_account_uuid, storage.cryptup_account_verified);
   });
 }
 
 function storage_cryptup_subscription(callback) {
-  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], function (s) {
+  account_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], s => {
     if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_verified && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, !s.cryptup_account_subscription.expired, s.cryptup_account_subscription.method || 'trial');
     } else {
@@ -346,8 +347,9 @@ function db_error_handle(exception, error_stack, callback) {
 }
 
 function db_open(callback) {
+  let open_db;
   try {
-    var open_db = indexedDB.open('cryptup', 2);
+    open_db = indexedDB.open('cryptup', 2);
   } catch (error) {
     if(error.name === 'SecurityError') { // firefox
       callback(db_denied);
@@ -356,27 +358,26 @@ function db_open(callback) {
     throw error;
   }
   open_db.onupgradeneeded = function (event) {
+    let contacts;
     if(event.oldVersion < 1) {
-      var contacts = open_db.result.createObjectStore('contacts', { keyPath: 'email', });
+      contacts = open_db.result.createObjectStore('contacts', { keyPath: 'email', });
       contacts.createIndex('search', 'searchable', { multiEntry: true, });
       contacts.createIndex('index_has_pgp', 'has_pgp');
       contacts.createIndex('index_pending_lookup', 'pending_lookup');
     }
     if(event.oldVersion < 2) {
-      var contacts = open_db.transaction.objectStore('contacts');
+      contacts = open_db.transaction.objectStore('contacts');
       contacts.createIndex('index_longid', 'longid');
     }
   };
-  var handled = 0; // the indexedDB docs don't say if onblocked and onerror can happen in the same request, or if the event/exception bubbles to both
-  open_db.onsuccess = catcher.try(function () {
+  let handled = 0; // the indexedDB docs don't say if onblocked and onerror can happen in the same request, or if the event/exception bubbles to both
+  open_db.onsuccess = catcher.try(() => {
     handled++;
     callback(open_db.result);
   });
-  var stack_fill = (new Error()).stack;
-  open_db.onblocked = catcher.try(function () {
-    db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
-  });
-  open_db.onerror = catcher.try(function () {
+  let stack_fill = (new Error()).stack;
+  open_db.onblocked = catcher.try(() => db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
+  open_db.onerror = catcher.try(() => {
     if(open_db.error.message === 'The user denied permission to access the database.') { // chrome
       callback(db_denied);
     } else if(open_db.error.message === 'A mutation operation was attempted on a database that did not allow mutations.') { // firefox
@@ -397,16 +398,16 @@ function db_index(has_pgp, substring) {
 function db_create_search_index_list(email, name, has_pgp) {
   email = email.toLowerCase();
   name = name ? name.toLowerCase() : '';
-  var parts = [email, name];
+  let parts = [email, name];
   parts = parts.concat(email.split(/[^a-z0-9]/));
   parts = parts.concat(name.split(/[^a-z0-9]/));
-  var index = [];
-  tool.each(parts, function (i, part) {
+  let index = [];
+  tool.each(parts, (i, part) => {
     if(part) {
-      var substring = '';
-      tool.each(part.split(''), function (i, letter) {
+      let substring = '';
+      tool.each(part.split(''), (i, letter) => {
         substring += letter;
-        var normalized = normalize_string(substring);
+        let normalized = normalize_string(substring);
         if(!tool.value(normalized).in(index)) {
           index.push(db_index(has_pgp, normalized));
         }
@@ -435,81 +436,78 @@ function db_contact_object(email, name, client, pubkey, attested, pending_lookup
 
 function db_contact_save(db, contact, callback) {
   if(Array.isArray(contact)) {
-    var processed = 0;
-    tool.each(contact, function (i, single_contact) {
-      db_contact_save(db, single_contact, function () {
+    let processed = 0;
+    tool.each(contact, (i, single_contact) => {
+      db_contact_save(db, single_contact, () => {
         if(++processed === contact.length && typeof callback === 'function') {
           callback();
         }
       });
     });
   } else {
-    var tx = db.transaction('contacts', 'readwrite');
-    var contacts = tx.objectStore('contacts');
+    let tx = db.transaction('contacts', 'readwrite');
+    let contacts = tx.objectStore('contacts');
     contacts.put(contact);
     tx.oncomplete = catcher.try(callback);
-    var stack_fill = (new Error()).stack;
-    tx.onabort = catcher.try(function () {
-      db_error_handle(tx.error, stack_fill, callback);
-    });
+    let stack_fill = (new Error()).stack;
+    tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
   }
 }
 
 function db_contact_update(db, email, update, callback) {
   if(Array.isArray(email)) {
-    var processed = 0;
-    tool.each(email, function (i, single_email) {
-      db_contact_update(db, single_email, update, function () {
+    let processed = 0;
+    tool.each(email, (i, single_email) => {
+      db_contact_update(db, single_email, update, () => {
         if(++processed === email.length && typeof callback === 'function') {
           callback();
         }
       });
     });
   } else {
-    db_contact_get(db, email, function (original) {
-      var updated = {};
-      tool.each(original, function (k, original_value) {
+    db_contact_get(db, email, (original) => {
+      let updated = {};
+      tool.each(original, (k, original_value) => {
         if(k in update) {
           updated[k] = update[k];
         } else {
           updated[k] = original_value;
         }
       });
-      var tx = db.transaction('contacts', 'readwrite');
-      var contacts = tx.objectStore('contacts');
+      let tx = db.transaction('contacts', 'readwrite');
+      let contacts = tx.objectStore('contacts');
       contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
       tx.oncomplete = catcher.try(callback);
-      var stack_fill = (new Error()).stack;
-      tx.onabort = catcher.try(function () {
-        db_error_handle(tx.error, stack_fill, callback);
-      });
+      let stack_fill = (new Error()).stack;
+      tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
     });
   }
 }
 
 function db_contact_get(db, email_or_longid, callback) {
   if(typeof email_or_longid !== 'object') {
+    let get;
     if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
-      var get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
+      get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
     } else { // longid
-      var get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
+      get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
     }
-    get.onsuccess = catcher.try(function () {
+    get.onsuccess = catcher.try(() => {
       if(get.result !== undefined) {
         callback(get.result);
       } else {
         callback(null);
       }
     });
-    var stack_fill = (new Error()).stack;
+    let stack_fill = (new Error()).stack;
     get.onerror = function () {
       db_error_handle(get.error, stack_fill, callback);
     };
   } else {
-    var results = Array(email_or_longid.length);
-    var finished = 0;
-    tool.each(email_or_longid, function (i, single_email_or_longid) {
-      db_contact_get(db, single_email_or_longid, function (contact) {
+    let results = new Array(email_or_longid.length);
+    let finished = 0;
+    tool.each(email_or_longid, (i, single_email_or_longid) => {
+      db_contact_get(db, single_email_or_longid, contact => {
         results[i] = contact;
         if(++finished >= email_or_longid.length) {
           callback(results);
@@ -519,42 +517,43 @@ function db_contact_get(db, email_or_longid, callback) {
   }
 }
 
-var db_query_keys = ['limit', 'substring', 'has_pgp'];
+const db_query_keys = ['limit', 'substring', 'has_pgp'];
 
 // query: substring, has_pgp, limit. All voluntary
 function db_contact_search(db, query, callback) {
-  tool.each(query, function (key, value) {
+  tool.each(query, (key, value) => {
     if(!tool.value(key).in(db_query_keys)) {
       throw new Error('db_contact_search: unknown key: ' + key);
     }
   });
-  var contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
+  let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
+  let search;
   if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
     query.substring = normalize_string(query.substring);
     if(query.substring) {
-      db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true, }, function (results_with_pgp) {
+      db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true, }, (results_with_pgp) => {
         if(query.limit && results_with_pgp.length === query.limit) {
           callback(results_with_pgp);
         } else {
-          db_contact_search(db, { substring: query.substring, limit: query.limit ? query.limit - results_with_pgp.length : undefined, has_pgp: false, }, function (results_without_pgp) {
+          db_contact_search(db, { substring: query.substring, limit: query.limit ? query.limit - results_with_pgp.length : undefined, has_pgp: false, }, results_without_pgp => {
             callback(results_with_pgp.concat(results_without_pgp));
           });
         }
       });
     } else {
-      var search = contacts.openCursor();
+      search = contacts.openCursor();
     }
   } else { // specific query.has_pgp value
     if(query.substring) {
-      var search = contacts.index('search').openCursor(IDBKeyRange.only(db_index(query.has_pgp, query.substring)));
+      search = contacts.index('search').openCursor(IDBKeyRange.only(db_index(query.has_pgp, query.substring)));
     } else {
-      var search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
+      search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
     }
   }
   if(typeof search !== 'undefined') {
-    var found = [];
-    search.onsuccess = catcher.try(function () {
-      var cursor = search.result;
+    let found = [];
+    search.onsuccess = catcher.try(() => {
+      let cursor = search.result;
       if(!cursor || found.length === query.limit) {
         callback(found);
       } else {
@@ -562,9 +561,7 @@ function db_contact_search(db, query, callback) {
         cursor.continue();
       }
     });
-    var stack_fill = (new Error()).stack;
-    search.onerror = catcher.try(function () {
-      db_error_handle(search.error, stack_fill, callback);
-    });
+    let stack_fill = (new Error()).stack;
+    search.onerror = catcher.try(() => db_error_handle(search.error, stack_fill, callback));
   }
 }

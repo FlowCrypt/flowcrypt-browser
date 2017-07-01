@@ -2,11 +2,11 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
-var attach_js = init_shared_attach_js(function () { return { size_mb: 5, size: 5 * 1024 * 1024, count: 1 }; });
-var new_photo_file;
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+let attach_js = init_shared_attach_js(function () { return { size_mb: 5, size: 5 * 1024 * 1024, count: 1 }; });
+let new_photo_file;
 
-var S = tool.ui.build_jquery_selectors({
+const S = tool.ui.build_jquery_selectors({
   'status': '.status',
   'subscribe': '.action_subscribe',
   'hide_if_active': '.hide_if_active',
@@ -37,7 +37,7 @@ tool.api.cryptup.account_update().then(response => render_fields(response.result
 
 function render_fields(result) {
   if(result.alias) {
-    var me = tool.api.cryptup.url('me', result.alias);
+    let me = tool.api.cryptup.url('me', result.alias);
     S.cached('status').html('Your contact page is currently <b class="good">enabled</b> at <a href="' + me + '" target="_blank">' + me.replace('https://', '') + '</a></span>');
     S.cached('hide_if_active').css('display', 'none');
     S.cached('show_if_active').css('display', 'inline-block');
@@ -59,9 +59,9 @@ function render_fields(result) {
     S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
       storage_cryptup_auth_info(function(email) {
-        account_storage_get(email, ['full_name'], function(storage) {
+        account_storage_get(email, ['full_name'], storage => {
           find_available_alias(email, function(alias) {
-            var initial = {alias: alias, name: storage.full_name || tool.str.capitalize(email.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
+            let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(email.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
             tool.api.cryptup.account_update(initial).validate(r => r.updated).then(response => window.location.reload(), error => {
               alert('Failed to enable your Contact Page. Please try again.\n\n' + error.message);
               window.location.reload();
@@ -81,7 +81,7 @@ S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), fu
   } else {
     S.cached('show_if_active').css('display', 'none');
     S.cached('status').html('Updating' + tool.ui.spinner('green'));
-    var update = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
+    let update = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
     if(new_photo_file) {
       update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content));
     }
@@ -94,7 +94,7 @@ S.cached('action_close').click(function () {
 });
 
 function find_available_alias(email, callback, i) {
-  var alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
+  let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
   while(alias.length < 3) {
     alias += tool.str.random(1).toLowerCase();
   }

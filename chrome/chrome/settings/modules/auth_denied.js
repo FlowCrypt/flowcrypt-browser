@@ -2,7 +2,7 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'use_account_email', 'parent_tab_id', 'email_provider']);
+let url_params = tool.env.url_params(['account_email', 'use_account_email', 'parent_tab_id', 'email_provider']);
 if(!url_params.use_account_email) {
   url_params.account_email = undefined;
 }
@@ -13,7 +13,7 @@ if(!url_params.email_provider) {
 if(!url_params.account_email) {
   render_setup_done(false);
 } else {
-  account_storage_get(url_params.account_email, ['setup_done'], function (storage) {
+  account_storage_get(url_params.account_email, ['setup_done'], storage => {
     render_setup_done(storage.setup_done);
   });
 }

@@ -4,7 +4,7 @@
 
 console.log('background_process.js starting');
 
-var background_process_start_reason = 'browser_start';
+let background_process_start_reason = 'browser_start';
 chrome.runtime.onInstalled.addListener(function(event){
   background_process_start_reason = event.reason;
 });
@@ -24,13 +24,9 @@ tool.browser.message.listen_background({
   attest_packet_received: attest_packet_received_handler,
   update_uninstall_url: update_uninstall_url,
   get_active_tab_info: get_active_tab_info,
-  runtime: function (message, sender, respond) {
-    respond({ environment: catcher.environment(), version: catcher.version() });
-  },
-  ping: function (message, sender, respond) {
-    respond(true);
-  },
-  _tab_: function (request, sender, respond) {
+  runtime: (message, sender, respond) => respond({ environment: catcher.environment(), version: catcher.version() }),
+  ping: (message, sender, respond) => respond(true),
+  _tab_: (request, sender, respond) => {
     if(sender === null) {
       respond(null); // background script
     } else { // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
@@ -41,7 +37,7 @@ tool.browser.message.listen_background({
 
 update_uninstall_url();
 
-account_storage_get(null, 'errors', function (storage) {
+account_storage_get(null, 'errors', storage => {
   if(storage.errors && storage.errors.length && storage.errors.length > 100) {
     account_storage_remove(null, 'errors');
   }
@@ -62,9 +58,9 @@ function open_settings_page_handler(message, sender, respond) {
 }
 
 function get_active_tab_info(request, sender, respond) {
-  chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, function (tabs) {
+  chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, tabs => {
     if(tabs.length) {
-      chrome.tabs.executeScript(tabs[0].id, { code: 'var r = {account_email: window.account_email_global, same_world: window.same_world_global}; r' }, function (result) {
+      chrome.tabs.executeScript(tabs[0].id, { code: 'var r = {account_email: window.account_email_global, same_world: window.same_world_global}; r' }, result => {
         respond({ provider: 'gmail', account_email: result[0].account_email || null, same_world: result[0].same_world === true });
       });
     } else {
@@ -74,10 +70,10 @@ function get_active_tab_info(request, sender, respond) {
 }
 
 function get_cryptup_settings_tab_id_if_open(callback) {
-  chrome.tabs.query({ currentWindow: true }, function (tabs) {
-    var extension = chrome.extension.getURL('/');
-    var found = false;
-    tool.each(tabs, function (i, tab) {
+  chrome.tabs.query({ currentWindow: true }, tabs => {
+    let extension = chrome.extension.getURL('/');
+    let found = false;
+    tool.each(tabs, (i, tab) => {
       if(tool.value(extension).in(tab.url)) {
         callback(tab.id);
         found = true;
@@ -92,7 +88,7 @@ function get_cryptup_settings_tab_id_if_open(callback) {
 
 function update_uninstall_url(request, sender, respond) {
   get_account_emails(function (account_emails) {
-    account_storage_get(null, ['metrics'], function (storage) {
+    account_storage_get(null, ['metrics'], storage => {
       if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
         catcher.try(function () {
           chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + JSON.stringify({
@@ -109,9 +105,9 @@ function update_uninstall_url(request, sender, respond) {
 }
 
 function open_settings_page(path, account_email, page, page_url_params) {
-  var base_path = chrome.extension.getURL('chrome/settings/' + (path || 'index.htm'));
+  let base_path = chrome.extension.getURL('chrome/settings/' + (path || 'index.htm'));
   get_cryptup_settings_tab_id_if_open(function(opened_tab) {
-    var open_tab = opened_tab ? function(url) { chrome.tabs.update(opened_tab, {url: url, active: true}); } : function(url) { chrome.tabs.create({url: url}); };
+    let open_tab = opened_tab ? function(url) { chrome.tabs.update(opened_tab, {url: url, active: true}); } : function(url) { chrome.tabs.create({url: url}); };
     if(account_email) {
       open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
     } else {
@@ -123,7 +119,7 @@ function open_settings_page(path, account_email, page, page_url_params) {
 }
 
 function close_popup_handler(request, sender, respond) {
-  chrome.tabs.query(request, function (tabs) {
+  chrome.tabs.query(request, tabs => {
     chrome.tabs.remove(tool.arr.select(tabs, 'id'));
   });
 }

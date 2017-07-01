@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-var url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
 
 tool.each(url_params.emails.split(','), function (i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');
@@ -29,7 +29,7 @@ db_open(function (db) {
     });
 
     $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-      var armored = tool.crypto.key.normalize(tool.crypto.armor.strip($('.pubkey').val()));
+      let armored = tool.crypto.key.normalize(tool.crypto.armor.strip($('.pubkey').val()));
       if(!tool.crypto.key.fingerprint(armored)) {
         alert('Could not recognize the format, please try again.');
         $('.pubkey').val('').focus();

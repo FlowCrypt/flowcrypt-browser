@@ -2,10 +2,10 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 function collect_info_and_download_backup_file(account_email, callback) {
-  var name = 'CryptUp_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
+  let name = 'CryptUp_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
   collect_info_for_account_backup(account_email, function (backup_text) {
     tool.file.save_to_downloads(name, 'text/plain', backup_text);
     if(callback) {
@@ -15,7 +15,7 @@ function collect_info_and_download_backup_file(account_email, callback) {
 }
 
 function collect_info_for_account_backup(account_email, callback) {
-  var text = [
+  let text = [
     'This file contains sensitive information, please put it in a safe place.',
     '',
     'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
@@ -46,7 +46,7 @@ function collect_info_for_account_backup(account_email, callback) {
 
 
 if(url_params.account_email) {
-  account_storage_get(null, ['dev_outlook_allow'], function (storage) {
+  account_storage_get(null, ['dev_outlook_allow'], storage => {
     if(storage.dev_outlook_allow === true) {
       $('.action_allow_outlook').prop('checked', true);
     }
@@ -55,7 +55,7 @@ if(url_params.account_email) {
   $('.email').text(url_params.account_email);
 
   $('.action_allow_outlook').change(function () {
-    account_storage_set(null, {'dev_outlook_allow': $(this).prop('checked')}, function (storage) {
+    account_storage_set(null, {'dev_outlook_allow': $(this).prop('checked')}, storage => {
       window.location.reload();
     });
   });
@@ -71,7 +71,7 @@ if(url_params.account_email) {
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
     $(self).html(tool.ui.spinner('white'));
     fetch_account_aliases_from_gmail(url_params.account_email, function(addresses) {
-      var all = tool.arr.unique(addresses.concat(url_params.account_email));
+      let all = tool.arr.unique(addresses.concat(url_params.account_email));
       account_storage_set(url_params.account_email, { addresses: all }, function () {
         alert('Updated to: ' + all.join(', '));
         window.location.reload();

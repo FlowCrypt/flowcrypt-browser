@@ -2,15 +2,15 @@
 
 'use strict';
 
-var CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
-var CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
-var ATTESTERS = {
+const CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
+const CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
+const ATTESTERS = {
   CRYPTUP: { email: 'attest@cryptup.org', api: undefined, pubkey: undefined }
 };
 
-var currently_watching = {};
-var can_read_emails = {};
-var packet_headers = tool.crypto.armor.headers('attest_packet');
+let currently_watching = {};
+let can_read_emails = {};
+let packet_headers = tool.crypto.armor.headers('attest_packet');
 
 refresh_attest_requests_and_privileges(function (account_email, attests_requested) {
   if(attests_requested && attests_requested.length && can_read_emails[account_email]) {
@@ -20,7 +20,7 @@ refresh_attest_requests_and_privileges(function (account_email, attests_requeste
 
 function attest_requested_handler(message, sender, respond) {
   respond();
-  refresh_attest_requests_and_privileges(null, function () {
+  refresh_attest_requests_and_privileges(null, () => {
     watch_for_attest_email(message.account_email);
   });
 }
@@ -49,12 +49,12 @@ function stop_watching(account_email) {
 }
 
 function check_email_for_attests_and_respond(account_email) {
-  account_storage_get(account_email, ['attests_requested'], function (storage) {
+  account_storage_get(account_email, ['attests_requested'], storage => {
     if(get_passphrase(account_email)) {
       if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email]) {
-        fetch_attest_emails(account_email, function (success, messages) {
+        fetch_attest_emails(account_email, (success, messages) => {
           if(success && messages) {
-            tool.each(messages, function (id, message) {
+            tool.each(messages, (id, message) => {
               process_attest_email(account_email, message);
             });
           }
@@ -70,19 +70,19 @@ function check_email_for_attests_and_respond(account_email) {
 }
 
 function process_attest_packet_text(account_email, attest_packet_text, passphrase, callback) {
-  var attest = tool.api.attester.packet.parse(attest_packet_text);
-  var key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
-  is_already_attested(account_email, attest.attester, function (is_attested) {
+  let attest = tool.api.attester.packet.parse(attest_packet_text);
+  let key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
+  is_already_attested(account_email, attest.attester, is_attested => {
     if (!is_attested) {
       if (tool.crypto.key.decrypt(key, passphrase || get_passphrase(account_email)).success) {
-        var expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-        var expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
+        let expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
+        let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
         if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
-          tool.crypto.message.sign(key, attest.text, true, function (success, result) {
+          tool.crypto.message.sign(key, attest.text, true, (success, result) => {
             if (success) {
-              var keyserver_api_request = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(result) : tool.api.attester.replace_confirm(result);
+              let keyserver_api_request = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(result) : tool.api.attester.replace_confirm(result);
               keyserver_api_request.validate(r => r.attested).then(response => {
-                account_storage_mark_as_attested(account_email, attest.content.attester, function () {
+                account_storage_mark_as_attested(account_email, attest.content.attester, () => {
                   callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
                 });
               }, error => {
@@ -114,18 +114,18 @@ function process_attest_email(account_email, gmail_message_object) {
 }
 
 function fetch_attest_emails(account_email, callback) {
-  var q = [
+  let q = [
     '(from:"' + get_attester_emails().join('" OR from: "') + '")',
     'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.
     'in:anywhere',
     '"' + packet_headers.begin + '"',
     '"' + packet_headers.end + '"',
   ];
-  tool.api.gmail.message_list(account_email, q.join(' '), true, function (success, response) {
+  tool.api.gmail.message_list(account_email, q.join(' '), true, (success, response) => {
     if(success) {
       if(response.messages) {
-        var message_ids = [];
-        tool.each(response.messages, function (i, message) {
+        let message_ids = [];
+        tool.each(response.messages, (i, message) => {
           message_ids.push(message.id);
         });
         tool.api.gmail.message_get(account_email, message_ids, 'full', callback);
@@ -140,8 +140,8 @@ function fetch_attest_emails(account_email, callback) {
 
 function refresh_attest_requests_and_privileges(process_account_email_callback, refresh_done_callback) {
   get_account_emails(function (account_emails) {
-    account_storage_get(account_emails, ['attests_requested', 'google_token_scopes'], function (multi_storage) {
-      tool.each(multi_storage, function (account_email, storage) {
+    account_storage_get(account_emails, ['attests_requested', 'google_token_scopes'], multi_storage => {
+      tool.each(multi_storage, (account_email, storage) => {
         can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
         if(process_account_email_callback) {
           process_account_email_callback(account_email, storage.attests_requested);
@@ -155,22 +155,22 @@ function refresh_attest_requests_and_privileges(process_account_email_callback, 
 }
 
 function get_attester_emails() {
-  var emails = [];
-  tool.each(ATTESTERS, function (id, attester) {
+  let emails = [];
+  tool.each(ATTESTERS, (id, attester) => {
     emails.push(attester.email);
   });
   return emails;
 }
 
 function is_already_attested(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_processed'], function (storage) {
+  account_storage_get(account_email, ['attests_processed'], storage => {
     callback(tool.value(attester).in(storage.attests_processed));
   });
 }
 
 function account_storage_mark_as_attested(account_email, attester, callback) {
   stop_watching(account_email);
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], function (storage) {
+  account_storage_get(account_email, ['attests_requested', 'attests_processed'], storage => {
     if(tool.value(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
       if(typeof storage.attests_processed === 'undefined') {
@@ -188,7 +188,7 @@ function account_storage_mark_as_attested(account_email, attester, callback) {
 
 function add_attest_log(account_email, packet, success, attestation_result_text, callback) {
   console.log('attest result ' + success + ': ' + attestation_result_text);
-  account_storage_get(account_email, ['attest_log'], function(storage) {
+  account_storage_get(account_email, ['attest_log'], storage => {
     if(!storage.attest_log) {
       storage.attest_log = [];
     } else if(storage.attest_log.length > 100) {
