@@ -1,5 +1,15 @@
 <div>
 
+<b>version 4.2.2 on July 1, 2017: Refactoring</b>
+security: fix naked keys
+internal: use modern javascript where possible
+internal: better reporting of unhandled promise errors
+internal: prepare comose.js for desktop
+internal: libsync from desktop
+internal: consolidate new_message and reply_message into one template refactor
+settings: Repeat password -> Repeat pass phrase placeholder backup
+reading: fix formatting of password messages
+
 <b>version 4.2.1 on June 25, 2017: Bugfixes</b>
 internal: several bugfixes after previous release
 internal: put all language dicts into a single file
