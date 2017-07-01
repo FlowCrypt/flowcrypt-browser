@@ -4,6 +4,8 @@
 
 function content_script_setup_if_vacant(webmail_specific) {
 
+  let account_email_interval = 1000;
+
   /*
    This tries to deal with initial environment setup and plugin updtates in a running tab.
    - vacant: no influence of previous script is apparent in the DOM
@@ -67,7 +69,6 @@ function content_script_setup_if_vacant(webmail_specific) {
 
   }
 
-  let account_email_interval = 1000;
   let factory;
   let inject;
   let notifications = content_script_notifications();
