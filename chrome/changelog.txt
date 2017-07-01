@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.2.5 on July 1, 2017: Content script bugfix</b>
+internal: content script bugfix
+
 <b>version 4.2.4 on July 1, 2017: Minimum chrome version</b>
 internal: minimum chrome version 49
 
