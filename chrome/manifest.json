@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "CryptUp: Encrypt Gmail with PGP",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
-  "version": "4.2.3",
+  "version": "4.2.4",
   "browser_action": {
     "default_icon": "img/logo-19-19-white-green.png",
     "default_title": "CryptUp Encryption for Gmail",
@@ -77,6 +77,7 @@
     "/chrome/elements/attest.htm",
     "/chrome/elements/shared/footer.htm"
   ],
+  "minimum_chrome_version": "49",
   "oauth2": {
     "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
     "url_code": "https://accounts.google.com/o/oauth2/auth",

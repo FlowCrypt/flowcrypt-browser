@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.2.4 on July 1, 2017: Minimum chrome version</b>
+internal: minimum chrome version 49
+
 <b>version 4.2.3 on July 1, 2017: Background fix</b>
 internal: background script fix
 
