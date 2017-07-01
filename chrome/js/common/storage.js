@@ -2,7 +2,7 @@
 
 'use strict';
 
-var global_storage_scope = 'global';
+const global_storage_scope = 'global';
 
 function account_storage_key(account_key_or_list, key) {
   if(typeof account_key_or_list === 'object') {
@@ -191,21 +191,36 @@ function private_keys_get(account_email, longid) {
   }
 }
 
-function private_keys_add(account_email, new_key_armored) {
-  var private_keys = private_keys_get(account_email);
-  var do_add = true;
-  var new_key_longid = tool.crypto.key.longid(new_key_armored);
+function private_keys_add(account_email, new_key_armored, replace_if_exists) {
+  let private_keys = private_keys_get(account_email);
+  let do_add = true;
+  let do_update = true;
+  let new_key_longid = tool.crypto.key.longid(new_key_armored);
   if(new_key_longid) {
+    if(openpgp.key.readArmored(new_key_armored).keys[0].primaryKey.isDecrypted) {
+      catcher.report('private_keys_add: attempting to add a naked key, aborted');
+      return;
+    }
     tool.each(private_keys, function (i, keyinfo) {
       if(new_key_longid === keyinfo.longid) {
         do_add = false;
+        if(replace_if_exists === true) {
+          if(keyinfo.primary) {
+            private_storage_set('local', account_email, 'master_private_key', new_key_armored);
+          }
+          private_keys[i] = { armored: new_key_armored, longid: new_key_longid, primary: keyinfo.primary };
+        } else {
+          do_update = false;
+        }
       }
     });
   } else {
-    do_add = false;
+    do_add = do_update = false;
   }
   if(do_add) {
-    private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: false, });
+    private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: false });
+  }
+  if(do_update) {
     private_storage_set('local', account_email, 'private_keys', private_keys);
   }
 }

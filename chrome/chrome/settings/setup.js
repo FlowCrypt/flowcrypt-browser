@@ -115,7 +115,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
                 account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
               }
               if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-                fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
+                tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
                   if(success && keys) {
                     recovered_keys = keys;
                     recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
@@ -146,7 +146,7 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
   $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
   $('h1').parent().html('<h1>Recover key from backup</h1>');
   $('.action_recover_account').text('load key from backup');
-  fetch_email_key_backups(url_params.account_email, email_provider, function (success, keys) {
+  tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
     if(success && keys) {
       recovered_keys = keys;
       recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
@@ -319,20 +319,21 @@ $('.back').off().click(function () {
 });
 
 $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-  var passphrase = $('#recovery_pasword').val();
-  var matching_keys = [];
+  let passphrase = $('#recovery_pasword').val();
+  let matching_keys = [];
   if(passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
     alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
   } else if(passphrase) {
     tool.each(recovered_keys, function (i, recovered_key) {
-      var longid = tool.crypto.key.longid(recovered_key);
+      let longid = tool.crypto.key.longid(recovered_key);
+      let armored = recovered_key.armor();
       if(!tool.value(longid).in(recovered_keys_successful_longids) && tool.crypto.key.decrypt(recovered_key, passphrase).success) {
         recovered_keys_successful_longids.push(longid);
-        matching_keys.push(openpgp.key.readArmored(recovered_key.armor()).keys[0]);
+        matching_keys.push(openpgp.key.readArmored(armored).keys[0]);
       }
     });
     if(matching_keys.length) {
-      var options = {
+      let options = {
         submit_main: false, // todo - think about submitting when recovering
         submit_all: false,
         passphrase: passphrase,

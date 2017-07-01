@@ -63,7 +63,7 @@ function show_status() {
   display_block('loading');
   account_storage_get(url_params.account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth'], function (storage) {
     if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-      fetch_email_key_backups(url_params.account_email, storage.email_provider || 'gmail', function (success, keys) {
+      tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
         if(success) {
           display_block('step_0_status');
           if(keys && keys.length) {

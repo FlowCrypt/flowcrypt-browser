@@ -14,28 +14,98 @@ function migrate_account(data, sender, respond_done) {
 
 function migrate_global(callback) {
   account_storage_get(null, ['version'], function (global_storage) {
-    if((!global_storage.version || global_storage.version < 300) && typeof localStorage.pubkey_cache !== 'undefined') {
-      global_migrate_v_300(callback);
+    if(!localStorage.resolved_naked_key_vulnerability) {
+      catcher.log('checking NKV');
+      global_migrate_v_422(resolved => {
+        catcher.log('NKV result/resolved: ' + resolved);
+        if(!resolved) {
+          setTimeout(migrate_global, tool.time.hours(1)); // try again in an hour - maybe there was no internet just now, or pass phrase not present
+        } else {
+          localStorage.resolved_naked_key_vulnerability = true;
+        }
+        if(typeof callback === 'function') {
+          callback();
+        }
+      });
     } else {
-      callback();
+      if(typeof callback === 'function') {
+        callback();
+      }
     }
   });
 }
 
-function global_migrate_v_300(callback) {
-  console.log('global_migrate_v_300: contacts pubkey_cache to indexedDB');
-  db_open(function (db) {
-    var tx = db.transaction('contacts', 'readwrite');
-    var contacts = tx.objectStore('contacts');
-    tool.each(JSON.parse(localStorage.pubkey_cache || '{}'), function (email, contact) {
-      if(typeof email === 'string') {
-        contacts.put(db_contact_object(email, null, contact.has_cryptup ? 'cryptup' : 'pgp', contact.pubkey, contact.attested, false, Date.now()));
+function global_migrate_v_422(callback) {
+  // for a short period, keys that were recovered from email backups would be stored without encryption. The code below fixes it retroactively
+  // this only affected users on machines that were recovered from a backup email who choose to keep pass phrase in session only
+  // the result was that although they specifically selected not to store their pass phrase, the key would not actually need it, defying the point
+  // this vulnerability could only be exploited if the attacker first compromises their device (by physical access or otherwise)
+  // the fix involves:
+  //  - encrypting the naked keys with pass phrase if present/known, or
+  //  - checking the backups (which are always protected by a pass phrase) and replacing the stored ones with them
+  // until all keys are fixed
+  get_account_emails(emails => {
+    let promises = [];
+    let fixable_count = 0;
+    tool.each(emails, (i, account_email) => {
+      let account_keys = private_keys_get(account_email);
+      let account_keys_to_fix = [];
+      tool.each(account_keys, (i, keyinfo) => {
+        let k  = openpgp.key.readArmored(keyinfo.armored).keys[0];
+        if(k.primaryKey.isDecrypted) {
+          let passphrase = get_passphrase(account_email, keyinfo.longid) || get_passphrase(account_email);
+          if(typeof passphrase === 'string' && passphrase) {
+            k.encrypt(passphrase);
+            private_keys_add(account_email, k.armor(), true);
+            catcher.log('fixed naked key ' + keyinfo.longid + ' on account ' + account_email);
+          } else {
+            account_keys_to_fix.push(keyinfo);
+            fixable_count++;
+          }
+        }
+      });
+      console.log('NKV ' + account_email + ': ' + account_keys_to_fix.map(x => x.longid).join(','));
+      if(account_keys_to_fix.length) {
+        promises.push(global_migrate_v_422_do_fix_account_keys(account_email, account_keys_to_fix));
       }
     });
-    tx.oncomplete = function () {
-      delete localStorage.pubkey_cache;
-      callback();
-    };
+    if(fixable_count) {
+      Promise.all(promises).then(
+        all => callback(fixable_count === all.reduce((sum, x) => sum + x, 0)),
+        error => callback(false),
+      );
+    } else {
+      callback(true);
+    }
+  });
+}
+
+function global_migrate_v_422_do_fix_account_keys(account_email, fixable_keyinfos) {
+  let count_resolved = 0;
+  return new Promise((resolve, reject) => {
+    catcher.try(() => {
+      tool.api.gmail.fetch_key_backups(account_email, function (success, backed_keys) {
+        if(success) {
+          if(backed_keys) {
+            $.each(fixable_keyinfos, (i, fixable_keyinfo) => {
+              $.each(backed_keys, (i, backed_k) => {
+                if(tool.crypto.key.longid(backed_keys) === fixable_keyinfos.longid) {
+                  private_keys_add(account_email, backed_k.armor(), true);
+                  catcher.log('fixed naked key ' + fixable_keyinfos.longid + ' on account ' + account_email);
+                  count_resolved++;
+                  return false; // next fixable key
+                }
+              });
+            });
+            resolve(count_resolved);
+          } else {
+            reject(); // no keys found on backup - does not resolve the issue
+          }
+        } else {
+          reject(); // eg connection is down - cannot check backups
+        }
+      });
+    })();
   });
 }
 
@@ -65,7 +135,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
           }
         });
         account_storage_set(account_email, { addresses_keyserver: addresses_keyserver, });
-      });
+      }, error => null);
     }
   });
 }

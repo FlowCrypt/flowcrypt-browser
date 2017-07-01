@@ -109,52 +109,6 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
   }
 }
 
-function fetch_email_key_backups(account_email, email_provider, callback) {
-  if(email_provider !== 'gmail') {
-    catcher.report('fetch_email_key_backups not implemented for ' + email_provider);
-    callback(false, 'fetch_email_key_backups not implemented for ' + email_provider);
-  } else {
-    tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true, function (success, response) {
-      if(success) {
-        if(response.messages) {
-          var message_ids = [];
-          tool.each(response.messages, function (i, message) {
-            message_ids.push(message.id);
-          });
-          tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
-            if(success) {
-              var attachments = [];
-              tool.each(messages, function (i, message) {
-                attachments = attachments.concat(tool.api.gmail.find_attachments(message));
-              });
-              tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
-                var keys = [];
-                tool.each(downloaded_attachments, function (i, downloaded_attachment) {
-                  try {
-                    var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
-                    var key = openpgp.key.readArmored(armored_key).keys[0];
-                    if(key.isPrivate()) {
-                      keys.push(key);
-                    }
-                  } catch(err) {}
-                });
-                callback(success, keys);
-              });
-            } else {
-              callback(false, 'Connection dropped while checking for backups. Please try again.');
-              display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
-            }
-          });
-        } else {
-          callback(true, null);
-        }
-      } else {
-        callback(false, 'Connection dropped while checking for backups. Please try again.');
-      }
-    });
-  }
-}
-
 function readable_crack_time(total_seconds) { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
   function numberEnding(number) {
     return(number > 1) ? 's' : '';

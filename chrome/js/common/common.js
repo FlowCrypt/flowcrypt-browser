@@ -193,6 +193,7 @@
         search_contacts: api_gmail_search_contacts,
         extract_armored_block: gmail_api_extract_armored_block,
         fetch_messages_based_on_query_and_extract_first_available_header: api_gmail_fetch_messages_based_on_query_and_extract_first_available_header,
+        fetch_key_backups: api_gmail_fetch_key_backups,
       },
       attester: {
         lookup_email: api_attester_lookup_email,
@@ -2829,6 +2830,47 @@
         api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, message_list_response.messages, header_names, callback);
       } else {
         callback(); // if the request is !success, it will just return undefined, which may not be the best
+      }
+    });
+  }
+
+  function api_gmail_fetch_key_backups(account_email, callback) {
+    tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true, function (success, response) {
+      if(success) {
+        if(response.messages) {
+          var message_ids = [];
+          tool.each(response.messages, function (i, message) {
+            message_ids.push(message.id);
+          });
+          tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
+            if(success) {
+              var attachments = [];
+              tool.each(messages, function (i, message) {
+                attachments = attachments.concat(tool.api.gmail.find_attachments(message));
+              });
+              tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments) {
+                var keys = [];
+                tool.each(downloaded_attachments, function (i, downloaded_attachment) {
+                  try {
+                    var armored_key = tool.str.base64url_decode(downloaded_attachment.data);
+                    var key = openpgp.key.readArmored(armored_key).keys[0];
+                    if(key.isPrivate()) {
+                      keys.push(key);
+                    }
+                  } catch(err) {}
+                });
+                callback(success, keys);
+              });
+            } else {
+              callback(false, 'Connection dropped while checking for backups. Please try again.');
+              display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
+            }
+          });
+        } else {
+          callback(true, null);
+        }
+      } else {
+        callback(false, 'Connection dropped while checking for backups. Please try again.');
       }
     });
   }

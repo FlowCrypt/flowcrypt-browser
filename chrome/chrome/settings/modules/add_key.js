@@ -14,7 +14,7 @@ tool.each(private_keys, function (i, keyinfo) {
 
 $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
 
-fetch_email_key_backups(url_params.account_email, 'gmail', function (success, keys) {
+tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
   if(success) {
     if(keys && keys.length) {
       var not_imported_backup_longids = [];
