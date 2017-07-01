@@ -30,7 +30,7 @@
 
   function subscribe(account_email, chosen_product, source) {
     callbacks.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-    return new Promise((resolve, reject) => {
+    return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_check_sync(updated => {
         storage_cryptup_auth_info((email, uuid, verified) => {
           if(verified) {
@@ -48,7 +48,7 @@
   }
 
   function do_subscribe(chosen_product, source) {
-    return new Promise((resolve, reject) => {
+    return catcher.Promise((resolve, reject) => {
       account_storage_remove(null, 'cryptup_subscription_attempt', function () {
         return tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, source || null).then(response => {
           if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
@@ -138,7 +138,7 @@
 
   function verify(account_email, tokens) {
     callbacks.render_status('verifying your email address..', true);
-    return new Promise((resolve, reject) => {
+    return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_login(account_email, tokens.pop()).then(resolve, error => {
         if(error.internal === 'token' && tokens.length) {
           verify(account_email, tokens).then(resolve, reject); // attempt at Promise recursion. Until nothing left to try in tokens array
@@ -151,7 +151,7 @@
 
   function register_and_attempt_to_verify(account_email) {
     callbacks.render_status('registering..', true);
-    return new Promise((resolve, reject) => {
+    return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_login(account_email).then(response => {
         if(_self.CAN_READ_EMAIL) {
           callbacks.render_status('verifying..', true);
@@ -170,7 +170,7 @@
   }
 
   function register_new_device(account_email) {
-    return new Promise((resolve, reject) => {
+    return catcher.Promise((resolve, reject) => {
       account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, function () {
         render_status('checking..', true);
         register_and_attempt_to_verify(account_email).then(resolve, reject);

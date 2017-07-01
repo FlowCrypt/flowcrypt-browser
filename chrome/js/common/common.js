@@ -770,7 +770,7 @@
   /* tool.time */
 
   function time_wait(until_this_function_evaluates_true) {
-    return new Promise(function (success, error) {
+    return catcher.Promise(function (success, error) {
       var interval = setInterval(function () {
         var result = until_this_function_evaluates_true();
         if(result === true) {
@@ -1433,7 +1433,7 @@
   function diagnose_keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
     account_storage_get(account_email, ['addresses'], function (storage) {
-      api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || []))).then(pubkey_search_results => {
+      api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || []))).then(function(pubkey_search_results) {
         tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
           if (!pubkey_search_result.pubkey) {
             diagnosis.has_pubkey_missing = true;
@@ -1452,7 +1452,7 @@
           }
         });
         callback(diagnosis);
-      }, error => {
+      }, function(error) {
         callback();
       });
     });
@@ -2153,7 +2153,7 @@
     } else {
       throw Error('unknown format:' + String(format));
     }
-    return new Promise(function(resolve, reject) {
+    return catcher.Promise(function(resolve, reject) {
       $.ajax({
         xhr: function() {
           return get_ajax_progress_xhr(progress);
@@ -3034,7 +3034,7 @@
   }
 
   function api_attester_packet_create_sign(values, decrypted_prv) {
-    return new Promise(function (resolve, reject) {
+    return catcher.Promise(function (resolve, reject) {
       var lines = [];
       tool.each(values, function (key, value) {
         lines.push(key + ':' + value);
@@ -3134,8 +3134,8 @@
   /* tool.api.cryptup */
 
   function api_cryptup_call(path, values, format) {
-    // return api_call(api_cryptup_url('api'), path, values, format || 'JSON', null, {'api-version': 3});
-    return api_call('http://127.0.0.1:5001/', path, values, format || 'JSON', null, {'api-version': 3});
+    return api_call(api_cryptup_url('api'), path, values, format || 'JSON', null, {'api-version': 3});
+    // return api_call('http://127.0.0.1:5001/', path, values, format || 'JSON', null, {'api-version': 3});
   }
 
   function api_cryptup_url(type, variable) {
@@ -3172,7 +3172,7 @@
   }
 
   function api_cryptup_account_login(account_email, token) {
-    return new Promise(function(resolve, reject) {
+    return catcher.Promise(function(resolve, reject) {
       storage_cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
         var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
         var email = registered_email || account_email;
@@ -3190,7 +3190,7 @@
   }
 
   function api_cryptup_account_subscribe(product, method, payment_source_token) {
-    return new Promise(function(resolve, reject) {
+    return catcher.Promise(function(resolve, reject) {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('account/subscribe', {
@@ -3212,7 +3212,7 @@
   }
 
   function api_cryptup_account_update(update_values) {
-    return new Promise(function(resolve, reject) {
+    return catcher.Promise(function(resolve, reject) {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
           var request = {account: email, uuid: uuid};
@@ -3226,7 +3226,7 @@
   }
 
   function api_cryptup_message_presign_files(attachments, auth_method) {
-    return new Promise(function (resolve, reject) {
+    return catcher.Promise(function (resolve, reject) {
       var lengths = attachments.map(function (a) { return a.size; });
       if(!auth_method) {
         api_cryptup_call('message/presign_files', {
@@ -3261,7 +3261,7 @@
   }
 
   function api_cryptup_message_upload(encrypted_data_armored, auth_method) { // todo - DEPRECATE THIS. Send as JSON to message/store
-    return new Promise(function (resolve, reject) {
+    return catcher.Promise(function (resolve, reject) {
       if(encrypted_data_armored.length > 100000) {
         reject({code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
       } else {
@@ -3288,7 +3288,7 @@
   }
 
   function api_cryptup_message_expiration(admin_codes, add_days) {
-    return new Promise(function (resolve, reject) {
+    return catcher.Promise(function (resolve, reject) {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('message/expiration', {
@@ -3305,7 +3305,7 @@
   }
 
   function api_cryptup_message_token() {
-    return new Promise(function (resolve, reject) {
+    return catcher.Promise(function (resolve, reject) {
       storage_cryptup_auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('message/token', {
@@ -3383,7 +3383,6 @@
                   local_storage_update['cryptup_account_subscription'] = null;
                 }
               }
-              console.log(local_storage_update);
               if(Object.keys(local_storage_update).length) {
                 catcher.log('updating account subscription from ' + stored_level + ' to ' + (response.subscription ? response.subscription.level : null), response);
                 account_storage_set(null, local_storage_update, function() {
@@ -3614,6 +3613,17 @@
     };
   }
 
+  function wrapped_Promise(f) {
+    return new Promise(function(resolve, reject) {
+      try {
+        f(resolve, reject);
+      } catch(e) {
+        handle_exception(e);
+        reject({code: null, message: 'Error happened, please write me at tom@cryptup.org to fix this\n\nError: ' + e.message, internal: 'exception'});
+      }
+    })
+  }
+
   function environment(url) {
     if(!url) {
       url = window.location.href;
@@ -3682,7 +3692,8 @@
     try: try_wrapper,
     environment: environment,
     test: test,
-    promise: promise_error_alert,
+    Promise: wrapped_Promise,
+    promise_error_alert: promise_error_alert,
   };
 
   if(window.is_bare_engine !== true) {
@@ -3756,7 +3767,7 @@
 
   Promise.prototype.validate = Promise.prototype.validate || function(validity_checker) {
     var original_promise = this;
-    return new Promise(function(resolve, reject) {
+    return catcher.Promise(function(resolve, reject) {
       original_promise.then(function(response) {
         if(typeof response === 'object') {
           if(validity_checker(response)) {

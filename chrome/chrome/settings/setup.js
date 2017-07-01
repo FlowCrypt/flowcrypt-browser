@@ -253,7 +253,7 @@ function create_save_key_pair(account_email, options) {
     numBits: 4096,
     userIds: [{ name: options.full_name, email: account_email }], // todo - add all addresses?
     passphrase: options.passphrase,
-  }).then(function (key) {
+  }).then(key => {
     options.is_newly_created_key = true;
     var prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
     test_private_key_and_handle(url_params.account_email, prv, options, function () {
@@ -261,7 +261,7 @@ function create_save_key_pair(account_email, options) {
         finalize_setup(account_email, key.publicKeyArmored, options);
       });
     });
-  }).catch(function (error) {
+  }).catch(error => {
     catcher.handle_exception(error);
     $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUp didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
   });

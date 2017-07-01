@@ -82,7 +82,7 @@ function global_migrate_v_422(callback) {
 
 function global_migrate_v_422_do_fix_account_keys(account_email, fixable_keyinfos) {
   let count_resolved = 0;
-  return new Promise((resolve, reject) => {
+  return catcher.Promise((resolve, reject) => {
     catcher.try(() => {
       tool.api.gmail.fetch_key_backups(account_email, function (success, backed_keys) {
         if(success) {
