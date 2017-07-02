@@ -220,60 +220,58 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             $('body').addClass('popup');
           }
         });
-
       });
-
-      function close_message() {
-        if(url_params.is_reply_box) {
-          tool.browser.message.send(url_params.parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
-        } else {
-          if(url_params.placement === 'settings') {
-            tool.browser.message.send(url_params.parent_tab_id, 'close_page');
-          } else if(url_params.placement === 'popup') {
-            window.close();
-          } else {
-            tool.browser.message.send(url_params.parent_tab_id, 'close_new_message');
-          }
-        }
-      }
-
-      function recover_missing_url_params(callback) {
-        if(url_params.is_reply_box) {
-          if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject) {
-            callback();
-          } else {
-            tool.api.gmail.message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
-              if (success) {
-                url_params.thread_id = gmail_message_object.threadId;
-                let reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
-                if(!url_params.to) {
-                  url_params.to = reply.to;
-                }
-                if(!url_params.from) {
-                  url_params.from = reply.from;
-                }
-                if(!url_params.subject) {
-                  url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
-                }
-              } else {
-                if(!url_params.from) {
-                  url_params.from = url_params.account_email;
-                }
-                if(!url_params.subject) {
-                  url_params.subject = '';
-                }
-                url_params.thread_id = url_params.thread_id || url_params.thread_message_id;
-                console.log('CRYPTUP: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
-              }
-              callback();
-            });
-          }
-        } else {
-          callback();
-        }
-      }
-
     });
+
+    function recover_missing_url_params(callback) {
+      if(url_params.is_reply_box) {
+        if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject) {
+          callback();
+        } else {
+          tool.api.gmail.message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
+            if (success) {
+              url_params.thread_id = gmail_message_object.threadId;
+              let reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+              if(!url_params.to) {
+                url_params.to = reply.to;
+              }
+              if(!url_params.from) {
+                url_params.from = reply.from;
+              }
+              if(!url_params.subject) {
+                url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
+              }
+            } else {
+              if(!url_params.from) {
+                url_params.from = url_params.account_email;
+              }
+              if(!url_params.subject) {
+                url_params.subject = '';
+              }
+              url_params.thread_id = url_params.thread_id || url_params.thread_message_id;
+              console.log('CRYPTUP: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
+            }
+            callback();
+          });
+        }
+      } else {
+        callback();
+      }
+    }
+
+    function close_message() {
+      if(url_params.is_reply_box) {
+        tool.browser.message.send(url_params.parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
+      } else {
+        if(url_params.placement === 'settings') {
+          tool.browser.message.send(url_params.parent_tab_id, 'close_page');
+        } else if(url_params.placement === 'popup') {
+          window.close();
+        } else {
+          tool.browser.message.send(url_params.parent_tab_id, 'close_new_message');
+        }
+      }
+    }
 
   });
 });
