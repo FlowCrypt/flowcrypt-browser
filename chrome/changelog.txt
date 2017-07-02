@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.2.7 on July 2, 2017: Reply bugfix</b>
+compose: reply bugfix
+
 <b>version 4.2.6 on July 2, 2017: Compose bugfix</b>
 compose: closing message window on missing db fixed
 
