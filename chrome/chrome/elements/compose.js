@@ -132,7 +132,13 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             }),
             email_provider_message_send: (message, render_upload_progress) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.message_send(url_params.account_email, message, function (success, response) {
-                (success ? resolve : reject)(response);
+                if(success) {
+                  resolve(response);
+                } else if(response && response.status === 0) {
+                  reject({code: null, message: 'Internet unavailable, please try again', internal: 'network'});
+                } else {
+                  reject(response);
+                }
               }, render_upload_progress);
             }),
             email_provider_search_contacts: (query, known_contacts) => catcher.Promise((resolve, reject) => {
@@ -216,9 +222,6 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             },
           }, tab_id);
 
-          if(url_params.placement === 'popup') {
-            $('body').addClass('popup');
-          }
         });
       });
     });
@@ -262,14 +265,10 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
     function close_message() {
       if(url_params.is_reply_box) {
         tool.browser.message.send(url_params.parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
-      } else {
-        if(url_params.placement === 'settings') {
+      } else if(url_params.placement === 'settings') {
           tool.browser.message.send(url_params.parent_tab_id, 'close_page');
-        } else if(url_params.placement === 'popup') {
-          window.close();
-        } else {
-          tool.browser.message.send(url_params.parent_tab_id, 'close_new_message');
-        }
+      } else {
+        tool.browser.message.send(url_params.parent_tab_id, 'close_new_message');
       }
     }
 

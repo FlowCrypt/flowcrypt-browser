@@ -4,18 +4,20 @@
 
 (function() {
 
-  let tool, catcher, openpgp, $, jQuery;
+  let tool, catcher, openpgp, $, jQuery, flowcrypt_attach;
   if(typeof exports !== 'object') {
     tool = window.tool;
     catcher = window.catcher;
     openpgp = window.openpgp;
     $ = jQuery = window.jQuery;
+    flowcrypt_attach = window.flowcrypt_attach;
   } else {
     tool = require('./tool').tool;
     catcher = require('./tool').catcher;
     openpgp = require('openpgp');
     $ = jQuery = require('jquery');
     window.lang = require('./lang');
+    flowcrypt_attach = require('./attach');
   }
 
   const S = tool.ui.build_jquery_selectors({
@@ -75,7 +77,7 @@
   const BTN_LOADING = 'loading..';
   const CRYPTUP_WEB_URL = 'https://cryptup.org';
 
-  let attach = init_shared_attach_js(get_max_attachment_size_and_oversize_notice);
+  let attach = flowcrypt_attach.init(get_max_attachment_size_and_oversize_notice);
 
   let last_draft = '';
   let can_read_emails;
@@ -725,21 +727,14 @@
         });
       });
     }, error => {
-      handle_send_message_error(error);
+      reset_send_btn();
+      if(error && error.message && error.internal) {
+        alert(error.message);
+      } else {
+        catcher.report('email_provider message_send error response', error);
+        alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
+      }
     });
-  }
-
-  function handle_send_message_error(error) {
-    reset_send_btn();
-    if (error && (error.status === 413 || error.code === 413)) {
-      S.now('send_btn_i').attr('class', '');
-      tool.env.increment('upgrade_notify_attach_size', function () {
-        alert('Currently, total attachments size should be under 5MB. Larger files will be possible very soon.');
-      });
-    } else {
-      catcher.report('email_provider message_send error response', error);
-      alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
-    }
   }
 
   function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, callback) {

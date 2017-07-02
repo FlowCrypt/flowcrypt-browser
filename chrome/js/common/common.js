@@ -655,7 +655,7 @@
   };
 
   function env_increment(type, callback) {
-    if(typeof account_storage_get === 'function') {
+    if(typeof account_storage_get === 'function' && typeof chrome === 'object') {
       if(!known_metric_types[type]) {
         catcher.report('Unknown metric type "' + type + '"');
       }
@@ -977,16 +977,20 @@
 
   function mime_require(group, callback) {
     if(group === 'parser') {
-      if(typeof MimeParser !== 'undefined') {
+      if(typeof MimeParser !== 'undefined') { // browser
         callback(MimeParser);
-      } else {
+      } else if (typeof exports === 'object') { // electron
+        callback(require('emailjs-mime-parser'));
+      } else { // RequireJS
         tool.env.set_up_require();
         require(['emailjs-mime-parser'], callback);
       }
     } else {
-      if(typeof MimeBuilder !== 'undefined') {
+      if(typeof MimeBuilder !== 'undefined') { // browser
         callback(MimeBuilder);
-      } else {
+      } else if (typeof exports === 'object') { // electron
+        callback(require('emailjs-mime-builder'));
+      } else { // RequireJS
         tool.env.set_up_require();
         require(['emailjs-mime-builder'], callback);
       }
@@ -2201,9 +2205,9 @@
     to = to || '';
     subject = subject || '';
     return {
-      headers: {
+      headers: (typeof exports !== 'object') ? { // todo - make it work in electron as well
         OpenPGP: 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key')),
-      },
+      } : {},
       from: from,
       to: typeof to === 'object' ? to : to.split(','),
       subject: subject,

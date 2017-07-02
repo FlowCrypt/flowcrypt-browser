@@ -10,7 +10,7 @@ db_open(function (db) {
     let original_content;
     let missing_passprase_longids = [];
 
-    let attach_js = init_shared_attach_js(function() {
+    let attach_js = window.flowcrypt_attach.init(() => {
       return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
     });
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');

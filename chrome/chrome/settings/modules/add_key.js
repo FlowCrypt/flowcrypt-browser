@@ -41,7 +41,7 @@ tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, ke
   $('#spinner_container').text('');
 });
 
-let attach_js = init_shared_attach_js(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
+let attach_js = window.flowcrypt_attach.init(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
 attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
 attach_js.set_attachment_added_callback(function (file) {
   let content = tool.str.from_uint8(file.content);
