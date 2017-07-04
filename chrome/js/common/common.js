@@ -3444,6 +3444,7 @@
   window.onunhandledrejection = handle_promise_error;
 
   function handle_promise_error(e) {
+    report('handle_promise_error', e);
     handle_exception(e.reason);
   }
 
