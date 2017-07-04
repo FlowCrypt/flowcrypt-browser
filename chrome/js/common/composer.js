@@ -12,12 +12,13 @@
     $ = jQuery = window.jQuery;
     flowcrypt_attach = window.flowcrypt_attach;
   } else {
-    tool = require('./tool').tool;
-    catcher = require('./tool').catcher;
+    require('module').globalPaths.push(process.cwd());
+    tool = require('js/tool').tool;
+    catcher = require('js/tool').catcher;
     openpgp = require('openpgp');
     $ = jQuery = require('jquery');
-    window.lang = require('./lang');
-    flowcrypt_attach = require('./attach');
+    window.lang = require('js/lang');
+    flowcrypt_attach = require('js/attach');
   }
 
   const S = tool.ui.build_jquery_selectors({
@@ -128,6 +129,7 @@
     render_footer_dialog: () => null,
     render_add_pubkey_dialog: (emails) => null,
     render_reinsert_reply_box: (last_message_id, recipients) => null,
+    render_help_dialog: () => null,
     factory_attachment: (attachment) => '<div>' + attachment.name + '</div>',
   };
 
@@ -1406,7 +1408,7 @@
   });
 
   S.cached('icon_help').click(function () {
-    app.send_message_to_background_script('settings', { account_email: account_email, page: '/chrome/settings/modules/help.htm' });
+    app.render_help_dialog();
   });
 
   S.now('input_from').change(function () {

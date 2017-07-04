@@ -180,6 +180,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
                 $.featherlight({iframe: factory.src.add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: window.flowcrypt_compose.S.cached('body').height() - 50});
               }
             },
+            render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/help.htm' }),
             close_message: close_message,
             factory_attachment: (attachment) => factory.embedded.attachment(attachment, []),
           }, {

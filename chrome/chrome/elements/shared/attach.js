@@ -14,8 +14,9 @@
       qq = window.qq;
       template_path = '/chrome/elements/shared/attach.template.htm';
     } else { // electron
-      tool = require('./tool').tool;
-      catcher = require('./tool').catcher;
+      require('module').globalPaths.push(process.cwd());
+      tool = require('js/tool').tool;
+      catcher = require('js/tool').catcher;
       $ = jQuery = require('jquery');
       qq = require('fine-uploader');
       template_path = '../attach.template.htm';

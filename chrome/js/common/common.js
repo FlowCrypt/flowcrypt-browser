@@ -3770,28 +3770,28 @@
     };
 
   Promise.prototype.validate = Promise.prototype.validate || function(validity_checker) {
-    var original_promise = this;
-    return catcher.Promise(function(resolve, reject) {
-      original_promise.then(function(response) {
-        if(typeof response === 'object') {
-          if(validity_checker(response)) {
-            resolve(response);
+      var original_promise = this;
+      return catcher.Promise(function(resolve, reject) {
+        original_promise.then(function(response) {
+          if(typeof response === 'object') {
+            if(validity_checker(response)) {
+              resolve(response);
+            } else {
+              reject({code: null, message: 'Could not validate result', internal: 'validate'});
+            }
           } else {
-            reject({code: null, message: 'Could not validate result', internal: 'validate'});
+            reject({code: null, message: 'Could not validate result: not an object', internal: 'validate'});
           }
-        } else {
-          reject({code: null, message: 'Could not validate result: not an object', internal: 'validate'});
-        }
-      }, reject);
-    });
-  };
+        }, reject);
+      });
+    };
 
   Promise.prototype.done = Promise.prototype.done || function(next) {
-    return this.then(function(x) {
-      next(true, x);
-    }, function(x) {
-      next(false, x);
-    });
-  };
+      return this.then(function(x) {
+        next(true, x);
+      }, function(x) {
+        next(false, x);
+      });
+    };
 
 })();
