@@ -1,5 +1,10 @@
 <div>
 
+<b>version 4.2.8 on July 3, 2017: Reply Load</b>
+composing: reply box sometimes takes time to load - add loader
+internal: more info about promise errors
+internal: TypeError: error_callback is not a function fixed
+
 <b>version 4.2.7 on July 2, 2017: Reply bugfix</b>
 compose: reply bugfix
 
