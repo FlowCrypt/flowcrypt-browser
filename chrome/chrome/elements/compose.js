@@ -230,6 +230,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
           if(url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject) {
             callback();
           } else {
+            $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
             tool.api.gmail.message_get(url_params.account_email, url_params.thread_message_id, 'metadata', function (success, gmail_message_object) {
               if (success) {
                 url_params.thread_id = gmail_message_object.threadId;
@@ -253,6 +254,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
                 url_params.thread_id = url_params.thread_id || url_params.thread_message_id;
                 console.log('CRYPTUP: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
               }
+              $('#loader').remove();
               callback();
             });
           }
