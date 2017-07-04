@@ -155,7 +155,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
                 }
               });
             },
-            email_provider_extract_armored_block: (message_id, callback) => tool.api.gmail.extract_armored_block(url_params.account_email, message_id, 'full', callback),
+            email_provider_extract_armored_block: (message_id, success, error) => tool.api.gmail.extract_armored_block(url_params.account_email, message_id, 'full', success, error),
             send_message_to_main_window: (channel, data) => tool.browser.message.send(url_params.parent_tab_id, channel, data),
             send_message_to_background_script: (channel, data) => tool.browser.message.send(null, channel, data),
             render_reinsert_reply_box: (last_message_id, recipients) => {

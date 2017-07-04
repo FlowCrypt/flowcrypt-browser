@@ -122,7 +122,7 @@
     email_provider_message_send: (message, render_upload_progress) => catcher.Promise((resolve, reject) => {reject()}),
     email_provider_search_contacts: (query, known_contacts) => catcher.Promise((resolve, reject) => {resolve([])}),
     email_provider_determine_reply_message_header_variables: (cb) => { if(cb) cb(); },
-    email_provider_extract_armored_block: (message_id, cb) => { if(cb) cb(); },
+    email_provider_extract_armored_block: (message_id, success_cb, error_cb) => { if(error_cb) error_cb('not implemented'); },
     send_message_to_main_window: (channel, data) => null,
     send_message_to_background_script: (channel, data) => null,
     render_footer_dialog: () => null,
