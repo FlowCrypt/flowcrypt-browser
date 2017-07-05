@@ -472,14 +472,14 @@
       S.now('send_btn_span').text('Loading');
       S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
       S.cached('send_btn_note').text('');
-      app.storage_get_subscription_info(function (_l, _e, _active) {
+      app.storage_get_subscription_info(function (subscription) {
         collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
           const challenge = emails_without_pubkeys.length ? {answer: S.cached('input_password').val()} : null;
           if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
             if(S.cached('icon_sign').is('.active')) {
-              sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active);
+              sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
             } else {
-              encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active);
+              encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
             }
           } else {
             reset_send_btn();
@@ -489,19 +489,19 @@
     }
   }
 
-  function encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active) {
+  function encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
     S.now('send_btn_span').text('Encrypting');
-    add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, _active, function (plaintext) {
+    add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, function (plaintext) {
       handle_send_btn_processing_error(function () {
         attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
           if (attachments.length && challenge) { // these will be password encrypted attachments
             button_update_timeout = setTimeout(function () {
               S.now('send_btn_span').text('sending');
             }, 500);
-            upload_attachments_to_cryptup(attachments, _active, function (all_good, upload_results, attachment_admin_codes, upload_error_message) {
+            upload_attachments_to_cryptup(attachments, subscription, function (all_good, upload_results, attachment_admin_codes, upload_error_message) {
               if (all_good === true) {
                 plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
-                do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject, _active, attachment_admin_codes);
+                do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
               } else if (all_good === tool.api.cryptup.auth_error) {
                 if (confirm('Your CryptUp account information is outdated, please review your account settings.')) {
                   app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
@@ -513,14 +513,14 @@
               }
             });
           } else {
-            do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, _active);
+            do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription);
           }
         });
       });
     });
   }
 
-  function sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active) {
+  function sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
     S.now('send_btn_span').text('Signing');
     const keyinfo = private_keys_get(account_email, 'primary');
     if (keyinfo) {
@@ -530,7 +530,7 @@
         app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         when_master_passphrase_entered(function (passphrase) {
           if (passphrase) {
-            sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, _active);
+            sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
           } else { // timeout - reset
             clearInterval(passphrase_interval);
             reset_send_btn();
@@ -576,8 +576,8 @@
     }
   }
 
-  function upload_attachments_to_cryptup(attachments, _active, callback) {
-    tool.api.cryptup.message_presign_files(attachments, _active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
+  function upload_attachments_to_cryptup(attachments, subscription, callback) {
+    tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
       const items = [];
       tool.each(pf_response.approvals, function (i, approval) {
         items.push({base_url: approval.base_url, fields: approval.fields, attachment: attachments[i]});
@@ -626,8 +626,8 @@
     return plaintext;
   }
 
-  function add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription_active, callback) {
-    if (challenge && subscription_active) {
+  function add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, callback) {
+    if (challenge && subscription.active) {
       tool.api.cryptup.message_token().validate(r => r.token).then(response => {
         callback(plaintext + '\n\n' + tool.e('div', {
             'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
@@ -655,13 +655,13 @@
     }
   }
 
-  function upload_encrypted_message_to_cryptup(encrypted_data, _active, callback) {
+  function upload_encrypted_message_to_cryptup(encrypted_data, subscription, callback) {
     S.now('send_btn_span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through CryptUp and recipients get a link.
     // admin_code stays locally and helps the sender extend life of the message or delete it
-    tool.api.cryptup.message_upload(encrypted_data, _active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
+    tool.api.cryptup.message_upload(encrypted_data, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
       callback(response.short, response.admin_code);
     }, error => {
       if (error.internal === 'auth') {
@@ -679,7 +679,7 @@
     return encrypted;
   }
 
-  function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, _active, attachment_admin_codes) {
+  function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription, attachment_admin_codes) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
       encrypted.data = with_attached_pubkey_if_needed(encrypted.data);
       let body = {'text/plain': encrypted.data};
@@ -688,7 +688,7 @@
       }, 500);
       app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
         if (challenge) {
-          upload_encrypted_message_to_cryptup(encrypted.data, _active, function (short_id, message_admin_code, error) {
+          upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
             if (short_id) {
               body = format_password_protected_email(short_id, body, armored_pubkeys);
               body = format_email_text_footer(body);
@@ -1383,17 +1383,13 @@
     let no_pgp_emails = get_recipients_from_dom('no_pgp');
     app.render_add_pubkey_dialog(no_pgp_emails);
     clearInterval(added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
-    console.log(';;;');
     added_pubkey_db_lookup_interval = setInterval(() => {
-      console.log('intervaling');
       tool.each(no_pgp_emails, (i, email) => {
         app.storage_contact_get(email, function (contact) {
-          console.log(contact);
           if (contact && contact.has_pgp) {
             $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
             $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
             clearInterval(added_pubkey_db_lookup_interval);
-            console.log('evaluating');
             evaluate_receivers();
           }
         });
