@@ -1326,7 +1326,7 @@
   }
 
   function browser_message_send(destination_string, name, data, callback) {
-    var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10) };
+    var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: typeof catcher !== 'undefined' ? catcher.stack_trace() : 'unknown' };
     var is_background_page = env_is_background_script();
     if (is_background_page && background_script_registered_handlers && msg.to === null) {
       background_script_registered_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
@@ -1378,7 +1378,7 @@
       } else if(tool.value(msg.name).in(Object.keys(background_script_registered_handlers))) {
         background_script_registered_handlers[msg.name](msg.data, sender, safe_respond);
       } else if(msg.to !== 'broadcast') {
-        catcher.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set');
+        catcher.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
       }
       return msg.respondable === true;
     });
@@ -1405,7 +1405,7 @@
               frame_registered_handlers[msg.name](msg.data, sender, respond);
             } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
               if(destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-                catcher.report('tool.browser.message.listen error: handler "' + msg.name + '" not set');
+                catcher.report('tool.browser.message.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
                 console.log('tool.browser.message.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
               }
@@ -3691,6 +3691,14 @@
     }
   }
 
+  function produce_new_stack_trace() {
+    try {
+      test();
+    } catch(e) {
+      return e.stack.split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
+    }
+  }
+
   var _c = { // web and extension code
     handle_error: handle_error,
     handle_exception: handle_exception,
@@ -3702,6 +3710,7 @@
     test: test,
     Promise: wrapped_Promise,
     promise_error_alert: promise_error_alert,
+    stack_trace: produce_new_stack_trace,
   };
 
   if(window.is_bare_engine !== true) {
