@@ -2842,10 +2842,7 @@
     tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true, function (success, response) {
       if(success) {
         if(response.messages) {
-          var message_ids = [];
-          tool.each(response.messages, function (i, message) {
-            message_ids.push(message.id);
-          });
+          var message_ids = response.messages.map(function(m) { return m.id});
           tool.api.gmail.message_get(account_email, message_ids, 'full', function (success, messages) {
             if(success) {
               var attachments = [];
@@ -2867,7 +2864,6 @@
               });
             } else {
               callback(false, 'Connection dropped while checking for backups. Please try again.');
-              display_block('step_0_found_key'); //todo: better handling needed. backup messages certainly exist but cannot find them right now.
             }
           });
         } else {
