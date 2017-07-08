@@ -938,7 +938,7 @@
           });
           if(method === 'forward') {
             supplied_subject = 'Fwd: ' + supplied_subject;
-            retrieve_decrypt_and_add_forwarded_message();
+            retrieve_decrypt_and_add_forwarded_message(last_message_id);
           }
         }
       });
