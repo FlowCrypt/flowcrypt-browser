@@ -3444,8 +3444,11 @@
   window.onunhandledrejection = handle_promise_error;
 
   function handle_promise_error(e) {
-    report('handle_promise_error', e);
-    handle_exception(e.reason);
+    if(e && typeof e === 'object' && typeof e.reason === 'object' && e.reason.message) {
+      handle_exception(e.reason); // actual exception that happened in Promise, unhandled
+    } else {
+      log('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+    }
   }
 
   function handle_error(error_message, url, line, col, error, is_manually_called, version, env) {
@@ -3563,7 +3566,7 @@
         handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
       });
     } catch(message_err) {
-      handle_error((exception || {message: 'catcher.handle_exception: supplied exception is not an object'}).message, window.location.href, line, col, exception, true);
+      handle_error(exception.message, window.location.href, line, col, exception, true);
     }
   }
 
