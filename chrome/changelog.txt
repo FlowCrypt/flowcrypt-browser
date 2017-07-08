@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.2.9 on July 5, 2017: Large file fix</b>
+composing: fix sending large files when subscribed
+
 <b>version 4.2.8 on July 3, 2017: Reply Load</b>
 composing: reply box sometimes takes time to load - add loader
 internal: more info about promise errors
