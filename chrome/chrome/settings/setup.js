@@ -379,7 +379,7 @@ $('#step_4_more_to_recover .action_recover_remaining').click(function () {
       window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
     });
   } else {
-    $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try a different pass phrases to unlock all backups.');
+    $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try different pass phrases to unlock all backups.');
     $('#step_2_recovery .line_skip_recovery').css('display', 'none');
   }
 });
