@@ -117,7 +117,7 @@
       },
     },
     diagnose: {
-      message_pubkeys: giagnose_message_pubkeys,
+      message_pubkeys: diagnose_message_pubkeys,
       keyserver_pubkeys: diagnose_keyserver_pubkeys,
     },
     crypto: {
@@ -1419,7 +1419,7 @@
 
   /* tool.diagnose */
 
-  function giagnose_message_pubkeys(account_email, message) {
+  function diagnose_message_pubkeys(account_email, message) {
     var message_key_ids = message.getEncryptionKeyIds();
     var local_key_ids = crypto_key_ids(private_storage_get('local', account_email, 'master_public_key'));
     var diagnosis = { found_match: false, receivers: message_key_ids.length };
