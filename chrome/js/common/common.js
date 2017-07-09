@@ -2247,7 +2247,11 @@
       auth_request.tab_id = tab_id;
       account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
         if (typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || api_google_has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
-          google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+          if(!env_is_background_script()) {
+            google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+          } else {
+            respond({success: false, error: 'Cannot produce auth window from background script'});
+          }
         } else {
           google_auth_refresh_token(storage.google_token_refresh, function (success, result) {
             if (!success && result === tool.api.error.network) {
@@ -2256,8 +2260,10 @@
               google_auth_save_tokens(auth_request.account_email, result, storage.google_token_scopes, function () {
                 respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
               });
-            } else {
+            } else if(!env_is_background_script()) {
               google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
+            } else {
+              respond({success: false, error: 'Cannot show auth window from background script'});
             }
           });
         }
