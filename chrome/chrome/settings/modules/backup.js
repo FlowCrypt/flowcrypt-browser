@@ -22,7 +22,7 @@ account_storage_get(url_params.account_email, ['setup_simple', 'email_provider']
   } else if(url_params.action === 'passphrase_change_gmail_backup') {
     if(storage.setup_simple) {
       display_block('loading');
-      let armored_private_key = private_keys_get(url_params.account_email, 'primary').armored;
+      let armored_private_key = private_keys_get(url_params.account_email, 'primary').private;
       (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, armored_private_key, function (success) {
         if(success) {
           $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
@@ -180,7 +180,7 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
   } else {
     let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    let armored_private_key = private_keys_get(url_params.account_email, 'primary').armored;
+    let armored_private_key = private_keys_get(url_params.account_email, 'primary').private;
     let prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, new_passphrase);
     private_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
@@ -198,7 +198,7 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
 }));
 
 function is_master_private_key_encrypted() {
-  let key = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').armored).keys[0];
+  let key = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').private).keys[0];
   return key.primaryKey.isDecrypted === false && !tool.crypto.key.decrypt(key, '').success;
 }
 
@@ -208,7 +208,7 @@ function backup_on_email_provider() {
   } else {
     let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    let armored_private_key = private_keys_get(url_params.account_email, 'primary').armored;
+    let armored_private_key = private_keys_get(url_params.account_email, 'primary').private;
     (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, armored_private_key, function (success) {
       if(success) {
         write_backup_done_and_render(false, 'inbox');
@@ -226,7 +226,7 @@ function backup_as_file() { //todo - add a non-encrypted download option
   } else {
     let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    let armored_private_key = private_keys_get(url_params.account_email, 'primary').armored;
+    let armored_private_key = private_keys_get(url_params.account_email, 'primary').private;
     tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
     write_backup_done_and_render(false, 'file');
   }

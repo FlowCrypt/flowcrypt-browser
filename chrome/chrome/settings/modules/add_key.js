@@ -6,11 +6,7 @@ var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 tool.ui.passphrase_toggle(['input_passphrase']);
 
-let private_keys = private_keys_get(url_params.account_email);
-let private_keys_long_ids = [];
-tool.each(private_keys, function (i, keyinfo) {
-  private_keys_long_ids.push(keyinfo.longid);
-});
+let private_keys_long_ids = private_keys_get(url_params.account_email).map(ki => ki.longid);
 
 $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
 

@@ -114,8 +114,7 @@ function private_storage_set(storage_type, account_email, key, value) {
 }
 
 function save_passphrase(storage_type, account_email, longid, passphrase) {
-  let master_prv_longid = tool.crypto.key.longid(private_storage_get('local', account_email, 'master_public_key')); //todo - migration needed
-  if(longid && longid !== master_prv_longid) {
+  if(longid && longid !== private_keys_get(account_email, 'primary').longid) {
     private_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
   } else {
     private_storage_set(storage_type, account_email, 'master_passphrase', passphrase);
@@ -156,19 +155,7 @@ function get_passphrase(account_email, longid) {
 }
 
 function private_keys_get(account_email, longid) {
-  let keys = [];
-  let private_keys = private_storage_get('local', account_email, 'private_keys');
-  let contains_primary = false;
-  tool.each(private_keys || [], (i, keyinfo) => {
-    if(keyinfo.primary === true) {
-      contains_primary = true;
-    }
-    keys.push(keyinfo);
-  });
-  let primary_key_armored = private_storage_get('local', account_email, 'master_private_key'); // legacy storage - to migrate
-  if(!contains_primary && (primary_key_armored || '').trim()) {
-    keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
-  }
+  let keys = private_storage_get('local', account_email, 'keys') || [];
   if(typeof longid !== 'undefined') { // looking for a specific key(s)
     let found;
     if(typeof longid === 'object') { // looking for an array of keys
@@ -187,47 +174,43 @@ function private_keys_get(account_email, longid) {
       });
     }
     return found;
-  } else {
+  } else { // return all keys
     return keys;
   }
 }
 
-function private_keys_add(account_email, new_key_armored, replace_if_exists) {
-  // ugly - should be refactored
-  // replace_if_exists should be true by default
-  // legacy method of storing keys should be migrated and abandoned
-  // later refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked check below
-  let private_keys = private_keys_get(account_email);
-  let is_first_key = (private_keys.length === 0);
-  let do_add = true;
-  let do_update = true;
+function private_keys_object(armored_prv, primary = false) {
+  let longid = tool.crypto.key.longid(armored_prv);
+  return {
+    private: armored_prv,
+    public: tool.crypto.key.read(armored_prv).toPublic().armor(),
+    primary: primary,
+    longid: longid,
+    fingerprint: tool.crypto.key.fingerprint(armored_prv),
+    keywords: window.mnemonic(longid),
+  };
+}
+
+function private_keys_add(account_email, new_key_armored) {
+  // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked check below
+  let keys = private_keys_get(account_email);
+  let updated = false;
   let new_key_longid = tool.crypto.key.longid(new_key_armored);
   if(new_key_longid) {
     // if(openpgp.key.readArmored(new_key_armored).keys[0].primaryKey.isDecrypted) {
     //   catcher.report('private_keys_add: attempting to add a naked key, aborted');
     //   return;
     // }
-    tool.each(private_keys, (i, keyinfo) => {
-      if(new_key_longid === keyinfo.longid) {
-        do_add = false;
-        if(replace_if_exists === true) {
-          if(keyinfo.primary) {
-            private_storage_set('local', account_email, 'master_private_key', new_key_armored); // legacy storage location
-          }
-          private_keys[i] = { armored: new_key_armored, longid: new_key_longid, primary: keyinfo.primary };
-        } else {
-          do_update = false;
-        }
+    tool.each(keys, (i, keyinfo) => {
+      if(new_key_longid === keyinfo.longid) { // replacing a key
+        keys[i] = private_keys_object(new_key_armored, keyinfo.primary);
+        updated = true;
       }
     });
-  } else {
-    do_add = do_update = false;
-  }
-  if(do_add) {
-    private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: is_first_key });
-  }
-  if(do_update) {
-    private_storage_set('local', account_email, 'private_keys', private_keys);
+    if(!updated) {
+      keys.push(private_keys_object(new_key_armored, keys.length === 0));
+    }
+    private_storage_set('local', account_email, 'keys', keys);
   }
 }
 
@@ -239,7 +222,7 @@ function private_keys_remove(account_email, remove_longid) {
       filtered_private_keys.push(keyinfo);
     }
   });
-  private_storage_set('local', account_email, 'private_keys', filtered_private_keys);
+  private_storage_set('local', account_email, 'keys', filtered_private_keys);
 }
 
 function account_storage_set(account_email, values, callback) {

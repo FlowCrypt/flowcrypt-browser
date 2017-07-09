@@ -67,7 +67,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
               }
               return subscription;
             },
-            storage_get_armored_public_key: (sender_email) => private_storage_get('local', url_params.account_email, 'master_public_key', url_params.parent_tab_id),
+            storage_get_armored_public_key: (sender_email) => private_keys_get(url_params.account_email, 'primary').public,
             storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {
               account_storage_get(url_params.account_email, ['drafts_reply', 'drafts_compose'], function (draft_storage) {
                 let drafts;

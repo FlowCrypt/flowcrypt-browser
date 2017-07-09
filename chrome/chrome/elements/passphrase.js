@@ -64,7 +64,7 @@ $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () 
   let pass = $('#passphrase').val();
   let is_correct = false;
   tool.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
-    let prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
     if(tool.crypto.key.decrypt(prv, pass).success) {
       is_correct = true;
       if($('.forget').prop('checked')) {

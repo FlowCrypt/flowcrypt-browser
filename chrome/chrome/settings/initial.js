@@ -2,4 +2,9 @@
 
 'use strict';
 
-localStorage.resolved_naked_key_vulnerability = true; // plugins first installed as version 4.2.2 and up
+// plugins first installed as version 4.2.2 and up
+localStorage.resolved_naked_key_vulnerability = true;
+
+// plugins first installed as version 4.3.1 and up: will not use master_public_key and master_private_key in local storage
+// instead, all keys in each account in one array
+localStorage.uses_account_keys_array = true;

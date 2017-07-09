@@ -868,8 +868,7 @@
   }
 
   function file_keyinfo_as_pubkey_attachment(keyinfo) {
-    var k = openpgp.key.readArmored(keyinfo.armored).keys[0];
-    return file_attachment('0x' + keyinfo.longid + '.asc', 'application/pgp-keys', k.toPublic().armor());
+    return file_attachment('0x' + keyinfo.longid + '.asc', 'application/pgp-keys', keyinfo.public);
   }
 
   /* tool.mime */
@@ -1421,7 +1420,7 @@
 
   function giagnose_message_pubkeys(account_email, message) {
     var message_key_ids = message.getEncryptionKeyIds();
-    var local_key_ids = crypto_key_ids(private_storage_get('local', account_email, 'master_public_key'));
+    var local_key_ids = crypto_key_ids(private_keys_get(account_email, 'primary').public);
     var diagnosis = { found_match: false, receivers: message_key_ids.length };
     tool.each(message_key_ids, function (i, msg_k_id) {
       tool.each(local_key_ids, function (j, local_k_id) {
@@ -1899,7 +1898,7 @@
     tool.each(keys.potentially_matching, function (i, keyinfo) {
       var passphrase = get_passphrase(account_email, keyinfo.longid);
       if(passphrase !== null) {
-        var key = openpgp.key.readArmored(keyinfo.armored).keys[0];
+        var key = openpgp.key.readArmored(keyinfo.private).keys[0];
         if(crypto_key_decrypt(key, passphrase).success) {
           keyinfo.decrypted = key;
           keys.with_passphrases.push(keyinfo);
@@ -2206,7 +2205,7 @@
     subject = subject || '';
     return {
       headers: (typeof exports !== 'object') ? { // todo - make it work in electron as well
-        OpenPGP: 'id=' + tool.crypto.key.fingerprint(private_storage_get('local', account_email, 'master_public_key')),
+        OpenPGP: 'id=' + private_keys_get(account_email, 'primary').fingerprint,
       } : {},
       from: from,
       to: typeof to === 'object' ? to : to.split(','),

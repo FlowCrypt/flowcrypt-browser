@@ -33,7 +33,7 @@ function display_block(name) {
 }
 
 $('.action_enter').click(function () {
-  let key = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').armored).keys[0];
+  let key = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').private).keys[0];
   if(tool.crypto.key.decrypt(key, $('#original_password').val()).success) {
     original_passphrase = $('#original_password').val();
     display_block('step_1_password');
@@ -70,7 +70,7 @@ $('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), function
     $('#password2').val('');
     $('#password2').focus();
   } else {
-    let prv = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').armored).keys[0];
+    let prv = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').private).keys[0];
     tool.crypto.key.decrypt(prv, get_passphrase(url_params.account_email) || original_passphrase);
     openpgp_key_encrypt(prv, new_passphrase);
     let stored_passphrase = private_storage_get('local', url_params.account_email, 'master_passphrase');

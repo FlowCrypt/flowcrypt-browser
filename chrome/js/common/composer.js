@@ -524,7 +524,7 @@
     S.now('send_btn_span').text('Signing');
     const keyinfo = private_keys_get(account_email, 'primary');
     if (keyinfo) {
-      const prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+      const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       const passphrase = app.storage_get_passphrase();
       if (passphrase === null) {
         app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});

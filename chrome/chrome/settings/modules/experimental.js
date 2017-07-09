@@ -36,7 +36,7 @@ function collect_info_for_account_backup(account_email, callback) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);
         text.push('key_primary: ' + keyinfo.primary);
-        text.push(keyinfo.armored);
+        text.push(keyinfo.private);
       });
       text.push('');
       callback(text.join('\n'));

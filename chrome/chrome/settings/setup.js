@@ -150,7 +150,7 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
     if(success && keys) {
       recovered_keys = keys;
       recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-      recovered_keys_successful_longids = private_keys_get(url_params.account_email).map(function(ki) { return ki.longid; });
+      recovered_keys_successful_longids = private_keys_get(url_params.account_email).map(ki => ki.longid);
       render_setup_done(url_params.account_email);
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
@@ -231,7 +231,6 @@ function finalize_setup(account_email, armored_pubkey, options) {
 function save_keys(account_email, prvs, options, callback) {
   private_storage_set(options.save_passphrase ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
   private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
-  private_storage_set('local', account_email, 'master_public_key', prvs[0].toPublic().armor());
   private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
   for(let i = 0; i < prvs.length; i++) { // save all keys
