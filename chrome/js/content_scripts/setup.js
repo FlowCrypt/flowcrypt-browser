@@ -102,11 +102,11 @@ function content_script_setup_if_vacant(webmail_specific) {
       factory = element_factory(account_email, tab_id, chrome.runtime.getURL('').replace(/\/$/, ''), reloadable_class, destroyable_class);
       inject = content_script_element_injector(webmail_specific.name, factory);
       inject.meta();
-      add_account_email_to_list_of_accounts(account_email);
+      window.flowcrypt_storage.account_emails_add(account_email);
       save_account_email_full_name_if_needed(account_email);
       let show_setup_needed_notification_if_setup_not_done = true;
       let wait_for_setup_interval = TrySetDestroyableInterval(function () {
-        account_storage_get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], storage => {
+        window.flowcrypt_storage.get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed'], storage => {
           if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
             notifications.clear();
             initialize(account_email, tab_id);
@@ -115,7 +115,7 @@ function content_script_setup_if_vacant(webmail_specific) {
             let set_up_notification = '<a href="#" class="action_open_settings">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
             notifications.show(set_up_notification, {
               notification_setup_needed_dismiss: function () {
-                account_storage_set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
+                window.flowcrypt_storage.set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
               },
               action_open_settings: function () {
                 tool.browser.message.send(null, 'settings', { account_email: account_email });
@@ -167,7 +167,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   }
 
   function save_account_email_full_name_if_needed(account_email) {
-    account_storage_get(account_email, 'full_name', value => {
+    window.flowcrypt_storage.get(account_email, 'full_name', value => {
       if(typeof value === 'undefined') {
         save_account_email_full_name(account_email);
       }
@@ -180,7 +180,7 @@ function content_script_setup_if_vacant(webmail_specific) {
     TrySetDestryableTimeout(function () {
       let full_name = webmail_specific.get_user_full_name();
       if(full_name) {
-        account_storage_set(account_email, { full_name: full_name });
+        window.flowcrypt_storage.set(account_email, { full_name: full_name });
       } else {
         save_account_email_full_name(account_email);
       }

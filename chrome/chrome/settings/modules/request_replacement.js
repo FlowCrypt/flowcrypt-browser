@@ -6,7 +6,7 @@ let url_params = tool.env.url_params(['account_email']);
 
 $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
-let primary_pubkey_armored = private_keys_get(url_params.account_email, 'primary').public;
+let primary_pubkey_armored = window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').public;
 let prv_headers = tool.crypto.armor.headers('private_key');
 
 tool.api.attester.lookup_email(url_params.account_email).done(function (success, keyserver_result) {

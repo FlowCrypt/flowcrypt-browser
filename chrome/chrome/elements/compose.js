@@ -6,18 +6,18 @@ tool.ui.event.protect();
 
 let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
 
-storage_cryptup_subscription((subscription_level, subscription_expire, subscription_active, subscription_method) => {
+window.flowcrypt_storage.subscription((subscription_level, subscription_expire, subscription_active, subscription_method) => {
   let subscription = { level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method };
-  db_open(db => {
+  window.flowcrypt_storage.db_open(db => {
 
-    if(db === db_denied) {
-      notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+    if(db === window.flowcrypt_storage.db_denied) {
+      window.flowcrypt_storage.notify_error(url_params.account_email, url_params.parent_tab_id);
       setTimeout(close_message, 300);
       return;
     }
 
     const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-    account_storage_get(url_params.account_email, storage_keys, storage => {
+    window.flowcrypt_storage.get(url_params.account_email, storage_keys, storage => {
 
       recover_missing_url_params(() => {
 
@@ -33,7 +33,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             can_read_email: () => can_read_email,
             does_recipient_have_my_pubkey: (their_email, callback) => {
               their_email = tool.str.parse_email(their_email).email;
-              account_storage_get(url_params.account_email, ['pubkey_sent_to'], function (pubkey_sent_to_storage) {
+              window.flowcrypt_storage.get(url_params.account_email, ['pubkey_sent_to'], function (pubkey_sent_to_storage) {
                 if (tool.value(their_email).in(pubkey_sent_to_storage.pubkey_sent_to)) {
                   callback(true);
                 } else if (!can_read_email) {
@@ -43,7 +43,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
                   const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
                   tool.api.gmail.message_list(url_params.account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response) {
                     if (success && response.messages) {
-                      account_storage_set(url_params.account_email, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email),}, function () {
+                      window.flowcrypt_storage.set(url_params.account_email, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email),}, function () {
                         callback(true);
                       });
                     } else {
@@ -60,16 +60,16 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
             storage_get_hide_message_password: () => !!storage.hide_message_password,
             storage_get_subscription_info: (cb) => { // returns cached result, callbacks with fresh result
               if(typeof cb === 'function') {
-                storage_cryptup_subscription(function(subscription_level, subscription_expire, subscription_active, subscription_method) {
+                window.flowcrypt_storage.subscription(function(subscription_level, subscription_expire, subscription_active, subscription_method) {
                   subscription = {level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method};
                   cb(subscription);
                 });
               }
               return subscription;
             },
-            storage_get_armored_public_key: (sender_email) => private_keys_get(url_params.account_email, 'primary').public,
+            storage_get_armored_public_key: (sender_email) => window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').public,
             storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {
-              account_storage_get(url_params.account_email, ['drafts_reply', 'drafts_compose'], function (draft_storage) {
+              window.flowcrypt_storage.get(url_params.account_email, ['drafts_reply', 'drafts_compose'], function (draft_storage) {
                 let drafts;
                 if (thread_id) { // it's a reply
                   drafts = draft_storage.drafts_reply || {};
@@ -78,7 +78,7 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
                   } else {
                     delete drafts[thread_id];
                   }
-                  account_storage_set(url_params.account_email, {drafts_reply: drafts}, () => {
+                  window.flowcrypt_storage.set(url_params.account_email, {drafts_reply: drafts}, () => {
                     resolve();
                   });
                 } else { // it's a new message
@@ -88,28 +88,28 @@ storage_cryptup_subscription((subscription_level, subscription_expire, subscript
                   } else {
                     delete drafts[draft_id];
                   }
-                  account_storage_set(url_params.account_email, {drafts_compose: drafts}, () => {
+                  window.flowcrypt_storage.set(url_params.account_email, {drafts_compose: drafts}, () => {
                     resolve();
                   });
                 }
               });
             }),
-            storage_get_passphrase: () => get_passphrase(url_params.account_email),
+            storage_passphrase_get: () => window.flowcrypt_storage.passphrase_get(url_params.account_email),
             storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => {
-              account_storage_get(null, ['admin_codes'], function (admin_code_storage) {
+              window.flowcrypt_storage.get(null, ['admin_codes'], function (admin_code_storage) {
                 admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
                 admin_code_storage.admin_codes[short_id] = {
                   date: Date.now(),
                   codes: [message_admin_code].concat(attachment_admin_codes || [])
                 };
-                account_storage_set(null, admin_code_storage, callback);
+                window.flowcrypt_storage.set(null, admin_code_storage, callback);
               });
             },
-            storage_contact_get: (email, callback) => db_contact_get(db, email, callback),
-            storage_contact_update: (email, update, callback) => db_contact_update(db, email, update, callback),
-            storage_contact_save: (contact, callback) => db_contact_save(db, contact, callback),
-            storage_contact_search: (query, callback) => db_contact_search(db, query, callback),
-            storage_contact_object: db_contact_object,
+            storage_contact_get: (email, callback) => window.flowcrypt_storage.db_contact_get(db, email, callback),
+            storage_contact_update: (email, update, callback) => window.flowcrypt_storage.db_contact_update(db, email, update, callback),
+            storage_contact_save: (contact, callback) => window.flowcrypt_storage.db_contact_save(db, contact, callback),
+            storage_contact_search: (query, callback) => window.flowcrypt_storage.db_contact_search(db, query, callback),
+            storage_contact_object: window.flowcrypt_storage.db_contact_object,
             email_provider_draft_get: (draft_id) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_get(url_params.account_email, draft_id, 'raw', (success, response) => {
                 (success ? resolve : reject)(response);

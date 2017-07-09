@@ -13,7 +13,7 @@ if(!url_params.email_provider) {
 if(!url_params.account_email) {
   render_setup_done(false);
 } else {
-  account_storage_get(url_params.account_email, ['setup_done'], storage => {
+  window.flowcrypt_storage.get(url_params.account_email, ['setup_done'], storage => {
     render_setup_done(storage.setup_done);
   });
 }

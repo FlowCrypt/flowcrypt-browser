@@ -6,9 +6,9 @@ let url_params = tool.env.url_params(['account_email', 'longid']);
 let keyinfo = undefined;
 
 if(url_params.longid) {
-  keyinfo = private_keys_get(url_params.account_email, url_params.longid);
+  keyinfo = window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid);
 } else {
-  tool.each(private_keys_get(url_params.account_email), function (i, k) {
+  tool.each(window.flowcrypt_storage.keys_get(url_params.account_email), function (i, k) {
     if(k.primary) {
       keyinfo = k;
     }

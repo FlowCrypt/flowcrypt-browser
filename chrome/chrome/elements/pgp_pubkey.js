@@ -18,7 +18,7 @@ function send_resize_message() {
 }
 
 function set_button_text(db) {
-  db_contact_get(db, $('.input_email').val(), function (contact) {
+  window.flowcrypt_storage.db_contact_get(db, $('.input_email').val(), function (contact) {
     $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
   });
 }
@@ -30,10 +30,10 @@ function render() {
   $('.line.fingerprints .keywords').text(mnemonic(tool.crypto.key.longid(pubkey)));
 }
 
-db_open(function (db) {
+window.flowcrypt_storage.db_open(function (db) {
 
-  if(db === db_denied) {
-    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+  if(db === window.flowcrypt_storage.db_denied) {
+    window.flowcrypt_storage.notify_error(url_params.account_email, url_params.parent_tab_id);
     return;
   }
 
@@ -63,7 +63,7 @@ db_open(function (db) {
 
   $('.action_add_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     if(tool.str.is_email_valid($('.input_email').val())) {
-      db_contact_save(db, db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function () {
+      window.flowcrypt_storage.db_contact_save(db, window.flowcrypt_storage.db_contact_object($('.input_email').val(), null, 'pgp', pubkey.armor(), null, false, Date.now()), function () {
         $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
         $('.input_email').remove();
       });

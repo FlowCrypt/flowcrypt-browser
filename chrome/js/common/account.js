@@ -32,7 +32,7 @@
     callbacks.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_check_sync(updated => {
-        storage_cryptup_auth_info((email, uuid, verified) => {
+        window.flowcrypt_storage.auth_info((email, uuid, verified) => {
           if(verified) {
             do_subscribe(chosen_product, source).then(resolve, reject);
           } else {
@@ -49,7 +49,7 @@
 
   function do_subscribe(chosen_product, source=null) {
     return catcher.Promise((resolve, reject) => {
-      account_storage_remove(null, 'cryptup_subscription_attempt', () => {
+      window.flowcrypt_storage.remove(null, 'cryptup_subscription_attempt', () => {
         return tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, source).then(response => {
           if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
             resolve(response.subscription);
@@ -116,7 +116,7 @@
       callbacks.render_status('A little while more..');
     }
     let end = Date.now() + timeout * 1000;
-    storage_cryptup_auth_info((account, uuid, verified) => {
+    window.flowcrypt_storage.auth_info((account, uuid, verified) => {
       callbacks.find_matching_tokens_from_email(account, uuid, (success, tokens) => {
         if(success && tokens) {
           callback(tokens);
@@ -131,7 +131,7 @@
 
   function save_subscription_attempt(product, source, callback) {
     product.source = source;
-    account_storage_set(null, { 'cryptup_subscription_attempt': product }, callback);
+    window.flowcrypt_storage.set(null, { 'cryptup_subscription_attempt': product }, callback);
   }
 
   function verify(account_email, tokens) {
@@ -169,7 +169,7 @@
 
   function register_new_device(account_email) {
     return catcher.Promise((resolve, reject) => {
-      account_storage_set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
+      window.flowcrypt_storage.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
         render_status('checking..', true);
         register_and_attempt_to_verify(account_email).then(resolve, reject);
       });

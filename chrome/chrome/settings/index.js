@@ -85,7 +85,7 @@ function initialize() {
   if(url_params.account_email) {
     $('.email-address').text(url_params.account_email);
     $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
-    account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], storage => {
+    window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], storage => {
       google_token_scopes = storage.google_token_scopes;
       if(storage.setup_done) {
         render_subscription_status_header();
@@ -95,7 +95,7 @@ function initialize() {
         }
         display_original('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
-        let private_keys = private_keys_get(url_params.account_email);
+        let private_keys = window.flowcrypt_storage.keys_get(url_params.account_email);
         if(!private_keys.length) {
           render_storage_read_error();
         } else if(private_keys.length > 4) {
@@ -108,7 +108,7 @@ function initialize() {
       }
     });
   } else {
-    get_account_emails(function (account_emails) {
+    window.flowcrypt_storage.account_emails_get(function (account_emails) {
       if(account_emails && account_emails[0]) {
         window.location = tool.env.url_create('index.htm', { account_email: account_emails[0] });
       } else {
@@ -134,7 +134,7 @@ function render_encrypted_contact_page_status() {
 
 function render_subscription_status_header() {
   tool.api.cryptup.account_check_sync(updated_with_new_info => {
-    storage_cryptup_subscription(function (level, expire, active, method) {
+    window.flowcrypt_storage.subscription(function (level, expire, active, method) {
       if(active) {
         $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(function () {
           show_settings_page('/chrome/settings/modules/account.htm');
@@ -182,9 +182,9 @@ function add_key_rows_html(private_keys) {
     show_settings_page($(this).attr('page'), $(this).attr('addurltext') || '');
   });
   $('.action_remove_key').click(function () {
-    private_keys_remove(url_params.account_email, $(this).attr('longid'));
-    save_passphrase('local', url_params.account_email, $(this).attr('longid'), undefined);
-    save_passphrase('session', url_params.account_email, $(this).attr('longid'), undefined);
+    window.flowcrypt_storage.keys_remove(url_params.account_email, $(this).attr('longid'));
+    window.flowcrypt_storage.passphrase_save('local', url_params.account_email, $(this).attr('longid'), undefined);
+    window.flowcrypt_storage.passphrase_save('session', url_params.account_email, $(this).attr('longid'), undefined);
     reload(true);
   });
 }
@@ -192,13 +192,13 @@ function add_key_rows_html(private_keys) {
 function new_google_account_authentication_prompt(account_email, omit_read_scope) {
   tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope: omit_read_scope, tab_id: tab_id_global }, google_token_scopes, function (response) {
     if(response && response.success === true && response.account_email) {
-      add_account_email_to_list_of_accounts(response.account_email, function () {
-        account_storage_get(response.account_email, ['setup_done'], storage => {
+      window.flowcrypt_storage.account_emails_add(response.account_email, function () {
+        window.flowcrypt_storage.get(response.account_email, ['setup_done'], storage => {
           if(storage.setup_done) { // this was just an additional permission
             alert('You\'re all set.');
             window.location = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
           } else {
-            account_storage_set(response.account_email, {email_provider: 'gmail'}, function () {
+            window.flowcrypt_storage.set(response.account_email, {email_provider: 'gmail'}, function () {
               window.location = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
             });
           }
@@ -272,7 +272,7 @@ $("#switch-account, #toggle-accounts-profile-img").click(function (event) {
   $(".add-account").toggleClass("hidden");
 });
 
-get_account_emails(function (account_emails) {
+window.flowcrypt_storage.account_emails_get(function (account_emails) {
   tool.each(account_emails, function (i, email) {
     $('#alt-accounts').prepend(menu_account_html(email));
   });

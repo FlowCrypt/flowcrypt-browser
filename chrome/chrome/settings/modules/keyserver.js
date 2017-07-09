@@ -14,7 +14,7 @@ $('.email-address').text(url_params.account_email);
 
 $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
-account_storage_get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], storage => {
+window.flowcrypt_storage.get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], storage => {
   tool.diagnose.keyserver_pubkeys(url_params.account_email, function (diagnosis) {
     if(diagnosis) {
       $('.summary').html('');
@@ -90,8 +90,8 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
     action_submit_or_request_attestation($(self).attr('email'));
   }));
   $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-    account_storage_get(url_params.account_email, ['addresses'], storage => {
-      account_storage_set(url_params.account_email, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}, function () {
+    window.flowcrypt_storage.get(url_params.account_email, ['addresses'], storage => {
+      window.flowcrypt_storage.set(url_params.account_email, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}, function () {
         window.location.reload();
       });
     });
@@ -113,9 +113,9 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
 function action_submit_or_request_attestation(email) {
   if(email === url_params.account_email) { // request attestation
     save_attest_request(url_params.account_email, 'CRYPTUP', function () {
-      tool.api.attester.initial_legacy_submit(email, private_keys_get(url_params.account_email, 'primary').public, true).done(() => window.location.reload());
+      tool.api.attester.initial_legacy_submit(email, window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').public, true).done(() => window.location.reload());
     });
   } else { // submit only
-    tool.api.attester.initial_legacy_submit(email, private_keys_get(url_params.account_email, 'primary').public, false).done(() => window.location.reload());
+    tool.api.attester.initial_legacy_submit(email, window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').public, false).done(() => window.location.reload());
   }
 }

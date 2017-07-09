@@ -10,8 +10,8 @@ tool.each(url_params.emails.split(','), function (i, email) {
   $('select.email').append('<option value="' + email + '">' + email + '</option>');
 });
 
-db_open(function (db) {
-  db_contact_search(db, { has_pgp: true }, function (contacts) {
+window.flowcrypt_storage.db_open(function (db) {
+  window.flowcrypt_storage.db_contact_search(db, { has_pgp: true }, function (contacts) {
 
     $('select.copy_from_email').append('<option value=""></option>');
     tool.each(contacts, function (i, contact) {
@@ -20,7 +20,7 @@ db_open(function (db) {
 
     $('select.copy_from_email').change(function () {
       if($(this).val()) {
-        db_contact_get(db, $(this).val(), function (contact) {
+        window.flowcrypt_storage.db_contact_get(db, $(this).val(), function (contact) {
           $('.pubkey').val(contact.pubkey).prop('disabled', true);
         });
       } else {
@@ -37,7 +37,7 @@ db_open(function (db) {
         alert('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
         $('.pubkey').val('').focus();
       } else {
-        db_contact_save(db, db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
+        window.flowcrypt_storage.db_contact_save(db, window.flowcrypt_storage.db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);
       }
     }));
 

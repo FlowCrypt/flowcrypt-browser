@@ -14,10 +14,10 @@ tool.browser.message.tab_id(function(tab_id) {
     },
   }, tab_id);
 
-  db_open(function (db) {
+  window.flowcrypt_storage.db_open(function (db) {
 
     function render_contact_list() {
-      db_contact_search(db, { has_pgp: true }, function (contacts) {
+      window.flowcrypt_storage.db_contact_search(db, { has_pgp: true }, function (contacts) {
 
         $('table#emails').html('');
         $('div.hide_when_rendering_subpage').css('display', 'block');
@@ -30,7 +30,7 @@ tool.browser.message.tab_id(function(tab_id) {
         });
 
         $('a.action_show').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-          db_contact_get(db, $(self).closest('tr').attr('email'), function (contact) {
+          window.flowcrypt_storage.db_contact_get(db, $(self).closest('tr').attr('email'), function (contact) {
             $('.hide_when_rendering_subpage').css('display', 'none');
             $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + contact.email);
             if(contact.client === 'cryptup') {
@@ -61,7 +61,7 @@ tool.browser.message.tab_id(function(tab_id) {
           if(!armored_pubkey || !email) {
             alert('No public key entered');
           } else if(tool.crypto.key.fingerprint(armored_pubkey) !== null) {
-            db_contact_save(db, db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()), render_contact_list);
+            window.flowcrypt_storage.db_contact_save(db, window.flowcrypt_storage.db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()), render_contact_list);
           } else {
             alert('Cannot recognize a valid public key, please try again. Let me know at tom@cryptup.org if you need help.');
             $('#edit_contact .input_pubkey').val('').focus();
@@ -89,7 +89,7 @@ tool.browser.message.tab_id(function(tab_id) {
         }));
 
         $('a.action_remove').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-          db_contact_save(db, db_contact_object($(self).closest('tr').attr('email'), null, null, null, null, null, null), render_contact_list);
+          window.flowcrypt_storage.db_contact_save(db, window.flowcrypt_storage.db_contact_object($(self).closest('tr').attr('email'), null, null, null, null, null, null), render_contact_list);
         }));
 
       });

@@ -24,7 +24,7 @@ catcher.try(() => {
   });
 
   function start(account_email, inject, notifications, factory, notify_murdered) {
-    account_storage_get(account_email, ['addresses', 'google_token_scopes'], storage => {
+    window.flowcrypt_storage.get(account_email, ['addresses', 'google_token_scopes'], storage => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       inject.buttons();
       replacer = gmail_element_replacer(factory, account_email, storage.addresses || [account_email], can_read_emails);

@@ -4,7 +4,7 @@
 
 let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
-db_open(function (db) {
+window.flowcrypt_storage.db_open(function (db) {
   tool.browser.message.tab_id(function (tab_id) {
 
     let original_content;
@@ -23,7 +23,7 @@ db_open(function (db) {
           // todo - copy pasted from attachment.js, unify into a single function
           // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
           // see pgp_block.js for proper common implmenetation
-          if(missing_passprase_longids && get_passphrase(url_params.account_email, longid) !== null) {
+          if(missing_passprase_longids && window.flowcrypt_storage.passphrase_get(url_params.account_email, longid) !== null) {
             missing_passprase_longids = [];
             $('.action_decrypt_and_download').click();
             return false;

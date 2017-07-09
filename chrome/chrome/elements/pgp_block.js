@@ -6,7 +6,7 @@ tool.ui.event.protect();
 
 let url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
 
-db_open(function (db) {
+window.flowcrypt_storage.db_open(function (db) {
 
   let included_attachments = [];
   let height_history = [];
@@ -18,8 +18,8 @@ db_open(function (db) {
   let password_message_link_result;
   let admin_codes;
 
-  if(db === db_denied) {
-    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+  if(db === window.flowcrypt_storage.db_denied) {
+    window.flowcrypt_storage.notify_error(url_params.account_email, url_params.parent_tab_id);
     render_error(window.lang.pgp_block.update_chrome_settings + '<a href="#" class="review_settings">Review Settings</a>', null, function () {
       $('.review_settings').click(function () {
         tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/texts/chrome_content_settings.htm' });
@@ -54,9 +54,9 @@ db_open(function (db) {
   }
 
   function render_content(content, is_error, callback) {
-    account_storage_get(url_params.account_email, ['successfully_received_at_leat_one_message'], storage => {
+    window.flowcrypt_storage.get(url_params.account_email, ['successfully_received_at_leat_one_message'], storage => {
       if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
-        account_storage_set(url_params.account_email, { successfully_received_at_leat_one_message: true });
+        window.flowcrypt_storage.set(url_params.account_email, { successfully_received_at_leat_one_message: true });
       }
       tool.str.as_safe_html(content, function(safe_html) {
         $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
@@ -238,7 +238,7 @@ db_open(function (db) {
   }
 
   function recover_stored_admin_codes() {
-    account_storage_get(null, ['admin_codes'], storage => {
+    window.flowcrypt_storage.get(null, ['admin_codes'], storage => {
       if(url_params.short && storage.admin_codes && storage.admin_codes[url_params.short] && storage.admin_codes[url_params.short].codes) {
         admin_codes = storage.admin_codes[url_params.short].codes;
       }
@@ -247,7 +247,7 @@ db_open(function (db) {
 
   function render_message_expiration_renew_options() {
     let parent = $(this).parent();
-    storage_cryptup_subscription(function (level, expire, expired, method) {
+    window.flowcrypt_storage.subscription(function (level, expire, expired, method) {
       if(level && !expired) {
         parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
         $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
@@ -338,7 +338,7 @@ db_open(function (db) {
           }
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
-        } else if(!result.counts.potentially_matching_keys && !private_keys_get(url_params.account_email, 'primary')) {
+        } else if(!result.counts.potentially_matching_keys && !window.flowcrypt_storage.keys_get(url_params.account_email, 'primary')) {
           render_error(window.lang.pgp_block.not_properly_set_up + button_html('cryptup settings', 'green settings'));
         } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
           if(url_params.has_password && !optional_password) {
@@ -370,7 +370,7 @@ db_open(function (db) {
   function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids) {
     missing_or_wrong_passprases = {};
     tool.each(missing_or_wrong_passphrase_key_longids, function (i, longid) {
-      missing_or_wrong_passprases[longid] = get_passphrase(url_params.account_email, longid);
+      missing_or_wrong_passprases[longid] = window.flowcrypt_storage.passphrase_get(url_params.account_email, longid);
     });
     render_error('<a href="#" class="enter_passphrase">' + window.lang.pgp_block.enter_passphrase + '</a> ' + window.lang.pgp_block.to_open_message, undefined, function () {
       clearInterval(passphrase_interval);
@@ -399,7 +399,7 @@ db_open(function (db) {
 
   function check_passphrase_changed() {
     tool.each(missing_or_wrong_passprases, function (i, longid) {
-      if((missing_or_wrong_passprases[longid] || null) !== get_passphrase(url_params.account_email, longid)) {
+      if((missing_or_wrong_passprases[longid] || null) !== window.flowcrypt_storage.passphrase_get(url_params.account_email, longid)) {
         missing_or_wrong_passprases = {};
         clearInterval(passphrase_interval);
         decrypt_and_render();
@@ -512,7 +512,7 @@ db_open(function (db) {
     }
   }
 
-  account_storage_get(url_params.account_email, ['setup_done', 'google_token_scopes'], storage => {
+  window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'google_token_scopes'], storage => {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     if(storage.setup_done) {
       initialize();

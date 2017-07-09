@@ -3,7 +3,7 @@
 'use strict';
 
 const url_params = tool.env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
-const attachment = tool.file.keyinfo_as_pubkey_attachment(private_keys_get(url_params.account_email, 'primary'));
+const attachment = tool.file.keyinfo_as_pubkey_attachment(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary'));
 let additional_message_headers;
 
 window.flowcrypt_compose.init({send_message_to_main_window: (channel, data) => tool.browser.message.send(url_params.parent_tab_id, channel, data)}, {is_reply_box: true, frame_id: url_params.frame_id});

@@ -655,11 +655,11 @@
   };
 
   function env_increment(type, callback) {
-    if(typeof account_storage_get === 'function' && typeof chrome === 'object') {
+    if(typeof window.flowcrypt_storage.get === 'function' && typeof chrome === 'object') {
       if(!known_metric_types[type]) {
         catcher.report('Unknown metric type "' + type + '"');
       }
-      account_storage_get(null, ['metrics'], function (storage) {
+      window.flowcrypt_storage.get(null, ['metrics'], function (storage) {
         var metrics_k = known_metric_types[type];
         if(!storage.metrics) {
           storage.metrics = {};
@@ -669,7 +669,7 @@
         } else {
           storage.metrics[metrics_k] += 1;
         }
-        account_storage_set(null, { metrics: storage.metrics }, function () {
+        window.flowcrypt_storage.set(null, { metrics: storage.metrics }, function () {
           browser_message_send(null, 'update_uninstall_url', null, callback);
         });
       });
@@ -1238,7 +1238,7 @@
   function ui_passphrase_toggle(pass_phrase_input_ids, force_initial_show_or_hide) {
     var button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
     var button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-    account_storage_get(null, ['hide_pass_phrases'], function (storage) {
+    window.flowcrypt_storage.get(null, ['hide_pass_phrases'], function (storage) {
       if(force_initial_show_or_hide === 'hide') {
         var show = false;
       } else if(force_initial_show_or_hide === 'show') {
@@ -1259,11 +1259,11 @@
           if($('#' + id).attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
             $(this).html(button_hide);
-            account_storage_set(null, { hide_pass_phrases: false, });
+            window.flowcrypt_storage.set(null, { hide_pass_phrases: false, });
           } else {
             $('#' + id).attr('type', 'password');
             $(this).html(button_show);
-            account_storage_set(null, { hide_pass_phrases: true, });
+            window.flowcrypt_storage.set(null, { hide_pass_phrases: true, });
           }
         });
       });
@@ -1420,7 +1420,7 @@
 
   function giagnose_message_pubkeys(account_email, message) {
     var message_key_ids = message.getEncryptionKeyIds();
-    var local_key_ids = crypto_key_ids(private_keys_get(account_email, 'primary').public);
+    var local_key_ids = crypto_key_ids(window.flowcrypt_storage.keys_get(account_email, 'primary').public);
     var diagnosis = { found_match: false, receivers: message_key_ids.length };
     tool.each(message_key_ids, function (i, msg_k_id) {
       tool.each(local_key_ids, function (j, local_k_id) {
@@ -1435,7 +1435,7 @@
 
   function diagnose_keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
-    account_storage_get(account_email, ['addresses'], function (storage) {
+    window.flowcrypt_storage.get(account_email, ['addresses'], function (storage) {
       api_attester_lookup_email(tool.arr.unique([account_email].concat(storage.addresses || []))).then(function(pubkey_search_results) {
         tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
           if (!pubkey_search_result.pubkey) {
@@ -1443,7 +1443,7 @@
             diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
           } else {
             var match = true;
-            if (!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(arr_select(private_keys_get(account_email), 'longid'))) {
+            if (!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(arr_select(window.flowcrypt_storage.keys_get(account_email), 'longid'))) {
               diagnosis.has_pubkey_mismatch = true;
               match = false;
             }
@@ -1889,14 +1889,14 @@
     keys.signed_by = (message.getSigningKeyIds() || []).map(function (id) {
       return crypto_key_longid(id.bytes);
     });
-    keys.potentially_matching = private_keys_get(account_email, keys.encrypted_for);
+    keys.potentially_matching = window.flowcrypt_storage.keys_get(account_email, keys.encrypted_for);
     if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
-      keys.potentially_matching = private_keys_get(account_email);
+      keys.potentially_matching = window.flowcrypt_storage.keys_get(account_email);
     }
     keys.with_passphrases = [];
     keys.without_passphrases = [];
     tool.each(keys.potentially_matching, function (i, keyinfo) {
-      var passphrase = get_passphrase(account_email, keyinfo.longid);
+      var passphrase = window.flowcrypt_storage.passphrase_get(account_email, keyinfo.longid);
       if(passphrase !== null) {
         var key = openpgp.key.readArmored(keyinfo.private).keys[0];
         if(crypto_key_decrypt(key, passphrase).success) {
@@ -1910,7 +1910,7 @@
       }
     });
     if(keys.signed_by.length) {
-      db_contact_get(db, keys.signed_by, function (verification_contacts) {
+      window.flowcrypt_storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
         keys.verification_contacts = verification_contacts.filter(function (contact) {
           return contact !== null;
         });
@@ -2205,7 +2205,7 @@
     subject = subject || '';
     return {
       headers: (typeof exports !== 'object') ? { // todo - make it work in electron as well
-        OpenPGP: 'id=' + private_keys_get(account_email, 'primary').fingerprint,
+        OpenPGP: 'id=' + window.flowcrypt_storage.keys_get(account_email, 'primary').fingerprint,
       } : {},
       from: from,
       to: typeof to === 'object' ? to : to.split(','),
@@ -2244,7 +2244,7 @@
   function api_google_auth(auth_request, respond) {
     browser_message_tab_id(function(tab_id) {
       auth_request.tab_id = tab_id;
-      account_storage_get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
+      window.flowcrypt_storage.get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (storage) {
         if (typeof storage.google_token_access === 'undefined' || typeof storage.google_token_refresh === 'undefined' || api_google_has_new_scope(auth_request.scopes, storage.google_token_scopes, auth_request.omit_read_scope)) {
           google_auth_window_show_and_respond_to_auth_request(auth_request, storage.google_token_scopes, respond);
         } else {
@@ -2347,7 +2347,7 @@
     if(typeof tokens_object.refresh_token !== 'undefined') {
       to_save.google_token_refresh = tokens_object.refresh_token;
     }
-    account_storage_set(account_email, to_save, callback);
+    window.flowcrypt_storage.set(account_email, to_save, callback);
   }
 
   function google_auth_get_tokens(code, callback, retries_left) {
@@ -2444,7 +2444,7 @@
   }
 
   function api_google_call(account_email, method, url, parameters, callback, fail_on_auth) {
-    account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
+    window.flowcrypt_storage.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
       var data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
       if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
         $.ajax({
@@ -2517,7 +2517,7 @@
       throw new Error('missing account_email in api_gmail_call');
     }
     progress = progress || {};
-    account_storage_get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
+    window.flowcrypt_storage.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
       if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
         if(typeof progress.upload === 'function') {
           var url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
@@ -3172,7 +3172,7 @@
 
   function api_cryptup_account_login(account_email, token) {
     return catcher.Promise(function(resolve, reject) {
-      storage_cryptup_auth_info(function (registered_email, registered_uuid, already_verified) {
+      window.flowcrypt_storage.auth_info(function (registered_email, registered_uuid, already_verified) {
         var uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
         var email = registered_email || account_email;
         api_cryptup_call('account/login', {
@@ -3180,7 +3180,7 @@
           uuid: uuid, token: token || null,
         }).validate(function (r) {return r.registered === true;}).then(function (response) {
           var to_save = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
-          account_storage_set(null, to_save, function () {
+          window.flowcrypt_storage.set(null, to_save, function () {
             resolve({verified: response.verified === true, subscription: response.subscription});
           });
         }, reject);
@@ -3190,7 +3190,7 @@
 
   function api_cryptup_account_subscribe(product, method, payment_source_token) {
     return catcher.Promise(function(resolve, reject) {
-      storage_cryptup_auth_info(function (email, uuid, verified) {
+      window.flowcrypt_storage.auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('account/subscribe', {
             account: email,
@@ -3199,7 +3199,7 @@
             source: payment_source_token,
             product: product,
           }).then(function(response) {
-            account_storage_set(null, { cryptup_account_subscription: response.subscription }, function () {
+            window.flowcrypt_storage.set(null, { cryptup_account_subscription: response.subscription }, function () {
               resolve(response);
             });
           }, reject);
@@ -3212,7 +3212,7 @@
 
   function api_cryptup_account_update(update_values) {
     return catcher.Promise(function(resolve, reject) {
-      storage_cryptup_auth_info(function (email, uuid, verified) {
+      window.flowcrypt_storage.auth_info(function (email, uuid, verified) {
         if(verified) {
           var request = {account: email, uuid: uuid};
           tool.each(update_values || {}, function(k, v) { request[k] = v; });
@@ -3232,7 +3232,7 @@
           lengths: lengths,
         }).then(resolve, reject);
       } else if(auth_method === 'uuid') {
-        storage_cryptup_auth_info(function (email, uuid, verified) {
+        window.flowcrypt_storage.auth_info(function (email, uuid, verified) {
           if(verified) {
             api_cryptup_call('message/presign_files', {
               account: email,
@@ -3270,7 +3270,7 @@
             content: content,
           }, 'FORM').then(resolve, reject);
         } else {
-          storage_cryptup_auth_info(function (email, uuid, verified) {
+          window.flowcrypt_storage.auth_info(function (email, uuid, verified) {
             if(verified) {
               api_cryptup_call('message/upload', {
                 account: email,
@@ -3288,7 +3288,7 @@
 
   function api_cryptup_message_expiration(admin_codes, add_days) {
     return catcher.Promise(function (resolve, reject) {
-      storage_cryptup_auth_info(function (email, uuid, verified) {
+      window.flowcrypt_storage.auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('message/expiration', {
             account: email,
@@ -3305,7 +3305,7 @@
 
   function api_cryptup_message_token() {
     return catcher.Promise(function (resolve, reject) {
-      storage_cryptup_auth_info(function (email, uuid, verified) {
+      window.flowcrypt_storage.auth_info(function (email, uuid, verified) {
         if(verified) {
           api_cryptup_call('message/token', {
             account: email,
@@ -3352,11 +3352,11 @@
 
   function api_cryptup_account_check_sync(callback) { // callbacks true on updated, false not updated, null for could not fetch
     callback = typeof callback === 'function' ? callback : function() {};
-    get_account_emails(function(emails) {
+    window.flowcrypt_storage.account_emails_get(function(emails) {
       if(emails.length) {
         tool.api.cryptup.account_check(emails).then(function(response) {
-          storage_cryptup_auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
-            storage_cryptup_subscription(function(stored_level, stored_expire, stored_active, stored_method) {
+          window.flowcrypt_storage.auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
+            window.flowcrypt_storage.subscription(function(stored_level, stored_expire, stored_active, stored_method) {
               var local_storage_update = {};
               if(response.email) {
                 if((response.email && !cryptup_account_email) || (response.email && cryptup_account_email !== response.email)) {
@@ -3384,7 +3384,7 @@
               }
               if(Object.keys(local_storage_update).length) {
                 catcher.log('updating account subscription from ' + stored_level + ' to ' + (response.subscription ? response.subscription.level : null), response);
-                account_storage_set(null, local_storage_update, function() {
+                window.flowcrypt_storage.set(null, local_storage_update, function() {
                   callback(true);
                 });
               } else {
@@ -3520,14 +3520,14 @@
       console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
     }
     try {
-      if(typeof account_storage_get === 'function' && typeof account_storage_set === 'function') {
+      if(typeof window.flowcrypt_storage.get === 'function' && typeof window.flowcrypt_storage.set === 'function') {
         tool.env.increment('error');
-        account_storage_get(null, ['errors'], function (storage) {
+        window.flowcrypt_storage.get(null, ['errors'], function (storage) {
           if(typeof storage.errors === 'undefined') {
             storage.errors = [];
           }
           storage.errors.unshift(error.stack || error_message);
-          account_storage_set(null, storage);
+          window.flowcrypt_storage.set(null, storage);
         });
       }
     } catch (storage_err) {
@@ -3596,12 +3596,12 @@
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
       try {
-        account_storage_get(null, ['errors'], function (storage) {
+        window.flowcrypt_storage.get(null, ['errors'], function (storage) {
           if(typeof storage.errors === 'undefined') {
             storage.errors = [];
           }
           storage.errors.unshift(e.stack || error_message);
-          account_storage_set(null, storage);
+          window.flowcrypt_storage.set(null, storage);
         });
       } catch (storage_err) {
         console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);

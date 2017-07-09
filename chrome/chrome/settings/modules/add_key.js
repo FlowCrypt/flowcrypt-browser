@@ -6,7 +6,7 @@ var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 tool.ui.passphrase_toggle(['input_passphrase']);
 
-let private_keys_long_ids = private_keys_get(url_params.account_email).map(ki => ki.longid);
+let private_keys_long_ids = window.flowcrypt_storage.keys_get(url_params.account_email).map(ki => ki.longid);
 
 $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
 
@@ -70,11 +70,11 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
       if(decrypt_result.error) {
         alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
       } else if(decrypt_result.success) {
-        private_keys_add(url_params.account_email, normalized_armored_key);
+        window.flowcrypt_storage.keys_add(url_params.account_email, normalized_armored_key);
         if($('.input_passphrase_save').prop('checked')) {
-          save_passphrase('local', url_params.account_email, new_key_longid, passphrase);
+          window.flowcrypt_storage.passphrase_save('local', url_params.account_email, new_key_longid, passphrase);
         } else {
-          save_passphrase('session', url_params.account_email, new_key_longid, passphrase);
+          window.flowcrypt_storage.passphrase_save('session', url_params.account_email, new_key_longid, passphrase);
         }
         tool.browser.message.send(url_params.parent_tab_id, 'reload', { advanced: true });
       } else {
