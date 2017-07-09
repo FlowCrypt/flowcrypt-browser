@@ -1,5 +1,12 @@
 <div>
 
+<b>version 4.3.0 on July 8, 2017: Error handling</b>
+internal: figure out missing parent id for set_css
+internal: unhandled promise errors
+setup: connection dropped while checking backups
+reading: cryptup not properly setup notice for incognito
+composing: fix quoting previous message on forward
+
 <b>version 4.2.9 on July 5, 2017: Large file fix</b>
 composing: fix sending large files when subscribed
 
