@@ -33,7 +33,7 @@ function display_block(name) {
 }
 
 $('.action_enter').click(function () {
-  let key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
+  let key = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').armored).keys[0];
   if(tool.crypto.key.decrypt(key, $('#original_password').val()).success) {
     original_passphrase = $('#original_password').val();
     display_block('step_1_password');
@@ -70,7 +70,7 @@ $('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), function
     $('#password2').val('');
     $('#password2').focus();
   } else {
-    let prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
+    let prv = openpgp.key.readArmored(private_keys_get(url_params.account_email, 'primary').armored).keys[0];
     tool.crypto.key.decrypt(prv, get_passphrase(url_params.account_email) || original_passphrase);
     openpgp_key_encrypt(prv, new_passphrase);
     let stored_passphrase = private_storage_get('local', url_params.account_email, 'master_passphrase');
@@ -82,7 +82,7 @@ $('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), function
       private_storage_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
     }
     private_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
-    private_storage_set('local', url_params.account_email, 'master_private_key', prv.armor());
+    private_keys_add(url_params.account_email, prv.armor(), true);
     // pass phrase change done in the plugin itself.
     // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
     account_storage_get(url_params.account_email, ['setup_simple'], storage => {

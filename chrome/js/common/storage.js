@@ -132,7 +132,7 @@ function get_passphrase(account_email, longid) {
       if(temporary) {
         return temporary;
       } else {
-        if(tool.crypto.key.longid(private_storage_get('local', account_email, 'master_private_key')) === longid) {
+        if(private_keys_get(url_params.account_email, 'primary').longid === longid) {
           return get_passphrase(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
         } else {
           return null;
@@ -165,7 +165,7 @@ function private_keys_get(account_email, longid) {
     }
     keys.push(keyinfo);
   });
-  let primary_key_armored = private_storage_get('local', account_email, 'master_private_key');
+  let primary_key_armored = private_storage_get('local', account_email, 'master_private_key'); // legacy storage - to migrate
   if(!contains_primary && (primary_key_armored || '').trim()) {
     keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
   }
@@ -193,21 +193,26 @@ function private_keys_get(account_email, longid) {
 }
 
 function private_keys_add(account_email, new_key_armored, replace_if_exists) {
+  // ugly - should be refactored
+  // replace_if_exists should be true by default
+  // legacy method of storing keys should be migrated and abandoned
+  // later refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked check below
   let private_keys = private_keys_get(account_email);
+  let is_first_key = (private_keys.length === 0);
   let do_add = true;
   let do_update = true;
   let new_key_longid = tool.crypto.key.longid(new_key_armored);
   if(new_key_longid) {
-    if(openpgp.key.readArmored(new_key_armored).keys[0].primaryKey.isDecrypted) {
-      catcher.report('private_keys_add: attempting to add a naked key, aborted');
-      return;
-    }
+    // if(openpgp.key.readArmored(new_key_armored).keys[0].primaryKey.isDecrypted) {
+    //   catcher.report('private_keys_add: attempting to add a naked key, aborted');
+    //   return;
+    // }
     tool.each(private_keys, (i, keyinfo) => {
       if(new_key_longid === keyinfo.longid) {
         do_add = false;
         if(replace_if_exists === true) {
           if(keyinfo.primary) {
-            private_storage_set('local', account_email, 'master_private_key', new_key_armored);
+            private_storage_set('local', account_email, 'master_private_key', new_key_armored); // legacy storage location
           }
           private_keys[i] = { armored: new_key_armored, longid: new_key_longid, primary: keyinfo.primary };
         } else {
@@ -219,7 +224,7 @@ function private_keys_add(account_email, new_key_armored, replace_if_exists) {
     do_add = do_update = false;
   }
   if(do_add) {
-    private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: false });
+    private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: is_first_key });
   }
   if(do_update) {
     private_storage_set('local', account_email, 'private_keys', private_keys);

@@ -229,13 +229,12 @@ function finalize_setup(account_email, armored_pubkey, options) {
 }
 
 function save_keys(account_email, prvs, options, callback) {
-  private_storage_set('local', account_email, 'master_private_key', prvs[0].armor());
   private_storage_set(options.save_passphrase ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
   private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
   private_storage_set('local', account_email, 'master_public_key', prvs[0].toPublic().armor());
   private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
   private_storage_set('local', account_email, 'master_public_key_submitted', false);
-  for(let i = 1; i < prvs.length; i++) { // if got more keys, save em too
+  for(let i = 0; i < prvs.length; i++) { // save all keys
     private_keys_add(account_email, prvs[i].armor());
     save_passphrase(options.save_passphrase ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
   }

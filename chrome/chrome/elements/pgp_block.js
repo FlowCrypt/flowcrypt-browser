@@ -338,7 +338,7 @@ db_open(function (db) {
           }
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
-        } else if(!result.counts.potentially_matching_keys && !private_storage_get('local', url_params.account_email, 'master_private_key', url_params.parent_tab_id)) {
+        } else if(!result.counts.potentially_matching_keys && !private_keys_get(url_params.account_email, 'primary')) {
           render_error(window.lang.pgp_block.not_properly_set_up + button_html('cryptup settings', 'green settings'));
         } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
           if(url_params.has_password && !optional_password) {
