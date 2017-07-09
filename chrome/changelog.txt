@@ -1,5 +1,10 @@
 <div>
 
+<b>version 4.3.1 on July 9, 2017: UX Bugfixes</b>
+internal: fix a typo in function name
+internal: prevent auth windows from background script
+setup: fix a typo when recovering account
+
 <b>version 4.3.0 on July 8, 2017: Error handling</b>
 internal: figure out missing parent id for set_css
 internal: unhandled promise errors
