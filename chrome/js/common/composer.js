@@ -4,13 +4,14 @@
 
 (function() {
 
-  let tool, catcher, openpgp, $, jQuery, flowcrypt_attach;
+  let tool, catcher, openpgp, $, jQuery, flowcrypt_attach, storage;
   if(typeof exports !== 'object') {
     tool = window.tool;
     catcher = window.catcher;
     openpgp = window.openpgp;
     $ = jQuery = window.jQuery;
     flowcrypt_attach = window.flowcrypt_attach;
+    storage = window.flowcrypt_storage;
   } else {
     require('module').globalPaths.push(process.cwd());
     tool = require('js/tool').tool;
@@ -19,6 +20,7 @@
     $ = jQuery = require('jquery');
     window.lang = require('js/lang');
     flowcrypt_attach = require('js/attach');
+    storage = require('js/storage').legacy;
   }
 
   const S = tool.ui.build_jquery_selectors({
@@ -522,7 +524,7 @@
 
   function sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
     S.now('send_btn_span').text('Signing');
-    const keyinfo = window.flowcrypt_storage.keys_get(account_email, 'primary');
+    const keyinfo = storage.keys_get(account_email, 'primary');
     if (keyinfo) {
       const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       const passphrase = app.storage_passphrase_get();
@@ -1090,7 +1092,7 @@
               tool.each(search_contacts_results.new, function (i, contact) {
                 app.storage_contact_get(contact.email, function (in_db) {
                   if (!in_db) {
-                    app.storage_contact_save(window.flowcrypt_storage.db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
+                    app.storage_contact_save(app.storage_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
                       search_contacts(true);
                     });
                   } else if (!in_db.name && contact.name) {

@@ -2,7 +2,6 @@
 
 'use strict';
 
-
 (function ( /* ALL TOOLS */ ) {
 
   var tool = window.tool = {
@@ -258,7 +257,7 @@
   if(typeof exports === 'object') {
     exports.tool = tool;
     openpgp = require('openpgp');
-    storage = require('js/storage');
+    storage = require('js/storage').legacy;
   }
 
   /* tool.str */
