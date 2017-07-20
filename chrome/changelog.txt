@@ -1,5 +1,9 @@
 <div>
 
+<b>version 4.3.2 on July 19, 2017: Extending</b>
+reading: please submit a bug report when message incompatible
+reading: fixed subscription checking when extending message
+
 <b>version 4.3.1 on July 9, 2017: UX Bugfixes</b>
 internal: fix a typo in function name
 internal: prevent auth windows from background script
