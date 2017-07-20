@@ -4,13 +4,14 @@
 
 (function() {
 
-  let tool, catcher, openpgp, $, jQuery, flowcrypt_attach;
+  let tool, catcher, openpgp, $, jQuery, flowcrypt_attach, storage;
   if(typeof exports !== 'object') {
     tool = window.tool;
     catcher = window.catcher;
     openpgp = window.openpgp;
     $ = jQuery = window.jQuery;
     flowcrypt_attach = window.flowcrypt_attach;
+    storage = window.flowcrypt_storage;
   } else {
     require('module').globalPaths.push(process.cwd());
     tool = require('js/tool').tool;
@@ -19,6 +20,7 @@
     $ = jQuery = require('jquery');
     window.lang = require('js/lang');
     flowcrypt_attach = require('js/attach');
+    storage = require('js/storage').legacy;
   }
 
   const S = tool.ui.build_jquery_selectors({
@@ -109,7 +111,7 @@
     storage_get_subscription_info: (cb) => { if(typeof cb === 'function') { cb({}); } return {}; }, // returns cached result, callbacks with fresh result
     storage_get_armored_public_key: (sender_email) => null,
     storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {resolve()}),
-    storage_get_passphrase: () => null,
+    storage_passphrase_get: () => null,
     storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => { callback(); },
     storage_contact_get: (email, cb) => { if(cb) cb(null); },
     storage_contact_update: (email, update, cb) => { if(cb) cb();},
@@ -358,7 +360,7 @@
   }
 
   function decrypt_and_render_draft(encrypted_draft, render_function, headers) {
-    if (app.storage_get_passphrase() !== null) {
+    if (app.storage_passphrase_get() !== null) {
       tool.crypto.message.decrypt(db, account_email, encrypted_draft, null, (result) => {
         if(result.success) {
           tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'), function (safe_html_draft) {
@@ -395,7 +397,7 @@
     clearInterval(passphrase_interval);
     const timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
     passphrase_interval = setInterval(function () {
-      let passphrase = app.storage_get_passphrase();
+      let passphrase = app.storage_passphrase_get();
       if (passphrase !== null) {
         clearInterval(passphrase_interval);
         callback(passphrase);
@@ -522,10 +524,10 @@
 
   function sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
     S.now('send_btn_span').text('Signing');
-    const keyinfo = private_keys_get(account_email, 'primary');
+    const keyinfo = storage.keys_get(account_email, 'primary');
     if (keyinfo) {
-      const prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
-      const passphrase = app.storage_get_passphrase();
+      const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
+      const passphrase = app.storage_passphrase_get();
       if (passphrase === null) {
         app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         when_master_passphrase_entered(function (passphrase) {
@@ -1090,7 +1092,7 @@
               tool.each(search_contacts_results.new, function (i, contact) {
                 app.storage_contact_get(contact.email, function (in_db) {
                   if (!in_db) {
-                    app.storage_contact_save(db_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
+                    app.storage_contact_save(app.storage_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
                       search_contacts(true);
                     });
                   } else if (!in_db.name && contact.name) {

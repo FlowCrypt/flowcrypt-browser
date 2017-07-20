@@ -18,11 +18,11 @@ if(url_params.type === 'embedded') {
 }
 tool.ui.passphrase_toggle(['passphrase']);
 
-let all_private_keys = private_keys_get(url_params.account_email);
+let all_private_keys = window.flowcrypt_storage.keys_get(url_params.account_email);
 
 let private_keys;
 if(url_params.longids) {
-  private_keys = private_keys_get(url_params.account_email, url_params.longids.split(','));
+  private_keys = window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longids.split(','));
 } else {
   private_keys = all_private_keys;
 }
@@ -64,13 +64,13 @@ $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () 
   let pass = $('#passphrase').val();
   let is_correct = false;
   tool.each(private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
-    let prv = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
     if(tool.crypto.key.decrypt(prv, pass).success) {
       is_correct = true;
       if($('.forget').prop('checked')) {
-        save_passphrase('session', url_params.account_email, keyinfo.longid, pass);
+        window.flowcrypt_storage.passphrase_save('session', url_params.account_email, keyinfo.longid, pass);
       } else {
-        save_passphrase('local', url_params.account_email, keyinfo.longid, pass);
+        window.flowcrypt_storage.passphrase_save('local', url_params.account_email, keyinfo.longid, pass);
       }
       tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
       tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');

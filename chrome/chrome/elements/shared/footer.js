@@ -6,9 +6,9 @@ tool.ui.event.protect();
 
 let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'placement']); // placement: compose||settings
 
-storage_cryptup_subscription(function (level, expire, active) {
+window.flowcrypt_storage.subscription(function (level, expire, active) {
   if(active) {
-    account_storage_get(url_params.account_email, ['email_footer'], storage => {
+    window.flowcrypt_storage.get(url_params.account_email, ['email_footer'], storage => {
       $('.input_email_footer').val(storage.email_footer);
     });
     $('.user_subscribed').css('display', 'block');
@@ -34,9 +34,9 @@ storage_cryptup_subscription(function (level, expire, active) {
 });
 
 function save_footer_if_has_subscription_and_requested(requested, footer, cb) {
-  storage_cryptup_subscription(function (level, expire, active) {
+  window.flowcrypt_storage.subscription(function (level, expire, active) {
     if(requested && active) {
-      account_storage_set(url_params.account_email, { 'email_footer': footer }, cb);
+      window.flowcrypt_storage.set(url_params.account_email, { 'email_footer': footer }, cb);
     } else {
       cb();
     }

@@ -7,9 +7,9 @@ let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 tool.ui.passphrase_toggle(['password']);
 
 let key;
-tool.each(private_keys_get(url_params.account_email), function (i, keyinfo) {
+tool.each(window.flowcrypt_storage.keys_get(url_params.account_email), function (i, keyinfo) {
   if(keyinfo.primary) {
-    key = openpgp.key.readArmored(keyinfo.armored).keys[0];
+    key = openpgp.key.readArmored(keyinfo.private).keys[0];
   }
 });
 

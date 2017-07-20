@@ -27,16 +27,16 @@ function collect_info_for_account_backup(account_email, callback) {
     '',
     'account_email: ' + account_email,
   ];
-  account_storage_get(null, ['version'], function (global_storage) {
-    account_storage_get(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name'], function (account_storage) {
+  window.flowcrypt_storage.get(null, ['version'], function (global_storage) {
+    window.flowcrypt_storage.get(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name'], function (account_storage) {
       text.push('global_storage: ' + JSON.stringify(global_storage));
       text.push('account_storage: ' + JSON.stringify(account_storage));
       text.push('');
-      tool.each(private_keys_get(account_email), function (i, keyinfo) {
+      tool.each(window.flowcrypt_storage.keys_get(account_email), function (i, keyinfo) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);
         text.push('key_primary: ' + keyinfo.primary);
-        text.push(keyinfo.armored);
+        text.push(keyinfo.private);
       });
       text.push('');
       callback(text.join('\n'));
@@ -46,7 +46,7 @@ function collect_info_for_account_backup(account_email, callback) {
 
 
 if(url_params.account_email) {
-  account_storage_get(null, ['dev_outlook_allow'], storage => {
+  window.flowcrypt_storage.get(null, ['dev_outlook_allow'], storage => {
     if(storage.dev_outlook_allow === true) {
       $('.action_allow_outlook').prop('checked', true);
     }
@@ -55,7 +55,7 @@ if(url_params.account_email) {
   $('.email').text(url_params.account_email);
 
   $('.action_allow_outlook').change(function () {
-    account_storage_set(null, {'dev_outlook_allow': $(this).prop('checked')}, storage => {
+    window.flowcrypt_storage.set(null, {'dev_outlook_allow': $(this).prop('checked')}, storage => {
       window.location.reload();
     });
   });
@@ -72,7 +72,7 @@ if(url_params.account_email) {
     $(self).html(tool.ui.spinner('white'));
     fetch_account_aliases_from_gmail(url_params.account_email, function(addresses) {
       let all = tool.arr.unique(addresses.concat(url_params.account_email));
-      account_storage_set(url_params.account_email, { addresses: all }, function () {
+      window.flowcrypt_storage.set(url_params.account_email, { addresses: all }, function () {
         alert('Updated to: ' + all.join(', '));
         window.location.reload();
       });
@@ -104,14 +104,14 @@ if(url_params.account_email) {
   });
 
   $('.action_flush_attest_info').click(function () {
-    account_storage_remove(url_params.account_email, ['attests_requested', 'attests_processed', 'attest_log'], function () {
+    window.flowcrypt_storage.remove(url_params.account_email, ['attests_requested', 'attests_processed', 'attest_log'], function () {
       alert('Internal attest info flushed');
       window.location.reload();
     });
   });
 
   $('.action_reset_managing_auth').click(() => {
-    account_storage_remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified'], () => {
+    window.flowcrypt_storage.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified'], () => {
       tool.browser.message.send(url_params.parent_tab_id, 'reload');
     });
   });

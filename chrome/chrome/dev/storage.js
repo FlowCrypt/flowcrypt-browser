@@ -12,7 +12,7 @@ if(url_params.title) {
 }
 
 if(controls) {
-  get_account_emails(function (account_emails) {
+  window.flowcrypt_storage.account_emails_get(function (account_emails) {
     $('.emails').append('<a href="' + tool.env.url_create('storage.htm', {controls: url_params.controls || ''}) + '">all</a>');
     $('.emails').append('<a href="' + tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}) + '">global</a>');
     $('.namespace').append('<option value="global">global</option>');
@@ -37,7 +37,7 @@ function render(obj) {
 
 chrome.storage.local.get(storage => {
   if(url_params.filter) {
-    var real_filter = account_storage_key(url_params.filter, url_params.keys || '');
+    var real_filter = window.flowcrypt_storage.key(url_params.filter, url_params.keys || '');
   } else {
     var real_filter = '';
   }
@@ -60,7 +60,7 @@ if(controls) {
         var storage_update = {};
         storage_update[$('.key').val()] = JSON.parse($('.value').val());
         var account_email = $('.namespace').val() === 'global' ? null : decodeURIComponent($('.namespace').val());
-        account_storage_set(account_email, storage_update, function () {
+        window.flowcrypt_storage.set(account_email, storage_update, function () {
           window.location.reload();
         });
       }

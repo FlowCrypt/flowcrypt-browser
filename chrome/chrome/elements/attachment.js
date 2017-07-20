@@ -12,10 +12,10 @@ if(url_params.size) {
 let original_content;
 let button = $('#download');
 
-db_open(function (db) {
+window.flowcrypt_storage.db_open(function (db) {
 
-  if(db === db_denied) {
-    notify_about_storage_access_error(url_params.account_email, url_params.parent_tab_id);
+  if(db === window.flowcrypt_storage.db_denied) {
+    window.flowcrypt_storage.notify_error(url_params.account_email, url_params.parent_tab_id);
     $('body.attachment').html('Need to update chrome settings to download attachments');
     return;
   }
@@ -52,7 +52,7 @@ db_open(function (db) {
 
   function check_passphrase_entered() { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
     tool.each(missing_passprase_longids, function (i, longid) {
-      if(missing_passprase_longids && get_passphrase(url_params.account_email, longid) !== null) {
+      if(missing_passprase_longids && window.flowcrypt_storage.passphrase_get(url_params.account_email, longid) !== null) {
         missing_passprase_longids = [];
         clearInterval(passphrase_interval);
         $('#download').click();

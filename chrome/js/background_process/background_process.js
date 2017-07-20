@@ -13,7 +13,7 @@ function get_background_process_start_reason() {
 }
 
 migrate_global(function () {
-  account_storage_set(null, { version: catcher.version('int') });
+  window.flowcrypt_storage.set(null, { version: catcher.version('int') });
 });
 
 tool.browser.message.listen_background({
@@ -37,9 +37,9 @@ tool.browser.message.listen_background({
 
 update_uninstall_url();
 
-account_storage_get(null, 'errors', storage => {
+window.flowcrypt_storage.get(null, 'errors', storage => {
   if(storage.errors && storage.errors.length && storage.errors.length > 100) {
-    account_storage_remove(null, 'errors');
+    window.flowcrypt_storage.remove(null, 'errors');
   }
 });
 
@@ -87,8 +87,8 @@ function get_cryptup_settings_tab_id_if_open(callback) {
 }
 
 function update_uninstall_url(request, sender, respond) {
-  get_account_emails(function (account_emails) {
-    account_storage_get(null, ['metrics'], storage => {
+  window.flowcrypt_storage.account_emails_get(function (account_emails) {
+    window.flowcrypt_storage.get(null, ['metrics'], storage => {
       if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
         catcher.try(function () {
           chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + JSON.stringify({
@@ -111,7 +111,7 @@ function open_settings_page(path, account_email, page, page_url_params) {
     if(account_email) {
       open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
     } else {
-      get_account_emails(function (account_emails) {
+      window.flowcrypt_storage.account_emails_get(function (account_emails) {
         open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
       });
     }

@@ -53,12 +53,12 @@ $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), fu
 }));
 
 tool.api.cryptup.account_check_sync(function() {
-  account_storage_get(url_params.account_email, ['google_token_scopes'], storage => {
+  window.flowcrypt_storage.get(url_params.account_email, ['google_token_scopes'], storage => {
     window.flowcrypt_account.config({
       render_status: render_status,
       CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes, 'read'),
     });
-    storage_cryptup_subscription(function (level, expire, active, method) {
+    window.flowcrypt_storage.subscription(function (level, expire, active, method) {
       if(!active) {
         if(level && expire) {
           if(method === 'trial') {

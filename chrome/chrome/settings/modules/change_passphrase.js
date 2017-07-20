@@ -4,7 +4,7 @@
 
 let url_params = tool.env.url_params(['account_email']);
 
-if(private_keys_get(url_params.account_email).length > 1) {
+if(window.flowcrypt_storage.keys_get(url_params.account_email).length > 1) {
   $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
   $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');
   $('#step_1_password #password').attr('placeholder', 'Enter a new primary key pass phrase');
@@ -12,7 +12,7 @@ if(private_keys_get(url_params.account_email).length > 1) {
 
 tool.ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
-let original_passphrase = get_passphrase(url_params.account_email);
+let original_passphrase = window.flowcrypt_storage.passphrase_get(url_params.account_email);
 if(original_passphrase === null) {
   display_block('step_0_enter');
 } else {
@@ -33,7 +33,7 @@ function display_block(name) {
 }
 
 $('.action_enter').click(function () {
-  let key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
+  let key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
   if(tool.crypto.key.decrypt(key, $('#original_password').val()).success) {
     original_passphrase = $('#original_password').val();
     display_block('step_1_password');
@@ -70,22 +70,22 @@ $('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), function
     $('#password2').val('');
     $('#password2').focus();
   } else {
-    let prv = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
-    tool.crypto.key.decrypt(prv, get_passphrase(url_params.account_email) || original_passphrase);
+    let prv = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
+    tool.crypto.key.decrypt(prv, window.flowcrypt_storage.passphrase_get(url_params.account_email) || original_passphrase);
     openpgp_key_encrypt(prv, new_passphrase);
-    let stored_passphrase = private_storage_get('local', url_params.account_email, 'master_passphrase');
+    let stored_passphrase = window.flowcrypt_storage.restricted_get('local', url_params.account_email, 'master_passphrase');
     if(typeof stored_passphrase !== 'undefined' && stored_passphrase !== '') {
-      private_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
-      private_storage_set('session', url_params.account_email, 'master_passphrase', undefined);
+      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
+      window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', undefined);
     } else {
-      private_storage_set('local', url_params.account_email, 'master_passphrase', undefined);
-      private_storage_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
+      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', undefined);
+      window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
     }
-    private_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
-    private_storage_set('local', url_params.account_email, 'master_private_key', prv.armor());
+    window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase_needed', true);
+    window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
     // pass phrase change done in the plugin itself.
     // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
-    account_storage_get(url_params.account_email, ['setup_simple'], storage => {
+    window.flowcrypt_storage.get(url_params.account_email, ['setup_simple'], storage => {
       if(storage.setup_simple) {
         show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
       } else {

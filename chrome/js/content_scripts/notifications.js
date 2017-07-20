@@ -5,9 +5,9 @@
 function content_script_notifications() {
 
   function show_initial_notifications(account_email) {
-    account_storage_get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], storage => {
+    window.flowcrypt_storage.get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], storage => {
       if(!storage.notification_setup_done_seen) {
-        account_storage_set(account_email, { notification_setup_done_seen: true }, () => {
+        window.flowcrypt_storage.set(account_email, { notification_setup_done_seen: true }, () => {
           content_script_notification_show('CryptUp was successfully set up for this account. <a href="#" class="close">close</a>');
         });
       } else if(storage.key_backup_prompt !== false && storage.setup_simple === true) {

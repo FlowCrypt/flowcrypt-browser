@@ -9,7 +9,7 @@ if(url_params.embedded) {
   $('.line').css('padding', '7px 0');
 }
 
-storage_cryptup_subscription(function (level, expire, active, method) {
+window.flowcrypt_storage.subscription(function (level, expire, active, method) {
   if(active) {
     $('.select_loader_container').html(tool.ui.spinner('green'));
     tool.api.cryptup.account_update().then(response => {
@@ -37,7 +37,7 @@ storage_cryptup_subscription(function (level, expire, active, method) {
   }
 });
 
-if(!private_storage_get('local', url_params.account_email, 'master_passphrase')) {
+if(!window.flowcrypt_storage.restricted_get('local', url_params.account_email, 'master_passphrase')) {
   $('#passphrase_to_open_email').prop('checked', true);
 }
 
@@ -51,18 +51,18 @@ $('.action_test_passphrase').click(function () {
 
 $('.confirm_passphrase_requirement_change').click(function () {
   if($('#passphrase_to_open_email').is(':checked')) { // forget pass all phrases
-    if($('input#passphrase_entry').val() === get_passphrase(url_params.account_email)) {
-      private_storage_set('local', url_params.account_email, 'master_passphrase', '');
-      private_storage_set('session', url_params.account_email, 'master_passphrase', '');
+    if($('input#passphrase_entry').val() === window.flowcrypt_storage.passphrase_get(url_params.account_email)) {
+      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', '');
+      window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', '');
       window.location.reload();
     } else {
       alert('Pass phrase did not match, please try again.');
       $('input#passphrase_entry').val('').focus();
     }
   } else { // save pass phrase
-    var key = openpgp.key.readArmored(private_storage_get('local', url_params.account_email, 'master_private_key')).keys[0];
+    var key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
     if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {
-      private_storage_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
+      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
       window.location.reload();
     } else {
       alert('Pass phrase did not match, please try again.');
@@ -80,10 +80,10 @@ $('#passphrase_to_open_email').change(function () {
   $('.passphrase_entry_container').css('display', 'block');
 });
 
-account_storage_get(url_params.account_email, ['hide_message_password'], storage => {
+window.flowcrypt_storage.get(url_params.account_email, ['hide_message_password'], storage => {
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
   $('#hide_message_password').change(function () {
-    account_storage_set(url_params.account_email, {hide_message_password: $(this).is(':checked')}, function () {
+    window.flowcrypt_storage.set(url_params.account_email, {hide_message_password: $(this).is(':checked')}, function () {
       window.location.reload();
     });
   });

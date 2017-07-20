@@ -49,7 +49,7 @@ function evaluate_password_strength(parent_selector, input_selector, button_sele
 }
 
 function save_attest_request(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], storage => {
+  window.flowcrypt_storage.get(account_email, ['attests_requested', 'attests_processed'], storage => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if(!tool.value(attester).in(storage.attests_requested)) {
@@ -58,7 +58,7 @@ function save_attest_request(account_email, attester, callback) {
     if(typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [];
     }
-    account_storage_set(account_email, storage, function () {
+    window.flowcrypt_storage.set(account_email, storage, function () {
       tool.browser.message.send(null, 'attest_requested', {
         account_email: account_email,
       }, callback);
@@ -67,7 +67,7 @@ function save_attest_request(account_email, attester, callback) {
 }
 
 function mark_as_attested(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], storage => {
+  window.flowcrypt_storage.get(account_email, ['attests_requested', 'attests_processed'], storage => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if(tool.value(attester).in(storage.attests_requested)) {
@@ -78,7 +78,7 @@ function mark_as_attested(account_email, attester, callback) {
     } else if(!tool.value(attester).in(storage.attests_processed)) {
       storage.attests_processed.push(attester); //add attester as processed if not already there
     }
-    account_storage_set(account_email, storage, callback);
+    window.flowcrypt_storage.set(account_email, storage, callback);
   });
 }
 
@@ -227,12 +227,12 @@ function reset_cryptup_account_storages(account_email, callback) {
   if(!account_email) {
     throw new Error('Missing account_email to reset');
   }
-  get_account_emails(function (account_emails) {
+  window.flowcrypt_storage.account_emails_get(function (account_emails) {
     if(!tool.value(account_email).in(account_emails)) {
       throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
     }
     let keys_to_remove = [];
-    let filter = account_storage_key(account_email, '');
+    let filter = window.flowcrypt_storage.key(account_email, '');
     if(!filter) {
       throw new Error('Filter is empty for account_email"' + account_email + '"');
     }
@@ -242,15 +242,15 @@ function reset_cryptup_account_storages(account_email, callback) {
           keys_to_remove.push(key.replace(filter, ''));
         }
       });
-      account_storage_remove(account_email, keys_to_remove, function () {
+      window.flowcrypt_storage.remove(account_email, keys_to_remove, function () {
         tool.each(localStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
-            private_storage_set('local', account_email, key.replace(filter, ''), undefined);
+            window.flowcrypt_storage.restricted_set('local', account_email, key.replace(filter, ''), undefined);
           }
         });
         tool.each(sessionStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
-            private_storage_set('session', account_email, key.replace(filter, ''), undefined);
+            window.flowcrypt_storage.restricted_set('session', account_email, key.replace(filter, ''), undefined);
           }
         });
         callback();

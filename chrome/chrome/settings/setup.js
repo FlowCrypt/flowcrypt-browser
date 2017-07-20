@@ -36,7 +36,7 @@ tool.browser.message.tab_id(function (tab_id) {
 });
 
 // show alternative account addresses in setup form + save them for later
-account_storage_get(url_params.account_email, ['addresses', 'google_token_scopes', 'email_provider'], storage => {
+window.flowcrypt_storage.get(url_params.account_email, ['addresses', 'google_token_scopes', 'email_provider'], storage => {
   if(storage.email_provider === 'gmail') {
     if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
       $('.auth_denied_warning').css('display', 'block');
@@ -62,7 +62,7 @@ function show_submit_all_addresses_option(addrs) {
 
 function save_and_fill_submit_option(addresses) {
   all_addresses = tool.arr.unique(addresses.concat(url_params.account_email));
-  account_storage_set(url_params.account_email, { addresses: all_addresses }, function () {
+  window.flowcrypt_storage.set(url_params.account_email, { addresses: all_addresses }, function () {
     show_submit_all_addresses_option(all_addresses);
   });
 }
@@ -95,11 +95,11 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   if(!url_params.account_email) {
     window.location = 'index.htm';
   }
-  db_open(function (db) {
-    if(db === db_private_mode_error) {
+  window.flowcrypt_storage.db_open(function (db) {
+    if(db === window.flowcrypt_storage.db_private_mode_error) {
       $('#loading').text('CryptUp does not work in Private Browsing Mode. Please use it in a standard browser window.');
     } else {
-      account_storage_get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
+      window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
         email_provider = storage.email_provider || 'gmail';
 
         if(storage.setup_done) {
@@ -150,7 +150,7 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
     if(success && keys) {
       recovered_keys = keys;
       recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-      recovered_keys_successful_longids = private_keys_get(url_params.account_email).map(function(ki) { return ki.longid; });
+      recovered_keys_successful_longids = window.flowcrypt_storage.keys_get(url_params.account_email).map(ki => ki.longid);
       render_setup_done(url_params.account_email);
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
@@ -161,7 +161,7 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
 
 // options: {submit_main, submit_all}
 function submit_public_key_if_needed(account_email, armored_pubkey, options, callback) {
-  account_storage_get(account_email, ['addresses'], storage => {
+  window.flowcrypt_storage.get(account_email, ['addresses'], storage => {
     if(options.submit_main) {
       tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
       let addresses;
@@ -176,7 +176,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
       } else {
         submit_pubkeys(addresses, armored_pubkey, function (success) {
           if(success) {
-            private_storage_set('local', account_email, 'master_public_key_submitted', true);
+            window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);
           }
           callback();
         });
@@ -184,7 +184,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
     } else {
       tool.api.attester.lookup_email(account_email).done((success, result) => {
         if(success && result && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
-          private_storage_set('local', account_email, 'master_public_key_submitted', true);  // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
+          window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);  // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
         }
         callback();
       });
@@ -196,11 +196,11 @@ function render_setup_done(account_email, key_backup_prompt) {
   if(key_backup_prompt) {
     window.location = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
   } else {
-    if (recovered_keys_longid_count > private_keys_get(account_email).length) { // recovery where not all keys were processed: some may have other pass phrase
+    if (recovered_keys_longid_count > window.flowcrypt_storage.keys_get(account_email).length) { // recovery where not all keys were processed: some may have other pass phrase
       display_block('step_4_more_to_recover');
       $('h1').text('More keys to recover');
       $('.email').text(account_email);
-      $('.private_key_count').text(private_keys_get(account_email).length);
+      $('.private_key_count').text(window.flowcrypt_storage.keys_get(account_email).length);
       $('.backups_count').text(recovered_keys.length);
     } else { // successful and complete setup
       display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
@@ -222,30 +222,28 @@ function finalize_setup(account_email, armored_pubkey, options) {
       key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key === true,
     };
-    account_storage_set(account_email, storage, function () {
+    window.flowcrypt_storage.set(account_email, storage, function () {
       render_setup_done(account_email, options.key_backup_prompt);
     });
   });
 }
 
 function save_keys(account_email, prvs, options, callback) {
-  private_storage_set('local', account_email, 'master_private_key', prvs[0].armor());
-  private_storage_set(options.save_passphrase ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
-  private_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
-  private_storage_set('local', account_email, 'master_public_key', prvs[0].toPublic().armor());
-  private_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
-  private_storage_set('local', account_email, 'master_public_key_submitted', false);
-  for(let i = 1; i < prvs.length; i++) { // if got more keys, save em too
-    private_keys_add(account_email, prvs[i].armor());
-    save_passphrase(options.save_passphrase ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
+  window.flowcrypt_storage.restricted_set(options.passphrase_save ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
+  window.flowcrypt_storage.restricted_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
+  window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submit', options.submit_main);
+  window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', false);
+  for(let i = 0; i < prvs.length; i++) { // save all keys
+    window.flowcrypt_storage.keys_add(account_email, prvs[i].armor());
+    window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
   }
   let contacts = [];
   tool.each(all_addresses, function (i, address) {
     let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
-    contacts.push(db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
+    contacts.push(window.flowcrypt_storage.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
   });
-  db_open(function (db) {
-    db_contact_save(db, contacts, callback);
+  window.flowcrypt_storage.db_open(function (db) {
+    window.flowcrypt_storage.db_contact_save(db, contacts, callback);
   });
 }
 
@@ -277,7 +275,7 @@ function get_and_save_google_user_info(account_email, callback) {
         result.gender = response.gender;
         result.locale = response.locale;
         result.picture = response.picture;
-        account_storage_set(account_email, result, function () {
+        window.flowcrypt_storage.set(account_email, result, function () {
           callback(result);
         });
       } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
@@ -305,7 +303,7 @@ $('.action_simple_setup').click(function () {
     create_save_key_pair(url_params.account_email, {
       full_name: userinfo.full_name,
       passphrase: '',
-      save_passphrase: true,
+      passphrase_save: true,
       submit_main: true,
       submit_all: true,
       setup_simple: true,
@@ -338,14 +336,14 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
         submit_main: false, // todo - think about submitting when recovering
         submit_all: false,
         passphrase: passphrase,
-        save_passphrase: true, //todo - think about saving passphrase when recovering
+        passphrase_save: true, //todo - think about saving passphrase when recovering
         setup_simple: true,
         key_backup_prompt: false,
         recovered: true,
       };
       recovered_key_matching_passphrases.push(passphrase);
       save_keys(url_params.account_email, matching_keys, options, function () {
-        account_storage_get(url_params.account_email, ['setup_done'], storage => {
+        window.flowcrypt_storage.get(url_params.account_email, ['setup_done'], storage => {
           if(!storage.setup_done) { // normal situation
             finalize_setup(url_params.account_email, matching_keys[0].toPublic().armor(), options);
           } else { // setup was finished before, just added more keys now
@@ -369,7 +367,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
 $('#step_4_more_to_recover .action_recover_remaining').click(function () {
   display_block('step_2_recovery');
   $('#recovery_pasword').val('');
-  let got = private_keys_get(url_params.account_email).length;
+  let got = window.flowcrypt_storage.keys_get(url_params.account_email).length;
   let bups = recovered_keys.length;
   let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
   if(url_params.action !== 'add_key') {
@@ -478,7 +476,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
           key_backup_prompt: false,
           submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
           submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-          save_passphrase: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+          passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
           recovered: false,
         };
         save_keys(url_params.account_email, [prv], options, function () {
@@ -518,7 +516,7 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
       create_save_key_pair(url_params.account_email, {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val(),
-        save_passphrase: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
+        passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
         submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
         submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
         setup_simple: false,

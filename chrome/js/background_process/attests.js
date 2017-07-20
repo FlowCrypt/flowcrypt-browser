@@ -49,8 +49,8 @@ function stop_watching(account_email) {
 }
 
 function check_email_for_attests_and_respond(account_email) {
-  account_storage_get(account_email, ['attests_requested'], storage => {
-    if(get_passphrase(account_email)) {
+  window.flowcrypt_storage.get(account_email, ['attests_requested'], storage => {
+    if(window.flowcrypt_storage.passphrase_get(account_email)) {
       if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email]) {
         fetch_attest_emails(account_email, (success, messages) => {
           if(success && messages) {
@@ -71,10 +71,10 @@ function check_email_for_attests_and_respond(account_email) {
 
 function process_attest_packet_text(account_email, attest_packet_text, passphrase, callback) {
   let attest = tool.api.attester.packet.parse(attest_packet_text);
-  let key = openpgp.key.readArmored(private_storage_get('local', account_email, 'master_private_key')).keys[0];
+  let key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
   is_already_attested(account_email, attest.attester, is_attested => {
     if (!is_attested) {
-      if (tool.crypto.key.decrypt(key, passphrase || get_passphrase(account_email)).success) {
+      if (tool.crypto.key.decrypt(key, passphrase || window.flowcrypt_storage.passphrase_get(account_email)).success) {
         let expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
         let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
         if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
@@ -139,8 +139,8 @@ function fetch_attest_emails(account_email, callback) {
 }
 
 function refresh_attest_requests_and_privileges(process_account_email_callback, refresh_done_callback) {
-  get_account_emails(function (account_emails) {
-    account_storage_get(account_emails, ['attests_requested', 'google_token_scopes'], multi_storage => {
+  window.flowcrypt_storage.account_emails_get(function (account_emails) {
+    window.flowcrypt_storage.get(account_emails, ['attests_requested', 'google_token_scopes'], multi_storage => {
       tool.each(multi_storage, (account_email, storage) => {
         can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
         if(process_account_email_callback) {
@@ -163,14 +163,14 @@ function get_attester_emails() {
 }
 
 function is_already_attested(account_email, attester, callback) {
-  account_storage_get(account_email, ['attests_processed'], storage => {
+  window.flowcrypt_storage.get(account_email, ['attests_processed'], storage => {
     callback(tool.value(attester).in(storage.attests_processed));
   });
 }
 
 function account_storage_mark_as_attested(account_email, attester, callback) {
   stop_watching(account_email);
-  account_storage_get(account_email, ['attests_requested', 'attests_processed'], storage => {
+  window.flowcrypt_storage.get(account_email, ['attests_requested', 'attests_processed'], storage => {
     if(tool.value(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
       if(typeof storage.attests_processed === 'undefined') {
@@ -179,7 +179,7 @@ function account_storage_mark_as_attested(account_email, attester, callback) {
       if(!tool.value(attester).in(storage.attests_processed)) {
         storage.attests_processed.push(attester); //add attester as processed if not already there
       }
-      account_storage_set(account_email, storage, callback);
+      window.flowcrypt_storage.set(account_email, storage, callback);
     } else {
       callback();
     }
@@ -188,13 +188,13 @@ function account_storage_mark_as_attested(account_email, attester, callback) {
 
 function add_attest_log(account_email, packet, success, attestation_result_text, callback) {
   console.log('attest result ' + success + ': ' + attestation_result_text);
-  account_storage_get(account_email, ['attest_log'], storage => {
+  window.flowcrypt_storage.get(account_email, ['attest_log'], storage => {
     if(!storage.attest_log) {
       storage.attest_log = [];
     } else if(storage.attest_log.length > 100) {
       storage.attest_log = [{attempt: 100, success: false, result: 'DELETED 100 LOGS'}];
     }
     storage.attest_log.push({attempt: storage.attest_log.length + 1, packet: packet, success: success, result: attestation_result_text});
-    account_storage_set(account_email, storage, callback);
+    window.flowcrypt_storage.set(account_email, storage, callback);
   });
 }

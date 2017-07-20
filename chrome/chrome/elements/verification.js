@@ -11,7 +11,7 @@ let token = window.flowcrypt_account.parse_token_email_text(url_params.verificat
 if(!token) {
   render_status('This verification email seems to have wrong format. Please write me at tom@cryptup.org to fix this.');
 } else {
-  account_storage_get(null, ['cryptup_subscription_attempt'], storage => {
+  window.flowcrypt_storage.get(null, ['cryptup_subscription_attempt'], storage => {
     let product_to_subscribe_to = storage.cryptup_subscription_attempt;
     window.flowcrypt_account.verify(url_params.account_email, [token]).then(response => {
       if(product_to_subscribe_to) {
