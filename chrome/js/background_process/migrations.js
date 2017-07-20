@@ -36,6 +36,7 @@ function global_migrate_v_431_account_private_keys_array_if_needed(callback) {
 
 function global_migrate_v_431_account_private_keys_array(callback) {
   window.flowcrypt_storage.account_emails_get(function (emails) {
+    let processed_emails_to_log = [];
     tool.each(emails, function (i, account_email) {
       let legacy_keys = legacy_storage_private_keys_get(account_email);
       if(legacy_keys.length) {
@@ -49,7 +50,9 @@ function global_migrate_v_431_account_private_keys_array(callback) {
       } else {
         catcher.log('migrating:uses_account_keys_array: ' + account_email + ' (no keys set yet)');
       }
+      processed_emails_to_log.push(account_email);
     });
+    catcher.log('migrating:uses_account_keys_array:done: ' + processed_emails_to_log.join(','));
     callback();
   });
 }

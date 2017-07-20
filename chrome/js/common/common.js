@@ -3437,6 +3437,10 @@
 (function ( /* ERROR HANDLING */ ) {
 
   var tool = typeof tool === 'object' ? tool : window.tool;
+  var storage = window.flowcrypt_storage;
+  if(typeof exports === 'object') {
+    storage = require('js/storage').legacy;
+  }
 
   var RUNTIME = {};
   figure_out_cryptup_runtime();
