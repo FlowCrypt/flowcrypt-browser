@@ -14,7 +14,7 @@ function migrate_account(data, sender, respond_done) {
 
 function migrate_global(callback) {
   global_migrate_v_422_check_and_resolve_naked_key_vulnerability_if_needed(function () {
-    global_migrate_v_431_account_private_keys_array_if_needed(function () {
+    global_migrate_v_433_account_private_keys_array_if_needed(function () {
       if(typeof callback === 'function') {
         callback();
       }
@@ -22,10 +22,10 @@ function migrate_global(callback) {
   });
 }
 
-function global_migrate_v_431_account_private_keys_array_if_needed(callback) {
+function global_migrate_v_433_account_private_keys_array_if_needed(callback) {
   if(!localStorage.uses_account_keys_array) {
     catcher.log('migrating:uses_account_keys_array');
-    global_migrate_v_431_account_private_keys_array(function() {
+    global_migrate_v_433_account_private_keys_array(function() {
       localStorage.uses_account_keys_array = true;
       callback();
     });
@@ -34,7 +34,7 @@ function global_migrate_v_431_account_private_keys_array_if_needed(callback) {
   }
 }
 
-function global_migrate_v_431_account_private_keys_array(callback) {
+function global_migrate_v_433_account_private_keys_array(callback) {
   window.flowcrypt_storage.account_emails_get(function (emails) {
     let processed_emails_to_log = [];
     tool.each(emails, function (i, account_email) {

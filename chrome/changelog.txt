@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.3.3 on July 20, 2017: Storage</b>
+internal: updating storage methods
+
 <b>version 4.3.2 on July 19, 2017: Extending</b>
 reading: please submit a bug report when message incompatible
 reading: fixed subscription checking when extending message
