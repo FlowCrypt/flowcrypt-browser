@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.3.5 on July 21, 2017: Migration fix</b>
+internal: getting pass phrase during migrations fixed
+
 <b>version 4.3.4 on July 20, 2017: Attest fix</b>
 setup: fixing attest element
 
