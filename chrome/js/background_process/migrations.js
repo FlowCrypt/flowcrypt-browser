@@ -227,12 +227,15 @@ function account_consistency_fixes(account_email) {
   window.flowcrypt_storage.get(account_email, ['setup_done'], function(storage) {
     // re-submitting pubkey if failed
     if(storage.setup_done && window.flowcrypt_storage.restricted_get('local', account_email, 'master_public_key_submit') && !window.flowcrypt_storage.restricted_get('local', account_email, 'master_public_key_submitted')) {
-      console.log('consistency_fixes: submitting pubkey');
-      tool.api.attester.initial_legacy_submit(account_email, window.flowcrypt_storage.keys_get(account_email, 'primary').public, false).validate(r => r.saved).done(function(success, result) {
-        if(success && result) { // todo - do not handle the error using .done, but try to not handle it. This produces weird errors in logs - fix that, then put it back.
-          window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);
-        }
-      });
+      let keyinfo = window.flowcrypt_storage.keys_get(account_email, 'primary');
+      if(keyinfo) {
+        console.log('consistency_fixes: submitting pubkey');
+        tool.api.attester.initial_legacy_submit(account_email, keyinfo.public, false).validate(r => r.saved).done(function(success, result) {
+          if(success && result) { // todo - do not handle the error using .done, but try to not handle it. This produces weird errors in logs - fix that, then put it back.
+            window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);
+          }
+        });
+      }
     }
   });
 }

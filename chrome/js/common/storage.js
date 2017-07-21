@@ -133,7 +133,8 @@
         if(temporary) {
           return temporary;
         } else {
-          if(keys_get(account_email, 'primary').longid === longid) {
+          let primary_k = keys_get(account_email, 'primary');
+          if(primary_k && primary_k.longid === longid) {
             return passphrase_get(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
           } else {
             return null;
