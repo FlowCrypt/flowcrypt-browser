@@ -71,7 +71,7 @@ function check_email_for_attests_and_respond(account_email) {
 
 function process_attest_packet_text(account_email, attest_packet_text, passphrase, callback) {
   let attest = tool.api.attester.packet.parse(attest_packet_text);
-  let key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
+  let key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(account_email, 'primary').private).keys[0];
   is_already_attested(account_email, attest.attester, is_attested => {
     if (!is_attested) {
       if (tool.crypto.key.decrypt(key, passphrase || window.flowcrypt_storage.passphrase_get(account_email)).success) {
