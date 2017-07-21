@@ -4833,6 +4833,7 @@ exports.default = {
   aead_protect: false, // use Authenticated Encryption with Additional Data (AEAD) protection for symmetric encryption
   integrity_protect: true, // use integrity protection for symmetric encryption
   ignore_mdc_error: false, // fail on decrypt if message is not integrity protected
+  checksum_required: false, // do not throw error when armor is missing a checksum
   rsa_blinding: true,
   use_native: true, // use native node.js crypto and Web Crypto apis (if available)
   zero_copy: false, // use transferable objects between the Web Worker and main thread
@@ -12212,6 +12213,9 @@ function splitChecksum(text) {
   if (lastEquals >= 0) {
     body = text.slice(0, lastEquals);
     checksum = text.slice(lastEquals + 1);
+    if (checksum.substr(0, 6) === '\n-----') {
+      checksum = ''; // missing armor checksum
+    }
   }
 
   return { body: body, checksum: checksum };
@@ -12276,7 +12280,8 @@ function dearmor(text) {
 
   checksum = checksum.substr(0, 4);
 
-  if (!verifyCheckSum(result.data, checksum)) {
+  if (!verifyCheckSum(result.data, checksum) && (checksum || _config2.default.checksum_required)) {
+    // will NOT throw error if checksum is empty AND checksum is not required (GPG compatibility)
     throw new Error("Ascii armor integrity check on message failed: '" + checksum + "' should be '" + getCheckSum(result.data) + "'");
   }
 
