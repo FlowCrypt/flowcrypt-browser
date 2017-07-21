@@ -4490,6 +4490,12 @@ var _armor = _dereq_('./encoding/armor.js');
 
 var _armor2 = _interopRequireDefault(_armor);
 
+var _signature = _dereq_('./signature.js');
+
+var sigModule = _interopRequireWildcard(_signature);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -4497,17 +4503,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @classdesc Class that represents an OpenPGP cleartext signed message.
  * See {@link http://tools.ietf.org/html/rfc4880#section-7}
  * @param  {String}     text       The cleartext of the signed message
- * @param  {module:packet/packetlist} packetlist The packetlist with signature packets or undefined
- *                                 if message not yet signed
+ * @param  {module:signature} signature       The detached signature or an empty signature if message not yet signed
  */
 
-function CleartextMessage(text, packetlist) {
+function CleartextMessage(text, signature) {
   if (!(this instanceof CleartextMessage)) {
-    return new CleartextMessage(text, packetlist);
+    return new CleartextMessage(text, signature);
   }
   // normalize EOL to canonical form <CR><LF>
   this.text = text.replace(/\r/g, '').replace(/[\t ]+\n/g, "\n").replace(/\n/g, "\r\n");
-  this.packets = packetlist || new _packet2.default.List();
+  if (signature && !(signature instanceof sigModule.Signature)) {
+    throw new Error('Invalid signature input');
+  }
+  this.signature = signature || new sigModule.Signature(new _packet2.default.List());
 }
 
 /**
@@ -4516,7 +4524,7 @@ function CleartextMessage(text, packetlist) {
  */
 CleartextMessage.prototype.getSigningKeyIds = function () {
   var keyIds = [];
-  var signatureList = this.packets.filterByTag(_enums2.default.packet.signature);
+  var signatureList = this.signature.packets;
   signatureList.forEach(function (packet) {
     keyIds.push(packet.issuerKeyId);
   });
@@ -4526,8 +4534,18 @@ CleartextMessage.prototype.getSigningKeyIds = function () {
 /**
  * Sign the cleartext message
  * @param  {Array<module:key~Key>} privateKeys private keys with decrypted secret key data for signing
+ * @return {module:message~CleartextMessage} new cleartext message with signed content
  */
 CleartextMessage.prototype.sign = function (privateKeys) {
+  return new CleartextMessage(this.text, this.signDetached(privateKeys));
+};
+
+/**
+ * Sign the cleartext message
+ * @param  {Array<module:key~Key>} privateKeys private keys with decrypted secret key data for signing
+ * @return {module:signature~Signature}      new detached signature of message content
+ */
+CleartextMessage.prototype.signDetached = function (privateKeys) {
   var packetlist = new _packet2.default.List();
   var literalDataPacket = new _packet2.default.Literal();
   literalDataPacket.setText(this.text);
@@ -4546,7 +4564,7 @@ CleartextMessage.prototype.sign = function (privateKeys) {
     signaturePacket.sign(signingKeyPacket, literalDataPacket);
     packetlist.push(signaturePacket);
   }
-  this.packets = packetlist;
+  return new sigModule.Signature(packetlist);
 };
 
 /**
@@ -4555,8 +4573,17 @@ CleartextMessage.prototype.sign = function (privateKeys) {
  * @return {Array<{keyid: module:type/keyid, valid: Boolean}>} list of signer's keyid and validity of signature
  */
 CleartextMessage.prototype.verify = function (keys) {
+  return this.verifyDetached(this.signature, keys);
+};
+
+/**
+ * Verify signatures of cleartext signed message
+ * @param {Array<module:key~Key>} keys array of keys to verify signatures
+ * @return {Array<{keyid: module:type/keyid, valid: Boolean}>} list of signer's keyid and validity of signature
+ */
+CleartextMessage.prototype.verifyDetached = function (signature, keys) {
   var result = [];
-  var signatureList = this.packets.filterByTag(_enums2.default.packet.signature);
+  var signatureList = signature.packets;
   var literalDataPacket = new _packet2.default.Literal();
   // we assume that cleartext signature is generated based on UTF8 cleartext
   literalDataPacket.setText(this.text);
@@ -4577,6 +4604,11 @@ CleartextMessage.prototype.verify = function (keys) {
       verifiedSig.keyid = signatureList[i].issuerKeyId;
       verifiedSig.valid = null;
     }
+
+    var packetlist = new _packet2.default.List();
+    packetlist.push(signatureList[i]);
+    verifiedSig.signature = new sigModule.Signature(packetlist);
+
     result.push(verifiedSig);
   }
   return result;
@@ -4599,7 +4631,7 @@ CleartextMessage.prototype.armor = function () {
   var body = {
     hash: _enums2.default.read(_enums2.default.hash, _config2.default.prefer_hash_algorithm).toUpperCase(),
     text: this.text,
-    data: this.packets.write()
+    data: this.signature.packets.write()
   };
   return _armor2.default.encode(_enums2.default.armor.signed, body);
 };
@@ -4618,7 +4650,8 @@ function readArmored(armoredText) {
   var packetlist = new _packet2.default.List();
   packetlist.read(input.data);
   verifyHeaders(input.headers, packetlist);
-  var newMessage = new CleartextMessage(input.text, packetlist);
+  var signature = new sigModule.Signature(packetlist);
+  var newMessage = new CleartextMessage(input.text, signature);
   return newMessage;
 }
 
@@ -4667,7 +4700,7 @@ function verifyHeaders(headers, packetlist) {
   }
 }
 
-},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47}],6:[function(_dereq_,module,exports){
+},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47,"./signature.js":66}],6:[function(_dereq_,module,exports){
 /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {'use strict';var n=void 0,u=!0,aa=this;function ba(e,d){var c=e.split("."),f=aa;!(c[0]in f)&&f.execScript&&f.execScript("var "+c[0]);for(var a;c.length&&(a=c.shift());)!c.length&&d!==n?f[a]=d:f=f[a]?f[a]:f[a]={}};var C="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function K(e,d){this.index="number"===typeof d?d:0;this.d=0;this.buffer=e instanceof(C?Uint8Array:Array)?e:new (C?Uint8Array:Array)(32768);if(2*this.buffer.length<=this.index)throw Error("invalid index");this.buffer.length<=this.index&&ca(this)}function ca(e){var d=e.buffer,c,f=d.length,a=new (C?Uint8Array:Array)(f<<1);if(C)a.set(d);else for(c=0;c<f;++c)a[c]=d[c];return e.buffer=a}
 K.prototype.a=function(e,d,c){var f=this.buffer,a=this.index,b=this.d,k=f[a],m;c&&1<d&&(e=8<d?(L[e&255]<<24|L[e>>>8&255]<<16|L[e>>>16&255]<<8|L[e>>>24&255])>>32-d:L[e]>>8-d);if(8>d+b)k=k<<d|e,b+=d;else for(m=0;m<d;++m)k=k<<1|e>>d-m-1&1,8===++b&&(b=0,f[a++]=L[k],k=0,a===f.length&&(f=ca(this)));f[a]=k;this.buffer=f;this.d=b;this.index=a};K.prototype.finish=function(){var e=this.buffer,d=this.index,c;0<this.d&&(e[d]<<=8-this.d,e[d]=L[e[d]],d++);C?c=e.subarray(0,d):(e.length=d,c=e);return c};
 var ga=new (C?Uint8Array:Array)(256),M;for(M=0;256>M;++M){for(var R=M,S=R,ha=7,R=R>>>1;R;R>>>=1)S<<=1,S|=R&1,--ha;ga[M]=(S<<ha&255)>>>0}var L=ga;function ja(e){this.buffer=new (C?Uint16Array:Array)(2*e);this.length=0}ja.prototype.getParent=function(e){return 2*((e-2)/4|0)};ja.prototype.push=function(e,d){var c,f,a=this.buffer,b;c=this.length;a[this.length++]=d;for(a[this.length++]=e;0<c;)if(f=this.getParent(c),a[c]>a[f])b=a[c],a[c]=a[f],a[f]=b,b=a[c+1],a[c+1]=a[f+1],a[f+1]=b,c=f;else break;return this.length};
@@ -4690,7 +4723,7 @@ function Ha(e,d,c){var f,a,b=0,k,m,g,p,v=e.length;m=0;p=c.length;a:for(;m<p;m++)
 function oa(e,d){var c=e.length,f=new ja(572),a=new (C?Uint8Array:Array)(c),b,k,m,g,p;if(!C)for(g=0;g<c;g++)a[g]=0;for(g=0;g<c;++g)0<e[g]&&f.push(g,e[g]);b=Array(f.length/2);k=new (C?Uint32Array:Array)(f.length/2);if(1===b.length)return a[f.pop().index]=1,a;g=0;for(p=f.length/2;g<p;++g)b[g]=f.pop(),k[g]=b[g].value;m=Ja(k,k.length,d);g=0;for(p=b.length;g<p;++g)a[b[g].index]=m[g];return a}
 function Ja(e,d,c){function f(a){var b=g[a][p[a]];b===d?(f(a+1),f(a+1)):--k[b];++p[a]}var a=new (C?Uint16Array:Array)(c),b=new (C?Uint8Array:Array)(c),k=new (C?Uint8Array:Array)(d),m=Array(c),g=Array(c),p=Array(c),v=(1<<c)-d,x=1<<c-1,l,h,q,t,w;a[c-1]=d;for(h=0;h<c;++h)v<x?b[h]=0:(b[h]=1,v-=x),v<<=1,a[c-2-h]=(a[c-1-h]/2|0)+d;a[0]=b[0];m[0]=Array(a[0]);g[0]=Array(a[0]);for(h=1;h<c;++h)a[h]>2*a[h-1]+b[h]&&(a[h]=2*a[h-1]+b[h]),m[h]=Array(a[h]),g[h]=Array(a[h]);for(l=0;l<d;++l)k[l]=c;for(q=0;q<a[c-1];++q)m[c-
 1][q]=e[q],g[c-1][q]=q;for(l=0;l<c;++l)p[l]=0;1===b[c-1]&&(--k[0],++p[c-1]);for(h=c-2;0<=h;--h){t=l=0;w=p[h+1];for(q=0;q<a[h];q++)t=m[h+1][w]+m[h+1][w+1],t>e[l]?(m[h][q]=t,g[h][q]=d,w+=2):(m[h][q]=e[l],g[h][q]=l,++l);p[h]=0;1===b[h]&&f(h)}return k}
-function pa(e){var d=new (C?Uint16Array:Array)(e.length),c=[],f=[],a=0,b,k,m,g;b=0;for(k=e.length;b<k;b++)c[e[b]]=(c[e[b]]|0)+1;b=1;for(k=16;b<=k;b++)f[b]=a,a+=c[b]|0,a<<=1;b=0;for(k=e.length;b<k;b++){a=f[e[b]];f[e[b]]+=1;m=d[b]=0;for(g=e[b];m<g;m++)d[b]=d[b]<<1|a&1,a>>>=1}return d};ba("Zlib.RawDeflate",ka);ba("Zlib.RawDeflate.prototype.compress",ka.prototype.h);var Ka={NONE:0,FIXED:1,DYNAMIC:ma},V,La,$,Ma;if(Object.keys)V=Object.keys(Ka);else for(La in V=[],$=0,Ka)V[$++]=La;$=0;for(Ma=V.length;$<Ma;++$)La=V[$],ba("Zlib.RawDeflate.CompressionType."+La,Ka[La]);}).call(this);
+function pa(e){var d=new (C?Uint16Array:Array)(e.length),c=[],f=[],a=0,b,k,m,g;b=0;for(k=e.length;b<k;b++)c[e[b]]=(c[e[b]]|0)+1;b=1;for(k=16;b<=k;b++)f[b]=a,a+=c[b]|0,a<<=1;b=0;for(k=e.length;b<k;b++){a=f[e[b]];f[e[b]]+=1;m=d[b]=0;for(g=e[b];m<g;m++)d[b]=d[b]<<1|a&1,a>>>=1}return d};ba("Zlib.RawDeflate",ka);ba("Zlib.RawDeflate.prototype.compress",ka.prototype.h);var Ka={NONE:0,FIXED:1,DYNAMIC:ma},V,La,$,Ma;if(Object.keys)V=Object.keys(Ka);else for(La in V=[],$=0,Ka)V[$++]=La;$=0;for(Ma=V.length;$<Ma;++$)La=V[$],ba("Zlib.RawDeflate.CompressionType."+La,Ka[La]);}).call(this); 
 
 },{}],7:[function(_dereq_,module,exports){
 /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {'use strict';var l=this;function p(b,e){var a=b.split("."),c=l;!(a[0]in c)&&c.execScript&&c.execScript("var "+a[0]);for(var d;a.length&&(d=a.shift());)!a.length&&void 0!==e?c[d]=e:c=c[d]?c[d]:c[d]={}};var q="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function t(b){var e=b.length,a=0,c=Number.POSITIVE_INFINITY,d,f,g,h,k,m,r,n,s,J;for(n=0;n<e;++n)b[n]>a&&(a=b[n]),b[n]<c&&(c=b[n]);d=1<<a;f=new (q?Uint32Array:Array)(d);g=1;h=0;for(k=2;g<=a;){for(n=0;n<e;++n)if(b[n]===g){m=0;r=h;for(s=0;s<g;++s)m=m<<1|r&1,r>>=1;J=g<<16|n;for(s=m;s<d;s+=k)f[s]=J;++h}++g;h<<=1;k<<=1}return[f,a,c]};function u(b,e){this.g=[];this.h=32768;this.c=this.f=this.d=this.k=0;this.input=q?new Uint8Array(b):b;this.l=!1;this.i=v;this.q=!1;if(e||!(e={}))e.index&&(this.d=e.index),e.bufferSize&&(this.h=e.bufferSize),e.bufferType&&(this.i=e.bufferType),e.resize&&(this.q=e.resize);switch(this.i){case w:this.a=32768;this.b=new (q?Uint8Array:Array)(32768+this.h+258);break;case v:this.a=0;this.b=new (q?Uint8Array:Array)(this.h);this.e=this.v;this.m=this.s;this.j=this.t;break;default:throw Error("invalid inflate mode");
@@ -4706,7 +4739,7 @@ u.prototype.t=function(b,e){var a=this.b,c=this.a;this.n=b;for(var d=a.length,f,
 u.prototype.e=function(){var b=new (q?Uint8Array:Array)(this.a-32768),e=this.a-32768,a,c,d=this.b;if(q)b.set(d.subarray(32768,b.length));else{a=0;for(c=b.length;a<c;++a)b[a]=d[a+32768]}this.g.push(b);this.k+=b.length;if(q)d.set(d.subarray(e,e+32768));else for(a=0;32768>a;++a)d[a]=d[e+a];this.a=32768;return d};
 u.prototype.v=function(b){var e,a=this.input.length/this.d+1|0,c,d,f,g=this.input,h=this.b;b&&("number"===typeof b.o&&(a=b.o),"number"===typeof b.r&&(a+=b.r));2>a?(c=(g.length-this.d)/this.n[2],f=258*(c/2)|0,d=f<h.length?h.length+f:h.length<<1):d=h.length*a;q?(e=new Uint8Array(d),e.set(h)):e=h;return this.b=e};
 u.prototype.m=function(){var b=0,e=this.b,a=this.g,c,d=new (q?Uint8Array:Array)(this.k+(this.a-32768)),f,g,h,k;if(0===a.length)return q?this.b.subarray(32768,this.a):this.b.slice(32768,this.a);f=0;for(g=a.length;f<g;++f){c=a[f];h=0;for(k=c.length;h<k;++h)d[b++]=c[h]}f=32768;for(g=this.a;f<g;++f)d[b++]=e[f];this.g=[];return this.buffer=d};
-u.prototype.s=function(){var b,e=this.a;q?this.q?(b=new Uint8Array(e),b.set(this.b.subarray(0,e))):b=this.b.subarray(0,e):(this.b.length>e&&(this.b.length=e),b=this.b);return this.buffer=b};p("Zlib.RawInflate",u);p("Zlib.RawInflate.prototype.decompress",u.prototype.u);var T={ADAPTIVE:v,BLOCK:w},U,V,W,X;if(Object.keys)U=Object.keys(T);else for(V in U=[],W=0,T)U[W++]=V;W=0;for(X=U.length;W<X;++W)V=U[W],p("Zlib.RawInflate.BufferType."+V,T[V]);}).call(this);
+u.prototype.s=function(){var b,e=this.a;q?this.q?(b=new Uint8Array(e),b.set(this.b.subarray(0,e))):b=this.b.subarray(0,e):(this.b.length>e&&(this.b.length=e),b=this.b);return this.buffer=b};p("Zlib.RawInflate",u);p("Zlib.RawInflate.prototype.decompress",u.prototype.u);var T={ADAPTIVE:v,BLOCK:w},U,V,W,X;if(Object.keys)U=Object.keys(T);else for(V in U=[],W=0,T)U[W++]=V;W=0;for(X=U.length;W<X;++W)V=U[W],p("Zlib.RawInflate.BufferType."+V,T[V]);}).call(this); 
 
 },{}],8:[function(_dereq_,module,exports){
 /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {'use strict';function l(d){throw d;}var v=void 0,x=!0,aa=this;function D(d,a){var c=d.split("."),e=aa;!(c[0]in e)&&e.execScript&&e.execScript("var "+c[0]);for(var b;c.length&&(b=c.shift());)!c.length&&a!==v?e[b]=a:e=e[b]?e[b]:e[b]={}};var F="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function H(d,a){this.index="number"===typeof a?a:0;this.i=0;this.buffer=d instanceof(F?Uint8Array:Array)?d:new (F?Uint8Array:Array)(32768);2*this.buffer.length<=this.index&&l(Error("invalid index"));this.buffer.length<=this.index&&this.f()}H.prototype.f=function(){var d=this.buffer,a,c=d.length,e=new (F?Uint8Array:Array)(c<<1);if(F)e.set(d);else for(a=0;a<c;++a)e[a]=d[a];return this.buffer=e};
@@ -4747,7 +4780,7 @@ T.prototype.t=function(){var d=0,a=this.a,c=this.l,e,b=new (F?Uint8Array:Array)(
 T.prototype.I=function(){var d,a=this.b;F?this.C?(d=new Uint8Array(a),d.set(this.a.subarray(0,a))):d=this.a.subarray(0,a):(this.a.length>a&&(this.a.length=a),d=this.a);return this.buffer=d};function jb(d){if("string"===typeof d){var a=d.split(""),c,e;c=0;for(e=a.length;c<e;c++)a[c]=(a[c].charCodeAt(0)&255)>>>0;d=a}for(var b=1,f=0,g=d.length,h,k=0;0<g;){h=1024<g?1024:g;g-=h;do b+=d[k++],f+=b;while(--h);b%=65521;f%=65521}return(f<<16|b)>>>0};function kb(d,a){var c,e;this.input=d;this.c=0;if(a||!(a={}))a.index&&(this.c=a.index),a.verify&&(this.N=a.verify);c=d[this.c++];e=d[this.c++];switch(c&15){case lb:this.method=lb;break;default:l(Error("unsupported compression method"))}0!==((c<<8)+e)%31&&l(Error("invalid fcheck flag:"+((c<<8)+e)%31));e&32&&l(Error("fdict flag is not supported"));this.B=new T(d,{index:this.c,bufferSize:a.bufferSize,bufferType:a.bufferType,resize:a.resize})}
 kb.prototype.p=function(){var d=this.input,a,c;a=this.B.p();this.c=this.B.c;this.N&&(c=(d[this.c++]<<24|d[this.c++]<<16|d[this.c++]<<8|d[this.c++])>>>0,c!==jb(a)&&l(Error("invalid adler-32 checksum")));return a};var lb=8;function mb(d,a){this.input=d;this.a=new (F?Uint8Array:Array)(32768);this.h=$.k;var c={},e;if((a||!(a={}))&&"number"===typeof a.compressionType)this.h=a.compressionType;for(e in a)c[e]=a[e];c.outputBuffer=this.a;this.A=new ia(this.input,c)}var $=na;
 mb.prototype.j=function(){var d,a,c,e,b,f,g,h=0;g=this.a;d=lb;switch(d){case lb:a=Math.LOG2E*Math.log(32768)-8;break;default:l(Error("invalid compression method"))}c=a<<4|d;g[h++]=c;switch(d){case lb:switch(this.h){case $.NONE:b=0;break;case $.r:b=1;break;case $.k:b=2;break;default:l(Error("unsupported compression type"))}break;default:l(Error("invalid compression method"))}e=b<<6|0;g[h++]=e|31-(256*c+e)%31;f=jb(this.input);this.A.b=h;g=this.A.j();h=g.length;F&&(g=new Uint8Array(g.buffer),g.length<=
-h+4&&(this.a=new Uint8Array(g.length+4),this.a.set(g),g=this.a),g=g.subarray(0,h+4));g[h++]=f>>24&255;g[h++]=f>>16&255;g[h++]=f>>8&255;g[h++]=f&255;return g};function nb(d,a){var c,e,b,f;if(Object.keys)c=Object.keys(a);else for(e in c=[],b=0,a)c[b++]=e;b=0;for(f=c.length;b<f;++b)e=c[b],D(d+"."+e,a[e])};D("Zlib.Inflate",kb);D("Zlib.Inflate.prototype.decompress",kb.prototype.p);nb("Zlib.Inflate.BufferType",{ADAPTIVE:Ba.D,BLOCK:Ba.F});D("Zlib.Deflate",mb);D("Zlib.Deflate.compress",function(d,a){return(new mb(d,a)).j()});D("Zlib.Deflate.prototype.compress",mb.prototype.j);nb("Zlib.Deflate.CompressionType",{NONE:$.NONE,FIXED:$.r,DYNAMIC:$.k});}).call(this);
+h+4&&(this.a=new Uint8Array(g.length+4),this.a.set(g),g=this.a),g=g.subarray(0,h+4));g[h++]=f>>24&255;g[h++]=f>>16&255;g[h++]=f>>8&255;g[h++]=f&255;return g};function nb(d,a){var c,e,b,f;if(Object.keys)c=Object.keys(a);else for(e in c=[],b=0,a)c[b++]=e;b=0;for(f=c.length;b<f;++b)e=c[b],D(d+"."+e,a[e])};D("Zlib.Inflate",kb);D("Zlib.Inflate.prototype.decompress",kb.prototype.p);nb("Zlib.Inflate.BufferType",{ADAPTIVE:Ba.D,BLOCK:Ba.F});D("Zlib.Deflate",mb);D("Zlib.Deflate.compress",function(d,a){return(new mb(d,a)).j()});D("Zlib.Deflate.prototype.compress",mb.prototype.j);nb("Zlib.Deflate.CompressionType",{NONE:$.NONE,FIXED:$.r,DYNAMIC:$.k});}).call(this); 
 
 },{}],9:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
@@ -4804,10 +4837,11 @@ exports.default = {
   use_native: true, // use native node.js crypto and Web Crypto apis (if available)
   zero_copy: false, // use transferable objects between the Web Worker and main thread
   debug: false,
+  tolerant: true, // ignore unsupported/unrecognizable packets instead of throwing an error
   show_version: true,
   show_comment: true,
-  versionstring: "OpenPGP.js", //todo - add back original version
-  commentstring: "http://openpgpjs.org",
+  versionstring: "OpenPGP.js v2.5.6",
+  commentstring: "https://openpgpjs.org",
   keyserver: "https://keyserver.ubuntu.com",
   node_store: './openpgp.store'
 };
@@ -6994,7 +7028,7 @@ exports.default = {
   }
 };
 
-},{"../type/mpi.js":67,"./cipher":16,"./public_key":28,"./random.js":31}],19:[function(_dereq_,module,exports){
+},{"../type/mpi.js":68,"./cipher":16,"./public_key":28,"./random.js":31}],19:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
 //
@@ -7139,7 +7173,7 @@ function nodeDecrypt(ct, key, iv) {
   return Promise.resolve(new Uint8Array(pt));
 }
 
-},{"../config":10,"../util.js":69,"asmcrypto-lite":1}],20:[function(_dereq_,module,exports){
+},{"../config":10,"../util.js":70,"asmcrypto-lite":1}],20:[function(_dereq_,module,exports){
 /**
  * @requires crypto/hash/sha
  * @requires crypto/hash/md5
@@ -7305,7 +7339,7 @@ exports.default = {
   }
 };
 
-},{"../../util.js":69,"./md5.js":21,"./ripe-md.js":22,"./sha.js":23,"asmcrypto-lite":1,"rusha":4}],21:[function(_dereq_,module,exports){
+},{"../../util.js":70,"./md5.js":21,"./ripe-md.js":22,"./sha.js":23,"asmcrypto-lite":1,"rusha":4}],21:[function(_dereq_,module,exports){
 /**
  * A fast MD5 JavaScript implementation
  * Copyright (c) 2012 Joseph Myers
@@ -7531,7 +7565,7 @@ function add32(a, b) {
   return a + b & 0xFFFFFFFF;
 }
 
-},{"../../util.js":69}],22:[function(_dereq_,module,exports){
+},{"../../util.js":70}],22:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7806,7 +7840,7 @@ function RMDstring(message) {
   return _util2.default.str2Uint8Array(retString);
 }
 
-},{"../../util.js":69}],23:[function(_dereq_,module,exports){
+},{"../../util.js":70}],23:[function(_dereq_,module,exports){
 /**
  * @preserve A JavaScript implementation of the SHA family of hashes, as
  * defined in FIPS PUB 180-2 as well as the corresponding HMAC implementation
@@ -9389,7 +9423,7 @@ exports.default = {
   }
 };
 
-},{"../util.js":69,"./hash":20,"./public_key/jsbn.js":29,"./random.js":31}],26:[function(_dereq_,module,exports){
+},{"../util.js":70,"./hash":20,"./public_key/jsbn.js":29,"./random.js":31}],26:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -9532,7 +9566,7 @@ function DSA() {
   this.verify = verify;
 }
 
-},{"../../config":10,"../../util.js":69,"../hash":20,"../random.js":31,"./jsbn.js":29}],27:[function(_dereq_,module,exports){
+},{"../../config":10,"../../util.js":70,"../hash":20,"../random.js":31,"./jsbn.js":29}],27:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -9605,7 +9639,7 @@ function Elgamal() {
   this.decrypt = decrypt;
 }
 
-},{"../../util.js":69,"../random.js":31,"./jsbn.js":29}],28:[function(_dereq_,module,exports){
+},{"../../util.js":70,"../random.js":31,"./jsbn.js":29}],28:[function(_dereq_,module,exports){
 /**
  * @requires crypto/public_key/dsa
  * @requires crypto/public_key/elgamal
@@ -11329,7 +11363,7 @@ BigInteger.prototype.toMPI = bnToMPI;
 // JSBN-specific extension
 BigInteger.prototype.square = bnSquare;
 
-},{"../../util.js":69}],30:[function(_dereq_,module,exports){
+},{"../../util.js":70}],30:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -11617,7 +11651,7 @@ function RSA() {
   this.keyObject = KeyObject;
 }
 
-},{"../../config":10,"../../util.js":69,"../random.js":31,"./jsbn.js":29}],31:[function(_dereq_,module,exports){
+},{"../../config":10,"../../util.js":70,"../random.js":31,"./jsbn.js":29}],31:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -11825,7 +11859,7 @@ RandomBuffer.prototype.get = function (buf) {
   }
 };
 
-},{"../type/mpi.js":67,"../util.js":69,"crypto":"crypto"}],32:[function(_dereq_,module,exports){
+},{"../type/mpi.js":68,"../util.js":70,"crypto":"crypto"}],32:[function(_dereq_,module,exports){
 /**
  * @requires util
  * @requires crypto/hash
@@ -11954,7 +11988,7 @@ exports.default = {
   }
 };
 
-},{"../util":69,"./pkcs1.js":25,"./public_key":28}],33:[function(_dereq_,module,exports){
+},{"../util":70,"./pkcs1.js":25,"./public_key":28}],33:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -12009,6 +12043,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *         3 = PGP MESSAGE
  *         4 = PUBLIC KEY BLOCK
  *         5 = PRIVATE KEY BLOCK
+ *         6 = SIGNATURE
  */
 function getType(text) {
   var reHeader = /^-----BEGIN PGP (MESSAGE, PART \d+\/\d+|MESSAGE, PART \d+|SIGNED MESSAGE|MESSAGE|PUBLIC KEY BLOCK|PRIVATE KEY BLOCK|SIGNATURE)-----$\n/m;
@@ -12032,10 +12067,7 @@ function getType(text) {
     if (/MESSAGE, PART \d+/.test(header[1])) {
       return _enums2.default.armor.multipart_last;
     } else
-      // BEGIN PGP SIGNATURE
-      // Used for detached signatures, OpenPGP/MIME signatures, and
-      // cleartext signatures. Note that PGP 2.x uses BEGIN PGP MESSAGE
-      // for detached signatures.
+      // BEGIN PGP SIGNED MESSAGE
       if (/SIGNED MESSAGE/.test(header[1])) {
         return _enums2.default.armor.signed;
       } else
@@ -12053,7 +12085,14 @@ function getType(text) {
             // Used for armoring private keys.
             if (/PRIVATE KEY BLOCK/.test(header[1])) {
               return _enums2.default.armor.private_key;
-            }
+            } else
+              // BEGIN PGP SIGNATURE
+              // Used for detached signatures, OpenPGP/MIME signatures, and
+              // cleartext signatures. Note that PGP 2.x uses BEGIN PGP MESSAGE
+              // for detached signatures.
+              if (/SIGNATURE/.test(header[1])) {
+                return _enums2.default.armor.signature;
+              }
 }
 
 /**
@@ -12107,30 +12146,9 @@ var crc_table = [0x00000000, 0x00864cfb, 0x018ad50d, 0x010c99f6, 0x0393e6e1, 0x0
 
 function createcrc24(input) {
   var crc = 0xB704CE;
-  var index = 0;
 
-  while (input.length - index > 16) {
+  for (var index = 0; index < input.length; index++) {
     crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 1]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 2]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 3]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 4]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 5]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 6]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 7]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 8]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 9]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 10]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 11]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 12]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 13]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 14]) & 0xff];
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index + 15]) & 0xff];
-    index += 16;
-  }
-
-  for (var j = index; j < input.length; j++) {
-    crc = crc << 8 ^ crc_table[(crc >> 16 ^ input[index++]) & 0xff];
   }
   return crc & 0xffffff;
 }
@@ -12186,15 +12204,14 @@ function verifyHeaders(headers) {
  * and an attribute "checksum" containing the checksum.
  */
 function splitChecksum(text) {
-  var reChecksumStart = /^=/m;
   var body = text;
   var checksum = "";
 
-  var matchResult = reChecksumStart.exec(text);
+  var lastEquals = text.lastIndexOf("=");
 
-  if (matchResult !== null) {
-    body = text.slice(0, matchResult.index);
-    checksum = text.slice(matchResult.index + 1);
+  if (lastEquals >= 0) {
+    body = text.slice(0, lastEquals);
+    checksum = text.slice(lastEquals + 1);
   }
 
   return { body: body, checksum: checksum };
@@ -12324,6 +12341,13 @@ function armor(messagetype, body, partindex, parttotal) {
       result.push(_base2.default.encode(body));
       result.push("\r\n=" + getCheckSum(body) + "\r\n");
       result.push("-----END PGP PRIVATE KEY BLOCK-----\r\n");
+      break;
+    case _enums2.default.armor.signature:
+      result.push("-----BEGIN PGP SIGNATURE-----\r\n");
+      result.push(addheader());
+      result.push(_base2.default.encode(body));
+      result.push("\r\n=" + getCheckSum(body) + "\r\n");
+      result.push("-----END PGP SIGNATURE-----\r\n");
       break;
   }
 
@@ -12755,7 +12779,8 @@ exports.default = {
     signed: 2,
     message: 3,
     public_key: 4,
-    private_key: 5
+    private_key: 5,
+    signature: 6
   },
 
   /** Asserts validity and converts from string/integer to integer. */
@@ -12894,7 +12919,7 @@ HKP.prototype.upload = function (publicKeyArmored) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.HKP = exports.AsyncProxy = exports.Keyring = exports.crypto = exports.config = exports.enums = exports.armor = exports.Keyid = exports.S2K = exports.MPI = exports.packet = exports.util = exports.cleartext = exports.message = exports.key = undefined;
+exports.HKP = exports.AsyncProxy = exports.Keyring = exports.crypto = exports.config = exports.enums = exports.armor = exports.Keyid = exports.S2K = exports.MPI = exports.packet = exports.util = exports.cleartext = exports.message = exports.signature = exports.key = undefined;
 
 var _openpgp = _dereq_('./openpgp');
 
@@ -13022,6 +13047,10 @@ var _key = _dereq_('./key');
 
 var keyMod = _interopRequireWildcard(_key);
 
+var _signature = _dereq_('./signature');
+
+var signatureMod = _interopRequireWildcard(_signature);
+
 var _message = _dereq_('./message');
 
 var messageMod = _interopRequireWildcard(_message);
@@ -13053,6 +13082,12 @@ exports.default = openpgp;
 var key = exports.key = keyMod;
 
 /**
+ * @see module:signature
+ * @name module:openpgp.signature
+ */
+var signature = exports.signature = signatureMod;
+
+/**
  * @see module:message
  * @name module:openpgp.message
  */
@@ -13069,7 +13104,7 @@ var cleartext = exports.cleartext = cleartextMod;
  * @name module:openpgp.util
  */
 
-},{"./cleartext":5,"./config/config":9,"./crypto":24,"./encoding/armor":33,"./enums":35,"./hkp":36,"./key":38,"./keyring":39,"./message":42,"./openpgp":43,"./packet":47,"./type/keyid":66,"./type/mpi":67,"./type/s2k":68,"./util":69,"./worker/async_proxy":70}],38:[function(_dereq_,module,exports){
+},{"./cleartext":5,"./config/config":9,"./crypto":24,"./encoding/armor":33,"./enums":35,"./hkp":36,"./key":38,"./keyring":39,"./message":42,"./openpgp":43,"./packet":47,"./signature":66,"./type/keyid":67,"./type/mpi":68,"./type/s2k":69,"./util":70,"./worker/async_proxy":71}],38:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -13103,6 +13138,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.Key = Key;
 exports.readArmored = readArmored;
 exports.generate = generate;
+exports.reformat = reformat;
 exports.getPreferredSymAlgo = getPreferredSymAlgo;
 
 var _packet = _dereq_('./packet');
@@ -13443,7 +13479,7 @@ Key.prototype.getEncryptionKeyPacket = function () {
   }
   // if no valid subkey for encryption, evaluate primary key
   var primaryUser = this.getPrimaryUser();
-  if (primaryUser && isValidEncryptionKeyPacket(this.primaryKey, primaryUser.selfCertificate)) {
+  if (primaryUser && primaryUser.selfCertificate && !primaryUser.selfCertificate.isExpired() && isValidEncryptionKeyPacket(this.primaryKey, primaryUser.selfCertificate)) {
     return this.primaryKey;
   }
   return null;
@@ -13590,7 +13626,7 @@ Key.prototype.getPrimaryUser = function () {
       continue;
     }
     for (var j = 0; j < this.users[i].selfCertifications.length; j++) {
-      primUser.push({ user: this.users[i], selfCertificate: this.users[i].selfCertifications[j] });
+      primUser.push({ index: i, user: this.users[i], selfCertificate: this.users[i].selfCertifications[j] });
     }
   }
   // sort by primary user flag and signature creation time
@@ -13711,6 +13747,77 @@ function mergeSignatures(source, dest, attr, checkFn) {
 Key.prototype.revoke = function () {};
 
 /**
+ * Signs primary user of key
+ * @param  {Array<module:key~Key>} privateKey decrypted private keys for signing
+ * @return {module:key~Key} new public key with new certificate signature
+ */
+Key.prototype.signPrimaryUser = function (privateKeys) {
+  var _ref = this.getPrimaryUser() || {};
+
+  var index = _ref.index;
+  var user = _ref.user;
+
+  if (!user) {
+    throw new Error('Could not find primary user');
+  }
+  user = user.sign(this.primaryKey, privateKeys);
+  var key = new Key(this.toPacketlist());
+  key.users[index] = user;
+  return key;
+};
+
+/**
+ * Signs all users of key
+ * @param  {Array<module:key~Key>} privateKeys decrypted private keys for signing
+ * @return {module:key~Key} new public key with new certificate signature
+ */
+Key.prototype.signAllUsers = function (privateKeys) {
+  var _this = this;
+
+  var users = this.users.map(function (user) {
+    return user.sign(_this.primaryKey, privateKeys);
+  });
+  var key = new Key(this.toPacketlist());
+  key.users = users;
+  return key;
+};
+
+/**
+ * Verifies primary user of key
+ * @param  {Array<module:key~Key>} keys array of keys to verify certificate signatures
+ * @return {Array<({keyid: module:type/keyid, valid: Boolean})>} list of signer's keyid and validity of signature
+ */
+Key.prototype.verifyPrimaryUser = function (keys) {
+  var _ref2 = this.getPrimaryUser() || {};
+
+  var user = _ref2.user;
+
+  if (!user) {
+    throw new Error('Could not find primary user');
+  }
+  return user.verifyAllSignatures(this.primaryKey, keys);
+};
+
+/**
+ * Verifies all users of key
+ * @param  {Array<module:key~Key>} keys array of keys to verify certificate signatures
+ * @return {Array<({userid: String, keyid: module:type/keyid, valid: Boolean})>} list of userid, signer's keyid and validity of signature
+ */
+Key.prototype.verifyAllUsers = function (keys) {
+  var _this2 = this;
+
+  return this.users.reduce(function (signatures, user) {
+    return signatures.concat(user.verifyAllSignatures(_this2.primaryKey, keys).map(function (signature) {
+      return {
+        userid: user.userId.userid,
+        keyid: signature.keyid,
+        valid: signature.valid
+      };
+    }));
+  }, []);
+};
+
+/**
  * @class
  * @classdesc Class that represents an user ID or attribute packet and the relevant signatures.
  */
@@ -13792,6 +13899,70 @@ User.prototype.isValidSelfCertificate = function (primaryKey, selfCertificate) {
     return true;
   }
   return false;
+};
+
+/**
+ * Signs user
+ * @param  {module:packet/secret_key|module:packet/public_key} primaryKey The primary key packet
+ * @param  {Array<module:key~Key>} privateKeys decrypted private keys for signing
+ * @return {module:key~Key} new user with new certificate signatures
+ */
+User.prototype.sign = function (primaryKey, privateKeys) {
+  var user, dataToSign, signingKeyPacket, signaturePacket;
+  dataToSign = {};
+  dataToSign.key = primaryKey;
+  dataToSign.userid = this.userId || this.userAttribute;
+  user = new User(this.userId || this.userAttribute);
+  user.otherCertifications = [];
+  privateKeys.forEach(function (privateKey) {
+    if (privateKey.isPublic()) {
+      throw new Error('Need private key for signing');
+    }
+    if (privateKey.primaryKey.getFingerprint() === primaryKey.getFingerprint()) {
+      throw new Error('Not implemented for self signing');
+    }
+    signingKeyPacket = privateKey.getSigningKeyPacket();
+    if (!signingKeyPacket) {
+      throw new Error('Could not find valid signing key packet');
+    }
+    if (!signingKeyPacket.isDecrypted) {
+      throw new Error('Private key is not decrypted.');
+    }
+    signaturePacket = new _packet2.default.Signature();
+    // Most OpenPGP implementations use generic certification (0x10)
+    signaturePacket.signatureType = _enums2.default.write(_enums2.default.signature, _enums2.default.signature.cert_generic);
+    signaturePacket.keyFlags = [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data];
+    signaturePacket.hashAlgorithm = privateKey.getPreferredHashAlgorithm();
+    signaturePacket.publicKeyAlgorithm = signingKeyPacket.algorithm;
+    signaturePacket.signingKeyId = signingKeyPacket.getKeyId();
+    signaturePacket.sign(signingKeyPacket, dataToSign);
+    user.otherCertifications.push(signaturePacket);
+  });
+  user.update(this, primaryKey);
+  return user;
+};
+
+/**
+ * Verifies all user signatures
+ * @param  {module:packet/secret_key|module:packet/public_key} primaryKey The primary key packet
+ * @param  {Array<module:key~Key>} keys array of keys to verify certificate signatures
+ * @return {Array<({keyid: module:type/keyid, valid: Boolean})>} list of signer's keyid and validity of signature
+ */
+User.prototype.verifyAllSignatures = function (primaryKey, keys) {
+  var dataToVerify = { userid: this.userId || this.userAttribute, key: primaryKey };
+  var certificates = this.selfCertifications.concat(this.otherCertifications || []);
+  return certificates.map(function (signaturePacket) {
+    var keyPackets = keys.filter(function (key) {
+      return key.getSigningKeyPacket(signaturePacket.issuerKeyId);
+    });
+    var valid = null;
+    if (keyPackets.length > 0) {
+      valid = keyPackets.some(function (keyPacket) {
+        return signaturePacket.verify(keyPacket.primaryKey, dataToVerify);
+      });
+    }
+    return { keyid: signaturePacket.issuerKeyId, valid: valid };
+  });
 };
 
 /**
@@ -13996,11 +14167,12 @@ function readArmored(armoredText) {
                                                      If array is used, the first userId is set as primary user Id
  * @param {String}  options.passphrase The passphrase used to encrypt the resulting private key
  * @param {Boolean} [options.unlocked=false]    The secret part of the generated key is unlocked
+ * @param {Number} [options.keyExpirationTime=0] The number of seconds after the key creation time that the key expires
  * @return {module:key~Key}
  * @static
  */
 function generate(options) {
-  var packetlist, secretKeyPacket, userIdPacket, dataToSign, signaturePacket, secretSubkeyPacket, subkeySignaturePacket;
+  var secretKeyPacket, secretSubkeyPacket;
   return Promise.resolve().then(function () {
     options.keyType = options.keyType || _enums2.default.publicKey.rsa_encrypt_sign;
     if (options.keyType !== _enums2.default.publicKey.rsa_encrypt_sign) {
@@ -14016,7 +14188,9 @@ function generate(options) {
       options.userIds = [options.userIds];
     }
 
-    return Promise.all([generateSecretKey(), generateSecretSubkey()]).then(wrapKeyObject);
+    return Promise.all([generateSecretKey(), generateSecretSubkey()]).then(function () {
+      return wrapKeyObject(secretKeyPacket, secretSubkeyPacket, options);
+    });
   });
 
   function generateSecretKey() {
@@ -14030,79 +14204,124 @@ function generate(options) {
     secretSubkeyPacket.algorithm = _enums2.default.read(_enums2.default.publicKey, options.keyType);
     return secretSubkeyPacket.generate(options.numBits);
   }
+}
 
-  function wrapKeyObject() {
-    // set passphrase protection
-    if (options.passphrase) {
-      secretKeyPacket.encrypt(options.passphrase);
-      secretSubkeyPacket.encrypt(options.passphrase);
+/**
+ * Reformats and signs an OpenPGP with a given User ID. Currently only supports RSA keys.
+ * @param {module:key~Key} options.privateKey   The private key to reformat
+ * @param {module:enums.publicKey} [options.keyType=module:enums.publicKey.rsa_encrypt_sign]
+ * @param {String|Array<String>}  options.userIds    assumes already in form of "User Name <username@email.com>"
+                                                     If array is used, the first userId is set as primary user Id
+ * @param {String}  options.passphrase The passphrase used to encrypt the resulting private key
+ * @param {Boolean} [options.unlocked=false]    The secret part of the generated key is unlocked
+ * @param {Number} [options.keyExpirationTime=0] The number of seconds after the key creation time that the key expires
+ * @return {module:key~Key}
+ * @static
+ */
+function reformat(options) {
+  var secretKeyPacket, secretSubkeyPacket;
+  return Promise.resolve().then(function () {
+
+    options.keyType = options.keyType || _enums2.default.publicKey.rsa_encrypt_sign;
+    if (options.keyType !== _enums2.default.publicKey.rsa_encrypt_sign) {
+      // RSA Encrypt-Only and RSA Sign-Only are deprecated and SHOULD NOT be generated
+      throw new Error('Only RSA Encrypt or Sign supported');
     }
 
-    packetlist = new _packet2.default.List();
-
-    packetlist.push(secretKeyPacket);
-
-    options.userIds.forEach(function (userId, index) {
-
-      userIdPacket = new _packet2.default.Userid();
-      userIdPacket.read(_util2.default.str2Uint8Array(userId));
-
-      dataToSign = {};
-      dataToSign.userid = userIdPacket;
-      dataToSign.key = secretKeyPacket;
-      signaturePacket = new _packet2.default.Signature();
-      signaturePacket.signatureType = _enums2.default.signature.cert_generic;
-      signaturePacket.publicKeyAlgorithm = options.keyType;
-      signaturePacket.hashAlgorithm = _config2.default.prefer_hash_algorithm;
-      signaturePacket.keyFlags = [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data];
-      signaturePacket.preferredSymmetricAlgorithms = [];
-      // prefer aes256, aes128, then aes192 (no WebCrypto support: https://www.chromium.org/blink/webcrypto#TOC-AES-support)
-      signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes256);
-      signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes128);
-      signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes192);
-      signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.cast5);
-      signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.tripledes);
-      signaturePacket.preferredHashAlgorithms = [];
-      // prefer fast asm.js implementations (SHA-256, SHA-1)
-      signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha256);
-      signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha1);
-      signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha512);
-      signaturePacket.preferredCompressionAlgorithms = [];
-      signaturePacket.preferredCompressionAlgorithms.push(_enums2.default.compression.zlib);
-      signaturePacket.preferredCompressionAlgorithms.push(_enums2.default.compression.zip);
-      if (index === 0) {
-        signaturePacket.isPrimaryUserID = true;
-      }
-      if (_config2.default.integrity_protect) {
-        signaturePacket.features = [];
-        signaturePacket.features.push(1); // Modification Detection
-      }
-      signaturePacket.sign(secretKeyPacket, dataToSign);
-
-      packetlist.push(userIdPacket);
-      packetlist.push(signaturePacket);
-    });
-
-    dataToSign = {};
-    dataToSign.key = secretKeyPacket;
-    dataToSign.bind = secretSubkeyPacket;
-    subkeySignaturePacket = new _packet2.default.Signature();
-    subkeySignaturePacket.signatureType = _enums2.default.signature.subkey_binding;
-    subkeySignaturePacket.publicKeyAlgorithm = options.keyType;
-    subkeySignaturePacket.hashAlgorithm = _config2.default.prefer_hash_algorithm;
-    subkeySignaturePacket.keyFlags = [_enums2.default.keyFlags.encrypt_communication | _enums2.default.keyFlags.encrypt_storage];
-    subkeySignaturePacket.sign(secretKeyPacket, dataToSign);
-
-    packetlist.push(secretSubkeyPacket);
-    packetlist.push(subkeySignaturePacket);
-
-    if (!options.unlocked) {
-      secretKeyPacket.clearPrivateMPIs();
-      secretSubkeyPacket.clearPrivateMPIs();
+    if (!options.passphrase) {
+      // Key without passphrase is unlocked by definition
+      options.unlocked = true;
     }
+    if (String.prototype.isPrototypeOf(options.userIds) || typeof options.userIds === 'string') {
+      options.userIds = [options.userIds];
+    }
+    var packetlist = options.privateKey.toPacketlist();
+    for (var i = 0; i < packetlist.length; i++) {
+      if (packetlist[i].tag === _enums2.default.packet.secretKey) {
+        secretKeyPacket = packetlist[i];
+      } else if (packetlist[i].tag === _enums2.default.packet.secretSubkey) {
+        secretSubkeyPacket = packetlist[i];
+      }
+    }
+    return wrapKeyObject(secretKeyPacket, secretSubkeyPacket, options);
+  });
+}
 
-    return new Key(packetlist);
+function wrapKeyObject(secretKeyPacket, secretSubkeyPacket, options) {
+  // set passphrase protection
+  if (options.passphrase) {
+    secretKeyPacket.encrypt(options.passphrase);
+    secretSubkeyPacket.encrypt(options.passphrase);
   }
+
+  var packetlist = new _packet2.default.List();
+
+  packetlist.push(secretKeyPacket);
+
+  options.userIds.forEach(function (userId, index) {
+
+    var userIdPacket = new _packet2.default.Userid();
+    userIdPacket.read(_util2.default.str2Uint8Array(userId));
+
+    var dataToSign = {};
+    dataToSign.userid = userIdPacket;
+    dataToSign.key = secretKeyPacket;
+    var signaturePacket = new _packet2.default.Signature();
+    signaturePacket.signatureType = _enums2.default.signature.cert_generic;
+    signaturePacket.publicKeyAlgorithm = options.keyType;
+    signaturePacket.hashAlgorithm = _config2.default.prefer_hash_algorithm;
+    signaturePacket.keyFlags = [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data];
+    signaturePacket.preferredSymmetricAlgorithms = [];
+    // prefer aes256, aes128, then aes192 (no WebCrypto support: https://www.chromium.org/blink/webcrypto#TOC-AES-support)
+    signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes256);
+    signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes128);
+    signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.aes192);
+    signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.cast5);
+    signaturePacket.preferredSymmetricAlgorithms.push(_enums2.default.symmetric.tripledes);
+    signaturePacket.preferredHashAlgorithms = [];
+    // prefer fast asm.js implementations (SHA-256). SHA-1 will not be secure much longer...move to bottom of list
+    signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha256);
+    signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha512);
+    signaturePacket.preferredHashAlgorithms.push(_enums2.default.hash.sha1);
+    signaturePacket.preferredCompressionAlgorithms = [];
+    signaturePacket.preferredCompressionAlgorithms.push(_enums2.default.compression.zlib);
+    signaturePacket.preferredCompressionAlgorithms.push(_enums2.default.compression.zip);
+    if (index === 0) {
+      signaturePacket.isPrimaryUserID = true;
+    }
+    if (_config2.default.integrity_protect) {
+      signaturePacket.features = [];
+      signaturePacket.features.push(1); // Modification Detection
+    }
+    if (options.keyExpirationTime > 0) {
+      signaturePacket.keyExpirationTime = options.keyExpirationTime;
+      signaturePacket.keyNeverExpires = false;
+    }
+    signaturePacket.sign(secretKeyPacket, dataToSign);
+
+    packetlist.push(userIdPacket);
+    packetlist.push(signaturePacket);
+  });
+
+  var dataToSign = {};
+  dataToSign.key = secretKeyPacket;
+  dataToSign.bind = secretSubkeyPacket;
+  var subkeySignaturePacket = new _packet2.default.Signature();
+  subkeySignaturePacket.signatureType = _enums2.default.signature.subkey_binding;
+  subkeySignaturePacket.publicKeyAlgorithm = options.keyType;
+  subkeySignaturePacket.hashAlgorithm = _config2.default.prefer_hash_algorithm;
+  subkeySignaturePacket.keyFlags = [_enums2.default.keyFlags.encrypt_communication | _enums2.default.keyFlags.encrypt_storage];
+  subkeySignaturePacket.sign(secretKeyPacket, dataToSign);
+
+  packetlist.push(secretSubkeyPacket);
+  packetlist.push(subkeySignaturePacket);
+
+  if (!options.unlocked) {
+    secretKeyPacket.clearPrivateMPIs();
+    secretSubkeyPacket.clearPrivateMPIs();
+  }
+
+  return new Key(packetlist);
 }
 
 /**
@@ -14137,7 +14356,7 @@ function getPreferredSymAlgo(keys) {
   return prefAlgo.algo;
 }
 
-},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47,"./util":69}],39:[function(_dereq_,module,exports){
+},{"./config":10,"./encoding/armor.js":33,"./enums.js":35,"./packet":47,"./util":70}],39:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -14212,7 +14431,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
  * Initialization routine for the keyring. This method reads the
  * keyring from HTML5 local storage and initializes this instance.
  * @constructor
- * @param {class} [storeHandler] class implementing load() and store() methods
+ * @param {class} [storeHandler] class implementing loadPublic(), loadPrivate(), storePublic(), and storePrivate() methods
  */
 function Keyring(storeHandler) {
   this.storeHandler = storeHandler || new _localstore2.default();
@@ -14528,7 +14747,7 @@ function storeKeys(storage, itemname, keys) {
   }
 }
 
-},{"../config":10,"../key.js":38,"../util.js":69,"node-localstorage":"node-localstorage"}],42:[function(_dereq_,module,exports){
+},{"../config":10,"../key.js":38,"../util.js":70,"node-localstorage":"node-localstorage"}],42:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -14591,6 +14810,10 @@ var _config2 = _interopRequireDefault(_config);
 var _crypto = _dereq_('./crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
+
+var _signature = _dereq_('./signature.js');
+
+var sigModule = _interopRequireWildcard(_signature);
 
 var _key = _dereq_('./key.js');
 
@@ -14855,10 +15078,14 @@ function encryptSessionKey(sessionKey, symAlgo, publicKeys, passwords) {
 
 /**
  * Sign the message (the literal data packet of the message)
- * @param  {Array<module:key~Key>} privateKey private keys with decrypted secret key data for signing
- * @return {module:message~Message}      new message with signed content
+ * @param  {Array<module:key~Key>}        privateKey private keys with decrypted secret key data for signing
+ * @param  {Signature} signature          (optional) any existing detached signature to add to the message
+ * @return {module:message~Message}       new message with signed content
  */
-Message.prototype.sign = function (privateKeys) {
+Message.prototype.sign = function () {
+  var privateKeys = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+  var signature = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
 
   var packetlist = new _packet2.default.List();
 
@@ -14869,12 +15096,30 @@ Message.prototype.sign = function (privateKeys) {
 
   var literalFormat = _enums2.default.write(_enums2.default.literal, literalDataPacket.format);
   var signatureType = literalFormat === _enums2.default.literal.binary ? _enums2.default.signature.binary : _enums2.default.signature.text;
-  var i, signingKeyPacket;
+  var i, signingKeyPacket, existingSigPacketlist, onePassSig;
+
+  if (signature) {
+    existingSigPacketlist = signature.packets.filterByTag(_enums2.default.packet.signature);
+    if (existingSigPacketlist.length) {
+      for (i = existingSigPacketlist.length - 1; i >= 0; i--) {
+        var sigPacket = existingSigPacketlist[i];
+        onePassSig = new _packet2.default.OnePassSignature();
+        onePassSig.type = signatureType;
+        onePassSig.hashAlgorithm = _config2.default.prefer_hash_algorithm;
+        onePassSig.publicKeyAlgorithm = sigPacket.publicKeyAlgorithm;
+        onePassSig.signingKeyId = sigPacket.issuerKeyId;
+        if (!privateKeys.length && i === 0) {
+          onePassSig.flags = 1;
+        }
+        packetlist.push(onePassSig);
+      }
+    }
+  }
   for (i = 0; i < privateKeys.length; i++) {
     if (privateKeys[i].isPublic()) {
       throw new Error('Need private key for signing');
     }
-    var onePassSig = new _packet2.default.OnePassSignature();
+    onePassSig = new _packet2.default.OnePassSignature();
     onePassSig.type = signatureType;
     //TODO get preferred hashg algo from key signature
     onePassSig.hashAlgorithm = _config2.default.prefer_hash_algorithm;
@@ -14904,7 +15149,52 @@ Message.prototype.sign = function (privateKeys) {
     packetlist.push(signaturePacket);
   }
 
+  if (signature) {
+    packetlist.concat(existingSigPacketlist);
+  }
+
   return new Message(packetlist);
+};
+
+/**
+ * Create a detached signature for the message (the literal data packet of the message)
+ * @param  {Array<module:key~Key>}           privateKey private keys with decrypted secret key data for signing
+ * @param  {Signature} signature             (optional) any existing detached signature
+ * @return {module:signature~Signature}      new detached signature of message content
+ */
+Message.prototype.signDetached = function () {
+  var privateKeys = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+  var signature = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
+
+  var packetlist = new _packet2.default.List();
+
+  var literalDataPacket = this.packets.findPacket(_enums2.default.packet.literal);
+  if (!literalDataPacket) {
+    throw new Error('No literal data packet to sign.');
+  }
+
+  var literalFormat = _enums2.default.write(_enums2.default.literal, literalDataPacket.format);
+  var signatureType = literalFormat === _enums2.default.literal.binary ? _enums2.default.signature.binary : _enums2.default.signature.text;
+
+  for (var i = 0; i < privateKeys.length; i++) {
+    var signingKeyPacket = privateKeys[i].getSigningKeyPacket();
+    var signaturePacket = new _packet2.default.Signature();
+    signaturePacket.signatureType = signatureType;
+    signaturePacket.hashAlgorithm = _config2.default.prefer_hash_algorithm;
+    signaturePacket.publicKeyAlgorithm = signingKeyPacket.algorithm;
+    if (!signingKeyPacket.isDecrypted) {
+      throw new Error('Private key is not decrypted.');
+    }
+    signaturePacket.sign(signingKeyPacket, literalDataPacket);
+    packetlist.push(signaturePacket);
+  }
+  if (signature) {
+    var existingSigPacketlist = signature.packets.filterByTag(_enums2.default.packet.signature);
+    packetlist.concat(existingSigPacketlist);
+  }
+
+  return new sigModule.Signature(packetlist);
 };
 
 /**
@@ -14913,13 +15203,40 @@ Message.prototype.sign = function (privateKeys) {
  * @return {Array<({keyid: module:type/keyid, valid: Boolean})>} list of signer's keyid and validity of signature
  */
 Message.prototype.verify = function (keys) {
-  var result = [];
   var msg = this.unwrapCompressed();
   var literalDataList = msg.packets.filterByTag(_enums2.default.packet.literal);
   if (literalDataList.length !== 1) {
     throw new Error('Can only verify message with one literal data packet.');
   }
   var signatureList = msg.packets.filterByTag(_enums2.default.packet.signature);
+  return createVerificationObjects(signatureList, literalDataList, keys);
+};
+
+/**
+ * Verify detached message signature
+ * @param {Array<module:key~Key>} keys array of keys to verify signatures
+ * @param {Signature}
+ * @return {Array<({keyid: module:type/keyid, valid: Boolean})>} list of signer's keyid and validity of signature
+ */
+Message.prototype.verifyDetached = function (signature, keys) {
+  var msg = this.unwrapCompressed();
+  var literalDataList = msg.packets.filterByTag(_enums2.default.packet.literal);
+  if (literalDataList.length !== 1) {
+    throw new Error('Can only verify message with one literal data packet.');
+  }
+  var signatureList = signature.packets;
+  return createVerificationObjects(signatureList, literalDataList, keys);
+};
+
+/**
+ * Create list of objects containing signer's keyid and validity of signature
+ * @param {Array<module:packet/signature>} signatureList array of signature packets
+ * @param {Array<module:packet/literal>} literalDataList array of literal data packets
+ * @param {Array<module:key~Key>} keys array of keys to verify signatures
+ * @return {Array<({keyid: module:type/keyid, valid: Boolean})>} list of signer's keyid and validity of signature
+ */
+function createVerificationObjects(signatureList, literalDataList, keys) {
+  var result = [];
   for (var i = 0; i < signatureList.length; i++) {
     var keyPacket = null;
     for (var j = 0; j < keys.length; j++) {
@@ -14931,16 +15248,22 @@ Message.prototype.verify = function (keys) {
 
     var verifiedSig = {};
     if (keyPacket) {
+      //found a key packet that matches keyId of signature
       verifiedSig.keyid = signatureList[i].issuerKeyId;
       verifiedSig.valid = signatureList[i].verify(keyPacket, literalDataList[0]);
     } else {
       verifiedSig.keyid = signatureList[i].issuerKeyId;
       verifiedSig.valid = null;
     }
+
+    var packetlist = new _packet2.default.List();
+    packetlist.push(signatureList[i]);
+    verifiedSig.signature = new sigModule.Signature(packetlist);
+
     result.push(verifiedSig);
   }
   return result;
-};
+}
 
 /**
  * Unwrap compressed message
@@ -15047,7 +15370,7 @@ function fromBinary(bytes, filename) {
   return new Message(literalDataPacketlist);
 }
 
-},{"./config":10,"./crypto":24,"./encoding/armor.js":33,"./enums.js":35,"./key.js":38,"./packet":47,"./util.js":69}],43:[function(_dereq_,module,exports){
+},{"./config":10,"./crypto":24,"./encoding/armor.js":33,"./enums.js":35,"./key.js":38,"./packet":47,"./signature.js":66,"./util.js":70}],43:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
 //
@@ -15089,6 +15412,7 @@ exports.initWorker = initWorker;
 exports.getWorker = getWorker;
 exports.destroyWorker = destroyWorker;
 exports.generateKey = generateKey;
+exports.reformatKey = reformatKey;
 exports.decryptKey = decryptKey;
 exports.encrypt = encrypt;
 exports.decrypt = decrypt;
@@ -15184,6 +15508,7 @@ function destroyWorker() {
  * @param  {String} passphrase       (optional) The passphrase used to encrypt the resulting private key
  * @param  {Number} numBits          (optional) number of bits for the key creation. (should be 2048 or 4096)
  * @param  {Boolean} unlocked        (optional) If the returned secret part of the generated key is unlocked
+ * @param  {Number} keyExpirationTime (optional) The number of seconds after the key creation time that the key expires
  * @return {Promise<Object>}         The generated key object in the form:
  *                                     { key:Key, privateKeyArmored:String, publicKeyArmored:String }
  * @static
@@ -15198,8 +15523,10 @@ function generateKey() {
   var numBits = _ref2$numBits === undefined ? 2048 : _ref2$numBits;
   var _ref2$unlocked = _ref2.unlocked;
   var unlocked = _ref2$unlocked === undefined ? false : _ref2$unlocked;
+  var _ref2$keyExpirationTi = _ref2.keyExpirationTime;
+  var keyExpirationTime = _ref2$keyExpirationTi === undefined ? 0 : _ref2$keyExpirationTi;
 
-  var options = formatUserIds({ userIds: userIds, passphrase: passphrase, numBits: numBits, unlocked: unlocked });
+  var options = formatUserIds({ userIds: userIds, passphrase: passphrase, numBits: numBits, unlocked: unlocked, keyExpirationTime: keyExpirationTime });
 
   if (!_util2.default.getWebCryptoAll() && asyncProxy) {
     // use web worker if web crypto apis are not supported
@@ -15218,14 +15545,54 @@ function generateKey() {
 }
 
 /**
+ * Reformats signature packets for a key and rewraps key object.
+ * @param  {Array<Object>} userIds   array of user IDs e.g. [{ name:'Phil Zimmermann', email:'phil@openpgp.org' }]
+ * @param  {String} passphrase       (optional) The passphrase used to encrypt the resulting private key
+ * @param  {Boolean} unlocked        (optional) If the returned secret part of the generated key is unlocked
+ * @param  {Number} keyExpirationTime (optional) The number of seconds after the key creation time that the key expires
+ * @return {Promise<Object>}         The generated key object in the form:
+ *                                     { key:Key, privateKeyArmored:String, publicKeyArmored:String }
+ * @static
+ */
+function reformatKey() {
+  var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+  var privateKey = _ref3.privateKey;
+  var _ref3$userIds = _ref3.userIds;
+  var userIds = _ref3$userIds === undefined ? [] : _ref3$userIds;
+  var _ref3$passphrase = _ref3.passphrase;
+  var passphrase = _ref3$passphrase === undefined ? "" : _ref3$passphrase;
+  var _ref3$unlocked = _ref3.unlocked;
+  var unlocked = _ref3$unlocked === undefined ? false : _ref3$unlocked;
+  var _ref3$keyExpirationTi = _ref3.keyExpirationTime;
+  var keyExpirationTime = _ref3$keyExpirationTi === undefined ? 0 : _ref3$keyExpirationTi;
+
+  var options = formatUserIds({ privateKey: privateKey, userIds: userIds, passphrase: passphrase, unlocked: unlocked, keyExpirationTime: keyExpirationTime });
+
+  if (asyncProxy) {
+    return asyncProxy.delegate('reformatKey', options);
+  }
+
+  return key.reformat(options).then(function (newKey) {
+    return {
+
+      key: newKey,
+      privateKeyArmored: newKey.armor(),
+      publicKeyArmored: newKey.toPublic().armor()
+
+    };
+  }).catch(onError.bind(null, 'Error reformatting keypair'));
+}
+
+/**
  * Unlock a private key with your passphrase.
  * @param  {Key} privateKey      the private key that is to be decrypted
  * @param  {String} passphrase   the user's passphrase chosen during key generation
  * @return {Key}                 the unlocked private key
  */
-function decryptKey(_ref3) {
-  var privateKey = _ref3.privateKey;
-  var passphrase = _ref3.passphrase;
+function decryptKey(_ref4) {
+  var privateKey = _ref4.privateKey;
+  var passphrase = _ref4.passphrase;
 
   if (asyncProxy) {
     // use web worker if available
@@ -15257,44 +15624,61 @@ function decryptKey(_ref3) {
  * @param  {Key|Array<Key>} privateKeys       (optional) private keys for signing. If omitted message will not be signed
  * @param  {String|Array<String>} passwords   (optional) array of passwords or a single password to encrypt the message
  * @param  {String} filename                  (optional) a filename for the literal data packet
- * @param  {Boolean} armor                    (optional) if the return value should be ascii armored or the message object
- * @return {Promise<String|Message>}          encrypted ASCII armored message, or the full Message object if 'armor' is false
+ * @param  {Boolean} armor                    (optional) if the return values should be ascii armored or the message/signature objects
+ * @param  {Boolean} detached                 (optional) if the signature should be detached (if true, signature will be added to returned object)
+ * @param  {Signature} signature              (optional) a detached signature to add to the encrypted message
+ * @return {Promise<Object>}                  encrypted (and optionally signed message) in the form:
+ *                                              {data: ASCII armored message if 'armor' is true,
+ *                                                message: full Message object if 'armor' is false, signature: detached signature if 'detached' is true}
  * @static
  */
-function encrypt(_ref4) {
-  var data = _ref4.data;
-  var publicKeys = _ref4.publicKeys;
-  var privateKeys = _ref4.privateKeys;
-  var passwords = _ref4.passwords;
-  var filename = _ref4.filename;
-  var _ref4$armor = _ref4.armor;
-  var armor = _ref4$armor === undefined ? true : _ref4$armor;
+function encrypt(_ref5) {
+  var data = _ref5.data;
+  var publicKeys = _ref5.publicKeys;
+  var privateKeys = _ref5.privateKeys;
+  var passwords = _ref5.passwords;
+  var filename = _ref5.filename;
+  var _ref5$armor = _ref5.armor;
+  var armor = _ref5$armor === undefined ? true : _ref5$armor;
+  var _ref5$detached = _ref5.detached;
+  var detached = _ref5$detached === undefined ? false : _ref5$detached;
+  var _ref5$signature = _ref5.signature;
+  var signature = _ref5$signature === undefined ? null : _ref5$signature;
 
   checkData(data);publicKeys = toArray(publicKeys);privateKeys = toArray(privateKeys);passwords = toArray(passwords);
 
   if (!nativeAEAD() && asyncProxy) {
     // use web worker if web crypto apis are not supported
-    return asyncProxy.delegate('encrypt', { data: data, publicKeys: publicKeys, privateKeys: privateKeys, passwords: passwords, filename: filename, armor: armor });
+    return asyncProxy.delegate('encrypt', { data: data, publicKeys: publicKeys, privateKeys: privateKeys, passwords: passwords, filename: filename, armor: armor, detached: detached, signature: signature });
   }
-
+  var result = {};
   return Promise.resolve().then(function () {
 
     var message = createMessage(data, filename);
-    if (privateKeys) {
-      // sign the message only if private keys are specified
-      message = message.sign(privateKeys);
+    if (!privateKeys) {
+      privateKeys = [];
+    }
+    if (privateKeys.length || signature) {
+      // sign the message only if private keys or signature is specified
+      if (detached) {
+        var detachedSignature = message.signDetached(privateKeys, signature);
+        if (armor) {
+          result.signature = detachedSignature.armor();
+        } else {
+          result.signature = detachedSignature;
+        }
+      } else {
+        message = message.sign(privateKeys, signature);
+      }
     }
     return message.encrypt(publicKeys, passwords);
   }).then(function (message) {
-
     if (armor) {
-      return {
-        data: message.armor()
-      };
+      result.data = message.armor();
+    } else {
+      result.message = message;
     }
-    return {
-      message: message
-    };
+    return result;
   }).catch(onError.bind(null, 'Error encrypting message'));
 }
 
@@ -15307,32 +15691,43 @@ function encrypt(_ref4) {
  * @param  {Object} sessionKey           (optional) session key in the form: { data:Uint8Array, algorithm:String }
  * @param  {String} password             (optional) single password to decrypt the message
  * @param  {String} format               (optional) return data format either as 'utf8' or 'binary'
+ * @param  {Signature} signature         (optional) detached signature for verification
  * @return {Promise<Object>}             decrypted and verified message in the form:
  *                                         { data:Uint8Array|String, filename:String, signatures:[{ keyid:String, valid:Boolean }] }
  * @static
  */
-function decrypt(_ref5) {
-  var message = _ref5.message;
-  var privateKey = _ref5.privateKey;
-  var publicKeys = _ref5.publicKeys;
-  var sessionKey = _ref5.sessionKey;
-  var password = _ref5.password;
-  var _ref5$format = _ref5.format;
-  var format = _ref5$format === undefined ? 'utf8' : _ref5$format;
+function decrypt(_ref6) {
+  var message = _ref6.message;
+  var privateKey = _ref6.privateKey;
+  var publicKeys = _ref6.publicKeys;
+  var sessionKey = _ref6.sessionKey;
+  var password = _ref6.password;
+  var _ref6$format = _ref6.format;
+  var format = _ref6$format === undefined ? 'utf8' : _ref6$format;
+  var _ref6$signature = _ref6.signature;
+  var signature = _ref6$signature === undefined ? null : _ref6$signature;
 
   checkMessage(message);publicKeys = toArray(publicKeys);
 
   if (!nativeAEAD() && asyncProxy) {
     // use web worker if web crypto apis are not supported
-    return asyncProxy.delegate('decrypt', { message: message, privateKey: privateKey, publicKeys: publicKeys, sessionKey: sessionKey, password: password, format: format });
+    return asyncProxy.delegate('decrypt', { message: message, privateKey: privateKey, publicKeys: publicKeys, sessionKey: sessionKey, password: password, format: format, signature: signature });
   }
 
   return message.decrypt(privateKey, sessionKey, password).then(function (message) {
 
     var result = parseMessage(message, format);
-    if (publicKeys && result.data) {
-      // verify only if publicKeys are specified
-      result.signatures = message.verify(publicKeys);
+    if (result.data) {
+      // verify
+      if (!publicKeys) {
+        publicKeys = [];
+      }
+      if (signature) {
+        //detached signature
+        result.signatures = message.verifyDetached(signature, publicKeys);
+      } else {
+        result.signatures = message.verify(publicKeys);
+      }
     }
     return result;
   }).catch(onError.bind(null, 'Error decrypting message'));
@@ -15346,39 +15741,58 @@ function decrypt(_ref5) {
 
 /**
  * Signs a cleartext message.
- * @param  {String} data                        cleartext input to be signed
+ * @param  {String | Uint8Array} data           cleartext input to be signed
  * @param  {Key|Array<Key>} privateKeys         array of keys or single key with decrypted secret key data to sign cleartext
  * @param  {Boolean} armor                      (optional) if the return value should be ascii armored or the message object
- * @return {Promise<String|CleartextMessage>}   ASCII armored message or the message of type CleartextMessage
+ * @param  {Boolean} detached                   (optional) if the return value should contain a detached signature
+ * @return {Promise<Object>}                    signed cleartext in the form:
+ *                                                {data: ASCII armored message if 'armor' is true,
+ *                                                message: full Message object if 'armor' is false, signature: detached signature if 'detached' is true}
  * @static
  */
-function sign(_ref6) {
-  var data = _ref6.data;
-  var privateKeys = _ref6.privateKeys;
-  var _ref6$armor = _ref6.armor;
-  var armor = _ref6$armor === undefined ? true : _ref6$armor;
+function sign(_ref7) {
+  var data = _ref7.data;
+  var privateKeys = _ref7.privateKeys;
+  var _ref7$armor = _ref7.armor;
+  var armor = _ref7$armor === undefined ? true : _ref7$armor;
+  var _ref7$detached = _ref7.detached;
+  var detached = _ref7$detached === undefined ? false : _ref7$detached;
 
-  checkString(data);
+  checkData(data);
   privateKeys = toArray(privateKeys);
 
   if (asyncProxy) {
     // use web worker if available
-    return asyncProxy.delegate('sign', { data: data, privateKeys: privateKeys, armor: armor });
+    return asyncProxy.delegate('sign', { data: data, privateKeys: privateKeys, armor: armor, detached: detached });
   }
 
+  var result = {};
   return execute(function () {
+    var message;
 
-    var cleartextMessage = new cleartext.CleartextMessage(data);
-    cleartextMessage.sign(privateKeys);
+    if (_util2.default.isString(data)) {
+      message = new cleartext.CleartextMessage(data);
+    } else {
+      message = messageLib.fromBinary(data);
+    }
+
+    if (detached) {
+      var signature = message.signDetached(privateKeys);
+      if (armor) {
+        result.signature = signature.armor();
+      } else {
+        result.signature = signature;
+      }
+    } else {
+      message = message.sign(privateKeys);
+    }
 
     if (armor) {
-      return {
-        data: cleartextMessage.armor()
-      };
+      result.data = message.armor();
+    } else {
+      result.message = message;
     }
-    return {
-      message: cleartextMessage
-    };
+    return result;
   }, 'Error signing cleartext message');
 }
 
@@ -15386,29 +15800,39 @@ function sign(_ref6) {
  * Verifies signatures of cleartext signed message
  * @param  {Key|Array<Key>} publicKeys   array of publicKeys or single key, to verify signatures
  * @param  {CleartextMessage} message    cleartext message object with signatures
+ * @param  {Signature} signature         (optional) detached signature for verification
  * @return {Promise<Object>}             cleartext with status of verified signatures in the form of:
  *                                         { data:String, signatures: [{ keyid:String, valid:Boolean }] }
  * @static
  */
-function verify(_ref7) {
-  var message = _ref7.message;
-  var publicKeys = _ref7.publicKeys;
+function verify(_ref8) {
+  var message = _ref8.message;
+  var publicKeys = _ref8.publicKeys;
+  var _ref8$signature = _ref8.signature;
+  var signature = _ref8$signature === undefined ? null : _ref8$signature;
 
-  checkCleartextMessage(message);
+  checkCleartextOrMessage(message);
   publicKeys = toArray(publicKeys);
 
   if (asyncProxy) {
     // use web worker if available
-    return asyncProxy.delegate('verify', { message: message, publicKeys: publicKeys });
+    return asyncProxy.delegate('verify', { message: message, publicKeys: publicKeys, signature: signature });
   }
 
+  var result = {};
   return execute(function () {
-    return {
-
-      data: message.getText(),
-      signatures: message.verify(publicKeys)
-
-    };
+    if (cleartext.CleartextMessage.prototype.isPrototypeOf(message)) {
+      result.data = message.getText();
+    } else {
+      result.data = message.getLiteralData();
+    }
+    if (signature) {
+      //detached signature
+      result.signatures = message.verifyDetached(signature, publicKeys);
+    } else {
+      result.signatures = message.verify(publicKeys);
+    }
+    return result;
   }, 'Error verifying cleartext signed message');
 }
 
@@ -15428,13 +15852,13 @@ function verify(_ref7) {
  * @return {Promise<Message>}                 the encrypted session key packets contained in a message object
  * @static
  */
-function encryptSessionKey(_ref8) {
-  var data = _ref8.data;
-  var algorithm = _ref8.algorithm;
-  var publicKeys = _ref8.publicKeys;
-  var passwords = _ref8.passwords;
+function encryptSessionKey(_ref9) {
+  var data = _ref9.data;
+  var algorithm = _ref9.algorithm;
+  var publicKeys = _ref9.publicKeys;
+  var passwords = _ref9.passwords;
 
-  checkbinary(data);checkString(algorithm, 'algorithm');publicKeys = toArray(publicKeys);passwords = toArray(passwords);
+  checkBinary(data);checkString(algorithm, 'algorithm');publicKeys = toArray(publicKeys);passwords = toArray(passwords);
 
   if (asyncProxy) {
     // use web worker if available
@@ -15461,10 +15885,10 @@ function encryptSessionKey(_ref8) {
  *                                          or 'undefined' if no key packets found
  * @static
  */
-function decryptSessionKey(_ref9) {
-  var message = _ref9.message;
-  var privateKey = _ref9.privateKey;
-  var password = _ref9.password;
+function decryptSessionKey(_ref10) {
+  var message = _ref10.message;
+  var privateKey = _ref10.privateKey;
+  var password = _ref10.password;
 
   checkMessage(message);
 
@@ -15492,7 +15916,7 @@ function checkString(data, name) {
     throw new Error('Parameter [' + (name || 'data') + '] must be of type String');
   }
 }
-function checkbinary(data, name) {
+function checkBinary(data, name) {
   if (!_util2.default.isUint8Array(data)) {
     throw new Error('Parameter [' + (name || 'data') + '] must be of type Uint8Array');
   }
@@ -15507,9 +15931,9 @@ function checkMessage(message) {
     throw new Error('Parameter [message] needs to be of type Message');
   }
 }
-function checkCleartextMessage(message) {
-  if (!cleartext.CleartextMessage.prototype.isPrototypeOf(message)) {
-    throw new Error('Parameter [message] needs to be of type CleartextMessage');
+function checkCleartextOrMessage(message) {
+  if (!cleartext.CleartextMessage.prototype.isPrototypeOf(message) && !messageLib.Message.prototype.isPrototypeOf(message)) {
+    throw new Error('Parameter [message] needs to be of type Message or CleartextMessage');
   }
 }
 
@@ -15534,7 +15958,11 @@ function formatUserIds(options) {
     if (!_util2.default.isString(id.name) || id.email && !_util2.default.isEmailAddress(id.email)) {
       throw new Error('Invalid user id format');
     }
-    return id.name + ' <' + id.email + '>';
+    id.name = id.name.trim();
+    if (id.name.length > 0) {
+      id.name += ' ';
+    }
+    return id.name + '<' + id.email + '>';
   });
   return options;
 }
@@ -15630,7 +16058,7 @@ function nativeAEAD() {
   return _util2.default.getWebCrypto() && _config2.default.aead_protect;
 }
 
-},{"./cleartext.js":5,"./config/config.js":9,"./key.js":38,"./message.js":42,"./util":69,"./worker/async_proxy.js":70,"es6-promise":2}],44:[function(_dereq_,module,exports){
+},{"./cleartext.js":5,"./config/config.js":9,"./key.js":38,"./message.js":42,"./util":70,"./worker/async_proxy.js":71,"es6-promise":2}],44:[function(_dereq_,module,exports){
 /**
  * @requires enums
  * @module packet
@@ -15892,6 +16320,10 @@ var _cleartext = _dereq_('../cleartext.js');
 
 var cleartext = _interopRequireWildcard(_cleartext);
 
+var _signature = _dereq_('../signature.js');
+
+var signature = _interopRequireWildcard(_signature);
+
 var _packetlist = _dereq_('./packetlist.js');
 
 var _packetlist2 = _interopRequireDefault(_packetlist);
@@ -15932,7 +16364,28 @@ function clonePackets(options) {
   if (options.key) {
     options.key = options.key.toPacketlist();
   }
+  if (options.message) {
+    //could be either a Message or CleartextMessage object
+    if (options.message instanceof message.Message) {
+      options.message = options.message.packets;
+    } else if (options.message instanceof cleartext.CleartextMessage) {
+      options.message.signature = options.message.signature.packets;
+    }
+  }
+  if (options.signature && options.signature instanceof signature.Signature) {
+    options.signature = options.signature.packets;
+  }
+  if (options.signatures) {
+    options.signatures = options.signatures.map(function (sig) {
+      return verificationObjectToClone(sig);
+    });
+  }
   return options;
+}
+
+function verificationObjectToClone(verObject) {
+  verObject.signature = verObject.signature.packets;
+  return verObject;
 }
 
 //////////////////////////////
@@ -15967,7 +16420,10 @@ function parseClonedPackets(options, method) {
     options.message = packetlistCloneToMessage(options.message);
   }
   if (options.signatures) {
-    options.signatures = options.signatures.map(packetlistCloneToSignature);
+    options.signatures = options.signatures.map(packetlistCloneToSignatures);
+  }
+  if (options.signature) {
+    options.signature = packetlistCloneToSignature(options.signature);
   }
   return options;
 }
@@ -15978,21 +16434,32 @@ function packetlistCloneToKey(clone) {
 }
 
 function packetlistCloneToMessage(clone) {
-  var packetlist = _packetlist2.default.fromStructuredClone(clone.packets);
+  var packetlist = _packetlist2.default.fromStructuredClone(clone);
   return new message.Message(packetlist);
 }
 
 function packetlistCloneToCleartextMessage(clone) {
-  var packetlist = _packetlist2.default.fromStructuredClone(clone.packets);
-  return new cleartext.CleartextMessage(clone.text, packetlist);
+  var packetlist = _packetlist2.default.fromStructuredClone(clone.signature);
+  return new cleartext.CleartextMessage(clone.text, new signature.Signature(packetlist));
 }
 
-function packetlistCloneToSignature(clone) {
+//verification objects
+function packetlistCloneToSignatures(clone) {
   clone.keyid = _keyid2.default.fromClone(clone.keyid);
+  clone.signature = new signature.Signature(clone.signature);
   return clone;
 }
 
-},{"../cleartext.js":5,"../key.js":38,"../message.js":42,"../type/keyid.js":66,"./packetlist.js":52}],46:[function(_dereq_,module,exports){
+function packetlistCloneToSignature(clone) {
+  if (typeof clone === "string") {
+    //signature is armored
+    return clone;
+  }
+  var packetlist = _packetlist2.default.fromStructuredClone(clone);
+  return new signature.Signature(packetlist);
+}
+
+},{"../cleartext.js":5,"../key.js":38,"../message.js":42,"../signature.js":66,"../type/keyid.js":67,"./packetlist.js":52}],46:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16133,7 +16600,7 @@ Compressed.prototype.decompress = function () {
       throw new Error('Compression algorithm BZip2 [BZ2] is not implemented.');
 
     default:
-      throw new Error("Compression algorithm unknown :" + this.alogrithm);
+      throw new Error("Compression algorithm unknown :" + this.algorithm);
   }
 
   this.packets.read(decompressed);
@@ -16175,7 +16642,7 @@ Compressed.prototype.compress = function () {
   }
 };
 
-},{"../compression/rawdeflate.min.js":6,"../compression/rawinflate.min.js":7,"../compression/zlib.min.js":8,"../enums.js":35,"../util.js":69}],47:[function(_dereq_,module,exports){
+},{"../compression/rawdeflate.min.js":6,"../compression/rawinflate.min.js":7,"../compression/zlib.min.js":8,"../enums.js":35,"../util.js":70}],47:[function(_dereq_,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16361,7 +16828,7 @@ Literal.prototype.write = function () {
   return _util2.default.concatUint8Array([format, filename_length, filename, date, data]);
 };
 
-},{"../enums.js":35,"../util.js":69}],49:[function(_dereq_,module,exports){
+},{"../enums.js":35,"../util.js":70}],49:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16553,7 +17020,7 @@ OnePassSignature.prototype.postCloneTypeFix = function () {
   this.signingKeyId = _keyid2.default.fromClone(this.signingKeyId);
 };
 
-},{"../enums.js":35,"../type/keyid.js":66,"../util.js":69}],51:[function(_dereq_,module,exports){
+},{"../enums.js":35,"../type/keyid.js":67,"../util.js":70}],51:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16660,9 +17127,9 @@ exports.default = {
     if (length < 256) {
       return new Uint8Array([0x80 | tag_type << 2, length]);
     } else if (length < 65536) {
-      return _util2.default.concatUint8Array([0x80 | tag_type << 2 | 1, _util2.default.writeNumber(length, 2)]);
+      return _util2.default.concatUint8Array([new Uint8Array([0x80 | tag_type << 2 | 1]), _util2.default.writeNumber(length, 2)]);
     } else {
-      return _util2.default.concatUint8Array([0x80 | tag_type << 2 | 2, _util2.default.writeNumber(length, 4)]);
+      return _util2.default.concatUint8Array([new Uint8Array([0x80 | tag_type << 2 | 2]), _util2.default.writeNumber(length, 4)]);
     }
   },
 
@@ -16813,7 +17280,7 @@ exports.default = {
   }
 };
 
-},{"../util.js":69}],52:[function(_dereq_,module,exports){
+},{"../util.js":70}],52:[function(_dereq_,module,exports){
 /**
  * This class represents a list of openpgp packets.
  * Take care when iterating over it - the packets themselves
@@ -16848,6 +17315,10 @@ var _enums = _dereq_('../enums.js');
 
 var _enums2 = _interopRequireDefault(_enums);
 
+var _config = _dereq_('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -16880,6 +17351,9 @@ Packetlist.prototype.read = function (bytes) {
       pushed = true;
       packet.read(parsed.packet);
     } catch (e) {
+      if (!_config2.default.tolerant || parsed.tag == _enums2.default.packet.symmetricallyEncrypted || parsed.tag == _enums2.default.packet.literal || parsed.tag == _enums2.default.packet.compressed) {
+        throw e;
+      }
       if (pushed) {
         this.pop(); // drop unsupported packet
       }
@@ -17066,7 +17540,7 @@ Packetlist.fromStructuredClone = function (packetlistClone) {
   return packetlist;
 };
 
-},{"../enums.js":35,"../util":69,"./all_packets.js":44,"./packet.js":51}],53:[function(_dereq_,module,exports){
+},{"../config":10,"../enums.js":35,"../util":70,"./all_packets.js":44,"./packet.js":51}],53:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17313,7 +17787,7 @@ PublicKey.prototype.postCloneTypeFix = function () {
   }
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69}],54:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/keyid.js":67,"../type/mpi.js":68,"../util.js":70}],54:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17503,7 +17977,7 @@ PublicKeyEncryptedSessionKey.prototype.postCloneTypeFix = function () {
   }
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69}],55:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/keyid.js":67,"../type/mpi.js":68,"../util.js":70}],55:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -17866,7 +18340,7 @@ SecretKey.prototype.clearPrivateMPIs = function () {
   this.isDecrypted = false;
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/mpi.js":67,"../type/s2k.js":68,"../util.js":69,"./public_key.js":53}],57:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/mpi.js":68,"../type/s2k.js":69,"../util.js":70,"./public_key.js":53}],57:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -18144,9 +18618,10 @@ Signature.prototype.write = function () {
   switch (this.version) {
     case 3:
       arr.push(new Uint8Array([3, 5])); // version, One-octet length of following hashed material.  MUST be 5
-      arr.push(this.signatureData);
+      arr.push(new Uint8Array([this.signatureType]));
+      arr.push(_util2.default.writeDate(this.created));
       arr.push(this.issuerKeyId.write());
-      arr.push(new Uint8Array([this.publicKeyAlgorithm, this.hashAlgorithm]));
+      arr.push(new Uint8Array([_enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm), _enums2.default.write(_enums2.default.hash, this.hashAlgorithm)]));
       break;
     case 4:
       arr.push(this.signatureData);
@@ -18179,7 +18654,18 @@ Signature.prototype.sign = function (key, data) {
 
   var trailer = this.calculateTrailer();
 
-  var toHash = _util2.default.concatUint8Array([this.toSign(signatureType, data), this.signatureData, trailer]);
+  var toHash = null;
+
+  switch (this.version) {
+    case 3:
+      toHash = _util2.default.concatUint8Array([this.toSign(signatureType, data), new Uint8Array([signatureType]), _util2.default.writeDate(this.created)]);
+      break;
+    case 4:
+      toHash = _util2.default.concatUint8Array([this.toSign(signatureType, data), this.signatureData, trailer]);
+      break;
+    default:
+      throw new Error('Version ' + this.version + ' of the signature is unsupported.');
+  }
 
   var hash = _crypto2.default.hash.digest(hashAlgorithm, toHash);
 
@@ -18600,7 +19086,7 @@ Signature.prototype.postCloneTypeFix = function () {
   this.issuerKeyId = _keyid2.default.fromClone(this.issuerKeyId);
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/keyid.js":66,"../type/mpi.js":67,"../util.js":69,"./packet.js":51}],59:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/keyid.js":67,"../type/mpi.js":68,"../util.js":70,"./packet.js":51}],59:[function(_dereq_,module,exports){
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
 //
@@ -18710,7 +19196,7 @@ SymEncryptedAEADProtected.prototype.encrypt = function (sessionKeyAlgorithm, key
   });
 };
 
-},{"../crypto":24,"../enums.js":35,"../util.js":69}],60:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../util.js":70}],60:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -18914,7 +19400,7 @@ function nodeDecrypt(algo, ct, key) {
   return new Uint8Array(pt);
 }
 
-},{"../crypto":24,"../enums.js":35,"../util.js":69,"asmcrypto-lite":1}],61:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../util.js":70,"asmcrypto-lite":1}],61:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19083,7 +19569,7 @@ SymEncryptedSessionKey.prototype.postCloneTypeFix = function () {
   this.s2k = _s2k2.default.fromClone(this.s2k);
 };
 
-},{"../crypto":24,"../enums.js":35,"../type/s2k.js":68,"../util.js":69}],62:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../type/s2k.js":69,"../util.js":70}],62:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19326,7 +19812,7 @@ UserAttribute.prototype.equals = function (usrAttr) {
   });
 };
 
-},{"../enums.js":35,"../util.js":69,"./packet.js":51}],65:[function(_dereq_,module,exports){
+},{"../enums.js":35,"../util.js":70,"./packet.js":51}],65:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19402,7 +19888,101 @@ Userid.prototype.write = function () {
   return _util2.default.str2Uint8Array(_util2.default.encode_utf8(this.userid));
 };
 
-},{"../enums.js":35,"../util.js":69}],66:[function(_dereq_,module,exports){
+},{"../enums.js":35,"../util.js":70}],66:[function(_dereq_,module,exports){
+// GPG4Browsers - An OpenPGP implementation in javascript
+// Copyright (C) 2011 Recurity Labs GmbH
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/**
+ * @requires config
+ * @requires crypto
+ * @requires encoding/armor
+ * @requires enums
+ * @requires packet
+ * @module signature
+ */
+
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Signature = Signature;
+exports.readArmored = readArmored;
+exports.read = read;
+
+var _packet = _dereq_('./packet');
+
+var _packet2 = _interopRequireDefault(_packet);
+
+var _enums = _dereq_('./enums.js');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _armor = _dereq_('./encoding/armor.js');
+
+var _armor2 = _interopRequireDefault(_armor);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * @class
+ * @classdesc Class that represents an OpenPGP signature.
+ * @param  {module:packet/packetlist} packetlist The signature packets
+ */
+
+function Signature(packetlist) {
+  if (!(this instanceof Signature)) {
+    return new Signature(packetlist);
+  }
+  this.packets = packetlist || new _packet2.default.List();
+}
+
+/**
+ * Returns ASCII armored text of signature
+ * @return {String} ASCII armor
+ */
+Signature.prototype.armor = function () {
+  return _armor2.default.encode(_enums2.default.armor.signature, this.packets.write());
+};
+
+/**
+ * reads an OpenPGP armored signature and returns a signature object
+ * @param {String} armoredText text to be parsed
+ * @return {Signature} new signature object
+ * @static
+ */
+function readArmored(armoredText) {
+  var input = _armor2.default.decode(armoredText).data;
+  return read(input);
+}
+
+/**
+ * reads an OpenPGP signature as byte array and returns a signature object
+ * @param {Uint8Array} input   binary signature
+ * @return {Signature}         new signature object
+ * @static
+ */
+function read(input) {
+  var packetlist = new _packet2.default.List();
+  packetlist.read(input);
+  return new Signature(packetlist);
+}
+
+},{"./encoding/armor.js":33,"./enums.js":35,"./packet":47}],67:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19491,7 +20071,7 @@ Keyid.fromId = function (hex) {
   return keyid;
 };
 
-},{"../util.js":69}],67:[function(_dereq_,module,exports){
+},{"../util.js":70}],68:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19622,7 +20202,7 @@ MPI.fromClone = function (clone) {
   return mpi;
 };
 
-},{"../crypto/public_key/jsbn.js":29,"../util.js":69}],68:[function(_dereq_,module,exports){
+},{"../crypto/public_key/jsbn.js":29,"../util.js":70}],69:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19827,7 +20407,7 @@ S2K.prototype.produce_key = function (passphrase, numBytes) {
   }
   i = 0;
 
-  while (rlength <= numBytes) {
+  while (rlength < numBytes) {
     var result = round(prefix.subarray(0, i), this);
     arr.push(result);
     rlength += result.length;
@@ -19846,7 +20426,7 @@ S2K.fromClone = function (clone) {
   return s2k;
 };
 
-},{"../crypto":24,"../enums.js":35,"../util.js":69}],69:[function(_dereq_,module,exports){
+},{"../crypto":24,"../enums.js":35,"../util.js":70}],70:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -19908,7 +20488,7 @@ exports.default = {
     if (!this.isString(data)) {
       return false;
     }
-    return (/ </.test(data) && />$/.test(data)
+    return (/</.test(data) && />$/.test(data)
     );
   },
 
@@ -20131,9 +20711,12 @@ exports.default = {
       throw new Error('Uint8Array2str: Data must be in the form of a Uint8Array');
     }
 
-    var result = [];
-    for (var i = 0; i < bin.length; i++) {
-      result[i] = String.fromCharCode(bin[i]);
+    var result = [],
+        bs = 16384,
+        j = bin.length;
+
+    for (var i = 0; i < j; i += bs) {
+      result.push(String.fromCharCode.apply(String, bin.subarray(i, i + bs < j ? i + bs : j)));
     }
     return result.join('');
   },
@@ -20411,7 +20994,7 @@ exports.default = {
 
 };
 
-},{"./config":10,"buffer":"buffer","crypto":"crypto"}],70:[function(_dereq_,module,exports){
+},{"./config":10,"buffer":"buffer","crypto":"crypto"}],71:[function(_dereq_,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -20570,5 +21153,5 @@ AsyncProxy.prototype.delegate = function (method, options) {
   });
 };
 
-},{"../crypto":24,"../packet":47,"../util.js":69}]},{},[37])(37)
+},{"../crypto":24,"../packet":47,"../util.js":70}]},{},[37])(37)
 });
