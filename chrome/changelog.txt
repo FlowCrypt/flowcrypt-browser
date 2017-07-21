@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.3.4 on July 20, 2017: Attest fix</b>
+setup: fixing attest element
+
 <b>version 4.3.3 on July 20, 2017: Storage</b>
 internal: updating internal storage methods
 
