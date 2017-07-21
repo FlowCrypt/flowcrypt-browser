@@ -1,5 +1,10 @@
 <div>
 
+<b>version 4.3.6 on July 21, 2017: Airmail fix</b>
+reading: Airmail compatibility fix
+internal: fix key array migration missing key
+internal: update openpgp.js
+
 <b>version 4.3.5 on July 21, 2017: Migration fix</b>
 internal: getting pass phrase during migrations fixed
 
