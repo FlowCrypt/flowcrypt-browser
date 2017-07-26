@@ -1328,8 +1328,13 @@
   function browser_message_send(destination_string, name, data, callback) {
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: typeof catcher !== 'undefined' ? catcher.stack_trace() : 'unknown' };
     var is_background_page = env_is_background_script();
-    if (is_background_page && background_script_registered_handlers && msg.to === null) {
-      background_script_registered_handlers[msg.name](msg.data, null, callback); // calling from background script to background script: skip messaging completely
+    if(typeof  destination_string === 'undefined') { // don't know where to send the message
+      catcher.report('browser_message_send to:undefined');
+      if(typeof callback !== 'undefined') {
+        callback();
+      }
+    } else if (is_background_page && background_script_registered_handlers && msg.to === null) {
+      background_script_registered_handlers[msg.name](msg.data, 'background', callback); // calling from background script to background script: skip messaging completely
     } else if(is_background_page) {
       chrome.tabs.sendMessage(destination_parse(msg.to).tab, msg, undefined, function(r) {
         catcher.try(function() {

@@ -27,8 +27,10 @@ tool.browser.message.listen_background({
   runtime: (message, sender, respond) => respond({ environment: catcher.environment(), version: catcher.version() }),
   ping: (message, sender, respond) => respond(true),
   _tab_: (request, sender, respond) => {
-    if(sender === null) {
+    if(sender === 'background') {
       respond(null); // background script
+    } else if(sender === null) {
+      respond(undefined); // not sure when or why this happens - maybe orphaned frames during update
     } else { // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
       respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
     }
