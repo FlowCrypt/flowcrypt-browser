@@ -28,12 +28,6 @@ $('.action_show_stripe').click(function() {
   $('.stripe_checkout').css('display', 'block');
 });
 
-$('.action_show_group').click(function() {
-  $('h1').text('CryptUp Group License');
-  $('.status').html('Manage your users under a single billing interface.<br/><br/>Group discounts apply to 51st seat and up, starting at 5% depending on group size.<br/><br/>In addition to group discount, there is a flat 20% discount for customers billed yearly.<br/><br/>Write me at tom@cryptup.org');
-  $('.hide_on_checkout').css('display', 'none');
-});
-
 $('.action_contact_page').click(function () {
   tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email});
 });
@@ -84,6 +78,7 @@ tool.api.cryptup.account_check_sync(function() {
             $('.action_show_stripe').removeClass('gray').addClass('green');
           } else {
             $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+            $('.action_close').click(close_dialog);
           }
         } else {
           $('h1').text('New Device');
