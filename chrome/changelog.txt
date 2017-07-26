@@ -1,5 +1,14 @@
 <div>
 
+<b>version 4.3.7 on July 25, 2017: Groups</b>
+settings: link to group licensing calculator
+reading: could not extend messages - fixed
+internal: cannot split supplied to
+internal: compose - cannot get public key
+internal: payment method "group"
+internal: unexpected set_css call + others
+internal: update openpgp.js
+
 <b>version 4.3.6 on July 21, 2017: Airmail fix</b>
 reading: Airmail compatibility fix
 internal: fix key array migration missing key
