@@ -190,7 +190,7 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
             thread_id: url_params.thread_id,
             subject: url_params.subject,
             from: url_params.from,
-            to: url_params.to || '',
+            to: url_params.to,
             frame_id: url_params.frame_id,
             tab_id: tab_id,
             is_reply_box: url_params.is_reply_box,
@@ -237,7 +237,7 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
                 url_params.thread_id = gmail_message_object.threadId;
                 let reply = tool.api.common.reply_correspondents(url_params.account_email, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
                 if(!url_params.to) {
-                  url_params.to = reply.to;
+                  url_params.to = reply.to.join(',');
                 }
                 if(!url_params.from) {
                   url_params.from = reply.from;
