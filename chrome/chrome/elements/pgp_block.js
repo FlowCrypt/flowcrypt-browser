@@ -248,7 +248,7 @@ window.flowcrypt_storage.db_open(function (db) {
   function render_message_expiration_renew_options() {
     let parent = $(this).parent();
     window.flowcrypt_storage.subscription(function (level, expire, active, method) {
-      if(level && !expired) {
+      if(level && active) {
         parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
         $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
       } else {
