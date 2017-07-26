@@ -1768,12 +1768,12 @@
     }
     var found_expired_subkey = false;
     tool.each(key.subKeys, function (i, sub_key) {
-      if(sub_key.verify(key) === openpgp.enums.keyStatus.expired && openpgpjs_original_isValidEncryptionKeyPacket(sub_key.subKey, sub_key.bindingSignature)) {
+      if(sub_key.verify(key.primaryKey) === openpgp.enums.keyStatus.expired && sub_key.isValidEncryptionKey(key.primaryKey)) {
         found_expired_subkey = true;
         return false;
       }
     });
-    return found_expired_subkey;
+    return found_expired_subkey; // todo - shouldn't we be checking that ALL subkeys are either invalid or expired to declare a key expired?
   }
 
   function crypto_key_usable(armored) { // is pubkey usable for encrytion?
@@ -2053,18 +2053,24 @@
     });
   }
 
-  function openpgpjs_original_isValidEncryptionKeyPacket(keyPacket, signature) {
-    return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
-  }
-
   function patch_public_keys_to_ignore_expiration(keys) {
-    function ignore_expiration_isValidEncryptionKey(primaryKey) {
-      var verifyResult = this.verify(primaryKey);
-      return(verifyResult === openpgp.enums.keyStatus.valid || verifyResult === openpgp.enums.keyStatus.expired) && openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
-    }
+    var openpgpjs_original_isValidEncryptionKeyPacket = function(keyPacket, signature) {
+      return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
+    };
     tool.each(keys, function (i, key) {
       tool.each(key.subKeys || [], function (i, sub_key) {
-        sub_key.isValidEncryptionKey = ignore_expiration_isValidEncryptionKey;
+        sub_key.isValidEncryptionKey = function (primaryKey) {
+          var verifyResult = this.verify(primaryKey);
+          if (verifyResult !== openpgp.enums.keyStatus.valid && verifyResult !== openpgp.enums.keyStatus.expired) {
+            return false;
+          }
+          for (var i = 0; i < this.bindingSignatures.length; i++) {
+            if (openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignatures[i])) {
+              return true;
+            }
+          }
+          return false;
+        };
       });
     });
   }

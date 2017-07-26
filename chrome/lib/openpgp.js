@@ -4841,7 +4841,7 @@ exports.default = {
   tolerant: true, // ignore unsupported/unrecognizable packets instead of throwing an error
   show_version: true,
   show_comment: true,
-  versionstring: "OpenPGP.js v2.5.6",
+  versionstring: "OpenPGP.js v2.5.8",
   commentstring: "https://openpgpjs.org",
   keyserver: "https://keyserver.ubuntu.com",
   node_store: './openpgp.store'
@@ -12157,8 +12157,7 @@ function createcrc24(input) {
 /**
  * Splits a message into two parts, the headers and the body. This is an internal function
  * @param {String} text OpenPGP armored message part
- * @returns {(Boolean|Object)} Either false in case of an error
- * or an object with attribute "headers" containing the headers and
+ * @returns {Object} An object with attribute "headers" containing the headers
  * and an attribute "body" containing the body.
  */
 function splitHeaders(text) {
@@ -12200,22 +12199,20 @@ function verifyHeaders(headers) {
 /**
  * Splits a message into two parts, the body and the checksum. This is an internal function
  * @param {String} text OpenPGP armored message part
- * @returns {(Boolean|Object)} Either false in case of an error
- * or an object with attribute "body" containing the body
+ * @returns {Object} An object with attribute "body" containing the body
  * and an attribute "checksum" containing the checksum.
  */
 function splitChecksum(text) {
+  text = text.trim();
   var body = text;
   var checksum = "";
 
   var lastEquals = text.lastIndexOf("=");
 
-  if (lastEquals >= 0) {
+  if (lastEquals >= 0 && lastEquals !== text.length - 1) {
+    // '=' as the last char means no checksum
     body = text.slice(0, lastEquals);
-    checksum = text.slice(lastEquals + 1);
-    if (checksum.substr(0, 6) === '\n-----') {
-      checksum = ''; // missing armor checksum
-    }
+    checksum = text.slice(lastEquals + 1).substr(0, 4);
   }
 
   return { body: body, checksum: checksum };
@@ -12237,6 +12234,7 @@ function dearmor(text) {
 
   var type = getType(text);
 
+  text = text.trim() + "\n";
   var splittext = text.split(reSplit);
 
   // IE has a bug in split with a re. If the pattern matches the beginning of the
@@ -12277,8 +12275,6 @@ function dearmor(text) {
 
     checksum = sig_sum.checksum;
   }
-
-  checksum = checksum.substr(0, 4);
 
   if (!verifyCheckSum(result.data, checksum) && (checksum || _config2.default.checksum_required)) {
     // will NOT throw error if checksum is empty AND checksum is not required (GPG compatibility)
@@ -13267,7 +13263,7 @@ Key.prototype.packetlist2structure = function (packetlist) {
               _util2.default.print_debug('Dropping subkey binding signature without preceding subkey packet');
               continue;
             }
-            subKey.bindingSignature = packetlist[i];
+            subKey.bindingSignatures.push(packetlist[i]);
             break;
           case _enums2.default.signature.key_revocation:
             this.revocationSignature = packetlist[i];
@@ -14026,7 +14022,7 @@ function SubKey(subKeyPacket) {
     return new SubKey(subKeyPacket);
   }
   this.subKey = subKeyPacket;
-  this.bindingSignature = null;
+  this.bindingSignatures = [];
   this.revocationSignature = null;
 }
 
@@ -14038,7 +14034,9 @@ SubKey.prototype.toPacketlist = function () {
   var packetlist = new _packet2.default.List();
   packetlist.push(this.subKey);
   packetlist.push(this.revocationSignature);
-  packetlist.push(this.bindingSignature);
+  for (var i = 0; i < this.bindingSignatures.length; i++) {
+    packetlist.push(this.bindingSignatures[i]);
+  }
   return packetlist;
 };
 
@@ -14048,7 +14046,15 @@ SubKey.prototype.toPacketlist = function () {
  * @return {Boolean}
  */
 SubKey.prototype.isValidEncryptionKey = function (primaryKey) {
-  return this.verify(primaryKey) === _enums2.default.keyStatus.valid && isValidEncryptionKeyPacket(this.subKey, this.bindingSignature);
+  if (this.verify(primaryKey) !== _enums2.default.keyStatus.valid) {
+    return false;
+  }
+  for (var i = 0; i < this.bindingSignatures.length; i++) {
+    if (isValidEncryptionKeyPacket(this.subKey, this.bindingSignatures[i])) {
+      return true;
+    }
+  }
+  return false;
 };
 
 /**
@@ -14057,7 +14063,15 @@ SubKey.prototype.isValidEncryptionKey = function (primaryKey) {
  * @return {Boolean}
  */
 SubKey.prototype.isValidSigningKey = function (primaryKey) {
-  return this.verify(primaryKey) === _enums2.default.keyStatus.valid && isValidSigningKeyPacket(this.subKey, this.bindingSignature);
+  if (this.verify(primaryKey) !== _enums2.default.keyStatus.valid) {
+    return false;
+  }
+  for (var i = 0; i < this.bindingSignatures.length; i++) {
+    if (isValidSigningKeyPacket(this.subKey, this.bindingSignatures[i])) {
+      return true;
+    }
+  }
+  return false;
 };
 
 /**
@@ -14074,21 +14088,39 @@ SubKey.prototype.verify = function (primaryKey) {
   if (this.subKey.version === 3 && this.subKey.expirationTimeV3 !== 0 && Date.now() > this.subKey.created.getTime() + this.subKey.expirationTimeV3 * 24 * 3600 * 1000) {
     return _enums2.default.keyStatus.expired;
   }
-  // check subkey binding signature
-  if (!this.bindingSignature) {
-    return _enums2.default.keyStatus.invalid;
+  // check subkey binding signatures (at least one valid binding sig needed)
+  for (var i = 0; i < this.bindingSignatures.length; i++) {
+    var isLast = i === this.bindingSignatures.length - 1;
+    var sig = this.bindingSignatures[i];
+    // check binding signature is not expired
+    if (sig.isExpired()) {
+      if (isLast) {
+        return _enums2.default.keyStatus.expired; // last expired binding signature
+      } else {
+        continue;
+      }
+    }
+    // check binding signature can verify
+    if (!(sig.verified || sig.verify(primaryKey, { key: primaryKey, bind: this.subKey }))) {
+      if (isLast) {
+        return _enums2.default.keyStatus.invalid; // last invalid binding signature
+      } else {
+        continue;
+      }
+    }
+    // check V4 expiration time
+    if (this.subKey.version === 4) {
+      if (sig.keyNeverExpires === false && Date.now() > this.subKey.created.getTime() + sig.keyExpirationTime * 1000) {
+        if (isLast) {
+          return _enums2.default.keyStatus.expired; // last V4 expired binding signature
+        } else {
+          continue;
+        }
+      }
+    }
+    return _enums2.default.keyStatus.valid; // found a binding signature that passed all checks
   }
-  if (this.bindingSignature.isExpired()) {
-    return _enums2.default.keyStatus.expired;
-  }
-  if (!(this.bindingSignature.verified || this.bindingSignature.verify(primaryKey, { key: primaryKey, bind: this.subKey }))) {
-    return _enums2.default.keyStatus.invalid;
-  }
-  // check V4 expiration time
-  if (this.subKey.version === 4 && this.bindingSignature.keyNeverExpires === false && Date.now() > this.subKey.created.getTime() + this.bindingSignature.keyExpirationTime * 1000) {
-    return _enums2.default.keyStatus.expired;
-  }
-  return _enums2.default.keyStatus.valid;
+  return _enums2.default.keyStatus.invalid; // no binding signatures to check
 };
 
 /**
@@ -14096,7 +14128,17 @@ SubKey.prototype.verify = function (primaryKey) {
  * @return {Date|null}
  */
 SubKey.prototype.getExpirationTime = function () {
-  return getExpirationTime(this.subKey, this.bindingSignature);
+  var highest;
+  for (var i = 0; i < this.bindingSignatures.length; i++) {
+    var current = getExpirationTime(this.subKey, this.bindingSignatures[i]);
+    if (current === null) {
+      return null;
+    }
+    if (!highest || current > highest) {
+      highest = current;
+    }
+  }
+  return highest;
 };
 
 /**
@@ -14115,9 +14157,14 @@ SubKey.prototype.update = function (subKey, primaryKey) {
   if (this.subKey.tag === _enums2.default.packet.publicSubkey && subKey.subKey.tag === _enums2.default.packet.secretSubkey) {
     this.subKey = subKey.subKey;
   }
-  // binding signature
-  if (!this.bindingSignature && subKey.bindingSignature && (subKey.bindingSignature.verified || subKey.bindingSignature.verify(primaryKey, { key: primaryKey, bind: this.subKey }))) {
-    this.bindingSignature = subKey.bindingSignature;
+  // update missing binding signatures
+  if (this.bindingSignatures.length < subKey.bindingSignatures.length) {
+    for (var i = this.bindingSignatures.length; i < subKey.bindingSignatures.length; i++) {
+      var newSig = subKey.bindingSignatures[i];
+      if (newSig.verified || newSig.verify(primaryKey, { key: primaryKey, bind: this.subKey })) {
+        this.bindingSignatures.push(newSig);
+      }
+    }
   }
   // revocation signature
   if (!this.revocationSignature && subKey.revocationSignature && !subKey.revocationSignature.isExpired() && (subKey.revocationSignature.verified || subKey.revocationSignature.verify(primaryKey, { key: primaryKey, bind: this.subKey }))) {
@@ -20529,12 +20576,9 @@ exports.default = {
 
   readNumber: function readNumber(bytes) {
     var n = 0;
-
     for (var i = 0; i < bytes.length; i++) {
-      n <<= 8;
-      n += bytes[i];
+      n += Math.pow(256, i) * bytes[bytes.length - 1 - i];
     }
-
     return n;
   },
 
