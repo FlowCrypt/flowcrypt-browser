@@ -258,15 +258,21 @@
             get_advanced += '\n\nTry it free for 30 days.';
           } else if (subscription.method === 'trial') {
             get_advanced += '\n\nYour trial has expired, please consider supporting our efforts by upgrading.';
+          } else if (subscription.method === 'group') {
+            get_advanced += '\n\nGroup billing is due for renewal. Please ask your leadership.';
           } else {
             get_advanced += '\n\nPlease renew your subscription to continue sending large files.';
           }
-          if (confirm(get_advanced)) {
-            show_subscribe_dialog_and_wait_for_response(null, null, function (new_subscription_active) {
-              if (new_subscription_active) {
-                alert('You\'re all set, now you can add your file again.');
-              }
-            });
+          if(subscription.method === 'group') {
+            alert(get_advanced);
+          } else {
+            if (confirm(get_advanced)) {
+              show_subscribe_dialog_and_wait_for_response(null, null, function (new_subscription_active) {
+                if (new_subscription_active) {
+                  alert('You\'re all set, now you can add your file again.');
+                }
+              });
+            }
           }
         },
       };

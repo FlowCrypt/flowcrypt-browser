@@ -142,12 +142,16 @@ function render_subscription_status_header() {
         if(method === 'trial') {
           $('.logo-row .subscription .expire').text(expire ? ('trial until ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
           $('.logo-row .subscription .upgrade').css('display', 'inline-block');
+        } else if (method === 'group') {
+          $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
         }
       } else {
         $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
         if(level && expire && method) {
           if(method === 'trial') {
             $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
+          } else if(method === 'group') {
+            $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
           }
           $('.logo-row .subscription .upgrade').text('renew');
         }

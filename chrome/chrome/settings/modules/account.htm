@@ -22,8 +22,8 @@
       <tr><td>Account email</td><td class="email"></td></tr>
       <tr><td>Level</td><td class="level"></td></tr>
       <tr><td>Subscription</td><td class="price"></td></tr>
-      <tr><td>Payment method</td><td class="method"></td></tr>
-      <tr><td class="expire_label"></td><td class="expire"></td></tr>
+      <tr class="hide_if_group_billing"><td>Payment method</td><td class="method"></td></tr>
+      <tr class="hide_if_group_billing"><td class="expire_label"></td><td class="expire"></td></tr>
     </table>
   </div>
 
@@ -40,6 +40,8 @@
   </div>
 
   <div class="line">&nbsp;</div>
+
+  <div class="line get_group_billing" style="display: none;">Part of a team? See <a href="https://cryptup.org/billing.htm" target="_blank" style="cursor: pointer;">group billing calculator</a></div>
 
   <div class="line cancel">
     To cancel subscription, please write me at tom@cryptup.org. You will not be charged again and your Advanced Account will remain active until next renewal date.

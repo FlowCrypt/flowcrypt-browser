@@ -57,6 +57,8 @@ tool.api.cryptup.account_check_sync(function() {
         if(level && expire) {
           if(method === 'trial') {
             $('.status').text('Your trial has expired on ' + tool.time.expiration_format(expire) + '. Upgrade now to continue using CryptUp Advanced.');
+          } else if(method === 'group') {
+            $('.status').text('Your group licensing is due for renewal. Please check with company leadership.');
           } else {
             $('.status').text('Your subscription has ended on ' + expire + '. Renew now to continue using CryptUp Advanced.');
           }
