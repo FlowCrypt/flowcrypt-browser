@@ -558,6 +558,10 @@
           // then please let me know. Eagerly waiting! In the meanwhile..
           plaintext = MimeCodec.foldLines(plaintext, 76, true);
 
+          // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
+          // Removing them here will prevent Gmail from screwing up the signature
+          plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
+
           tool.crypto.key.decrypt(prv, passphrase);
           tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
             if (success) {
