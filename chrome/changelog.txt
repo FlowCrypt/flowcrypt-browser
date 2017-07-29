@@ -1,5 +1,9 @@
 <div>
 
+<b>version 4.3.8 on July 28, 2017: Signature fix</b>
+reading: recognize pgp signatures by mime type
+sending: more reliable signed messages
+
 <b>version 4.3.7 on July 25, 2017: Groups</b>
 settings: link to group licensing calculator
 reading: could not extend messages - fixed
