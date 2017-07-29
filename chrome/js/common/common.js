@@ -2745,12 +2745,12 @@
   function file_treat_as(attachment) {
     if(tool.value(attachment.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
+    } else if(attachment.name === 'signature.asc' || attachment.type === 'application/pgp-signature') {
+      return  'signature';
     } else if(attachment.name === '') {
       return attachment.size < 100 ? 'hidden' : 'message';
     } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
-    } else if(attachment.name === 'signature.asc') {
-      return  'signature';
     } else if(attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?\.asc$/g)) { // name starts with a key id
       return 'public_key';
     } else if((attachment.name.match(/\.asc$/) && attachment.size < 100000 && !attachment.inline) || tool.value(attachment.name).in(['message', 'message.asc', 'encrypted.asc'])) {
