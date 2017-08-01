@@ -11,11 +11,11 @@ catcher.try(() => {
   content_script_setup_if_vacant({
     name: 'inbox',
     get_user_account_email:  function () {
-      let account_email_loading_match = $('div.gb_xb, div.gb_wb').text().match(/^[a-z0-9._\-]+@[a-z0-9\-_.]+$/gi);
+      let account_email_loading_match = $('div.gb_vb').text().match(/^[a-z0-9._\-]+@[a-z0-9\-_.]+$/gi);
       return account_email_loading_match !== null ? account_email_loading_match[0].toLowerCase() : undefined;
     },
     get_user_full_name: function () {
-      return $('div.gb_vb, div.gb_wb').text();
+      return $('div.gb_tb, div.gb_ub').text();
     },
     get_replacer: function () {
       return replacer;
