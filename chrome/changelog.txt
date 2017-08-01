@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.3.9 on August 1, 2017: Inbox fix</b>
+setup: google inbox fix
+
 <b>version 4.3.8 on July 28, 2017: Signature fix</b>
 reading: recognize pgp signatures by mime type
 sending: more reliable signed messages
