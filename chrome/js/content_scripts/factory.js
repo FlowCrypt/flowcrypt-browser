@@ -162,7 +162,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
         if(webmail_name === 'inbox') {
           return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
         } else if(webmail_name === 'outlook') {
-          return '<div class="_fce_c ' + destroyable_class + ' cryptup_compose_button_container" role="presentation"><div class="new_message_button" title="New Secure Email"><img src="' + src_img('logo-19-19-white-green.png') + '"></div></div>';
+          return '<div class="_fce_c ' + destroyable_class + ' cryptup_compose_button_container" role="presentation"><div class="new_message_button" title="New Secure Email"><img src="' + src_img('logo-19-19.png') + '"></div></div>';
         } else {
           return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
         }

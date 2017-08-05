@@ -34,7 +34,7 @@ tool.browser.message.tab_id(function(tab_id) {
             $('.hide_when_rendering_subpage').css('display', 'none');
             $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + contact.email);
             if(contact.client === 'cryptup') {
-              $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo-19-19-white-green.png" />');
+              $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
             } else {
               $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
             }
