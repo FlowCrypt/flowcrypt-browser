@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.4.0 on August 7, 2017: Logo</b>
+design: updated CryptUp Logo
+
 <b>version 4.3.9 on August 1, 2017: Inbox fix</b>
 setup: google inbox fix
 
