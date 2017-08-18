@@ -102,7 +102,7 @@ function find_available_alias(email, callback, i) {
     if(!response.profile) {
       callback(alias);
     } else {
-      find_available_alias(callback, (i || 0) + tool.int.random(1, 9));
+      find_available_alias(email, callback, (i || 0) + tool.int.random(1, 9));
     }
   }, error => {
     alert('Failed to create account, possibly a network issue. Please try again.');
