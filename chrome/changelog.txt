@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.4.1 on August 17, 2017: Contact Page Fix</b>
+settings: contact page fix when alias already taken
+
 <b>version 4.4.0 on August 7, 2017: Logo</b>
 design: updated CryptUp Logo
 
