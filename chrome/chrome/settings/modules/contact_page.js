@@ -98,7 +98,8 @@ function find_available_alias(email, callback, i) {
   while(alias.length < 3) {
     alias += tool.str.random(1).toLowerCase();
   }
-  tool.api.cryptup.link_me(alias + (i || '')).then(response => {
+  alias += (i || '');
+  tool.api.cryptup.link_me(alias).then(response => {
     if(!response.profile) {
       callback(alias);
     } else {
