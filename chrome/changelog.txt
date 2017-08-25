@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.4.3 on August 25, 2017: Inbox Fix</b>
+setup: google inbox fix
+
 <b>version 4.4.2 on August 19, 2017: Contact Page Fix 2</b>
 settings: contact page fix when alias already taken #2
 
