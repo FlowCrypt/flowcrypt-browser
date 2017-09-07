@@ -2032,7 +2032,8 @@
                   catcher.try(function () {
                     if(decrypted.data !== null) {
                       if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                        finally_callback_result(callback, {success: true, content: decrypted, encrypted: true, signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false});
+                        // ORIGINAL ... signature: keys.signed_by.length ? crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]) : false
+                        finally_callback_result(callback, {success: true, content: decrypted, encrypted: true, signature: null});
                       }
                     } else {
                       other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at tom@cryptup.org to fix this.');
