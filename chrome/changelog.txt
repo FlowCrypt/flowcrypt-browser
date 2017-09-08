@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.4.4 on September 7, 2017: Decrypt Fix</b>
+reading: fix decrypted messages that require verification
+
 <b>version 4.4.3 on August 25, 2017: Inbox Fix</b>
 setup: google inbox fix
 
