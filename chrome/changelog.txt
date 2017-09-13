@@ -1,5 +1,8 @@
 <div>
 
+<b>version 4.4.5 on September 13, 2017: Unknown account</b>
+settings: fix unknown account error on subscribe
+
 <b>version 4.4.4 on September 7, 2017: Decrypt Fix</b>
 reading: fix decrypted messages that require verification
 
