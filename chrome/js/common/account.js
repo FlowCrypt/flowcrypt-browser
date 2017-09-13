@@ -34,7 +34,17 @@
       tool.api.cryptup.account_check_sync(updated => {
         window.flowcrypt_storage.auth_info((email, uuid, verified) => {
           if(verified) {
-            do_subscribe(chosen_product, source).then(resolve, reject);
+            do_subscribe(chosen_product, source).then(resolve, error => {
+              if(error.internal === 'auth') {
+                save_subscription_attempt(chosen_product, source, () => {
+                  register_and_attempt_to_verify(account_email).then(response => {
+                    do_subscribe(chosen_product, source).then(resolve, reject);
+                  }, reject)
+                });
+              } else {
+                reject(error);
+              }
+            });
           } else {
             save_subscription_attempt(chosen_product, source, () => {
               register_and_attempt_to_verify(account_email).then(response => {
