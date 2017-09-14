@@ -955,10 +955,14 @@
 
   function mime_resembles_message(message) {
     var m = message.toLowerCase();
-    if(m.match(/content-type: +[0-9a-z\-\/]+/) === null) {
+    var contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
+    if(contentType === null) {
       return false;
     }
-    return Boolean(m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || m.match(/content-disposition: +[0-9a-z\-\/]+/) || m.match(/; boundary=/) || m.match(/; charset=/));
+    if(m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || m.match(/content-disposition: +[0-9a-z\-\/]+/) || m.match(/; boundary=/) || m.match(/; charset=/)) {
+      return true;
+    }
+    return Boolean(contentType.index === 0 && m.match(/boundary=/));
   }
 
   function mime_format_content_to_display(text, full_mime_message) {
