@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -125,7 +125,7 @@ function show_status() {
       });
     } else { // gmail read permission not granted - cannot check for backups
       display_block('step_0_status');
-      $('.status_summary').html('CryptUp cannot check your backups.');
+      $('.status_summary').html('FlowCrypt cannot check your backups.');
       let pemissions_button_if_gmail = email_provider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
       $('#step_0_status .container').html(pemissions_button_if_gmail + '<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>');
       $('.action_go_manual').click(function () {

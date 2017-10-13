@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -27,7 +27,7 @@ function content_script_setup_if_vacant(webmail_specific) {
 
     window.destroy = function () {
       catcher.try(() => {
-        console.log('Updating CryptUp');
+        console.log('Updating FlowCrypt');
         document.removeEventListener(destruction_event, destroy);
         tool.each(destroyable_intervals, function (i, id) {
           clearInterval(id);
@@ -77,18 +77,18 @@ function content_script_setup_if_vacant(webmail_specific) {
     let account_email = webmail_specific.get_user_account_email();
     if(!window.account_email_global) {
       if(typeof account_email !== 'undefined' && catcher.version()) {
-        console.log('Loading CryptUp ' + catcher.version());
+        console.log('Loading FlowCrypt ' + catcher.version());
         window.account_email_global = account_email;
         tool.env.webmails(function (webmails) {
           if(tool.value(webmail_specific.name).in(webmails)) {
             setup(account_email);
           } else {
-            console.log('CryptUp disabled: ' + webmail_specific.name + ' integration currently for development only');
+            console.log('FlowCrypt disabled: ' + webmail_specific.name + ' integration currently for development only');
           }
         });
       } else {
         if(account_email_interval > 6000) {
-          console.log('Cannot load CryptUp yet. Page: ' + window.location + ' (' + document.title + ')');
+          console.log('Cannot load FlowCrypt yet. Page: ' + window.location + ' (' + document.title + ')');
         }
         account_email_interval += 1000;
         TrySetDestryableTimeout(wait_for_account_email_then_setup, account_email_interval);
@@ -112,7 +112,7 @@ function content_script_setup_if_vacant(webmail_specific) {
             initialize(account_email, tab_id);
             clearInterval(wait_for_setup_interval);
           } else if(!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-            let set_up_notification = '<a href="#" class="action_open_settings">Set up CryptUp</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+            let set_up_notification = '<a href="#" class="action_open_settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
             notifications.show(set_up_notification, {
               notification_setup_needed_dismiss: function () {
                 window.flowcrypt_storage.set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);
@@ -188,7 +188,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   }
 
   function notify_murdered() {
-    document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">CryptUp has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>';
+    document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>';
   }
 
 }

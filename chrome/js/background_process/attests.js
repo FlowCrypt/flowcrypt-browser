@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -86,16 +86,16 @@ function process_attest_packet_text(account_email, attest_packet_text, passphras
                   callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
                 });
               }, error => {
-                callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at tom@cryptup.org to find out why.\n\n' + error.message);
+                callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + error.message);
               });
             } else {
               attest.packet_text = attest_packet_text;
               catcher.log('Error signing ' + attest.content.action + ' attest packet: ' + result, attest);
-              callback(account_email, attest_packet_text, false, 'Error signing the attest. Write me at tom@cryptup.org to find out why:' + result);
+              callback(account_email, attest_packet_text, false, 'Error signing the attest. Write me at human@flowcrypt.com to find out why:' + result);
             }
           });
         } else {
-          callback(account_email, attest_packet_text, false, 'This attest message is ignored as it does not match your settings.\n\nWrite me at tom@cryptup.org to help.');
+          callback(account_email, attest_packet_text, false, 'This attest message is ignored as it does not match your settings.\n\nWrite me at human@flowcrypt.com to help.');
         }
       } else {
         callback(account_email, attest_packet_text, false, 'Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.');

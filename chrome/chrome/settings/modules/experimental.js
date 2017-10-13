@@ -1,11 +1,11 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
 let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
 function collect_info_and_download_backup_file(account_email, callback) {
-  let name = 'CryptUp_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
+  let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
   collect_info_for_account_backup(account_email, function (backup_text) {
     tool.file.save_to_downloads(name, 'text/plain', backup_text);
     if(callback) {
@@ -23,7 +23,7 @@ function collect_info_for_account_backup(account_email, callback) {
     'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
     '',
     'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
-    'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on CryptUp or elsewhere) later on!',
+    'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
     '',
     'account_email: ' + account_email,
   ];
@@ -84,7 +84,7 @@ if(url_params.account_email) {
   });
 
   $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-    if(confirm('This will remove all your CryptUp settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
+    if(confirm('This will remove all your FlowCrypt settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
       collect_info_and_download_backup_file(url_params.account_email, function () {
         if(confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
           reset_cryptup_account_storages(url_params.account_email, function () {

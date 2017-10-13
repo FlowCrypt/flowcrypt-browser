@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -240,7 +240,7 @@ function account_consistency_fixes(account_email) {
   });
 }
 
-function account_update_status_keyserver(account_email) { // checks which emails were registered on cryptup keyserver.
+function account_update_status_keyserver(account_email) { // checks which emails were registered on Attester
   let my_longids = tool.arr.select(window.flowcrypt_storage.keys_get(account_email), 'longid');
   window.flowcrypt_storage.get(account_email, ['addresses', 'addresses_keyserver'], function(storage) {
     if(storage.addresses && storage.addresses.length) {

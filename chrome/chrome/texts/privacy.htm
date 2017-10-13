@@ -1,35 +1,35 @@
-<!-- Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE -->
+<!-- Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com -->
 
 <html>
 <head>
-  <title>CryptUp</title>
+  <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css">
 </head>
 <body style="padding: 40px; font-size: 14px; line-height: 18px;">
 
   <div class="lightboxed">
 
-    <h1>CryptUp Privacy Policy</h1>
+    <h1>FlowCrypt Privacy Policy</h1>
 
-    <p>The goal is that CryptUp will have access to as little information as necessary. The details are outlined below.</p>
+    <p>The goal is that FlowCrypt will have access to as little information as necessary. The details are outlined below.</p>
 
     <p>This document is the first draft and it is written in Plain English as opposed to Legal Language so that it can be readily understood. Please send me feedback if any section needs clarification or clearer language.</p>
 
     <h2>Terminology</h2>
     <ul>
-      <li>CRYPTUP or WE - CryptUp's developers, employees, legal entity or server software that is under our direct control</li>
+      <li>FLOWCRYPT or WE - FlowCrypt's developers, employees, legal entity or server software that is under our direct control</li>
       <li>YOU - the user of this software bound by its licence and terms of use</li>
-      <li>SERVER HARDWARE - a 3rd party server infrastructure provided as a service to CRYPTUP. This may include cloud servers and related services</li>
-      <li>CRYPTUP SERVER - server software holding user account related information, and allowing storage of encrypted MESSAGE when needed. This software runs on SERVER HARDWARE</li>
+      <li>SERVER HARDWARE - a 3rd party server infrastructure provided as a service to FLOWCRYPT. This may include cloud servers and related services</li>
+      <li>FLOWCRYPT SERVER - server software holding user account related information, and allowing storage of encrypted MESSAGE when needed. This software runs on SERVER HARDWARE</li>
       <li>ATTESTER - server software necessary to make encrypted PGP communication smooth. ATTESTER helps distribute and verify PUBLIC KEYS and runs on SERVER HARDWARE</li>
       <li>PUBLIC KEY - Cryptographic information needed in order to encrypt data for someone</li>
       <li>PRIVATE KEY - Cryptographic information needed to open or decrypt previously encrypted data for its corresponding PUBLIC KEY. Additionally protected with a PASS PHRASE</li>
       <li>PASS PHRASE - A long textual string that is difficult to guess or brute force, used to protect the PRIVATE KEY</li>
       <li>BRUTE FORCE ATTACK - A method of unlocking encrypted material without breaking the underlying encryption, by using vast amounts of computational power to guess all possible combinations of a given PASS PHRASE or MESSAGE PASSWORD. This attack method can be combined with other methods such as a dictionary attack (the use of words commonly found in passwords). The success rate of such attack can vary from very high (simple, short PASS PHRASE or MESSAGE PASSWORD) through very low (long, complicated, uncommon and hard to guess PASS PHRASE or MESSAGE PASSWORD) to effectively impossible with current technology (complex, very long, random PASS PHRASE or MESSAGE PASSWORD)</li>
       <li>LOCAL MACHINE - general term for hardware used by end users such as a computer, laptop, tablet or a phone</li>
-      <li>LOCAL APP - CryptUp software that runs on LOCAL MACHINE. This may take a form of a browser extension or a native application</li>
+      <li>LOCAL APP - FlowCrypt software that runs on LOCAL MACHINE. This may take a form of a browser extension or a native application</li>
       <li>LOCAL APP CONTACTS - Collection of contacts who use encryption, their PUBLIC KEYs and related info stored in LOCAL APP</li>
-      <li>WEB APP - CryptUp software which is served on the web through a link</li>
+      <li>WEB APP - FlowCrypt software which is served on the web through a link</li>
       <li>PRIVATE WEB APP - is a WEB APP that produces or keeps sensitive MESSAGE CONTENT exclusively on LOCAL MACHINE</li>
       <!--<li>HASH - data fingerprint that is always consistent for the same data and does not reveal any information about the data itself. https://en.wikipedia.org/wiki/Cryptographic_hash_function</li>-->
       <li>EMAIL PROVIDER - person, company or their software who ensures delivery of your email. This could be Google, Yahoo, Microsoft, your or other person's private email server, or any other that can fulfill this function</li>
@@ -42,22 +42,22 @@
     </ul>
 
     <h2>End-to-end encryption</h2>
-    <p>Regardless of the method of MESSAGE delivery, CryptUp is an end-to-end encryption software. That means the CONTENT of your MESSAGE is encrypted in LOCAL APP or PRIVATE WEB APP and then sent to the recipient encrypted. How the MESSAGE is handled by the recipient depends on their setup. The vast majority of compatible software will only decrypt your MESSAGEs on the recipient's LOCAL MACHINE. That means neither EMAIL PROVIDER or CRYPTUP can access the CONTENT of the MESSAGE in transit or at rest.</p>
+    <p>Regardless of the method of MESSAGE delivery, FlowCrypt is an end-to-end encryption software. That means the CONTENT of your MESSAGE is encrypted in LOCAL APP or PRIVATE WEB APP and then sent to the recipient encrypted. How the MESSAGE is handled by the recipient depends on their setup. The vast majority of compatible software will only decrypt your MESSAGEs on the recipient's LOCAL MACHINE. That means neither EMAIL PROVIDER or FLOWCRYPT can access the CONTENT of the MESSAGE in transit or at rest.</p>
 
     <h2>Email ACCESS TOKEN</h2>
     <p>ACCESS TOKEN needed to access user's email is exclusively stored in LOCAL APP on user's LOCAL MACHINE, no exceptions. ACCESS TOKEN is used solely within LOCAL APP for user authentication, sending and receiving of MESSAGES and other related actions that make LOCAL APP work smoothly.</p>
 
     <h2>MESSAGE delivery and storage</h2>
     <p>When you message a recipient who has COMPATIBLE SOFTWARE, the encrypted message is transferred from your EMAIL PROVIDER to recipient's EMAIL PROVIDER. This includes any attachments. How the encrypted data is transferred and stored and what happens to the MESSAGE is at the sole discretion of respective EMAIL PROVIDERs. EMAIL PROVIDER will see who you are messaging, how often, the email subject and related meta information just like they do when you send PLAIN TEXT email. The mechanics of sending encrypted email is the same as PLAIN TEXT email, except EMAIL PROVIDER is not able to see the CONTENT of these MESSAGEs.</p>
-    <p>When any of your recipients do not have COMPATIBLE SOFTWARE, LOCAL APP or PRIVATE WEB APP will require a MESSAGE PASSWORD to be provided by sender. Anyone who has access to the MESSAGE PASSWORD can open such MESSAGE. The encrypted MESSAGE is then sent through EMAIL PROVIDERs the same way as above. In addition, encrypted MESSAGE will be stored on CRYPTUP SERVER. This helps recipients without COMPATIBLE SOFTWARE to open such messages and view their CONTENT through the use of PRIVATE WEB APP. When the recipient doesn't have COMPATIBLE SOFTWARE and the encrypted MESSAGE is relayed through CRYPTUP SERVER, following information is stored along with it: (a) date and time MESSAGE was sent, (b) size of MESSAGE, (c) the encrypted MESSAGE, (d) message expiration time, (e): indication if this is a MESSAGE text or attachment, (f) sender of MESSAGE only if this is an attachment and this particular MESSAGE never expires. MESSAGE that is not an attachment or is set to expire at a future date will not have any sender associated with it on CRYPTUP SERVER. Because MESSAGE PASSWORD can be subject to a BRUTE FORCE ATTACK, it is advisable to use a MESSAGE PASSWORD of sufficient strength for your particular use case.</p>
+    <p>When any of your recipients do not have COMPATIBLE SOFTWARE, LOCAL APP or PRIVATE WEB APP will require a MESSAGE PASSWORD to be provided by sender. Anyone who has access to the MESSAGE PASSWORD can open such MESSAGE. The encrypted MESSAGE is then sent through EMAIL PROVIDERs the same way as above. In addition, encrypted MESSAGE will be stored on FLOWCRYPT SERVER. This helps recipients without COMPATIBLE SOFTWARE to open such messages and view their CONTENT through the use of PRIVATE WEB APP. When the recipient doesn't have COMPATIBLE SOFTWARE and the encrypted MESSAGE is relayed through FLOWCRYPT SERVER, following information is stored along with it: (a) date and time MESSAGE was sent, (b) size of MESSAGE, (c) the encrypted MESSAGE, (d) message expiration time, (e): indication if this is a MESSAGE text or attachment, (f) sender of MESSAGE only if this is an attachment and this particular MESSAGE never expires. MESSAGE that is not an attachment or is set to expire at a future date will not have any sender associated with it on FLOWCRYPT SERVER. Because MESSAGE PASSWORD can be subject to a BRUTE FORCE ATTACK, it is advisable to use a MESSAGE PASSWORD of sufficient strength for your particular use case.</p>
 
     <h2>Handling MESSAGE PASSWORDs and PASS PHRASEs</h2>
-    <p>CRYPTUP will never have access to user PRIVATE KEYs, MESSAGE PASSWORDs or PASS PHRASEs. LOCAL APP is intended to never send such information to CRYPTUP SERVER or ATTESTER.</p>
-    <p>LOCAL APP, PRIVATE WEB APP or any other CRYPTUP software will not distribute PASS PHRASEs or MESSAGE PASSWORDs in any way. Safe storage, backup and distribution of this material is left solely on the user.</p>
-    <p>If any user intentionally or unintentionally sends a PRIVATE KEY, MESSAGE PASSWORD or PASS PHRASE to CRYPTUP (please do not do that!), CRYPTUP will delete such information immediately upon noticing it, unless the user explicitly indicated that this material is solely for testing purposes. In either case, users should consider such keys not trusted and compromised, and should avoid using them in production scenarios.</p>
+    <p>FLOWCRYPT will never have access to user PRIVATE KEYs, MESSAGE PASSWORDs or PASS PHRASEs. LOCAL APP is intended to never send such information to FLOWCRYPT SERVER or ATTESTER.</p>
+    <p>LOCAL APP, PRIVATE WEB APP or any other FLOWCRYPT software will not distribute PASS PHRASEs or MESSAGE PASSWORDs in any way. Safe storage, backup and distribution of this material is left solely on the user.</p>
+    <p>If any user intentionally or unintentionally sends a PRIVATE KEY, MESSAGE PASSWORD or PASS PHRASE to FLOWCRYPT (please do not do that!), FLOWCRYPT will delete such information immediately upon noticing it, unless the user explicitly indicated that this material is solely for testing purposes. In either case, users should consider such keys not trusted and compromised, and should avoid using them in production scenarios.</p>
 
     <h2>Handling of PRIVATE KEYs</h2>
-    <p>LOCAL APP will store PRIVATE KEYs in storage accessible only to LOCAL MACHINE such as browser storage, application storage, hard drive or similar, and the security of these PRIVATE KEYs depend on the security of the underlying LOCAL MACHINE that keeps them. For this reason, it is advised to always update to latest operating system, keep up to date with latest security fixes, keep the system virus free using reliable antivirus software, using full-disk encryption or any other practices that make LOCAL MACHINE less vulnerable to attackers. Additionally, CRYPTUP recommends that you select an option to "Always require a pass phrase when opening email" as an additional layer of security in case your LOCAL MACHINE gets compromised in the future through physical or other means.</p>
+    <p>LOCAL APP will store PRIVATE KEYs in storage accessible only to LOCAL MACHINE such as browser storage, application storage, hard drive or similar, and the security of these PRIVATE KEYs depend on the security of the underlying LOCAL MACHINE that keeps them. For this reason, it is advised to always update to latest operating system, keep up to date with latest security fixes, keep the system virus free using reliable antivirus software, using full-disk encryption or any other practices that make LOCAL MACHINE less vulnerable to attackers. Additionally, FLOWCRYPT recommends that you select an option to "Always require a pass phrase when opening email" as an additional layer of security in case your LOCAL MACHINE gets compromised in the future through physical or other means.</p>
     <p>In addition to storing PRIVATE KEY in LOCAL APP exclusive to LOCAL MACHINE, depending on how was LOCAL APP set up, following will apply:</p>
     <ul>
       <li><u>Option 1 - manual setup - use (import) my own key</u>:  LOCAL APP will keep both the PRIVATE KEY and PASS PHRASE exclusively on LOCAL MACHINE, unless user specifically navigates to backup section of settings where they perform an additional form of PRIVATE KEY backup.</li>
@@ -75,14 +75,14 @@
     <ul>
       <li>handling of PUBLIC KEYs, ATTESTER data storage and publication policy</li>
       <li>handling of expired MESSAGEs (their content and all associated data gets deleted)</li>
-      <li>policy of purging data from CRYPTUP SERVER (expired messages purged automatically, everything else per request of sender)</li>
+      <li>policy of purging data from FLOWCRYPT SERVER (expired messages purged automatically, everything else per request of sender)</li>
       <li>the process and technical details of purging data</li>
       <li>software security review and disclosure of security related bugs</li>
     </ul>
 
     <h2>Feedback</h2>
     <p>This privacy policy is subject to change without prior notice based on feedback from the community. Such changes and prior versions will be visible on project's public repository and also mentioned in project's changelog if/when such changes occur.</p>
-    <p>Please send me your feedback or requests for clarification at tom@cryptup.org</p>
+    <p>Please send me your feedback or requests for clarification at human@flowcrypt.com</p>
 
   </div>
 

@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -23,7 +23,7 @@ if(url_params.source !== 'auth_error') {
 $('#content').css('display', 'block');
 
 $('.action_show_stripe').click(function() {
-  $('.status').text('You are subscribing to a $5 monthly payment for CryptUp Advanced.');
+  $('.status').text('You are subscribing to a $5 monthly payment for FlowCrypt Advanced.');
   $('.hide_on_checkout').css('display', 'none');
   $('.stripe_checkout').css('display', 'block');
 });
@@ -56,11 +56,11 @@ tool.api.cryptup.account_check_sync(function() {
       if(!active) {
         if(level && expire) {
           if(method === 'trial') {
-            $('.status').text('Your trial has expired on ' + tool.time.expiration_format(expire) + '. Upgrade now to continue using CryptUp Advanced.');
+            $('.status').text('Your trial has expired on ' + tool.time.expiration_format(expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
           } else if(method === 'group') {
             $('.status').text('Your group licensing is due for renewal. Please check with company leadership.');
           } else {
-            $('.status').text('Your subscription has ended on ' + expire + '. Renew now to continue using CryptUp Advanced.');
+            $('.status').text('Your subscription has ended on ' + expire + '. Renew now to continue using FlowCrypt Advanced.');
           }
           $('.action_get_trial').css('display', 'none');
           $('.action_show_stripe').removeClass('gray').addClass('green');
@@ -68,7 +68,7 @@ tool.api.cryptup.account_check_sync(function() {
           $('.status').text('After the trial period, your account will automatically switch back to Free Forever.');
         }
       } else if(active && method === 'trial') {
-        $('.status').html('After the trial period, your account will automatically switch back to Free Forever.<br/><br/>You can subscribe now to stay on CryptUp Advanced. It\'s $5 a month.');
+        $('.status').html('After the trial period, your account will automatically switch back to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
       } else {
         // todo - upgrade to business
       }
@@ -79,13 +79,13 @@ tool.api.cryptup.account_check_sync(function() {
             $('.action_get_trial').css('display', 'none');
             $('.action_show_stripe').removeClass('gray').addClass('green');
           } else {
-            $('#content').html('<div class="line">You have already upgraded to CryptUp Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+            $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
             $('.action_close').click(close_dialog);
           }
         } else {
           $('h1').text('New Device');
           $('.action_show_stripe, .action_show_group').css('display', 'none');
-          $('.status').text('This browser or device is not registered on your CryptUp Account.');
+          $('.status').text('This browser or device is not registered on your FlowCrypt Account.');
           $('.action_get_trial, .action_close').addClass('long');
         }
       }
@@ -135,7 +135,7 @@ function button_restore() {
 
 function handle_successful_upgrade() {
   tool.env.increment('upgrade_done');
-  tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to CryptUp Advanced.' });
+  tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
   if(url_params.subscribe_result_tab_id) {
     tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});
   }

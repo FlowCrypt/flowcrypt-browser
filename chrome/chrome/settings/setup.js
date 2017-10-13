@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -91,13 +91,13 @@ function display_block(name) {
 }
 
 function setup_dialog_init() { // todo - handle network failure on init. loading
-  $('h1').text('Set Up CryptUp');
+  $('h1').text('Set Up FlowCrypt');
   if(!url_params.account_email) {
     window.location = 'index.htm';
   }
   window.flowcrypt_storage.db_open(function (db) {
     if(db === window.flowcrypt_storage.db_private_mode_error) {
-      $('#loading').text('CryptUp does not work in Private Browsing Mode. Please use it in a standard browser window.');
+      $('#loading').text('FlowCrypt does not work in Private Browsing Mode. Please use it in a standard browser window.');
     } else {
       window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
         email_provider = storage.email_provider || 'gmail';
@@ -127,7 +127,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
               } else { // cannot read gmail to find a backup, or this is outlook
                 if(keyserver_result.has_cryptup) {
                   display_block('step_2b_manual_enter');
-                  $('#step_2b_manual_enter').prepend('<div class="line red">CryptUp can\'t locate your backup automatically.</div><div class="line">Find "Your CryptUp Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+                  $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
                 } else {
                   display_block('step_1_easy_or_manual');
                 }
@@ -262,7 +262,7 @@ function create_save_key_pair(account_email, options) {
     });
   }).catch(error => {
     catcher.handle_exception(error);
-    $('#step_2_easy_generating, #step_2a_manual_create').html('CryptUp didn\'t set up properly due to en error.<br/><br/>Please write me at tom@cryptup.org so that I can fix it ASAP.');
+    $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Please write me at human@flowcrypt.com so that I can fix it ASAP.');
   });
 }
 
@@ -298,7 +298,7 @@ $('.action_simple_setup').click(function () {
     }
   }
   display_block('step_2_easy_generating');
-  $('h1').text('Please wait, setting up CryptUp');
+  $('h1').text('Please wait, setting up FlowCrypt');
   get_and_save_google_user_info(url_params.account_email, function (userinfo) {
     create_save_key_pair(url_params.account_email, {
       full_name: userinfo.full_name,
@@ -360,7 +360,7 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
       $('.line_skip_recovery').css('display', 'block');
     }
   } else {
-    alert('Please enter the password you used when you first set up CryptUp, so that we can recover your original keys.');
+    alert('Please enter the password you used when you first set up FlowCrypt, so that we can recover your original keys.');
   }
 }));
 
@@ -466,7 +466,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
   } else {
     let decrypt_result = tool.crypto.key.decrypt(openpgp.key.readArmored(normalized_armored_key).keys[0], passphrase);
     if(decrypt_result.error) {
-      alert('CryptUp doesn\'t support this type of key yet. Please write me at tom@cryptup.org, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.error + ')');
+      alert('FlowCrypt doesn\'t support this type of key yet. Please write me at human@flowcrypt.com, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.error + ')');
     } else if (decrypt_result.success) {
       if(prv.getEncryptionKeyPacket() !== null) {
         $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
@@ -483,7 +483,7 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
           finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
         });
       } else {
-        alert('This looks like a valid key but it cannot be used for encryption. Please write me at tom@cryptup.org to see why is that. I\'m VERY prompt to respond.');
+        alert('This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
       }
     } else {
       alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
@@ -509,7 +509,7 @@ $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(t
     $('#step_2a_manual_create .input_password2').val('');
     $('#step_2a_manual_create .input_password2').focus();
   } else {
-    $('h1').text('Please wait, setting up CryptUp');
+    $('h1').text('Please wait, setting up FlowCrypt');
     $('#step_2a_manual_create input').prop('disabled', true);
     $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner('white') + 'just a minute');
     get_and_save_google_user_info(url_params.account_email, function (userinfo) {

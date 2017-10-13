@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -9,7 +9,7 @@ let url_params = tool.env.url_params(['account_email', 'verification_email_text'
 let token = window.flowcrypt_account.parse_token_email_text(url_params.verification_email_text);
 
 if(!token) {
-  render_status('This verification email seems to have wrong format. Please write me at tom@cryptup.org to fix this.');
+  render_status('This verification email seems to have wrong format. Please write me at human@flowcrypt.com to fix this.');
 } else {
   window.flowcrypt_storage.get(null, ['cryptup_subscription_attempt'], storage => {
     let product_to_subscribe_to = storage.cryptup_subscription_attempt;
@@ -17,9 +17,9 @@ if(!token) {
       if(product_to_subscribe_to) {
         window.flowcrypt_account.subscribe(url_params.account_email, product_to_subscribe_to, product_to_subscribe_to.source).then(subscription => {
           if(subscription && subscription.level === 'pro') {
-            render_status('Welcome to CryptUp Advanced.');
+            render_status('Welcome to FlowCrypt Advanced.');
           } else {
-            render_status('Email verified, but had trouble enabling CryptUp Advanced. Please write me at tom@cryptup.org to fix this.');
+            render_status('Email verified, but had trouble enabling FlowCrypt Advanced. Please write me at human@flowcrypt.com to fix this.');
           }
         }, handle_error_response);
       } else {

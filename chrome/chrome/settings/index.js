@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -59,7 +59,7 @@ tool.browser.message.tab_id(function (tab_id) {
     close_dialog: function (data) {
       $('#cryptup_dialog').remove();
     },
-  }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on cryptup-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+  }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
   initialize();
 
@@ -162,11 +162,11 @@ function render_subscription_status_header() {
 }
 
 function render_storage_read_error() {
-  let html = '<div class="line">CryptUp is not able to access local browser storage. </div>';
+  let html = '<div class="line">FlowCrypt is not able to access local browser storage. </div>';
   html += '<div class="line">Certain browser privacy or security settings can cause this.</div>';
   html += '<div class="line">Private Browsing Mode (Incognito mode) can also cause this issue.</div>';
   html += '<div class="line">If you have changed any browser settings recently, try to set them back.</div>';
-  html += '<div class="line">Email me at tom@cryptup.org if you have questions.</div>';
+  html += '<div class="line">Email me at human@flowcrypt.com if you have questions.</div>';
   $('#settings-row').html(html);
 }
 
@@ -212,7 +212,7 @@ function new_google_account_authentication_prompt(account_email, omit_read_scope
       show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
     } else {
       catcher.log('failed to log into google', response);
-      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at tom@cryptup.org to fix it.');
+      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
       window.location.reload();
     }
   });

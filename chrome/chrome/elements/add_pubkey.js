@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -34,7 +34,7 @@ window.flowcrypt_storage.db_open(function (db) {
         alert('Could not recognize the format, please try again.');
         $('.pubkey').val('').focus();
       } else if (!tool.crypto.key.usable(armored)) {
-        alert('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
+        alert('This public key looks correctly formatted, but cannot be used for encryption. Please write me at human@flowcrypt.com so that I can see if there is a way to fix it.');
         $('.pubkey').val('').focus();
       } else {
         window.flowcrypt_storage.db_contact_save(db, window.flowcrypt_storage.db_contact_object($('select.email').val(), null, 'pgp', armored, null, false, Date.now()), close_dialog);

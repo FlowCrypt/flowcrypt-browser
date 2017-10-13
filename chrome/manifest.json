@@ -1,11 +1,11 @@
 {
   "manifest_version": 2,
-  "name": "CryptUp: Encrypt Gmail with PGP",
+  "name": "FlowCrypt: Encrypt Gmail with PGP (formerly CryptUp)",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "version": "4.4.6",
   "browser_action": {
     "default_icon": "/img/logo/flowcrypt-logo-16-16.png",
-    "default_title": "CryptUp Encryption for Gmail",
+    "default_title": "FlowCrypt Encryption for Gmail",
     "default_popup": "/chrome/popups/default.htm"
   },
   "icons": {
@@ -42,7 +42,7 @@
       "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/google.js"]
     },
     {
-      "matches": ["https://cryptup.org/stripe*", "https://cryptup.io/stripe*"],
+      "matches": ["https://flowcrypt.com/stripe*", "https://cryptup.org/stripe*"],
       "js": ["/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/checkout/stripe.js"],
       "all_frames": true
     }

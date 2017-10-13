@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -66,7 +66,7 @@
 
   function notify_about_storage_access_error(account_email, parent_tab_id) {
     if(parent_tab_id) {
-      let msg = 'Your browser settings are keeping CryptUp from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
+      let msg = 'Your browser settings are keeping FlowCrypt from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
       tool.browser.message.send(parent_tab_id, 'notification_show', {notification: msg});
     } else {
       console.log('SecurityError: cannot access localStorage or sessionStorage');

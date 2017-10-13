@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -31,7 +31,7 @@ tool.api.cryptup.account_update().then(response => render_fields(response.result
       show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
     });
   } else {
-    S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at tom@cryptup.org if this persists.');
+    S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
   }
 });
 

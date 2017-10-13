@@ -1,11 +1,11 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
 var url_params = tool.env.url_params(['filter', 'keys', 'controls', 'title']);
 
 // this is for debugging
-var controls = url_params.controls === true && (tool.value('blfdgihadmeigiiebaghlhhobipconfm').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'mindoutofframe@gmail.com', 'tom@cryptup.org']));
+var controls = url_params.controls === true && (tool.value('blfdgihadmeigiiebaghlhhobipconfm').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'mindoutofframe@gmail.com', 'human@flowcrypt.com']));
 
 if(url_params.title) {
   $('#content').prepend('<h1>' + url_params.title + '</h1>');

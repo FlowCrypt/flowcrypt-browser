@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -59,7 +59,7 @@ tool.browser.message.tab_id(function(tab_id) {
     if(email_provider !== 'gmail') {
       $('body').text('Not supported for ' + email_provider);
     } else {
-      display_block('inbox', 'CryptUp Email Inbox');
+      display_block('inbox', 'FlowCrypt Email Inbox');
       tool.api.gmail.message_list(url_params.account_email, q_encrypted_messages, false, function(list_success, list_result) {
         if(!list_success || typeof list_result.messages === 'undefined') {
           $('body').text('Connection error trying to get list of messages');

@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -78,7 +78,7 @@
   const BTN_SIGN_AND_SEND = 'sign and send';
   const BTN_WRONG_ENTRY = 're-enter recipient..';
   const BTN_LOADING = 'loading..';
-  const CRYPTUP_WEB_URL = 'https://cryptup.org';
+  const CRYPTUP_WEB_URL = 'https://flowcrypt.com';
 
   let attach = flowcrypt_attach.init(get_max_attachment_size_and_oversize_notice);
 
@@ -321,7 +321,7 @@
         } else {
           body = encrypted.data;
         }
-        let subject = S.cached('input_subject').val() || supplied_subject || 'CryptUp draft';
+        let subject = S.cached('input_subject').val() || supplied_subject || 'FlowCrypt draft';
         tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject}, [], function (mime_message) {
           if (!draft_id) {
             app.email_provider_draft_create(mime_message).then(response => {
@@ -511,12 +511,12 @@
                 plaintext = add_uploaded_file_links_to_message_body(plaintext, upload_results);
                 do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
               } else if (all_good === tool.api.cryptup.auth_error) {
-                if (confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+                if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
                   app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
                 }
                 reset_send_btn(100);
               } else {
-                alert('There was an error uploading attachments. Please try it again. Write me at tom@cryptup.org if it happens repeatedly.\n\n' + upload_error_message);
+                alert('There was an error uploading attachments. Please try it again. Write me at human@flowcrypt.com if it happens repeatedly.\n\n' + upload_error_message);
                 reset_send_btn(100);
               }
             });
@@ -576,14 +576,14 @@
               });
             } else {
               catcher.report('error signing message. Error:' + signing_result);
-              alert('There was an error signing this message. Please write me at tom@cryptup.org, I resolve similar issues very quickly.\n\n' + signing_result);
+              alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
               reset_send_btn();
             }
           });
         });
       }
     } else {
-      alert('Cannot sign the message because your plugin is not correctly set up. Write me at tom@cryptup.org if this persists.');
+      alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
       reset_send_btn();
     }
   }
@@ -651,14 +651,14 @@
           }));
       }, error => {
         if (error.internal === 'auth') {
-          if (confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+          if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
             app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
           }
           reset_send_btn();
         } else if (error.internal === 'subscription') {
           callback(plaintext); // just skip and leave as is
         } else {
-          alert('There was an error sending this message. Please try again. Let me know at tom@cryptup.org if this happens repeatedly.\n\nmessage/token: ' + error.message);
+          alert('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + error.message);
           reset_send_btn();
         }
       });
@@ -671,7 +671,7 @@
     S.now('send_btn_span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
-    // the encrypted data goes through CryptUp and recipients get a link.
+    // the encrypted data goes through FlowCrypt and recipients get a link.
     // admin_code stays locally and helps the sender extend life of the message or delete it
     tool.api.cryptup.message_upload(encrypted_data, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
       callback(response.short, response.admin_code);
@@ -709,7 +709,7 @@
               });
             } else {
               if (error === tool.api.cryptup.auth_error) {
-                if (confirm('Your CryptUp account information is outdated, please review your account settings.')) {
+                if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
                   app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
                 }
               } else {
@@ -746,7 +746,7 @@
         alert(error.message);
       } else {
         catcher.report('email_provider message_send error response', error);
-        alert('Error sending message, try to re-open your web mail window and send again. Write me at tom@cryptup.org if this happens repeatedly.');
+        alert('Error sending message, try to re-open your web mail window and send again. Write me at human@flowcrypt.com if this happens repeatedly.');
       }
     });
   }
@@ -955,7 +955,7 @@
         }
       });
     } else {
-      S.cached('reply_message_prompt').html('CryptUp has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
+      S.cached('reply_message_prompt').html('FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       S.cached('reply_message_prompt').attr('style', 'border:none !important');
       $('.auth_settings').click(() => app.send_message_to_background_script('settings', { account_email: account_email, page: '/chrome/settings/modules/auth_denied.htm'}));
       $('.new_message_button').click(() => app.send_message_to_main_window('open_new_message'));
@@ -1020,7 +1020,7 @@
         can_read_emails = true;
         search_contacts();
       } else if (google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
-        alert('CryptUp needs this permission to search your contacts on Gmail. Without it, CryptUp will keep a separate contact list.');
+        alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
       } else {
         console.log(google_auth_response);
         alert(window.lang.general.something_went_wrong_try_again);

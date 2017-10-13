@@ -19,7 +19,7 @@ settings: contact page fix when alias already taken #2
 settings: contact page fix when alias already taken
 
 <b>version 4.4.0 on August 7, 2017: Logo</b>
-design: updated CryptUp Logo
+design: updated FlowCrypt Logo
 
 <b>version 4.3.9 on August 1, 2017: Inbox fix</b>
 setup: google inbox fix
@@ -64,7 +64,7 @@ setup: fix a typo when recovering account
 internal: figure out missing parent id for set_css
 internal: unhandled promise errors
 setup: connection dropped while checking backups
-reading: cryptup not properly setup notice for incognito
+reading: FlowCrypt not properly setup notice for incognito
 composing: fix quoting previous message on forward
 
 <b>version 4.2.9 on July 5, 2017: Large file fix</b>
@@ -205,7 +205,7 @@ composing: make intro button more prominent
 settings: setting up & editing public contact page
 settings: better UI when selecting account in browser action popup
 settings: browser button seems to show only one account
-internal: add api version with each request to the cryptup api
+internal: add api version with each request to the FlowCrypt api
 internal: refactor mime_decode to work on Android
 
 <b>version 4.0.0 on April 26, 2017: Firefox Release</b>
@@ -291,7 +291,7 @@ reading: outlook: remove link previews
 <b>version 3.8.5 on March 21, 2017: Intro</b>
 composing: option to add plain text intro to password encrypted messages
 reading: links inside encrypted messages are now clickable
-reading: fixed recipient couldn't open password protected emails after installing CryptUp
+reading: fixed recipient couldn't open password protected emails after installing FlowCrypt
 settings: fixed having to click twice on browser button
 settings: fixed attempting to save empty account email
 
@@ -343,7 +343,7 @@ setup: basic microsoft auth tests
 
 <b>version 3.7.5 on March 12, 2017: Import Contacts</b>
 settings: bulk import contacts form from settings
-settings: preparing CryptUp Advanced
+settings: preparing FlowCrypt Advanced
 composing: show a friendly message if missing prv on signing
 reading: try to process messages with detached sigs even without text
 
@@ -372,7 +372,7 @@ settings: publish pricing
 internal: update api endpoint
 
 <b>version 3.7.0 on March 7, 2017: Google Inbox</b>
-composing, reading: CryptUp can now run on inbox.google.com
+composing, reading: FlowCrypt can now run on inbox.google.com
 setup: added compatibility for broken Windows GPA keys
 
 <b>version 3.6.3 on March 6, 2017: Refactoring</b>
@@ -395,7 +395,7 @@ composing: option to sign outgoing messages instead of encrypting them
 reading: verify detached signatures
 reading: message in attachment called message - second attempt
 settings: fix settings decrypt form
-settings: CryptUp is hiring note in settings
+settings: FlowCrypt is hiring note in settings
 settings: rename advanced settings
 
 <b>version 3.5.5 on March 1, 2017: Large Attachments</b>
@@ -450,7 +450,7 @@ design: changed size of profile image on setup
 <b>version 3.4.1 on February 19, 2017: User Friendly</b>
 reading: badly displayed verification message result
 reading: correct pass phrase will get rejected when opening email
-reading: CryptUp failing to render decrypted messages
+reading: FlowCrypt failing to render decrypted messages
 reading: google auth keeps reappearing on spotty internet
 reading: switch-to-encrypted and show-original buttons improved
 composing: requests for lookup were getting doubled
@@ -487,7 +487,7 @@ composing: straight to password prompt on missing pubkey
 composing: fix ms office incompatibilities
 reading: browser crash fix on file download
 reading: fingeprint shown in gmail element pubkey block should be spaced
-internal: separate keyserver and CryptUp urls
+internal: separate keyserver and FlowCrypt urls
 
 <b>version 3.3.6 on February 8, 2017: Attachment Handling Fixes</b>
 composing: binary files can now be attached as well
@@ -507,7 +507,7 @@ composing: fixed error re-rendering pubkey button
 composing: fixed issue rendering pubkey button
 
 <b>version 3.3.2 on February 7, 2017: Bugfixes</b>
-reading: show icon to disable CryptUp for the convo
+reading: show icon to disable FlowCrypt for the convo
 reading: show quoted pubkeys properly
 setup: cannot uncheck submit email aliases on setup
 setup: experimental decrypt file page fixed
@@ -557,9 +557,9 @@ setup: full name to be included in key user list
 setup: missing toggle button when adding a secondary key
 setup: easier to find public key
 setup: properly handle create key errors in setup
-setup: offline CryptUp settings
+setup: offline FlowCrypt settings
 composing: problem rendering attachments after a reply
-composing: make CryptUp work with conversation view switched off
+composing: make FlowCrypt work with conversation view switched off
 composing: forwarding should include Fwd: ... in header
 reading: show received pubkeys shortened
 design: fixing changelog layout
@@ -647,7 +647,7 @@ setup: fixing broken manual key create
 <b>version 2.9.3 on January 3, 2017: Browser Incompatibility Test</b>
 setup: do a test during setup to see if the created key is usable
 setup: error on entering ECC keys - notify user
-setup: better behavior when closing CryptUp tabs
+setup: better behavior when closing FlowCrypt tabs
 reading: match multiple PGP blocks in a message
 reading: properly catch PGP message format errors when decrypting
 sending: more robust key fingerprints
@@ -664,11 +664,11 @@ setup: improved extension browser button behavior
 setup: handling errors while fetching alternative addresses
 
 <b>version 2.9.0 on December 31, 2016: Permission Update</b>
-setup: allowing CryptUp to work with any webmail in future (Yahoo etc)
+setup: allowing FlowCrypt to work with any webmail in future (Yahoo etc)
 setup: gmail notification that page needs refresh after install
 setup: fingerprint check exception fix
 composing: more robust reply box replacing
-composing: attach pubkey if didn't submit to CryptUp keyserver
+composing: attach pubkey if didn't submit to FlowCrypt Attester
 
 <b>version 2.8.5 on December 30, 2016: Compose Bugfixes</b>
 composing: fixed exception when pulling pubkeys
@@ -684,7 +684,7 @@ reading: more robust and faster pgp block replacing
 
 <b>version 2.8.3 on December 29, 2016: Composing and Reading Bugfixes</b>
 composing: inform and offer to retry failed pubkey lookups
-setup: safer CryptUp content script loading
+setup: safer FlowCrypt content script loading
 
 <b>version 2.8.2 on December 29, 2016: Setup Bugfixes</b>
 setup: background page was failing repeatedly for some users
@@ -786,7 +786,7 @@ composing: clearer prompt to connect gmail contacts
 composing: reworded challenge question/answer ui
 composing: changed send button text (less technical)
 composing: message sent confirmation
-reading: formatting email response from non-CryptUp people
+reading: formatting email response from non-FlowCrypt people
 reading: mime encrypted attachments fix
 
 <b>version 2.3.2 on November 14, 2016: setting bugfix</b>
@@ -809,7 +809,7 @@ composing: better recipients selection UX
 composing: fixed newlines in drafts
 composing: reply box to resize on challenge q
 composing: hide gmail translate message box
-composing: attach pubkey when talking to non-CryptUp contacts
+composing: attach pubkey when talking to non-FlowCrypt contacts
 composing: restyling missing pubkey prompt
 composing: bugfix traditional drafts mid-convo
 composing: bugfix very first google contact not to wipe previous one
@@ -817,7 +817,7 @@ composing: bugfix recipients missing placeholder
 
 <b>version 2.1.0 on May 18, 2016: Usability: Setup</b>
 setup: initial screen image link fix
-setup: option to disable CryptUp for each account
+setup: option to disable FlowCrypt for each account
 setup: remind user didn't submit pubkey and never received encrypted message
 setup: creating a new key even if doesn't remember passphrase from last
 

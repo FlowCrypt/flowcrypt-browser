@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -10,7 +10,7 @@ function inject_cryptup_into_webmail_if_needed() {
       tool.each(tab_ids, (i, tab_id) => {
         is_content_script_injection_needed(tab_id, (already_injected) => {
           if(!already_injected) {
-            console.log("Injecting CryptUp into tab " + tab_id);
+            console.log("Injecting FlowCrypt into tab " + tab_id);
             inject_content_scripts(tab_id, group.js);
           }
         });

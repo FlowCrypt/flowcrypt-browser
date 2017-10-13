@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -40,7 +40,7 @@ window.flowcrypt_storage.db_open(function (db) {
   if(typeof pubkey !== 'undefined') {
     if (pubkey.getEncryptionKeyPacket() === null && pubkey.getSigningKeyPacket() === null) {
       // todo - people may still get errors if this is signing only key and they try to encrypt, but I'm leaving it here in case they just want to verify signatures
-      $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Please write me at tom@cryptup.org so that I can see if there is a way to fix it.');
+      $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Please write me at human@flowcrypt.com so that I can see if there is a way to fix it.');
       $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
     } else {
       $('.input_email').val(tool.str.parse_email(pubkey.users[0].userId.userid).email);

@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -13,7 +13,7 @@ let interval = setInterval(() => {
     return;
   }
   clearInterval(interval);
-  if(tool.value(google_oauth2.state_header).in(document.title)) { // this is cryptup's google oauth - based on a &state= passed on in auth request
+  if(tool.value(google_oauth2.state_header).in(document.title)) { // this is FlowCrypt's google oauth - based on a &state= passed on in auth request
     let parts = document.title.split(' ', 2);
     let result = parts[0];
     let params = tool.env.url_params(['code', 'state', 'error'], parts[1]);

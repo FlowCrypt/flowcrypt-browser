@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -62,13 +62,13 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
     if(new_key.isPublic()) {
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
     } else if(!new_key_longid) {
-      alert('This key may not be compatible. Please write me at tom@cryptup.org and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
+      alert('This key may not be compatible. Please write me at human@flowcrypt.com and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
     } else if(tool.value(new_key_longid).in(private_keys_long_ids)) {
       alert('This is one of your current keys.');
     } else {
       let decrypt_result = tool.crypto.key.decrypt(new_key, passphrase);
       if(decrypt_result.error) {
-        alert('This key type may not be supported by CryptUp. Please write me at tom@cryptup.org to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
+        alert('This key type may not be supported by FlowCrypt. Please write me at human@flowcrypt.com to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
       } else if(decrypt_result.success) {
         window.flowcrypt_storage.keys_add(url_params.account_email, normalized_armored_key);
         if($('.input_passphrase_save').prop('checked')) {

@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -248,7 +248,7 @@
       }
     },
     enums: {
-      recovery_email_subjects: ['Your CryptUp Backup', 'Your FlowCrypt Backup', 'Your CryptUP Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
+      recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
     },
   };
 
@@ -1087,7 +1087,7 @@
      --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
      Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
      From: Henry Electrum <henry.electrum@gmail.com>
-     To: tom@cryptup.org
+     To: human@flowcrypt.com
      Message-ID: <abd68ba1-35c3-ee8a-0d60-0319c608d56b@gmail.com>
      Subject: compatibility - simples signed email
 
@@ -1577,10 +1577,10 @@
     return null;
   }
 
-  var password_sentence_present_test = /https:\/\/cryptup\.(org|io)\/[a-zA-Z0-9]{10}/;
+  var password_sentence_present_test = /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/;
   var password_sentences = [
     /This\smessage\sis\sencrypted.+\n\n?/gm, // todo - should be in a common place as the code that generated it
-    /.*https:\/\/cryptup\.(org|io)\/[a-zA-Z0-9]{10}.*\n\n?/gm,
+    /.*https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}.*\n\n?/gm,
   ];
 
   function crypto_armor_normalize(armored, type) {
@@ -1985,9 +1985,9 @@
     } catch(verify_error) {
       signature.match = null;
       if(verify_error.message === 'Can only verify message with one literal data packet.') {
-        signature.error = 'CryptUp is not equipped to verify this message (err 101)';
+        signature.error = 'FlowCrypt is not equipped to verify this message (err 101)';
       } else {
-        signature.error = 'CryptUp had trouble verifying this message (' + verify_error.message + ')';
+        signature.error = 'FlowCrypt had trouble verifying this message (' + verify_error.message + ')';
         catcher.handle_exception(verify_error);
       }
     }
@@ -2042,7 +2042,7 @@
                         finally_callback_result(callback, {success: true, content: decrypted, encrypted: true, signature: null});
                       }
                     } else {
-                      other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at tom@cryptup.org to fix this.');
+                      other_errors.push(decrypted.err instanceof Array ? decrypted.err.join(', ') : 'Decrypted data is null. Please write me at human@flowcrypt.com to fix this.');
                       counts.attempts++;
                       finally_callback_result(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
                     }
@@ -2105,7 +2105,7 @@
       used_challange = true;
     }
     if(!armored_pubkeys && !used_challange) {
-      alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at tom@cryptup.org if this happens repeatedly.');
+      alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at human@flowcrypt.com if this happens repeatedly.');
       throw new Error('no-pubkeys-no-challenge');
     }
     if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
@@ -2118,7 +2118,7 @@
       })();
     }, function (error) {
       console.log(error);
-      alert('Error encrypting message, please try again. If you see this repeatedly, contact me at tom@cryptup.org.');
+      alert('Error encrypting message, please try again. If you see this repeatedly, contact me at human@flowcrypt.com.');
       //todo: make the UI behave well on errors
     });
   }
@@ -3165,10 +3165,10 @@
   function api_cryptup_url(type, variable) {
     return {
       'api': 'https://api.cryptup.io/',
-      'me': 'https://cryptup.org/me/' + variable,
-      'pubkey': 'https://cryptup.org/pub/' + variable,
-      'decrypt': 'https://cryptup.org/' + variable,
-      'web': 'https://cryptup.org/',
+      'me': 'https://flowcrypt.com/me/' + variable,
+      'pubkey': 'https://flowcrypt.com/pub/' + variable,
+      'decrypt': 'https://flowcrypt.com/' + variable,
+      'web': 'https://flowcrypt.com/',
     }[type];
   }
 
@@ -3492,7 +3492,7 @@
       error = { name: 'thrown_object', message: error.message || '(unknown)', stack: stringified};
       error_message = 'thrown_object'
     }
-    var user_log_message = ' Please report errors above to tom@cryptup.org. I fix errors VERY promptly.';
+    var user_log_message = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
     var ignored_errors = [
       'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
@@ -3535,18 +3535,18 @@
         async: true,
         success: function (response) {
           if(response.saved === true) {
-            console.log('%cCRYPTUP ERROR:' + user_log_message, 'font-weight: bold;');
+            console.log('%cFlowCrypt ERROR:' + user_log_message, 'font-weight: bold;');
           } else {
-            console.log('%cCRYPTUP EXCEPTION:' + user_log_message, 'font-weight: bold;');
+            console.log('%cFlowCrypt EXCEPTION:' + user_log_message, 'font-weight: bold;');
           }
         },
         error: function (XMLHttpRequest, status, error) {
-          console.log('%cCRYPTUP FAILED:' + user_log_message, 'font-weight: bold;');
+          console.log('%cFlowCrypt FAILED:' + user_log_message, 'font-weight: bold;');
         },
       });
     } catch(ajax_err) {
       console.log(ajax_err.message);
-      console.log('%cCRYPTUP ISSUE:' + user_log_message, 'font-weight: bold;');
+      console.log('%cFlowCrypt ISSUE:' + user_log_message, 'font-weight: bold;');
     }
     try {
       if(typeof storage.get === 'function' && typeof storage.set === 'function') {
@@ -3651,7 +3651,7 @@
         f(resolve, reject);
       } catch(e) {
         handle_exception(e);
-        reject({code: null, message: 'Error happened, please write me at tom@cryptup.org to fix this\n\nError: ' + e.message, internal: 'exception'});
+        reject({code: null, message: 'Error happened, please write me at human@flowcrypt.com to fix this\n\nError: ' + e.message, internal: 'exception'});
       }
     })
   }
@@ -3668,9 +3668,9 @@
       env = 'ex:dev';
     } else if(url.indexOf('himcfccebk') !== -1) {
       env = 'ex:test';
-    } else if (url.indexOf('l.cryptup.org') !== -1 || url.indexOf('l.cryptup.io') !== -1) {
+    } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
       env = 'web:local';
-    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('cryptup.io') !== -1) {
+    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('flowcrypt.com') !== -1) {
       env = 'web:prod';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
       env = 'ex:fork';
@@ -3751,7 +3751,7 @@
 (function ( /* EXTENSIONS AND CONFIG */ ) {
 
   if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
-    window.openpgp.config.versionstring = 'CryptUp ' + (catcher.version() || '') + ' Gmail Encryption https://cryptup.org';
+    window.openpgp.config.versionstring = 'FlowCrypt ' + (catcher.version() || '') + ' Gmail Encryption flowcrypt.com';
     window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
   }
 

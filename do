@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3.5
 # -*- coding: utf-8 -*-
 
 import os
@@ -15,11 +15,11 @@ choices = [
 ]
 
 for c in choices:
-    print '%s\t%s\t\t%s' % c
-shortcut = raw_input('')
+    print('%s\t%s\t\t%s' % c)
+shortcut = input('')
 valid_choice = [c for c in choices if shortcut == c[0]]
 if not valid_choice:
 	raise Exception('Unknown choice')
 command = valid_choice[0][1]
 
-os.system('../cryptup-script/browser/%s' % command)
+os.system('../flowcrypt-script/browser/%s' % command)

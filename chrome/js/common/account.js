@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -64,7 +64,7 @@
           if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
             resolve(response.subscription);
           } else {
-            reject({code: null, message: 'Something went wrong when upgrading, please email me at tom@cryptup.org to fix this.', internal: 'mismatch'});
+            reject({code: null, message: 'Something went wrong when upgrading, please email me at human@flowcrypt.com to fix this.', internal: 'mismatch'});
           }
         }, reject); // todo - deal with auth error? would need to know account_email for new registration
       });

@@ -1,10 +1,10 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: relative; height: 100%; width: auto; }
 .new_message_featherlight .featherlight-content, .new_message_featherlight .featherlight-content iframe { overflow: hidden !important;}
 .new_message_featherlight .featherlight-content .featherlight-close-icon { display: none; }
 
-#header-row .logo-row img.cryptup-logo { width: 100px; height: auto; margin-right: 5px; text-align: left; margin-top: -2px; }
+#header-row .logo-row img.cryptup-logo { height: auto; margin-right: 5px; text-align: left; margin-top: -2px; }
 #header-row .logo-row { margin-top: 10px; }
 #header-row .logo-row #v { display: inline-block; margin-right: 15px; }
 #header-row .logo-row .subscription > span { display: inline-block; margin-left: 15px; }

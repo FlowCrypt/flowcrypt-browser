@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -30,7 +30,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function add_cryptup_conversation_icon(container_selector, icon_html, icon_selector, on_click) {
-      container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous cryptup buttons, if any
+      container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
       container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(on_click)));
   }
 

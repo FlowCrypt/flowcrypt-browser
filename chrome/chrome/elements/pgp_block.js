@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -148,7 +148,7 @@ window.flowcrypt_storage.db_open(function (db) {
         } else {
           delete result.message;
           console.log(result);
-          alert('There was a problem decrypting this file. Downloading encrypted original. Write me at tom@cryptup.org if this happens repeatedly.');
+          alert('There was a problem decrypting this file. Downloading encrypted original. Write me at human@flowcrypt.com if this happens repeatedly.');
           tool.file.save_to_downloads(name, type, encrypted_data);
         }
       });
@@ -255,7 +255,7 @@ window.flowcrypt_storage.db_open(function (db) {
         if (level && !active && method === 'trial') {
           alert('Your trial has ended. Please renew your subscription to proceed.');
         } else {
-          alert('CryptUp Advanced users can choose expiration of password encrypted messages. Try it free.');
+          alert('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
         }
         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog');
       }
@@ -267,7 +267,7 @@ window.flowcrypt_storage.db_open(function (db) {
     $(self).parent().html('Updating..' + tool.ui.spinner('green'));
     tool.api.cryptup.message_expiration(admin_codes, n_days).validate(r => r.updated).then(response => window.location.reload(), error => {
       if(error.internal === 'auth') {
-        alert('Your CryptUp account information is outdated, please review your account settings.');
+        alert('Your FlowCrypt account information is outdated, please review your account settings.');
         tool.browser.message.send(url_params.parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       } else {
         catcher.report('error when extending message expiration', error);
@@ -339,7 +339,7 @@ window.flowcrypt_storage.db_open(function (db) {
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else if(!result.counts.potentially_matching_keys && !window.flowcrypt_storage.keys_get(url_params.account_email, 'primary')) {
-          render_error(window.lang.pgp_block.not_properly_set_up + button_html('cryptup settings', 'green settings'));
+          render_error(window.lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
         } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
           if(url_params.has_password && !optional_password) {
             render_password_prompt();
@@ -461,7 +461,7 @@ window.flowcrypt_storage.db_open(function (db) {
     } else if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
       $('#pgp_block').text(url_params.signature ? 'Verifying..' : 'Decrypting...');
       decrypt_and_render();
-    } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from CryptUp API
+    } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from FlowCrypt API
       $('#pgp_block').text('Loading message...');
       recover_stored_admin_codes();
       tool.api.cryptup.link_message(url_params.short).validate(r => typeof r.url !== 'undefined').then(response => {

@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -93,7 +93,7 @@ function update_uninstall_url(request, sender, respond) {
     window.flowcrypt_storage.get(null, ['metrics'], storage => {
       if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
         catcher.try(function () {
-          chrome.runtime.setUninstallURL('https://cryptup.org/leaving.htm#' + JSON.stringify({
+          chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
             email: (account_emails && account_emails.length) ? account_emails[0] : null,
             metrics: storage.metrics || null,
           }));

@@ -1,4 +1,4 @@
-/* Business Source License 1.0 © 2016 FlowCrypt Limited (tom@cryptup.org). Use limitations apply. This version will change to GPLv3 on 2020-01-01. See https://github.com/CryptUp/cryptup-browser/tree/master/src/LICENCE */
+/* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -47,11 +47,11 @@ tool.api.attester.lookup_email(url_params.account_email).done(function (success,
               show_settings_page('/chrome/settings/modules/keyserver.htm');
             });
           }, error => {
-            alert('Error requesting Re-Attestation. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(error.message));
+            alert('Error requesting Re-Attestation. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(error.message));
           });
         }, error => {
           catcher.report('Error signing REQUEST_REPLACEMENT: ' + error.message);
-          alert('Error signing request. If this happens repeatedly, write me at tom@cryptup.org. Error message:\n\n' + JSON.stringify(error.message));
+          alert('Error signing request. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(error.message));
         });
       }
     }));
