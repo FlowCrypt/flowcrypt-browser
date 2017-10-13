@@ -267,11 +267,13 @@
       return {
         email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
         name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
+        full: email_string,
       };
     }
     return {
       email: email_string.replace(/["']/g, '').trim().toLowerCase(),
       name: null,
+      full: email_string,
     };
   }
 
