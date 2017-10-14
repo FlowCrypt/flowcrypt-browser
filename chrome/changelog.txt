@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.0.0 on October 13, 2017: FlowCrypt</b>
+CryptUp is now called FlowCrypt
+
 <b>version 4.4.6 on September 14, 2017: Facebook Mime</b>
 reading: improve mime recognition
 
