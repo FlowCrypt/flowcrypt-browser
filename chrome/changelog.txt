@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.0.1 on October 13, 2017: Inbox fix</b>
+setup: inbox integration fixed
+
 <b>version 5.0.0 on October 13, 2017: FlowCrypt</b>
 CryptUp is now called FlowCrypt
 
