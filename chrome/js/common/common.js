@@ -3017,9 +3017,9 @@
 
   /* tool.api.attester */
 
-  function api_attester_call(path, values, format) {
-    return api_call('https://attester.cryptup.io/', path, values, format || 'JSON', null, {'api-version': 3});
-    // return api_call('http://127.0.0.1:5002/', path, values, format || 'JSON', null, {'api-version': 3});
+  function api_attester_call(path, values) {
+    return api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': 3});
+    // return api_call('http://127.0.0.1:5002/', path, values, 'JSON', null, {'api-version': 3});
   }
 
   function api_attester_lookup_email(email) {
