@@ -1,6 +1,12 @@
 <div>
 
-<b>version 5.0.1 on October 13, 2017: Inbox fix</b>
+<b>version 5.0.2 on October 21, 2017: Firefox Attachments</b>
+reading: fix attachments in firefox
+composing: remove unwanted scrollbar + scroll to reply box
+composing: change UP button to "Encrypted Reply"
+internal: switch to attester.flowcrypt.com
+
+<b>version 5.0.1 on October 20, 2017: Inbox fix</b>
 setup: inbox integration fixed
 
 <b>version 5.0.0 on October 13, 2017: FlowCrypt</b>
