@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'download', 'content']);
+let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content']);
 if(url_params.size) {
   url_params.size = parseInt(url_params.size);
 }
@@ -34,19 +34,19 @@ window.flowcrypt_storage.db_open(function (db) {
     let name_split = url_params.name.replace(/\.(pgp|gpg)$/ig, '').split('.');
     let extension = name_split[name_split.length - 1].toLowerCase();
     switch(extension) {
-    case 'jpg':
-    case 'jpeg':
-      return p('jpg');
-    case 'xls':
-    case 'xlsx':
-      return p('excel');
-    case 'doc':
-    case 'docx':
-      return p('word');
-    case 'png':
-      return p('png');
-    default:
-      return p('generic');
+      case 'jpg':
+      case 'jpeg':
+        return p('jpg');
+      case 'xls':
+      case 'xlsx':
+        return p('excel');
+      case 'doc':
+      case 'docx':
+        return p('word');
+      case 'png':
+        return p('png');
+      default:
+        return p('generic');
     }
   })());
 
@@ -103,10 +103,7 @@ window.flowcrypt_storage.db_open(function (db) {
           if(!filename || tool.value(filename).in(['msg.txt', 'null'])) {
             filename = url_params.name.replace(/(\.pgp)|(\.gpg)$/, '');
           }
-          tool.file.save_to_downloads(filename, url_params.type, result.content.data);
-          if(url_params.download) { // it was downloaded automatically in a new window: close the window
-            setTimeout(function() { window.close(); }, 1000);
-          }
+          tool.file.save_to_downloads(filename, url_params.type, result.content.data, tool.env.browser().name === 'firefox' ? $('body') : null);
         } else if((result.missing_passphrases || []).length) {
           missing_passprase_longids = result.missing_passphrases;
           tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.missing_passphrases});
@@ -181,21 +178,6 @@ window.flowcrypt_storage.db_open(function (db) {
     }
   }
 
-  if(url_params.download) {
-    if(url_params.content) {
-      tool.file.save_to_downloads(url_params.name, url_params.type, tool.str.to_uint8(tool.str.base64url_decode(url_params.content)));
-      setTimeout(function() { window.close(); }, 1000);
-    } else {
-      download();
-    }
-  } else {
-    $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
-      if(tool.env.browser().name !== 'firefox') { // download from within iframe in all browsers except firefox
-        download();
-      } else { // download in a new tab in firefox
-        window.open(window.location.href + tool.env.url_create('', {download: true}).replace('?', '&'), '_blank');
-      }
-    }));
-  }
+  $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), download));
 
 });

@@ -831,7 +831,7 @@
     request.send();
   }
 
-  function file_save_to_downloads(name, type, content) {
+  function file_save_to_downloads(name, type, content, render_in) {
     var blob = new Blob([content], { type: type });
     if(window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, name);
@@ -839,20 +839,30 @@
       var a = window.document.createElement('a');
       a.href = window.URL.createObjectURL(blob);
       a.download = name;
-      if(env_browser().name === 'firefox') {
-        document.body.appendChild(a);
+      if(render_in) {
+        a.textContent = 'DECRYPTED FILE';
+        a.style = 'font-size: 16px; font-weight: bold;';
+        render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+        render_in.append(a);
+        render_in.find('a').click(function (e) {
+          alert('Please use right-click and select Save Link As');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        });
+      } else {
+        if(typeof a.click === 'function') {
+          a.click();
+        } else { // safari
+          var e = document.createEvent('MouseEvents');
+          e.initMouseEvent('click', true, true, window);
+          a.dispatchEvent(e);
+        }
+        if(env_browser().name === 'firefox') {
+          document.body.removeChild(a);
+        }
+        window.URL.revokeObjectURL(a.href);
       }
-      if(typeof a.click === 'function') {
-        a.click();
-      } else { // safari
-        var e = document.createEvent('MouseEvents');
-        e.initMouseEvent('click', true, true, window);
-        a.dispatchEvent(e);
-      }
-      if(env_browser().name === 'firefox') {
-        document.body.removeChild(a);
-      }
-      window.URL.revokeObjectURL(a.href);
     }
   }
 
