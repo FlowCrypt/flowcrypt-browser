@@ -169,7 +169,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       },
       reply: () => '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>',
       without_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show conversation without FlowCrypt"><span>see original</span></span>',
-      with_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><img src="' + src_logo(true, 16) + '"/></span>',
+      with_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><span>secure reply</span></span>',
       recipients_use_encryption: (count, webmail_name) => {
         if(webmail_name !== 'gmail') {
           catcher.report('switch_to_secure not implemented for ' + webmail_name);
