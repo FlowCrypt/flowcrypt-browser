@@ -65,6 +65,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
           add_cryptup_conversation_icon(convo_upper_icons, factory.button.with_cryptup(), '.use_secure_reply', () => {
             replace_conversation_buttons(true);
             replace_standard_reply_box(true, true);
+            tool.ui.scroll('.reply_message_iframe_container', [100, 200, 300]);
           });
         }
       }
@@ -276,7 +277,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
       if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // should be replaced
         let prepared_reply_box = $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container');
         if(i === 0) { // last box
-          prepared_reply_box.append(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').css('display', 'none');
+          prepared_reply_box.html(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').css('display', 'none');
         } else {
           prepared_reply_box.append('<font>Draft skipped</font>').children(':not(font)').css('display', 'none');
         }

@@ -181,7 +181,9 @@
       }
     }
     if(is_reply_box) {
-      S.cached('reply_message_prompt').css('display', 'block');
+      if(!variables.skip_click_prompt) {
+        S.cached('reply_message_prompt').css('display', 'block');
+      }
       S.cached('header').remove();
       S.cached('subject').remove();
       S.cached('contacts').css('top', '39px');
