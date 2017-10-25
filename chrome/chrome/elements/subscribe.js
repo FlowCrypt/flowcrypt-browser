@@ -80,7 +80,10 @@ tool.api.cryptup.account_check_sync(function() {
             $('.action_show_stripe').removeClass('gray').addClass('green');
           } else {
             $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
-            $('.action_close').click(close_dialog);
+            $('.action_close').click(() => {
+              tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});
+              close_dialog();
+            });
           }
         } else {
           $('h1').text('New Device');
