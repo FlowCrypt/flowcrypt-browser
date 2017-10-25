@@ -261,9 +261,11 @@
           } else if (subscription.method === 'trial') {
             get_advanced += '\n\nYour trial has expired, please consider supporting our efforts by upgrading.';
           } else if (subscription.method === 'group') {
-            get_advanced += '\n\nGroup billing is due for renewal. Please ask your leadership.';
-          } else {
+            get_advanced += '\n\nGroup billing is due for renewal. Please check with your leadership.';
+          } else if (subscription.method === 'stripe') {
             get_advanced += '\n\nPlease renew your subscription to continue sending large files.';
+          } else {
+            get_advanced += '\n\nClick ok to see subscribe options.'
           }
           if(subscription.method === 'group') {
             alert(get_advanced);
@@ -279,9 +281,11 @@
         },
       };
     } else {
+      let allow_huge_attachments = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
+      let size_mb = (subscription.method !== 'trial' && tool.value(tool.crypto.hash.sha1(account_email)).in(allow_huge_attachments)) ? 200 : 25;
       return {
-        size_mb: 25,
-        size: 25 * 1024 * 1024,
+        size_mb: size_mb,
+        size: size_mb * 1024 * 1024,
         count: 10,
         oversize: function (combined_size) {
           alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');

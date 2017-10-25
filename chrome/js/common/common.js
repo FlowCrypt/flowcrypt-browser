@@ -2120,7 +2120,7 @@
     }
     if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
       options.privateKeys = [signing_prv];
-      console.log('singing oonly');
+      console.log('signing oonly');
     }
     openpgp.encrypt(options).then(function (result) {
       catcher.try(function () { // todo - this is very awkward, should create a Try wrapper with a better api
