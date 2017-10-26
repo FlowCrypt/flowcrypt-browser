@@ -7,15 +7,21 @@ catcher.try(() => {
   const replace_pgp_elements_interval_ms = 1000;
   let replace_pgp_elements_interval;
   let replacer;
+  let full_name = '';
 
   content_script_setup_if_vacant({
     name: 'inbox',
     get_user_account_email:  function () {
-      let account_email_loading_match = $('div.gb_Cb').text().match(/^[a-z0-9._\-]+@[a-z0-9\-_.]+$/gi);
-      return account_email_loading_match !== null ? account_email_loading_match[0].toLowerCase() : undefined;
+      let credentials = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
+      if(credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && tool.str.is_email_valid(credentials[1].innerText)) {
+        let account_email = credentials[1].innerText.toLowerCase();
+        full_name =  credentials[0].innerText;
+        console.log('Loading for ' + account_email + ' (' + full_name + ')');
+        return account_email;
+      }
     },
     get_user_full_name: function () {
-      return $('div.gb_wb').text();
+      return full_name;
     },
     get_replacer: function () {
       return replacer;
