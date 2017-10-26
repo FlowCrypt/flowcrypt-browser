@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.0.4 on October 26, 2017: Sending stuck</b>
+composing: send message getting stuck
+setup: fix google inbox
+
 <b>version 5.0.3 on October 25, 2017: Large Attachments</b>
 composing: allow attachments to non-users up to 200mb
 composing: attach -> please subscribe -> already subscribed -> loop - fixed
