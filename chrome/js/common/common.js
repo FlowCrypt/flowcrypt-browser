@@ -2232,9 +2232,10 @@
     from = from || '';
     to = to || '';
     subject = subject || '';
+    var primary_pubkey = storage.keys_get(account_email, 'primary');
     return {
-      headers: (typeof exports !== 'object') ? { // todo - make it work in electron as well
-        OpenPGP: 'id=' + storage.keys_get(account_email, 'primary').fingerprint,
+      headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
+        OpenPGP: 'id=' + primary_pubkey.fingerprint,
       } : {},
       from: from,
       to: typeof to === 'object' ? to : to.split(','),
