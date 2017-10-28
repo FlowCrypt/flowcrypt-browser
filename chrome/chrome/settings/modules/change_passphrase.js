@@ -74,15 +74,15 @@ window.flowcrypt_storage.passphrase_get(url_params.account_email).then(original_
       let prv = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
       tool.crypto.key.decrypt(prv, original_passphrase);
       openpgp_key_encrypt(prv, new_passphrase);
-      let stored_passphrase = window.flowcrypt_storage.restricted_get('local', url_params.account_email, 'master_passphrase');
+      let stored_passphrase = window.flowcrypt_storage.legacy_storage_get('local', url_params.account_email, 'master_passphrase');
       if(typeof stored_passphrase !== 'undefined' && stored_passphrase !== '') {
-        window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
-        window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', undefined);
+        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
+        window.flowcrypt_storage.legacy_storage_set('session', url_params.account_email, 'master_passphrase', undefined);
       } else {
-        window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', undefined);
-        window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
+        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', undefined);
+        window.flowcrypt_storage.legacy_storage_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
       }
-      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase_needed', true);
+      window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
       window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
       // pass phrase change done in the plugin itself.
       // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.

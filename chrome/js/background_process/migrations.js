@@ -43,10 +43,10 @@ function global_migrate_v_433_account_private_keys_array(callback) {
         catcher.log('migrating:uses_account_keys_array: ' + account_email);
         let master_longid = legacy_storage_private_keys_get(account_email, 'primary').longid;
         let keys = legacy_keys.map(function (ki) { return window.flowcrypt_storage.keys_object(ki.armored || ki.private, ki.longid === master_longid);});
-        window.flowcrypt_storage.restricted_set('local', account_email, 'keys', keys);
-        window.flowcrypt_storage.restricted_set('local', account_email, 'private_keys', undefined);
-        window.flowcrypt_storage.restricted_set('local', account_email, 'master_private_key', undefined);
-        window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key', undefined);
+        window.flowcrypt_storage.legacy_storage_set('local', account_email, 'keys', keys);
+        window.flowcrypt_storage.legacy_storage_set('local', account_email, 'private_keys', undefined);
+        window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_private_key', undefined);
+        window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_public_key', undefined);
       } else {
         catcher.log('migrating:uses_account_keys_array: ' + account_email + ' (no keys set yet)');
       }
@@ -77,7 +77,7 @@ function global_migrate_v_422_check_and_resolve_naked_key_vulnerability_if_neede
 
 function legacy_storage_private_keys_get(account_email, longid) { // left here to be used for migration to new storage schema
   let keys = [];
-  let private_keys = window.flowcrypt_storage.restricted_get('local', account_email, 'private_keys');
+  let private_keys = window.flowcrypt_storage.legacy_storage_get('local', account_email, 'private_keys');
   let contains_primary = false;
   tool.each(private_keys || [], (i, keyinfo) => {
     if(keyinfo.primary === true) {
@@ -85,7 +85,7 @@ function legacy_storage_private_keys_get(account_email, longid) { // left here t
     }
     keys.push(keyinfo);
   });
-  let primary_key_armored = window.flowcrypt_storage.restricted_get('local', account_email, 'master_private_key'); // legacy storage - to migrate
+  let primary_key_armored = window.flowcrypt_storage.legacy_storage_get('local', account_email, 'master_private_key'); // legacy storage - to migrate
   if(!contains_primary && (primary_key_armored || '').trim()) {
     keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
   }
@@ -124,7 +124,7 @@ function legacy_storage_private_keys_add(account_email, new_key_armored, replace
         do_add = false;
         if(replace_if_exists === true) {
           if(keyinfo.primary) {
-            window.flowcrypt_storage.restricted_set('local', account_email, 'master_private_key', new_key_armored); // legacy storage location
+            window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_private_key', new_key_armored); // legacy storage location
           }
           private_keys[i] = { armored: new_key_armored, longid: new_key_longid, primary: keyinfo.primary };
         } else {
@@ -139,7 +139,7 @@ function legacy_storage_private_keys_add(account_email, new_key_armored, replace
     private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: is_first_key });
   }
   if(do_update) {
-    window.flowcrypt_storage.restricted_set('local', account_email, 'private_keys', private_keys);
+    window.flowcrypt_storage.legacy_storage_set('local', account_email, 'private_keys', private_keys);
   }
 }
 
@@ -258,13 +258,13 @@ function global_migrate_v_422_do_fix_account_keys(account_email, fixable_keyinfo
 function account_consistency_fixes(account_email) {
   window.flowcrypt_storage.get(account_email, ['setup_done'], function(storage) {
     // re-submitting pubkey if failed
-    if(storage.setup_done && window.flowcrypt_storage.restricted_get('local', account_email, 'master_public_key_submit') && !window.flowcrypt_storage.restricted_get('local', account_email, 'master_public_key_submitted')) {
+    if(storage.setup_done && window.flowcrypt_storage.legacy_storage_get('local', account_email, 'master_public_key_submit') && !window.flowcrypt_storage.legacy_storage_get('local', account_email, 'master_public_key_submitted')) {
       let keyinfo = window.flowcrypt_storage.keys_get(account_email, 'primary');
       if(keyinfo) {
         console.log('consistency_fixes: submitting pubkey');
         tool.api.attester.initial_legacy_submit(account_email, keyinfo.public, false).validate(r => r.saved).done(function(success, result) {
           if(success && result) { // todo - do not handle the error using .done, but try to not handle it. This produces weird errors in logs - fix that, then put it back.
-            window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);
+            window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_public_key_submitted', true);
           }
         });
       }

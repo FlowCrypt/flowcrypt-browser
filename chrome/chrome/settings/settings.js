@@ -245,12 +245,12 @@ function reset_cryptup_account_storages(account_email, callback) {
       window.flowcrypt_storage.remove(account_email, keys_to_remove, function () {
         tool.each(localStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
-            window.flowcrypt_storage.restricted_set('local', account_email, key.replace(filter, ''), undefined);
+            window.flowcrypt_storage.legacy_storage_set('local', account_email, key.replace(filter, ''), undefined);
           }
         });
         tool.each(sessionStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
-            window.flowcrypt_storage.restricted_set('session', account_email, key.replace(filter, ''), undefined);
+            window.flowcrypt_storage.legacy_storage_set('session', account_email, key.replace(filter, ''), undefined);
           }
         });
         callback();

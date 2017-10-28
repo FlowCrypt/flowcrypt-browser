@@ -88,7 +88,7 @@
     }
   }
 
-  function storage_get(storage_type, account_email, key, parent_tab_id) {
+  function legacy_local_storage_get(storage_type, account_email, key, parent_tab_id) {
     let storage = get_storage(storage_type);
     if(storage === null) {
       notify_about_storage_access_error(account_email, parent_tab_id);
@@ -112,7 +112,7 @@
     }
   }
 
-  function restricted_set(storage_type, account_email, key, value) {
+  function legacy_local_storage_set(storage_type, account_email, key, value) {
     let storage = get_storage(storage_type);
     let account_key = storage_key(account_email, key);
     if(typeof value === 'undefined') {
@@ -133,9 +133,9 @@
   function passphrase_save(storage_type, account_email, longid, passphrase) {
     return try_promise((resolve, reject) => {
       if(longid && longid !== keys_get(account_email, 'primary').longid) {
-        restricted_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
+        legacy_local_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
       } else {
-        restricted_set(storage_type, account_email, 'master_passphrase', passphrase);
+        legacy_local_storage_set(storage_type, account_email, 'master_passphrase', passphrase);
       }
       resolve();
     });
@@ -144,11 +144,11 @@
   function passphrase_get(account_email, longid) {
     return try_promise((resolve, reject) => {
       if(longid) {
-        let stored = storage_get('local', account_email, 'passphrase_' + longid);
+        let stored = legacy_local_storage_get('local', account_email, 'passphrase_' + longid);
         if(stored) {
           resolve(stored);
         } else {
-          let temporary = storage_get('session', account_email, 'passphrase_' + longid);
+          let temporary = legacy_local_storage_get('session', account_email, 'passphrase_' + longid);
           if(temporary) {
             resolve(temporary);
           } else {
@@ -161,14 +161,14 @@
           }
         }
       } else { //todo - this whole part would also be unnecessary if we did a migration
-        if(storage_get('local', account_email, 'master_passphrase_needed') === false) {
+        if(legacy_local_storage_get('local', account_email, 'master_passphrase_needed') === false) {
           resolve('');
         } else {
-          let stored = storage_get('local', account_email, 'master_passphrase');
+          let stored = legacy_local_storage_get('local', account_email, 'master_passphrase');
           if(stored) {
             resolve(stored);
           } else {
-            let from_session = storage_get('session', account_email, 'master_passphrase');
+            let from_session = legacy_local_storage_get('session', account_email, 'master_passphrase');
             if(from_session) {
               resolve(from_session);
             } else {
@@ -181,7 +181,7 @@
   }
 
   function keys_get(account_email, longid) {
-    let keys = storage_get('local', account_email, 'keys') || [];
+    let keys = legacy_local_storage_get('local', account_email, 'keys') || [];
     if(typeof longid !== 'undefined') { // looking for a specific key(s)
       let found;
       if(typeof longid === 'object') { // looking for an array of keys
@@ -236,7 +236,7 @@
       if(!updated) {
         keys.push(keys_object(new_key_armored, keys.length === 0));
       }
-      restricted_set('local', account_email, 'keys', keys);
+      legacy_local_storage_set('local', account_email, 'keys', keys);
     }
   }
 
@@ -248,7 +248,7 @@
         filtered_private_keys.push(keyinfo);
       }
     });
-    restricted_set('local', account_email, 'keys', filtered_private_keys);
+    legacy_local_storage_set('local', account_email, 'keys', filtered_private_keys);
   }
 
   function extension_storage_set(account_email, values, callback) {
@@ -603,8 +603,8 @@
     keys_remove: keys_remove,
     passphrase_get: passphrase_get,
     passphrase_save: passphrase_save,
-    restricted_set: restricted_set,
-    restricted_get: storage_get,
+    legacy_storage_set: legacy_local_storage_set,
+    legacy_storage_get: legacy_local_storage_get,
     notify_error: notify_about_storage_access_error,
   };
 

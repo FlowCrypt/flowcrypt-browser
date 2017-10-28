@@ -176,7 +176,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
       } else {
         submit_pubkeys(addresses, armored_pubkey, function (success) {
           if(success) {
-            window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);
+            window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_public_key_submitted', true);
           }
           callback();
         });
@@ -184,7 +184,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
     } else {
       tool.api.attester.lookup_email(account_email).done((success, result) => {
         if(success && result && result.pubkey && tool.crypto.key.fingerprint(result.pubkey) !== null && tool.crypto.key.fingerprint(result.pubkey) === tool.crypto.key.fingerprint(armored_pubkey)) {
-          window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', true);  // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
+          window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_public_key_submitted', true);  // pubkey with the same fingerprint was submitted to keyserver previously, or was found on PKS
         }
         callback();
       });
@@ -230,10 +230,10 @@ function finalize_setup(account_email, armored_pubkey, options) {
 
 function save_keys(account_email, prvs, options, callback) {
   let promises = [];
-  window.flowcrypt_storage.restricted_set(options.passphrase_save ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
-  window.flowcrypt_storage.restricted_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
-  window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submit', options.submit_main);
-  window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', false);
+  window.flowcrypt_storage.legacy_storage_set(options.passphrase_save ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
+  window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
+  window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_public_key_submit', options.submit_main);
+  window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_public_key_submitted', false);
   for(let i = 0; i < prvs.length; i++) { // save all keys
     window.flowcrypt_storage.keys_add(account_email, prvs[i].armor());
     promises.push(window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase));

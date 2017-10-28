@@ -39,7 +39,7 @@ window.flowcrypt_storage.subscription(function (level, expire, active, method) {
   }
 });
 
-if(!window.flowcrypt_storage.restricted_get('local', url_params.account_email, 'master_passphrase')) {
+if(!window.flowcrypt_storage.legacy_storage_get('local', url_params.account_email, 'master_passphrase')) {
   $('#passphrase_to_open_email').prop('checked', true);
 }
 
@@ -55,8 +55,8 @@ $('.confirm_passphrase_requirement_change').click(function () {
   if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases
     window.flowcrypt_storage.passphrase_get(url_params.account_email).then(stored_passphrase => {
       if($('input#passphrase_entry').val() === stored_passphrase) {
-        window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', '');
-        window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', '');
+        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', '');
+        window.flowcrypt_storage.legacy_storage_set('session', url_params.account_email, 'master_passphrase', '');
         window.location.reload();
       } else {
         alert('Pass phrase did not match, please try again.');
@@ -66,7 +66,7 @@ $('.confirm_passphrase_requirement_change').click(function () {
   } else { // save pass phrase
     var key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
     if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {
-      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
+      window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
       window.location.reload();
     } else {
       alert('Pass phrase did not match, please try again.');
