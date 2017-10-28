@@ -88,7 +88,7 @@
     }
   }
 
-  function storage_set(storage_type, account_email, key, parent_tab_id) {
+  function storage_get(storage_type, account_email, key, parent_tab_id) {
     let storage = get_storage(storage_type);
     if(storage === null) {
       notify_about_storage_access_error(account_email, parent_tab_id);
@@ -144,11 +144,11 @@
   function passphrase_get(account_email, longid) {
     return try_promise((resolve, reject) => {
       if(longid) {
-        let stored = storage_set('local', account_email, 'passphrase_' + longid);
+        let stored = storage_get('local', account_email, 'passphrase_' + longid);
         if(stored) {
           resolve(stored);
         } else {
-          let temporary = storage_set('session', account_email, 'passphrase_' + longid);
+          let temporary = storage_get('session', account_email, 'passphrase_' + longid);
           if(temporary) {
             resolve(temporary);
           } else {
@@ -161,14 +161,14 @@
           }
         }
       } else { //todo - this whole part would also be unnecessary if we did a migration
-        if(storage_set('local', account_email, 'master_passphrase_needed') === false) {
+        if(storage_get('local', account_email, 'master_passphrase_needed') === false) {
           resolve('');
         } else {
-          let stored = storage_set('local', account_email, 'master_passphrase');
+          let stored = storage_get('local', account_email, 'master_passphrase');
           if(stored) {
             resolve(stored);
           } else {
-            let from_session = storage_set('session', account_email, 'master_passphrase');
+            let from_session = storage_get('session', account_email, 'master_passphrase');
             if(from_session) {
               resolve(from_session);
             } else {
@@ -181,7 +181,7 @@
   }
 
   function keys_get(account_email, longid) {
-    let keys = storage_set('local', account_email, 'keys') || [];
+    let keys = storage_get('local', account_email, 'keys') || [];
     if(typeof longid !== 'undefined') { // looking for a specific key(s)
       let found;
       if(typeof longid === 'object') { // looking for an array of keys
@@ -604,7 +604,7 @@
     passphrase_get: passphrase_get,
     passphrase_save: passphrase_save,
     restricted_set: restricted_set,
-    restricted_get: storage_set,
+    restricted_get: storage_get,
     notify_error: notify_about_storage_access_error,
   };
 
