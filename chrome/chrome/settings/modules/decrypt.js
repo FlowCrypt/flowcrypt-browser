@@ -19,14 +19,13 @@ window.flowcrypt_storage.db_open(function (db) {
     tool.browser.message.listen({
       close_dialog: function () {
         $('.passphrase_dialog').html('');
-        tool.each(missing_passprase_longids, function (i, longid) {
-          // todo - copy pasted from attachment.js, unify into a single function
-          // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
-          // see pgp_block.js for proper common implmenetation
-          if(missing_passprase_longids && window.flowcrypt_storage.passphrase_get(url_params.account_email, longid) !== null) {
+        Promise.all(missing_passprase_longids.map(longid => window.flowcrypt_storage.passphrase_get(url_params.account_email, longid))).then(passphrases => {
+          if(passphrases.filter(passphrase => passphrase !== null).length) {
+            // todo - copy/pasted - unify
+            // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
+            // see pgp_block.js for proper common implmenetation
             missing_passprase_longids = [];
             $('.action_decrypt_and_download').click();
-            return false;
           }
         });
       },

@@ -1917,33 +1917,34 @@
     }
     keys.with_passphrases = [];
     keys.without_passphrases = [];
-    tool.each(keys.potentially_matching, function (i, keyinfo) {
-      var passphrase = storage.passphrase_get(account_email, keyinfo.longid);
-      if(passphrase !== null) {
-        var key = openpgp.key.readArmored(keyinfo.private).keys[0];
-        if(crypto_key_decrypt(key, passphrase).success) {
-          keyinfo.decrypted = key;
-          keys.with_passphrases.push(keyinfo);
+    keys.potentially_matching.map(keyinfo => storage.passphrase_get(account_email, keyinfo.longid)).then(passphrases => {
+      tool.each(keys.potentially_matching, function (i, keyinfo) {
+        if(passphrases[i] !== null) {
+          var key = openpgp.key.readArmored(keyinfo.private).keys[0];
+          if(crypto_key_decrypt(key, passphrases[i]).success) {
+            keyinfo.decrypted = key;
+            keys.with_passphrases.push(keyinfo);
+          } else {
+            keys.without_passphrases.push(keyinfo);
+          }
         } else {
           keys.without_passphrases.push(keyinfo);
         }
+      });
+      if(keys.signed_by.length) {
+        storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
+          keys.verification_contacts = verification_contacts.filter(function (contact) {
+            return contact !== null;
+          });
+          keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
+            return openpgp.key.readArmored(contact.pubkey).keys;
+          }));
+          callback(keys);
+        });
       } else {
-        keys.without_passphrases.push(keyinfo);
+        callback(keys);
       }
     });
-    if(keys.signed_by.length) {
-      storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
-        keys.verification_contacts = verification_contacts.filter(function (contact) {
-          return contact !== null;
-        });
-        keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
-          return openpgp.key.readArmored(contact.pubkey).keys;
-        }));
-        callback(keys);
-      });
-    } else {
-      callback(keys);
-    }
   }
 
   function zeroed_decrypt_error_counts(keys) {

@@ -101,6 +101,7 @@
   let is_reply_box, tab_id, account_email, db, thread_id, draft_id, supplied_subject, supplied_from, supplied_to, frame_id;
 
   let app = {
+    // this is a list of empty defaults that will get overwritten wherever composer is used
     can_read_email: () => true,
     does_recipient_have_my_pubkey: (email, cb) => { if(cb) { cb(); }},
     storage_get_addresses: () => [account_email],
@@ -111,7 +112,7 @@
     storage_get_subscription_info: (cb) => { if(typeof cb === 'function') { cb({}); } return {}; }, // returns cached result, callbacks with fresh result
     storage_get_armored_public_key: (sender_email) => null,
     storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {resolve()}),
-    storage_passphrase_get: () => null,
+    storage_passphrase_get: () => catcher.Promise((resolve, reject) => {resolve()}),
     storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => { callback(); },
     storage_contact_get: (email, cb) => { if(cb) cb(null); },
     storage_contact_update: (email, update, cb) => { if(cb) cb();},
@@ -372,51 +373,54 @@
   }
 
   function decrypt_and_render_draft(encrypted_draft, render_function, headers) {
-    if (app.storage_passphrase_get() !== null) {
-      tool.crypto.message.decrypt(db, account_email, encrypted_draft, null, (result) => {
-        if(result.success) {
-          tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'), function (safe_html_draft) {
-            S.cached('input_text').html(safe_html_draft);
-            if (headers && headers.to && headers.to.length) {
-              S.cached('input_to').focus();
-              S.cached('input_to').val(headers.to.join(','));
-              S.cached('input_text').focus();
-            }
-            if (headers && headers.from) {
-              S.now('input_from').val(headers.from);
-            }
+    app.storage_passphrase_get().then(passphrase => {
+      if (passphrase !== null) {
+        tool.crypto.message.decrypt(db, account_email, encrypted_draft, null, (result) => {
+          if(result.success) {
+            tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'), function (safe_html_draft) {
+              S.cached('input_text').html(safe_html_draft);
+              if (headers && headers.to && headers.to.length) {
+                S.cached('input_to').focus();
+                S.cached('input_to').val(headers.to.join(','));
+                S.cached('input_text').focus();
+              }
+              if (headers && headers.from) {
+                S.now('input_from').val(headers.from);
+              }
+              if (render_function) {
+                render_function();
+              }
+            });
+          } else {
             if (render_function) {
               render_function();
             }
-          });
-        } else {
-          if (render_function) {
-            render_function();
           }
+        }, 'utf8');
+      } else {
+        if (is_reply_box) {
+          S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
+          when_master_passphrase_entered(function () {
+            decrypt_and_render_draft(encrypted_draft, render_function, headers);
+          });
         }
-      }, 'utf8');
-    } else {
-      if (is_reply_box) {
-        S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
-        when_master_passphrase_entered(function () {
-          decrypt_and_render_draft(encrypted_draft, render_function, headers);
-        });
       }
-    }
+    });
   }
 
   function when_master_passphrase_entered(callback, seconds_timeout) {
     clearInterval(passphrase_interval);
     const timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
     passphrase_interval = setInterval(function () {
-      let passphrase = app.storage_passphrase_get();
-      if (passphrase !== null) {
-        clearInterval(passphrase_interval);
-        callback(passphrase);
-      } else if (timeout_at && Date.now() > timeout_at) {
-        clearInterval();
-        callback(null);
-      }
+      app.storage_passphrase_get().then(passphrase => {
+        if (passphrase !== null) {
+          clearInterval(passphrase_interval);
+          callback(passphrase);
+        } else if (timeout_at && Date.now() > timeout_at) {
+          clearInterval();
+          callback(null);
+        }
+      });
     }, 1000);
   }
 
@@ -539,55 +543,56 @@
     const keyinfo = storage.keys_get(account_email, 'primary');
     if (keyinfo) {
       const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
-      const passphrase = app.storage_passphrase_get();
-      if (passphrase === null) {
-        app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
-        when_master_passphrase_entered(function (passphrase) {
-          if (passphrase) {
-            sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
-          } else { // timeout - reset
-            clearInterval(passphrase_interval);
-            reset_send_btn();
-          }
-        }, 60);
-      } else {
-        tool.env.set_up_require();
-        require(['emailjs-mime-codec'], function (MimeCodec) {
-
-          // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
-          // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
-          // resulting in.. wait for it.. signatures that don't match
-          // if you are reading this and have ideas about better solutions which:
-          //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
-          //  - don't require text to be sent as an attachment
-          //  - don't require all other clients to support PGP/MIME
-          // then please let me know. Eagerly waiting! In the meanwhile..
-          plaintext = MimeCodec.foldLines(plaintext, 76, true);
-
-          // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
-          // Removing them here will prevent Gmail from screwing up the signature
-          plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-
-          tool.crypto.key.decrypt(prv, passphrase);
-          tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
-            if (success) {
-              handle_send_btn_processing_error(function () {
-                attach.collect_attachments(function (attachments) { // todo - not signing attachments
-                  app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
-                    S.now('send_btn_span').text('Sending');
-                    const body = {'text/plain': with_attached_pubkey_if_needed(signing_result)};
-                    do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-                  });
-                });
-              });
-            } else {
-              catcher.report('error signing message. Error:' + signing_result);
-              alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
+      app.storage_passphrase_get().then(passphrase => {
+        if (passphrase === null) {
+          app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
+          when_master_passphrase_entered(function (passphrase) {
+            if (passphrase) {
+              sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+            } else { // timeout - reset
+              clearInterval(passphrase_interval);
               reset_send_btn();
             }
+          }, 60);
+        } else {
+          tool.env.set_up_require();
+          require(['emailjs-mime-codec'], function (MimeCodec) {
+
+            // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
+            // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
+            // resulting in.. wait for it.. signatures that don't match
+            // if you are reading this and have ideas about better solutions which:
+            //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
+            //  - don't require text to be sent as an attachment
+            //  - don't require all other clients to support PGP/MIME
+            // then please let me know. Eagerly waiting! In the meanwhile..
+            plaintext = MimeCodec.foldLines(plaintext, 76, true);
+
+            // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
+            // Removing them here will prevent Gmail from screwing up the signature
+            plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
+
+            tool.crypto.key.decrypt(prv, passphrase);
+            tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
+              if (success) {
+                handle_send_btn_processing_error(function () {
+                  attach.collect_attachments(function (attachments) { // todo - not signing attachments
+                    app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
+                      S.now('send_btn_span').text('Sending');
+                      const body = {'text/plain': with_attached_pubkey_if_needed(signing_result)};
+                      do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
+                    });
+                  });
+                });
+              } else {
+                catcher.report('error signing message. Error:' + signing_result);
+                alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
+                reset_send_btn();
+              }
+            });
           });
-        });
-      }
+        }
+      });
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
       reset_send_btn();

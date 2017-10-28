@@ -51,14 +51,18 @@ window.flowcrypt_storage.db_open(function (db) {
   })());
 
   function check_passphrase_entered() { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
-    tool.each(missing_passprase_longids, function (i, longid) {
-      if(missing_passprase_longids && window.flowcrypt_storage.passphrase_get(url_params.account_email, longid) !== null) {
-        missing_passprase_longids = [];
-        clearInterval(passphrase_interval);
-        $('#download').click();
-        return false;
-      }
-    });
+    if(missing_passprase_longids) {
+      Promise.all(missing_passprase_longids.map(longid => window.flowcrypt_storage.passphrase_get(url_params.account_email, longid))).then(passphrases => {
+        // todo - copy/pasted - unify
+        // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
+        // see pgp_block.js for proper common implmenetation
+        if(passphrases.filter(passphrase => passphrase !== null).length) {
+          missing_passprase_longids = [];
+          clearInterval(passphrase_interval);
+          $('#download').click();
+        }
+      });
+    }
   }
 
   function get_url_file_size(original_url, callback) {

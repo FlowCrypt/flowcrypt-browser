@@ -6,6 +6,21 @@
 
   const global_storage_scope = 'global';
 
+  function try_promise(f) {
+    return new Promise(function(resolve, reject) {
+      try {
+        f(resolve, reject);
+      } catch(e) {
+        try {
+          catcher.handle_exception(e);
+        } catch(e) {
+          console.log(e);
+        }
+        reject({code: null, message: 'Error happened, please write me at human@flowcrypt.com to fix this\n\nError: ' + e.message, internal: 'exception'});
+      }
+    })
+  }
+
   function storage_key(account_key_or_list, key) {
     if(typeof account_key_or_list === 'object') {
       let all_results = [];
@@ -116,45 +131,53 @@
   }
 
   function passphrase_save(storage_type, account_email, longid, passphrase) {
-    if(longid && longid !== keys_get(account_email, 'primary').longid) {
-      restricted_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
-    } else {
-      restricted_set(storage_type, account_email, 'master_passphrase', passphrase);
-    }
+    return try_promise((resolve, reject) => {
+      if(longid && longid !== keys_get(account_email, 'primary').longid) {
+        restricted_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
+      } else {
+        restricted_set(storage_type, account_email, 'master_passphrase', passphrase);
+      }
+      resolve();
+    });
   }
 
   function passphrase_get(account_email, longid) {
-    if(longid) {
-      let stored = storage_set('local', account_email, 'passphrase_' + longid);
-      if(stored) {
-        return stored;
-      } else {
-        let temporary = storage_set('session', account_email, 'passphrase_' + longid);
-        if(temporary) {
-          return temporary;
+    return try_promise((resolve, reject) => {
+      if(longid) {
+        let stored = storage_set('local', account_email, 'passphrase_' + longid);
+        if(stored) {
+          resolve(stored);
         } else {
-          let primary_k = keys_get(account_email, 'primary');
-          if(primary_k && primary_k.longid === longid) {
-            return passphrase_get(account_email); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+          let temporary = storage_set('session', account_email, 'passphrase_' + longid);
+          if(temporary) {
+            resolve(temporary);
           } else {
-            return null;
+            let primary_k = keys_get(account_email, 'primary');
+            if(primary_k && primary_k.longid === longid) {
+              passphrase_get(account_email, null, callback); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+            } else {
+              resolve(null);
+            }
+          }
+        }
+      } else { //todo - this whole part would also be unnecessary if we did a migration
+        if(storage_set('local', account_email, 'master_passphrase_needed') === false) {
+          resolve('');
+        } else {
+          let stored = storage_set('local', account_email, 'master_passphrase');
+          if(stored) {
+            resolve(stored);
+          } else {
+            let from_session = storage_set('session', account_email, 'master_passphrase');
+            if(from_session) {
+              resolve(from_session);
+            } else {
+              resolve(null);
+            }
           }
         }
       }
-    } else { //todo - this whole part would also be unnecessary if we did a migration
-      if(storage_set('local', account_email, 'master_passphrase_needed') === false) {
-        return '';
-      }
-      let stored = storage_set('local', account_email, 'master_passphrase');
-      if(stored) {
-        return stored;
-      }
-      let temporary = storage_set('session', account_email, 'master_passphrase');
-      if(temporary) {
-        return temporary;
-      }
-      return null;
-    }
+    });
   }
 
   function keys_get(account_email, longid) {

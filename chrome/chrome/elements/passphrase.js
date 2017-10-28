@@ -67,13 +67,10 @@ $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () 
     let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
     if(tool.crypto.key.decrypt(prv, pass).success) {
       is_correct = true;
-      if($('.forget').prop('checked')) {
-        window.flowcrypt_storage.passphrase_save('session', url_params.account_email, keyinfo.longid, pass);
-      } else {
-        window.flowcrypt_storage.passphrase_save('local', url_params.account_email, keyinfo.longid, pass);
-      }
-      tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
-      tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
+      window.flowcrypt_storage.passphrase_save($('.forget').prop('checked') ? 'session' : 'local', url_params.account_email, keyinfo.longid, pass).then(() => {
+        tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
+        tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
+      });
       return false;
     }
   });

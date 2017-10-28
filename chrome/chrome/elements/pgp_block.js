@@ -369,17 +369,19 @@ window.flowcrypt_storage.db_open(function (db) {
 
   function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids) {
     missing_or_wrong_passprases = {};
-    tool.each(missing_or_wrong_passphrase_key_longids, function (i, longid) {
-      missing_or_wrong_passprases[longid] = window.flowcrypt_storage.passphrase_get(url_params.account_email, longid);
-    });
-    render_error('<a href="#" class="enter_passphrase">' + window.lang.pgp_block.enter_passphrase + '</a> ' + window.lang.pgp_block.to_open_message, undefined, function () {
-      clearInterval(passphrase_interval);
-      passphrase_interval = setInterval(check_passphrase_changed, 1000);
-      $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-        tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_passphrase_key_longids });
-        clearInterval(passphrase_interval);
-        passphrase_interval = setInterval(check_passphrase_changed, 250);
-      }));
+    Promise.all(missing_or_wrong_passphrase_key_longids.map(longid => window.flowcrypt_storage.passphrase_get(url_params.account_email, longid))).then(passphrases => {
+      tool.each(missing_or_wrong_passphrase_key_longids, (i, longid) => {
+        missing_or_wrong_passprases[longid] = passphrases[i];
+        render_error('<a href="#" class="enter_passphrase">' + window.lang.pgp_block.enter_passphrase + '</a> ' + window.lang.pgp_block.to_open_message, undefined, function () {
+          clearInterval(passphrase_interval);
+          passphrase_interval = setInterval(check_passphrase_changed, 1000);
+          $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+            tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_passphrase_key_longids });
+            clearInterval(passphrase_interval);
+            passphrase_interval = setInterval(check_passphrase_changed, 250);
+          }));
+        });
+      });
     });
   }
 
@@ -398,13 +400,16 @@ window.flowcrypt_storage.db_open(function (db) {
   }
 
   function check_passphrase_changed() {
-    tool.each(missing_or_wrong_passprases, function (i, longid) {
-      if((missing_or_wrong_passprases[longid] || null) !== window.flowcrypt_storage.passphrase_get(url_params.account_email, longid)) {
-        missing_or_wrong_passprases = {};
-        clearInterval(passphrase_interval);
-        decrypt_and_render();
-        return false;
-      }
+    let longids = Object.keys(missing_or_wrong_passprases);
+    Promise.all(longids.map(longid => window.flowcrypt_storage.passphrase_get(url_params.account_email, longid))).then(updated_passphrases => {
+      tool.each(missing_or_wrong_passprases, function (i, longid) {
+        if((missing_or_wrong_passprases[longid] || null) !== updated_passphrases[longids.indexOf(longid)]) {
+          missing_or_wrong_passprases = {};
+          clearInterval(passphrase_interval);
+          decrypt_and_render();
+          return false;
+        }
+      });
     });
   }
 

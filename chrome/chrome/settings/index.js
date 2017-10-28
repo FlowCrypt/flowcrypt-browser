@@ -187,9 +187,10 @@ function add_key_rows_html(private_keys) {
   });
   $('.action_remove_key').click(function () {
     window.flowcrypt_storage.keys_remove(url_params.account_email, $(this).attr('longid'));
-    window.flowcrypt_storage.passphrase_save('local', url_params.account_email, $(this).attr('longid'), undefined);
-    window.flowcrypt_storage.passphrase_save('session', url_params.account_email, $(this).attr('longid'), undefined);
-    reload(true);
+    Promise.all([
+      window.flowcrypt_storage.passphrase_save('local', url_params.account_email, $(this).attr('longid'), undefined),
+      window.flowcrypt_storage.passphrase_save('session', url_params.account_email, $(this).attr('longid'), undefined),
+    ]).then(() => reload(true));
   });
 }
 

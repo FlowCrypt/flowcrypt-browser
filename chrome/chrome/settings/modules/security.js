@@ -1,5 +1,7 @@
 /* Business Source License 1.0 © 2016-2017 FlowCrypt Limited. Use limitations apply. Contact human@flowcrypt.com */
 
+'use strict';
+
 var url_params = tool.env.url_params(['account_email', 'embedded', 'parent_tab_id']);
 
 tool.ui.passphrase_toggle(['passphrase_entry']);
@@ -50,15 +52,17 @@ $('.action_test_passphrase').click(function () {
 });
 
 $('.confirm_passphrase_requirement_change').click(function () {
-  if($('#passphrase_to_open_email').is(':checked')) { // forget pass all phrases
-    if($('input#passphrase_entry').val() === window.flowcrypt_storage.passphrase_get(url_params.account_email)) {
-      window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', '');
-      window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', '');
-      window.location.reload();
-    } else {
-      alert('Pass phrase did not match, please try again.');
-      $('input#passphrase_entry').val('').focus();
-    }
+  if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases
+    window.flowcrypt_storage.passphrase_get(url_params.account_email).then(stored_passphrase => {
+      if($('input#passphrase_entry').val() === stored_passphrase) {
+        window.flowcrypt_storage.restricted_set('local', url_params.account_email, 'master_passphrase', '');
+        window.flowcrypt_storage.restricted_set('session', url_params.account_email, 'master_passphrase', '');
+        window.location.reload();
+      } else {
+        alert('Pass phrase did not match, please try again.');
+        $('input#passphrase_entry').val('').focus();
+      }
+    });
   } else { // save pass phrase
     var key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
     if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {

@@ -119,10 +119,6 @@ function legacy_storage_private_keys_add(account_email, new_key_armored, replace
   let do_update = true;
   let new_key_longid = tool.crypto.key.longid(new_key_armored);
   if(new_key_longid) {
-    // if(openpgp.key.readArmored(new_key_armored).keys[0].primaryKey.isDecrypted) {
-    //   catcher.report('private_keys_add: attempting to add a naked key, aborted');
-    //   return;
-    // }
     tool.each(private_keys, (i, keyinfo) => {
       if(new_key_longid === keyinfo.longid) {
         do_add = false;
@@ -147,6 +143,42 @@ function legacy_storage_private_keys_add(account_email, new_key_armored, replace
   }
 }
 
+function legacy_storage_passphrase_get(account_email, longid) {
+  if(longid) {
+    let stored = storage_set('local', account_email, 'passphrase_' + longid);
+    if(stored) {
+      return stored;
+    } else {
+      let temporary = storage_set('session', account_email, 'passphrase_' + longid);
+      if(temporary) {
+        return temporary;
+      } else {
+        let primary_k = keys_get(account_email, 'primary');
+        if(primary_k && primary_k.longid === longid) {
+          legacy_storage_passphrase_get(account_email, null, callback); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+        } else {
+          return null;
+        }
+      }
+    }
+  } else { //todo - this whole part would also be unnecessary if we did a migration
+    if(storage_set('local', account_email, 'master_passphrase_needed') === false) {
+      return '';
+    } else {
+      let stored = storage_set('local', account_email, 'master_passphrase');
+      if(stored) {
+        return stored;
+      } else {
+        let from_session = storage_set('session', account_email, 'master_passphrase');
+        if(from_session) {
+          return from_session;
+        } else {
+          return null;
+        }
+      }
+    }
+  }
+}
 
 function global_migrate_v_422_check_and_resolve_naked_key_vulnerability(callback) {
   // for a short period, keys that were recovered from email backups would be stored without encryption. The code below fixes it retroactively
@@ -166,7 +198,7 @@ function global_migrate_v_422_check_and_resolve_naked_key_vulnerability(callback
       tool.each(account_keys, function(i, keyinfo) {
         let k  = openpgp.key.readArmored(keyinfo.armored || keyinfo.private).keys[0];
         if(k.primaryKey.isDecrypted) {
-          let passphrase = window.flowcrypt_storage.passphrase_get(account_email, keyinfo.longid) || window.flowcrypt_storage.passphrase_get(account_email);
+          let passphrase = legacy_storage_passphrase_get(account_email, keyinfo.longid) || legacy_storage_passphrase_get(account_email);
           if(typeof passphrase === 'string' && passphrase) {
             k.encrypt(passphrase);
             legacy_storage_private_keys_add(account_email, k.armor(), true);

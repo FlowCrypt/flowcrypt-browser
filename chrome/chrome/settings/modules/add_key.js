@@ -71,12 +71,9 @@ $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(),
         alert('This key type may not be supported by FlowCrypt. Please write me at human@flowcrypt.com to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
       } else if(decrypt_result.success) {
         window.flowcrypt_storage.keys_add(url_params.account_email, normalized_armored_key);
-        if($('.input_passphrase_save').prop('checked')) {
-          window.flowcrypt_storage.passphrase_save('local', url_params.account_email, new_key_longid, passphrase);
-        } else {
-          window.flowcrypt_storage.passphrase_save('session', url_params.account_email, new_key_longid, passphrase);
-        }
-        tool.browser.message.send(url_params.parent_tab_id, 'reload', { advanced: true });
+        window.flowcrypt_storage.passphrase_save($('.input_passphrase_save').prop('checked') ? 'local' : 'session', url_params.account_email, new_key_longid, passphrase).then(() => {
+          tool.browser.message.send(url_params.parent_tab_id, 'reload', { advanced: true });
+        });
       } else {
         alert('The pass phrase does not match. Please try a different pass phrase.');
       }

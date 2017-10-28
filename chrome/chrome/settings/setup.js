@@ -229,21 +229,24 @@ function finalize_setup(account_email, armored_pubkey, options) {
 }
 
 function save_keys(account_email, prvs, options, callback) {
+  let promises = [];
   window.flowcrypt_storage.restricted_set(options.passphrase_save ? 'local' : 'session', account_email, 'master_passphrase', options.passphrase || '');
   window.flowcrypt_storage.restricted_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
   window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submit', options.submit_main);
   window.flowcrypt_storage.restricted_set('local', account_email, 'master_public_key_submitted', false);
   for(let i = 0; i < prvs.length; i++) { // save all keys
     window.flowcrypt_storage.keys_add(account_email, prvs[i].armor());
-    window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase);
+    promises.push(window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase));
   }
-  let contacts = [];
-  tool.each(all_addresses, function (i, address) {
-    let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
-    contacts.push(window.flowcrypt_storage.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
-  });
-  window.flowcrypt_storage.db_open(function (db) {
-    window.flowcrypt_storage.db_contact_save(db, contacts, callback);
+  Promise.all(promises).then(() => {
+    let contacts = [];
+    tool.each(all_addresses, function (i, address) {
+      let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
+      contacts.push(window.flowcrypt_storage.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
+    });
+    window.flowcrypt_storage.db_open(function (db) {
+      window.flowcrypt_storage.db_contact_save(db, contacts, callback);
+    });
   });
 }
 
