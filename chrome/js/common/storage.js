@@ -18,7 +18,7 @@
         }
         reject({code: null, message: 'Error happened, please write me at human@flowcrypt.com to fix this\n\nError: ' + e.message, internal: 'exception'});
       }
-    })
+    });
   }
 
   function storage_key(account_key_or_list, key) {
@@ -141,7 +141,7 @@
     });
   }
 
-  function passphrase_get(account_email, longid) {
+  function passphrase_get(account_email, longid, ignore_session) {
     return try_promise((resolve, reject) => {
       if(longid) {
         let stored = legacy_local_storage_get('local', account_email, 'passphrase_' + longid);
@@ -149,7 +149,7 @@
           resolve(stored);
         } else {
           let temporary = legacy_local_storage_get('session', account_email, 'passphrase_' + longid);
-          if(temporary) {
+          if(temporary && !ignore_session) {
             resolve(temporary);
           } else {
             let primary_k = keys_get(account_email, 'primary');
@@ -169,7 +169,7 @@
             resolve(stored);
           } else {
             let from_session = legacy_local_storage_get('session', account_email, 'master_passphrase');
-            if(from_session) {
+            if(from_session && !ignore_session) {
               resolve(from_session);
             } else {
               resolve(null);
@@ -223,10 +223,6 @@
     let updated = false;
     let new_key_longid = tool.crypto.key.longid(new_key_armored);
     if(new_key_longid) {
-      // if(openpgp.key.readArmored(new_key_armored).keys[0].primaryKey.isDecrypted) {
-      //   catcher.report('private_keys_add: attempting to add a naked key, aborted');
-      //   return;
-      // }
       tool.each(keys, (i, keyinfo) => {
         if(new_key_longid === keyinfo.longid) { // replacing a key
           keys[i] = keys_object(new_key_armored, keyinfo.primary);
@@ -604,7 +600,6 @@
     passphrase_get: passphrase_get,
     passphrase_save: passphrase_save,
     legacy_storage_set: legacy_local_storage_set,
-    legacy_storage_get: legacy_local_storage_get,
     notify_error: notify_about_storage_access_error,
   };
 

@@ -183,16 +183,17 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
     let armored_private_key = window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private;
     let prv = openpgp.key.readArmored(armored_private_key).keys[0];
     openpgp_key_encrypt(prv, new_passphrase);
-    window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
-    window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
-    window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
-    (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, prv.armor(), function (success) {
-      if(success) {
-        write_backup_done_and_render(false, 'inbox');
-      } else {
-        $(self).text(btn_text);
-        alert('Need internet connection to finish. Please click the button again to retry.');
-      }
+    window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, new_passphrase).then(() => {
+      window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
+      window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
+      (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, prv.armor(), function (success) {
+        if(success) {
+          write_backup_done_and_render(false, 'inbox');
+        } else {
+          $(self).text(btn_text);
+          alert('Need internet connection to finish. Please click the button again to retry.');
+        }
+      });
     });
   }
 }));

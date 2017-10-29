@@ -74,25 +74,28 @@ window.flowcrypt_storage.passphrase_get(url_params.account_email).then(original_
       let prv = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
       tool.crypto.key.decrypt(prv, original_passphrase);
       openpgp_key_encrypt(prv, new_passphrase);
-      let stored_passphrase = window.flowcrypt_storage.legacy_storage_get('local', url_params.account_email, 'master_passphrase');
-      if(typeof stored_passphrase !== 'undefined' && stored_passphrase !== '') {
-        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', new_passphrase);
-        window.flowcrypt_storage.legacy_storage_set('session', url_params.account_email, 'master_passphrase', undefined);
-      } else {
-        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', undefined);
-        window.flowcrypt_storage.legacy_storage_set('session', url_params.account_email, 'master_passphrase', new_passphrase);
-      }
-      window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
-      window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
-      // pass phrase change done in the plugin itself.
-      // For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
-      window.flowcrypt_storage.get(url_params.account_email, ['setup_simple'], storage => {
-        if(storage.setup_simple) {
-          show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
+      window.flowcrypt_storage.passphrase_get(url_params.account_email, null, true).then(stored_passphrase => {
+        let promises = [];
+        if(stored_passphrase !== null) {
+          promises.push(window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, new_passphrase));
+          promises.push(window.flowcrypt_storage.passphrase_save('session', url_params.account_email, null, undefined));
         } else {
-          alert('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
-          show_settings_page('/chrome/settings/modules/backup.htm', '&action=options');
+          promises.push(window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, undefined));
+          promises.push(window.flowcrypt_storage.passphrase_save('session', url_params.account_email, null, new_passphrase));
         }
+        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
+        window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
+        Promise.all(promises).then(() => {
+          // Pass phrase change done in the extension storage. For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
+          window.flowcrypt_storage.get(url_params.account_email, ['setup_simple'], storage => {
+            if(storage.setup_simple) {
+              show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
+            } else {
+              alert('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
+              show_settings_page('/chrome/settings/modules/backup.htm', '&action=options');
+            }
+          });
+        });
       });
     }
   }));

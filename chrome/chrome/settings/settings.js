@@ -82,10 +82,10 @@ function mark_as_attested(account_email, attester, callback) {
   });
 }
 
-function submit_pubkeys(addresses, pubkey, callback, success) {
+function submit_pubkeys(addresses, pubkey, callback, _success) {
   if(addresses.length) {
-    if(typeof success === 'undefined') {
-      success = true;
+    if(typeof _success === 'undefined') {
+      _success = true;
     }
     let address = addresses.pop();
     let attest = (address === settings_url_params.account_email); // only request attestation of main email
@@ -93,19 +93,19 @@ function submit_pubkeys(addresses, pubkey, callback, success) {
       if(attest && key_submitted) {
         if(!response.attested) {
           save_attest_request(settings_url_params.account_email, 'CRYPTUP', function () {
-            submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+            submit_pubkeys(addresses, pubkey, callback, _success && key_submitted && response.saved === true);
           });
         } else { //previously successfully attested, the attester claims
           mark_as_attested(settings_url_params.account_email, 'CRYPTUP', function () {
-            submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+            submit_pubkeys(addresses, pubkey, callback, _success && key_submitted && response.saved === true);
           });
         }
       } else {
-        submit_pubkeys(addresses, pubkey, callback, success && key_submitted && response.saved === true);
+        submit_pubkeys(addresses, pubkey, callback, _success && key_submitted && response.saved === true);
       }
     });
   } else {
-    callback(success);
+    callback(_success);
   }
 }
 
@@ -245,12 +245,12 @@ function reset_cryptup_account_storages(account_email, callback) {
       window.flowcrypt_storage.remove(account_email, keys_to_remove, function () {
         tool.each(localStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
-            window.flowcrypt_storage.legacy_storage_set('local', account_email, key.replace(filter, ''), undefined);
+            localStorage.removeItem(key);
           }
         });
         tool.each(sessionStorage, function (key, value) {
           if(key.indexOf(filter) === 0) {
-            window.flowcrypt_storage.legacy_storage_set('session', account_email, key.replace(filter, ''), undefined);
+            sessionStorage.removeItem(key);
           }
         });
         callback();

@@ -39,9 +39,15 @@ window.flowcrypt_storage.subscription(function (level, expire, active, method) {
   }
 });
 
-if(!window.flowcrypt_storage.legacy_storage_get('local', url_params.account_email, 'master_passphrase')) {
-  $('#passphrase_to_open_email').prop('checked', true);
-}
+window.flowcrypt_storage.passphrase_get(url_params.account_email, null, true).then(stored_passphrase => {
+  if(stored_passphrase === null) {
+    $('#passphrase_to_open_email').prop('checked', true);
+  }
+  $('#passphrase_to_open_email').change(function () {
+    $('.passhprase_checkbox_container').css('display', 'none');
+    $('.passphrase_entry_container').css('display', 'block');
+  });
+});
 
 $('.action_change_passphrase').click(function () {
   show_settings_page('/chrome/settings/modules/change_passphrase.htm');
@@ -52,12 +58,13 @@ $('.action_test_passphrase').click(function () {
 });
 
 $('.confirm_passphrase_requirement_change').click(function () {
-  if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases
+  if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
     window.flowcrypt_storage.passphrase_get(url_params.account_email).then(stored_passphrase => {
       if($('input#passphrase_entry').val() === stored_passphrase) {
-        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', '');
-        window.flowcrypt_storage.legacy_storage_set('session', url_params.account_email, 'master_passphrase', '');
-        window.location.reload();
+        Promise.all([
+          window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, undefined),
+          window.flowcrypt_storage.passphrase_save('session', url_params.account_email, null, undefined),
+        ]).then(() => window.location.reload());
       } else {
         alert('Pass phrase did not match, please try again.');
         $('input#passphrase_entry').val('').focus();
@@ -66,8 +73,7 @@ $('.confirm_passphrase_requirement_change').click(function () {
   } else { // save pass phrase
     var key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
     if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {
-      window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase', $('input#passphrase_entry').val());
-      window.location.reload();
+      window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, $('input#passphrase_entry').val()).then(() => window.location.reload());
     } else {
       alert('Pass phrase did not match, please try again.');
       $('input#passphrase_entry').val('').focus();
@@ -77,11 +83,6 @@ $('.confirm_passphrase_requirement_change').click(function () {
 
 $('.cancel_passphrase_requirement_change').click(function () {
   window.location.reload();
-});
-
-$('#passphrase_to_open_email').change(function () {
-  $('.passhprase_checkbox_container').css('display', 'none');
-  $('.passphrase_entry_container').css('display', 'block');
 });
 
 window.flowcrypt_storage.get(url_params.account_email, ['hide_message_password'], storage => {
