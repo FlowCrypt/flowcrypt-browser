@@ -225,19 +225,15 @@ function finalize_setup(account_email, armored_pubkey, options) {
 }
 
 function save_keys(account_email, prvs, options, callback) {
-  console.log('save_keys');
   let promise_factories = [
     () => window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase)),
     () => window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, null, options.passphrase || ''),
   ];
-  console.log(1);
   for(let i = 0; i < prvs.length; i++) { // save all keys
     promise_factories.push(() => window.flowcrypt_storage.keys_add(account_email, prvs[i].armor()));
     promise_factories.push(() => window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase));
   }
-  console.log(2);
   Promise.sequence(promise_factories).then(() => { // sequential write because storage has race condition
-    console.log(3);
     let contacts = [];
     tool.each(all_addresses, function (i, address) {
       let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
@@ -246,10 +242,6 @@ function save_keys(account_email, prvs, options, callback) {
     window.flowcrypt_storage.db_open(function (db) {
       window.flowcrypt_storage.db_contact_save(db, contacts, callback);
     });
-  }, error => {
-    console.log(error);
-    alert('aaa!');
-    alert('error');
   });
 }
 

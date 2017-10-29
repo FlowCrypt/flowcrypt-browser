@@ -89,9 +89,7 @@
   }
 
   function legacy_local_storage_get(storage_type, account_email, key, parent_tab_id) {
-    console.log('a1');
     return try_promise((resolve, reject) => {
-      console.log('a2');
       let storage = get_storage(storage_type);
       if(storage === null) {
         notify_about_storage_access_error(account_email, parent_tab_id);
@@ -113,7 +111,6 @@
       } else {
         resolve(value.replace('str#', '', 1));
       }
-      console.log('a5');
     });
   }
 
@@ -133,10 +130,8 @@
     } else {
       storage[account_key] = 'str#' + value;
     }
-    console.log('z10');
     // fake async for future compatibility
     return try_promise((resolve, reject) => {
-      console.log('z11');
       resolve();
     });
   }
@@ -196,15 +191,10 @@
   }
 
   function keys_get(account_email, longid) {
-    console.log('x1');
     return try_promise((resolve, reject) => {
-      console.log('x2');
       legacy_local_storage_get('local', account_email, 'keys').then(keys => {
-        console.log('x3');
         keys = keys || [];
-        console.log('x4');
         if(typeof longid !== 'undefined') { // looking for a specific key(s)
-          console.log('x5');
           let found;
           if(typeof longid === 'object') { // looking for an array of keys
             found = [];
@@ -221,10 +211,8 @@
               }
             });
           }
-          console.log('x10');
           resolve(found);
         } else { // return all keys
-          console.log('x11');
           resolve(keys);
         }
       });
@@ -244,11 +232,8 @@
   }
 
   function keys_add(account_email, new_key_armored) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
-    console.log('a');
     return try_promise((resolve, reject) => {
-      console.log('b');
       keys_get(account_email).then(private_keys => {
-        console.log('c');
         let updated = false;
         let new_key_longid = tool.crypto.key.longid(new_key_armored);
         if (new_key_longid) {
@@ -261,9 +246,7 @@
           if (!updated) {
             private_keys.push(keys_object(new_key_armored, private_keys.length === 0));
           }
-          console.log('d');
           legacy_local_storage_set('local', account_email, 'keys', private_keys).then(() => {
-            console.log('e');
             resolve();
           });
         } else {

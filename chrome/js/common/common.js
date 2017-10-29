@@ -1115,7 +1115,6 @@
       var first_boundary_index = mime_message.substr(0, 1000).toLowerCase().indexOf('boundary=');
       if(first_boundary_index) {
         var boundary = mime_message.substr(first_boundary_index, 100);
-        console.log(boundary);
         boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
         if(boundary) {
           boundary = boundary.replace(/^boundary="?|"$/gi, '');
@@ -2130,7 +2129,6 @@
     }
     if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
       options.privateKeys = [signing_prv];
-      console.log('signing oonly');
     }
     openpgp.encrypt(options).then(function (result) {
       catcher.try(function () { // todo - this is very awkward, should create a Try wrapper with a better api
