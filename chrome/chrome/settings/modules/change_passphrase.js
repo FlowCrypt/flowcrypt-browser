@@ -75,7 +75,9 @@ window.flowcrypt_storage.passphrase_get(url_params.account_email).then(original_
       tool.crypto.key.decrypt(prv, original_passphrase);
       openpgp_key_encrypt(prv, new_passphrase);
       window.flowcrypt_storage.passphrase_get(url_params.account_email, null, true).then(stored_passphrase => {
-        let promises = [];
+        let promises = [
+          window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true),
+        ];
         if(stored_passphrase !== null) {
           promises.push(window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, new_passphrase));
           promises.push(window.flowcrypt_storage.passphrase_save('session', url_params.account_email, null, undefined));
@@ -83,7 +85,6 @@ window.flowcrypt_storage.passphrase_get(url_params.account_email).then(original_
           promises.push(window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, undefined));
           promises.push(window.flowcrypt_storage.passphrase_save('session', url_params.account_email, null, new_passphrase));
         }
-        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true);
         window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
         Promise.all(promises).then(() => {
           // Pass phrase change done in the extension storage. For it to have a real effect though, a new backup containing the new pass phrase needs to be created.

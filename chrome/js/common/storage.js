@@ -128,17 +128,19 @@
     } else {
       storage[account_key] = 'str#' + value;
     }
+
+    // fake async for future compatibility
+    return try_promise((resolve, reject) => {
+      resolve();
+    });
   }
 
   function passphrase_save(storage_type, account_email, longid, passphrase) {
-    return try_promise((resolve, reject) => {
-      if(longid && longid !== keys_get(account_email, 'primary').longid) {
-        legacy_local_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
-      } else {
-        legacy_local_storage_set(storage_type, account_email, 'master_passphrase', passphrase);
-      }
-      resolve();
-    });
+    if(longid && longid !== keys_get(account_email, 'primary').longid) {
+      return legacy_local_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase);
+    } else {
+      return legacy_local_storage_set(storage_type, account_email, 'master_passphrase', passphrase);
+    }
   }
 
   function passphrase_get(account_email, longid, ignore_session) {
@@ -232,7 +234,7 @@
       if(!updated) {
         keys.push(keys_object(new_key_armored, keys.length === 0));
       }
-      legacy_local_storage_set('local', account_email, 'keys', keys);
+      return legacy_local_storage_set('local', account_email, 'keys', keys);
     }
   }
 
@@ -244,7 +246,7 @@
         filtered_private_keys.push(keyinfo);
       }
     });
-    legacy_local_storage_set('local', account_email, 'keys', filtered_private_keys);
+    return legacy_local_storage_set('local', account_email, 'keys', filtered_private_keys);
   }
 
   function extension_storage_set(account_email, values, callback) {

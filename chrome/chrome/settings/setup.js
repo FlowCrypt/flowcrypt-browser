@@ -219,9 +219,10 @@ function finalize_setup(account_email, armored_pubkey, options) {
 }
 
 function save_keys(account_email, prvs, options, callback) {
-  let promises = [];
-  window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase || ''));
-  promises.push(window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, null, options.passphrase || ''));
+  let promises = [
+    window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase)),
+    window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, null, options.passphrase || ''),
+  ];
   for(let i = 0; i < prvs.length; i++) { // save all keys
     window.flowcrypt_storage.keys_add(account_email, prvs[i].armor());
     promises.push(window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase));
