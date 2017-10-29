@@ -69,41 +69,43 @@ function check_email_for_attests_and_respond(account_email) {
 
 function process_attest_packet_text(account_email, attest_packet_text, passphrase, callback) {
   let attest = tool.api.attester.packet.parse(attest_packet_text);
-  let key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(account_email, 'primary').private).keys[0];
-  is_already_attested(account_email, attest.attester, is_attested => {
-    if (!is_attested) {
-      window.flowcrypt_storage.passphrase_get(account_email).then(stored_passphrase => {
-        if (tool.crypto.key.decrypt(key, passphrase || stored_passphrase).success) {
-          let expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
-          let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
-          if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
-            tool.crypto.message.sign(key, attest.text, true, (success, result) => {
-              if (success) {
-                let keyserver_api_request = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(result) : tool.api.attester.replace_confirm(result);
-                keyserver_api_request.validate(r => r.attested).then(response => {
-                  account_storage_mark_as_attested(account_email, attest.content.attester, () => {
-                    callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
+  window.flowcrypt_storage.keys_get(account_email, 'primary').then(primary_k => {
+    let key = openpgp.key.readArmored(primary_k.private).keys[0];
+    is_already_attested(account_email, attest.attester, is_attested => {
+      if (!is_attested) {
+        window.flowcrypt_storage.passphrase_get(account_email).then(stored_passphrase => {
+          if (tool.crypto.key.decrypt(key, passphrase || stored_passphrase).success) {
+            let expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
+            let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
+            if (attest && attest.success && attest.content.attester in ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
+              tool.crypto.message.sign(key, attest.text, true, (success, result) => {
+                if (success) {
+                  let keyserver_api_request = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(result) : tool.api.attester.replace_confirm(result);
+                  keyserver_api_request.validate(r => r.attested).then(response => {
+                    account_storage_mark_as_attested(account_email, attest.content.attester, () => {
+                      callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);
+                    });
+                  }, error => {
+                    callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + error.message);
                   });
-                }, error => {
-                  callback(account_email, attest_packet_text, false, 'Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + error.message);
-                });
-              } else {
-                attest.packet_text = attest_packet_text;
-                catcher.log('Error signing ' + attest.content.action + ' attest packet: ' + result, attest);
-                callback(account_email, attest_packet_text, false, 'Error signing the attest. Write me at human@flowcrypt.com to find out why:' + result);
-              }
-            });
+                } else {
+                  attest.packet_text = attest_packet_text;
+                  catcher.log('Error signing ' + attest.content.action + ' attest packet: ' + result, attest);
+                  callback(account_email, attest_packet_text, false, 'Error signing the attest. Write me at human@flowcrypt.com to find out why:' + result);
+                }
+              });
+            } else {
+              callback(account_email, attest_packet_text, false, 'This attest message is ignored as it does not match your settings.\n\nWrite me at human@flowcrypt.com to help.');
+            }
           } else {
-            callback(account_email, attest_packet_text, false, 'This attest message is ignored as it does not match your settings.\n\nWrite me at human@flowcrypt.com to help.');
+            callback(account_email, attest_packet_text, false, 'Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.');
           }
-        } else {
-          callback(account_email, attest_packet_text, false, 'Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.');
-        }
-      });
-    } else {
-      callback(account_email, attest_packet_text, true, attest.content.attester + ' already attested ' + account_email);
-      stop_watching(account_email);
-    }
+        });
+      } else {
+        callback(account_email, attest_packet_text, true, attest.content.attester + ' already attested ' + account_email);
+        stop_watching(account_email);
+      }
+    });
   });
 }
 

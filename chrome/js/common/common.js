@@ -1441,44 +1441,51 @@
   /* tool.diagnose */
 
   function diagnose_message_pubkeys(account_email, message) {
-    var message_key_ids = message.getEncryptionKeyIds();
-    var local_key_ids = crypto_key_ids(storage.keys_get(account_email, 'primary').public);
-    var diagnosis = { found_match: false, receivers: message_key_ids.length };
-    tool.each(message_key_ids, function (i, msg_k_id) {
-      tool.each(local_key_ids, function (j, local_k_id) {
-        if(msg_k_id === local_k_id) {
-          diagnosis.found_match = true;
-          return false;
-        }
+    return catcher.Promise(function(resolve, reject) {
+      var message_key_ids = message.getEncryptionKeyIds();
+      storage.keys_get(account_email).then(function(private_keys) {
+        var local_key_ids = [].concat.apply([], private_keys.map(ki => ki.pubkey).map(crypto_key_ids));
+        var diagnosis = { found_match: false, receivers: message_key_ids.length };
+        tool.each(message_key_ids, function (i, msg_k_id) {
+          tool.each(local_key_ids, function (j, local_k_id) {
+            if(msg_k_id === local_k_id) {
+              diagnosis.found_match = true;
+              return false;
+            }
+          });
+        });
+        resolve(diagnosis);
       });
     });
-    return diagnosis;
   }
 
   function diagnose_keyserver_pubkeys(account_email, callback) {
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
     storage.get(account_email, ['addresses'], function (s) {
-      api_attester_lookup_email(tool.arr.unique([account_email].concat(s.addresses || []))).then(function(pubkey_search_results) {
-        tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
-          if (!pubkey_search_result.pubkey) {
-            diagnosis.has_pubkey_missing = true;
-            diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
-          } else {
-            var match = true;
-            if (!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(arr_select(storage.keys_get(account_email), 'longid'))) {
-              diagnosis.has_pubkey_mismatch = true;
-              match = false;
+      storage.keys_get(account_email).then(function(stored_keys) {
+        let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
+        api_attester_lookup_email(tool.arr.unique([account_email].concat(s.addresses || []))).then(function(pubkey_search_results) {
+          tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
+            if (!pubkey_search_result.pubkey) {
+              diagnosis.has_pubkey_missing = true;
+              diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
+            } else {
+              var match = true;
+              if (!tool.value(crypto_key_longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
+                diagnosis.has_pubkey_mismatch = true;
+                match = false;
+              }
+              diagnosis.results[pubkey_search_result.email] = {
+                pubkey: pubkey_search_result.pubkey,
+                attested: pubkey_search_result.attested,
+                match: match
+              };
             }
-            diagnosis.results[pubkey_search_result.email] = {
-              pubkey: pubkey_search_result.pubkey,
-              attested: pubkey_search_result.attested,
-              match: match
-            };
-          }
+          });
+          callback(diagnosis);
+        }, function(error) {
+          callback();
         });
-        callback(diagnosis);
-      }, function(error) {
-        callback();
       });
     });
   }
@@ -1911,39 +1918,41 @@
     keys.signed_by = (message.getSigningKeyIds() || []).map(function (id) {
       return crypto_key_longid(id.bytes);
     });
-    keys.potentially_matching = storage.keys_get(account_email, keys.encrypted_for);
-    if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
-      keys.potentially_matching = storage.keys_get(account_email);
-    }
-    keys.with_passphrases = [];
-    keys.without_passphrases = [];
-    keys.potentially_matching.map(keyinfo => storage.passphrase_get(account_email, keyinfo.longid)).then(passphrases => {
-      tool.each(keys.potentially_matching, function (i, keyinfo) {
-        if(passphrases[i] !== null) {
-          var key = openpgp.key.readArmored(keyinfo.private).keys[0];
-          if(crypto_key_decrypt(key, passphrases[i]).success) {
-            keyinfo.decrypted = key;
-            keys.with_passphrases.push(keyinfo);
+    storage.keys_get(account_email).then(function(private_keys_all) {
+      keys.potentially_matching = private_keys_all.filter(function(ki) { return tool.value(ki.longid).in(keys.encrypted_for)});
+      if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
+        keys.potentially_matching = private_keys_all;
+      }
+      keys.with_passphrases = [];
+      keys.without_passphrases = [];
+      keys.potentially_matching.map(keyinfo => storage.passphrase_get(account_email, keyinfo.longid)).then(passphrases => {
+        tool.each(keys.potentially_matching, function (i, keyinfo) {
+          if(passphrases[i] !== null) {
+            var key = openpgp.key.readArmored(keyinfo.private).keys[0];
+            if(crypto_key_decrypt(key, passphrases[i]).success) {
+              keyinfo.decrypted = key;
+              keys.with_passphrases.push(keyinfo);
+            } else {
+              keys.without_passphrases.push(keyinfo);
+            }
           } else {
             keys.without_passphrases.push(keyinfo);
           }
+        });
+        if(keys.signed_by.length) {
+          storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
+            keys.verification_contacts = verification_contacts.filter(function (contact) {
+              return contact !== null;
+            });
+            keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
+              return openpgp.key.readArmored(contact.pubkey).keys;
+            }));
+            callback(keys);
+          });
         } else {
-          keys.without_passphrases.push(keyinfo);
+          callback(keys);
         }
       });
-      if(keys.signed_by.length) {
-        storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
-          keys.verification_contacts = verification_contacts.filter(function (contact) {
-            return contact !== null;
-          });
-          keys.for_verification = [].concat.apply([], keys.verification_contacts.map(function (contact) {
-            return openpgp.key.readArmored(contact.pubkey).keys;
-          }));
-          callback(keys);
-        });
-      } else {
-        callback(keys);
-      }
     });
   }
 
@@ -2233,11 +2242,12 @@
     from = from || '';
     to = to || '';
     subject = subject || '';
-    var primary_pubkey = storage.keys_get(account_email, 'primary');
+    // var primary_pubkey = storage.keys_get(account_email, 'primary'); // todo - changing to async - add back later
     return {
-      headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
-        OpenPGP: 'id=' + primary_pubkey.fingerprint,
-      } : {},
+      // headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
+      //   OpenPGP: 'id=' + primary_pubkey.fingerprint,
+      // } : {},
+      headers: {},
       from: from,
       to: typeof to === 'object' ? to : to.split(','),
       subject: subject,
@@ -3842,5 +3852,20 @@
         next(false, x);
       });
     };
+
+  Promise.sequence = Promise.sequence || function (promise_factories) {
+    return catcher.Promise(function (resolve, reject) {
+      let all_results = [];
+      return promise_factories.reduce(function(chained_promises, create_promise) {
+        return chained_promises.then(function(promise_result) {
+          all_results.push(promise_result);
+          return create_promise();
+        });
+      }, Promise.resolve('remove+me')).then(function(last_promise_result) {
+        all_results.push(last_promise_result);
+        resolve(all_results.splice(1)); // remove first bogus promise result
+      });
+    });
+  }
 
 })();

@@ -67,7 +67,17 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
               }
               return subscription;
             },
-            storage_get_armored_public_key: (sender_email) => (window.flowcrypt_storage.keys_get(url_params.account_email, 'primary') || {}).public,
+            storage_get_armored_public_key: (sender_email) => {
+              return catcher.Promise((resolve, reject) => {
+                window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+                  if(primary_k) {
+                    resolve(primary_k.public);
+                  } else {
+                    reject('FlowCrypt is not properly set up. No Public Key found in storage.')
+                  }
+                });
+              });
+            },
             storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {
               window.flowcrypt_storage.get(url_params.account_email, ['drafts_reply', 'drafts_compose'], function (draft_storage) {
                 let drafts;

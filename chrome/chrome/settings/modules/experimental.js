@@ -32,14 +32,16 @@ function collect_info_for_account_backup(account_email, callback) {
       text.push('global_storage: ' + JSON.stringify(global_storage));
       text.push('account_storage: ' + JSON.stringify(account_storage));
       text.push('');
-      tool.each(window.flowcrypt_storage.keys_get(account_email), function (i, keyinfo) {
+      window.flowcrypt_storage.keys_get(account_email).then(keyinfos => {
+        tool.each(keyinfos, function (i, keyinfo) {
+          text.push('');
+          text.push('key_longid: ' + keyinfo.longid);
+          text.push('key_primary: ' + keyinfo.primary);
+          text.push(keyinfo.private);
+        });
         text.push('');
-        text.push('key_longid: ' + keyinfo.longid);
-        text.push('key_primary: ' + keyinfo.primary);
-        text.push(keyinfo.private);
+        callback(text.join('\n'));
       });
-      text.push('');
-      callback(text.join('\n'));
     });
   });
 }

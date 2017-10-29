@@ -111,11 +111,13 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
 }
 
 function action_submit_or_request_attestation(email) {
-  if(email === url_params.account_email) { // request attestation
-    save_attest_request(url_params.account_email, 'CRYPTUP', function () {
-      tool.api.attester.initial_legacy_submit(email, window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').public, true).done(() => window.location.reload());
-    });
-  } else { // submit only
-    tool.api.attester.initial_legacy_submit(email, window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').public, false).done(() => window.location.reload());
-  }
+  window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+    if(email === url_params.account_email) { // request attestation
+      save_attest_request(url_params.account_email, 'CRYPTUP', function () {
+        tool.api.attester.initial_legacy_submit(email, primary_k.public, true).done(() => window.location.reload());
+      });
+    } else { // submit only
+      tool.api.attester.initial_legacy_submit(email, primary_k.public, false).done(() => window.location.reload());
+    }
+  });
 }

@@ -318,40 +318,41 @@
     if (should_save_draft(S.cached('input_text').text()) || force_save === true) {
       save_draft_in_process = true;
       S.cached('send_btn_note').text('Saving');
-      const armored_pubkey = app.storage_get_armored_public_key(account_email);
-      tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted) {
-        let body;
-        if (thread_id) { // replied message
-          body = '[cryptup:link:draft_reply:' + thread_id + ']\n\n' + encrypted.data;
-        } else if (draft_id) {
-          body = '[cryptup:link:draft_compose:' + draft_id + ']\n\n' + encrypted.data;
-        } else {
-          body = encrypted.data;
-        }
-        let subject = S.cached('input_subject').val() || supplied_subject || 'FlowCrypt draft';
-        tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject}, [], function (mime_message) {
-          if (!draft_id) {
-            app.email_provider_draft_create(mime_message).then(response => {
-              S.cached('send_btn_note').text('Saved');
-              draft_id = response.id;
-              app.storage_set_draft_meta(true, response.id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
-              // recursing one more time, because we need the draft_id we get from this reply in the message itself
-              // essentially everytime we save draft for the first time, we have to save it twice
-              // save_draft_in_process will remain true because well.. it's still in process
-              draft_save(true); // force_save = true
-            }, error => {
-              S.cached('send_btn_note').text('Not saved');
-              save_draft_in_process = false; // it will only be set to false (done) if it's a failure (only in terms of the very first save)
-            });
+      app.storage_get_armored_public_key(account_email).then(armored_pubkey => {
+        tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted) {
+          let body;
+          if (thread_id) { // replied message
+            body = '[cryptup:link:draft_reply:' + thread_id + ']\n\n' + encrypted.data;
+          } else if (draft_id) {
+            body = '[cryptup:link:draft_compose:' + draft_id + ']\n\n' + encrypted.data;
           } else {
-            app.email_provider_draft_update(draft_id, mime_message).then(response => {
-              S.cached('send_btn_note').text('Saved');
-              save_draft_in_process = false;
-            }, error => {
-              S.cached('send_btn_note').text('Not saved');
-              save_draft_in_process = false;
-            });
+            body = encrypted.data;
           }
+          let subject = S.cached('input_subject').val() || supplied_subject || 'FlowCrypt draft';
+          tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject}, [], function (mime_message) {
+            if (!draft_id) {
+              app.email_provider_draft_create(mime_message).then(response => {
+                S.cached('send_btn_note').text('Saved');
+                draft_id = response.id;
+                app.storage_set_draft_meta(true, response.id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
+                // recursing one more time, because we need the draft_id we get from this reply in the message itself
+                // essentially everytime we save draft for the first time, we have to save it twice
+                // save_draft_in_process will remain true because well.. it's still in process
+                draft_save(true); // force_save = true
+              }, error => {
+                S.cached('send_btn_note').text('Not saved');
+                save_draft_in_process = false; // it will only be set to false (done) if it's a failure (only in terms of the very first save)
+              });
+            } else {
+              app.email_provider_draft_update(draft_id, mime_message).then(response => {
+                S.cached('send_btn_note').text('Saved');
+                save_draft_in_process = false;
+              }, error => {
+                S.cached('send_btn_note').text('Not saved');
+                save_draft_in_process = false;
+              });
+            }
+          });
         });
       });
     }
@@ -426,18 +427,20 @@
 
   function collect_all_available_public_keys(account_email, recipients, callback) {
     app.storage_contact_get(recipients, function (contacts) {
-      const armored_pubkeys = [app.storage_get_armored_public_key(account_email)];
-      const emails_without_pubkeys = [];
-      tool.each(contacts, function (i, contact) {
-        if (contact && contact.has_pgp) {
-          armored_pubkeys.push(contact.pubkey);
-        } else if (contact && keyserver_lookup_results_by_email[contact.email] && keyserver_lookup_results_by_email[contact.email].has_pgp) {
-          armored_pubkeys.push(keyserver_lookup_results_by_email[contact.email].pubkey);
-        } else {
-          emails_without_pubkeys.push(recipients[i]);
-        }
+      app.storage_get_armored_public_key(account_email).then(armored_public_key => {
+        const armored_pubkeys = [];
+        const emails_without_pubkeys = [];
+        tool.each(contacts, function (i, contact) {
+          if (contact && contact.has_pgp) {
+            armored_pubkeys.push(contact.pubkey);
+          } else if (contact && keyserver_lookup_results_by_email[contact.email] && keyserver_lookup_results_by_email[contact.email].has_pgp) {
+            armored_pubkeys.push(keyserver_lookup_results_by_email[contact.email].pubkey);
+          } else {
+            emails_without_pubkeys.push(recipients[i]);
+          }
+        });
+        callback(armored_pubkeys, emails_without_pubkeys);
       });
-      callback(armored_pubkeys, emails_without_pubkeys);
     });
   }
 
@@ -540,63 +543,66 @@
 
   function sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
     S.now('send_btn_span').text('Signing');
-    const keyinfo = storage.keys_get(account_email, 'primary');
-    if (keyinfo) {
-      const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
-      app.storage_passphrase_get().then(passphrase => {
-        if (passphrase === null) {
-          app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
-          when_master_passphrase_entered(function (passphrase) {
-            if (passphrase) {
-              sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
-            } else { // timeout - reset
-              clearInterval(passphrase_interval);
-              reset_send_btn();
-            }
-          }, 60);
-        } else {
-          tool.env.set_up_require();
-          require(['emailjs-mime-codec'], function (MimeCodec) {
-
-            // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
-            // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
-            // resulting in.. wait for it.. signatures that don't match
-            // if you are reading this and have ideas about better solutions which:
-            //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
-            //  - don't require text to be sent as an attachment
-            //  - don't require all other clients to support PGP/MIME
-            // then please let me know. Eagerly waiting! In the meanwhile..
-            plaintext = MimeCodec.foldLines(plaintext, 76, true);
-
-            // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
-            // Removing them here will prevent Gmail from screwing up the signature
-            plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-
-            tool.crypto.key.decrypt(prv, passphrase);
-            tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
-              if (success) {
-                handle_send_btn_processing_error(function () {
-                  attach.collect_attachments(function (attachments) { // todo - not signing attachments
-                    app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
-                      S.now('send_btn_span').text('Sending');
-                      const body = {'text/plain': with_attached_pubkey_if_needed(signing_result)};
-                      do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-                    });
-                  });
-                });
-              } else {
-                catcher.report('error signing message. Error:' + signing_result);
-                alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
+    storage.keys_get(account_email, 'primary').then(primary_k => {
+      if (primary_k) {
+        const prv = openpgp.key.readArmored(primary_k.private).keys[0];
+        app.storage_passphrase_get().then(passphrase => {
+          if (passphrase === null) {
+            app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
+            when_master_passphrase_entered(function (passphrase) {
+              if (passphrase) {
+                sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+              } else { // timeout - reset
+                clearInterval(passphrase_interval);
                 reset_send_btn();
               }
+            }, 60);
+          } else {
+            tool.env.set_up_require();
+            require(['emailjs-mime-codec'], function (MimeCodec) {
+
+              // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
+              // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
+              // resulting in.. wait for it.. signatures that don't match
+              // if you are reading this and have ideas about better solutions which:
+              //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
+              //  - don't require text to be sent as an attachment
+              //  - don't require all other clients to support PGP/MIME
+              // then please let me know. Eagerly waiting! In the meanwhile..
+              plaintext = MimeCodec.foldLines(plaintext, 76, true);
+
+              // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
+              // Removing them here will prevent Gmail from screwing up the signature
+              plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
+
+              tool.crypto.key.decrypt(prv, passphrase);
+              tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
+                if (success) {
+                  handle_send_btn_processing_error(function () {
+                    attach.collect_attachments(function (attachments) { // todo - not signing attachments
+                      app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
+                        S.now('send_btn_span').text('Sending');
+                        with_attached_pubkey_if_needed(signing_result).then(signing_result => {
+                          const body = {'text/plain': signing_result};
+                          do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
+                        });
+                      });
+                    });
+                  });
+                } else {
+                  catcher.report('error signing message. Error:' + signing_result);
+                  alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
+                  reset_send_btn();
+                }
+              });
             });
-          });
-        }
-      });
-    } else {
-      alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
-      reset_send_btn();
-    }
+          }
+        });
+      } else {
+        alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
+        reset_send_btn();
+      }
+    });
   }
 
   function upload_attachments_to_cryptup(attachments, subscription, callback) {
@@ -696,43 +702,49 @@
   }
 
   function with_attached_pubkey_if_needed(encrypted) {
-    if (S.cached('icon_pubkey').is('.active')) {
-      encrypted += '\n\n' + app.storage_get_armored_public_key(account_email);
-    }
-    return encrypted;
+    return catcher.Promise((resolve, reject) => {
+      app.storage_get_armored_public_key(account_email).then(armored_public_key => {
+        if (S.cached('icon_pubkey').is('.active')) {
+          encrypted += '\n\n' + armored_public_key;
+        }
+        resolve(encrypted);
+      });
+    });
   }
 
   function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription, attachment_admin_codes) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
-      encrypted.data = with_attached_pubkey_if_needed(encrypted.data);
-      let body = {'text/plain': encrypted.data};
-      button_update_timeout = setTimeout(function () {
-        S.now('send_btn_span').text('sending');
-      }, 500);
-      app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
-        if (challenge) {
-          upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
-            if (short_id) {
-              body = format_password_protected_email(short_id, body, armored_pubkeys);
-              body = format_email_text_footer(body);
-              app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, () => {
-                do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-              });
-            } else {
-              if (error === tool.api.cryptup.auth_error) {
-                if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-                  app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-                }
+      with_attached_pubkey_if_needed(encrypted.data).then(encrypted_data => {
+        encrypted.data = encrypted_data;
+        let body = {'text/plain': encrypted.data};
+        button_update_timeout = setTimeout(function () {
+          S.now('send_btn_span').text('sending');
+        }, 500);
+        app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
+          if (challenge) {
+            upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
+              if (short_id) {
+                body = format_password_protected_email(short_id, body, armored_pubkeys);
+                body = format_email_text_footer(body);
+                app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, () => {
+                  do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
+                });
               } else {
-                alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+                if (error === tool.api.cryptup.auth_error) {
+                  if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+                    app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+                  }
+                } else {
+                  alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+                }
+                reset_send_btn();
               }
-              reset_send_btn();
-            }
-          });
-        } else {
-          body = format_email_text_footer(body);
-          do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-        }
+            });
+          } else {
+            body = format_email_text_footer(body);
+            do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
+          }
+        });
       });
     });
   }

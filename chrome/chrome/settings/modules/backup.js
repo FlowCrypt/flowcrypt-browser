@@ -22,16 +22,17 @@ window.flowcrypt_storage.get(url_params.account_email, ['setup_simple', 'email_p
   } else if(url_params.action === 'passphrase_change_gmail_backup') {
     if(storage.setup_simple) {
       display_block('loading');
-      let armored_private_key = window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private;
-      (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, armored_private_key, function (success) {
-        if(success) {
-          $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
-        } else {
-          $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
-          $('.reload').click(function () {
-            window.location.reload();
-          });
-        }
+      window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+        (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_k.private, function (success) {
+          if(success) {
+            $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
+          } else {
+            $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
+            $('.reload').click(function () {
+              window.location.reload();
+            });
+          }
+        });
       });
     } else { // should never happen on this action. Just in case.
       display_block('step_3_manual');
@@ -180,14 +181,21 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
   } else {
     let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
-    let armored_private_key = window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private;
-    let prv = openpgp.key.readArmored(armored_private_key).keys[0];
-    openpgp_key_encrypt(prv, new_passphrase);
-    window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, new_passphrase).then(() => {
-      window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true).then(() => {
-        window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true);
+    console.log('p1');
+    window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+      let prv = openpgp.key.readArmored(primary_k.private).keys[0];
+      openpgp_key_encrypt(prv, new_passphrase);
+      console.log('p2');
+      Promise.all([
+        window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, new_passphrase),
+        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true),
+        window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true),
+      ]).then(() => {
+        console.log('p3');
         (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, prv.armor(), function (success) {
+          console.log('p4');
           if(success) {
+            console.log('p5');
             write_backup_done_and_render(false, 'inbox');
           } else {
             $(self).text(btn_text);
@@ -199,42 +207,32 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
   }
 }));
 
-function is_master_private_key_encrypted() {
-  let key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
+function is_master_private_key_encrypted(primary_k) {
+  let key = openpgp.key.readArmored(primary_k.private).keys[0];
   return key.primaryKey.isDecrypted === false && !tool.crypto.key.decrypt(key, '').success;
 }
 
-function backup_on_email_provider() {
-  if(!is_master_private_key_encrypted()) {
-    alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
-  } else {
-    let btn_text = $(self).text();
-    $(self).html(tool.ui.spinner('white'));
-    let armored_private_key = window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private;
-    (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, armored_private_key, function (success) {
-      if(success) {
-        write_backup_done_and_render(false, 'inbox');
-      } else {
-        $(self).text(btn_text);
-        alert('Need internet connection to finish. Please click the button again to retry.');
-      }
-    });
-  }
+function backup_on_email_provider(primary_k) {
+  let btn_text = $(self).text();
+  $(self).html(tool.ui.spinner('white'));
+  (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_k.private, function (success) {
+    if(success) {
+      write_backup_done_and_render(false, 'inbox');
+    } else {
+      $(self).text(btn_text);
+      alert('Need internet connection to finish. Please click the button again to retry.');
+    }
+  });
 }
 
-function backup_as_file() { //todo - add a non-encrypted download option
-  if(!is_master_private_key_encrypted()) {
-    alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
-  } else {
-    let btn_text = $(self).text();
-    $(self).html(tool.ui.spinner('white'));
-    let armored_private_key = window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private;
-    tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', armored_private_key);
-    write_backup_done_and_render(false, 'file');
-  }
+function backup_as_file(primary_k) { //todo - add a non-encrypted download option
+  let btn_text = $(self).text();
+  $(self).html(tool.ui.spinner('white'));
+  tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_k.private);
+  write_backup_done_and_render(false, 'file');
 }
 
-function backup_by_print() { //todo - implement + add a non-encrypted print option
+function backup_by_print(primary_k) { //todo - implement + add a non-encrypted print option
   throw new Error('not implemented');
 }
 
@@ -254,15 +252,21 @@ function write_backup_done_and_render(prompt, method) {
 
 $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-  if(selected === 'inbox') {
-    backup_on_email_provider();
-  } else if(selected === 'file') {
-    backup_as_file();
-  } else if(selected === 'print') {
-    backup_by_print();
-  } else {
-    backup_refused();
-  }
+  window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+    if(is_master_private_key_encrypted(primary_k)) {
+      if(selected === 'inbox') {
+        backup_on_email_provider(primary_k);
+      } else if(selected === 'file') {
+        backup_as_file(primary_k);
+      } else if(selected === 'print') {
+        backup_by_print(primary_k);
+      } else {
+        backup_refused(primary_k);
+      }
+    } else {
+      alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
+    }
+  });
 }));
 
 $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {

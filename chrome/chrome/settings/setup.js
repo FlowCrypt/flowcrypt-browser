@@ -150,9 +150,11 @@ function prepare_and_render_add_key_from_backup() { // at this point, account is
     if(success && keys) {
       recovered_keys = keys;
       recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-      recovered_keys_successful_longids = window.flowcrypt_storage.keys_get(url_params.account_email).map(ki => ki.longid);
-      render_setup_done(url_params.account_email);
-      $('#step_4_more_to_recover .action_recover_remaining').click();
+      window.flowcrypt_storage.keys_get(url_params.account_email).then(stored_keys => {
+        recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
+        render_setup_done(url_params.account_email);
+        $('#step_4_more_to_recover .action_recover_remaining').click();
+      });
     } else {
       window.location = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
     }
@@ -186,17 +188,21 @@ function render_setup_done(account_email, key_backup_prompt) {
   if(key_backup_prompt) {
     window.location = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
   } else {
-    if (recovered_keys_longid_count > window.flowcrypt_storage.keys_get(account_email).length) { // recovery where not all keys were processed: some may have other pass phrase
-      display_block('step_4_more_to_recover');
-      $('h1').text('More keys to recover');
-      $('.email').text(account_email);
-      $('.private_key_count').text(window.flowcrypt_storage.keys_get(account_email).length);
-      $('.backups_count').text(recovered_keys.length);
-    } else { // successful and complete setup
-      display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
-      $('h1').text(url_params.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
-      $('.email').text(account_email);
-    }
+    window.flowcrypt_storage.keys_get(account_email).then(stored_keys => {
+      if (recovered_keys_longid_count > stored_keys.length) { // recovery where not all keys were processed: some may have other pass phrase
+        display_block('step_4_more_to_recover');
+        $('h1').text('More keys to recover');
+        $('.email').text(account_email);
+        window.flowcrypt_storage.keys_get(account_email).then(stored_keys => {
+          $('.private_key_count').text(stored_keys.length);
+          $('.backups_count').text(recovered_keys.length);
+        });
+      } else { // successful and complete setup
+        display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
+        $('h1').text(url_params.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
+        $('.email').text(account_email);
+      }
+    });
   }
 }
 
@@ -219,15 +225,19 @@ function finalize_setup(account_email, armored_pubkey, options) {
 }
 
 function save_keys(account_email, prvs, options, callback) {
-  let promises = [
-    window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase)),
-    window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, null, options.passphrase || ''),
+  console.log('save_keys');
+  let promise_factories = [
+    () => window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_passphrase_needed', Boolean(options.passphrase)),
+    () => window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, null, options.passphrase || ''),
   ];
+  console.log(1);
   for(let i = 0; i < prvs.length; i++) { // save all keys
-    window.flowcrypt_storage.keys_add(account_email, prvs[i].armor());
-    promises.push(window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase));
+    promise_factories.push(() => window.flowcrypt_storage.keys_add(account_email, prvs[i].armor()));
+    promise_factories.push(() => window.flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, tool.crypto.key.longid(prvs[i]), options.passphrase));
   }
-  Promise.all(promises).then(() => {
+  console.log(2);
+  Promise.sequence(promise_factories).then(() => { // sequential write because storage has race condition
+    console.log(3);
     let contacts = [];
     tool.each(all_addresses, function (i, address) {
       let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
@@ -236,6 +246,10 @@ function save_keys(account_email, prvs, options, callback) {
     window.flowcrypt_storage.db_open(function (db) {
       window.flowcrypt_storage.db_contact_save(db, contacts, callback);
     });
+  }, error => {
+    console.log(error);
+    alert('aaa!');
+    alert('error');
   });
 }
 
@@ -359,19 +373,21 @@ $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.u
 $('#step_4_more_to_recover .action_recover_remaining').click(function () {
   display_block('step_2_recovery');
   $('#recovery_pasword').val('');
-  let got = window.flowcrypt_storage.keys_get(url_params.account_email).length;
-  let bups = recovered_keys.length;
-  let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
-  if(url_params.action !== 'add_key') {
-    $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
-    $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
-    $('#step_2_recovery .skip_recover_remaining').click(function () {
-      window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
-    });
-  } else {
-    $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try different pass phrases to unlock all backups.');
-    $('#step_2_recovery .line_skip_recovery').css('display', 'none');
-  }
+  window.flowcrypt_storage.keys_get(url_params.account_email).then(stored_keys => {
+    let got = stored_keys.length;
+    let bups = recovered_keys.length;
+    let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
+    if(url_params.action !== 'add_key') {
+      $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
+      $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+      $('#step_2_recovery .skip_recover_remaining').click(function () {
+        window.location = tool.env.url_create('index.htm', { account_email: url_params.account_email });
+      });
+    } else {
+      $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try different pass phrases to unlock all backups.');
+      $('#step_2_recovery .line_skip_recovery').css('display', 'none');
+    }
+  });
 });
 
 $('.action_skip_recovery').click(function () {

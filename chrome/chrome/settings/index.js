@@ -95,13 +95,14 @@ function initialize() {
         }
         display_original('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
-        let private_keys = window.flowcrypt_storage.keys_get(url_params.account_email);
-        if(!private_keys.length) {
-          render_storage_read_error();
-        } else if(private_keys.length > 4) {
-          $('.key_list').css('overflow-y', 'scroll');
-        }
-        add_key_rows_html(private_keys);
+        window.flowcrypt_storage.keys_get(url_params.account_email).then(private_keys => {
+          if(!private_keys.length) {
+            render_storage_read_error();
+          } else if(private_keys.length > 4) {
+            $('.key_list').css('overflow-y', 'scroll');
+          }
+          add_key_rows_html(private_keys);
+        });
       } else {
         display_original('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -186,8 +187,8 @@ function add_key_rows_html(private_keys) {
     show_settings_page($(this).attr('page'), $(this).attr('addurltext') || '');
   });
   $('.action_remove_key').click(function () {
-    window.flowcrypt_storage.keys_remove(url_params.account_email, $(this).attr('longid'));
     Promise.all([
+      window.flowcrypt_storage.keys_remove(url_params.account_email, $(this).attr('longid')),
       window.flowcrypt_storage.passphrase_save('local', url_params.account_email, $(this).attr('longid'), undefined),
       window.flowcrypt_storage.passphrase_save('session', url_params.account_email, $(this).attr('longid'), undefined),
     ]).then(() => reload(true));

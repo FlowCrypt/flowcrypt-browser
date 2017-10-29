@@ -126,16 +126,17 @@ window.flowcrypt_storage.db_open(function (db) {
   }
 
   function handle_private_key_mismatch(account_email, message) { //todo - make it work for multiple stored keys
-    let msg_diagnosis = tool.diagnose.message_pubkeys(account_email, message);
-    if(msg_diagnosis.found_match) {
-      render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.encrypted_correctly_file_bug);
-    } else {
-      if(msg_diagnosis.receivers === 1) {
-        render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.single_sender + window.lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
+    tool.diagnose.message_pubkeys(account_email, message).then(msg_diagnosis => {
+      if(msg_diagnosis.found_match) {
+        render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.encrypted_correctly_file_bug);
       } else {
-        render_error(window.lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
+        if(msg_diagnosis.receivers === 1) {
+          render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.single_sender + window.lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
+        } else {
+          render_error(window.lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
+        }
       }
-    }
+    });
   }
 
   function decrypt_and_save_attachment_to_downloads(success, encrypted_data, name, type) {
@@ -338,26 +339,30 @@ window.flowcrypt_storage.db_open(function (db) {
           }
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
-        } else if(!result.counts.potentially_matching_keys && !window.flowcrypt_storage.keys_get(url_params.account_email, 'primary')) {
-          render_error(window.lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
-        } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
-          if(url_params.has_password && !optional_password) {
-            render_password_prompt();
-          } else {
-            handle_private_key_mismatch(url_params.account_email, result.message);
-          }
-        } else if(result.counts.wrong_password) {
-          alert('Incorrect answer, please try again');
-          render_password_prompt();
-        } else if(result.counts.unsecure_mdc && !unsecure_mdc_ignored) {
-          openpgp.config.ignore_mdc_error = true;
-          unsecure_mdc_ignored = true;
-          initialize(); // try again with mdc missing error ignored
-        } else if(result.counts.errors) {
-          render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
         } else {
-          delete result.message;
-          render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+          window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+            if(!result.counts.potentially_matching_keys && !primary_k) {
+              render_error(window.lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
+            } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
+              if(url_params.has_password && !optional_password) {
+                render_password_prompt();
+              } else {
+                handle_private_key_mismatch(url_params.account_email, result.message);
+              }
+            } else if(result.counts.wrong_password) {
+              alert('Incorrect answer, please try again');
+              render_password_prompt();
+            } else if(result.counts.unsecure_mdc && !unsecure_mdc_ignored) {
+              openpgp.config.ignore_mdc_error = true;
+              unsecure_mdc_ignored = true;
+              initialize(); // try again with mdc missing error ignored
+            } else if(result.counts.errors) {
+              render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
+            } else {
+              delete result.message;
+              render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+            }
+          });
         }
       });
     } else {

@@ -71,13 +71,15 @@ $('.confirm_passphrase_requirement_change').click(function () {
       }
     });
   } else { // save pass phrase
-    var key = openpgp.key.readArmored(window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').private).keys[0];
-    if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {
-      window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, $('input#passphrase_entry').val()).then(() => window.location.reload());
-    } else {
-      alert('Pass phrase did not match, please try again.');
-      $('input#passphrase_entry').val('').focus();
-    }
+    window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
+      var key = openpgp.key.readArmored(primary_k.private).keys[0];
+      if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val()).success) {
+        window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, $('input#passphrase_entry').val()).then(() => window.location.reload());
+      } else {
+        alert('Pass phrase did not match, please try again.');
+        $('input#passphrase_entry').val('').focus();
+      }
+    });
   }
 });
 
