@@ -635,7 +635,7 @@
     auth_info: flowcrypt_auth_info,
     keys_object: keys_object,
     keys_add: keys_add,
-    keys_get: keys_get, // todo - async commmon.js
+    keys_get: keys_get,
     keys_remove: keys_remove,
     passphrase_get: passphrase_get,
     passphrase_save: passphrase_save,
