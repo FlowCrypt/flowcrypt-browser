@@ -4,7 +4,6 @@
 
 function migrate_account(data, sender, respond_done) {
   window.flowcrypt_storage.get(data.account_email, ['version'], function(account_storage) {
-    // if account_storage.version < ....
     window.flowcrypt_storage.set(data.account_email, { version: catcher.version('int') }, respond_done);
     account_consistency_fixes(data.account_email);
     account_update_status_pks(data.account_email);
@@ -22,6 +21,164 @@ function migrate_global(callback) {
   });
 }
 
+let old_version_storage = {
+  private_keys_get: (account_email, longid) => { // left here to be used for migration to new storage schema
+    let keys = [];
+    let private_keys = this.get('local', account_email, 'private_keys');
+    let contains_primary = false;
+    tool.each(private_keys || [], (i, keyinfo) => {
+      if(keyinfo.primary === true) {
+        contains_primary = true;
+      }
+      keys.push(keyinfo);
+    });
+    let primary_key_armored = this.get('local', account_email, 'master_private_key'); // legacy storage - to migrate
+    if(!contains_primary && (primary_key_armored || '').trim()) {
+      keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
+    }
+    if(typeof longid !== 'undefined') { // looking for a specific key(s)
+      let found;
+      if(typeof longid === 'object') { // looking for an array of keys
+        found = [];
+        tool.each(keys, (i, keyinfo) => {
+          if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
+            found.push(keyinfo);
+          }
+        });
+      } else { // looking for a single key
+        found = null;
+        tool.each(keys, (i, keyinfo) => {
+          if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
+            found = keyinfo;
+          }
+        });
+      }
+      return found;
+    } else {
+      return keys;
+    }
+  },
+  private_keys_add: (account_email, new_key_armored, replace_if_exists) => { // left here to be used for migration to new storage schema
+    let private_keys = this.private_keys_get(account_email);
+    let is_first_key = (private_keys.length === 0);
+    let do_add = true;
+    let do_update = true;
+    let new_key_longid = tool.crypto.key.longid(new_key_armored);
+    if(new_key_longid) {
+      tool.each(private_keys, (i, keyinfo) => {
+        if(new_key_longid === keyinfo.longid) {
+          do_add = false;
+          if(replace_if_exists === true) {
+            if(keyinfo.primary) {
+              this.set('local', account_email, 'master_private_key', new_key_armored); // legacy storage location
+            }
+            private_keys[i] = { armored: new_key_armored, longid: new_key_longid, primary: keyinfo.primary };
+          } else {
+            do_update = false;
+          }
+        }
+      });
+    } else {
+      do_add = do_update = false;
+    }
+    if(do_add) {
+      private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: is_first_key });
+    }
+    if(do_update) {
+      this.set('local', account_email, 'private_keys', private_keys);
+    }
+  },
+  passphrase_get: (account_email, longid) => {
+    if(longid) {
+      let stored = this.get('local', account_email, 'passphrase_' + longid);
+      if(stored) {
+        return stored;
+      } else {
+        let temporary = this.get('session', account_email, 'passphrase_' + longid);
+        if(temporary) {
+          return temporary;
+        } else {
+          let primary_k = keys_get(account_email, 'primary');
+          if(primary_k && primary_k.longid === longid) {
+            this.passphrase_get(account_email, null, callback); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+          } else {
+            return null;
+          }
+        }
+      }
+    } else { //todo - this whole part would also be unnecessary if we did a migration
+      if(this.get('local', account_email, 'master_passphrase_needed') === false) {
+        return '';
+      } else {
+        let stored = this.get('local', account_email, 'master_passphrase');
+        if(stored) {
+          return stored;
+        } else {
+          let from_session = this.get('session', account_email, 'master_passphrase');
+          if(from_session) {
+            return from_session;
+          } else {
+            return null;
+          }
+        }
+      }
+    }
+  },
+  set: (storage_type, account_email, key, value) => {
+    let storage = this.get_storage(storage_type);
+    let account_key = window.flowcrypt_storage.key(account_email, key);
+    if(typeof value === 'undefined') {
+      storage.removeItem(account_key);
+    } else if(value === null) {
+      storage[account_key] = 'null#null';
+    } else if(value === true || value === false) {
+      storage[account_key] = 'bool#' + value;
+    } else if(value + 0 === value) {
+      storage[account_key] = 'int#' + value;
+    } else if(typeof value === 'object') {
+      storage[account_key] = 'json#' + JSON.stringify(value);
+    } else {
+      storage[account_key] = 'str#' + value;
+    }
+  },
+  get: (storage_type, account_email, key, parent_tab_id) => {
+    let storage = this.get_storage(storage_type);
+    let value = storage[window.flowcrypt_storage.key(account_email, key)];
+    if(typeof value === 'undefined') {
+      return value;
+    } else if(value === 'null#null') {
+      return null;
+    } else if(value === 'bool#true') {
+      return true;
+    } else if(value === 'bool#false') {
+      return false;
+    } else if(value.indexOf('int#') === 0) {
+      return Number(value.replace('int#', '', 1));
+    } else if(value.indexOf('json#') === 0) {
+      return JSON.parse(value.replace('json#', '', 1));
+    } else {
+      return value.replace('str#', '', 1);
+    }
+  },
+  get_storage: (storage_type) => {
+    try {
+      if(storage_type === 'local') {
+        return localStorage;
+      } else if(storage_type === 'session') {
+        return sessionStorage;
+      } else {
+        throw new Error('unknown type of storage: "' + storage_type + '", use either "local" or "session"');
+      }
+    } catch(error) {
+      if(error.name === 'SecurityError') {
+        return null;
+      } else {
+        throw error;
+      }
+    }
+  },
+};
+
 function global_migrate_v_433_account_private_keys_array_if_needed(callback) {
   if(!localStorage.uses_account_keys_array) {
     catcher.log('migrating:uses_account_keys_array');
@@ -38,10 +195,10 @@ function global_migrate_v_433_account_private_keys_array(callback) {
   window.flowcrypt_storage.account_emails_get(function (emails) {
     let processed_emails_to_log = [];
     tool.each(emails, function (i, account_email) {
-      let legacy_keys = legacy_storage_private_keys_get(account_email);
+      let legacy_keys = old_version_storage.private_keys_get(account_email);
       if(legacy_keys.length) {
         catcher.log('migrating:uses_account_keys_array: ' + account_email);
-        let master_longid = legacy_storage_private_keys_get(account_email, 'primary').longid;
+        let master_longid = old_version_storage.private_keys_get(account_email, 'primary').longid;
         let keys = legacy_keys.map(function (ki) { return window.flowcrypt_storage.keys_object(ki.armored || ki.private, ki.longid === master_longid);});
         window.flowcrypt_storage.legacy_storage_set('local', account_email, 'keys', keys);
         window.flowcrypt_storage.legacy_storage_set('local', account_email, 'private_keys', undefined);
@@ -74,112 +231,6 @@ function global_migrate_v_422_check_and_resolve_naked_key_vulnerability_if_neede
   }
 }
 
-
-function legacy_storage_private_keys_get(account_email, longid) { // left here to be used for migration to new storage schema
-  let keys = [];
-  let private_keys = window.flowcrypt_storage.legacy_storage_get('local', account_email, 'private_keys');
-  let contains_primary = false;
-  tool.each(private_keys || [], (i, keyinfo) => {
-    if(keyinfo.primary === true) {
-      contains_primary = true;
-    }
-    keys.push(keyinfo);
-  });
-  let primary_key_armored = window.flowcrypt_storage.legacy_storage_get('local', account_email, 'master_private_key'); // legacy storage - to migrate
-  if(!contains_primary && (primary_key_armored || '').trim()) {
-    keys.push({ armored: primary_key_armored, primary: true, longid: tool.crypto.key.longid(primary_key_armored) });
-  }
-  if(typeof longid !== 'undefined') { // looking for a specific key(s)
-    let found;
-    if(typeof longid === 'object') { // looking for an array of keys
-      found = [];
-      tool.each(keys, (i, keyinfo) => {
-        if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
-          found.push(keyinfo);
-        }
-      });
-    } else { // looking for a single key
-      found = null;
-      tool.each(keys, (i, keyinfo) => {
-        if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
-          found = keyinfo;
-        }
-      });
-    }
-    return found;
-  } else {
-    return keys;
-  }
-}
-
-function legacy_storage_private_keys_add(account_email, new_key_armored, replace_if_exists) { // left here to be used for migration to new storage schema
-  let private_keys = legacy_storage_private_keys_get(account_email);
-  let is_first_key = (private_keys.length === 0);
-  let do_add = true;
-  let do_update = true;
-  let new_key_longid = tool.crypto.key.longid(new_key_armored);
-  if(new_key_longid) {
-    tool.each(private_keys, (i, keyinfo) => {
-      if(new_key_longid === keyinfo.longid) {
-        do_add = false;
-        if(replace_if_exists === true) {
-          if(keyinfo.primary) {
-            window.flowcrypt_storage.legacy_storage_set('local', account_email, 'master_private_key', new_key_armored); // legacy storage location
-          }
-          private_keys[i] = { armored: new_key_armored, longid: new_key_longid, primary: keyinfo.primary };
-        } else {
-          do_update = false;
-        }
-      }
-    });
-  } else {
-    do_add = do_update = false;
-  }
-  if(do_add) {
-    private_keys.push({ armored: new_key_armored, longid: new_key_longid, primary: is_first_key });
-  }
-  if(do_update) {
-    window.flowcrypt_storage.legacy_storage_set('local', account_email, 'private_keys', private_keys);
-  }
-}
-
-function legacy_storage_passphrase_get(account_email, longid) {
-  if(longid) {
-    let stored = storage_set('local', account_email, 'passphrase_' + longid);
-    if(stored) {
-      return stored;
-    } else {
-      let temporary = storage_set('session', account_email, 'passphrase_' + longid);
-      if(temporary) {
-        return temporary;
-      } else {
-        let primary_k = keys_get(account_email, 'primary');
-        if(primary_k && primary_k.longid === longid) {
-          legacy_storage_passphrase_get(account_email, null, callback); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
-        } else {
-          return null;
-        }
-      }
-    }
-  } else { //todo - this whole part would also be unnecessary if we did a migration
-    if(storage_set('local', account_email, 'master_passphrase_needed') === false) {
-      return '';
-    } else {
-      let stored = storage_set('local', account_email, 'master_passphrase');
-      if(stored) {
-        return stored;
-      } else {
-        let from_session = storage_set('session', account_email, 'master_passphrase');
-        if(from_session) {
-          return from_session;
-        } else {
-          return null;
-        }
-      }
-    }
-  }
-}
-
 function global_migrate_v_422_check_and_resolve_naked_key_vulnerability(callback) {
   // for a short period, keys that were recovered from email backups would be stored without encryption. The code below fixes it retroactively
   // this only affected users on machines that were recovered from a backup email who choose to keep pass phrase in session only
@@ -193,15 +244,15 @@ function global_migrate_v_422_check_and_resolve_naked_key_vulnerability(callback
     let promises = [];
     let fixable_count = 0;
     tool.each(emails, function(i, account_email) {
-      let account_keys = legacy_storage_private_keys_get(account_email);
+      let account_keys = old_version_storage.private_keys_get(account_email);
       let account_keys_to_fix = [];
       tool.each(account_keys, function(i, keyinfo) {
         let k  = openpgp.key.readArmored(keyinfo.armored || keyinfo.private).keys[0];
         if(k.primaryKey.isDecrypted) {
-          let passphrase = legacy_storage_passphrase_get(account_email, keyinfo.longid) || legacy_storage_passphrase_get(account_email);
+          let passphrase = old_version_storage.passphrase_get(account_email, keyinfo.longid) || old_version_storage.passphrase_get(account_email);
           if(typeof passphrase === 'string' && passphrase) {
             k.encrypt(passphrase);
-            legacy_storage_private_keys_add(account_email, k.armor(), true);
+            old_version_storage.private_keys_add(account_email, k.armor(), true);
             catcher.log('fixed naked key ' + keyinfo.longid + ' on account ' + account_email);
           } else {
             account_keys_to_fix.push(keyinfo);
@@ -236,7 +287,7 @@ function global_migrate_v_422_do_fix_account_keys(account_email, fixable_keyinfo
             $.each(fixable_keyinfos, function(i, fixable_keyinfo) {
               $.each(backed_keys, function(i, backed_k) {
                 if(tool.crypto.key.longid(backed_keys) === fixable_keyinfos.longid) {
-                  legacy_storage_private_keys_add(account_email, backed_k.armor(), true);
+                  old_version_storage.private_keys_add(account_email, backed_k.armor(), true);
                   catcher.log('fixed naked key ' + fixable_keyinfos.longid + ' on account ' + account_email);
                   count_resolved++;
                   return false; // next fixable key
