@@ -1443,7 +1443,7 @@
     return catcher.Promise(function(resolve, reject) {
       var message_key_ids = message.getEncryptionKeyIds();
       storage.keys_get(account_email).then(function(private_keys) {
-        var local_key_ids = [].concat.apply([], private_keys.map(ki => ki.pubkey).map(crypto_key_ids));
+        var local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(crypto_key_ids));
         var diagnosis = { found_match: false, receivers: message_key_ids.length };
         tool.each(message_key_ids, function (i, msg_k_id) {
           tool.each(local_key_ids, function (j, local_k_id) {
@@ -1924,7 +1924,7 @@
       }
       keys.with_passphrases = [];
       keys.without_passphrases = [];
-      keys.potentially_matching.map(keyinfo => storage.passphrase_get(account_email, keyinfo.longid)).then(passphrases => {
+      Promise.all(keys.potentially_matching.map(keyinfo => storage.passphrase_get(account_email, keyinfo.longid))).then(passphrases => {
         tool.each(keys.potentially_matching, function (i, keyinfo) {
           if(passphrases[i] !== null) {
             var key = openpgp.key.readArmored(keyinfo.private).keys[0];

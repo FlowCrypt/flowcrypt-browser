@@ -428,7 +428,7 @@
   function collect_all_available_public_keys(account_email, recipients, callback) {
     app.storage_contact_get(recipients, function (contacts) {
       app.storage_get_armored_public_key(account_email).then(armored_public_key => {
-        const armored_pubkeys = [];
+        const armored_pubkeys = [armored_public_key];
         const emails_without_pubkeys = [];
         tool.each(contacts, function (i, contact) {
           if (contact && contact.has_pgp) {

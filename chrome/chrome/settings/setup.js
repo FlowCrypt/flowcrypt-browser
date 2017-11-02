@@ -176,7 +176,7 @@ function submit_public_key_if_needed(account_email, armored_pubkey, options, cal
         // already submitted and ATTESTED another pubkey for this email
         callback();
       } else {
-        submit_pubkeys(addresses, armored_pubkey, () => callback);  // ignores submit errors
+        submit_pubkeys(addresses, armored_pubkey, () => callback());  // ignores submit errors
       }
     } else {
       callback();
