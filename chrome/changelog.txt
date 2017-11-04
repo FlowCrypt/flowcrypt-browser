@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.0.5 on November 3, 2017: Refactoring</b>
+internal: preparing new extension storage
+
 <b>version 5.0.4 on October 26, 2017: Sending stuck</b>
 composing: send message getting stuck
 setup: fix google inbox
