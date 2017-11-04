@@ -61,15 +61,16 @@ tool.browser.message.tab_id(function (tab_id) {
     },
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
-  initialize();
-
-  if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
-    if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
-      show_settings_page(url_params.page, '&use_account_email=1');
-    } else {
-      show_settings_page(url_params.page, url_params.page_url_params ? JSON.parse(url_params.page_url_params) : null);
+  initialize().then(() => {
+    if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
+      if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
+        show_settings_page(url_params.page, '&use_account_email=1');
+      } else {
+        show_settings_page(url_params.page, url_params.page_url_params ? JSON.parse(url_params.page_url_params) : null);
+      }
     }
-  }
+  });
+
 });
 
 function display_original(selector) {
@@ -82,42 +83,50 @@ function display_original(selector) {
 }
 
 function initialize() {
-  if(url_params.account_email) {
-    $('.email-address').text(url_params.account_email);
-    $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
-    window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], storage => {
-      google_token_scopes = storage.google_token_scopes;
-      if(storage.setup_done) {
-        render_subscription_status_header();
-        render_encrypted_contact_page_status();
-        if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read') && (storage.email_provider || 'gmail') === 'gmail') {
-          $('.auth_denied_warning').css('display', 'block');
-        }
-        display_original('.hide_if_setup_not_done');
-        $('.show_if_setup_not_done').css('display', 'none');
-        window.flowcrypt_storage.keys_get(url_params.account_email).then(private_keys => {
-          if(!private_keys.length) {
-            render_storage_read_error();
-          } else if(private_keys.length > 4) {
-            $('.key_list').css('overflow-y', 'scroll');
+  return catcher.Promise((resolve, reject) => {
+    if(url_params.account_email) {
+      $('.email-address').text(url_params.account_email);
+      $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
+      window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'google_token_scopes', 'email_provider'], storage => {
+        google_token_scopes = storage.google_token_scopes;
+        if(storage.setup_done) {
+          render_subscription_status_header();
+          render_encrypted_contact_page_status();
+          if(!tool.api.gmail.has_scope(storage.google_token_scopes, 'read') && (storage.email_provider || 'gmail') === 'gmail') {
+            $('.auth_denied_warning').css('display', 'block');
           }
-          add_key_rows_html(private_keys);
-        });
-      } else {
-        display_original('.show_if_setup_not_done');
-        $('.hide_if_setup_not_done').css('display', 'none');
-      }
-    });
-  } else {
-    window.flowcrypt_storage.account_emails_get(function (account_emails) {
-      if(account_emails && account_emails[0]) {
-        window.location = tool.env.url_create('index.htm', { account_email: account_emails[0] });
-      } else {
-        $('.show_if_setup_not_done').css('display', 'initial');
-        $('.hide_if_setup_not_done').css('display', 'none');
-      }
-    });
-  }
+          display_original('.hide_if_setup_not_done');
+          $('.show_if_setup_not_done').css('display', 'none');
+          if(url_params.advanced) {
+            $("#settings").toggleClass("advanced");
+          }
+          window.flowcrypt_storage.keys_get(url_params.account_email).then(private_keys => {
+            if(!private_keys.length) {
+              render_storage_read_error();
+            } else if(private_keys.length > 4) {
+              $('.key_list').css('overflow-y', 'scroll');
+            }
+            add_key_rows_html(private_keys);
+            resolve();
+          });
+        } else {
+          display_original('.show_if_setup_not_done');
+          $('.hide_if_setup_not_done').css('display', 'none');
+          resolve();
+        }
+      });
+    } else {
+      window.flowcrypt_storage.account_emails_get(function (account_emails) {
+        if(account_emails && account_emails[0]) {
+          window.location = tool.env.url_create('index.htm', { account_email: account_emails[0] });
+        } else {
+          $('.show_if_setup_not_done').css('display', 'initial');
+          $('.hide_if_setup_not_done').css('display', 'none');
+        }
+        resolve();
+      });
+    }
+  });
 }
 
 function render_encrypted_contact_page_status() {
@@ -266,10 +275,6 @@ $('body').click(function () {
 $(".toggle-settings").click(function () {
   $("#settings").toggleClass("advanced");
 });
-
-if(url_params.advanced) {
-  $("#settings").toggleClass("advanced");
-}
 
 $("#switch-account, #toggle-accounts-profile-img").click(function (event) {
   event.stopPropagation();
