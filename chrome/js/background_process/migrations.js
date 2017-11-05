@@ -21,7 +21,7 @@ function migrate_global(callback) {
 }
 
 let old_version_storage = {
-  private_keys_get: (account_email, longid) => { // left here to be used for migration to new storage schema
+  private_keys_get: function (account_email, longid) { // left here to be used for migration to new storage schema
     let keys = [];
     let private_keys = this.get('local', account_email, 'private_keys');
     let contains_primary = false;
@@ -57,7 +57,7 @@ let old_version_storage = {
       return keys;
     }
   },
-  private_keys_add: (account_email, new_key_armored, replace_if_exists) => { // left here to be used for migration to new storage schema
+  private_keys_add: function(account_email, new_key_armored, replace_if_exists) { // left here to be used for migration to new storage schema
     let private_keys = this.private_keys_get(account_email);
     let is_first_key = (private_keys.length === 0);
     let do_add = true;
@@ -87,7 +87,7 @@ let old_version_storage = {
       this.set('local', account_email, 'private_keys', private_keys);
     }
   },
-  passphrase_get: (account_email, longid) => {
+  passphrase_get: function (account_email, longid) {
     if(longid) {
       let stored = this.get('local', account_email, 'passphrase_' + longid);
       if(stored) {
@@ -123,7 +123,7 @@ let old_version_storage = {
       }
     }
   },
-  set: (storage_type, account_email, key, value) => {
+  set: function (storage_type, account_email, key, value) {
     let storage = this.get_storage(storage_type);
     let account_key = window.flowcrypt_storage.key(account_email, key);
     if(typeof value === 'undefined') {
@@ -140,7 +140,7 @@ let old_version_storage = {
       storage[account_key] = 'str#' + value;
     }
   },
-  get: (storage_type, account_email, key, parent_tab_id) => {
+  get: function (storage_type, account_email, key, parent_tab_id) {
     let storage = this.get_storage(storage_type);
     let value = storage[window.flowcrypt_storage.key(account_email, key)];
     if(typeof value === 'undefined') {
@@ -159,7 +159,7 @@ let old_version_storage = {
       return value.replace('str#', '', 1);
     }
   },
-  get_storage: (storage_type) => {
+  get_storage: function (storage_type) {
     try {
       if(storage_type === 'local') {
         return localStorage;
