@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.0.6 on November 5, 2017: Refactoring bugfix</b>
+internal: fix migration bug
+
 <b>version 5.0.5 on November 3, 2017: Refactoring</b>
 internal: preparing new extension storage
 
