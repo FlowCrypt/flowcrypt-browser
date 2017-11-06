@@ -110,7 +110,7 @@
     storage_get_email_footer: () => null,
     storage_get_hide_message_password: () => false,
     storage_get_subscription_info: (cb) => { if(typeof cb === 'function') { cb({}); } return {}; }, // returns cached result, callbacks with fresh result
-    storage_get_armored_public_key: (sender_email) => null,
+    storage_get_armored_public_key: (sender_email) => catcher.Promise((resolve, reject) => {resolve(null)}),
     storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {resolve()}),
     storage_passphrase_get: () => catcher.Promise((resolve, reject) => {resolve()}),
     storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => { callback(); },
@@ -319,41 +319,43 @@
       save_draft_in_process = true;
       S.cached('send_btn_note').text('Saving');
       app.storage_get_armored_public_key(account_email).then(armored_pubkey => {
-        tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted) {
-          let body;
-          if (thread_id) { // replied message
-            body = '[cryptup:link:draft_reply:' + thread_id + ']\n\n' + encrypted.data;
-          } else if (draft_id) {
-            body = '[cryptup:link:draft_compose:' + draft_id + ']\n\n' + encrypted.data;
-          } else {
-            body = encrypted.data;
-          }
-          let subject = S.cached('input_subject').val() || supplied_subject || 'FlowCrypt draft';
-          tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject}, [], function (mime_message) {
-            if (!draft_id) {
-              app.email_provider_draft_create(mime_message).then(response => {
-                S.cached('send_btn_note').text('Saved');
-                draft_id = response.id;
-                app.storage_set_draft_meta(true, response.id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
-                // recursing one more time, because we need the draft_id we get from this reply in the message itself
-                // essentially everytime we save draft for the first time, we have to save it twice
-                // save_draft_in_process will remain true because well.. it's still in process
-                draft_save(true); // force_save = true
-              }, error => {
-                S.cached('send_btn_note').text('Not saved');
-                save_draft_in_process = false; // it will only be set to false (done) if it's a failure (only in terms of the very first save)
-              });
+        if(armored_pubkey) {
+          tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted) {
+            let body;
+            if (thread_id) { // replied message
+              body = '[cryptup:link:draft_reply:' + thread_id + ']\n\n' + encrypted.data;
+            } else if (draft_id) {
+              body = '[cryptup:link:draft_compose:' + draft_id + ']\n\n' + encrypted.data;
             } else {
-              app.email_provider_draft_update(draft_id, mime_message).then(response => {
-                S.cached('send_btn_note').text('Saved');
-                save_draft_in_process = false;
-              }, error => {
-                S.cached('send_btn_note').text('Not saved');
-                save_draft_in_process = false;
-              });
+              body = encrypted.data;
             }
+            let subject = S.cached('input_subject').val() || supplied_subject || 'FlowCrypt draft';
+            tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject}, [], function (mime_message) {
+              if (!draft_id) {
+                app.email_provider_draft_create(mime_message).then(response => {
+                  S.cached('send_btn_note').text('Saved');
+                  draft_id = response.id;
+                  app.storage_set_draft_meta(true, response.id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
+                  // recursing one more time, because we need the draft_id we get from this reply in the message itself
+                  // essentially everytime we save draft for the first time, we have to save it twice
+                  // save_draft_in_process will remain true because well.. it's still in process
+                  draft_save(true); // force_save = true
+                }, error => {
+                  S.cached('send_btn_note').text('Not saved');
+                  save_draft_in_process = false; // it will only be set to false (done) if it's a failure (only in terms of the very first save)
+                });
+              } else {
+                app.email_provider_draft_update(draft_id, mime_message).then(response => {
+                  S.cached('send_btn_note').text('Saved');
+                  save_draft_in_process = false;
+                }, error => {
+                  S.cached('send_btn_note').text('Not saved');
+                  save_draft_in_process = false;
+                });
+              }
+            });
           });
-        });
+        }
       });
     }
   }
