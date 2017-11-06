@@ -4,6 +4,7 @@
 
 let settings_url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'embedded']);
 let settings_tab_id_global = undefined;
+let ignore_email_aliases = ['nobody@google.com'];
 
 tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
@@ -16,7 +17,7 @@ function fetch_account_aliases_from_gmail(account_email, callback, query, from_e
     if(headers && headers.from) {
       fetch_account_aliases_from_gmail(account_email, callback, query + ' -from:"' + tool.str.parse_email(headers.from).email + '"', from_emails.concat(tool.str.parse_email(headers.from).email));
     } else {
-      callback(from_emails);
+      callback(from_emails.filter(email => !tool.value(email).in(ignore_email_aliases)));
     }
   });
 }
