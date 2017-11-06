@@ -2774,7 +2774,7 @@
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if(attachment.name === 'signature.asc' || attachment.type === 'application/pgp-signature') {
       return  'signature';
-    } else if(attachment.name === '') {
+    } else if(attachment.name === '' && !tool.value('image/').in(attachment.type)) {
       return attachment.size < 100 ? 'hidden' : 'message';
     } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
