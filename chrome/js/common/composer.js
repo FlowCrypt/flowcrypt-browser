@@ -1303,7 +1303,7 @@
       }
     }
     let t = new Date();
-    let time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
+    let time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     S.cached('reply_message_successful').find('div.replied_time').text(time);
     S.cached('reply_message_successful').css('display', 'block');
     if (message.attachments.length) {
