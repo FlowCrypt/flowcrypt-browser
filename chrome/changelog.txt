@@ -1,5 +1,12 @@
 <div>
 
+<b>version 5.0.7 on November 6, 2017: Noname</b>
+reading: noname inline images should not trigger FlowCrypt
+setup: remove and ignore nobody@google.com aliases
+composing: time formatting wrong on a sent message
+composing: error searching contacts fix
+composing: error saving draft fix
+
 <b>version 5.0.6 on November 5, 2017: Refactoring bugfix</b>
 internal: fix migration bug
 
