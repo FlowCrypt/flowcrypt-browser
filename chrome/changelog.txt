@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.0.8 on November 10, 2017: Bugfixes</b>
+internal: various bugfixes
+
 <b>version 5.0.7 on November 6, 2017: Noname</b>
 reading: noname inline images should not trigger FlowCrypt
 setup: remove and ignore nobody@google.com aliases
