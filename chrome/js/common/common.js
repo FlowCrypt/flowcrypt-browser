@@ -3779,12 +3779,6 @@
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
   };
 
-  if(typeof $ === 'function') {
-    $.fn.reverse = [].reverse;
-  } else if(typeof jQuery === 'function') {
-    jQuery.fn.reverse = [].reverse;
-  }
-
   String.prototype.repeat = String.prototype.repeat || function(count) {
       if (this == null) {
         throw new TypeError('can\'t convert ' + this + ' to object');
