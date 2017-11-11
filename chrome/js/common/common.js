@@ -1914,7 +1914,7 @@
     } else {
       keys.encrypted_for = [];
     }
-    keys.signed_by = (message.getSigningKeyIds() || []).map(function (id) {
+    keys.signed_by = (message.getSigningKeyIds() || []).filter(function(id) { return Boolean(id); }).map(function (id) {
       return crypto_key_longid(id.bytes);
     });
     storage.keys_get(account_email).then(function(private_keys_all) {
