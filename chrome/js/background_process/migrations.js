@@ -99,7 +99,7 @@ let old_version_storage = {
         } else {
           let primary_k = this.private_keys_get(account_email, 'primary');
           if(primary_k && primary_k.longid === longid) {
-            this.passphrase_get(account_email, null, callback); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
+            this.passphrase_get(account_email, null); //todo - do a storage migration so that we don't have to keep trying to query the "old way of storing"
           } else {
             return null;
           }
