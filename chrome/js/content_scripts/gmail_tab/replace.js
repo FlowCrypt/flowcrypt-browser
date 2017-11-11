@@ -272,7 +272,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_standard_reply_box(editable, force) {
-    tool.each($('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').get().reverse(), (i, reply_box) => {
+    $($('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').get().reverse()).each((i, reply_box) => {
       let root_element = get_conversation_root_element(reply_box);
       if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // should be replaced
         let prepared_reply_box = $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container');
