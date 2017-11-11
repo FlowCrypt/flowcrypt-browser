@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.0.9 on November 11, 2017: Bugfix</b>
+internal: migration issue fixed
+
 <b>version 5.0.8 on November 10, 2017: Bugfixes</b>
 internal: various bugfixes
 
