@@ -274,12 +274,13 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function replace_standard_reply_box(editable, force) {
     $($('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').get().reverse()).each((i, reply_box) => {
       let root_element = get_conversation_root_element(reply_box);
-      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // should be replaced
-        let prepared_reply_box = $(reply_box).addClass('remove_borders').addClass('reply_message_iframe_container');
+      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // element should be replaced
+        let reply_box_container = $('<div class="remove_borders reply_message_iframe_container"></div>');
+        $(reply_box).replaceWith(reply_box_container);  // original element replaced so that originally bound events would go with it (prevents inbox freezing)
         if(i === 0) { // last box
-          prepared_reply_box.html(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').css('display', 'none');
+          reply_box_container.html(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').css('display', 'none');
         } else {
-          prepared_reply_box.append('<font>Draft skipped</font>').children(':not(font)').css('display', 'none');
+          reply_box_container.append('<font>Draft skipped</font>').children(':not(font)').css('display', 'none');
         }
       }
     });
