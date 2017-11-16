@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.1.0 on November 15, 2017: Freezing fix</b>
+replying: fixed gmail freezing bug
+
 <b>version 5.0.9 on November 11, 2017: Bugfix</b>
 internal: migration issue fixed
 
