@@ -3780,70 +3780,70 @@
   };
 
   String.prototype.repeat = String.prototype.repeat || function(count) {
-      if (this == null) {
-        throw new TypeError('can\'t convert ' + this + ' to object');
+    if (this == null) {
+      throw new TypeError('can\'t convert ' + this + ' to object');
+    }
+    var str = '' + this;
+    count = +count;
+    if (count != count) {
+      count = 0;
+    }
+    if (count < 0) {
+      throw new RangeError('repeat count must be non-negative');
+    }
+    if (count == Infinity) {
+      throw new RangeError('repeat count must be less than infinity');
+    }
+    count = Math.floor(count);
+    if (str.length == 0 || count == 0) {
+      return '';
+    }
+    // Ensuring count is a 31-bit integer allows us to heavily optimize the
+    // main part. But anyway, most current (August 2014) browsers can't handle
+    // strings 1 << 28 chars or longer, so:
+    if (str.length * count >= 1 << 28) {
+      throw new RangeError('repeat count must not overflow maximum string size');
+    }
+    var rpt = '';
+    for (;;) {
+      if ((count & 1) == 1) {
+        rpt += str;
       }
-      var str = '' + this;
-      count = +count;
-      if (count != count) {
-        count = 0;
+      count >>>= 1;
+      if (count == 0) {
+        break;
       }
-      if (count < 0) {
-        throw new RangeError('repeat count must be non-negative');
-      }
-      if (count == Infinity) {
-        throw new RangeError('repeat count must be less than infinity');
-      }
-      count = Math.floor(count);
-      if (str.length == 0 || count == 0) {
-        return '';
-      }
-      // Ensuring count is a 31-bit integer allows us to heavily optimize the
-      // main part. But anyway, most current (August 2014) browsers can't handle
-      // strings 1 << 28 chars or longer, so:
-      if (str.length * count >= 1 << 28) {
-        throw new RangeError('repeat count must not overflow maximum string size');
-      }
-      var rpt = '';
-      for (;;) {
-        if ((count & 1) == 1) {
-          rpt += str;
-        }
-        count >>>= 1;
-        if (count == 0) {
-          break;
-        }
-        str += str;
-      }
-      // Could we try:
-      // return Array(count + 1).join(this);
-      return rpt;
-    };
+      str += str;
+    }
+    // Could we try:
+    // return Array(count + 1).join(this);
+    return rpt;
+  };
 
   Promise.prototype.validate = Promise.prototype.validate || function(validity_checker) {
-      var original_promise = this;
-      return catcher.Promise(function(resolve, reject) {
-        original_promise.then(function(response) {
-          if(typeof response === 'object') {
-            if(validity_checker(response)) {
-              resolve(response);
-            } else {
-              reject({code: null, message: 'Could not validate result', internal: 'validate'});
-            }
+    var original_promise = this;
+    return catcher.Promise(function(resolve, reject) {
+      original_promise.then(function(response) {
+        if(typeof response === 'object') {
+          if(validity_checker(response)) {
+            resolve(response);
           } else {
-            reject({code: null, message: 'Could not validate result: not an object', internal: 'validate'});
+            reject({code: null, message: 'Could not validate result', internal: 'validate'});
           }
-        }, reject);
-      });
-    };
+        } else {
+          reject({code: null, message: 'Could not validate result: not an object', internal: 'validate'});
+        }
+      }, reject);
+    });
+  };
 
   Promise.prototype.done = Promise.prototype.done || function(next) {
-      return this.then(function(x) {
-        next(true, x);
-      }, function(x) {
-        next(false, x);
-      });
-    };
+    return this.then(function(x) {
+      next(true, x);
+    }, function(x) {
+      next(false, x);
+    });
+  };
 
   Promise.sequence = Promise.sequence || function (promise_factories) {
     return catcher.Promise(function (resolve, reject) {
