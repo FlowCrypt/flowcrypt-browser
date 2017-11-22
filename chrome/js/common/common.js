@@ -1015,7 +1015,13 @@
 
   function mime_process(mime_message, callback) {
     mime_decode(mime_message, function (success, decoded) {
-      var blocks = crypto_armor_detect_blocks(decoded.text);
+      if(typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
+        decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
+      }
+      var blocks = [];
+      if(decoded.text) {  // may be undefined or empty
+        blocks = blocks.concat(crypto_armor_detect_blocks(decoded.text));
+      }
       tool.each(decoded.attachments, function(i, file) {
         var treat_as = file_treat_as(file);
         if(treat_as === 'message') {
@@ -1275,11 +1281,11 @@
           if($('#' + id).attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
             $(this).html(button_hide);
-            storage.set(null, { hide_pass_phrases: false, });
+            storage.set(null, { hide_pass_phrases: false });
           } else {
             $('#' + id).attr('type', 'password');
             $(this).html(button_show);
-            storage.set(null, { hide_pass_phrases: true, });
+            storage.set(null, { hide_pass_phrases: true });
           }
         });
       });
@@ -1443,7 +1449,7 @@
     return catcher.Promise(function(resolve, reject) {
       var message_key_ids = message.getEncryptionKeyIds();
       storage.keys_get(account_email).then(function(private_keys) {
-        var local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(crypto_key_ids));
+        var local_key_ids = [].concat.apply([], private_keys.map(function(ki) {return ki.public}).map(crypto_key_ids));
         var diagnosis = { found_match: false, receivers: message_key_ids.length };
         tool.each(message_key_ids, function (i, msg_k_id) {
           tool.each(local_key_ids, function (j, local_k_id) {
@@ -1462,7 +1468,7 @@
     var diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
     storage.get(account_email, ['addresses'], function (s) {
       storage.keys_get(account_email).then(function(stored_keys) {
-        let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
+        var stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
         api_attester_lookup_email(tool.arr.unique([account_email].concat(s.addresses || []))).then(function(pubkey_search_results) {
           tool.each(pubkey_search_results.results, function (i, pubkey_search_result) {
             if (!pubkey_search_result.pubkey) {
@@ -1924,7 +1930,7 @@
       }
       keys.with_passphrases = [];
       keys.without_passphrases = [];
-      Promise.all(keys.potentially_matching.map(keyinfo => storage.passphrase_get(account_email, keyinfo.longid))).then(passphrases => {
+      Promise.all(keys.potentially_matching.map(function(keyinfo) {return storage.passphrase_get(account_email, keyinfo.longid)})).then(function(passphrases) {
         tool.each(keys.potentially_matching, function (i, keyinfo) {
           if(passphrases[i] !== null) {
             var key = openpgp.key.readArmored(keyinfo.private).keys[0];
@@ -1938,7 +1944,7 @@
             keys.without_passphrases.push(keyinfo);
           }
         });
-        if(keys.signed_by.length) {
+        if(keys.signed_by.length && typeof storage.db_contact_get === 'function') {
           storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
             keys.verification_contacts = verification_contacts.filter(function (contact) {
               return contact !== null;
@@ -2774,7 +2780,7 @@
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if(attachment.name === 'signature.asc' || attachment.type === 'application/pgp-signature') {
       return  'signature';
-    } else if(attachment.name === '' && !tool.value('image/').in(attachment.type)) {
+    } else if(!attachment.name && !tool.value('image/').in(attachment.type)) { // attachment.name may be '' or undefined - catch either
       return attachment.size < 100 ? 'hidden' : 'message';
     } else if(attachment.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
@@ -3475,13 +3481,9 @@
 (function ( /* ERROR HANDLING */ ) {
 
   var tool = typeof tool === 'object' ? tool : window.tool;
-  var storage = window.flowcrypt_storage;
-  if(typeof exports === 'object') {
-    storage = require('js/storage').legacy;
-  }
-
+  var storage = (typeof exports === 'object') ? require('js/storage').legacy : window.flowcrypt_storage;
   var RUNTIME = {};
-  figure_out_cryptup_runtime();
+  figure_out_flowcrypt_runtime();
 
   var original_on_error = window.onerror;
   window.onerror = handle_error;
@@ -3716,7 +3718,7 @@
     }
   }
 
-  function figure_out_cryptup_runtime() {
+  function figure_out_flowcrypt_runtime() {
     if(window.is_bare_engine !== true) {
       try {
         RUNTIME.version = chrome.runtime.getManifest().version;
@@ -3728,7 +3730,7 @@
           if(typeof extension_runtime !== 'undefined') {
             RUNTIME = extension_runtime;
           } else {
-            setTimeout(figure_out_cryptup_runtime, 200);
+            setTimeout(figure_out_flowcrypt_runtime, 200);
           }
         });
       }
@@ -3847,7 +3849,7 @@
 
   Promise.sequence = Promise.sequence || function (promise_factories) {
     return catcher.Promise(function (resolve, reject) {
-      let all_results = [];
+      var all_results = [];
       return promise_factories.reduce(function(chained_promises, create_promise) {
         return chained_promises.then(function(promise_result) {
           all_results.push(promise_result);
