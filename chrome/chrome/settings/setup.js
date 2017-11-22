@@ -73,6 +73,7 @@ function display_block(name) {
     'step_0_found_key',
     'step_1_easy_or_manual',
     'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
+    'step_3_compatibility_fix',
     'step_3_test_failed',
     'step_4_more_to_recover',
     'step_4_done',
@@ -471,28 +472,71 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
     if(decrypt_result.error) {
       alert('FlowCrypt doesn\'t support this type of key yet. Please write me at human@flowcrypt.com, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.error + ')');
     } else if (decrypt_result.success) {
+      let options = {
+        passphrase: passphrase,
+        setup_simple: false,
+        key_backup_prompt: false,
+        submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+        submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
+        passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+        recovered: false,
+      };
       if(prv.getEncryptionKeyPacket() !== null) {
         $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
-        let options = {
-          passphrase: passphrase,
-          setup_simple: false,
-          key_backup_prompt: false,
-          submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
-          submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-          passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
-          recovered: false,
-        };
         save_keys(url_params.account_email, [prv], options, function () {
           finalize_setup(url_params.account_email, prv.toPublic().armor(), options);
         });
-      } else {
-        alert('This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
+      } else { // cannot get a valid encryption key packet
+        if(prv.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || tool.crypto.key.expired_for_encryption(prv)) { // known issues - key can be fixed
+          render_compatibility_fix_block(prv, options);
+        } else {
+          alert('This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
+        }
       }
     } else {
       alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
       $('#step_2b_manual_enter .input_passphrase').val('');
       $('#step_2b_manual_enter .input_passphrase').focus();
     }
+  }
+});
+
+function render_compatibility_fix_block(original_prv, options) {
+  display_block('step_3_compatibility_fix');
+  let user_ids = original_prv.users.map(u => u.userId.userid);
+  if (!user_ids.length) {
+    user_ids.push(url_params.account_email);
+  }
+  $('#step_3_compatibility_fix .compatibility_fix_user_ids').html(user_ids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join(''));
+  $('#step_3_compatibility_fix .action_fix_compatibility').off().click(function () {
+    let expire_years = $('select.input_fix_expire_years').val();
+    if (!expire_years) {
+      alert('Please select key expiration');
+    } else {
+      let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
+      original_prv.decrypt(options.passphrase);
+      $(this).off().html(tool.ui.spinner('white'));
+      setTimeout(() => {
+        openpgp.reformatKey({privateKey: original_prv, passphrase: options.passphrase, userIds: user_ids, keyExpirationTime: expire_seconds}).then(updated_prv => {
+          if (updated_prv.key.getEncryptionKeyPacket() !== null) {
+            save_keys(url_params.account_email, [updated_prv.key], options, () => {
+              finalize_setup(url_params.account_email, updated_prv.key.toPublic().armor(), options);
+            });
+          } else {
+            alert('Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
+            $(this).replaceWith(tool.e('a', {href: window.location.href.replace(/#$/, ''), text: 'Go back and try something else'}));
+          }
+        });
+      }, 50);
+    }
+  });
+}
+
+$('select.input_fix_expire_years').change(function () {
+  if($(this).val()) {
+    $('#step_3_compatibility_fix .action_fix_compatibility').removeClass('gray').addClass('green');
+  } else {
+    $('#step_3_compatibility_fix .action_fix_compatibility').removeClass('green').addClass('gray');
   }
 });
 

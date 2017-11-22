@@ -102,7 +102,7 @@ body#settings > div#content.setup div#step_2_easy_generating { display: none; te
 body#settings > div#content.setup div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
 body#settings > div#content.setup div.manual { display: none; }
 body#settings > div#content.setup div.alignleft { width: 600px; text-align: left; display: inline-block; }
-body#settings > div#content.setup div.manual textarea { width: 530px; height: 300px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
+body#settings > div#content.setup div.manual textarea { width: 530px; height: 200px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
 body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0 auto;}
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
@@ -127,6 +127,7 @@ body#settings > div#content.setup label.checkboxSquaredOne { padding-left: 0!imp
 
 body#settings > div#content.setup div#step_3_back { display: none; }
 body#settings > div#content.setup div#step_3_backup .second { display: none; }
+body#settings > div#content.setup div#step_3_compatibility_fix { display: none; }
 body#settings > div#content.setup div#step_3_test_failed { display: none; }
 body#settings > div#content.setup div#step_4_done { display: none; }
 body#settings > div#content.setup div#step_4_more_to_recover { display: none; }
