@@ -859,7 +859,13 @@
           a.dispatchEvent(e);
         }
         if(env_browser().name === 'firefox') {
-          document.body.removeChild(a);
+          try {
+            document.body.removeChild(a);
+          } catch(err) {
+            if(err.message !== 'Node was not found') {
+              throw err;
+            }
+          }
         }
         window.URL.revokeObjectURL(a.href);
       }

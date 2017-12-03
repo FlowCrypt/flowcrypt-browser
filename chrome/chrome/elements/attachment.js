@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content']);
+let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted']);
 if(url_params.size) {
   url_params.size = parseInt(url_params.size);
 }
@@ -98,6 +98,10 @@ window.flowcrypt_storage.db_open(function (db) {
     xhr.send();
   }
 
+  function get_original_name(name) {
+    return name.replace(/(\.pgp)|(\.gpg)$/, '');
+  }
+
   function decrypt_and_save_attachment_to_downloads(success, encrypted_data) {
     if(success) {
       tool.crypto.message.decrypt(db, url_params.account_email, encrypted_data, undefined, function (result) {
@@ -105,7 +109,7 @@ window.flowcrypt_storage.db_open(function (db) {
         if(result.success) {
           let filename = result.content.filename;
           if(!filename || tool.value(filename).in(['msg.txt', 'null'])) {
-            filename = url_params.name.replace(/(\.pgp)|(\.gpg)$/, '');
+            filename = get_original_name(url_params.name);
           }
           tool.file.save_to_downloads(filename, url_params.type, result.content.data, tool.env.browser().name === 'firefox' ? $('body') : null);
         } else if((result.missing_passphrases || []).length) {
@@ -115,6 +119,7 @@ window.flowcrypt_storage.db_open(function (db) {
           passphrase_interval = setInterval(check_passphrase_entered, 1000);
         } else {
           delete result.message;
+          console.log(result);
           $('body.attachment').html('Error opening file<br>Downloading original..');
           tool.file.save_to_downloads(url_params.name, url_params.type, encrypted_data);
         }
@@ -148,11 +153,15 @@ window.flowcrypt_storage.db_open(function (db) {
     button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
     recover_missing_attachment_id_if_needed(() => {
       progress_element = $('.download_progress');
-      if(url_params.attachment_id) {
+      if(url_params.decrypted) { // when content was downloaded and decrypted
+        tool.file.save_to_downloads(get_original_name(url_params.name), url_params.type, tool.str.to_uint8(url_params.decrypted), tool.env.browser().name === 'firefox' ? $('body') : null);
+      } else if(url_params.content) { // when encrypted content was already downloaded
+        decrypt_and_save_attachment_to_downloads(true, url_params.content);
+      } else if(url_params.attachment_id) { // gmail attachment_id
         tool.api.gmail.attachment_get(url_params.account_email, url_params.message_id, url_params.attachment_id, function (success, attachment) {
           decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data) : undefined);
         }, render_progress);
-      } else if(url_params.url) {
+      } else if(url_params.url) { // gneneral url to download attachment
         tool.file.download_as_uint8(url_params.url, render_progress, function (success, data) {
           decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(data)); //toto - have to convert to str because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
         });

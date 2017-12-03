@@ -197,7 +197,7 @@ window.flowcrypt_storage.db_open(function (db) {
         if(attachment.url) {
           p.url = attachment.url;
         } else {
-          p.content = tool.str.base64url_encode((typeof attachment.content === 'string') ? attachment.content : tool.str.from_uint8(attachment.content));
+          p.decrypted = (typeof attachment.content === 'string') ? attachment.content : tool.str.from_uint8(attachment.content);
         }
         window.open(tool.env.url_create('/chrome/elements/attachment.htm',  p), '_blank');
       }
