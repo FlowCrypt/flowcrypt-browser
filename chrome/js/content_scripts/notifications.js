@@ -6,21 +6,15 @@ function content_script_notifications() {
 
   function show_initial_notifications(account_email) {
     window.flowcrypt_storage.get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], account_storage => {
-      window.flowcrypt_storage.get(null, ['namechange_flowcrypt_notified'], general_storage => {
-        if(!account_storage.notification_setup_done_seen) {
-          window.flowcrypt_storage.set(account_email, { notification_setup_done_seen: true }, () => {
-            content_script_notification_show('FlowCrypt was successfully set up for this account. <a href="#" class="close">close</a>');
-          });
-        } else if(account_storage.key_backup_prompt !== false && account_storage.setup_simple === true) {
-          content_script_notification_show('<a href="#" class="action_backup">Back up your FlowCrypt key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
-            action_backup: event => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/backup.htm' }),
-          });
-        } else if(!general_storage.namechange_flowcrypt_notified) {
-          window.flowcrypt_storage.set(null, { namechange_flowcrypt_notified: true }, () => {
-            content_script_notification_show('CryptUp is now called FlowCrypt. <a href="https://flowcrypt.com/blog/article/2017-10-13-cryptup-is-now-called-flowcrypt">read more</a> <a href="#" class="close">close</a>');
-          });
-        }
-      });
+      if(!account_storage.notification_setup_done_seen) {
+        window.flowcrypt_storage.set(account_email, { notification_setup_done_seen: true }, () => {
+          content_script_notification_show('FlowCrypt was successfully set up for this account. <a href="#" class="close">close</a>');
+        });
+      } else if(account_storage.key_backup_prompt !== false && account_storage.setup_simple === true) {
+        content_script_notification_show('<a href="#" class="action_backup">Back up your FlowCrypt key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
+          action_backup: event => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/backup.htm' }),
+        });
+      }
     });
   }
 
