@@ -6,10 +6,12 @@ import sys
 
 choices = [
 	('c', 'chrome_pack', '\tpack chrome extension and run automated tests'),
-	('f', 'firefox_pack', '\tpack firefox extension'),
 	('fr', 'firefox_run', '\trun firefox extension'),
+	('fR!', 'firefox_release', '\tpack and release firefox'),
 	('c2f', 'chrome_to_firefox', 'replace firefox code with chrome code'),
 	('f2c', 'firefox_to_chrome', 'replace chrome code with firefox code'),
+	('f', 'firefox_pack', '\tpack firefox extension'),
+	('fwu', 'firefox_update_web', '\tpack and release firefox'),
 	('fu', 'firefox_upload', '\tsigned package to s3'),
 	('lib', 'chrome_update_libs', 'very possibly a broken script'),
 	('bsl', 'chrome_update_licence', 'update licence statements in all project files'),
