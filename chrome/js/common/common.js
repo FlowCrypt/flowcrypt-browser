@@ -2042,7 +2042,7 @@
       } else if(armored_signed_only) {
         var message = openpgp.cleartext.readArmored(encrypted_data);
       } else {
-        var message = openpgp.message.read(tool.str.to_uint8(encrypted_data));
+        var message = openpgp.message.read(typeof encrypted_data === 'string' ? tool.str.to_uint8(encrypted_data) : encrypted_data);
       }
     } catch(format_error) {
       callback({success: false, counts: zeroed_decrypt_error_counts(), format_error: format_error.message, errors: other_errors, encrypted: null, signature: null});
