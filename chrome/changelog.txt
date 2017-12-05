@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.1.2 on December 05, 2017: Firefox attachments</b>
+setup: remove "CryptUp is now called FlowCrypt" notification
+reading: fix inner attachments in firefox
+
 <b>version 5.1.1 on November 22, 2017: PGP Desktop Compatibility</b>
 setup: offer to fix and reformat key during import
 
