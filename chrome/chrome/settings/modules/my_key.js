@@ -23,7 +23,7 @@ window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid ||
 
   $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     let file = tool.file.keyinfo_as_pubkey_attachment(keyinfo);
-    tool.file.save_to_downloads(file.name, file.type, file.content);
+    tool.file.save_to_downloads(file.name, file.type, file.content, tool.env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_view_pubkey').click(function () {
