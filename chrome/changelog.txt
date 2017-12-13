@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.1.3 on December 14, 2017: Firefox Backup</b>
+settings: download pubkey as a file on Firefox
+settings: download backup as a file on Firefox
+
 <b>version 5.1.2 on December 05, 2017: Firefox attachments</b>
 setup: remove "CryptUp is now called FlowCrypt" notification
 reading: fix inner attachments in firefox
