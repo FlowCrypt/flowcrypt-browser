@@ -124,6 +124,7 @@
         strip: crypto_armor_strip,
         clip: crypto_armor_clip,
         headers: crypto_armor_headers,
+        detect_blocks: crypto_armor_detect_blocks,
         replace_blocks: crypto_armor_replace_blocks,
         normalize: crypto_armor_normalize,
       },
@@ -1570,7 +1571,7 @@
   var crypto_armor_headers_dict = {
     null: { begin: '-----BEGIN', end: '-----END' },
     public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
-    private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----' },
+    private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
     attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----', replace: true },
     cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
     signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
@@ -1711,7 +1712,7 @@
     }
     var r = '';
     tool.each(blocks, function(i, block) {
-      if(block.type === 'text') {
+      if(block.type === 'text' || block.type === 'private_key') {
         r += (Number(i) ? '\n\n' : '') + str_html_escape(block.content) + '\n\n';
       } else if (block.type === 'message') {
         r += factory.embedded.message(block.complete ? crypto_armor_normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
