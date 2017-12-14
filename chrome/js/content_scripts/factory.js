@@ -2,10 +2,11 @@
 
 'use strict';
 
-function element_factory(account_email, parent_tab_id, chrome_runtime_extension_url, reloadable_class, destroyable_class) {
+function element_factory(account_email, parent_tab_id, chrome_runtime_extension_url, reloadable_class, destroyable_class, set_params) {
 
   reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
+  set_params = set_params || {};
 
   function resolve_from_to(secondary_emails, my_email, their_emails) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
     if(their_emails.length === 1 && tool.value(their_emails[0]).in(secondary_emails)) {
@@ -31,44 +32,52 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
     }
   }
 
+  function url_create_with_added_params(path, params) {
+    params = params || {};
+    tool.each(set_params, function (k, v) {
+      params[k] = v;
+    });
+    return tool.env.url_create(path, params);
+  }
+
   function src_compose_message(draft_id) {
     var params = { is_reply_box: false, account_email: account_email, parent_tab_id: parent_tab_id, draft_id: draft_id, placement: 'gmail' };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/compose.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/compose.htm'), params);
   }
 
   function src_passphrase_dialog(longids, type) {
     var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/passphrase.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/passphrase.htm'), params);
   }
 
   function src_subscribe_dialog(verification_email_text, placement, source, subscribe_result_tab_id) {
     var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: parent_tab_id, subscribe_result_tab_id: subscribe_result_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/subscribe.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/subscribe.htm'), params);
   }
 
   function src_verification_dialog(verification_email_text) {
     var params = { account_email: account_email, verification_email_text: verification_email_text, parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/verification.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/verification.htm'), params);
   }
 
   function src_attest(attest_packet) {
     var params = { account_email: account_email, attest_packet: attest_packet, parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/attest.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/attest.htm'), params);
   }
 
   function src_add_pubkey_dialog(emails, placement) {
     var params = { account_email: account_email, emails: emails, parent_tab_id: parent_tab_id, placement: placement };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/add_pubkey.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/add_pubkey.htm'), params);
   }
 
   function src_add_footer_dialog(placement) {
     var params = { account_email: account_email, parent_tab_id: parent_tab_id, placement: placement };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/shared/footer.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/shared/footer.htm'), params);
   }
 
   function src_pgp_attachment_iframe(meta) {
     var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id, url: meta.url };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/attachment.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/attachment.htm'), params);
   }
 
   function src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short) {
@@ -76,12 +85,12 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       account_email: account_email, frame_id: 'frame_' + tool.str.random(10), message: armored, has_password: has_password, message_id: message_id,
       sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id, signature: signature, short: short,
     };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/pgp_block.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/pgp_block.htm'), params);
   }
 
   function src_pgp_pubkey_iframe(armored_pubkey, is_outgoing) {
     var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(10), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/pgp_pubkey.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/pgp_pubkey.htm'), params);
   }
 
   function src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft) {
@@ -102,11 +111,11 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       params.from = headers.from;
       params.subject = 'Re: ' + conversation_params.subject;
     }
-    return tool.env.url_create(chrome.extension.getURL('chrome/elements/compose.htm'), params);
+    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/compose.htm'), params);
   }
 
   function src_stripe_checkout() {
-    return tool.env.url_create('https://flowcrypt.com/stripe.htm', { parent_tab_id: parent_tab_id });
+    return url_create_with_added_params('https://flowcrypt.com/stripe.htm', { parent_tab_id: parent_tab_id });
   }
 
   function iframe(src, classes, additional_attributes) {

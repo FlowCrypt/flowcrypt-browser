@@ -4,7 +4,8 @@
 
 tool.ui.event.protect();
 
-let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'frame_id']);
+let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
+// minimized means I have to click to see details. Compact means the details take up very little space.
 
 let pubkey = openpgp.key.readArmored(url_params.armored_pubkey).keys[0];
 
@@ -13,7 +14,7 @@ render();
 function send_resize_message() {
   tool.browser.message.send(url_params.parent_tab_id, 'set_css', {
     selector: 'iframe#' + url_params.frame_id,
-    css: { height: $('#pgp_block').height() + 30 }
+    css: { height: $('#pgp_block').height() + (url_params.compact ? 10 : 30) },
   });
 }
 
@@ -25,6 +26,11 @@ function set_button_text(db) {
 
 function render() {
   $('.pubkey').text(url_params.armored_pubkey);
+  if(url_params.compact) {
+    $('.hide_if_compact').remove();
+    $('body').css({border: 'none', padding: 0});
+    $('.line').removeClass('line');
+  }
   $('.line.fingerprints, .line.add_contact').css('display', url_params.minimized ? 'none' : 'block');
   $('.line.fingerprints .fingerprint').text(tool.crypto.key.fingerprint(pubkey, 'spaced'));
   $('.line.fingerprints .keywords').text(mnemonic(tool.crypto.key.longid(pubkey)));

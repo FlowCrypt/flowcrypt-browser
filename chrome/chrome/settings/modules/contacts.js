@@ -6,7 +6,7 @@ let url_params = tool.env.url_params(['account_email']);
 
 tool.browser.message.tab_id(function(tab_id) {
 
-  let factory = element_factory(url_params.account_email, tab_id);
+  let factory = element_factory(url_params.account_email, tab_id, undefined, undefined, undefined, {compact: true});
 
   tool.browser.message.listen({
     set_css: function (data) {
