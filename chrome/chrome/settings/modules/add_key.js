@@ -38,19 +38,6 @@ window.flowcrypt_storage.keys_get(url_params.account_email).then(keyinfos => {
     $('#spinner_container').text('');
   });
 
-  let attach_js = window.flowcrypt_attach.init(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
-  attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-  attach_js.set_attachment_added_callback(function (file) {
-    let content = tool.str.from_uint8(file.content);
-    let k = openpgp.key.readArmored(content).keys[0];
-    if(typeof k !== 'undefined') {
-      $('.input_private_key').val(k.armor()).prop('disabled', true);
-      $('.source_paste_container').css('display', 'block');
-    } else {
-      alert('Not able to read this key. Is it a valid PGP private key?');
-    }
-  });
-
   $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     let normalized_armored_key = tool.crypto.key.normalize($('.input_private_key').val());
     let new_key = openpgp.key.readArmored(normalized_armored_key).keys[0];
@@ -84,16 +71,6 @@ window.flowcrypt_storage.keys_get(url_params.account_email).then(keyinfos => {
     }
   }));
 
-  $('input[type=radio][name=source]').change(function() {
-    if(this.value === 'file') {
-      $('.source_paste_container').css('display', 'none');
-      $('#fineuploader_button > input').click()
-    } else if(this.value === 'paste') {
-      $('.input_private_key').val('').prop('disabled', false);
-      $('.source_paste_container').css('display', 'block');
-    } else if(this.value === 'backup') {
-      window.location = tool.env.url_create('../setup.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, action: 'add_key'})
-    }
-  });
+  initialize_private_key_import_ui();
 
 });

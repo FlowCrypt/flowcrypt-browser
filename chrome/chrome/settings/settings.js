@@ -259,3 +259,36 @@ function reset_cryptup_account_storages(account_email, callback) {
     });
   });
 }
+
+function initialize_private_key_import_ui() {
+  let attach_js = window.flowcrypt_attach.init(function() { return {count: 100, size: 1024 * 1024, size_mb: 1};});
+  attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+  attach_js.set_attachment_added_callback(function (file) {
+    let content = tool.str.from_uint8(file.content);
+    let k;
+    if(tool.value(tool.crypto.armor.headers('private_key').begin).in(content)) {
+      k = openpgp.key.readArmored(content).keys[0];
+    } else {
+      k = openpgp.key.read(file.content).keys[0];
+    }
+    if(typeof k !== 'undefined') {
+      $('.input_private_key').val(k.armor()).prop('disabled', true);
+      $('.source_paste_container').css('display', 'block');
+    } else {
+      alert('Not able to read this key. Is it a valid PGP private key?');
+      $('input[type=radio][name=source]').removeAttr('checked');
+    }
+  });
+
+  $('input[type=radio][name=source]').change(function() {
+    if(this.value === 'file') {
+      $('.source_paste_container').css('display', 'none');
+      $('#fineuploader_button > input').click();
+    } else if(this.value === 'paste') {
+      $('.input_private_key').val('').prop('disabled', false);
+      $('.source_paste_container').css('display', 'block');
+    } else if(this.value === 'backup') {
+      window.location = tool.env.url_create('../setup.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, action: 'add_key'})
+    }
+  });
+}

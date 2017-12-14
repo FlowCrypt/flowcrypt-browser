@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
 </head>
 
 <body id="settings">
@@ -139,38 +140,50 @@
           <br/> Other extensions or websites can't access it. The key will never leave your browser.
         </div>
         <div class="line">
-          <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+          <ul style="list-style: none;margin-left: 0;padding-left: 0;" class="source_selector">
+            <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a file</label></li>
+            <li><input type="radio" name="source" id="source_paste" value="paste"> <label for="source_paste">Paste armored key directly</label></li>
+          </ul>
         </div>
-        <div class="line" style="text-align: left; padding-left: 40px;">
-          <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" />
+        <div class="source_file_container display_none">
+          <a href="#" id="fineuploader_button" class="display_none">file</a>
+          <div class="line display_none" id="fineuploader"></div>
         </div>
-        <div class="line left">
-          <div class="squaredFour">
-            <input type="checkbox" value="" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
-            <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
+        <div class="source_paste_container display_none">
+          <div class="line">
+            <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
           </div>
-          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
-        </div>
-        <div class="line left">
-          <div class="squaredFour">
-            <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
-            <label class="checkboxSquaredOne" for="e_submitPubkey"></label>
+          <div class="line" style="text-align: left; padding-left: 40px;">
+            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" />
           </div>
-          <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (does not sync elsewhere)</span>
-        </div>
-        <div class="line left" style="visibility: hidden;">
-          <div class="squaredFour">
-            <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll" />
-            <label class="checkboxSquaredOne" for="e_submitAll"></label>
+          <div class="line left">
+            <div class="squaredFour">
+              <input type="checkbox" value="" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
+              <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
+            </div>
+            <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
           </div>
-          <label class="checkboxSquaredOne" for="e_submitAll" style="position: relative; left: 25px;">
-            Also submit the same pubkey for:
-            <br /><span class="addresses" style="padding-left: 35px;"></span>
-          </label>
-        </div>
+          <div class="line left">
+            <div class="squaredFour">
+              <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
+              <label class="checkboxSquaredOne" for="e_submitPubkey"></label>
+            </div>
+            <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (does not sync elsewhere)</span>
+          </div>
+          <div class="line left" style="visibility: hidden;">
+            <div class="squaredFour">
+              <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll" />
+              <label class="checkboxSquaredOne" for="e_submitAll"></label>
+            </div>
+            <label class="checkboxSquaredOne" for="e_submitAll" style="position: relative; left: 25px;">
+              Also submit the same pubkey for:
+              <br /><span class="addresses" style="padding-left: 35px;"></span>
+            </label>
+          </div>
 
-        <div class="line">
-          <div class="button long green action_save_private">SAVE</div>
+          <div class="line">
+            <div class="button long green action_save_private">SAVE</div>
+          </div>
         </div>
       </div>
     </div>
@@ -276,6 +289,7 @@
 
   </div>
 
+  <script src="/lib/fine-uploader.js"></script>
   <script src="/lib/jquery.min.js"></script>
   <script src="/lib/featherlight/featherlight.js"></script>
   <script src="/lib/zxcvbn.js"></script>
@@ -285,6 +299,7 @@
   <script src="/js/common/mnemonic.js"></script>
   <script src="/js/common/storage.js"></script>
   <script src="/js/common/common.js"></script>
+  <script src="/chrome/elements/shared/attach.js"></script>
   <script src="../settings/settings.js"></script>
   <script src="setup.js"></script>
 

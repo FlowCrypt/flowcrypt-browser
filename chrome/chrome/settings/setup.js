@@ -111,6 +111,7 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
           }
         } else {
           tool.api.attester.lookup_email(url_params.account_email).done((keyserver_success, keyserver_result) => {
+            initialize_private_key_import_ui(); // for step_2b_manual_enter
             if(keyserver_success && keyserver_result && keyserver_result.pubkey) {
               if(keyserver_result.attested) {
                 account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
