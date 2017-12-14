@@ -66,6 +66,7 @@ body#settings > div#content > div#accounts a.button.has_email b { padding-right:
 body#settings > div#content p.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative; padding-bottom: 0; opacity: .5}
 body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
+body#settings > div#content hr { height: 1px; border: none; border-bottom: 1px solid #CACACA; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { padding: 0; box-sizing: border-box;
   width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px; }
 .toggled_passphrase  { padding-right: 62px !important; }

@@ -4,6 +4,8 @@
 
 let url_params = tool.env.url_params(['account_email', 'longid']);
 
+$('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm', url_params));
+
 window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid || 'primary').then(keyinfo => {
 
   let key = openpgp.key.readArmored(keyinfo.private).keys[0];
@@ -34,13 +36,13 @@ window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid ||
     if($('.action_show_other_type').text().toLowerCase() === 'show private') {
       $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
       $('.action_show_other_type').text('show public').removeClass('bad').addClass('good');
-      $('.key_type').text('Master Private Key');
+      $('.key_type').text('Private Key');
       $('.show_when_showing_public').css('display', 'none');
       $('.show_when_showing_private').css('display', '');
     } else {
       $('.key_dump').text('').removeClass('bad').addClass('good');
       $('.action_show_other_type').text('show private').removeClass('good').addClass('bad');
-      $('.key_type').text('Master Public Key Info');
+      $('.key_type').text('Public Key Info');
       $('.show_when_showing_public').css('display', '');
       $('.show_when_showing_private').css('display', 'none');
     }
