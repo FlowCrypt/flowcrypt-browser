@@ -5,7 +5,7 @@
 var url_params = tool.env.url_params(['filter', 'keys', 'controls', 'title']);
 
 // this is for debugging
-var controls = url_params.controls === true && (tool.value('blfdgihadmeigiiebaghlhhobipconfm').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'mindoutofframe@gmail.com', 'human@flowcrypt.com']));
+var controls = url_params.controls === true && (tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
 
 if(url_params.title) {
   $('#content').prepend('<h1>' + url_params.title + '</h1>');

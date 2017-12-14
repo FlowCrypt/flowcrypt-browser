@@ -4,6 +4,11 @@
 
 let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
+// this is for debugging
+if((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
+  $('.storage_link_container').append(' - <a href="' + tool.env.url_create('/chrome/dev/storage.htm', {controls: true, }) + '">Storage</a>');
+}
+
 function collect_info_and_download_backup_file(account_email, callback) {
   let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
   collect_info_for_account_backup(account_email, function (backup_text) {
