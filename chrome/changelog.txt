@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.1.5 on December 20, 2017: Decrypt errors fix</b>
+fix diagnosis of decrypt errors
+
 <b>version 5.1.4 on December 20, 2017: Decrypt Fix, Imports</b>
 errors recognizing encrypted messages
 allow importing non-armored private keys
