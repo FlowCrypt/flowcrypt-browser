@@ -337,12 +337,12 @@
   }
 
   function str_month_name(month_index) {
-    return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month_index];
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month_index];
   }
 
   function str_random(length) {
-    var id = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    var id = '';
+    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for(var i = 0; i < (length || 5); i++) {
       id += possible.charAt(Math.floor(Math.random() * possible.length));
     }
@@ -394,7 +394,7 @@
     for(var i = 0; i < u8a.length; i += CHUNK_SZ) {
       c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
     }
-    return c.join("");
+    return c.join('');
   }
 
   function str_to_uint8(raw) {
@@ -816,8 +816,8 @@
 
   function file_download_as_uint8(url, progress, callback) {
     var request = new XMLHttpRequest();
-    request.open("GET", url, true);
-    request.responseType = "arraybuffer";
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
     if(typeof progress === 'function') {
       request.onprogress = function (evt) {
         progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
@@ -1062,14 +1062,14 @@
         var parser = new emailjs_mime_parser();
         var parsed = {};
         parser.onheader = function (node) {
-          if(!String(node.path.join("."))) { // root node headers
+          if(!String(node.path.join('.'))) { // root node headers
             tool.each(node.headers, function (name, header) {
               mime_message_contents.headers[name] = header[0].value;
             });
           }
         };
         parser.onbody = function (node, chunk) {
-          var path = String(node.path.join("."));
+          var path = String(node.path.join('.'));
           if(typeof parsed[path] === 'undefined') {
             parsed[path] = node;
           }
@@ -1857,7 +1857,7 @@
       try {
         var fp = key.primaryKey.fingerprint.toUpperCase();
         if(formatting === 'spaced') {
-          return fp.replace(/(.{4})/g, "$1 ").trim();
+          return fp.replace(/(.{4})/g, '$1 ').trim();
         }
         return fp;
       } catch(error) {
@@ -1969,11 +1969,20 @@
   }
 
   function zeroed_decrypt_error_counts(keys) {
-    return { decrypted: 0, potentially_matching_keys: keys ? keys.potentially_matching.length : 0, rounds: keys ? keys.with_passphrases.length : 0, attempts: 0, key_mismatch: 0, wrong_password: 0, unsecure_mdc: 0 };
+    return {
+      decrypted: 0,
+      potentially_matching_keys: keys ? keys.potentially_matching.length : 0,
+      rounds: keys ? keys.with_passphrases.length : 0,
+      attempts: 0,
+      key_mismatch: 0,
+      wrong_password: 0,
+      unsecure_mdc: 0,
+      format_errors: 0,
+    };
   }
 
   function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
-    if(String(decrypt_error) === "Error: Error decrypting message: Cannot read property 'isDecrypted' of null" && !one_time_message_password) {
+    if(String(decrypt_error) === 'TypeError: Error decrypting message: Cannot read property \'isDecrypted\' of null' && !one_time_message_password) {
       counts.key_mismatch++; // wrong private key
     } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
       counts.key_mismatch++; // attempted opening password only message with key
@@ -1981,6 +1990,8 @@
       counts.wrong_password++; // wrong password
     } else if(String(decrypt_error) === 'Error: Error decrypting message: Decryption failed due to missing MDC in combination with modern cipher.') {
       counts.unsecure_mdc++;
+    } else if (String(decrypt_error) === 'Error: Error decrypting message: Decryption error') {
+      counts.format_errors++; // typically
     } else {
       other_errors.push(String(decrypt_error));
     }
@@ -1991,6 +2002,9 @@
     if(result.success) {
       callback(result); // callback the moment there is successful decrypt
     } else if(result.counts.attempts === result.counts.rounds && !result.counts.decrypted) {
+      if(result.counts.format_errors > 0) {
+        result.format_error = 'This message seems to be badly formatted.';
+      }
       callback(result); // or callback if no success and this was the last attempt
     }
   }
@@ -2159,7 +2173,7 @@
   function get_ajax_progress_xhr(progress_callbacks) {
     var progress_reporting_xhr = new window.XMLHttpRequest();
     if(typeof progress_callbacks.upload === 'function') {
-      progress_reporting_xhr.upload.addEventListener("progress", function(evt) {
+      progress_reporting_xhr.upload.addEventListener('progress', function(evt) {
         progress_callbacks.upload(evt.lengthComputable ? parseInt((evt.loaded / evt.total) * 100) : null);
       }, false);
     }
@@ -2377,7 +2391,7 @@
     }
     var auth_code_window = window.open(api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
     // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-    // a "gmail_auth_code_result" chrome message to "google_auth.google_auth_window_result_handler" and close itself
+    // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
     if(env_browser().name !== 'firefox') {
       var window_closed_timer = setInterval(api_google_auth_window_closed_watcher, 250);
     }
@@ -2521,7 +2535,7 @@
           error: function (response) {
             try {
               var error_obj = JSON.parse(response.responseText);
-              if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
+              if(typeof error_obj.error !== 'undefined' && error_obj.error.message === 'Invalid Credentials') {
                 google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, api_google_call);
               } else {
                 response._error = error_obj.error;
@@ -2609,7 +2623,7 @@
           error: function (response) {
             try {
               var error_obj = JSON.parse(response.responseText);
-              if(typeof error_obj.error !== 'undefined' && error_obj.error.message === "Invalid Credentials") {
+              if(typeof error_obj.error !== 'undefined' && error_obj.error.message === 'Invalid Credentials') {
                 google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, api_gmail_call, progress, content_type);
               } else {
                 response._error = error_obj.error;
