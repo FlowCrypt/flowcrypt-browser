@@ -5,6 +5,7 @@
 function gmail_element_replacer(factory, account_email, addresses, can_read_emails, injector) {
 
   let recipient_has_pgp = {}; // undefined: never checked or check faild, null: checking now, true: uses, false: doesn't use
+  const message_parent_selector = "div.adn, div.ads";
 
   function everything() {
     replace_armored_blocks();
@@ -16,7 +17,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_armored_blocks() {
-    $("div.adP.adO div.a3s:contains('" + tool.crypto.armor.headers().begin + "')").not('.evaluated').each(function () { // for each email that contains PGP block
+    $(message_parent_selector).find("div.a3s:contains('" + tool.crypto.armor.headers().begin + "')").not('.evaluated').each(function () { // for each email that contains PGP block
       $(this).addClass('evaluated');
       let message_id = determine_message_id('message', this);
       let sender_email = get_sender_email(this);
@@ -97,12 +98,9 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function determine_message_id(base_element_type, my_element) {
-    let selectors = {
-      message: $(my_element).parents('div.adP.adO'),
-      attachment: $(my_element).parent().siblings('div.adP.adO'),
-    };
+    let selector = $(my_element).parents(message_parent_selector);
     let message_id = null; // todo: maybe need to traverse through all children elements classes of the whole message to get to /^m([0-9a-f]{16})$/ - as a backup
-    let found = [selectors[base_element_type].get(0), selectors[base_element_type].find('div.a3s').get(0)];
+    let found = [selector.get(0), selector.find('div.a3s').get(0)];
     let classes = [].concat(found[0] ? tool.arr.from_dome_node_list(found[0].classList) : [], found[1] ? tool.arr.from_dome_node_list(found[1].classList) : []);
     tool.each(classes, (i, message_class) => {
       let match = message_class.match(/^m([0-9a-f]{16})$/);
