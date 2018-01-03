@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.1.6 on January 2, 2017: Decrypted null</b>
+reading: fix decrypted null error
+
 <b>version 5.1.5 on December 20, 2017: Decrypt errors fix</b>
 fix diagnosis of decrypt errors
 
