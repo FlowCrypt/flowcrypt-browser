@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.1.7 on January 5, 2017: Enigmail attachments</b>
+sending: prevent enigmail from attempting to display encrypted attachments
+
 <b>version 5.1.6 on January 2, 2017: Decrypted null</b>
 reading: fix decrypted null error
 
