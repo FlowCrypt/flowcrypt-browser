@@ -135,6 +135,7 @@
         challenge_answer: crypto_hash_challenge_answer,
       },
       key: {
+        create: crypto_key_create,
         read: crypto_key_read,
         decrypt: crypto_key_decrypt,
         expired_for_encryption: crypto_key_expired_for_encryption,
@@ -1763,6 +1764,18 @@
   }
 
   /* tool.crypto.key */
+
+  function crypto_key_create(user_ids_as_pgp_contacts, num_bits, pass_phrase, callback) {
+    openpgp.generateKey({
+      numBits: num_bits,
+      userIds: user_ids_as_pgp_contacts,
+      passphrase: pass_phrase,
+    }).then(function(key) {
+      callback(key.privateKeyArmored);
+    }).catch(function(error) {
+      catcher.handle_exception(error);
+    });
+  }
 
   function crypto_key_read(armored_key) {
     return openpgp.key.readArmored(armored_key).keys[0];
