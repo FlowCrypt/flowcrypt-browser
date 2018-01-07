@@ -24,12 +24,7 @@ function fetch_account_aliases_from_gmail(account_email, callback, query, from_e
 
 function evaluate_password_strength(parent_selector, input_selector, button_selector) {
   parent_selector += ' ';
-  let result = crack_time_result(zxcvbn($(parent_selector + input_selector).val()), [
-    'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
-    'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
-    'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
-    'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
-  ]);
+  let result = tool.crypto.password.estimate_strength(zxcvbn($(parent_selector + input_selector).val(), tool.crypto.password.weak_words()).guesses);
   $(parent_selector + '.password_feedback').css('display', 'block');
   $(parent_selector + '.password_bar > div').css('width', result.bar + '%');
   $(parent_selector + '.password_bar > div').css('background-color', result.color);
@@ -107,76 +102,6 @@ function submit_pubkeys(addresses, pubkey, callback, _success) {
     });
   } else {
     callback(_success);
-  }
-}
-
-function readable_crack_time(total_seconds) { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
-  function numberEnding(number) {
-    return(number > 1) ? 's' : '';
-  }
-  total_seconds = Math.round(total_seconds);
-  let millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
-  if(millennia) {
-    return millennia === 1 ? 'a millennium' : 'millennia';
-  }
-  let centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
-  if(centuries) {
-    return centuries === 1 ? 'a century' : 'centuries';
-  }
-  let years = Math.round(total_seconds / (86400 * 30 * 12));
-  if(years) {
-    return years + ' year' + numberEnding(years);
-  }
-  let months = Math.round(total_seconds / (86400 * 30));
-  if(months) {
-    return months + ' month' + numberEnding(months);
-  }
-  let days = Math.round(total_seconds / 86400);
-  if(days) {
-    return days + ' day' + numberEnding(days);
-  }
-  let hours = Math.round(total_seconds / 3600);
-  if(hours) {
-    return hours + ' hour' + numberEnding(hours);
-  }
-  let minutes = Math.round(total_seconds / 60);
-  if(minutes) {
-    return minutes + ' minute' + numberEnding(minutes);
-  }
-  let seconds = total_seconds % 60;
-  if(seconds) {
-    return seconds + ' second' + numberEnding(seconds);
-  }
-  return 'less than a second';
-}
-
-// https://threatpost.com/how-much-does-botnet-cost-022813/77573/
-// https://www.abuse.ch/?p=3294
-let guesses_per_second = 10000 * 2 * 4000; //(10k ips) * (2 cores p/machine) * (4k guesses p/core)
-let crack_time_words = [
-  ['millenni', 'perfect', 100, 'green', true],
-  ['centu', 'great', 80, 'green', true],
-  ['year', 'good', 60, 'orange', true],
-  ['month', 'reasonable', 40, 'darkorange', true],
-  ['day', 'poor', 20, 'darkred', false],
-  ['', 'weak', 10, 'red', false],
-]; // word search, word rating, bar percent, color, pass
-
-function crack_time_result(zxcvbn_result) {
-  let time_to_crack = zxcvbn_result.guesses / guesses_per_second;
-  for(let i = 0; i < crack_time_words.length; i++) {
-    let readable_time = readable_crack_time(time_to_crack);
-    if(tool.value(crack_time_words[i][0]).in(readable_time)) {
-      return {
-        word: crack_time_words[i][1],
-        bar: crack_time_words[i][2],
-        time: readable_time,
-        seconds: Math.round(time_to_crack),
-        pass: crack_time_words[i][4],
-        color: crack_time_words[i][3],
-        suggestions: zxcvbn_result.feedback.suggestions,
-      };
-    }
   }
 }
 

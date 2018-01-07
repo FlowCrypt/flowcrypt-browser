@@ -151,6 +151,10 @@
         decrypt: crypto_message_decrypt,
         encrypt: crypto_message_encrypt,
       },
+      password: {
+        estimate_strength: crypto_password_estimate_strength,
+        weak_words: crypto_password_weak_words,
+      }
     },
     api: {
       auth: {
@@ -2181,6 +2185,85 @@
       alert('Error encrypting message, please try again. If you see this repeatedly, contact me at human@flowcrypt.com.');
       //todo: make the UI behave well on errors
     });
+  }
+
+  function readable_crack_time(total_seconds) { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
+    function numberEnding(number) {
+      return(number > 1) ? 's' : '';
+    }
+    total_seconds = Math.round(total_seconds);
+    var millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
+    if(millennia) {
+      return millennia === 1 ? 'a millennium' : 'millennia';
+    }
+    var centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
+    if(centuries) {
+      return centuries === 1 ? 'a century' : 'centuries';
+    }
+    var years = Math.round(total_seconds / (86400 * 30 * 12));
+    if(years) {
+      return years + ' year' + numberEnding(years);
+    }
+    var months = Math.round(total_seconds / (86400 * 30));
+    if(months) {
+      return months + ' month' + numberEnding(months);
+    }
+    var days = Math.round(total_seconds / 86400);
+    if(days) {
+      return days + ' day' + numberEnding(days);
+    }
+    var hours = Math.round(total_seconds / 3600);
+    if(hours) {
+      return hours + ' hour' + numberEnding(hours);
+    }
+    var minutes = Math.round(total_seconds / 60);
+    if(minutes) {
+      return minutes + ' minute' + numberEnding(minutes);
+    }
+    var seconds = total_seconds % 60;
+    if(seconds) {
+      return seconds + ' second' + numberEnding(seconds);
+    }
+    return 'less than a second';
+  }
+
+  // https://threatpost.com/how-much-does-botnet-cost-022813/77573/
+  // https://www.abuse.ch/?p=3294
+  var guesses_per_second = 10000 * 2 * 4000; //(10k ips) * (2 cores p/machine) * (4k guesses p/core)
+  var crack_time_words = [
+    ['millenni', 'perfect', 100, 'green', true],
+    ['centu', 'great', 80, 'green', true],
+    ['year', 'good', 60, 'orange', true],
+    ['month', 'reasonable', 40, 'darkorange', true],
+    ['day', 'poor', 20, 'darkred', false],
+    ['', 'weak', 10, 'red', false],
+  ]; // word search, word rating, bar percent, color, pass
+
+  function crypto_password_estimate_strength(zxcvbn_result_guesses) {
+    var time_to_crack = zxcvbn_result_guesses / guesses_per_second;
+    for(var i = 0; i < crack_time_words.length; i++) {
+      var readable_time = readable_crack_time(time_to_crack);
+      if(tool.value(crack_time_words[i][0]).in(readable_time)) { // looks for a word match from readable_crack_time, defaults on "weak"
+        return {
+          word: crack_time_words[i][1],
+          bar: crack_time_words[i][2],
+          time: readable_time,
+          seconds: Math.round(time_to_crack),
+          pass: crack_time_words[i][4],
+          color: crack_time_words[i][3],
+          suggestions: [],
+        };
+      }
+    }
+  }
+
+  function crypto_password_weak_words() {
+    return [
+      'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
+      'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
+      'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
+      'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
+    ];
   }
 
   /* tool.api */
