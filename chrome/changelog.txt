@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.1.8 on January 8, 2017: Gmail freezing</b>
+reading: more robust inbox freezing fix
+
 <b>version 5.1.7 on January 5, 2017: Enigmail attachments</b>
 sending: prevent enigmail from attempting to display encrypted attachments
 
