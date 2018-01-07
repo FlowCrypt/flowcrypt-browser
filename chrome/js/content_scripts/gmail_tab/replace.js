@@ -270,11 +270,17 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_standard_reply_box(editable, force) {
-    $($('div.nr.tMHS5d, div.gA td.I5').not('.reply_message_iframe_container').filter(':visible').get().reverse()).each((i, reply_box) => {
+    $($('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_iframe_container, .reply_message_evaluated').filter(':visible').get().reverse()).each((i, reply_box) => {
       let root_element = get_conversation_root_element(reply_box);
       if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // element should be replaced
         let reply_box_container = $('<div class="remove_borders reply_message_iframe_container"></div>');
-        $(reply_box).replaceWith(reply_box_container);  // original element replaced so that originally bound events would go with it (prevents inbox freezing)
+        if($(reply_box).hasClass('I5')) { // activated standard reply box
+          // activated reply box - cannot remove because would cause issues / gmail freezing
+          $(reply_box).append(reply_box_container).addClass('reply_message_evaluated').children(':not(.reply_message_iframe_container)').css('display', 'none');
+        } else {
+          // original element replaced so that originally bound events would go with it (prevents inbox freezing)
+          $(reply_box).replaceWith(reply_box_container);
+        }
         if(i === 0) { // last box
           reply_box_container.html(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').css('display', 'none');
         } else {
