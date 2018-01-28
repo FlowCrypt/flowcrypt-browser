@@ -108,6 +108,13 @@ function render_diagnosis(diagnosis, attests_requested, attests_processed) {
       }, 30000);
     });
   }));
+  var refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
+  $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
+    $(self).html(tool.ui.spinner('green'));
+    fetch_account_aliases_from_gmail(url_params.account_email, function(addresses) {
+      window.flowcrypt_storage.set(url_params.account_email, { addresses: tool.arr.unique(addresses.concat(url_params.account_email)) }, () => window.location.reload());
+    });
+  }));
 }
 
 function action_submit_or_request_attestation(email) {
