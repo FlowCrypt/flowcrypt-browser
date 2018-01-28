@@ -15,13 +15,13 @@ window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(prim
     $('.recipients').append(tool.e('span', {text: to}));
   });
 
-// render
+  // render
   $('.pubkey_file_name').text(attachment.name);
   window.flowcrypt_compose.resize_reply_box();
   tool.browser.message.send(url_params.parent_tab_id, 'scroll', {selector: '.reply_message_iframe_container', repeat: [500]});
   $('#input_text').focus();
 
-// determine reply headers
+  // determine reply headers
   tool.api.gmail.thread_get(url_params.account_email, url_params.thread_id, 'full', function (success, thread) {
     if (success && thread.messages && thread.messages.length > 0) {
       let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
@@ -30,7 +30,7 @@ window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(prim
     }
   });
 
-// send
+  // send
   $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     $('#send_btn').text('sending..');
     let message = tool.api.common.message(url_params.account_email, url_params.from, url_params.to, url_params.subject, $('#input_text').get(0).innerText, [attachment], url_params.thread_id);

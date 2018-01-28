@@ -19,6 +19,21 @@ tool.browser.message.tab_id(function(tab_id) {
     function render_contact_list() {
       window.flowcrypt_storage.db_contact_search(db, { has_pgp: true }, function (contacts) {
 
+        $('.line.actions').html('&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+          let all_armored_public_keys = contacts.map(c => c.pubkey.trim()).join('\n');
+          tool.file.save_to_downloads('public-keys-export.asc', 'application/pgp-keys', all_armored_public_keys, tool.env.browser().name === 'firefox' ? $('.line.actions') : null);
+        }));
+
+        $('.line.actions').append('&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+          $('.hide_when_rendering_subpage').css('display', 'none');
+          $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;Bulk Public Key Import&nbsp;&nbsp;&nbsp;&nbsp;');
+          $('#bulk_import').css('display', 'block');
+          $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
+          $('#bulk_import .action_process').css('display', 'inline-block');
+          $('#bulk_import #processed').text('').css('display', 'none');
+          $('#page_back_button').click(render_contact_list);
+        }));
+
         $('table#emails').html('');
         $('div.hide_when_rendering_subpage').css('display', 'block');
         $('table.hide_when_rendering_subpage').css('display', 'table');
