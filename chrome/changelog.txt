@@ -1,5 +1,11 @@
 <div>
 
+<b>version 5.1.9 on January 31, 2017: Public key management</b>
+settings: handle multiple pubkeys within single armor
+settings: export all public keys into a file (help coworker) good first issue
+settings: Attester screen should have a link to refresh list of emails
+reading: add support for public key files with unusual names
+
 <b>version 5.1.8 on January 8, 2017: Gmail freezing</b>
 reading: more robust inbox freezing fix
 
