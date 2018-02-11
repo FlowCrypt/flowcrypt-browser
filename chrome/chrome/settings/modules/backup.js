@@ -213,13 +213,14 @@ function is_master_private_key_encrypted(primary_k) {
 }
 
 function backup_on_email_provider(primary_k) {
-  let btn_text = $(self).text();
-  $('.action_manual_backup').html(tool.ui.spinner('white'));
+  let btn = $('.action_manual_backup');
+  let original_btn_text = btn.text();
+  btn.html(tool.ui.spinner('white'));
   (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_k.private, function (success) {
+    btn.text(original_btn_text);
     if(success) {
       write_backup_done_and_render(false, 'inbox');
     } else {
-      $(self).text(btn_text);
       alert('Need internet connection to finish. Please click the button again to retry.');
     }
   });
