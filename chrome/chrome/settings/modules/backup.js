@@ -214,7 +214,7 @@ function is_master_private_key_encrypted(primary_k) {
 
 function backup_on_email_provider(primary_k) {
   let btn_text = $(self).text();
-  $(self).html(tool.ui.spinner('white'));
+  $('.action_manual_backup').html(tool.ui.spinner('white'));
   (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_k.private, function (success) {
     if(success) {
       write_backup_done_and_render(false, 'inbox');
