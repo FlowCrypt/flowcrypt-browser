@@ -49,7 +49,7 @@ window.flowcrypt_storage.passphrase_get(url_params.account_email).then(original_
   });
 
   $('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
-    evaluate_password_strength('#step_1_password', '#password', '.action_password');
+    render_password_strength('#step_1_password', '#password', '.action_password');
   }));
 
   $('.action_password').click(function () {
@@ -64,7 +64,7 @@ window.flowcrypt_storage.passphrase_get(url_params.account_email).then(original_
     $('#password').val('');
     $('#password2').val('');
     display_block('step_1_password');
-    evaluate_password_strength('#step_1_password', '#password', '.action_password');
+    render_password_strength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   });
 

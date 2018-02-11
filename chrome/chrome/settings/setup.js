@@ -542,7 +542,7 @@ $('select.input_fix_expire_years').change(function () {
 });
 
 $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
-  evaluate_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
+  render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
 }));
 
 $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), function () {

@@ -22,9 +22,13 @@ function fetch_account_aliases_from_gmail(account_email, callback, query, from_e
   });
 }
 
-function evaluate_password_strength(parent_selector, input_selector, button_selector) {
+function evaluate_password_strength(pass_phrase) {
+  return tool.crypto.password.estimate_strength(zxcvbn(pass_phrase, tool.crypto.password.weak_words()).guesses);
+}
+
+function render_password_strength(parent_selector, input_selector, button_selector) {
   parent_selector += ' ';
-  let result = tool.crypto.password.estimate_strength(zxcvbn($(parent_selector + input_selector).val(), tool.crypto.password.weak_words()).guesses);
+  let result = evaluate_password_strength($(parent_selector + input_selector).val());
   $(parent_selector + '.password_feedback').css('display', 'block');
   $(parent_selector + '.password_bar > div').css('width', result.bar + '%');
   $(parent_selector + '.password_bar > div').css('background-color', result.color);

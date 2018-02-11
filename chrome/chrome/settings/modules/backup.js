@@ -55,7 +55,7 @@ function display_block(name) {
 }
 
 $('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
-  evaluate_password_strength('#step_1_password', '#password', '.action_password');
+  render_password_strength('#step_1_password', '#password', '.action_password');
 }));
 
 function show_status() {
@@ -152,7 +152,7 @@ $('.action_reset_password').click(function () {
   $('#password').val('');
   $('#password2').val('');
   display_block('step_1_password');
-  evaluate_password_strength('#step_1_password', '#password', '.action_password');
+  render_password_strength('#step_1_password', '#password', '.action_password');
   $('#password').focus();
 });
 
@@ -207,22 +207,27 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
   }
 }));
 
-function is_master_private_key_encrypted(primary_k) {
-  let key = openpgp.key.readArmored(primary_k.private).keys[0];
+function is_master_private_key_encrypted(ki) {
+  let key = openpgp.key.readArmored(ki.private).keys[0];
   return key.primaryKey.isDecrypted === false && !tool.crypto.key.decrypt(key, '').success;
 }
 
-function backup_on_email_provider(primary_k) {
-  let btn = $('.action_manual_backup');
-  let original_btn_text = btn.text();
-  btn.html(tool.ui.spinner('white'));
-  (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_k.private, function (success) {
-    btn.text(original_btn_text);
-    if(success) {
-      write_backup_done_and_render(false, 'inbox');
-    } else {
-      alert('Need internet connection to finish. Please click the button again to retry.');
+function backup_on_email_provider(primary_ki) {
+  flowcrypt_storage.passphrase_get(url_params.account_email).then(pass_phrase => {
+    if(!is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
+      return;
     }
+    let btn = $('.action_manual_backup');
+    let original_btn_text = btn.text();
+    btn.html(tool.ui.spinner('white'));
+    (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_ki.private, function (success) {
+      btn.text(original_btn_text);
+      if(success) {
+        write_backup_done_and_render(false, 'inbox');
+      } else {
+        alert('Need internet connection to finish. Please click the button again to retry.');
+      }
+    });
   });
 }
 
@@ -256,22 +261,42 @@ function write_backup_done_and_render(prompt, method) {
 
 $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-  window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
-    if(is_master_private_key_encrypted(primary_k)) {
-      if(selected === 'inbox') {
-        backup_on_email_provider(primary_k);
-      } else if(selected === 'file') {
-        backup_as_file(primary_k);
-      } else if(selected === 'print') {
-        backup_by_print(primary_k);
-      } else {
-        backup_refused(primary_k);
-      }
-    } else {
+  window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
+    if(!is_master_private_key_encrypted(primary_ki)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
+      return;
+    }
+    if(selected === 'inbox') {
+      backup_on_email_provider(primary_ki);
+    } else if(selected === 'file') {
+      backup_as_file(primary_ki);
+    } else if(selected === 'print') {
+      backup_by_print(primary_ki);
+    } else {
+      backup_refused(primary_ki);
     }
   });
 }));
+
+function is_pass_phrase_strong_enough(ki, pass_phrase) {
+  if(!pass_phrase) {
+    let pp = prompt('Please enter your pass phrase:');
+    if(!pp) {
+      return false;
+    }
+    let k = tool.crypto.key.read(ki.private);
+    if(!k.decrypt(pp)) {
+      alert('Pass phrase did not match, please try again.');
+      return false;
+    }
+    pass_phrase = pp;
+  }
+  if(evaluate_password_strength(pass_phrase).pass === true) {
+    return true;
+  }
+  alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
+  return false;
+}
 
 $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
   if(url_params.action === 'setup') {
