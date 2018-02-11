@@ -226,7 +226,6 @@ function backup_on_email_provider(primary_k) {
 }
 
 function backup_as_file(primary_k) { //todo - add a non-encrypted download option
-  let btn_text = $(self).text();
   $(self).html(tool.ui.spinner('white'));
   if(tool.env.browser().name !== 'firefox') {
     tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_k.private);
