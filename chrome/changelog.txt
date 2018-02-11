@@ -1,5 +1,10 @@
 <div>
 
+<b>version 5.2.0 on February 11, 2017: Security</b>
+security: double check passphrase strength when trying to back up imported key security
+settings: rename to "test my pass phrase"
+reading: support eM client compatibility
+
 <b>version 5.1.9 on January 31, 2017: Public key management</b>
 settings: handle multiple pubkeys within single armor
 settings: export all public keys into a file (help coworker) good first issue
