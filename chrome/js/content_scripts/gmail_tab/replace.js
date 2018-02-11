@@ -38,9 +38,9 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function replace_conversation_buttons(force) {
     let convo_upper_icons = $('div.ade:visible');
     let use_encryption_in_this_convo = $('iframe.pgp_block').filter(':visible').length || force;
-    let visible_reply_buttons = $('td.acX:visible');
     // reply buttons
     if(use_encryption_in_this_convo) {
+      let visible_reply_buttons = $('td.acX:visible');
       if(visible_reply_buttons.not('.replaced').length) { // last reply button in convo gets replaced
         let conversation_reply_buttons_to_replace = visible_reply_buttons.not('.replaced');
         let has_visible_replacements = visible_reply_buttons.filter('.replaced').length > 0;
@@ -60,6 +60,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
           add_cryptup_conversation_icon(convo_upper_icons, factory.button.without_cryptup(), '.show_original_conversation', () => {
             convo_upper_icons.find('.gZ').click();
           });
+
         }
       } else {
         if(!convo_upper_icons.is('.appended')) {

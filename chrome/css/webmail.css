@@ -30,6 +30,7 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img { border: 2p
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span { text-transform: uppercase; font-size: 9.5px; color: white; background: #31A217; padding: 2px 3px 2px 3px;
   display: inline-block; border-radius: 2px; cursor: default; }
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img, div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) { margin-left: 5px; }
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container { display: inline-block; width: 30px; }
