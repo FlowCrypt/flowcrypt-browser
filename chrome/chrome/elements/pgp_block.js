@@ -54,31 +54,30 @@ window.flowcrypt_storage.db_open(function (db) {
   }
 
   function render_content(content, is_error, callback) {
-    window.flowcrypt_storage.get(url_params.account_email, ['successfully_received_at_leat_one_message'], storage => {
-      if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
-        window.flowcrypt_storage.set(url_params.account_email, { successfully_received_at_leat_one_message: true });
+    if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
+      window.flowcrypt_storage.set(url_params.account_email, { successfully_received_at_leat_one_message: true });
+    }
+    tool.str.as_safe_html(content, function(safe_html) {
+      $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
+      if(unsecure_mdc_ignored && !is_error) {
+        set_frame_color('red');
+        $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + window.lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
       }
-      tool.str.as_safe_html(content, function(safe_html) {
-        $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
-        if(unsecure_mdc_ignored && !is_error) {
-          set_frame_color('red');
-          $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + window.lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
-        }
-        if(is_error) {
-          $('.action_show_raw_pgp_block').click(function () {
-            $('.raw_pgp_block').css('display', 'block');
-            $(this).css('display', 'none');
-            send_resize_message();
-          });
-        }
-        if(callback) {
-          callback();
-        }
-        setTimeout(function () {
-          $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
-        }, 1000);
-        send_resize_message();
-      });
+      if(is_error) {
+        $('.action_show_raw_pgp_block').click(function () {
+          $('.raw_pgp_block').css('display', 'block');
+          $(this).css('display', 'none');
+          send_resize_message();
+        });
+      }
+      if(callback) {
+        callback();
+      }
+      setTimeout(function () {
+        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
+      }, 1000);
+      send_resize_message();
+      $('body').attr('data-test-state', 'ready');  //set as ready so that automated tests can evaluate results
     });
   }
 

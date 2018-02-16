@@ -191,10 +191,10 @@
     <div id="step_2_recovery">
       <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your pass phrase to continue.</div>
       <div class="line">
-        <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase" />
+        <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase" data-test="input-recovery-pass-phrase" />
       </div>
       <div class="line">
-        <div class="button green long action_recover_account">RECOVER ACCOUNT</div>
+        <div class="button green long action_recover_account" data-test="action-recover-account">RECOVER ACCOUNT</div>
       </div>
       <div class="line line_skip_recovery" style="display: none;">
         <a href="#" class="action_skip_recovery">Skip recovery and set up encryption again. Your previous encrypted emails will be unreadable.</a>
@@ -269,7 +269,7 @@
         <div class="button long gray action_send">COMPOSE ENCRYPTED EMAIL</div>
       </div>
       <div class="line">
-        <div class="button long gray action_account_settings">MORE SETTINGS</div>
+        <div class="button long gray action_account_settings" data-test="action-step4more-account-settings">MORE SETTINGS</div>
       </div>
       <div class="line auth_denied_warning" style="display: none;">
         <br/>

@@ -8,5 +8,5 @@
 /temp/
 .DS_Store
 !.gitignore
-!/release/.gitignore
 !/config/.gitignore
+/test/puppeteer.json
