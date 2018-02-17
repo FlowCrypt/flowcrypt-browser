@@ -30,7 +30,7 @@ const meta = {
   sleep: function(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
-  wait: async function (page, selector, timeout=10000, visible=true) {
+  wait: async function (page, selector, timeout=20000, visible=true) {
     let selectors = Array.isArray(selector) ? selector : [selector];
     for(let i = 0; i < selectors.length; i++) {
       await page.waitForSelector(extension.selector(selectors[i]), {timeout: timeout, visible: visible});
