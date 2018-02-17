@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.2.2 on February 17, 2017: Security page fix</b>
+settings: fix security settings page exceptions
+
 <b>version 5.2.1 on February 17, 2017: Storage</b>
 internal: stop relying on local storage
 internal: stop unnecessary reports
