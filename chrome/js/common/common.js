@@ -1362,7 +1362,7 @@
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: typeof catcher !== 'undefined' ? catcher.stack_trace() : 'unknown' };
     var is_background_page = env_is_background_script();
     if(typeof  destination_string === 'undefined') { // don't know where to send the message
-      catcher.report('browser_message_send to:undefined');
+      catcher.log('browser_message_send to:undefined');
       if(typeof callback !== 'undefined') {
         callback();
       }
