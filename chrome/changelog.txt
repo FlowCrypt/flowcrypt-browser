@@ -1,5 +1,10 @@
 <div>
 
+<b>version 5.2.1 on February 17, 2017: Storage</b>
+internal: stop relying on local storage
+internal: stop unnecessary reports
+tests: improve automated tests
+
 <b>version 5.2.0 on February 11, 2017: Security</b>
 security: double check passphrase strength when trying to back up imported key security
 settings: rename to "test my pass phrase"
@@ -21,13 +26,13 @@ sending: prevent enigmail from attempting to display encrypted attachments
 reading: fix decrypted null error
 
 <b>version 5.1.5 on December 20, 2017: Decrypt errors fix</b>
-fix diagnosis of decrypt errors
+reading: fix diagnosis of decrypt errors
 
 <b>version 5.1.4 on December 20, 2017: Decrypt Fix, Imports</b>
-errors recognizing encrypted messages
-allow importing non-armored private keys
-"master public key" misrepresentation
-recognize pub-prv in one file (GPGKeychain) good first issue
+reading: errors recognizing encrypted messages
+reading: "master public key" misrepresentation
+setup: allow importing non-armored private keys
+setup: recognize pub-prv in one file (GPGKeychain)
 
 <b>version 5.1.3 on December 14, 2017: Firefox Backup</b>
 settings: download pubkey as a file on Firefox
