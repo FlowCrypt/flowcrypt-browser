@@ -892,8 +892,8 @@
     return ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification'];
   }
 
-  function file_keyinfo_as_pubkey_attachment(keyinfo) {
-    return file_attachment('0x' + keyinfo.longid + '.asc', 'application/pgp-keys', keyinfo.public);
+  function file_keyinfo_as_pubkey_attachment(ki) {
+    return file_attachment('0x' + ki.longid + '.asc', 'application/pgp-keys', ki.public);
   }
 
   /* tool.mime */
@@ -1954,18 +1954,18 @@
       }
       keys.with_passphrases = [];
       keys.without_passphrases = [];
-      Promise.all(keys.potentially_matching.map(function(keyinfo) {return storage.passphrase_get(account_email, keyinfo.longid)})).then(function(passphrases) {
-        tool.each(keys.potentially_matching, function (i, keyinfo) {
+      Promise.all(keys.potentially_matching.map(function(ki) {return storage.passphrase_get(account_email, ki.longid)})).then(function(passphrases) {
+        tool.each(keys.potentially_matching, function (i, ki) {
           if(passphrases[i] !== null) {
-            var key = openpgp.key.readArmored(keyinfo.private).keys[0];
+            var key = openpgp.key.readArmored(ki.private).keys[0];
             if(crypto_key_decrypt(key, passphrases[i]).success) {
-              keyinfo.decrypted = key;
-              keys.with_passphrases.push(keyinfo);
+              ki.decrypted = key;
+              keys.with_passphrases.push(ki);
             } else {
-              keys.without_passphrases.push(keyinfo);
+              keys.without_passphrases.push(ki);
             }
           } else {
-            keys.without_passphrases.push(keyinfo);
+            keys.without_passphrases.push(ki);
           }
         });
         if(keys.signed_by.length && typeof storage.db_contact_get === 'function') {
@@ -2035,10 +2035,10 @@
     return true; // next attempt
   }
 
-  function get_decrypt_options(message, keyinfo, is_armored, one_time_message_password, force_output_format) {
+  function get_decrypt_options(message, ki, is_armored, one_time_message_password, force_output_format) {
     var options = { message: message, format: is_armored ? force_output_format || 'utf8' : force_output_format || 'binary' };
     if(!one_time_message_password) {
-      options.privateKey = keyinfo.decrypted;
+      options.privateKey = ki.decrypted;
     } else {
       options.password = crypto_hash_challenge_answer(one_time_message_password);
     }
@@ -2100,7 +2100,7 @@
         }
         callback({success: true, content: { data: message.text }, encrypted: false, signature: crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0])});
       } else {
-        var missing_passphrases = keys.without_passphrases.map(function (keyinfo) { return keyinfo.longid; });
+        var missing_passphrases = keys.without_passphrases.map(function (ki) { return ki.longid; });
         if(!keys.with_passphrases.length && !message_password) {
           callback({success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
         } else {

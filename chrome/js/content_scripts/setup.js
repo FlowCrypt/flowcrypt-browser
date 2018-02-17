@@ -77,7 +77,7 @@ function content_script_setup_if_vacant(webmail_specific) {
     let account_email = webmail_specific.get_user_account_email();
     if(!window.account_email_global) {
       if(typeof account_email !== 'undefined' && catcher.version()) {
-        console.log('Loading FlowCrypt ' + catcher.version());
+        console.log('Loading FlowCrypt ' + catcher.version() + ' for ' + account_email);
         window.account_email_global = account_email;
         tool.env.webmails(function (webmails) {
           if(tool.value(webmail_specific.name).in(webmails)) {

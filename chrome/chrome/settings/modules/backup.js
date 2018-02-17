@@ -22,8 +22,8 @@ window.flowcrypt_storage.get(url_params.account_email, ['setup_simple', 'email_p
   } else if(url_params.action === 'passphrase_change_gmail_backup') {
     if(storage.setup_simple) {
       display_block('loading');
-      window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
-        (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_k.private, function (success) {
+      window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
+        (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email, primary_ki.private, function (success) {
           if(success) {
             $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
           } else {
@@ -182,13 +182,12 @@ $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function
     let btn_text = $(self).text();
     $(self).html(tool.ui.spinner('white'));
     console.log('p1');
-    window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
-      let prv = openpgp.key.readArmored(primary_k.private).keys[0];
+    window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
+      let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
       openpgp_key_encrypt(prv, new_passphrase);
       console.log('p2');
       Promise.all([
-        window.flowcrypt_storage.passphrase_save('local', url_params.account_email, null, new_passphrase),
-        window.flowcrypt_storage.legacy_storage_set('local', url_params.account_email, 'master_passphrase_needed', true),
+        window.flowcrypt_storage.passphrase_save('local', url_params.account_email, primary_ki.longid, new_passphrase),
         window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true),
       ]).then(() => {
         console.log('p3');
@@ -213,7 +212,7 @@ function is_master_private_key_encrypted(ki) {
 }
 
 function backup_on_email_provider(primary_ki) {
-  flowcrypt_storage.passphrase_get(url_params.account_email).then(pass_phrase => {
+  flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid).then(pass_phrase => {
     if(!is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
       return;
     }
@@ -231,17 +230,17 @@ function backup_on_email_provider(primary_ki) {
   });
 }
 
-function backup_as_file(primary_k) { //todo - add a non-encrypted download option
+function backup_as_file(primary_ki) { //todo - add a non-encrypted download option
   $(self).html(tool.ui.spinner('white'));
   if(tool.env.browser().name !== 'firefox') {
-    tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_k.private);
+    tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private);
     write_backup_done_and_render(false, 'file');
   } else {
-    tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_k.private, $('.backup_action_buttons_container'));
+    tool.file.save_to_downloads('cryptup-' + url_params.account_email.toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private, $('.backup_action_buttons_container'));
   }
 }
 
-function backup_by_print(primary_k) { //todo - implement + add a non-encrypted print option
+function backup_by_print(primary_ki) { //todo - implement + add a non-encrypted print option
   throw new Error('not implemented');
 }
 

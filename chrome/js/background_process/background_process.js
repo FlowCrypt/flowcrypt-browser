@@ -14,6 +14,12 @@ function get_background_process_start_reason() {
 
 migrate_global(function () {
   window.flowcrypt_storage.set(null, { version: catcher.version('int') });
+  window.flowcrypt_storage.get(null, ['settings_seen'], (s) => {
+    if(!s.settings_seen) {
+      open_settings_page('initial.htm'); // called after the very first installation of the plugin
+      window.flowcrypt_storage.set(null, {settings_seen: true});
+    }
+  });
 });
 
 tool.browser.message.listen_background({
@@ -44,11 +50,6 @@ window.flowcrypt_storage.get(null, 'errors', storage => {
     window.flowcrypt_storage.remove(null, 'errors');
   }
 });
-
-if(!localStorage.settings_seen) {
-  open_settings_page('initial.htm'); // called after the very first installation of the plugin
-  localStorage.settings_seen = true;
-}
 
 inject_cryptup_into_webmail_if_needed();
 

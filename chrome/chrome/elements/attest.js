@@ -6,24 +6,27 @@ tool.ui.event.protect();
 
 let url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
 
-window.flowcrypt_storage.passphrase_get(url_params.account_email).then(passphrase => {
-  if(passphrase !== null) {
-    process_attest(passphrase);
-  } else {
-    $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>')
-    $('.action_passphrase').click(function() {
-      tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {type: 'attest'});
-    });
-    tool.browser.message.tab_id(function(tab_id) {
-      tool.browser.message.listen({
-        passphrase_entry: function(message, sender, respond) {
-          if(message.entered) {
-            window.flowcrypt_storage.passphrase_get(url_params.account_email).then(process_attest);
-          }
-        },
-      })
-    });
-  }
+window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
+  window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid).then(passphrase => {
+    if(passphrase !== null) {
+      process_attest(passphrase);
+    } else {
+      $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>')
+      $('.action_passphrase').click(function() {
+        tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {type: 'attest'});
+      });
+      tool.browser.message.tab_id(function(tab_id) {
+        tool.browser.message.listen({
+          passphrase_entry: function(message, sender, respond) {
+            if(message.entered) {
+              window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid).then(process_attest);
+            }
+          },
+        })
+      });
+    }
+  });
+
 });
 
 function process_attest(passphrase) {

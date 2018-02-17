@@ -61,24 +61,6 @@
     }
   }
 
-  function get_storage(storage_type) {
-    try {
-      if(storage_type === 'local') {
-        return localStorage;
-      } else if(storage_type === 'session') {
-        return sessionStorage;
-      } else {
-        throw new Error('unknown type of storage: "' + storage_type + '", use either "local" or "session"');
-      }
-    } catch(error) {
-      if(error.name === 'SecurityError') {
-        return null;
-      } else {
-        throw error;
-      }
-    }
-  }
-
   function notify_about_storage_access_error(account_email, parent_tab_id) {
     if(parent_tab_id) {
       let msg = 'Your browser settings are keeping FlowCrypt from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
@@ -88,112 +70,59 @@
     }
   }
 
-  function legacy_local_storage_get(storage_type, account_email, key, parent_tab_id) {
+  function session_storage_get(account_email, key) {
     return try_promise((resolve, reject) => {
-      let storage = get_storage(storage_type);
-      if(storage === null) {
-        notify_about_storage_access_error(account_email, parent_tab_id);
-        reject();
-      }
-      let value = storage[storage_key(account_email, key)];
-      if(typeof value === 'undefined') {
-        resolve(value);
-      } else if(value === 'null#null') {
-        resolve(null);
-      } else if(value === 'bool#true') {
-        resolve(true);
-      } else if(value === 'bool#false') {
-        resolve(false);
-      } else if(value.indexOf('int#') === 0) {
-        resolve(Number(value.replace('int#', '', 1)));
-      } else if(value.indexOf('json#') === 0) {
-        resolve(JSON.parse(value.replace('json#', '', 1)));
-      } else {
-        resolve(value.replace('str#', '', 1));
-      }
+      resolve(sessionStorage[storage_key(account_email, key)]);
     });
   }
 
-  function legacy_local_storage_set(storage_type, account_email, key, value) {
-    let storage = get_storage(storage_type);
-    let account_key = storage_key(account_email, key);
-    if(typeof value === 'undefined') {
-      storage.removeItem(account_key);
-    } else if(value === null) {
-      storage[account_key] = 'null#null';
-    } else if(value === true || value === false) {
-      storage[account_key] = 'bool#' + value;
-    } else if(value + 0 === value) {
-      storage[account_key] = 'int#' + value;
-    } else if(typeof value === 'object') {
-      storage[account_key] = 'json#' + JSON.stringify(value);
-    } else {
-      storage[account_key] = 'str#' + value;
-    }
-    // fake async for future compatibility
+  function session_storage_set(account_email, key, value) {
     return try_promise((resolve, reject) => {
+      if(typeof value !== 'undefined') {
+        sessionStorage[storage_key(account_email, key)] = String(value);
+      } else {
+        sessionStorage.removeItem(storage_key(account_email, key));
+      }
       resolve();
     });
   }
 
   function passphrase_save(storage_type, account_email, longid, passphrase) {
     return try_promise((resolve, reject) => {
-      keys_get(account_email, 'primary').then(primary_k => {
-        if(longid && primary_k && longid !== primary_k.longid) {
-          legacy_local_storage_set(storage_type, account_email, 'passphrase_' + longid, passphrase).then(resolve);
+      let storage_k = 'passphrase_' + longid;
+      if (storage_type === 'session') {
+        session_storage_set(account_email, storage_k, passphrase).then(resolve, reject);
+      } else {
+        if(typeof passphrase === 'undefined') {
+          extension_storage_remove(account_email, [storage_k], resolve);
         } else {
-          legacy_local_storage_set(storage_type, account_email, 'master_passphrase', passphrase).then(resolve);
+          let to_save = {};
+          to_save[storage_k] = passphrase;
+          extension_storage_set(account_email, to_save, resolve);
         }
-      })
+      }
     });
   }
 
   function passphrase_get(account_email, longid, ignore_session) {
     return try_promise((resolve, reject) => {
-      if(longid) {
-        legacy_local_storage_get('local', account_email, 'passphrase_' + longid).then(stored => {
-          if(stored) {
-            resolve(stored);
-          } else {
-            legacy_local_storage_get('session', account_email, 'passphrase_' + longid).then(from_session => {
-              if(from_session && !ignore_session) {
-                resolve(from_session);
-              } else {
-                keys_get(account_email, 'primary').then(primary_k => {
-                  if(primary_k && primary_k.longid === longid) {
-                    passphrase_get(account_email, null, ignore_session).then(resolve); //todo - do a storage migration so that we don't have to keep trying to query with legacy storage method
-                  } else {
-                    resolve(null);
-                  }
-                });
-              }
-            });
-          }
-        });
-      } else { //todo - this whole part would also be unnecessary if we did a migration
-        legacy_local_storage_get('local', account_email, 'master_passphrase_needed').then(passphrase_needed => {
-          if (passphrase_needed === false) {
-            resolve('');
-          } else {
-            legacy_local_storage_get('local', account_email, 'master_passphrase').then(stored => {
-              if (stored) {
-                resolve(stored);
-              } else {
-                legacy_local_storage_get('session', account_email, 'master_passphrase').then(from_session => {
-                    resolve(from_session && !ignore_session ? from_session : null);
-                });
-              }
-            });
-          }
-        });
-      }
+      let storage_k = 'passphrase_' + longid;
+      extension_storage_get(account_email, [storage_k], storage => {
+        if(typeof storage[storage_k] === 'string') {
+          resolve(storage[storage_k]);
+        } else {
+          session_storage_get(account_email, storage_k).then(from_session => {
+            resolve(from_session && !ignore_session ? from_session : null);
+          });
+        }
+      });
     });
   }
 
   function keys_get(account_email, longid) {
     return try_promise((resolve, reject) => {
-      legacy_local_storage_get('local', account_email, 'keys').then(keys => {
-        keys = keys || [];
+      extension_storage_get(account_email, ['keys'], storage => {
+        let keys = storage.keys || [];
         if(typeof longid !== 'undefined') { // looking for a specific key(s)
           let found;
           if(typeof longid === 'object') { // looking for an array of keys
@@ -246,9 +175,7 @@
           if (!updated) {
             private_keys.push(keys_object(new_key_armored, private_keys.length === 0));
           }
-          legacy_local_storage_set('local', account_email, 'keys', private_keys).then(() => {
-            resolve();
-          });
+          extension_storage_set(account_email, {keys: private_keys}, resolve);
         } else {
           resolve();
         }
@@ -265,7 +192,7 @@
             filtered_private_keys.push(keyinfo);
           }
         });
-        legacy_local_storage_set('local', account_email, 'keys', filtered_private_keys).then(resolve);
+        extension_storage_set(account_email, {keys: filtered_private_keys}, resolve);
       });
     });
   }
@@ -622,8 +549,7 @@
     keys_remove: keys_remove,
     passphrase_get: passphrase_get,
     passphrase_save: passphrase_save,
-    legacy_storage_set: legacy_local_storage_set,
-    notify_error: notify_about_storage_access_error,
+    notify_error: notify_about_storage_access_error, // todo - only use DB in background page & deprecate this
   };
 
 })();
