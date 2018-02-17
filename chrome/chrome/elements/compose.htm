@@ -38,14 +38,14 @@
         <!-- to -->
         <div>
           <span class="recipients"></span>
-          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Add Recipient" />
+          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Add Recipient"  data-test="input-to" />
         </div>
       </td>
     </tr>
     <tr id="section_subject">
       <td class="input">
         <!-- subject -->
-        <input id="input_subject" spellcheck="true" tabindex="2" placeholder="Subject" />
+        <input id="input_subject" spellcheck="true" tabindex="2" placeholder="Subject" data-test="input-subject" />
       </td>
     </tr>
     <tr class="intro_container">
@@ -58,19 +58,19 @@
       <td class="text">
         <div class="action_add_intro good" title="Add a custom message that your recipient will see before they open encrypted content">+ add intro</div>
         <!-- body -->
-        <div contenteditable id="input_text" tabindex="4"></div>
+        <div contenteditable id="input_text" tabindex="4" data-test="input-body"></div>
         <div id="fineuploader"></div>
       </td>
     </tr>
     <tr id="password_or_pubkey_container">
       <td>
-        Emails <span class="grey">in grey</span> don't seem to use encryption. Add a <span class="label_password" style="display: block;">password protection</span><span class="start">"</span><input id="input_password" placeholder="" tabindex="5"><span class="end">"</span>
+        Emails <span class="grey">in grey</span> don't seem to use encryption. Add a <span class="label_password" style="display: block;">password protection</span><span class="start">"</span><input id="input_password" placeholder="" tabindex="5" data-test="input-password"><span class="end">"</span>
         <div class="question_copy">If they do use encryption, <a href="#" class="add_pubkey">add their public key</a> instead. Else ask them to get FlowCrypt!</div>
       </td>
     </tr>
     <tr class="bottom">
       <td class="bottom">
-        <div id="send_btn" class="button green"><i class=""></i><span tabindex="6">encrypt and send</span></div>
+        <div id="send_btn" class="button green" data-test="action-send"><i class=""></i><span tabindex="6">encrypt and send</span></div>
         <div class="icon action_sign" tabindex="-1" title="Sign this message instead of encrypting it"><i alt="sign"></i></div>
         <div class="icon attach" id="fineuploader_button" tabindex="-1" title="Attach a file"><img src="/img/svgs/paperclip-icon.svg" class="attach-file" alt="Attach File"></div>
         <div id="send_btn_note"></div>

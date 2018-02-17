@@ -277,6 +277,7 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
     });
 
     function close_message() {
+      $('body').attr('data-test-state', 'closed');  // used by automated tests
       if(url_params.is_reply_box) {
         tool.browser.message.send(url_params.parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
       } else if(url_params.placement === 'settings') {

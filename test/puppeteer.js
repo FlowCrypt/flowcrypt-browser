@@ -21,19 +21,19 @@ const extension = {
       return name_or_selector; // actual selector
     }
   },
-  selector_test_state_ready: function () {
-    return '[data-test-state="ready"]';
-  }
+  selector_test_state: function (state) {
+    return '[data-test-state="' + state + '"]';
+  },
 };
 
 const meta = {
   sleep: function(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
-  wait: async function (page, selector, timeout=20000, visible=true) {
+  wait: async function (page, selector, timeout=20, visible=true) {
     let selectors = Array.isArray(selector) ? selector : [selector];
     for(let i = 0; i < selectors.length; i++) {
-      await page.waitForSelector(extension.selector(selectors[i]), {timeout: timeout, visible: visible});
+      await page.waitForSelector(extension.selector(selectors[i]), {timeout: timeout * 1000, visible: visible});
     }
   },
   click: async function (page, selector) {
@@ -76,27 +76,34 @@ const meta = {
       console.log('success');
     }
   },
-};
+  random: () => Math.random().toString(36).substring(7),
+ };
 
 const actions = {
-  approve_gmail_oauth: function(account_email, callback) {
+  approve_gmail_oauth: async function(account_email, callback) {
     let auth = extension.config.auth.google.filter(a => a.email === account_email)[0];
     return async(target) => {
+      meta.sleep(5);
       let oauth_page = await target.page();
       await meta.wait(oauth_page, '#Email, #submit_approve_access, #identifierId, .w6VTHd');
       if (await oauth_page.$('#Email') !== null) {
+        await meta.wait(oauth_page, '#Email', 60);
         await meta.wait_and_type(oauth_page, '#Email', auth['email']);
         await meta.wait_and_click(oauth_page, '#next');
-        await meta.wait_and_type(oauth_page, '#Passwd', auth['password'], 1);
+        await meta.sleep(5);
+        await meta.wait_and_type(oauth_page, '#Passwd', auth['password'], 5);
         await meta.wait_and_click(oauth_page, '#signIn', 1);
       } else if (await oauth_page.$('#identifierId') !== null) {
-        await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 1);
+        await meta.wait(oauth_page, '#identifierId', 60);
+        await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 2);
         await meta.wait_and_click(oauth_page, '.RveJvd', 1);  // confirm email
-        await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], 3);
+        await meta.sleep(5);
+        await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], 5);
         await meta.wait_and_click(oauth_page, '.CwaK9', 1);  // confirm password
       } else if (await oauth_page.$('.w6VTHd') !== null) {
         await meta.wait_and_click(oauth_page, '.w6VTHd', 1);  // select first email account
       }
+      await meta.wait(oauth_page, '#submit_approve_access', 60);
       await meta.wait_and_click(oauth_page, '#submit_approve_access', 1);
       meta.log('approve_gmail_oauth');
       callback();
@@ -117,7 +124,7 @@ const actions = {
       let m = messages[i];
       await pgp_block_page.goto(extension.url('chrome/elements/pgp_block.htm') + m.params);
       await meta.wait(pgp_block_page, '@pgp-block-content');
-      await meta.wait(pgp_block_page, extension.selector_test_state_ready()); // wait until decryption done
+      await meta.wait(pgp_block_page, extension.selector_test_state('ready')); // wait until decryption done
       await meta.sleep(1);
       let content = await meta.read(pgp_block_page, '@pgp-block-content');
       let ok = true;
@@ -138,6 +145,52 @@ const actions = {
     } else {
       meta.log(`pgp_block_tests`, `some decrypt tests had failures`);
     }
+  },
+  compose_tests: async function() {
+    let compose_page = await this.new_page();
+    let compose_url = extension.url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com');
+
+    await meta.sleep(1);
+    await compose_page.goto(compose_url);
+    await meta.wait(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait(compose_page, extension.selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
+    await meta.click(compose_page, '@input-subject');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: freshly loaded pubkey: ' + meta.random());
+    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a freshly loaded public key');
+    await meta.click(compose_page, '@action-send');
+    await meta.wait(compose_page, extension.selector_test_state('closed')); // wait until page closed
+    // await compose_page.close();
+    meta.log('compose:tests:fresh pubkey');
+
+    await meta.sleep(1);
+    await compose_page.goto(compose_url);
+    await meta.wait(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait(compose_page, extension.selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
+    await meta.click(compose_page, '@input-subject');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: reused pubkey: ' + meta.random());
+    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a reused public key');
+    await meta.click(compose_page, '@action-send');
+    await meta.wait(compose_page, extension.selector_test_state('closed')); // wait until page closed
+    // await compose_page.close();
+    meta.log('compose:tests:reused pubkey');
+
+    // await meta.sleep(1);
+    // await compose_page.goto(compose_url);
+    // await meta.wait(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    // await meta.wait(compose_page, extension.selector_test_state('ready')); // wait until page ready
+    // await meta.type(compose_page, '@input-to', 'human+test@flowcrypt.com');
+    // await meta.click(compose_page, '@input-subject');
+    // await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey: ' + meta.random());
+    // await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
+    // await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
+    // await meta.sleep(1);
+    // await meta.wait_and_click(compose_page, '@action-send');
+    // await meta.wait(compose_page, extension.selector_test_state('closed')); // wait until page closed
+    // meta.log('compose:tests:unknown pubkey');
+
+    await compose_page.close();
   },
   new_page: async function(url) {
     const page = await browser.newPage();
@@ -172,9 +225,10 @@ const actions = {
 
   const settings_page = await actions.new_page('chrome/settings/index.htm');
   meta.wait_and_click(settings_page, '@action-connect-to-gmail');
-  browser.once('targetcreated', actions.approve_gmail_oauth('flowcrypt.compatibility@gmail.com', async() => {
+  browser.once('targetcreated', await actions.approve_gmail_oauth('flowcrypt.compatibility@gmail.com', async() => {
     await actions.setup_recover(settings_page, 2);
     await actions.pgp_block_tests();
+    await actions.compose_tests();
     await actions.close_browser();
   }));
 

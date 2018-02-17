@@ -196,6 +196,7 @@
       S.cached('compose_table').css('display', 'table');
       render_compose_table();
     }
+    $('body').attr('data-test-state', 'ready');  //set as ready so that automated tests can evaluate results
   }
 
   function initial_draft_load() {
@@ -867,7 +868,7 @@
   function show_hide_password_or_pubkey_container_and_color_send_button() {
     reset_send_btn();
     S.cached('send_btn_note').text('');
-    S.cached('send_btn').attr('title', '');
+    S.cached('send_btn').removeAttr('title');
     let was_previously_visible = S.cached('password_or_pubkey').css('display') === 'table-row';
     if (!$('.recipients span').length) {
       hide_message_password_ui();
