@@ -41,15 +41,17 @@ window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(prim
     }
   });
 
-  window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid, true).then(stored_passphrase => {
-    if(stored_passphrase === null) {
-      $('#passphrase_to_open_email').prop('checked', true);
-    }
-    $('#passphrase_to_open_email').change(function () {
-      $('.passhprase_checkbox_container').css('display', 'none');
-      $('.passphrase_entry_container').css('display', 'block');
+  if(primary_ki !== null) { // not set up yet
+    window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid, true).then(stored_passphrase => {
+      if(stored_passphrase === null) {
+        $('#passphrase_to_open_email').prop('checked', true);
+      }
+      $('#passphrase_to_open_email').change(function () {
+        $('.passhprase_checkbox_container').css('display', 'none');
+        $('.passphrase_entry_container').css('display', 'block');
+      });
     });
-  });
+  }
 
   $('.action_change_passphrase').click(function () {
     show_settings_page('/chrome/settings/modules/change_passphrase.htm');
