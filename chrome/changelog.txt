@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.2.4 on February 18, 2017: Storage permissions fix</b>
+internal: do not rely on browser cookies settings
+internal: support Incognito / Private Browsing Mode
+
 <b>version 5.2.3 on February 18, 2017: Attest fix</b>
 internal: fix background process attest exception
 
