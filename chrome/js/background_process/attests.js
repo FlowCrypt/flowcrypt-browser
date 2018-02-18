@@ -47,24 +47,28 @@ function stop_watching(account_email) {
 function check_email_for_attests_and_respond(account_email) {
   window.flowcrypt_storage.get(account_email, ['attests_requested'], storage => {
     window.flowcrypt_storage.keys_get(account_email, 'primary').then(primary_ki => {
-      window.flowcrypt_storage.passphrase_get(account_email, primary_ki.longid).then(passphrase => {
-        if(passphrase !== null) {
-          if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email]) {
-            fetch_attest_emails(account_email, (success, messages) => {
-              if(success && messages) {
-                tool.each(messages, (id, message) => {
-                  process_attest_email(account_email, message);
-                });
-              }
-            });
+      if(primary_ki !== null) {
+        window.flowcrypt_storage.passphrase_get(account_email, primary_ki.longid).then(passphrase => {
+          if(passphrase !== null) {
+            if(storage.attests_requested && storage.attests_requested.length && can_read_emails[account_email]) {
+              fetch_attest_emails(account_email, (success, messages) => {
+                if(success && messages) {
+                  tool.each(messages, (id, message) => {
+                    process_attest_email(account_email, message);
+                  });
+                }
+              });
+            } else {
+              add_attest_log(false, 'cannot fetch attest emails for ' + account_email);
+              stop_watching(account_email);
+            }
           } else {
-            add_attest_log(false, 'cannot fetch attest emails for ' + account_email);
-            stop_watching(account_email);
+            console.log('cannot get pass phrase for signing - skip fetching attest emails for ' + account_email);
           }
-        } else {
-          console.log('cannot get pass phrase for signing - skip fetching attest emails for ' + account_email);
-        }
-      });
+        });
+      } else {
+        console.log('no primary key set yet - skip fetching attest emails for ' + account_email);
+      }
     });
   });
 }
