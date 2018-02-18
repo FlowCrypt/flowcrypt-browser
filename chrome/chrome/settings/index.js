@@ -101,9 +101,7 @@ function initialize() {
             $("#settings").toggleClass("advanced");
           }
           window.flowcrypt_storage.keys_get(url_params.account_email).then(private_keys => {
-            if(!private_keys.length) {
-              render_storage_read_error();
-            } else if(private_keys.length > 4) {
+            if(private_keys.length > 4) {
               $('.key_list').css('overflow-y', 'scroll');
             }
             add_key_rows_html(private_keys);
@@ -169,15 +167,6 @@ function render_subscription_status_header() {
       }
     });
   });
-}
-
-function render_storage_read_error() {
-  let html = '<div class="line">FlowCrypt is not able to access local browser storage. </div>';
-  html += '<div class="line">Certain browser privacy or security settings can cause this.</div>';
-  html += '<div class="line">Private Browsing Mode (Incognito mode) can also cause this issue.</div>';
-  html += '<div class="line">If you have changed any browser settings recently, try to set them back.</div>';
-  html += '<div class="line">Email me at human@flowcrypt.com if you have questions.</div>';
-  $('#settings-row').html(html);
 }
 
 function add_key_rows_html(private_keys) {

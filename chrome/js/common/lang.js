@@ -29,7 +29,7 @@
       write_me: 'Please write me at human@flowcrypt.com so that I can fix it. I respond very promptly. ',
       refresh_window: 'Please refresh your web mail window to read encrypted messages. ',
       update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
-      not_properly_set_up: 'FlowCrypt is not properly set up to decrypt messages. This can also be caused by Incognito or Private Browsing mode. ',
+      not_properly_set_up: 'FlowCrypt is not properly set up to decrypt messages. ',
       mdc_warning: 'This message was badly encrypted. Do not consider it private. The sender should update their encryption software.\n\nIt allows for a known vulnerability to be exploited (missing MDC in combination with modern cipher) that may allow unintended parties to read the contents.',
       message_expired_on: 'Message expired on ',
       messages_dont_expire: 'Messages don\'t expire if recipients also have encryption set up.',

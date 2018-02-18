@@ -39,9 +39,6 @@ function content_script_notifications() {
     if(typeof callbacks.reload === 'undefined') {
       callbacks.reload = catcher.try(() => window.location.reload());
     }
-    if(typeof callbacks.content_settings === 'undefined') {
-      callbacks.content_settings = catcher.try(() => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/texts/' + tool.env.browser().name + '_content_settings.htm' }));
-    }
     tool.each(callbacks, (name, callback) => $('.webmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback))));
   }
 
