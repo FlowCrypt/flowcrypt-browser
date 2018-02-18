@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.2.3 on February 18, 2017: Attest fix</b>
+internal: fix background process attest exception
+
 <b>version 5.2.2 on February 17, 2017: Security page fix</b>
 settings: fix security settings page exceptions
 
