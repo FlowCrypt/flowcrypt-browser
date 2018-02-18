@@ -96,48 +96,41 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
   if(!url_params.account_email) {
     window.location = 'index.htm';
   }
-  window.flowcrypt_storage.db_open(function (db) {
-    if(db === window.flowcrypt_storage.db_private_mode_error) {
-      $('#loading').text('FlowCrypt does not work in Private Browsing Mode. Please use it in a standard browser window.');
+  window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
+    email_provider = storage.email_provider || 'gmail';
+    if(storage.setup_done) {
+      if(url_params.action !== 'add_key') {
+        render_setup_done(url_params.account_email);
+      } else {
+        prepare_and_render_add_key_from_backup();
+      }
     } else {
-      window.flowcrypt_storage.get(url_params.account_email, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
-        email_provider = storage.email_provider || 'gmail';
-
-        if(storage.setup_done) {
-          if(url_params.action !== 'add_key') {
-            render_setup_done(url_params.account_email);
-          } else {
-            prepare_and_render_add_key_from_backup();
+      tool.api.attester.lookup_email(url_params.account_email).done((keyserver_success, keyserver_result) => {
+        initialize_private_key_import_ui(); // for step_2b_manual_enter
+        if(keyserver_success && keyserver_result && keyserver_result.pubkey) {
+          if(keyserver_result.attested) {
+            account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
           }
-        } else {
-          tool.api.attester.lookup_email(url_params.account_email).done((keyserver_success, keyserver_result) => {
-            initialize_private_key_import_ui(); // for step_2b_manual_enter
-            if(keyserver_success && keyserver_result && keyserver_result.pubkey) {
-              if(keyserver_result.attested) {
-                account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
+          if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+            tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
+              if(success && keys) {
+                recovered_keys = keys;
+                recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+                display_block('step_2_recovery');
+              } else {
+                display_block('step_0_found_key');
               }
-              if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-                tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
-                  if(success && keys) {
-                    recovered_keys = keys;
-                    recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-                    display_block('step_2_recovery');
-                  } else {
-                    display_block('step_0_found_key');
-                  }
-                });
-              } else { // cannot read gmail to find a backup, or this is outlook
-                if(keyserver_result.has_cryptup) {
-                  display_block('step_2b_manual_enter');
-                  $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
-                } else {
-                  display_block('step_1_easy_or_manual');
-                }
-              }
+            });
+          } else { // cannot read gmail to find a backup, or this is outlook
+            if(keyserver_result.has_cryptup) {
+              display_block('step_2b_manual_enter');
+              $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
             } else {
               display_block('step_1_easy_or_manual');
             }
-          });
+          }
+        } else {
+          display_block('step_1_easy_or_manual');
         }
       });
     }
@@ -238,9 +231,7 @@ function save_keys(account_email, prvs, options, callback) {
       let attested = (address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
       contacts.push(window.flowcrypt_storage.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
     });
-    window.flowcrypt_storage.db_open(function (db) {
-      window.flowcrypt_storage.db_contact_save(db, contacts, callback);
-    });
+    window.flowcrypt_storage.db_contact_save(null, contacts, callback);
   });
 }
 

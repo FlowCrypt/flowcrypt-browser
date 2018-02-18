@@ -98,7 +98,7 @@
   let subscribe_result_listener;
   let additional_message_headers = {};
   let button_update_timeout;
-  let is_reply_box, tab_id, account_email, db, thread_id, draft_id, supplied_subject, supplied_from, supplied_to, frame_id;
+  let is_reply_box, tab_id, account_email, thread_id, draft_id, supplied_subject, supplied_from, supplied_to, frame_id;
 
   let app = {
     // this is a list of empty defaults that will get overwritten wherever composer is used
@@ -138,7 +138,6 @@
 
   function init(app_functions, variables) {
     account_email = variables.account_email;
-    db = variables.db;
     draft_id = variables.draft_id;
     thread_id = variables.thread_id;
     supplied_subject = variables.subject;
@@ -379,7 +378,7 @@
   function decrypt_and_render_draft(encrypted_draft, render_function, headers) {
     app.storage_passphrase_get().then(passphrase => {
       if (passphrase !== null) {
-        tool.crypto.message.decrypt(db, account_email, encrypted_draft, null, (result) => {
+        tool.crypto.message.decrypt(account_email, encrypted_draft, null, (result) => {
           if(result.success) {
             tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'), function (safe_html_draft) {
               S.cached('input_text').html(safe_html_draft);
@@ -944,7 +943,7 @@
 
   function retrieve_decrypt_and_add_forwarded_message(message_id) {
     app.email_provider_extract_armored_block(message_id, function (armored_message) {
-      tool.crypto.message.decrypt(db, account_email, armored_message, undefined, function (result) {
+      tool.crypto.message.decrypt(account_email, armored_message, undefined, function (result) {
         if (result.success) {
           if (!tool.mime.resembles_message(result.content.data)) {
             append_forwarded_message(tool.mime.format_content_to_display(result.content.data, armored_message));

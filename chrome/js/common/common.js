@@ -1933,7 +1933,7 @@
     openpgp.sign(options).then(function(result) {callback(true, result.data)}, function (error) {callback(false, error.message)});
   }
 
-  function get_sorted_keys_for_message(db, account_email, message, callback) {
+  function get_sorted_keys_for_message(account_email, message, callback) {
     var keys = {};
     keys.verification_contacts = [];
     keys.for_verification = [];
@@ -1969,7 +1969,7 @@
           }
         });
         if(keys.signed_by.length && typeof storage.db_contact_get === 'function') {
-          storage.db_contact_get(db, keys.signed_by, function (verification_contacts) {
+          storage.db_contact_get(null, keys.signed_by, function (verification_contacts) {
             keys.verification_contacts = verification_contacts.filter(function (contact) {
               return contact !== null;
             });
@@ -2066,14 +2066,14 @@
     return signature;
   }
 
-  function crypto_message_verify_detached(db, account_email, plaintext, signature_text, callback) {
+  function crypto_message_verify_detached(account_email, plaintext, signature_text, callback) {
     var message = openpgp.message.readSignedContent(plaintext, signature_text);
-    get_sorted_keys_for_message(db, account_email, message, function(keys) {
+    get_sorted_keys_for_message(account_email, message, function(keys) {
       callback(crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]));
     });
   }
 
-  function crypto_message_decrypt(db, account_email, encrypted_data, message_password, callback, output_format) {
+  function crypto_message_decrypt(account_email, encrypted_data, message_password, callback, output_format) {
     var armored_encrypted = tool.value(crypto_armor_headers('message').begin).in(encrypted_data);
     var armored_signed_only = tool.value(crypto_armor_headers('signed_message').begin).in(encrypted_data);
     var is_armored = armored_encrypted || armored_signed_only;
@@ -2090,7 +2090,7 @@
       callback({success: false, counts: zeroed_decrypt_error_counts(), format_error: format_error.message, errors: other_errors, encrypted: null, signature: null});
       return;
     }
-    get_sorted_keys_for_message(db, account_email, message, function (keys) {
+    get_sorted_keys_for_message(account_email, message, function (keys) {
       var counts = zeroed_decrypt_error_counts(keys);
       if(armored_signed_only) {
         if(!message.text) {

@@ -61,15 +61,6 @@
     }
   }
 
-  function notify_about_storage_access_error(account_email, parent_tab_id) {
-    if(parent_tab_id) {
-      let msg = 'Your browser settings are keeping FlowCrypt from working properly. <a href="#" class="content_settings">Click here to fix it</a>. When fixed, <a href="#" class="reload">reload this page</a>.';
-      tool.browser.message.send(parent_tab_id, 'notification_show', {notification: msg});
-    } else {
-      console.log('SecurityError: cannot access localStorage or sessionStorage');
-    }
-  }
-
   function session_storage_get(account_email, key) {
     return try_promise((resolve, reject) => {
       resolve(sessionStorage[storage_key(account_email, key)]);
@@ -290,14 +281,6 @@
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  function db_denied() {
-    throw new Error('db_denied is not callable');
-  }
-
-  function db_private_mode_error() {
-    throw new Error('db_private_mode_error is not callable');
-  }
-
   function db_error_handle(exception, error_stack, callback) {
     exception.stack = error_stack.replace(/^Error/, String(exception));
     catcher.handle_exception(exception);
@@ -308,15 +291,7 @@
 
   function db_open(callback) {
     let open_db;
-    try {
-      open_db = indexedDB.open('cryptup', 2);
-    } catch (error) {
-      if(error.name === 'SecurityError') { // firefox
-        callback(db_denied);
-        return;
-      }
-      throw error;
-    }
+    open_db = indexedDB.open('cryptup', 2);
     open_db.onupgradeneeded = function (event) {
       let contacts;
       if(event.oldVersion < 1) {
@@ -338,13 +313,7 @@
     let stack_fill = (new Error()).stack;
     open_db.onblocked = catcher.try(() => db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
     open_db.onerror = catcher.try(() => {
-      if(open_db.error.message === 'The user denied permission to access the database.') { // chrome
-        callback(db_denied);
-      } else if(open_db.error.message === 'A mutation operation was attempted on a database that did not allow mutations.') { // firefox
-        callback(db_private_mode_error);
-      } else {
-        db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
-      }
+      db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
     });
   }
 
@@ -395,85 +364,97 @@
   }
 
   function db_contact_save(db, contact, callback) {
-    if(Array.isArray(contact)) {
-      let processed = 0;
-      tool.each(contact, (i, single_contact) => {
-        db_contact_save(db, single_contact, () => {
-          if(++processed === contact.length && typeof callback === 'function') {
-            callback();
-          }
-        });
-      });
+    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+      tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, callback);
     } else {
-      let tx = db.transaction('contacts', 'readwrite');
-      let contacts = tx.objectStore('contacts');
-      contacts.put(contact);
-      tx.oncomplete = catcher.try(callback);
-      let stack_fill = (new Error()).stack;
-      tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
+      if (Array.isArray(contact)) {
+        let processed = 0;
+        tool.each(contact, (i, single_contact) => {
+          db_contact_save(db, single_contact, () => {
+            if (++processed === contact.length && typeof callback === 'function') {
+              callback();
+            }
+          });
+        });
+      } else {
+        let tx = db.transaction('contacts', 'readwrite');
+        let contacts = tx.objectStore('contacts');
+        contacts.put(contact);
+        tx.oncomplete = catcher.try(callback);
+        let stack_fill = (new Error()).stack;
+        tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
+      }
     }
   }
 
   function db_contact_update(db, email, update, callback) {
-    if(Array.isArray(email)) {
-      let processed = 0;
-      tool.each(email, (i, single_email) => {
-        db_contact_update(db, single_email, update, () => {
-          if(++processed === email.length && typeof callback === 'function') {
-            callback();
-          }
-        });
-      });
+    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+      tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, callback);
     } else {
-      db_contact_get(db, email, (original) => {
-        let updated = {};
-        tool.each(original, (k, original_value) => {
-          if(k in update) {
-            updated[k] = update[k];
-          } else {
-            updated[k] = original_value;
-          }
+      if(Array.isArray(email)) {
+        let processed = 0;
+        tool.each(email, (i, single_email) => {
+          db_contact_update(db, single_email, update, () => {
+            if(++processed === email.length && typeof callback === 'function') {
+              callback();
+            }
+          });
         });
-        let tx = db.transaction('contacts', 'readwrite');
-        let contacts = tx.objectStore('contacts');
-        contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
-        tx.oncomplete = catcher.try(callback);
-        let stack_fill = (new Error()).stack;
-        tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
-      });
+      } else {
+        db_contact_get(db, email, (original) => {
+          let updated = {};
+          tool.each(original, (k, original_value) => {
+            if(k in update) {
+              updated[k] = update[k];
+            } else {
+              updated[k] = original_value;
+            }
+          });
+          let tx = db.transaction('contacts', 'readwrite');
+          let contacts = tx.objectStore('contacts');
+          contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
+          tx.oncomplete = catcher.try(callback);
+          let stack_fill = (new Error()).stack;
+          tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
+        });
+      }
     }
   }
 
   function db_contact_get(db, email_or_longid, callback) {
-    if(typeof email_or_longid !== 'object') {
-      let get;
-      if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
-        get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
-      } else { // longid
-        get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
-      }
-      get.onsuccess = catcher.try(() => {
-        if(get.result !== undefined) {
-          callback(get.result);
-        } else {
-          callback(null);
-        }
-      });
-      let stack_fill = (new Error()).stack;
-      get.onerror = function () {
-        db_error_handle(get.error, stack_fill, callback);
-      };
+    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+      tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, callback);
     } else {
-      let results = new Array(email_or_longid.length);
-      let finished = 0;
-      tool.each(email_or_longid, (i, single_email_or_longid) => {
-        db_contact_get(db, single_email_or_longid, contact => {
-          results[i] = contact;
-          if(++finished >= email_or_longid.length) {
-            callback(results);
+      if(typeof email_or_longid !== 'object') {
+        let get;
+        if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
+          get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
+        } else { // longid
+          get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
+        }
+        get.onsuccess = catcher.try(() => {
+          if(get.result !== undefined) {
+            callback(get.result);
+          } else {
+            callback(null);
           }
         });
-      });
+        let stack_fill = (new Error()).stack;
+        get.onerror = function () {
+          db_error_handle(get.error, stack_fill, callback);
+        };
+      } else {
+        let results = new Array(email_or_longid.length);
+        let finished = 0;
+        tool.each(email_or_longid, (i, single_email_or_longid) => {
+          db_contact_get(db, single_email_or_longid, contact => {
+            results[i] = contact;
+            if(++finished >= email_or_longid.length) {
+              callback(results);
+            }
+          });
+        });
+      }
     }
   }
 
@@ -481,48 +462,53 @@
 
 // query: substring, has_pgp, limit. All voluntary
   function db_contact_search(db, query, callback) {
-    tool.each(query, (key, value) => {
-      if(!tool.value(key).in(db_query_keys)) {
-        throw new Error('db_contact_search: unknown key: ' + key);
-      }
-    });
-    let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
-    let search;
-    if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
-      query.substring = normalize_string(query.substring);
-      if(query.substring) {
-        db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true, }, (results_with_pgp) => {
-          if(query.limit && results_with_pgp.length === query.limit) {
-            callback(results_with_pgp);
-          } else {
-            db_contact_search(db, { substring: query.substring, limit: query.limit ? query.limit - results_with_pgp.length : undefined, has_pgp: false, }, results_without_pgp => {
-              callback(results_with_pgp.concat(results_without_pgp));
-            });
-          }
-        });
-      } else {
-        search = contacts.openCursor();
-      }
-    } else { // specific query.has_pgp value
-      if(query.substring) {
-        search = contacts.index('search').openCursor(IDBKeyRange.only(db_index(query.has_pgp, query.substring)));
-      } else {
-        search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
-      }
-    }
-    if(typeof search !== 'undefined') {
-      let found = [];
-      search.onsuccess = catcher.try(() => {
-        let cursor = search.result;
-        if(!cursor || found.length === query.limit) {
-          callback(found);
-        } else {
-          found.push(cursor.value);
-          cursor.continue();
+    console.log([db, query, callback]);
+    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+      tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, callback);
+    } else {
+      tool.each(query, (key, value) => {
+        if(!tool.value(key).in(db_query_keys)) {
+          throw new Error('db_contact_search: unknown key: ' + key);
         }
       });
-      let stack_fill = (new Error()).stack;
-      search.onerror = catcher.try(() => db_error_handle(search.error, stack_fill, callback));
+      let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
+      let search;
+      if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
+        query.substring = normalize_string(query.substring);
+        if(query.substring) {
+          db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true, }, (results_with_pgp) => {
+            if(query.limit && results_with_pgp.length === query.limit) {
+              callback(results_with_pgp);
+            } else {
+              db_contact_search(db, { substring: query.substring, limit: query.limit ? query.limit - results_with_pgp.length : undefined, has_pgp: false, }, results_without_pgp => {
+                callback(results_with_pgp.concat(results_without_pgp));
+              });
+            }
+          });
+        } else {
+          search = contacts.openCursor();
+        }
+      } else { // specific query.has_pgp value
+        if(query.substring) {
+          search = contacts.index('search').openCursor(IDBKeyRange.only(db_index(query.has_pgp, query.substring)));
+        } else {
+          search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
+        }
+      }
+      if(typeof search !== 'undefined') {
+        let found = [];
+        search.onsuccess = catcher.try(() => {
+          let cursor = search.result;
+          if(!cursor || found.length === query.limit) {
+            callback(found);
+          } else {
+            found.push(cursor.value);
+            cursor.continue();
+          }
+        });
+        let stack_fill = (new Error()).stack;
+        search.onerror = catcher.try(() => db_error_handle(search.error, stack_fill, callback));
+      }
     }
   }
 
@@ -539,8 +525,6 @@
     db_contact_save: db_contact_save,
     db_contact_object: db_contact_object,
     db_open: db_open,
-    db_private_mode_error: db_private_mode_error,
-    db_denied: db_denied,
     subscription: flowcrypt_subscription,
     auth_info: flowcrypt_auth_info,
     keys_object: keys_object,
@@ -549,7 +533,6 @@
     keys_remove: keys_remove,
     passphrase_get: passphrase_get,
     passphrase_save: passphrase_save,
-    notify_error: notify_about_storage_access_error, // todo - only use DB in background page & deprecate this
   };
 
 })();

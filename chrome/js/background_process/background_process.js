@@ -22,25 +22,29 @@ migrate_global(function () {
   });
 });
 
-tool.browser.message.listen_background({
-  close_popup: close_popup_handler,
-  migrate_account: migrate_account,
-  settings: open_settings_page_handler,
-  attest_requested: attest_requested_handler,
-  attest_packet_received: attest_packet_received_handler,
-  update_uninstall_url: update_uninstall_url,
-  get_active_tab_info: get_active_tab_info,
-  runtime: (message, sender, respond) => respond({ environment: catcher.environment(), version: catcher.version() }),
-  ping: (message, sender, respond) => respond(true),
-  _tab_: (request, sender, respond) => {
-    if(sender === 'background') {
-      respond(null); // background script
-    } else if(sender === null) {
-      respond(undefined); // not sure when or why this happens - maybe orphaned frames during update
-    } else { // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-      respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
-    }
-  },
+window.flowcrypt_storage.db_open(function (db) {
+  tool.browser.message.listen_background({
+    // bg_exec: execute_in_background_process_and_respond_when_done,
+    db: (request, sender, respond) => db_operation(request, sender, respond, db),
+    close_popup: close_popup_handler,
+    migrate_account: migrate_account,
+    settings: open_settings_page_handler,
+    attest_requested: attest_requested_handler,
+    attest_packet_received: attest_packet_received_handler,
+    update_uninstall_url: update_uninstall_url,
+    get_active_tab_info: get_active_tab_info,
+    runtime: (message, sender, respond) => respond({ environment: catcher.environment(), version: catcher.version() }),
+    ping: (message, sender, respond) => respond(true),
+    _tab_: (request, sender, respond) => {
+      if(sender === 'background') {
+        respond(null); // background script
+      } else if(sender === null) {
+        respond(undefined); // not sure when or why this happens - maybe orphaned frames during update
+      } else { // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+        respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
+      }
+    },
+  });
 });
 
 update_uninstall_url();
@@ -126,3 +130,34 @@ function close_popup_handler(request, sender, respond) {
     chrome.tabs.remove(tool.arr.select(tabs, 'id'));
   });
 }
+
+function db_operation(request, sender, respond, db) {
+  catcher.try(() => {
+    window.flowcrypt_storage[request.f].apply(null, [db].concat(request.args, [respond]));
+  })();
+}
+
+// function execute_in_background_process_and_respond_when_done(request, sender, respond) {
+//   // console.log(respond);
+//   // console.log(request.path);
+//   // console.log(request.args);
+//   let f = window;
+//   let has_callback = false;
+//   let args = (request.args || []).map(arg => {
+//     if(arg === tool.env.callback_placeholder) {
+//       has_callback = true;
+//       return respond;
+//     } else {
+//       return arg;
+//     }
+//   });
+//   tool.each(request.path.split('.'), (i, step) => {
+//     f = f[step];
+//   });
+//   // console.log(f);
+//   // console.log(args);
+//   let returned = f.apply(null, args);
+//   if(!has_callback) {
+//     respond(returned);
+//   }
+// }
