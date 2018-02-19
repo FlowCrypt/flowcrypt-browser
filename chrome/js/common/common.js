@@ -1088,7 +1088,7 @@
             } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
               mime_message_contents.html = tool.str.uint8_as_utf(node.content);
             } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
-              mime_message_contents.text = tool.str.uint8_as_utf(node.content);
+              mime_message_contents.text = node.raw;
             } else {
               var node_content = tool.str.from_uint8(node.content);
               mime_message_contents.attachments.push(file_attachment(mime_node_filename(node), mime_node_type(node), node_content));
