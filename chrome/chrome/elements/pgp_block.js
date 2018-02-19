@@ -12,7 +12,6 @@ let message_fetched_from_api = false;
 let passphrase_interval = undefined;
 let missing_or_wrong_passprases = {};
 let can_read_emails = undefined;
-let unsecure_mdc_ignored = false;
 let password_message_link_result;
 let admin_codes;
 
@@ -47,10 +46,10 @@ function render_content(content, is_error, callback) {
   }
   tool.str.as_safe_html(content, function(safe_html) {
     $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
-    if(unsecure_mdc_ignored && !is_error) {
-      set_frame_color('red');
-      $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + window.lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
-    }
+    // if(unsecure_mdc_ignored && !is_error) {
+    //   set_frame_color('red');
+    //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + window.lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
+    // }
     if(is_error) {
       $('.action_show_raw_pgp_block').click(function () {
         $('.raw_pgp_block').css('display', 'block');
@@ -113,7 +112,7 @@ function render_error(error_box_content, raw_message_substitute, callback) {
 }
 
 function handle_private_key_mismatch(account_email, message) { //todo - make it work for multiple stored keys
-  tool.diagnose.message_pubkeys(account_email, message).then(msg_diagnosis => {
+  tool.browser.message.bg_exec('tool.diagnose.message_pubkeys', [account_email, message], function (msg_diagnosis) {
     if(msg_diagnosis.found_match) {
       render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.encrypted_correctly_file_bug);
     } else {
@@ -130,7 +129,7 @@ function decrypt_and_save_attachment_to_downloads(success, encrypted_data, name,
   //todo - more or less copy/pasted from attachment.js, should use a common function
   //todo - or even better, stop showing attachments as inner part of messages, instead show them through attachment.htm. Test performance.
   if(success) {
-    tool.crypto.message.decrypt(url_params.account_email, encrypted_data, undefined, function (result) {
+    tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email, encrypted_data, undefined, tool.browser.message.cb], function (result) {
       if(result.success) {
         tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data);
       } else {
@@ -309,7 +308,7 @@ function decide_decrypted_content_formatting_and_render(decrypted_content, is_en
 
 function decrypt_and_render(optional_password) {
   if(typeof url_params.signature !== 'string') {
-    tool.crypto.message.decrypt(url_params.account_email, url_params.message, optional_password, function (result) {
+    tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email, url_params.message, optional_password, tool.browser.message.cb], function (result) {
       if(result.success) {
         if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
           console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
@@ -334,15 +333,11 @@ function decrypt_and_render(optional_password) {
             if(url_params.has_password && !optional_password) {
               render_password_prompt();
             } else {
-              handle_private_key_mismatch(url_params.account_email, result.message);
+              handle_private_key_mismatch(url_params.account_email, url_params.message);
             }
           } else if(result.counts.wrong_password) {
             alert('Incorrect answer, please try again');
             render_password_prompt();
-          } else if(result.counts.unsecure_mdc && !unsecure_mdc_ignored) {
-            openpgp.config.ignore_mdc_error = true;
-            unsecure_mdc_ignored = true;
-            initialize(); // try again with mdc missing error ignored
           } else if(result.counts.errors) {
             render_error(window.lang.pgp_block.cant_open + window.lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
           } else {
@@ -353,7 +348,7 @@ function decrypt_and_render(optional_password) {
       }
     });
   } else {
-    tool.crypto.message.verify_detached(url_params.account_email, url_params.message, url_params.signature, function (signature_result) {
+    tool.browser.message.bg_exec('tool.crypto.message.verify_detached', [url_params.account_email, url_params.message, url_params.signature, tool.browser.message.cb], function (signature_result) {
       decide_decrypted_content_formatting_and_render(url_params.message, false, signature_result);
     });
   }

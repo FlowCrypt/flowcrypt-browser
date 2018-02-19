@@ -109,6 +109,8 @@
     },
     browser: {
       message: {
+        cb: '[***|callback_placeholder|***]',
+        bg_exec: browser_message_bg_exec,
         send: browser_message_send,
         tab_id: browser_message_tab_id,
         listen: browser_message_listen,
@@ -1358,6 +1360,10 @@
     return parsed;
   }
 
+  function browser_message_bg_exec(path, args, callback) {
+    browser_message_send(null, 'bg_exec', {path: path, args: args}, callback);
+  }
+
   function browser_message_send(destination_string, name, data, callback) {
     var msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: typeof catcher !== 'undefined' ? catcher.stack_trace() : 'unknown' };
     var is_background_page = env_is_background_script();
@@ -1458,6 +1464,9 @@
   /* tool.diagnose */
 
   function diagnose_message_pubkeys(account_email, message) {
+    if(typeof message === 'string') {
+      message = openpgp.message.readArmored(message);
+    }
     return catcher.Promise(function(resolve, reject) {
       var message_key_ids = message.getEncryptionKeyIds();
       storage.keys_get(account_email).then(function(private_keys) {
@@ -1999,7 +2008,7 @@
   }
 
   function increment_decrypt_error_counts(counts, other_errors, one_time_message_password, decrypt_error) {
-    if(String(decrypt_error) === 'TypeError: Error decrypting message: Cannot read property \'isDecrypted\' of null' && !one_time_message_password) {
+    if(String(decrypt_error) === 'Error: Error decrypting message: Cannot read property \'isDecrypted\' of null' && !one_time_message_password) {
       counts.key_mismatch++; // wrong private key
     } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
       counts.key_mismatch++; // attempted opening password only message with key
@@ -3629,7 +3638,7 @@
     if(e && typeof e === 'object' && typeof e.reason === 'object' && e.reason.message) {
       handle_exception(e.reason); // actual exception that happened in Promise, unhandled
     } else {
-      log('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+      report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
     }
   }
 
@@ -3893,6 +3902,7 @@
     Promise: wrapped_Promise,
     promise_error_alert: promise_error_alert,
     stack_trace: produce_new_stack_trace,
+    handle_promise_error: handle_promise_error,
   };
 
   if(window.is_bare_engine !== true) {
@@ -3911,6 +3921,7 @@
   if(typeof window.openpgp !== 'undefined' && typeof window.openpgp.config !== 'undefined' && typeof window.openpgp.config.versionstring !== 'undefined' && typeof window.openpgp.config.commentstring !== 'undefined') {
     window.openpgp.config.versionstring = 'FlowCrypt ' + (catcher.version() || '') + ' Gmail Encryption flowcrypt.com';
     window.openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
+    window.openpgp.config.ignore_mdc_error = true;  // todo - report back to user once openpgp.js has the functionality https://github.com/openpgpjs/openpgpjs/issues/651
   }
 
   RegExp.escape = function (s) {

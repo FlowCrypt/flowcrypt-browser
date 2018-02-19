@@ -4,6 +4,8 @@
 
 console.log('background_process.js starting');
 
+openpgp.initWorker({path: 'lib/openpgp.worker.js'});
+
 let background_process_start_reason = 'browser_start';
 chrome.runtime.onInstalled.addListener(function(event){
   background_process_start_reason = event.reason;
@@ -24,7 +26,7 @@ migrate_global(function () {
 
 window.flowcrypt_storage.db_open(function (db) {
   tool.browser.message.listen_background({
-    // bg_exec: execute_in_background_process_and_respond_when_done,
+    bg_exec: execute_in_background_process_and_respond_when_done,
     db: (request, sender, respond) => db_operation(request, sender, respond, db),
     close_popup: close_popup_handler,
     migrate_account: migrate_account,
@@ -137,27 +139,26 @@ function db_operation(request, sender, respond, db) {
   })();
 }
 
-// function execute_in_background_process_and_respond_when_done(request, sender, respond) {
-//   // console.log(respond);
-//   // console.log(request.path);
-//   // console.log(request.args);
-//   let f = window;
-//   let has_callback = false;
-//   let args = (request.args || []).map(arg => {
-//     if(arg === tool.env.callback_placeholder) {
-//       has_callback = true;
-//       return respond;
-//     } else {
-//       return arg;
-//     }
-//   });
-//   tool.each(request.path.split('.'), (i, step) => {
-//     f = f[step];
-//   });
-//   // console.log(f);
-//   // console.log(args);
-//   let returned = f.apply(null, args);
-//   if(!has_callback) {
-//     respond(returned);
-//   }
-// }
+function execute_in_background_process_and_respond_when_done(request, sender, respond) {
+  let f = window;
+  let has_callback = false;
+  let args = (request.args || []).map(arg => {
+    if(arg === tool.browser.message.cb) {
+      has_callback = true;
+      return respond;
+    } else {
+      return arg;
+    }
+  });
+  tool.each(request.path.split('.'), (i, step) => {
+    f = f[step];
+  });
+  let returned = f.apply(null, args);
+  if(!has_callback) {
+    if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
+      returned.then(respond, catcher.handle_promise_error);
+    } else { // direct value
+      respond(returned);
+    }
+  }
+}
