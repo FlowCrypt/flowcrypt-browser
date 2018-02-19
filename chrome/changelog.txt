@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.2.5 on February 19, 2017: Performance</b>
+reading: decrypting at 2x-10x speed now
+settings: show a notice when key is missing
+
 <b>version 5.2.4 on February 18, 2017: Storage permissions fix</b>
 internal: do not rely on browser cookies settings
 internal: support Incognito / Private Browsing Mode
