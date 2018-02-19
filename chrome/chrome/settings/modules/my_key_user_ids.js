@@ -8,6 +8,10 @@ $('.action_show_public_key').attr('href', tool.env.url_create('my_key.htm', url_
 
 window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid || 'primary').then(keyinfo => {
 
+  if(keyinfo === null) {
+    return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
+  }
+
   let key = openpgp.key.readArmored(keyinfo.private).keys[0];
 
   let user_ids = key.users.map(u => u.userId.userid); // todo - create a common function in settings.js for here and setup.js user_ids

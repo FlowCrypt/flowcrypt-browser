@@ -8,6 +8,10 @@ $('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm
 
 window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid || 'primary').then(keyinfo => {
 
+  if(keyinfo === null) {
+    return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
+  }
+
   let key = openpgp.key.readArmored(keyinfo.private).keys[0];
 
   tool.api.attester.lookup_email(url_params.account_email).validate(r => r.pubkey && tool.crypto.key.longid(r.pubkey) === keyinfo.longid).then(response => {

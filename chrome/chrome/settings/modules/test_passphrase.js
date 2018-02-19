@@ -8,6 +8,10 @@ tool.ui.passphrase_toggle(['password']);
 
 window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_k => {
 
+  if(primary_k === null) {
+    return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
+  }
+
   let key = openpgp.key.readArmored(primary_k.private).keys[0];
 
   $('.action_verify').click(function () {
