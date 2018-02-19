@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.2.7 on February 19, 2017: Session</b>
+reading: fixed decrypting when pass phrase is in session
+
 <b>version 5.2.6 on February 19, 2017: Unicode</b>
 reading: fixed Russian and Chinese UTF from facebook
 
