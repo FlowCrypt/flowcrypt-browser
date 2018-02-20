@@ -98,19 +98,17 @@ function get_cryptup_settings_tab_id_if_open(callback) {
 
 function update_uninstall_url(request, sender, respond) {
   window.flowcrypt_storage.account_emails_get(function (account_emails) {
-    window.flowcrypt_storage.get(null, ['metrics'], storage => {
-      if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
-        catcher.try(function () {
-          chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
-            email: (account_emails && account_emails.length) ? account_emails[0] : null,
-            metrics: storage.metrics || null,
-          }));
-        })();
-      }
-      if(respond) {
-        respond();
-      }
-    });
+    if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
+      catcher.try(function () {
+        chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
+          email: (account_emails && account_emails.length) ? account_emails[0] : null,
+          metrics: null,
+        }));
+      })();
+    }
+    if(respond) {
+      respond();
+    }
   });
 }
 

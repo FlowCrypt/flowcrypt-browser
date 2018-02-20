@@ -204,7 +204,6 @@ function render_setup_done(account_email, key_backup_prompt) {
 // options: {submit_main, submit_all, setup_simple, key_backup_prompt}
 function finalize_setup(account_email, armored_pubkey, options) {
   submit_public_key_if_needed(account_email, armored_pubkey, options, function () {
-    tool.env.increment('setup');
     let storage = {
       setup_date: Date.now(),
       setup_done: true,

@@ -44,7 +44,6 @@
       url_create: env_url_create,
       key_codes: env_key_codes,
       set_up_require: env_set_up_require,
-      increment: env_increment,
       webmails: env_webmails,
     },
     arr: {
@@ -647,46 +646,6 @@
         'punycode': './emailjs/punycode',
       }
     });
-  }
-
-  var known_metric_types = {
-    'compose': 'c',
-    'view': 'w',
-    'reply': 'r',
-    'attach': 'a',
-    'download': 'd',
-    'setup': 's',
-    'error': 'e',
-    'upgrade_notify_attach_nonpgp': 'unan',
-    'upgrade_notify_attach_size': 'unas',
-    'upgrade_dialog_show': 'uds',
-    'upgrade_dialog_register_click': 'udrc',
-    'upgrade_verification_embedded_show': 'uves',
-    'upgrade_done': 'ud',
-  };
-
-  function env_increment(type, callback) {
-    if(typeof storage.get === 'function' && typeof chrome === 'object') {
-      if(!known_metric_types[type]) {
-        catcher.report('Unknown metric type "' + type + '"');
-      }
-      storage.get(null, ['metrics'], function (s) {
-        var metrics_k = known_metric_types[type];
-        if(!s.metrics) {
-          s.metrics = {};
-        }
-        if(!s.metrics[metrics_k]) {
-          s.metrics[metrics_k] = 1;
-        } else {
-          s.metrics[metrics_k] += 1;
-        }
-        storage.set(null, { metrics: s.metrics }, function () {
-          browser_message_send(null, 'update_uninstall_url', null, callback);
-        });
-      });
-    } else if (typeof callback === 'function') {
-      callback();
-    }
   }
 
   function env_webmails(cb) {
@@ -3352,11 +3311,11 @@
     });
   }
 
-  function api_cryptup_help_uninstall(email, client, metrics) {
+  function api_cryptup_help_uninstall(email, client) {
     return api_cryptup_call('help/uninstall', {
       email: email,
       client: client,
-      metrics: metrics,
+      metrics: null,
     });
   }
 
@@ -3717,7 +3676,6 @@
     }
     try {
       if(typeof storage.get === 'function' && typeof storage.set === 'function') {
-        tool.env.increment('error');
         storage.get(null, ['errors'], function (s) {
           if(typeof s.errors === 'undefined') {
             s.errors = [];

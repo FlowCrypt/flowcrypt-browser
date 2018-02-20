@@ -16,7 +16,6 @@ if(url_params.placement === 'settings') {
 }
 if(url_params.source !== 'auth_error') {
   $('.list_table').css('display', 'block');
-  tool.env.increment('upgrade_dialog_show');
 } else {
   $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').text('Add Device');
 }
@@ -36,13 +35,11 @@ $('.action_close').click(close_dialog);
 
 $('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
   button_spin(self);
-  tool.env.increment('upgrade_dialog_register_click');
   window.flowcrypt_account.subscribe(url_params.account_email, window.flowcrypt_account.PRODUCTS.trial, null).then(handle_successful_upgrade, handle_error_response);
 }));
 
 $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
   button_spin(self);
-  tool.env.increment('upgrade_dialog_register_click');
   window.flowcrypt_account.register_new_device(url_params.account_email).then(close_dialog, handle_error_response);
 }));
 
@@ -137,7 +134,6 @@ function button_restore() {
 }
 
 function handle_successful_upgrade() {
-  tool.env.increment('upgrade_done');
   tool.browser.message.send(url_params.parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
   if(url_params.subscribe_result_tab_id) {
     tool.browser.message.send(url_params.subscribe_result_tab_id, 'subscribe_result', {active: true});

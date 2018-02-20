@@ -758,13 +758,11 @@
       const is_signed = S.cached('icon_sign').is('.active');
       app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (is_reply_box ? 'reply' : 'message') + ' has been sent.'});
       draft_delete(() => {
-        tool.env.increment('compose', function () {
-          if(is_reply_box) {
-            render_reply_success(message, plaintext, response ? response.id : null);
-          } else {
-            app.close_message();
-          }
-        });
+        if(is_reply_box) {
+          render_reply_success(message, plaintext, response ? response.id : null);
+        } else {
+          app.close_message();
+        }
       });
     }, error => {
       reset_send_btn();

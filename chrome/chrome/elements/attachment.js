@@ -139,7 +139,6 @@ function render_progress(percent, received, size) {
 }
 
 function download() {
-  tool.env.increment('download');
   original_content = button.html();
   button.addClass('visible');
   button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');

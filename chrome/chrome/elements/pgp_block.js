@@ -15,8 +15,6 @@ let can_read_emails = undefined;
 let password_message_link_result;
 let admin_codes;
 
-tool.env.increment('view');
-
 function send_resize_message() {
   let new_height = $('#pgp_block').height() + 40;
 

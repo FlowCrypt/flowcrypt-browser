@@ -126,7 +126,6 @@
     }
 
     function process_new_attachment(id, name) {
-      tool.env.increment('attach');
       var limits = typeof get_limits === 'function' ? get_limits() : {};
       if(limits.count && Object.keys(attached_files).length >= limits.count) {
         alert('Amount of attached files is limited to ' + limits.count);

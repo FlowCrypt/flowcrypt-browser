@@ -198,7 +198,7 @@
     });
     chrome.storage.local.set(storage_update, () => {
       catcher.try(() => {
-        if(typeof callback !== 'undefined') {
+        if(typeof callback === 'function') {
           callback();
         }
       })();
