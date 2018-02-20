@@ -1,6 +1,6 @@
 <div>
 
-<b>version 5.2.8 on February 19, 2017: Maintenance</b>
+<b>version 5.2.8 on February 20, 2017: Maintenance</b>
 internal: allow extension to work when block 3rd party cookies enabled
 internal: library upgrades, bugfixes and other maintenance
 
