@@ -77,7 +77,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   function replace_cryptup_tags() {
     $("div[contenteditable='true']:contains('[cryptup:link:')").not('.evaluated').each(function () {
       $(this).addClass('evaluated');
-      // todo - extremely distastful coding, should use regex match
+      // todo - extremely distasteful coding, should use regex match
       let button = '';
       let button_href_id = undefined;
       $(this).html().replace(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)\]/g, function (full_link, name, id) {
