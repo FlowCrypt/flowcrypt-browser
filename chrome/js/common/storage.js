@@ -6,6 +6,10 @@
 
   const global_storage_scope = 'global';
 
+  function env_is_background_script() {
+    return window.location && tool.value('_generated_background_page.html').in(window.location.href);
+  }
+
   function try_promise(f) {
     return new Promise(function(resolve, reject) {
       try {
@@ -61,20 +65,28 @@
     }
   }
 
-  function session_storage_get(account_email, key) {
+  function session_get(account_email, key) {
     return try_promise((resolve, reject) => {
-      resolve(sessionStorage[storage_key(account_email, key)]);
+      if(env_is_background_script()) {
+        resolve(window.sessionStorage[storage_key(account_email, key)]);
+      } else {
+        tool.browser.message.send(null, 'session_get', {account_email: account_email, key: key}, resolve);
+      }
     });
   }
 
-  function session_storage_set(account_email, key, value) {
+  function session_set(account_email, key, value) {
     return try_promise((resolve, reject) => {
-      if(typeof value !== 'undefined') {
-        sessionStorage[storage_key(account_email, key)] = String(value);
+      if(env_is_background_script()) {
+        if(typeof value !== 'undefined') {
+          sessionStorage[storage_key(account_email, key)] = String(value);
+        } else {
+          sessionStorage.removeItem(storage_key(account_email, key));
+        }
+        resolve();
       } else {
-        sessionStorage.removeItem(storage_key(account_email, key));
+        tool.browser.message.send(null, 'session_set', {account_email: account_email, key: key, value: value}, resolve);
       }
-      resolve();
     });
   }
 
@@ -82,7 +94,7 @@
     return try_promise((resolve, reject) => {
       let storage_k = 'passphrase_' + longid;
       if (storage_type === 'session') {
-        session_storage_set(account_email, storage_k, passphrase).then(resolve, reject);
+        session_set(account_email, storage_k, passphrase).then(resolve, reject);
       } else {
         if(typeof passphrase === 'undefined') {
           extension_storage_remove(account_email, [storage_k], resolve);
@@ -102,7 +114,7 @@
         if(typeof storage[storage_k] === 'string') {
           resolve(storage[storage_k]);
         } else {
-          session_storage_get(account_email, storage_k).then(from_session => {
+          session_get(account_email, storage_k).then(from_session => {
             resolve(from_session && !ignore_session ? from_session : null);
           });
         }
@@ -462,7 +474,6 @@
 
 // query: substring, has_pgp, limit. All voluntary
   function db_contact_search(db, query, callback) {
-    console.log([db, query, callback]);
     if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, callback);
     } else {
@@ -515,6 +526,8 @@
   window.flowcrypt_storage = {
     set: extension_storage_set,
     get: extension_storage_get,
+    session_set: session_set,
+    session_get: session_get,
     remove: extension_storage_remove,
     key: storage_key,
     account_emails_add: account_emails_add,

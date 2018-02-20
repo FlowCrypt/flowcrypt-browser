@@ -28,7 +28,8 @@ window.flowcrypt_storage.db_open(function (db) {
   tool.browser.message.listen_background({
     bg_exec: execute_in_background_process_and_respond_when_done,
     db: (request, sender, respond) => db_operation(request, sender, respond, db),
-    save_passphrase_in_session: save_passphrase_in_session,
+    session_set: session_set,
+    session_get: session_get,
     close_popup: close_popup_handler,
     migrate_account: migrate_account,
     settings: open_settings_page_handler,
@@ -162,6 +163,10 @@ function execute_in_background_process_and_respond_when_done(request, sender, re
   }
 }
 
-function save_passphrase_in_session(request, sender, respond) {
-  window.flowcrypt_storage.passphrase_save('session', request.account_email, request.longid, request.passphrase).then(respond);
+function session_set(request, sender, respond) {
+  window.flowcrypt_storage.session_set(request.account_email, request.key, request.value).then(respond);
+}
+
+function session_get(request, sender, respond) {
+  window.flowcrypt_storage.session_get(request.account_email, request.key).then(respond);
 }

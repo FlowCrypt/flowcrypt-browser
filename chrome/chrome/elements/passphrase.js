@@ -65,9 +65,6 @@ window.flowcrypt_storage.keys_get(url_params.account_email).then(all_private_key
         is_correct = true;
         let storage = $('.forget').prop('checked') ? 'session' : 'local';
         window.flowcrypt_storage.passphrase_save(storage, url_params.account_email, keyinfo.longid, pass).then(() => {
-          if(storage === 'session') {  // background page and other page sessions are separated
-            tool.browser.message.send(null, 'save_passphrase_in_session', {account_email: url_params.account_email, longid: keyinfo.longid, passphrase: pass});
-          }
           tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
           tool.browser.message.send(url_params.parent_tab_id, 'close_dialog');
         });
