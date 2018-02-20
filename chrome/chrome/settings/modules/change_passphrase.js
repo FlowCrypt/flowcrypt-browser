@@ -15,6 +15,9 @@ window.flowcrypt_storage.keys_get(url_params.account_email).then(private_keys =>
 });
 
 window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
+  if(primary_ki === null) {
+    return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
+  }
   window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid).then(original_passphrase => {
 
     if(original_passphrase === null) {

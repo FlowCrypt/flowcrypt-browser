@@ -261,6 +261,9 @@ function write_backup_done_and_render(prompt, method) {
 $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
   let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
   window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
+    if(primary_ki === null) {
+      return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
+    }
     if(!is_master_private_key_encrypted(primary_ki)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
