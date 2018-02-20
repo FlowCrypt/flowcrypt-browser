@@ -687,7 +687,61 @@
         this.contentTransferEncoding.value = (this.contentTransferEncoding.value || '').toLowerCase().trim();
     };
 
-    /**
+    MimeNode.prototype._equalSignNotationAsUtf = function (str) { // todo - flowcrypt - clean up and push upstream
+        return str.replace(/(=[A-F0-9]{2})+/g, function (equal_sign_utf_part) {
+            return MimeNode.prototype._typedArrayAsUtf(equal_sign_utf_part.replace(/^=/, '').split('=').map(function (two_hex_digits) { return parseInt(two_hex_digits, 16); }));
+        });
+    };
+
+    MimeNode.prototype._typedArrayAsUtf = function (a) { // todo - flowcrypt - clean up and push upstream
+      var length = a.length;
+      var bytes_left_in_char = 0;
+      var utf8_string = '';
+      var binary_char = '';
+      for(var i = 0; i < length; i++) {
+        if(a[i] < 128) {
+          if(bytes_left_in_char) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
+            utf8_string += String.fromCharCode(a[i-1]);
+          }
+          bytes_left_in_char = 0;
+          binary_char = '';
+          utf8_string += String.fromCharCode(a[i]);
+        } else {
+          if(!bytes_left_in_char) { // beginning of new multi-byte character
+            if(a[i] >= 128 && a[i] < 192) { //10xx xxxx
+              utf8_string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
+            } else if(a[i] >= 192 && a[i] < 224) { //110x xxxx
+              bytes_left_in_char = 1;
+              binary_char = a[i].toString(2).substr(3);
+            } else if(a[i] >= 224 && a[i] < 240) { //1110 xxxx
+              bytes_left_in_char = 2;
+              binary_char = a[i].toString(2).substr(4);
+            } else if(a[i] >= 240 && a[i] < 248) { //1111 0xxx
+              bytes_left_in_char = 3;
+              binary_char = a[i].toString(2).substr(5);
+            } else if(a[i] >= 248 && a[i] < 252) { //1111 10xx
+              bytes_left_in_char = 4;
+              binary_char = a[i].toString(2).substr(6);
+            } else if(a[i] >= 252 && a[i] < 254) { //1111 110x
+              bytes_left_in_char = 5;
+              binary_char = a[i].toString(2).substr(7);
+            } else {
+              console.log('str_uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
+            }
+          } else { // continuation of a multi-byte character
+            binary_char += a[i].toString(2).substr(2);
+            bytes_left_in_char--;
+          }
+          if(binary_char && !bytes_left_in_char) {
+            utf8_string += String.fromCharCode(parseInt(binary_char, 2));
+            binary_char = '';
+          }
+        }
+      }
+      return utf8_string;
+    };
+
+  /**
      * Processes a line in the BODY state. If this is a multipart or rfc822 node,
      * passes line value to child nodes.
      *
@@ -744,9 +798,8 @@
                         this._lineRemainder = '';
                     }
 
-                    this._bodyBuffer += curLine.replace(/\=(\r?\n|$)/g, '').replace(/=([a-f0-9]{2})/ig, function(m, code) {
-                        return String.fromCharCode(parseInt(code, 16));
-                    });
+                    this._bodyBuffer += this._equalSignNotationAsUtf(curLine.replace(/\=(\r?\n|$)/g, ''));
+
                     break;
                     // case '7bit':
                     // case '8bit':
@@ -798,8 +851,8 @@
             // http://tools.ietf.org/html/rfc3676#section-4.4
             replace(/^ /gm, '');
         }
-
         this.content = mimecodec.toTypedArray(this._bodyBuffer);
+        this.rawContent = this._bodyBuffer;
 
         if (/^text\/(plain|html)$/i.test(this.contentType.value) && !/^attachment$/i.test(contentDisposition.value)) {
 

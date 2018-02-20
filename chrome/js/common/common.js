@@ -1043,11 +1043,11 @@
         parser.onend = function () {
           tool.each(parsed, function (path, node) {
             if(mime_node_type(node) === 'application/pgp-signature') {
-              mime_message_contents.signature = tool.str.uint8_as_utf(node.content);
+              mime_message_contents.signature = node.rawContent;
             } else if(mime_node_type(node) === 'text/html' && !mime_node_filename(node)) {
-              mime_message_contents.html = tool.str.uint8_as_utf(node.content);
+              mime_message_contents.html = node.rawContent;
             } else if(mime_node_type(node) === 'text/plain' && !mime_node_filename(node)) {
-              mime_message_contents.text = node.raw;
+              mime_message_contents.text = node.rawContent;
             } else {
               var node_content = tool.str.from_uint8(node.content);
               mime_message_contents.attachments.push(file_attachment(mime_node_filename(node), mime_node_type(node), node_content));
