@@ -3743,22 +3743,18 @@
   }
 
   function handle_exception(exception) {
+    var line, col;
     try {
       var caller_line = exception.stack.split('\n')[1];
       var matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
-      var line = Number(matched[1]);
-      var col = Number(matched[2]);
+      line = Number(matched[1]);
+      col = Number(matched[2]);
     } catch(line_err) {
-      var line = 0;
-      var col = 0;
+      line = 0;
+      col = 0;
     }
-    try {
-      tool.browser.message.send(null, 'runtime', null, function (runtime) {
-        handle_error(exception.message, window.location.href, line, col, exception, true, runtime.version, runtime.environment);
-      });
-    } catch(message_err) {
-      handle_error(exception.message, window.location.href, line, col, exception, true);
-    }
+    RUNTIME = RUNTIME || {};
+    handle_error(exception.message, window.location.href, line, col, exception, true, RUNTIME.version, RUNTIME.environment);
   }
 
   function report(name, details) {
