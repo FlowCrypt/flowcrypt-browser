@@ -3596,7 +3596,7 @@
   function handle_promise_error(e) {
     if(e && typeof e === 'object' && typeof e.reason === 'object' && e.reason.message) {
       handle_exception(e.reason); // actual exception that happened in Promise, unhandled
-    } else if(JSON.stringify(e) !== '{"isTrusted":false}') {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
+    } else if(!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
       report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
     }
   }
