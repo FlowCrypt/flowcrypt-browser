@@ -1361,6 +1361,9 @@
         $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
         $('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
       }
+      if(tool.env.browser().name === 'firefox') {
+        S.cached('input_text').css('height', S.cached('input_text').height());  // this will fix issue on Firefox that causes input text box to infinitely expand instead of scrolling
+      }
     }
   }
 
