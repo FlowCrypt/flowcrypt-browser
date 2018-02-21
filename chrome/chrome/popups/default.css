@@ -154,3 +154,8 @@ li {
 li a {
   margin-top: 0 !important;
 }
+
+div.content ul.emails .button.long {
+  font-weight: normal;
+  width: 308px;
+}
