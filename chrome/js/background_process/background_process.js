@@ -25,6 +25,9 @@ migrate_global(function () {
 });
 
 window.flowcrypt_storage.db_open(function (db) {
+  if(db === false) {
+    open_settings_page('corrupted.htm'); // called if database is corrupted
+  }
   tool.browser.message.listen_background({
     bg_exec: execute_in_background_process_and_respond_when_done,
     db: (request, sender, respond) => db_operation(request, sender, respond, db),
@@ -135,7 +138,12 @@ function close_popup_handler(request, sender, respond) {
 
 function db_operation(request, sender, respond, db) {
   catcher.try(() => {
-    window.flowcrypt_storage[request.f].apply(null, [db].concat(request.args, [respond]));
+    // if(db === false && request.f === 'db_delete') { window.flowcrypt_storage[request.f].apply(null, [].concat(request.args, [respond]));} else
+    if(db) {
+      window.flowcrypt_storage[request.f].apply(null, [db].concat(request.args, [respond]));
+    } else {
+      catcher.log('db corrupted, skipping: ' + request.f);
+    }
   })();
 }
 

@@ -295,9 +295,11 @@
 
   function db_error_handle(exception, error_stack, callback) {
     exception.stack = error_stack.replace(/^Error/, String(exception));
-    catcher.handle_exception(exception);
-    if(typeof callback === 'function') {
-      callback(db_denied);
+    if(exception.message === 'Internal error opening backing store for indexedDB.open.') {
+      callback(false);
+    } else {
+      catcher.handle_exception(exception);
+      callback(null);
     }
   }
 
