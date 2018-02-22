@@ -2,6 +2,8 @@
 
 'use strict';
 
+const MAX_MESSAGE_SIZE = 1024 * 1024;
+
 console.log('background_process.js starting');
 
 openpgp.initWorker({path: 'lib/openpgp.worker.js'});
@@ -148,27 +150,39 @@ function db_operation(request, sender, respond, db) {
 }
 
 function execute_in_background_process_and_respond_when_done(request, sender, respond) {
+  function convert_large_data_to_object_urls_and_respond(result) {
+    if(request.path === 'tool.crypto.message.decrypt') {
+      if(result && result.success && result.content && result.content.data && result.content.data.length >= MAX_MESSAGE_SIZE) {
+        result.content.data = tool.file.object_url_create(result.content.data);
+      }
+    }
+    respond(result);
+  }
   let f = window;
   let has_callback = false;
   let args = (request.args || []).map(arg => {
     if(arg === tool.browser.message.cb) {
       has_callback = true;
-      return respond;
+      return convert_large_data_to_object_urls_and_respond;
+    } else if(typeof arg === 'string' && arg.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
+      return tool.file.object_url_consume(arg);
     } else {
       return arg;
     }
   });
-  tool.each(request.path.split('.'), (i, step) => {
-    f = f[step];
-  });
-  let returned = f.apply(null, args);
-  if(!has_callback) {
-    if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
-      returned.then(respond, catcher.handle_promise_error);
-    } else { // direct value
-      respond(returned);
+  Promise.all(args).then(resolved_args => {
+    tool.each(request.path.split('.'), (i, step) => {
+      f = f[step];
+    });
+    let returned = f.apply(null, resolved_args); // the actual operation
+    if(!has_callback) {
+      if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
+        returned.then(convert_large_data_to_object_urls_and_respond, catcher.handle_promise_error);
+      } else { // direct value
+        convert_large_data_to_object_urls_and_respond(returned);
+      }
     }
-  }
+  });
 }
 
 function session_set(request, sender, respond) {

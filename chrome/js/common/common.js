@@ -73,6 +73,8 @@
       to_utc_timestamp: time_to_utc_timestamp,
     },
     file: {
+      object_url_create: file_object_url_create,
+      object_url_consume: file_object_url_consume,
       download_as_uint8: file_download_as_uint8,
       save_to_downloads: file_save_to_downloads,
       attachment: file_attachment,
@@ -780,6 +782,23 @@
 
   /* tools.file */
 
+  function file_object_url_create(content) {
+    return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+  }
+
+  function file_object_url_consume(url) {
+    return catcher.Promise(function(resolve, reject) {
+      file_download_as_uint8(url, null, function (success, uint8) {
+        window.URL.revokeObjectURL(url);
+        if(success) {
+          resolve(uint8);
+        } else {
+          reject({error: 'could not consume object url', detail: url});
+        }
+      });
+    });
+  }
+
   function file_download_as_uint8(url, progress, callback) {
     var request = new XMLHttpRequest();
     request.open('GET', url, true);
@@ -1302,6 +1321,7 @@
 
   /* tools.browser.message */
 
+  var MAX_MESSAGE_SIZE = 1024 * 1024; // 1MB
   var background_script_registered_handlers;
   var frame_registered_handlers = {};
   var standard_handlers = {
@@ -1320,7 +1340,27 @@
   }
 
   function browser_message_bg_exec(path, args, callback) {
-    browser_message_send(null, 'bg_exec', {path: path, args: args}, callback);
+    args = args.map(function (arg) {
+      if((typeof arg === 'string' || arg instanceof Uint8Array) && arg.length > MAX_MESSAGE_SIZE) {
+        return file_object_url_create(arg);
+      } else {
+        return arg;
+      }
+    });
+    browser_message_send(null, 'bg_exec', {path: path, args: args}, function (result) {
+      if(path === 'tool.crypto.message.decrypt') {
+        if(result && result.success && result.content && result.content.data && typeof result.content.data === 'string' && result.content.data.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
+          tool.file.object_url_consume(result.content.data).then(function (result_content_data) {
+            result.content.data = result_content_data;
+            callback(result);
+          });
+        } else {
+          callback(result);
+        }
+      } else {
+        callback(result);
+      }
+    });
   }
 
   function browser_message_send(destination_string, name, data, callback) {

@@ -124,8 +124,6 @@ function handle_private_key_mismatch(account_email, message) { //todo - make it 
 }
 
 function decrypt_and_save_attachment_to_downloads(success, encrypted_data, name, type) {
-  //todo - more or less copy/pasted from attachment.js, should use a common function
-  //todo - or even better, stop showing attachments as inner part of messages, instead show them through attachment.htm. Test performance.
   if(success) {
     tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email, encrypted_data, undefined, tool.browser.message.cb], function (result) {
       if(result.success) {
@@ -173,7 +171,7 @@ function render_inner_attachments(attachments) {
           setTimeout(function() {
             $(self).find('.progress').html('');
           }, 200);
-          decrypt_and_save_attachment_to_downloads(success, tool.str.from_uint8(downloaded), attachment.name, attachment.type);
+          decrypt_and_save_attachment_to_downloads(success, downloaded, attachment.name, attachment.type);
         });
       }
     } else { // firefox: open in another tab
