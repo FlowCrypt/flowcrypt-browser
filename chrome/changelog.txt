@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.3.1 on February 22, 2017: Attachments</b>
+reading: fixed issue decrypting files
+
 <b>version 5.3.0 on February 21, 2017: Bugfixes</b>
 composing: Firefox compose text box keeps expanding fixed
 internal: storage, utf8 and other bugfixes
