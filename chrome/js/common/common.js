@@ -1341,7 +1341,7 @@
 
   function browser_message_bg_exec(path, args, callback) {
     args = args.map(function (arg) {
-      if((typeof arg === 'string' || arg instanceof Uint8Array) && arg.length > MAX_MESSAGE_SIZE) {
+      if((typeof arg === 'string' && arg.length > MAX_MESSAGE_SIZE) || arg instanceof Uint8Array) {
         return file_object_url_create(arg);
       } else {
         return arg;

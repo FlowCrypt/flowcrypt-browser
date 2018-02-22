@@ -152,7 +152,7 @@ function db_operation(request, sender, respond, db) {
 function execute_in_background_process_and_respond_when_done(request, sender, respond) {
   function convert_large_data_to_object_urls_and_respond(result) {
     if(request.path === 'tool.crypto.message.decrypt') {
-      if(result && result.success && result.content && result.content.data && result.content.data.length >= MAX_MESSAGE_SIZE) {
+      if(result && result.success && result.content && result.content.data && (result.content.data.length >= MAX_MESSAGE_SIZE || result.content.data instanceof Uint8Array)) {
         result.content.data = tool.file.object_url_create(result.content.data);
       }
     }
