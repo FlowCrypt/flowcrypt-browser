@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "FlowCrypt: Encrypt Gmail with PGP",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
-  "version": "5.3.2",
+  "version": "5.3.3",
   "browser_action": {
     "default_icon": "/img/logo/flowcrypt-logo-16-16.png",
     "default_title": "FlowCrypt Encryption for Gmail",
