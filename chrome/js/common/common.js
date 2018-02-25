@@ -3683,7 +3683,7 @@
     }
     try {
       $.ajax({
-        url: 'https://api.cryptup.io/help/error',
+        url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify({
           name: (error.name || '').substring(0, 50),
