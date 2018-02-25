@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.3.2 on February 22, 2017: Domain</b>
+fix api domain issue
+
 <b>version 5.3.1 on February 22, 2017: Attachments</b>
 reading: fixed issue decrypting files
 
