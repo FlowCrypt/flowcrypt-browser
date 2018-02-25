@@ -3334,7 +3334,7 @@
 
   function api_cryptup_url(type, variable) {
     return {
-      'api': 'https://api.cryptup.io/',
+      'api': 'https://flowcrypt.com/api/',
       'me': 'https://flowcrypt.com/me/' + variable,
       'pubkey': 'https://flowcrypt.com/pub/' + variable,
       'decrypt': 'https://flowcrypt.com/' + variable,
