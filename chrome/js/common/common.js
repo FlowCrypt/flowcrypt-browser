@@ -2075,6 +2075,12 @@
   }
 
   function crypto_message_verify_detached(account_email, plaintext, signature_text, callback) {
+    if(plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
+      plaintext = str_from_uint8(plaintext);
+    }
+    if(signature_text instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
+      signature_text = str_from_uint8(signature_text);
+    }
     var message = openpgp.message.readSignedContent(plaintext, signature_text);
     get_sorted_keys_for_message(account_email, message, function(keys) {
       callback(crypto_message_verify(message, keys.for_verification, keys.verification_contacts[0]));
