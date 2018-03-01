@@ -35,6 +35,7 @@
     input_subject: '#input_subject',
     input_password: '#input_password',
     input_intro: '.input_intro',
+    all_cells_except_text: 'table#compose > tbody > tr > :not(.text)',
     add_intro: '.action_add_intro',
     add_their_pubkey: '.add_pubkey',
     intro_container: '.intro_container',
@@ -99,6 +100,7 @@
   let additional_message_headers = {};
   let button_update_timeout;
   let is_reply_box, tab_id, account_email, thread_id, draft_id, supplied_subject, supplied_from, supplied_to, frame_id;
+  let reference_body_height;
 
   let app = {
     // this is a list of empty defaults that will get overwritten wherever composer is used
@@ -390,11 +392,13 @@
               if (headers && headers.from) {
                 S.now('input_from').val(headers.from);
               }
+              set_input_text_height_manually_if_needed();
               if (render_function) {
                 render_function();
               }
             });
           } else {
+            set_input_text_height_manually_if_needed()
             if (render_function) {
               render_function();
             }
@@ -817,6 +821,7 @@
       const email = tool.str.parse_email($(email_element).text()).email;
       if (tool.str.is_email_valid(email)) {
         S.now('send_btn_span').text(BTN_LOADING);
+        set_input_text_height_manually_if_needed();
         lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, function (pubkey_lookup_result) {
           render_pubkey_result(email_element, email, pubkey_lookup_result);
         });
@@ -824,6 +829,7 @@
         render_pubkey_result(email_element, email, PUBKEY_LOOKUP_RESULT_WRONG);
       }
     });
+    set_input_text_height_manually_if_needed()
   }
 
   function get_password_validation_warning() {
@@ -852,6 +858,28 @@
     } else {
       S.cached('add_intro').css('display', 'block');
     }
+    set_input_text_height_manually_if_needed();
+  }
+
+  /**
+   * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
+   * (else ff will keep expanding body element beyond frame view)
+   * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
+   *
+   * @param update_reference_body_height - set to true to take a new snapshot of intended html body height
+   */
+  function set_input_text_height_manually_if_needed(update_reference_body_height) {
+    if(!is_reply_box && tool.env.browser().name === 'firefox') {
+      let cell_height_except_text = 0;
+      S.cached('all_cells_except_text').each(function() {
+        let cell = $(this);
+        cell_height_except_text += cell.is(':visible') ? cell.parent('tr').height() + 1 : 0; // add a 1px border height for each table row
+      });
+      if(update_reference_body_height || !reference_body_height) {
+        reference_body_height = S.cached('body').height();
+      }
+      S.cached('input_text').css('height', reference_body_height - cell_height_except_text);
+    }
   }
 
   function hide_message_password_ui() {
@@ -860,6 +888,7 @@
     S.cached('add_intro').css('display', 'none');
     S.cached('input_intro').text('');
     S.cached('intro_container').css('display', 'none');
+    set_input_text_height_manually_if_needed();
   }
 
   function show_hide_password_or_pubkey_container_and_color_send_button() {
@@ -889,6 +918,7 @@
         resize_reply_box();
       }
     }
+    set_input_text_height_manually_if_needed();
   }
 
   function respond_to_input_hotkeys(input_to_keydown_event) {
@@ -1002,6 +1032,7 @@
     S.cached('input_to').val('');
     resize_input_to();
     evaluate_receivers();
+    set_input_text_height_manually_if_needed();
   }
 
   function select_contact(email, from_query) {
@@ -1317,7 +1348,7 @@
   }
 
   function render_compose_table() {
-    if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefoxx where user cannot click on the message password
+    if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
     $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), extract_process_encrypt_and_send_message)).keypress(tool.ui.enter(extract_process_encrypt_and_send_message));
@@ -1361,9 +1392,7 @@
         $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
         $('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
       }
-      if(tool.env.browser().name === 'firefox') {
-        S.cached('input_text').css('height', S.cached('input_text').height());  // this will fix issue on Firefox that causes input text box to infinitely expand instead of scrolling
-      }
+      set_input_text_height_manually_if_needed();
     }
   }
 
@@ -1440,6 +1469,7 @@
     $(this).css('display', 'none');
     S.cached('intro_container').css('display', 'table-row');
     S.cached('input_intro').focus();
+    set_input_text_height_manually_if_needed();
   });
 
   S.cached('icon_help').click(function () {
