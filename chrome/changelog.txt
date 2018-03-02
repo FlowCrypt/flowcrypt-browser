@@ -1,6 +1,6 @@
 <div>
 
-<b>version 5.3.4 on March 02, 2017: Firefox compose</b>
+<b>version 5.3.5 on March 02, 2017: Firefox compose</b>
 composing: fix firefox ever expanding text box in compose
 reading: fix verifying detached signatures
 
