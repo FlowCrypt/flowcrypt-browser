@@ -98,7 +98,7 @@ const actions = {
       } else if (await oauth_page.$('#identifierId') !== null) {
         await meta.wait(oauth_page, '#identifierId', 60);
         await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 2);
-        await meta.wait_and_click(oauth_page, '.RveJvd', 1);  // confirm email
+        await meta.wait_and_click(oauth_page, '.zZhnYe', 2);  // confirm email
         await meta.sleep(5);
         await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], 5);
         await meta.wait_and_click(oauth_page, '.CwaK9', 1);  // confirm password
