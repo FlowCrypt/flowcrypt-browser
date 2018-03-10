@@ -103,7 +103,7 @@ function decrypt_and_save_attachment_to_downloads(success, encrypted_data) {
         if(!filename || tool.value(filename).in(['msg.txt', 'null'])) {
           filename = get_original_name(url_params.name);
         }
-        tool.file.save_to_downloads(filename, url_params.type, result.content.data, tool.env.browser().name === 'firefox' ? $('body') : null);
+        tool.file.save_to_downloads(filename, url_params.type, result.content.data, $('body'));
       } else if((result.missing_passphrases || []).length) {
         missing_passprase_longids = result.missing_passphrases;
         tool.browser.message.send(url_params.parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.missing_passphrases});

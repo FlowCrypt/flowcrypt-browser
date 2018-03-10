@@ -123,16 +123,18 @@ function handle_private_key_mismatch(account_email, message) { //todo - make it 
   });
 }
 
-function decrypt_and_save_attachment_to_downloads(success, encrypted_data, name, type) {
+function decrypt_and_save_attachment_to_downloads(success, encrypted_data, name, type, render_in) {
   if(success) {
     tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email, encrypted_data, undefined, tool.browser.message.cb], function (result) {
       if(result.success) {
-        tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data);
+        tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data, render_in);
+        send_resize_message();
       } else {
         delete result.message;
         console.log(result);
         alert('There was a problem decrypting this file. Downloading encrypted original. Write me at human@flowcrypt.com if this happens repeatedly.');
-        tool.file.save_to_downloads(name, type, encrypted_data);
+        tool.file.save_to_downloads(name, type, encrypted_data, render_in);
+        send_resize_message();
       }
     });
   } else {
@@ -160,28 +162,19 @@ function render_inner_attachments(attachments) {
   send_resize_message();
   $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     let attachment = included_attachments[$(self).attr('index')];
-    if(tool.env.browser().name !== 'firefox') { // non-firefox: download directly
-      if(attachment.content) {
-        tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content);
-      } else {
-        $(self).find('.progress').prepend(tool.ui.spinner('green'));
-        tool.file.download_as_uint8(attachment.url, function(percent, load, total) {
-          render_progress($(self).find('.progress .percent'), percent, load, total || attachment.size);
-        }, function (success, downloaded) {
-          setTimeout(function() {
-            $(self).find('.progress').html('');
-          }, 200);
-          decrypt_and_save_attachment_to_downloads(success, downloaded, attachment.name, attachment.type);
-        });
-      }
-    } else { // firefox: open in another tab
-      let p = {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, download: true, name: attachment.name, type: attachment.type, size: attachment.size};
-      if(attachment.url) {
-        p.url = attachment.url;
-      } else {
-        p.decrypted = (typeof attachment.content === 'string') ? attachment.content : tool.str.from_uint8(attachment.content);
-      }
-      window.open(tool.env.url_create('/chrome/elements/attachment.htm',  p), '_blank');
+    if(attachment.content) {
+      tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content, $(self));
+      send_resize_message();
+    } else {
+      $(self).find('.progress').prepend(tool.ui.spinner('green'));
+      tool.file.download_as_uint8(attachment.url, function(percent, load, total) {
+        render_progress($(self).find('.progress .percent'), percent, load, total || attachment.size);
+      }, function (success, downloaded) {
+        setTimeout(function() {
+          $(self).find('.progress').html('');
+        }, 200);
+        decrypt_and_save_attachment_to_downloads(success, downloaded, attachment.name, attachment.type, $(self));
+      });
     }
   }));
 }

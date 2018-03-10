@@ -830,6 +830,7 @@
         a.style = 'font-size: 16px; font-weight: bold;';
         render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
         render_in.append(a);
+        render_in.css('height', 'auto');
         render_in.find('a').click(function (e) {
           alert('Please use right-click and select Save Link As');
           e.preventDefault();
@@ -853,7 +854,9 @@
             }
           }
         }
-        window.URL.revokeObjectURL(a.href);
+        setTimeout(function () {
+          window.URL.revokeObjectURL(a.href);
+        }, 0);
       }
     }
   }
