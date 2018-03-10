@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.3.6 on March 10, 2017: Attachments</b>
+reading: attachments download on Chrome fixed
+
 <b>version 5.3.5 on March 02, 2017: Firefox compose</b>
 composing: fix firefox ever expanding text box in compose
 reading: fix verifying detached signatures
