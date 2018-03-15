@@ -1468,6 +1468,8 @@
   function diagnose_message_pubkeys(account_email, message) {
     if(typeof message === 'string') {
       message = openpgp.message.readArmored(message);
+    } else if(message instanceof Uint8Array) {
+      message = openpgp.message.readArmored(str_from_uint8(message));
     }
     return catcher.Promise(function(resolve, reject) {
       var message_key_ids = message.getEncryptionKeyIds();
@@ -2091,17 +2093,25 @@
   }
 
   function crypto_message_decrypt(account_email, encrypted_data, message_password, callback, output_format) {
-    var armored_encrypted = tool.value(crypto_armor_headers('message').begin).in(encrypted_data);
-    var armored_signed_only = tool.value(crypto_armor_headers('signed_message').begin).in(encrypted_data);
+    var first_100_bytes = encrypted_data.slice(0, 100);
+    if(first_100_bytes instanceof Uint8Array) {
+      first_100_bytes = str_from_uint8(first_100_bytes);
+    }
+    var armored_encrypted = tool.value(crypto_armor_headers('message').begin).in(first_100_bytes);
+    var armored_signed_only = tool.value(crypto_armor_headers('signed_message').begin).in(first_100_bytes);
     var is_armored = armored_encrypted || armored_signed_only;
+    if(is_armored && encrypted_data instanceof Uint8Array) {
+      encrypted_data = str_from_uint8(encrypted_data);
+    }
     var other_errors = [];
+    var message;
     try {
       if(armored_encrypted) {
-        var message = openpgp.message.readArmored(encrypted_data);
+        message = openpgp.message.readArmored(encrypted_data);
       } else if(armored_signed_only) {
-        var message = openpgp.cleartext.readArmored(encrypted_data);
+        message = openpgp.cleartext.readArmored(encrypted_data);
       } else {
-        var message = openpgp.message.read(typeof encrypted_data === 'string' ? tool.str.to_uint8(encrypted_data) : encrypted_data);
+        message = openpgp.message.read(typeof encrypted_data === 'string' ? tool.str.to_uint8(encrypted_data) : encrypted_data);
       }
     } catch(format_error) {
       callback({success: false, counts: zeroed_decrypt_error_counts(), format_error: format_error.message, errors: other_errors, encrypted: null, signature: null});
