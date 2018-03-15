@@ -14,6 +14,7 @@ a:focus { outline: none !important; }
 .line.prange, td.orange, b.orange, span.orange { color: #d18826; }
 .line.green, td.green, b.green, span.green { color: #31A217; }
 .line.gray, td.gray, b.gray, span.gray { color: #B7B7B7; }
+.line.pad_links a { padding-left: 20px; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 .green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
@@ -103,7 +104,7 @@ body#settings > div#content.setup div#step_2_easy_generating { display: none; te
 body#settings > div#content.setup div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
 body#settings > div#content.setup div.manual { display: none; }
 body#settings > div#content.setup div.alignleft { width: 600px; text-align: left; display: inline-block; }
-body#settings > div#content.setup div.manual textarea { width: 530px; height: 200px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
+body#settings > div#content.setup div.manual textarea, textarea.armored { width: 530px; height: 200px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
 body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0 auto;}
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }

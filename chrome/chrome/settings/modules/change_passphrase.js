@@ -82,11 +82,10 @@ window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(prim
         openpgp_key_encrypt(prv, new_passphrase);
         window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid, true).then(stored_passphrase => {
           Promise.all([
-            window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true),
+            window.flowcrypt_storage.keys_add(url_params.account_email, prv.armor(), true), //todo: the "true" looks bogus - confirm & remove, search for other keys_add uses
             window.flowcrypt_storage.passphrase_save('local', url_params.account_email, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined),
             window.flowcrypt_storage.passphrase_save('session', url_params.account_email, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase),
-          ]).then(() => {
-            // Pass phrase change done in the extension storage. For it to have a real effect though, a new backup containing the new pass phrase needs to be created.
+          ]).then(() => { // Pass phrase change done in the extension storage. A new backup should be created (protected by updated pass phrase).
             window.flowcrypt_storage.get(url_params.account_email, ['setup_simple'], storage => {
               if(storage.setup_simple) {
                 show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');

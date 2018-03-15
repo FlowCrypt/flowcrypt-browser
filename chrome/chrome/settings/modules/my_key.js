@@ -5,6 +5,7 @@
 let url_params = tool.env.url_params(['account_email', 'longid']);
 
 $('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm', url_params));
+$('.action_view_update').attr('href', tool.env.url_create('my_key_update.htm', url_params));
 
 window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid || 'primary').then(keyinfo => {
 

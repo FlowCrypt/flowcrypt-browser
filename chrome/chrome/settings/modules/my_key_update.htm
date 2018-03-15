@@ -14,11 +14,18 @@
 <body id="settings">
   <div id="content" class="my_key page" style="text-align: left;">
     <div class="line">
-      <b>User IDs</b> listed in Public Key with KeyWords:<br><span class="key_words good"></span>
+      <b>Update Private Key</b> with KeyWords: <span class="key_words good"></span>
     </div>
-    <div class="line"><hr /></div>
-    <div class="line user_ids"></div>
-    <div class="line"><hr /></div>
+    <div class="line">You can use other OpenPGP compatible software to update your private key (change expiration, change user ids) and load updated key below.</div>
+    <div class="line">FlowCrypt will recreate a new public key from your updated private key and save it locally.</div>
+    <div class="line bad">Public key will not be replaced on Attester automatically. Please send new pubkey to human@flowcrypt.com</div>
+    <div class="line">
+      <textarea class="input_private_key armored" placeholder="Updated ASCII Armored Private Key"></textarea>
+    </div>
+    <div class="line">
+      <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+    </div>
+    <div class="line"><span class="button green long action_update_private_key">update private key</span></div>
     <div class="line"><a href="#" class="action_show_public_key">Back to Public Key</a></div>
   </div>
 
@@ -30,7 +37,7 @@
   <script src="/js/common/common.js"></script>
   <script src="/js/common/mnemonic.js"></script>
   <script src="../settings.js"></script>
-  <script src="my_key_user_ids.js"></script>
+  <script src="my_key_update.js"></script>
 </body>
 
 </html>
