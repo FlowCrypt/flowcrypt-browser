@@ -178,19 +178,19 @@ const actions = {
     // await compose_page.close();
     meta.log('compose:tests:reused pubkey');
 
-    // await meta.sleep(1);
-    // await compose_page.goto(compose_url);
-    // await meta.wait(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    // await meta.wait(compose_page, extension.selector_test_state('ready')); // wait until page ready
-    // await meta.type(compose_page, '@input-to', 'human+test@flowcrypt.com');
-    // await meta.click(compose_page, '@input-subject');
-    // await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey: ' + meta.random());
-    // await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
-    // await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
-    // await meta.sleep(1);
-    // await meta.wait_and_click(compose_page, '@action-send');
-    // await meta.wait(compose_page, extension.selector_test_state('closed')); // wait until page closed
-    // meta.log('compose:tests:unknown pubkey');
+    await meta.sleep(1);
+    await compose_page.goto(compose_url);
+    await meta.wait(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait(compose_page, extension.selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_page, '@input-to', 'human+test@flowcrypt.com');
+    await meta.click(compose_page, '@input-subject');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey: ' + meta.random());
+    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
+    await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
+    await meta.wait_and_click(compose_page, '@action-send', 1);
+    await meta.wait_and_click(compose_page, '@action-send', 1);  // in real usage, also have to click two times when using password - why?
+    await meta.wait(compose_page, extension.selector_test_state('closed')); // wait until page closed
+    meta.log('compose:tests:unknown pubkey');
 
     await compose_page.close();
   },
