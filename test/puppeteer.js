@@ -82,34 +82,37 @@ const meta = {
  };
 
 const actions = {
-  approve_gmail_oauth: async function(account_email, callback) {
+  await_popup: function (browser, action) {
+    return new Promise((resolve, reject) => {
+      browser.once('targetcreated', target => {
+        resolve(target.page());
+      });
+      action();
+    });
+  },
+  approve_gmail_oauth: async function(oauth_page, account_email) {
     let auth = extension.config.auth.google.filter(a => a.email === account_email)[0];
-    return async(target) => {
-      meta.sleep(5);
-      let oauth_page = await target.page();
-      await meta.wait(oauth_page, '#Email, #submit_approve_access, #identifierId, .w6VTHd');
-      if (await oauth_page.$('#Email') !== null) {
-        await meta.wait(oauth_page, '#Email', 60);
-        await meta.wait_and_type(oauth_page, '#Email', auth['email']);
-        await meta.wait_and_click(oauth_page, '#next');
-        await meta.sleep(5);
-        await meta.wait_and_type(oauth_page, '#Passwd', auth['password'], 5);
-        await meta.wait_and_click(oauth_page, '#signIn', 1);
-      } else if (await oauth_page.$('#identifierId') !== null) {
-        await meta.wait(oauth_page, '#identifierId', 60);
-        await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 2);
-        await meta.wait_and_click(oauth_page, '.zZhnYe', 2);  // confirm email
-        await meta.sleep(5);
-        await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], 5);
-        await meta.wait_and_click(oauth_page, '.CwaK9', 1);  // confirm password
-      } else if (await oauth_page.$('.w6VTHd') !== null) {
-        await meta.wait_and_click(oauth_page, '.w6VTHd', 1);  // select first email account
-      }
-      await meta.wait(oauth_page, '#submit_approve_access', 60);
-      await meta.wait_and_click(oauth_page, '#submit_approve_access', 1);
-      meta.log('approve_gmail_oauth');
-      callback();
-    };
+    await meta.wait(oauth_page, '#Email, #submit_approve_access, #identifierId, .w6VTHd');
+    if (await oauth_page.$('#Email') !== null) {
+      await meta.wait(oauth_page, '#Email', 60);
+      await meta.wait_and_type(oauth_page, '#Email', auth['email']);
+      await meta.wait_and_click(oauth_page, '#next');
+      await meta.sleep(5);
+      await meta.wait_and_type(oauth_page, '#Passwd', auth['password'], 5);
+      await meta.wait_and_click(oauth_page, '#signIn', 1);
+    } else if (await oauth_page.$('#identifierId') !== null) {
+      await meta.wait(oauth_page, '#identifierId', 60);
+      await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 2);
+      await meta.wait_and_click(oauth_page, '.zZhnYe', 2);  // confirm email
+      await meta.sleep(5);
+      await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], 5);
+      await meta.wait_and_click(oauth_page, '.CwaK9', 1);  // confirm password
+    } else if (await oauth_page.$('.w6VTHd') !== null) {
+      await meta.wait_and_click(oauth_page, '.w6VTHd', 1);  // select first email account
+    }
+    await meta.wait(oauth_page, '#submit_approve_access', 60);
+    await meta.wait_and_click(oauth_page, '#submit_approve_access', 1);
+    meta.log('approve_gmail_oauth');
   },
   setup_recover: async function(settings_page, key_n) {
     await settings_page.bringToFront();
@@ -226,13 +229,11 @@ const actions = {
   });
 
   const settings_page = await actions.new_page('chrome/settings/index.htm');
-  meta.wait_and_click(settings_page, '@action-connect-to-gmail');
-  browser.once('targetcreated', await actions.approve_gmail_oauth('flowcrypt.compatibility@gmail.com', async() => {
-    await actions.setup_recover(settings_page, 2);
-    await actions.pgp_block_tests();
-    await actions.compose_tests();
-    await actions.close_browser();
-  }));
-
+  const oauth_popup = await actions.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
+  await actions.approve_gmail_oauth(oauth_popup, 'flowcrypt.compatibility@gmail.com');
+  await actions.setup_recover(settings_page, 2);
+  await actions.pgp_block_tests();
+  await actions.compose_tests();
+  await actions.close_browser();
 
 })();
