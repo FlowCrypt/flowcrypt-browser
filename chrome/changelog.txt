@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.3.8 on March 16, 2017: Update Key</b>
+settings: import updated private key
+reading: fixed issue opening pgp/mime with large attachments
+
 <b>version 5.3.7 on March 15, 2017: PGP/Mime attachments</b>
 reading: fixed issue opening pgp/mime with large attachments
 
