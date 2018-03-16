@@ -84,8 +84,10 @@ const meta = {
 const actions = {
   await_popup: function (browser, action) {
     return new Promise((resolve, reject) => {
-      browser.once('targetcreated', target => {
-        resolve(target.page());
+      browser.on('targetcreated', target => {
+        if(target.type() === 'page') {
+          resolve(target.page());
+        }
       });
       action();
     });
