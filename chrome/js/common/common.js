@@ -961,7 +961,11 @@
   }
 
   function mime_resembles_message(message) {
-    var m = message.toLowerCase();
+    var m = message.slice(0, 1000);
+    if(m instanceof  Uint8Array) {
+      m = str_from_uint8(m);
+    }
+    m = m.toLowerCase();
     var contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
     if(contentType === null) {
       return false;

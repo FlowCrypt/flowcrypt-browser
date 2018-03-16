@@ -256,6 +256,9 @@ function decide_decrypted_content_formatting_and_render(decrypted_content, is_en
   set_frame_color(is_encrypted ? 'green' : 'gray');
   render_pgp_signature_check_result(signature_result);
   let public_keys = [];
+  if(decrypted_content instanceof Uint8Array) {
+    decrypted_content = tool.str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
+  }
   if(!tool.mime.resembles_message(decrypted_content)) {
     let cryptup_attachments = [];
     decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
