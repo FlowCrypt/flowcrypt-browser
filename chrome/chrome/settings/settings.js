@@ -224,3 +224,57 @@ function initialize_private_key_import_ui() {
     }
   });
 }
+
+function render_prv_compatibility_fix_ui(container, original_prv, passphrase, back_url, key_fixed_callback) {
+  let user_ids = original_prv.users.map(u => u.userId.userid);
+  if (!user_ids.length) {
+    user_ids.push(settings_url_params.account_email);
+  }
+  container = $(container);
+  container.html([
+    '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
+    '<div class="line compatibility_fix_user_ids">' + user_ids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
+    '<div class="line">',
+    '  Choose expiration of updated key',
+    '  <select class="input_fix_expire_years">',
+    '    <option  value="" disabled selected>please choose expiration</option>',
+    '    <option value="never">no expiration</option>',
+    '    <option value="1">1 year</option>',
+    '    <option value="2">2 years</option>',
+    '    <option value="3">3 years</option>',
+    '    <option value="5">5 years</option>',
+    '  </select>',
+    '</div>',
+    '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
+    '<div class="line">',
+    '  <div class="button long gray action_fix_compatibility">UPDATE AND IMPORT KEY</div>',
+    '</div>',
+  ].join('\n'));
+  container.find('select.input_fix_expire_years').change(function () {
+    if($(this).val()) {
+      container.find('.action_fix_compatibility').removeClass('gray').addClass('green');
+    } else {
+      container.find('.action_fix_compatibility').removeClass('green').addClass('gray');
+    }
+  });
+  container.find('.action_fix_compatibility').click(function () {
+    let expire_years = $(this).parents(container).find('select.input_fix_expire_years').val();
+    if (!expire_years) {
+      alert('Please select key expiration');
+    } else {
+      $(this).off().html(tool.ui.spinner('white'));
+      let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
+      original_prv.decrypt(passphrase);
+      setTimeout(() => {
+        openpgp.reformatKey({privateKey: original_prv, passphrase: passphrase, userIds: user_ids, keyExpirationTime: expire_seconds}).then(fixed_prv_result => {
+          if (fixed_prv_result.key.getEncryptionKeyPacket() !== null) {
+            key_fixed_callback(fixed_prv_result.key);
+          } else {
+            alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
+            $(this).replaceWith(tool.e('a', {href: back_url, text: 'Go back and try something else'}));
+          }
+        });
+      }, 50);
+    }
+  });
+}

@@ -488,42 +488,12 @@ $('#step_2b_manual_enter .action_save_private').click(function () {
 
 function render_compatibility_fix_block(original_prv, options) {
   display_block('step_3_compatibility_fix');
-  let user_ids = original_prv.users.map(u => u.userId.userid);
-  if (!user_ids.length) {
-    user_ids.push(url_params.account_email);
-  }
-  $('#step_3_compatibility_fix .compatibility_fix_user_ids').html(user_ids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join(''));
-  $('#step_3_compatibility_fix .action_fix_compatibility').off().click(function () {
-    let expire_years = $('select.input_fix_expire_years').val();
-    if (!expire_years) {
-      alert('Please select key expiration');
-    } else {
-      let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
-      original_prv.decrypt(options.passphrase);
-      $(this).off().html(tool.ui.spinner('white'));
-      setTimeout(() => {
-        openpgp.reformatKey({privateKey: original_prv, passphrase: options.passphrase, userIds: user_ids, keyExpirationTime: expire_seconds}).then(updated_prv => {
-          if (updated_prv.key.getEncryptionKeyPacket() !== null) {
-            save_keys(url_params.account_email, [updated_prv.key], options, () => {
-              finalize_setup(url_params.account_email, updated_prv.key.toPublic().armor(), options);
-            });
-          } else {
-            alert('Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            $(this).replaceWith(tool.e('a', {href: window.location.href.replace(/#$/, ''), text: 'Go back and try something else'}));
-          }
-        });
-      }, 50);
-    }
+  render_prv_compatibility_fix_ui('#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''), (updated_prv) => {
+    save_keys(url_params.account_email, [updated_prv], options, () => {
+      finalize_setup(url_params.account_email, updated_prv.toPublic().armor(), options);
+    });
   });
 }
-
-$('select.input_fix_expire_years').change(function () {
-  if($(this).val()) {
-    $('#step_3_compatibility_fix .action_fix_compatibility').removeClass('gray').addClass('green');
-  } else {
-    $('#step_3_compatibility_fix .action_fix_compatibility').removeClass('green').addClass('gray');
-  }
-});
 
 $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
   render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');

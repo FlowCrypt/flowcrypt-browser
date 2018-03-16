@@ -207,24 +207,7 @@
       </div>
     </div>
 
-    <div id="step_3_compatibility_fix">
-      <div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>
-      <div class="line compatibility_fix_user_ids"></div>
-      <div class="line">
-        Choose expiration of updated key
-        <select class="input_fix_expire_years">
-          <option  value="" disabled selected>please choose expiration</option>
-          <option value="never">no expiration</option>
-          <option value="1">1 year</option>
-          <option value="2">2 years</option>
-          <option value="3">3 years</option>
-          <option value="5">5 years</option>
-        </select>
-      </div>
-      <div class="line">FlowCrypt will attempt to update the key before importing.</div>
-      <div class="line">
-        <div class="button long gray action_fix_compatibility">UPDATE AND IMPORT KEY</div>
-      </div>
+    <div id="step_3_compatibility_fix" class="compatibility_fix_container">
     </div>
 
     <div id="step_3_test_failed">
