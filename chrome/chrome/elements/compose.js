@@ -100,7 +100,11 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
           storage_passphrase_get: () => {
             return catcher.Promise((resolve, reject) => {
               window.flowcrypt_storage.keys_get(url_params.account_email, 'primary').then(primary_ki => {
-                window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid).then(resolve, reject);
+                if(primary_ki === null) {
+                  resolve(null); // flowcrypt just uninstalled or reset?
+                } else {
+                  window.flowcrypt_storage.passphrase_get(url_params.account_email, primary_ki.longid).then(resolve, reject);
+                }
               });
             });
           },
