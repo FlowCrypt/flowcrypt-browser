@@ -236,7 +236,7 @@ function render_prv_compatibility_fix_ui(container, original_prv, passphrase, ba
     '<div class="line compatibility_fix_user_ids">' + user_ids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
     '<div class="line">',
     '  Choose expiration of updated key',
-    '  <select class="input_fix_expire_years">',
+    '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
     '    <option  value="" disabled selected>please choose expiration</option>',
     '    <option value="never">no expiration</option>',
     '    <option value="1">1 year</option>',
@@ -247,7 +247,7 @@ function render_prv_compatibility_fix_ui(container, original_prv, passphrase, ba
     '</div>',
     '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
     '<div class="line">',
-    '  <div class="button long gray action_fix_compatibility">UPDATE AND IMPORT KEY</div>',
+    '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
     '</div>',
   ].join('\n'));
   container.find('select.input_fix_expire_years').change(function () {

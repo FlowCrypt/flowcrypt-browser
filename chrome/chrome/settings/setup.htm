@@ -58,7 +58,7 @@
         <div class="line circle-i">
           <img src="/img/fa/fa-cogs-green.png" alt="Settings">
         </div>
-        <div class="button long green action_manual_enter_key">use my own private key</div>
+        <div class="button long green action_manual_enter_key" data-test="action-step1easyormanual-choose-manual-enter">use my own private key</div>
         <div class="line">&nbsp;</div>
         <div class="line">Use your own PGP key</div>
         <div class="line">Manual setup</div>
@@ -143,7 +143,7 @@
         <div class="line">
           <ul style="list-style: none;margin-left: 0;padding-left: 0;" class="source_selector">
             <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a file</label></li>
-            <li><input type="radio" name="source" id="source_paste" value="paste"> <label for="source_paste">Paste armored key directly</label></li>
+            <li><input type="radio" name="source" id="source_paste" value="paste" data-test="input-step2bmanualenter-source-paste"> <label for="source_paste">Paste armored key directly</label></li>
           </ul>
         </div>
         <div class="source_file_container display_none">
@@ -152,22 +152,22 @@
         </div>
         <div class="source_paste_container display_none">
           <div class="line">
-            <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+            <textarea class="input_private_key" placeholder="ASCII Armored Private Key" data-test="input-step2bmanualenter-ascii-key"></textarea>
           </div>
           <div class="line" style="text-align: left; padding-left: 40px;">
-            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" />
+            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
           <div class="line left">
             <div class="squaredFour">
               <input type="checkbox" value="" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
-              <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
+              <label class="checkboxSquaredOne" for="e_rememberPassphrase" data-test="input-step2bmanualenter-save-passphrase"></label>
             </div>
             <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
           </div>
           <div class="line left">
             <div class="squaredFour">
               <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
-              <label class="checkboxSquaredOne" for="e_submitPubkey"></label>
+              <label class="checkboxSquaredOne" for="e_submitPubkey" data-test="input-step2bmanualenter-submit-pubkey"></label>
             </div>
             <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (does not sync elsewhere)</span>
           </div>
@@ -183,7 +183,7 @@
           </div>
 
           <div class="line">
-            <div class="button long green action_save_private">SAVE</div>
+            <div class="button long green action_save_private" data-test="input-step2bmanualenter-save">SAVE</div>
           </div>
         </div>
       </div>
@@ -227,7 +227,7 @@
         <div class="button long green action_send">COMPOSE ENCRYPTED EMAIL</div>
       </div>
       <div class="line">
-        <div class="button long gray action_account_settings">MORE SETTINGS</div>
+        <div class="button long gray action_account_settings" data-test="action-step4done-account-settings">MORE SETTINGS</div>
       </div>
       <div class="line auth_denied_warning" style="display: none;">
         <br/>
