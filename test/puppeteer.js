@@ -13,7 +13,7 @@ let results = {
 
 const meta = {
   config: JSON.parse(fs.readFileSync('test/puppeteer.json', 'utf8')),
-  _url: function (path) {
+  extension_url: function (path) {
     return 'chrome-extension://' + this.config.extension_id + '/' + path;
   },
   _selector: function (name_or_selector) {
@@ -84,10 +84,6 @@ const meta = {
     }
   },
   random: () => Math.random().toString(36).substring(7),
- };
-
-const actions = {
-  oauth_password_delay: 3,
   await_popup: function (browser, action) {
     return new Promise((resolve, reject) => {
       browser.on('targetcreated', target => {
@@ -98,6 +94,26 @@ const actions = {
       action();
     });
   },
+  new_page: async function(url) {
+    const page = await browser.newPage();
+    await page.bringToFront();
+    await page.setViewport(meta.size);
+    if(url) {
+      await page.goto(url.indexOf('https://') === 0 ? url : meta.extension_url(url));
+    }
+    return page;
+  },
+  close_browser: async() => {
+    await setTimeout(async() => {
+      await browser.close();
+      meta.log('close_browser');
+      meta.finish();
+    }, 5000);
+  },
+ };
+
+const tests = {
+  oauth_password_delay: 1,
   approve_gmail_oauth: async function(oauth_page, account_email) {
     let auth = meta.config.auth.google.filter(a => a.email === account_email)[0];
     await meta.wait(oauth_page, '#Email, #submit_approve_access, #identifierId, .w6VTHd');
@@ -152,12 +168,12 @@ const actions = {
     meta.log('setup_manual_enter:' + key_title);
   },
   pgp_block_tests: async function() {
-    let pgp_block_page = await this.new_page();
+    let pgp_block_page = await meta.new_page();
     let messages = meta.config.messages;
     let all_ok = true;
     for(let i = 0; i < messages.length; i++) {
       let m = messages[i];
-      await pgp_block_page.goto(meta._url('chrome/elements/pgp_block.htm') + m.params);
+      await pgp_block_page.goto(meta.extension_url('chrome/elements/pgp_block.htm') + m.params);
       await meta.wait(pgp_block_page, '@pgp-block-content');
       await meta.wait(pgp_block_page, meta._selector_test_state('ready'), 30); // wait for 30s until decryption done
       await meta.sleep(1);
@@ -181,9 +197,24 @@ const actions = {
       meta.log(`pgp_block_tests`, `some decrypt tests had failures`);
     }
   },
+  gmail_tests: async function() {
+    // standard gmail
+    let gmail_page = await meta.new_page('https://mail.google.com');
+    await meta.wait_and_click(gmail_page, '@action-secure-compose', 1);
+    await meta.wait(gmail_page, '@container-new-message');
+    meta.log('gmail:tests:secure compose button (mail.google.com)');
+
+    // google inbox - need to hover over the button first
+    // await gmail_page.goto('https://inbox.google.com');
+    // await meta.wait_and_click(gmail_page, '@action-secure-compose', 1);
+    // await meta.wait(gmail_page, '@container-new-message');
+    // meta.log('gmail:tests:secure compose button (inbox.google.com)');
+
+    await gmail_page.close();
+  },
   compose_tests: async function() {
-    let compose_page = await this.new_page();
-    let compose_url = meta._url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com');
+    let compose_page = await meta.new_page();
+    let compose_url = meta.extension_url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com');
 
     await meta.sleep(1);
     await compose_page.goto(compose_url);
@@ -225,22 +256,6 @@ const actions = {
 
     await compose_page.close();
   },
-  new_page: async function(url) {
-    const page = await browser.newPage();
-    await page.bringToFront();
-    await page.setViewport(meta.size);
-    if(url) {
-      await page.goto(meta._url(url));
-    }
-    return page;
-  },
-  close_browser: async() => {
-    await setTimeout(async() => {
-      await browser.close();
-      meta.log('close_browser');
-      meta.finish();
-    }, 5000);
-  },
 };
 
 
@@ -256,22 +271,23 @@ const actions = {
     slowMo: 50,
   });
 
-  const settings_page = await actions.new_page('chrome/settings/index.htm');
+  const settings_page = await meta.new_page('chrome/settings/index.htm');
 
   // setup flowcrypt.compatibility
-  const oauth_popup_1 = await actions.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
-  await actions.approve_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com');
-  await actions.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1');
+  const oauth_popup_1 = await meta.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
+  await tests.approve_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com');
+  await tests.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1');
 
   // setup flowcrypt.test.key.imported
-  const oauth_popup_2 = await actions.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
-  await actions.approve_gmail_oauth(oauth_popup_2, 'flowcrypt.test.key.imported@gmail.com');
-  await actions.setup_manual_enter(settings_page, 'missing.self.signatures', {fix_key: true});
+  const oauth_popup_2 = await meta.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
+  await tests.approve_gmail_oauth(oauth_popup_2, 'flowcrypt.test.key.imported@gmail.com');
+  await tests.setup_manual_enter(settings_page, 'missing.self.signatures', {fix_key: true});
 
   // specific tests
-  await actions.pgp_block_tests();
-  await actions.compose_tests();
+  await tests.pgp_block_tests();
+  await tests.compose_tests();
+  await tests.gmail_tests();
 
-  await actions.close_browser();
+  await meta.close_browser();
 
 })();

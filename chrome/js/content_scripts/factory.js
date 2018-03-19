@@ -154,7 +154,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       add_pubkey: (emails) => dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'})),
     },
     embedded: {
-      compose: (draft_id) => tool.e('div', {id: 'new_message', class: 'new_message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})}),
+      compose: (draft_id) => tool.e('div', {id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})}),
       subscribe: (verification_email_text, source) => iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'}),
       verification: (verification_email_text) => iframe(src_verification_dialog(verification_email_text), ['short', 'embedded'], {scrolling: 'no'}),
       attachment: (meta) => tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))}),
@@ -169,11 +169,11 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
     button: {
       compose: (webmail_name) => {
         if(webmail_name === 'inbox') {
-          return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
+          return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
         } else if(webmail_name === 'outlook') {
           return '<div class="_fce_c ' + destroyable_class + ' cryptup_compose_button_container" role="presentation"><div class="new_message_button" title="New Secure Email"><img src="' + src_img('logo-19-19.png') + '"></div></div>';
         } else {
-          return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0">SECURE COMPOSE</div></div>';
+          return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0" data-test="action-secure-compose">SECURE COMPOSE</div></div>';
         }
       },
       reply: () => '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>',
