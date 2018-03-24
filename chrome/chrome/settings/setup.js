@@ -91,7 +91,7 @@ function display_block(name) {
   }
 }
 
-function setup_dialog_init() { // todo - handle network failure on init. loading
+function setup_dialog_init() {
   $('h1').text('Set Up FlowCrypt');
   if(!url_params.account_email) {
     window.location = 'index.htm';
@@ -107,12 +107,12 @@ function setup_dialog_init() { // todo - handle network failure on init. loading
     } else {
       tool.api.attester.lookup_email(url_params.account_email).done((keyserver_success, keyserver_result) => {
         initialize_private_key_import_ui(); // for step_2b_manual_enter
-        if(keyserver_success && keyserver_result && keyserver_result.pubkey) {
+        if(keyserver_success && keyserver_result && keyserver_result.pubkey) { // todo - handle network failure when fetching pubkey, show "retry"
           if(keyserver_result.attested) {
             account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
           }
           if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
-            tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {
+            tool.api.gmail.fetch_key_backups(url_params.account_email, function (success, keys) {  // todo - handle network failure when fetching backup, show "retry"
               if(success && keys) {
                 recovered_keys = keys;
                 recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
