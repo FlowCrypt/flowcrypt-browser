@@ -250,7 +250,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block > .block_pubkey_outgoing:hover { opacity: 1; }
 #pgp_block > .future_expiration { padding-right: 8px; text-align: right; font-family: monospace; font-size: 11px; opacity: 0.7; color: #31A217; font-weight: 500; }
 #pgp_block > .future_expiration:hover { opacity: 1; }
-#pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; }
+#pgp_signature { text-align: right; position: relative; top: -20px; right: 20px; opacity: 0.5; float: right; width: fit-content;}
 #pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
 #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 200px; float: right; }
 #pgp_signature.neutral, #pgp_signature.bad, #pgp_signature:hover { opacity: 1; }
