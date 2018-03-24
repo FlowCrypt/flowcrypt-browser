@@ -38,15 +38,15 @@ window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid ||
   });
 
   $('.action_show_other_type').click(function () {
-    if($('.action_show_other_type').text().toLowerCase() === 'show private') {
+    if($('.action_show_other_type').text().toLowerCase() === 'show private key') {
       $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
-      $('.action_show_other_type').text('show public').removeClass('bad').addClass('good');
+      $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
       $('.key_type').text('Private Key');
       $('.show_when_showing_public').css('display', 'none');
       $('.show_when_showing_private').css('display', '');
     } else {
       $('.key_dump').text('').removeClass('bad').addClass('good');
-      $('.action_show_other_type').text('show private').removeClass('good').addClass('bad');
+      $('.action_show_other_type').text('show private key').removeClass('good').addClass('bad');
       $('.key_type').text('Public Key Info');
       $('.show_when_showing_public').css('display', '');
       $('.show_when_showing_private').css('display', 'none');

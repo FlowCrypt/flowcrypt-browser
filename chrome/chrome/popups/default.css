@@ -27,6 +27,7 @@ html, body {
   font-weight: 500;
   font-size: 16px;
   margin-right: 64px;
+  height: 64px;
 }
 .menu-row span:first-child {
   width: 250px;

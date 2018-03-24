@@ -9,7 +9,7 @@ if(url_params.action === 'new_message') {
   $('#title').text('Choose account for new message');
   page = '/chrome/elements/compose.htm';
 } else if(url_params.action === 'settings') {
-  $('#title').text('Select account to see settings')
+  $('#title').text('Select account to open settings')
 } else {
   throw new Error('unknown action: ' + action);
 }

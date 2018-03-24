@@ -3,8 +3,8 @@
 @font-face { font-family: 'signature'; src: url('/fonts/Tangerine_Regular.ttf'); }
 @font-face { font-family: 'signature'; src: url('/fonts/Tangerine_Bold.ttf'); font-weight: bold; }
 
-.button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; font-weight: 600; letter-spacing: 0.2px;
-  border: 1px solid transparent; color: #fff; border-radius: 2px; font-size: 11px; text-align: center; white-space: nowrap; min-height: 27px;
+.button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; font-weight: 500;
+  border: 1px solid transparent; color: #fff; border-radius: 2px; font-size: 14px; text-align: center; white-space: nowrap; min-height: 27px;
   min-width: 56px; line-height: 27px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 5px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
 
@@ -14,7 +14,7 @@ a:focus { outline: none !important; }
 .line.prange, td.orange, b.orange, span.orange { color: #d18826; }
 .line.green, td.green, b.green, span.green { color: #31A217; }
 .line.gray, td.gray, b.gray, span.gray { color: #B7B7B7; }
-.line.pad_links a { padding-left: 20px; }
+.line.pad_links a { padding-right: 20px; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 .green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
@@ -25,7 +25,7 @@ a:focus { outline: none !important; }
 .gray_label { color: white; background-color: #B7B7B7; }
 .button.red { background-color: #d14836; color: white; }
 .button.green { background-color: #31A217; border:0 !important; color: white; }
-.button.gray { background-color: #B7B7B7; background-image: -webkit-linear-gradient(top, #C5C5C5, #B7B7B7); color: white;}
+.button.gray { background-color: #B7B7B7; background-image: -webkit-linear-gradient(top, #C5C5C5, #B7B7B7); color: white; border: none; }
 .button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444;}
 .button.small { padding: 0 7px; margin-top: 0; }
 .button_secure.green { background:  #31A217; }
@@ -54,7 +54,7 @@ div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; p
 div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 
-body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif;}
+body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif; font-size: 16px; }
 body#settings > div#content {  margin-top: 70px; margin-bottom: 150px; position: relative;}
 body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
