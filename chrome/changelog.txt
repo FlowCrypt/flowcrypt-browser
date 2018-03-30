@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.3.9 on March 30, 2017: Design updates</b>
+settings: design updates
+reading: fixed links in signed messages
+
 <b>version 5.3.8 on March 16, 2017: Update Key</b>
 settings: import updated private key
 reading: fixed issue opening pgp/mime with large attachments
