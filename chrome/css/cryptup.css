@@ -32,7 +32,7 @@ a:focus { outline: none !important; }
 .toggle_show_hide_pass_phrase { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none;
   -ms-user-select: none; user-select: none; display: inline-block; position: absolute; width: 50px; text-align: center; padding-left: 4px;
   margin-left: -55px;  padding-top: 7px; cursor: pointer; opacity: 0.5; background: #dadada; height: 36px; line-height: 14px;
-  border: 1px solid rgba(0,0,0,0.25); border-left: none; }
+  border: 1px solid rgba(0,0,0,0.25); border-left: none; font-size: 14px; }
 .toggle_show_hide_pass_phrase .eye-open,
 .toggle_show_hide_pass_phrase .eye-closed { width: 19px; height: 15px;}
 
@@ -50,7 +50,7 @@ i.large_spinner img { position: relative; width: 75px; height: 75px; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }
 
-div.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative; }
+div.line { min-height: 18px; padding: 12px 0; max-width: 650px; margin:0 auto; position: relative; }
 div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 
@@ -104,7 +104,7 @@ body#settings > div#content.setup div#step_2_easy_generating { display: none; te
 body#settings > div#content.setup div#step_2_easy_generating i { font-size: 490px !important; position: absolute; color: #eee; top: 59px; left: -163px; }
 body#settings > div#content.setup div.manual { display: none; }
 body#settings > div#content.setup div.alignleft { width: 600px; text-align: left; display: inline-block; }
-body#settings > div#content.setup div.manual textarea, textarea.armored { width: 530px; height: 200px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
+body#settings > div#content.setup div.manual textarea, textarea.armored { width: 610px; height: 200px; font-size: 12px; text-align: left; margin-top:-13px; padding: 8px; border: 1px solid rgba(0,0,0, .25); }
 body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0 auto;}
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
@@ -311,7 +311,11 @@ table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none;}
 table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
-table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; width: 98%; outline: none; }
+table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; outline: none;
+  margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
+table#compose td.input.show_send_from #input_from_settings { display: none; visibility: hidden; } /* todo - functionality not ready */
+table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 13px; color: red; opacity: 0.4; }
+table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; cursor: pointer; }
 table#compose tr.bottom { background-color: #f5f5f5; }
 table#compose td.bottom { padding: 7px 12px 1px 12px; height: 47px; border-top: 1px solid #cfcfcf;}
 table#compose td.bottom div#send_btn { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; white-space: nowrap; min-width: 120px;

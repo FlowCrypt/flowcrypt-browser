@@ -29,9 +29,9 @@
         <img src="/img/svgs/question-icon.svg" alt="Help icon">
       </a>
       <h1></h1>
+      <br/>
     </div>
-    <div class="line">&nbsp;</div>
-    <div class="line">&nbsp;</div>
+
     <div id="loading" class="loading">
       <div class="loader" title="0"><img src="/img/svgs/spinner-green-large.svg" /></div>
       <div class="loading_copy">Loading...</div>
@@ -105,7 +105,7 @@
             <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing" name="check" checked="">
             <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"></label>
           </div>
-          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+          <span class="labelCopy">Remember Pass Phrase after closing browser</span>
         </div>
 
         <div class="line left">
@@ -113,7 +113,7 @@
             <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check" checked="">
             <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"></label>
           </div>
-          <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (does not sync elsewhere).</span>
+          <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
         </div>
         <div class="line left" style="visibility: hidden;">
           <div class="squaredFour">
@@ -136,10 +136,7 @@
 
     <div id="step_2b_manual_enter" class="manual">
       <div class="aligncenter">
-        <div class="line">
-          The private key is stored in your local browser extension storage.
-          <br/> Other extensions or websites can't access it. The key will never leave your browser.
-        </div>
+        <div class="line">The private key is stored securely in your local browser extension storage.<br/>The key will never leave your browser.</div>
         <div class="line">
           <ul style="list-style: none;margin-left: 0;padding-left: 0;" class="source_selector">
             <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a file</label></li>
@@ -162,14 +159,14 @@
               <input type="checkbox" value="" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
               <label class="checkboxSquaredOne" for="e_rememberPassphrase" data-test="input-step2bmanualenter-save-passphrase"></label>
             </div>
-            <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+            <span class="labelCopy">Remember Pass Phrase after closing browser</span>
           </div>
           <div class="line left">
             <div class="squaredFour">
               <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
               <label class="checkboxSquaredOne" for="e_submitPubkey" data-test="input-step2bmanualenter-submit-pubkey"></label>
             </div>
-            <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (does not sync elsewhere)</span>
+            <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
           </div>
           <div class="line left" style="visibility: hidden;">
             <div class="squaredFour">
@@ -178,7 +175,7 @@
             </div>
             <label class="checkboxSquaredOne" for="e_submitAll" style="position: relative; left: 25px;">
               Also submit the same pubkey for:
-              <br /><span class="addresses" style="padding-left: 35px;"></span>
+              <br /><span class="addresses" style="padding-left: 35px;font-size:14px;"></span>
             </label>
           </div>
 

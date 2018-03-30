@@ -1389,7 +1389,7 @@
       $('.close_new_message').click(app.close_message);
       let addresses = order_addresses(account_email, app.storage_get_addresses());
       if(addresses.length > 1) {
-        $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select>');
+        $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" title="Settings">');
         $('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
       }
       set_input_text_height_manually_if_needed();
