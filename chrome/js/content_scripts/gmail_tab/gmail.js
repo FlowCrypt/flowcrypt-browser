@@ -12,9 +12,15 @@ catcher.try(() => {
     name: 'gmail',
     get_user_account_email: () => {
       let account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
-      return account_email_loading_match !== null ? account_email_loading_match[0].replace(/^[\s.]+|[\s.]+$/gm, '').toLowerCase() : undefined;
+      if(account_email_loading_match !== null) { // try parse from loading div
+        return account_email_loading_match[0].replace(/^[\s.]+|[\s.]+$/gm, '').toLowerCase();
+      }
+      let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
+      if(tool.str.is_email_valid(email_from_account_dropdown)) {
+        return email_from_account_dropdown;
+      }
     },
-    get_user_full_name: () => $("div.gb_hb div.gb_lb").text(),
+    get_user_full_name: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
     get_replacer: () => replacer,
     start: start,
   });
