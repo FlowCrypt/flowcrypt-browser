@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.4.0 on March 31, 2017: Gmail load fix</b>
+reading: fix gmail missing FlowCrypt ui
+
 <b>version 5.3.9 on March 30, 2017: Design updates</b>
 settings: design updates
 reading: fixed links in signed messages
