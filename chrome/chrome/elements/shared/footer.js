@@ -4,7 +4,7 @@
 
 tool.ui.event.protect();
 
-let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'placement']); // placement: compose||settings
+let url_params = tool.env.url_params(['account_email', 'parent_tab_id']); // placement: compose||settings
 
 window.flowcrypt_storage.subscription(function (level, expire, active) {
   if(active) {

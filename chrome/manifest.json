@@ -78,6 +78,7 @@
     "/chrome/elements/subscribe.htm",
     "/chrome/elements/verification.htm",
     "/chrome/elements/attest.htm",
+    "/chrome/elements/sending_address.htm",
     "/chrome/elements/shared/footer.htm"
   ],
   "minimum_chrome_version": "49",

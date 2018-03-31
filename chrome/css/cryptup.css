@@ -313,7 +313,6 @@ table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
 table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; outline: none;
   margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
-table#compose td.input.show_send_from #input_from_settings { display: none; visibility: hidden; } /* todo - functionality not ready */
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 13px; color: red; opacity: 0.4; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; cursor: pointer; }
 table#compose tr.bottom { background-color: #f5f5f5; }

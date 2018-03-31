@@ -181,11 +181,9 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
               thread_message_id: last_message_id,
             });
           },
-          render_footer_dialog: () => {
-            $.featherlight({iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
-              $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
-            }});
-          },
+          render_footer_dialog: () => $.featherlight({iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
+            $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
+          }}),
           render_add_pubkey_dialog: (emails) => {
             if (url_params.placement !== 'settings') {
               tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog', {emails: emails});
@@ -194,6 +192,7 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
             }
           },
           render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/help.htm' }),
+          render_sending_address_dialog: () => $.featherlight({iframe: factory.src.sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
           close_message: close_message,
           factory_attachment: (attachment) => factory.embedded.attachment(attachment, []),
         }, {

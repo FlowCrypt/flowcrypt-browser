@@ -7,7 +7,7 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 #header-row .logo-row img.cryptup-logo { height: auto; margin-right: 5px; text-align: left; margin-top: -2px; }
 #header-row .logo-row { margin-top: 10px; }
 #header-row .logo-row #v { display: inline-block; margin-right: 15px; }
-#header-row .logo-row .subscription > span { display: inline-block; margin-left: 15px; }
+#header-row .logo-row .subscription > span { display: inline-block; margin-left: 4px; }
 #header-row .logo-row .subscription .level, #header-row .logo-row .subscription .upgrade, #header-row .logo-row .subscription .expire { display: none; }
 #header-row .logo-row .subscription .upgrade { opacity: 0.7; cursor: pointer; }
 #header-row .logo-row .subscription .upgrade:hover { opacity: 1; }

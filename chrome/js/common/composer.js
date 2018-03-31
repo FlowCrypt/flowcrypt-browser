@@ -102,8 +102,7 @@
   let is_reply_box, tab_id, account_email, thread_id, draft_id, supplied_subject, supplied_from, supplied_to, frame_id;
   let reference_body_height;
 
-  let app = {
-    // this is a list of empty defaults that will get overwritten wherever composer is used
+  let app = { // this is a list of empty defaults that will get overwritten wherever composer is used
     can_read_email: () => true,
     does_recipient_have_my_pubkey: (email, cb) => { if(cb) { cb(); }},
     storage_get_addresses: () => [account_email],
@@ -135,6 +134,7 @@
     render_add_pubkey_dialog: (emails) => null,
     render_reinsert_reply_box: (last_message_id, recipients) => null,
     render_help_dialog: () => null,
+    render_sending_address_dialog: () => null,
     factory_attachment: (attachment) => '<div>' + attachment.name + '</div>',
   };
 
@@ -1387,17 +1387,18 @@
       }, 1000);
     } else {
       $('.close_new_message').click(app.close_message);
-      let addresses = order_addresses(account_email, app.storage_get_addresses());
+      let addresses = app.storage_get_addresses();
       if(addresses.length > 1) {
-        $('#input_addresses_container').addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" title="Settings">');
-        $('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
+        let input_addr_container = $('#input_addresses_container');
+        input_addr_container.addClass('show_send_from').append('<select id="input_from" tabindex="-1"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" title="Settings">');
+        input_addr_container.find('#input_from_settings').click(() => app.render_sending_address_dialog());
+        input_addr_container.find('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
+        if(tool.env.browser().name === 'firefox') {
+          input_addr_container.find('#input_from_settings').css('margin-top', '20px');
+        }
       }
       set_input_text_height_manually_if_needed();
     }
-  }
-
-  function order_addresses(account_email, addresses) { // place main account email as first
-    return [account_email].concat(tool.arr.without_value(addresses, account_email));
   }
 
   function should_save_draft(message_body) {
