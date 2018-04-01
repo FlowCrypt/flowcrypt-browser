@@ -1,5 +1,9 @@
 <div>
 
+<b>version 5.4.1 on April 1, 2017: Sending address settings</b>
+composing: choosing default send-from address/alias
+composing: send button gets stuck with utf8 in title /fixed
+
 <b>version 5.4.0 on March 31, 2017: Gmail load fix</b>
 reading: fix gmail missing FlowCrypt ui
 
