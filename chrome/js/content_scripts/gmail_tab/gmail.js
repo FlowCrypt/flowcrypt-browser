@@ -16,7 +16,7 @@ catcher.try(() => {
         return account_email_loading_match[0].replace(/^[\s.]+|[\s.]+$/gm, '').toLowerCase();
       }
       let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
-      if(tool.str.is_email_valid(email_from_account_dropdown)) {
+      if(tool.str.is_email_valid(email_from_account_dropdown) && window.location.search.indexOf('&view=btop&') === -1) { // when view=btop present, FlowCrypt should not be active
         return email_from_account_dropdown;
       }
     },
