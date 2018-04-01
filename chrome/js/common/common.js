@@ -375,25 +375,31 @@
   }
 
   function str_html_attribute_encode(values) {
-    return str_base64url_encode(JSON.stringify(values));
+    return str_base64url_utf_encode(JSON.stringify(values));
   }
 
   function str_html_attribute_decode(encoded) {
-    return JSON.parse(str_base64url_decode(encoded));
+    return JSON.parse(str_base64url_utf_decode(encoded));
   }
 
-  function str_base64url_encode(str) {
-    if(typeof str === 'undefined') {
-      return str;
-    }
-    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  function str_base64url_utf_encode(str) { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+      return String.fromCharCode(parseInt(p1, 16));
+    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  function str_base64url_decode(str) {
-    if(typeof str === 'undefined') {
-      return str;
-    }
-    return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  function str_base64url_utf_decode(str) { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    }).join(''));
+  }
+
+  function str_base64url_encode(str) { // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+    return (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function str_base64url_decode(str) { // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+    return (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/'));
   }
 
   function str_from_uint8(u8a) {
