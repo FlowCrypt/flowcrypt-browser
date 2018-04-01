@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.4.2 on April 1, 2017: Do not activate in separate window</b>
+
 <b>version 5.4.1 on April 1, 2017: Sending address settings</b>
 composing: choosing default send-from address/alias
 composing: send button gets stuck with utf8 in title /fixed
