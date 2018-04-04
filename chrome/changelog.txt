@@ -1,95 +1,95 @@
 <div>
 
-<b>version 5.4.2 on April 1, 2017: Do not activate in separate window</b>
+<b>version 5.4.2 on April 1, 2018: Do not activate in separate window</b>
 
-<b>version 5.4.1 on April 1, 2017: Sending address settings</b>
+<b>version 5.4.1 on April 1, 2018: Sending address settings</b>
 composing: choosing default send-from address/alias
 composing: send button gets stuck with utf8 in title /fixed
 
-<b>version 5.4.0 on March 31, 2017: Gmail load fix</b>
+<b>version 5.4.0 on March 31, 2018: Gmail load fix</b>
 reading: fix gmail missing FlowCrypt ui
 
-<b>version 5.3.9 on March 30, 2017: Design updates</b>
+<b>version 5.3.9 on March 30, 2018: Design updates</b>
 settings: design updates
 reading: fixed links in signed messages
 
-<b>version 5.3.8 on March 16, 2017: Update Key</b>
+<b>version 5.3.8 on March 16, 2018: Update Key</b>
 settings: import updated private key
 reading: fixed issue opening pgp/mime with large attachments
 
-<b>version 5.3.7 on March 15, 2017: PGP/Mime attachments</b>
+<b>version 5.3.7 on March 15, 2018: PGP/Mime attachments</b>
 reading: fixed issue opening pgp/mime with large attachments
 
-<b>version 5.3.6 on March 10, 2017: Attachments</b>
+<b>version 5.3.6 on March 10, 2018: Attachments</b>
 reading: attachments download on Chrome fixed
 
-<b>version 5.3.5 on March 02, 2017: Firefox compose</b>
+<b>version 5.3.5 on March 02, 2018: Firefox compose</b>
 composing: fix firefox ever expanding text box in compose
 reading: fix verifying detached signatures
 
-<b>version 5.3.3 on February 25, 2017: Domain</b>
+<b>version 5.3.3 on February 25, 2018: Domain</b>
 fix api domain issue
 
-<b>version 5.3.2 on February 25, 2017: Domain</b>
+<b>version 5.3.2 on February 25, 2018: Domain</b>
 fix api domain issue
 
-<b>version 5.3.1 on February 22, 2017: Attachments</b>
+<b>version 5.3.1 on February 22, 2018: Attachments</b>
 reading: fixed issue decrypting files
 
-<b>version 5.3.0 on February 21, 2017: Bugfixes</b>
+<b>version 5.3.0 on February 21, 2018: Bugfixes</b>
 composing: Firefox compose text box keeps expanding fixed
 internal: storage, utf8 and other bugfixes
 
-<b>version 5.2.9 on February 20, 2017: Unicode II</b>
+<b>version 5.2.9 on February 20, 2018: Unicode II</b>
 reading: compatibility fix -  unicode from gpgmail
 
-<b>version 5.2.8 on February 20, 2017: Maintenance</b>
+<b>version 5.2.8 on February 20, 2018: Maintenance</b>
 internal: allow extension to work when block 3rd party cookies enabled
 internal: library upgrades, bugfixes and other maintenance
 
-<b>version 5.2.7 on February 19, 2017: Session</b>
+<b>version 5.2.7 on February 19, 2018: Session</b>
 reading: fixed decrypting when pass phrase is in session
 
-<b>version 5.2.6 on February 19, 2017: Unicode</b>
+<b>version 5.2.6 on February 19, 2018: Unicode</b>
 reading: fixed Russian and Chinese UTF from facebook
 
-<b>version 5.2.5 on February 19, 2017: Performance</b>
+<b>version 5.2.5 on February 19, 2018: Performance</b>
 reading: decrypting at 2x-10x speed now
 settings: show a notice when key is missing
 
-<b>version 5.2.4 on February 18, 2017: Storage permissions fix</b>
+<b>version 5.2.4 on February 18, 2018: Storage permissions fix</b>
 internal: do not rely on browser cookies settings
 internal: support Incognito / Private Browsing Mode
 
-<b>version 5.2.3 on February 18, 2017: Attest fix</b>
+<b>version 5.2.3 on February 18, 2018: Attest fix</b>
 internal: fix background process attest exception
 
-<b>version 5.2.2 on February 17, 2017: Security page fix</b>
+<b>version 5.2.2 on February 17, 2018: Security page fix</b>
 settings: fix security settings page exceptions
 
-<b>version 5.2.1 on February 17, 2017: Storage</b>
+<b>version 5.2.1 on February 17, 2018: Storage</b>
 internal: stop relying on local storage
 internal: stop unnecessary reports
 tests: improve automated tests
 
-<b>version 5.2.0 on February 11, 2017: Security</b>
+<b>version 5.2.0 on February 11, 2018: Security</b>
 security: double check passphrase strength when trying to back up imported key security
 settings: rename to "test my pass phrase"
 reading: support eM client compatibility
 
-<b>version 5.1.9 on January 31, 2017: Public key management</b>
+<b>version 5.1.9 on January 31, 2018: Public key management</b>
 settings: handle multiple pubkeys within single armor
 settings: export all public keys into a file (help coworker) good first issue
 settings: Attester screen should have a link to refresh list of emails
 reading: add support for public key files with unusual names
 
-<b>version 5.1.8 on January 8, 2017: Gmail freezing</b>
+<b>version 5.1.8 on January 8, 2018: Gmail freezing</b>
 reading: more robust inbox freezing fix
 
-<b>version 5.1.7 on January 5, 2017: Enigmail attachments</b>
+<b>version 5.1.7 on January 5, 2018: Enigmail attachments</b>
 sending: prevent enigmail from attempting to display encrypted attachments
 
-<b>version 5.1.6 on January 2, 2017: Decrypted null</b>
+<b>version 5.1.6 on January 2, 2018: Decrypted null</b>
 reading: fix decrypted null error
 
 <b>version 5.1.5 on December 20, 2017: Decrypt errors fix</b>
