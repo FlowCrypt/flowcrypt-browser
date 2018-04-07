@@ -15,6 +15,14 @@ let can_read_emails = undefined;
 let password_message_link_result;
 let admin_codes;
 
+function render_text(text) {
+  document.getElementById('pgp_block').innerText = text;
+}
+
+function render_html(html) {
+  document.getElementById('pgp_block').innerHTML = html;
+}
+
 function send_resize_message() {
   let new_height = $('#pgp_block').height() + 40;
 
@@ -43,7 +51,7 @@ function render_content(content, is_error, callback) {
     window.flowcrypt_storage.set(url_params.account_email, { successfully_received_at_leat_one_message: true });
   }
   tool.str.as_safe_html(content, function(safe_html) {
-    $('#pgp_block').html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
+    render_html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
     // if(unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
     //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + window.lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
@@ -276,7 +284,7 @@ function decide_decrypted_content_formatting_and_render(decrypted_content, is_en
       }
     });
   } else {
-    $('#pgp_block').text('Formatting...');
+    render_text('Formatting...');
     tool.mime.decode(decrypted_content, function (success, result) {
       render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content, url_params.message), false, function () {
         let renderable_attachments = [];
@@ -419,7 +427,7 @@ function render_password_encrypted_message_load_fail(link_result) {
 
 function initialize(force_pull_message_from_api) {
   if(can_read_emails && url_params.message && url_params.signature === true) {
-    $('#pgp_block').text('Loading signature...');
+    render_text('Loading signature...');
     tool.api.gmail.message_get(url_params.account_email, url_params.message_id, 'raw', function(success, result) {
       message_fetched_from_api = 'raw';
       if(success && result.raw) {
@@ -443,10 +451,10 @@ function initialize(force_pull_message_from_api) {
       }
     });
   } else if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
-    $('#pgp_block').text(url_params.signature ? 'Verifying..' : 'Decrypting...');
+    render_text(url_params.signature ? 'Verifying..' : 'Decrypting...');
     decrypt_and_render();
   } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from FlowCrypt API
-    $('#pgp_block').text('Loading message...');
+    render_text('Loading message...');
     recover_stored_admin_codes();
     tool.api.cryptup.link_message(url_params.short).validate(r => typeof r.url !== 'undefined').then(response => {
       password_message_link_result = response;
@@ -456,21 +464,21 @@ function initialize(force_pull_message_from_api) {
             url_params.message = tool.str.from_uint8(result);
             decrypt_and_render();
           } else {
-            $('#pgp_block').text('Could not load message (network issue). Please try again.');
+            render_text('Could not load message (network issue). Please try again.');
           }
         });
       } else {
         render_password_encrypted_message_load_fail(password_message_link_result);
       }
     }, error => {
-      $('#pgp_block').text('Failed to load message info (network issue). Please try again.');
+      render_text('Failed to load message info (network issue). Please try again.');
     });
   } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
     if(can_read_emails) {
-      $('#pgp_block').text('Retrieving message...');
+      render_text('Retrieving message...');
       let format = (!message_fetched_from_api) ? 'full' : 'raw';
       tool.api.gmail.extract_armored_block(url_params.account_email, url_params.message_id, format, function (message_raw) {
-        $('#pgp_block').text('Decrypting...');
+        render_text('Decrypting...');
         url_params.message = message_raw;
         message_fetched_from_api = format;
         decrypt_and_render();
@@ -488,7 +496,7 @@ function initialize(force_pull_message_from_api) {
         }
       });
     } else { // gmail message read auth not allowed
-      $('#pgp_block').html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+      render_html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
       $('.auth_settings').click(function () {
         tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
       });

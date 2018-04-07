@@ -33,7 +33,7 @@ catcher.try(() => {
     window.flowcrypt_storage.get(account_email, ['addresses', 'google_token_scopes'], storage => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       inject.buttons();
-      replacer = gmail_element_replacer(factory, account_email, storage.addresses || [account_email], can_read_emails);
+      replacer = inbox_element_replacer(factory, account_email, storage.addresses || [account_email], can_read_emails);
       notifications.show_initial(account_email);
       replacer.everything();
       replace_pgp_elements_interval = TrySetDestroyableInterval(function () {

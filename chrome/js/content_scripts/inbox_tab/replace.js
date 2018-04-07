@@ -2,7 +2,7 @@
 
 'use strict';
 
-function gmail_element_replacer(factory, account_email, addresses, can_read_emails) {
+function inbox_element_replacer(factory, account_email, addresses, can_read_emails) {
 
   function everything() {
     replace_armored_blocks();

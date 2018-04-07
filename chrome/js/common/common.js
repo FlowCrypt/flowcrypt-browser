@@ -878,7 +878,7 @@
   }
 
   function file_pgp_name_patterns() {
-    return ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification'];
+    return ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''];
   }
 
   function file_keyinfo_as_pubkey_attachment(ki) {
