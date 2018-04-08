@@ -207,7 +207,7 @@ body#settings > div#content.storage .pre { margin: 0 auto; padding: 20px; backgr
 
 body#settings > div#content .list_table { display: none; }
 body#settings > div#content .list_table table img { width: 15px; }
-body#settings > div#content .list_table table { width: 100%; }
+body#settings > div#content .list_table table { width: 100%; font-size: 14px; }
 body#settings > div#content .list_table table tr th { padding-bottom: 10px; text-transform: uppercase; }
 body#settings > div#content .list_table table tr th:first-child { text-align: left; padding-left: 20px; }
 body#settings > div#content .list_table table tr td { padding-bottom: 2px; text-align: left; }
