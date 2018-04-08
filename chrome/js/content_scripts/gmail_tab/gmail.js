@@ -11,6 +11,7 @@ catcher.try(() => {
 
   content_script_setup_if_vacant({
     name: 'gmail',
+    variant: host_page_info.gmail_variant,
     get_user_account_email: () => {
       if(window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
         if (host_page_info.email) {
@@ -56,9 +57,9 @@ catcher.try(() => {
       }
       if(insights.new_data_layer === null && insights.new_ui === null && insights.email === null) {
         insights.gmail_variant = 'html';
-      } else if(insights.new_ui === 'false') {
+      } else if(insights.new_ui === false) {
         insights.gmail_variant = 'standard';
-      } else if (insights.new_ui === 'true') {
+      } else if (insights.new_ui === true) {
         insights.gmail_variant = 'new';
       }
     } catch (e) {}

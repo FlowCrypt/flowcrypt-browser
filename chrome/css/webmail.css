@@ -31,6 +31,8 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span { text-tran
   display: inline-block; border-radius: 2px; cursor: default; }
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img, div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) { margin-left: 5px; }
+body.cryptup_gmail.cryptup_gmail_new div.reply_message_button { margin-left: 18px; zoom: 0.8; }
+body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button { margin-left: 18px; zoom: 1.2; }
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container { display: inline-block; width: 30px; }

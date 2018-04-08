@@ -12,6 +12,8 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     message_outer: 'div.adn',
     message_inner: 'div.a3s:not(.undefined), .message_inner_body',
     message_inner_containing_pgp: "div.a3s:not(.undefined):contains('" + tool.crypto.armor.headers().begin + "')",
+    attachments_container_outer: 'div.hq.gt',
+    attachments_container_inner: 'div.aQH',
     translate_prompt: '.adI',
   };
 
@@ -105,7 +107,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function replace_attachments() {
-    $('div.aQH').each((i, attachments_container) => {
+    $(selector.attachments_container_inner).each((i, attachments_container) => {
       attachments_container = $(attachments_container);
       let new_pgp_attachments = filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
       let new_pgp_attachments_names = tool.arr.from_dome_node_list(new_pgp_attachments.find('.aV3')).map(x => $.trim($(x).text()));
@@ -134,17 +136,20 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     });
   }
 
-  function process_attachments(message_id, attachment_metas, attachments_container, skip_google_drive, new_pgp_attachments_names) {
+  function process_attachments(message_id, attachment_metas, attachments_container_inner, skip_google_drive, new_pgp_attachments_names) {
     let message_element = get_message_body_element(message_id);
     let sender_email = get_sender_email(message_element);
     let is_outgoing = tool.value(sender_email).in(addresses);
-    attachments_container.parent().find('span.aVW').css('visibility', 'hidden'); // original gmail header showing amount of attachments
+    attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
+    let rendered_attachments_count = attachment_metas.length;
     tool.each(attachment_metas, (i, attachment_meta) => {
       if(attachment_meta.treat_as !== 'original') {
-        let attachment_selector = filter_attachments(attachments_container.children(), [attachment_meta.name]).first();
-        hide_attachment(attachment_selector, attachments_container);
+        let attachment_selector = filter_attachments(attachments_container_inner.children(), [attachment_meta.name]).first();
+        hide_attachment(attachment_selector, attachments_container_inner);
+        rendered_attachments_count--;
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
-          attachments_container.prepend(factory.embedded.attachment(attachment_meta));
+          attachments_container_inner.prepend(factory.embedded.attachment(attachment_meta));
+          rendered_attachments_count++;
         } else if(attachment_meta.treat_as === 'message') {
           if(!(attachment_meta.name === 'encrypted.asc' && !tool.value(attachment_meta.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
             message_element = update_message_body_element(message_element, 'append', factory.embedded.message('', message_id, false, sender_email, false));
@@ -156,11 +161,11 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
               if(tool.value(tool.crypto.armor.headers().begin).in(armored_key)) {
                 message_element = update_message_body_element(message_element, 'append', factory.embedded.pubkey(armored_key, is_outgoing));
               } else {
-                attachment_selector.css('display', 'block');
-                attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
+                attachment_selector.show().children('.attachment_loader').text('Unknown Public Key Format');
+                rendered_attachments_count++;
               }
             } else {
-              attachments_container.find('.attachment_loader').text('Please reload page');
+              attachments_container_inner.find('.attachment_loader').text('Please reload page');
             }
           });
         } else if (attachment_meta.treat_as === 'signature') {
@@ -171,7 +176,10 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
         }
       }
     });
-    let not_processed_attachments_loaders = attachments_container.find('.attachment_loader');
+    if(rendered_attachments_count === 0) {
+      attachments_container_inner.parents(selector.attachments_container_outer).first().hide();
+    }
+    let not_processed_attachments_loaders = attachments_container_inner.find('.attachment_loader');
     if(!skip_google_drive && not_processed_attachments_loaders.length && message_element.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
       let google_drive_attachments = [];
@@ -184,7 +192,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
           console.log('Missing Google Drive attachments download_url');
         }
       });
-      process_attachments(message_id, google_drive_attachments, attachments_container, true);
+      process_attachments(message_id, google_drive_attachments, attachments_container_inner, true);
     }
   }
 
@@ -207,7 +215,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
   }
 
   function hide_attachment(atachment_element, attachments_container_selector) {
-    atachment_element.css('display', 'none');
+    atachment_element.hide();
     if(!atachment_element.length) {
       attachments_container_selector.children('.attachment_loader').text('Missing file info');
     }
@@ -296,15 +304,15 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
         let reply_box_container = $('<div class="remove_borders reply_message_iframe_container"></div>');
         if($(reply_box).hasClass('I5')) { // activated standard reply box
           // activated reply box - cannot remove because would cause issues / gmail freezing
-          $(reply_box).append(reply_box_container).addClass('reply_message_evaluated').children(':not(.reply_message_iframe_container)').css('display', 'none');
+          $(reply_box).append(reply_box_container).addClass('reply_message_evaluated').children(':not(.reply_message_iframe_container)').hide();
         } else {
           // original element replaced so that originally bound events would go with it (prevents inbox freezing)
           $(reply_box).replaceWith(reply_box_container);
         }
         if(i === 0) { // last box
-          reply_box_container.html(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').css('display', 'none');
+          reply_box_container.html(factory.embedded.reply(get_conversation_params(root_element), editable)).children(':not(iframe)').hide();
         } else {
-          reply_box_container.append('<font>Draft skipped</font>').children(':not(font)').css('display', 'none');
+          reply_box_container.append('<font>Draft skipped</font>').children(':not(font)').hide();
         }
       }
     });

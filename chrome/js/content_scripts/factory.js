@@ -179,7 +179,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
         } else if(webmail_name === 'outlook') {
           return '<div class="_fce_c ' + destroyable_class + ' cryptup_compose_button_container" role="presentation"><div class="new_message_button" title="New Secure Email"><img src="' + src_img('logo-19-19.png') + '"></div></div>';
         } else {
-          return '<div class="' + destroyable_class + ' z0"><div class="new_message_button" role="button" tabindex="0" data-test="action-secure-compose">SECURE COMPOSE</div></div>';
+          return '<div class="' + destroyable_class + ' z0" style="height: 30px;"><div class="new_message_button" role="button" tabindex="0" data-test="action-secure-compose">SECURE COMPOSE</div></div>';
         }
       },
       reply: () => '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>',

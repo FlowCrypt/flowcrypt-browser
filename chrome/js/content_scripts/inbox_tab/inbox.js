@@ -11,6 +11,7 @@ catcher.try(() => {
 
   content_script_setup_if_vacant({
     name: 'inbox',
+    variant: 'standard',
     get_user_account_email:  function () {
       let credentials = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
       if(credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && tool.str.is_email_valid(credentials[1].innerText)) {

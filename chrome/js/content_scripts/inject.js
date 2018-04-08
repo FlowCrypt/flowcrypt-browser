@@ -2,7 +2,7 @@
 
 'use strict';
 
-function content_script_element_injector(webmail_name, factory) {
+function content_script_element_injector(webmail_name, webmail_variant, factory) {
 
   const compose_button_container_selector = {
     'gmail': 'div.aic',
@@ -19,11 +19,11 @@ function content_script_element_injector(webmail_name, factory) {
   });
 
   function meta() {
-    S.cached('body').addClass('cryptup_' + webmail_name).append(factory.meta.stylesheet('webmail') + factory.meta.notification_container());
+    S.cached('body').addClass('cryptup_' + webmail_name + ' cryptup_' + webmail_name + '_' + webmail_variant).append(factory.meta.stylesheet('webmail') + factory.meta.notification_container());
   }
 
   function open_compose_window() {
-    if(S.now('compose_window').length == 0) {
+    if(S.now('compose_window').length === 0) {
       S.cached('body').append(factory.embedded.compose());
     }
   }
