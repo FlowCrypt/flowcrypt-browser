@@ -3583,11 +3583,11 @@
             storage.subscription(function(stored_level, stored_expire, stored_active, stored_method) {
               var local_storage_update = {};
               if(response.email) {
-                if((response.email && !cryptup_account_email) || (response.email && cryptup_account_email !== response.email)) {
+                if(response.email !== cryptup_account_email) {
                   // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
                   local_storage_update['cryptup_account_email'] = response.email;
                   local_storage_update['cryptup_account_uuid'] = tool.crypto.hash.sha1(tool.str.random(40));
-                  local_storage_update['cryptup_account_verified'] = true;
+                  local_storage_update['cryptup_account_verified'] = false;
                 }
               } else {
                 if(cryptup_account_email) {
