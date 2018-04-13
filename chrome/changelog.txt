@@ -1,5 +1,8 @@
 <div>
 
+<b>version 5.4.4 on April 13, 2018: Bugfix</b>
+settings: subscription not shown in settings - bug
+
 <b>version 5.4.3 on April 8, 2018: Gmail compatibility</b>
 
 <b>version 5.4.2 on April 1, 2018: Do not activate in separate window</b>
