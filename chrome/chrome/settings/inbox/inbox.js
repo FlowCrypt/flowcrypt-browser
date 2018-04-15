@@ -2,19 +2,19 @@
 
 'use strict';
 
-var url_params = tool.env.url_params(['account_email']);
-var q_encrypted_messages = 'is:inbox (' + tool.api.gmail.query.or(tool.arr.select(['message', 'signed_message', 'public_key'].map(tool.crypto.armor.headers), 'begin'), true) + ')';
-var email_provider;
-var factory;
-var notifications = content_script_notifications();
+let url_params = tool.env.url_params(['account_email']);
+let q_encrypted_messages = 'is:inbox (' + tool.api.gmail.query.or(tool.arr.select(['message', 'signed_message', 'public_key'].map(tool.crypto.armor.headers), 'begin'), true) + ')';
+let email_provider;
+let factory;
 
-var S = tool.ui.build_jquery_selectors({
+let S = tool.ui.build_jquery_selectors({
   threads: '.threads',
   thread: '.thread',
   body: 'body',
 });
 
 tool.browser.message.tab_id(function(tab_id) {
+  let notifications = content_script_notifications(tab_id);
   tool.browser.message.listen({
     open_new_message: function (data) {
       inject.open_compose_window();
@@ -64,16 +64,16 @@ tool.browser.message.tab_id(function(tab_id) {
         if(!list_success || typeof list_result.messages === 'undefined') {
           $('body').text('Connection error trying to get list of messages');
         } else {
-          var thread_ids = tool.arr.unique(tool.arr.select(list_result.messages, 'threadId'));
+          let thread_ids = tool.arr.unique(tool.arr.select(list_result.messages, 'threadId'));
           tool.each(thread_ids, function(i, thread_id) {
             thread_element_add(thread_id);
             tool.api.gmail.message_get(url_params.account_email, thread_id, 'metadata', function(item_success, item_result) {
-              var thread_item = $('.threads #' + thread_list_item_id(thread_id));
+              let thread_item = $('.threads #' + thread_list_item_id(thread_id));
               if(!item_success) {
                 thread_item.find('.loading').text('Failed to load');
               } else {
                 thread_item.find('.subject').text(tool.api.gmail.find_header(item_result, 'subject'));
-                var from = tool.str.parse_email(tool.api.gmail.find_header(item_result, 'from'));
+                let from = tool.str.parse_email(tool.api.gmail.find_header(item_result, 'from'));
                 thread_item.find('.from').text(from.name || from.email);
                 thread_item.find('.loading').text('');
                 thread_item.find('.date').text(new Date(Number(item_result.internalDate)));
@@ -119,13 +119,9 @@ function render_thread(thread_id) {
 }
 
 function render_message(message) {
-  var bodies = tool.api.gmail.find_bodies(message);
-  var armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'])) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'])));
-  if(!armored_message_from_bodies) {
-    var renderable_html = tool.str.html_escape(bodies['text/plain']).replace(/\n/g, '<br>\n');
-  } else {
-    var renderable_html = factory.embedded.message(armored_message_from_bodies, message.id);
-  }
+  let bodies = tool.api.gmail.find_bodies(message);
+  let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'])) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'])));
+  let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']).replace(/\n/g, '<br>\n') : factory.embedded.message(armored_message_from_bodies, message.id);
   S.cached('thread').append(tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
 }
 

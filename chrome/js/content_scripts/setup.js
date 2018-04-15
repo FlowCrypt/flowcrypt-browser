@@ -71,7 +71,7 @@ function content_script_setup_if_vacant(webmail_specific) {
 
   let factory;
   let inject;
-  let notifications = content_script_notifications();
+  let notifications;
 
   function wait_for_account_email_then_setup() {
     let account_email = webmail_specific.get_user_account_email();
@@ -99,6 +99,7 @@ function content_script_setup_if_vacant(webmail_specific) {
   // called by wait_for_account_email_then_setup
   function setup(account_email) {
     tool.browser.message.tab_id(function (tab_id) {
+      notifications = content_script_notifications(tab_id);
       factory = element_factory(account_email, tab_id, chrome.runtime.getURL('').replace(/\/$/, ''), reloadable_class, destroyable_class);
       inject = content_script_element_injector(webmail_specific.name, webmail_specific.variant, factory);
       inject.meta();

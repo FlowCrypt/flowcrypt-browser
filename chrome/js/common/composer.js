@@ -109,6 +109,7 @@
     storage_get_addresses_pks: () => [],
     storage_get_addresses_keyserver: () => [],
     storage_get_email_footer: () => null,
+    storage_set_email_footer: (footer) => null,
     storage_get_hide_message_password: () => false,
     storage_get_subscription_info: (cb) => { if(typeof cb === 'function') { cb({}); } return {}; }, // returns cached result, callbacks with fresh result
     storage_get_armored_public_key: (sender_email) => catcher.Promise((resolve, reject) => {resolve(null)}),
@@ -154,8 +155,14 @@
     my_addresses_on_pks = app.storage_get_addresses_pks() || [];
     my_addresses_on_keyserver = app.storage_get_addresses_keyserver() || [];
     can_read_emails = app.can_read_email();
-    if (app.storage_get_subscription_info().active) {
+    let subscription = app.storage_get_subscription_info();
+    if (subscription.active) {
       update_footer_icon();
+    } else if (app.storage_get_email_footer()) { // footer set but subscription not active - subscription expired
+      app.storage_set_email_footer(null);
+      app.send_message_to_main_window('notification_show', {
+        notification: 'Your FlowCrypt ' + (subscription.method === 'trial' ? 'trial' : 'subscription') + ' has ended. Custom email signature (email footer) will no longer be used. <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>',
+      });
     }
     if (app.storage_get_hide_message_password()) {
       S.cached('input_password').attr('type', 'password');

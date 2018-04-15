@@ -50,6 +50,10 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
           storage_get_addresses_pks: () => storage.addresses_pks || [],
           storage_get_addresses_keyserver: () => storage.addresses_keyserver || [],
           storage_get_email_footer: () => storage.email_footer,
+          storage_set_email_footer: (footer) => {
+            storage.email_footer = footer;
+            window.flowcrypt_storage.set(url_params.account_email, {email_footer: footer}); // async
+          },
           storage_get_hide_message_password: () => !!storage.hide_message_password,
           storage_get_subscription_info: (cb) => { // returns cached result, callbacks with fresh result
             if(typeof cb === 'function') {

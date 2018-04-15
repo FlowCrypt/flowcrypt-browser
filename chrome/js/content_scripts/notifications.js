@@ -2,7 +2,7 @@
 
 'use strict';
 
-function content_script_notifications() {
+function content_script_notifications(tab_id) {
 
   function show_initial_notifications(account_email) {
     window.flowcrypt_storage.get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], account_storage => {
@@ -38,6 +38,9 @@ function content_script_notifications() {
     }
     if(typeof callbacks.reload === 'undefined') {
       callbacks.reload = catcher.try(() => window.location.reload());
+    }
+    if(typeof callbacks.subscribe === 'undefined') {
+      callbacks.subscribe = catcher.try(() => tool.browser.message.send(tab_id, 'subscribe_dialog'));
     }
     tool.each(callbacks, (name, callback) => $('.webmail_notifications a.' + name).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callback))));
   }
