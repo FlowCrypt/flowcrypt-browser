@@ -51,6 +51,7 @@
     general: {
       something_went_wrong_try_again: 'Something went wrong, please try again. If this happens again, please write me at human@flowcrypt.com to fix it. ',
       write_me_to_fix_it: 'Please write me at human@flowcrypt.com to fix this if it happens repeatedly. ',
+      restart_browser_and_try_again: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
     }
   };
 

@@ -309,7 +309,9 @@ function decide_decrypted_content_formatting_and_render(decrypted_content, is_en
 function decrypt_and_render(optional_password) {
   if(typeof url_params.signature !== 'string') {
     tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email, url_params.message, optional_password, tool.browser.message.cb], function (result) {
-      if(result.success) {
+      if(typeof result === 'undefined') {
+        render_error(window.lang.general.restart_browser_and_try_again);
+      } else if(result.success) {
         if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
           console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
           initialize(true);
