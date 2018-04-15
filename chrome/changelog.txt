@@ -1,5 +1,10 @@
 <div>
 
+<b>version 5.4.5 on April 16, 2018: Error handling</b>
+composing: Footer settings screen overflowing fixed
+composing: stop including footer in email when trial ends
+reading: restart browser when background page not responsive
+
 <b>version 5.4.4 on April 13, 2018: Bugfix</b>
 settings: subscription not shown in settings - bug
 
