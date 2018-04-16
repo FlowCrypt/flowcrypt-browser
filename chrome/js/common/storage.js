@@ -326,9 +326,7 @@
     });
     let stack_fill = (new Error()).stack;
     open_db.onblocked = catcher.try(() => db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
-    open_db.onerror = catcher.try(() => {
-      db_error_handle(open_db.error, stack_fill, handled++ ? null : callback);
-    });
+    open_db.onerror = catcher.try(() => db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
   }
 
   function db_index(has_pgp, substring) {
