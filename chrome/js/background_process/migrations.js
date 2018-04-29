@@ -83,7 +83,7 @@ function account_update_status_keyserver(account_email) { // checks which emails
 function account_update_status_pks(account_email) { // checks if any new emails were registered on pks lately
   window.flowcrypt_storage.keys_get(account_email).then(keyinfos => {
     let my_longids = keyinfos.map(ki => ki.longid);
-    let hkp = new openpgp.HKP('http://keys.gnupg.net');
+    let hkp = new openpgp.HKP('https://pgp.key-server.io');
     window.flowcrypt_storage.get(account_email, ['addresses', 'addresses_pks'], function(storage) {
       let addresses_pks = storage.addresses_pks || [];
       tool.each(storage.addresses || [account_email], function(i, email) {
