@@ -94,6 +94,12 @@ const meta = {
       triggering_action();
     });
   },
+  await_new_dialog: function (page, triggering_action = function () {}) {
+    return new Promise((resolve, reject) => {
+      page.on('dialog', resolve);
+      triggering_action();
+    });
+  },
   new_page: async function(url) {
     const page = await browser.newPage();
     await page.bringToFront();
@@ -140,12 +146,17 @@ const tests = {
     await meta.wait_and_click(oauth_page, '#submit_approve_access', 1);
     meta.log('tests:approve_gmail_oauth:' + account_email);
   },
-  setup_recover: async function(settings_page, key_title) {
+  setup_recover: async function(settings_page, key_title, options={}) {
     await settings_page.bringToFront();
     let k = meta.config.keys.filter(k => k.title === key_title)[0];
     await meta.wait_and_type(settings_page, '@input-recovery-pass-phrase', k.passphrase);
-    await meta.wait_and_click(settings_page, '@action-recover-account');
-    await meta.wait_and_click(settings_page, '@action-step4more-account-settings');
+    if(options.wrong_passphrase) {
+      let dialog = await meta.await_new_dialog(settings_page, () => meta.wait_and_click(settings_page, '@action-recover-account'));
+      dialog.accept();
+    } else {
+      await meta.wait_and_click(settings_page, '@action-recover-account');
+      await meta.wait_and_click(settings_page, options.more_to_recover ? '@action-step4more-account-settings' : '@action-step4done-account-settings');
+    }
     meta.log('tests:setup_recover:' + key_title);
   },
   setup_manual_enter: async function(settings_page, key_title, options={}) {
@@ -286,7 +297,7 @@ const tests = {
   // setup flowcrypt.compatibility
   const oauth_popup_1 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
   await tests.approve_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com');
-  await tests.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1');
+  await tests.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {more_to_recover: true});
 
   // setup flowcrypt.test.key.imported
   const oauth_popup_2 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
@@ -297,6 +308,12 @@ const tests = {
   const oauth_popup_3 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
   await tests.approve_gmail_oauth(oauth_popup_3, 'flowcrypt.test.key.used.pgp@gmail.com');
   await tests.setup_manual_enter(settings_page, 'flowcrypt.test.key.used.pgp', {used_pgp_before: true});
+
+  // setup flowcrypt.test.key.recovered@gmail.com (+ test wrong pass phrase)
+  const oauth_popup_4 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
+  await tests.approve_gmail_oauth(oauth_popup_4, 'flowcrypt.test.key.recovered@gmail.com');
+  await tests.setup_recover(settings_page, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true}); // test wrong pass phrase first
+  await tests.setup_recover(settings_page, 'flowcrypt.test.key.recovered');
 
   // specific tests
   await tests.pgp_block_tests();
