@@ -84,14 +84,14 @@ const meta = {
     }
   },
   random: () => Math.random().toString(36).substring(7),
-  await_popup: function (browser, action) {
+  await_new_page: function (browser, triggering_action = function () {}) { // may be a tab or popup
     return new Promise((resolve, reject) => {
       browser.on('targetcreated', target => {
         if(target.type() === 'page') {
           resolve(target.page());
         }
       });
-      action();
+      triggering_action();
     });
   },
   new_page: async function(url) {
@@ -138,7 +138,7 @@ const tests = {
     }
     await meta.wait(oauth_page, '#submit_approve_access', 60);
     await meta.wait_and_click(oauth_page, '#submit_approve_access', 1);
-    meta.log('approve_gmail_oauth:' + account_email);
+    meta.log('tests:approve_gmail_oauth:' + account_email);
   },
   setup_recover: async function(settings_page, key_title) {
     await settings_page.bringToFront();
@@ -146,7 +146,7 @@ const tests = {
     await meta.wait_and_type(settings_page, '@input-recovery-pass-phrase', k.passphrase);
     await meta.wait_and_click(settings_page, '@action-recover-account');
     await meta.wait_and_click(settings_page, '@action-step4more-account-settings');
-    meta.log('setup_recover:' + key_title);
+    meta.log('tests:setup_recover:' + key_title);
   },
   setup_manual_enter: async function(settings_page, key_title, options={}) {
     await settings_page.bringToFront();
@@ -165,7 +165,7 @@ const tests = {
       await meta.wait_and_click(settings_page, '@action-fix-and-import-key');
     }
     await meta.wait_and_click(settings_page, '@action-step4done-account-settings');
-    meta.log('setup_manual_enter:' + key_title);
+    meta.log('tests:setup_manual_enter:' + key_title);
   },
   pgp_block_tests: async function() {
     let pgp_block_page = await meta.new_page();
@@ -181,20 +181,20 @@ const tests = {
       let ok = true;
       for(let j = 0; j < m.content.length; j++) {
         if(content.indexOf(m.content[j]) === -1) {
-          meta.log(`pgp_block_tests:${m.name}`, `missing expected content:${m.content[j]}`);
+          meta.log(`tests:pgp_block:${m.name}`, `missing expected content:${m.content[j]}`);
           ok = false;
           all_ok = false;
         }
       }
       if(ok) {
-        meta.log(`pgp_block_tests:${m.name}`);
+        meta.log(`tests:pgp_block:${m.name}`);
       }
     }
     await pgp_block_page.close();
     if(all_ok) {
-      meta.log(`pgp_block_tests`);
+      meta.log(`tests:pgp_block`);
     } else {
-      meta.log(`pgp_block_tests`, `some decrypt tests had failures`);
+      meta.log(`tests:pgp_block`, `some decrypt tests had failures`);
     }
   },
   gmail_tests: async function() {
@@ -202,7 +202,7 @@ const tests = {
     let gmail_page = await meta.new_page('https://mail.google.com');
     await meta.wait_and_click(gmail_page, '@action-secure-compose', 1);
     await meta.wait(gmail_page, '@container-new-message');
-    meta.log('gmail:tests:secure compose button (mail.google.com)');
+    meta.log('tests:gmail:secure compose button (mail.google.com)');
 
     // google inbox - need to hover over the button first
     // await gmail_page.goto('https://inbox.google.com');
@@ -226,7 +226,7 @@ const tests = {
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a freshly loaded public key');
     await meta.click(compose_page, '@action-send');
     await meta.wait(compose_page, meta._selector_test_state('closed')); // wait until page closed
-    meta.log('compose:tests:fresh pubkey');
+    meta.log('tests:compose:fresh pubkey');
 
     await meta.sleep(1);
     await compose_page.goto(compose_url);
@@ -238,7 +238,7 @@ const tests = {
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a reused public key');
     await meta.click(compose_page, '@action-send');
     await meta.wait(compose_page, meta._selector_test_state('closed')); // wait until page closed
-    meta.log('compose:tests:reused pubkey');
+    meta.log('tests:compose:reused pubkey');
 
     await meta.sleep(1);
     await compose_page.goto(compose_url);
@@ -252,9 +252,13 @@ const tests = {
     await meta.wait_and_click(compose_page, '@action-send', 1);
     await meta.wait_and_click(compose_page, '@action-send', 1);  // in real usage, also have to click two times when using password - why?
     await meta.wait(compose_page, meta._selector_test_state('closed')); // wait until page closed
-    meta.log('compose:tests:unknown pubkey');
+    meta.log('tests:compose:unknown pubkey');
 
     await compose_page.close();
+  },
+  initial_page_shows: async function() {
+    await meta.wait(await meta.await_new_page(browser), '@initial-page'); // first page opened by flowcrypt, comes second
+    meta.log('tests:meta:initial page shows');
   },
 };
 
@@ -271,15 +275,17 @@ const tests = {
     slowMo: 50,
   });
 
+  await tests.initial_page_shows();
+
   const settings_page = await meta.new_page('chrome/settings/index.htm');
 
   // setup flowcrypt.compatibility
-  const oauth_popup_1 = await meta.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
+  const oauth_popup_1 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
   await tests.approve_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com');
   await tests.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1');
 
   // setup flowcrypt.test.key.imported
-  const oauth_popup_2 = await meta.await_popup(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
+  const oauth_popup_2 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
   await tests.approve_gmail_oauth(oauth_popup_2, 'flowcrypt.test.key.imported@gmail.com');
   await tests.setup_manual_enter(settings_page, 'missing.self.signatures', {fix_key: true});
 
