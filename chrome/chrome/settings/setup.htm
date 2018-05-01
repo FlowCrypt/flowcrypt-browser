@@ -39,8 +39,8 @@
 
     <div id="step_0_found_key">
       <div class="line">Used PGP encryption before?</div>
-      <div class="line"><a href="#" class="button long green action_manual_enter_key">Enter existing key</a></div>
-      <div class="line">Alternatively, <a href="#new_key" class="action_manual_create_key hover_underline">create a new key</a></div>
+      <div class="line"><a href="#" class="button long green action_manual_enter_key" data-test="action-step0foundkey-choose-manual-enter">Enter existing key</a></div>
+      <div class="line">Alternatively, <a href="#new_key" class="action_manual_create_key hover_underline" data-test="action-step0foundkey-choose-manual-create">create a new key</a></div>
     </div>
 
     <div id="step_1_easy_or_manual">
@@ -86,7 +86,7 @@
     <div id="step_2a_manual_create" class="manual">
       <div class="aligncenter">
         <div class="line ">Choose a pass phrase to protect your encrypted emails. See <a href="#" data-featherlight="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>.</div>
-        <div class="line password_feedback"><span class="password_result"></span> (average time to crack: <span class="password_time"></span>)
+        <div class="line password_feedback"><span class="password_result"></span> (time to crack: <span class="password_time"></span>)
           <ul></ul>
         </div>
         <div class="line">

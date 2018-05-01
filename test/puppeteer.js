@@ -151,7 +151,11 @@ const tests = {
   setup_manual_enter: async function(settings_page, key_title, options={}) {
     await settings_page.bringToFront();
     let k = meta.config.keys.filter(k => k.title === key_title)[0];
-    await meta.wait_and_click(settings_page, '@action-step1easyormanual-choose-manual-enter');
+    if(options.used_pgp_before) {
+      await meta.wait_and_click(settings_page, '@action-step0foundkey-choose-manual-enter');
+    } else {
+      await meta.wait_and_click(settings_page, '@action-step1easyormanual-choose-manual-enter');
+    }
     await meta.wait_and_click(settings_page, '@input-step2bmanualenter-source-paste');
     await meta.wait_and_type(settings_page, '@input-step2bmanualenter-ascii-key', k.armored);
     await meta.wait_and_type(settings_page, '@input-step2bmanualenter-passphrase', k.passphrase);
@@ -288,6 +292,11 @@ const tests = {
   const oauth_popup_2 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
   await tests.approve_gmail_oauth(oauth_popup_2, 'flowcrypt.test.key.imported@gmail.com');
   await tests.setup_manual_enter(settings_page, 'missing.self.signatures', {fix_key: true});
+
+  // setup flowcrypt.test.key.used.pgp
+  const oauth_popup_3 = await meta.await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-add-account'));
+  await tests.approve_gmail_oauth(oauth_popup_3, 'flowcrypt.test.key.used.pgp@gmail.com');
+  await tests.setup_manual_enter(settings_page, 'flowcrypt.test.key.used.pgp', {used_pgp_before: true});
 
   // specific tests
   await tests.pgp_block_tests();
