@@ -38,6 +38,9 @@ const meta = {
       await page.waitForSelector(this._selector(selectors[i]), {timeout: timeout * 1000, visible: visible !== false});
     }
   },
+  not_present: async function(page, selector) {
+    await this.wait_till_gone(page, selector, {timeout: 0});
+  },
   wait_till_gone: async function (page, selector, {timeout=5} : {timeout?: number}={timeout:5}) {
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
@@ -56,7 +59,7 @@ const meta = {
         return;
       }
     }
-    throw Error(`meta.gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
+    throw Error(`meta.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   },
   click: async function (page, selector) {
     await page.click(meta._selector(selector));
@@ -82,12 +85,15 @@ const meta = {
     }
     await this.type(page, selector, text);
   },
-  wait_and_click: async function (page, selector, delay=0) {
+  wait_and_click: async function (page, selector, {delay=0, confirm_gone=false} : {delay?: number, confirm_gone?: boolean}={}) {
     await this.wait(page, selector);
     if(delay) {
-      await this.sleep(delay)
+      await this.sleep(delay);
     }
-    await this.click(page, selector)
+    await this.click(page, selector);
+    if(confirm_gone) {
+      await this.wait_till_gone(page, selector);
+    }
   },
   log: (text, error? : string) => {
     if(!error) {
@@ -152,16 +158,16 @@ const tests = {
       await meta.wait_and_click(oauth_page, '#next');
       await meta.sleep(this.oauth_password_delay);
       await meta.wait_and_type(oauth_page, '#Passwd', auth['password'], this.oauth_password_delay);
-      await meta.wait_and_click(oauth_page, '#signIn', 1)
+      await meta.wait_and_click(oauth_page, '#signIn', {delay: 1})
     } else if (await oauth_page.$('#identifierId') !== null) {
       await meta.wait(oauth_page, '#identifierId', {timeout: 60});
       await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 2);
-      await meta.wait_and_click(oauth_page, '.zZhnYe', 2);  // confirm email
+      await meta.wait_and_click(oauth_page, '.zZhnYe', {delay: 2});  // confirm email
       await meta.sleep(this.oauth_password_delay);
       await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], this.oauth_password_delay);
-      await meta.wait_and_click(oauth_page, '.CwaK9', 1);  // confirm password
+      await meta.wait_and_click(oauth_page, '.CwaK9', {delay: 1});  // confirm password
     } else if (await oauth_page.$('.w6VTHd') !== null) { // select from accounts where already logged in
-      await meta.wait_and_click(oauth_page, '.bLzI3e', 1); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
+      await meta.wait_and_click(oauth_page, '.bLzI3e', {delay: 1}); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
       await meta.sleep(2);
       return await this.handle_gmail_oauth(oauth_page, account_email, action) // start from beginning after clicking "other email acct"
     }
@@ -171,7 +177,7 @@ const tests = {
     } else if(action === 'deny') {
       throw Error('tests.handle_gmail_oauth options.deny.true not implemented');
     } else {
-      await meta.wait_and_click(oauth_page, '#submit_approve_access', 1);
+      await meta.wait_and_click(oauth_page, '#submit_approve_access', {delay: 1});
     }
     meta.log(`tests:handle_gmail_oauth:${account_email}:${action}`)
   },
@@ -202,7 +208,7 @@ const tests = {
     if(!submit_pubkey) {
       await meta.wait_and_click(settings_page, '@input-step2bmanualenter-submit-pubkey'); // uncheck
     }
-    await meta.wait_and_click(settings_page, '@input-step2bmanualenter-save', 1);
+    await meta.wait_and_click(settings_page, '@input-step2bmanualenter-save', {delay: 1});
     if(fix_key) {
       await meta.wait(settings_page, '@input-compatibility-fix-expire-years');
       await meta.select(settings_page, '@input-compatibility-fix-expire-years', '1');
@@ -269,7 +275,7 @@ const tests = {
   gmail_tests: async function() {
     // standard gmail
     let gmail_page = await meta.new_page('https://mail.google.com');
-    await meta.wait_and_click(gmail_page, '@action-secure-compose', 1);
+    await meta.wait_and_click(gmail_page, '@action-secure-compose', {delay: 1});
     await meta.wait(gmail_page, '@container-new-message');
     meta.log('tests:gmail:secure compose button (mail.google.com)');
 
@@ -318,8 +324,8 @@ const tests = {
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey: ' + meta.random());
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
     await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
-    await meta.wait_and_click(compose_page, '@action-send', 1);
-    await meta.wait_and_click(compose_page, '@action-send', 1);  // in real usage, also have to click two times when using password - why?
+    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
+    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
     await meta.wait(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:unknown pubkey');
 
@@ -334,6 +340,10 @@ const tests = {
     await initial_page.close();
     meta.log('tests:meta:initial page shows');
   },
+  wait_till_gmail_loaded: async function (gmail_page) {
+    await meta.wait(gmail_page, 'div.z0'); // compose button container visible
+    await meta.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
+  },
   login_and_setup_tests: async function() {
 
     // setup flowcrypt.test.key.new.manual@gmail.com
@@ -344,16 +354,16 @@ const tests = {
     await this.close_overlay_dialog(settings_page_0); // it is complaining that the oauth window was closed
     meta.log('tests:login_and_setup_tests:permissions page can be closed');
     await settings_page_0.close();
-
     // open gmail, check that there is notification, close it, close gmail, reopen, check it's still there, proceed to set up through the link in it
     let gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
+    await this.wait_till_gmail_loaded(gmail_page_0);
     await meta.wait(gmail_page_0, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail setup notification shows up');
-    await meta.wait_and_click(gmail_page_0, '@notification-setup-action-close');
-    await meta.wait_till_gone(gmail_page_0, '@notification-setup-action-close');
+    await meta.wait_and_click(gmail_page_0, '@notification-setup-action-close', {confirm_gone: true});
     meta.log('tests:login_and_setup_tests:gmail setup notification goes away when close clicked');
     await gmail_page_0.close();
     gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
+    await this.wait_till_gmail_loaded(gmail_page_0);
     await meta.wait(gmail_page_0, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail setup notification shows up again');
     let new_settings_page = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(gmail_page_0, '@notification-setup-action-open-settings'));
@@ -363,18 +373,33 @@ const tests = {
     await this.setup_manual_create(new_settings_page, 'flowcrypt.test.key.new.manual', 'none');
     await meta.wait(gmail_page_0, ['@webmail-notification', '@notification-successfully-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail success notification shows');
-    await meta.wait_and_click(gmail_page_0, '@notification-successfully-setup-action-close');
-    await meta.wait_till_gone(gmail_page_0, '@webmail-notification');
+    await meta.wait_and_click(gmail_page_0, '@notification-successfully-setup-action-close', {confirm_gone: true});
     meta.log('tests:login_and_setup_tests:gmail success notification goes away after click');
     await gmail_page_0.close();
     gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
-    await meta.wait_till_gone(gmail_page_0, ['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close'], {timeout: 0});
+    await this.wait_till_gmail_loaded(gmail_page_0);
+    await meta.not_present(gmail_page_0, ['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail success notification doesnt show up again');
     await gmail_page_0.close();
+    await new_settings_page.close();
 
-    // setup flowcrypt.compatibility
+    // log in flowcrypt.compatibility, test that setup prompts can be disabled. Then proceed to set up
     const settings_page_1 = await meta.new_page('chrome/settings/index.htm');
-    const oauth_popup_1 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_1, '@action-add-account'));
+    let oauth_popup_1 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_1, '@action-add-account'));
+    await this.handle_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com', 'close');
+    await this.close_overlay_dialog(settings_page_1);
+    let gmail_page_1 = await meta.new_page('https://mail.google.com/mail/u/1/#inbox');
+    await this.wait_till_gmail_loaded(gmail_page_1);
+    await meta.wait(gmail_page_1, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    await meta.wait_and_click(gmail_page_1, '@notification-setup-action-dismiss', {confirm_gone: true});
+    meta.log('tests:login_and_setup_tests:gmail setup notification goes away when dismiss clicked');
+    await gmail_page_1.close();
+    gmail_page_1 = await meta.new_page('https://mail.google.com/mail/u/1/#inbox');
+    await this.wait_till_gmail_loaded(gmail_page_1);
+    await meta.not_present(gmail_page_1, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    await gmail_page_1.close();
+    meta.log('tests:login_and_setup_tests:gmail setup notification does not reappear if dismissed');
+    oauth_popup_1 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_1, '@action-add-account'));
     await this.handle_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com', 'approve');
     await this.setup_recover(settings_page_1, 'flowcrypt.compatibility.1pp1', {more_to_recover: true});
 
