@@ -38,10 +38,10 @@ const meta = {
       await page.waitForSelector(this._selector(selectors[i]), {timeout: timeout * 1000, visible: visible !== false});
     }
   },
-  wait_till_gone: async function (page, selector, {timeout=20} : {timeout?: number}) {
+  wait_till_gone: async function (page, selector, {timeout=5} : {timeout?: number}={timeout:5}) {
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
-    while(seconds_left--) {
+    while(seconds_left-- >= 0) {
       let not_found = 0;
       for(let i = 0; i < selectors.length; i++) {
         try {
@@ -340,21 +340,37 @@ const tests = {
     const settings_page_0 = await meta.new_page('chrome/settings/index.htm');
     let oauth_popup_0 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_0, '@action-connect-to-gmail'));
     await this.handle_gmail_oauth(oauth_popup_0, 'flowcrypt.test.key.new.manual@gmail.com', 'close');
+    meta.log('tests:login_and_setup_tests:permissions page shows when oauth closed');
     await this.close_overlay_dialog(settings_page_0); // it is complaining that the oauth window was closed
+    meta.log('tests:login_and_setup_tests:permissions page can be closed');
     await settings_page_0.close();
 
     // open gmail, check that there is notification, close it, close gmail, reopen, check it's still there, proceed to set up through the link in it
     let gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
     await meta.wait(gmail_page_0, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    meta.log('tests:login_and_setup_tests:gmail setup notification shows up');
     await meta.wait_and_click(gmail_page_0, '@notification-setup-action-close');
-    await meta.wait_till_gone(gmail_page_0, '@notification-setup-action-close', {timeout: 5});
+    await meta.wait_till_gone(gmail_page_0, '@notification-setup-action-close');
+    meta.log('tests:login_and_setup_tests:gmail setup notification goes away when close clicked');
     await gmail_page_0.close();
     gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
     await meta.wait(gmail_page_0, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    meta.log('tests:login_and_setup_tests:gmail setup notification shows up again');
     let new_settings_page = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(gmail_page_0, '@notification-setup-action-open-settings'));
+    meta.log('tests:login_and_setup_tests:gmail setup notification link works');
     oauth_popup_0 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(new_settings_page, '@action-connect-to-gmail'));
     await this.handle_gmail_oauth(oauth_popup_0, 'flowcrypt.test.key.new.manual@gmail.com', 'approve');
     await this.setup_manual_create(new_settings_page, 'flowcrypt.test.key.new.manual', 'none');
+    await meta.wait(gmail_page_0, ['@webmail-notification', '@notification-successfully-setup-action-close']);
+    meta.log('tests:login_and_setup_tests:gmail success notification shows');
+    await meta.wait_and_click(gmail_page_0, '@notification-successfully-setup-action-close');
+    await meta.wait_till_gone(gmail_page_0, '@webmail-notification');
+    meta.log('tests:login_and_setup_tests:gmail success notification goes away after click');
+    await gmail_page_0.close();
+    gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
+    await meta.wait_till_gone(gmail_page_0, ['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close'], {timeout: 0});
+    meta.log('tests:login_and_setup_tests:gmail success notification doesnt show up again');
+    await gmail_page_0.close();
 
     // setup flowcrypt.compatibility
     const settings_page_1 = await meta.new_page('chrome/settings/index.htm');
