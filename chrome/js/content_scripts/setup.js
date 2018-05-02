@@ -113,7 +113,7 @@ function content_script_setup_if_vacant(webmail_specific) {
             initialize(account_email, tab_id);
             clearInterval(wait_for_setup_interval);
           } else if(!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-            let set_up_notification = '<a href="#" class="action_open_settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss">dismiss</a> <a href="#" class="close">remind me later</a>';
+            let set_up_notification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
             notifications.show(set_up_notification, {
               notification_setup_needed_dismiss: function () {
                 window.flowcrypt_storage.set(account_email, { notification_setup_needed_dismissed: true }, notifications.clear);

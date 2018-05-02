@@ -103,7 +103,7 @@
           <tr class="details hide_if_backup_done">
             <td>
               <input type="radio" name="input_backup_choice" value="none" id="input_backup_none" />
-              <label for="input_backup_none">no backup</label>
+              <label for="input_backup_none" data-test="input-backup-step3manual-no-backup">no backup</label>
             </td>
             <td><span class="red_label">no recovery</span></td>
             <td></td>
@@ -116,7 +116,7 @@
       <div class="line">
       </div>
       <div class="line backup_action_buttons_container">
-        <div class="button long green action_manual_backup">BACK UP AS EMAIL</div>
+        <div class="button long green action_manual_backup" data-test="action-backup-step3manual-continue">BACK UP AS EMAIL</div>
         &nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;
         <div class="button long gray action_skip_backup">LATER</div>
       </div>

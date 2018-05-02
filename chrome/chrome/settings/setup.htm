@@ -68,7 +68,7 @@
         <div class="line circle-i">
           <img src="/img/fa/fa-cogs-green.png" alt="Settings">
         </div>
-        <div class="button long green action_manual_create_key">Create key manually</div>
+        <div class="button long green action_manual_create_key" data-test="action-step1easyormanual-choose-manual-create">Create key manually</div>
         <div class="line">&nbsp;</div>
         <div class="line">Create a new PGP key</div>
         <div class="line">Manual setup</div>
@@ -90,20 +90,20 @@
           <ul></ul>
         </div>
         <div class="line">
-          <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" id="step_2a_manual_create_input_password" />
+          <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" />
           <br/>
           <div class="password_bar">
             <div></div>
           </div>
         </div>
         <div class="line">
-          <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2" />
+          <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2" />
         </div>
 
         <div class="line left">
           <div class="squaredFour">
-            <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing" name="check" checked="">
-            <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"></label>
+            <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing" name="check" checked="" />
+            <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing" data-test="input-step2bmanualcreate-save-passphrase"></label>
           </div>
           <span class="labelCopy">Remember Pass Phrase after closing browser</span>
         </div>
@@ -111,10 +111,11 @@
         <div class="line left">
           <div class="squaredFour">
             <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check" checked="">
-            <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"></label>
+            <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver" data-test="input-step2bmanualcreate-submit-pubkey"></label>
           </div>
           <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
         </div>
+
         <div class="line left" style="visibility: hidden;">
           <div class="squaredFour">
             <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll" />
@@ -126,7 +127,7 @@
           </label>
         </div>
         <div class="line">
-          <div class="button long gray action_create_private">CREATE AND SAVE</div>
+          <div class="button long gray action_create_private" data-test="input-step2bmanualcreate-create-and-save">CREATE AND SAVE</div>
         </div>
         <div class="line">
           Or to keep things simple, use <a href="#" class="action_simple_setup">quick setup</a>

@@ -23,7 +23,7 @@ function content_script_notifications(tab_id) {
   }
 
   function content_script_notification_show(text, callbacks, account_email) {
-    $('.webmail_notifications').html('<div class="webmail_notification">' + text + '</div>');
+    $('.webmail_notifications').html('<div class="webmail_notification" data-test="webmail-notification">' + text + '</div>');
     if(!callbacks) {
       callbacks = {};
     }
