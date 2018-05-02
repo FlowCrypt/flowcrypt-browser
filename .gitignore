@@ -11,3 +11,4 @@
 !/config/.gitignore
 /test/puppeteer.json
 /test/node_modules/
+/test/test.js
