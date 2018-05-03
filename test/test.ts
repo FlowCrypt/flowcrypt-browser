@@ -1,6 +1,6 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-import {Dialog, Page} from "puppeteer";
+import {Dialog, Frame, Page} from "puppeteer";
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
@@ -12,16 +12,18 @@ interface ConfigInterface {
 }
 
 let browser;
-let results = {success: [], error: []};
+let results = {success: [], error: [], start: Date.now()};
 
 const meta = {
+  url: {settings: 'chrome/settings/index.htm'},
+  size: {width: 1280, height: 900},
   config: JSON.parse(fs.readFileSync('test/puppeteer.json', 'utf8')) as ConfigInterface,
   extension_url: function (path) {
     return `chrome-extension://${this.config.extension_id}/${path}`;
   },
-  _selector: function (name_or_selector) {
-    if(name_or_selector[0] === '@') {
-      return `[data-test="${name_or_selector.substr(1)}"]`;  // element name for testing
+  _selector: function (name_or_selector : string) {
+    if(name_or_selector[0] === '@') {  // element @test-id
+      return `[data-test="${name_or_selector.substr(1)}"]`;
     } else {
       return name_or_selector; // actual selector
     }
@@ -29,10 +31,13 @@ const meta = {
   _selector_test_state: function (state) {
     return `[data-test-state="${state}"]`;
   },
+  _element: async function(page: Page | Frame, selector : string) {
+    return await page.$(meta._selector(selector));
+  },
   sleep: function(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
-  wait: async function (page, selector : string|string[], {timeout=20, visible=true} : {timeout?: number, visible?: boolean}={}) {
+  wait: async function (page : Page | Frame, selector : string|string[], {timeout=20, visible=true} : {timeout?: number, visible?: boolean}={}) {
     let selectors = Array.isArray(selector) ? selector : [selector];
     for(let i = 0; i < selectors.length; i++) {
       await page.waitForSelector(this._selector(selectors[i]), {timeout: timeout * 1000, visible: visible !== false});
@@ -41,7 +46,7 @@ const meta = {
   not_present: async function(page, selector) {
     await this.wait_till_gone(page, selector, {timeout: 0});
   },
-  wait_till_gone: async function (page, selector, {timeout=5} : {timeout?: number}={timeout:5}) {
+  wait_till_gone: async function (page : Page | Frame, selector : string|string[], {timeout=5} : {timeout?: number}={timeout:5}) {
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
     while(seconds_left-- >= 0) {
@@ -50,8 +55,10 @@ const meta = {
         try {
           await this.wait(page, selectors[i], {timeout: 1});
         } catch (e) {
-          if(e.message.indexOf('waiting failed') === 0) {
+          if(e.message.indexOf('waiting') === 0 && e.message.indexOf('failed') !== -1) {
             not_found++
+          } else {
+            console.log(e);
           }
         }
       }
@@ -61,31 +68,31 @@ const meta = {
     }
     throw Error(`meta.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   },
-  click: async function (page, selector) {
-    await page.click(meta._selector(selector));
+  click: async function (page : Page | Frame, selector : string) {
+    await (await this._element(page, selector)).click();
   },
-  type: async function (page, selector, text, letter_by_letter=false) {
+  type: async function (page : Page | Frame, selector : string, text : string, letter_by_letter=false) {
     if(letter_by_letter || text.length < 20) {
-      await page.type(meta._selector(selector), text);
+      await (await this._element(page, selector)).type(text);
     } else {
       await page.evaluate((s, t) => (document.querySelector(s) as HTMLInputElement).value = t, meta._selector(selector), text.substring(0, text.length - 10));
-      await page.type(meta._selector(selector), text.substring(text.length - 10, text.length));
+      await (await this._element(page, selector)).type(text.substring(text.length - 10, text.length));
     }
   },
-  read: async function (page, selector) {
+  read: async function (page : Page, selector : string) {
     return await page.evaluate((s) => document.querySelector(s).innerText, meta._selector(selector));
   },
-  select: async function(page, selector, value) {
+  select_option: async function (page : Page, selector : string, value) {
     return await page.evaluate((s, v) => jQuery(s).val(v), meta._selector(selector), value);
   },
-  wait_and_type: async function (page, selector, text, delay=0) {
+  wait_and_type: async function (page : Page | Frame, selector : string, text : string, delay=0) {
     await this.wait(page, selector);
     if(delay) {
       await this.sleep(delay);
     }
     await this.type(page, selector, text);
   },
-  wait_and_click: async function (page, selector, {delay=0, confirm_gone=false} : {delay?: number, confirm_gone?: boolean}={}) {
+  wait_and_click: async function (page : Page | Frame, selector : string, {delay=0, confirm_gone=false} : {delay?: number, confirm_gone?: boolean}={}) {
     await this.wait(page, selector);
     if(delay) {
       await this.sleep(delay);
@@ -95,7 +102,7 @@ const meta = {
       await this.wait_till_gone(page, selector);
     }
   },
-  log: (text, error? : string) => {
+  log: (text : string, error? : string) => {
     if(!error) {
       console.log(`[ok] ${text}`);
       results.success.push(text);
@@ -104,26 +111,34 @@ const meta = {
       results.error.push(`${text}|${String(error)}`);
     }
   },
-  size: {width: 1280, height: 900},
   finish: function () {
+    let time = `in ${Math.round((Date.now() - results.start) / (1000 * 60))}m`;
     if(results.error.length) {
-      console.log(`failed:${results.error.length}`);
+      console.log(`failed:${results.error.length} ${time}`);
     } else {
-      console.log('success');
+      console.log(`success ${time}`);
     }
   },
   random: () => Math.random().toString(36).substring(7),
-  trigger_and_await_new_page: function (browser, triggering_action = function () {}) : Promise<Page> { // may be a tab or popup
+  _trigger_and_await_new_page: function (browser, triggering_action = function () {}) : Promise<Page> { // may be a tab or popup
     return new Promise((resolve) => {
-      browser.on('targetcreated', target => {
+      let resolved = 0;
+      browser.on('targetcreated', async (target) => {
         if(target.type() === 'page') {
-          resolve(target.page()); // this will keep getting called on every future event, but will only actually callback once - due to the way promises work
+          if(!resolved++) {
+            resolve(target.page());
+          }
         }
       });
       triggering_action();
     });
   },
-  trigger_and_await_new_dialog: function (page, triggering_action = function () {}) : Promise<Dialog> {
+  trigger_and_await_new_page: async function (browser, triggering_action = function () {}) : Promise<Page> { // may be a tab or popup
+    let page = await this._trigger_and_await_new_page(browser, triggering_action);
+    await page.setViewport(meta.size);
+    return page;
+  },
+  trigger_and_await_new_dialog: function (page : Page, triggering_action = function () {}) : Promise<Dialog> {
     return new Promise((resolve) => {
       page.on('dialog', resolve);
       triggering_action();
@@ -131,12 +146,14 @@ const meta = {
   },
   new_page: async function(url? : string) {
     const page = await browser.newPage();
-    await page.bringToFront();
     await page.setViewport(meta.size);
     if(url) {
       await page.goto(url.indexOf('https://') === 0 ? url : meta.extension_url(url));
     }
     return page;
+  },
+  get_frame: async function(page : Page, url : string) : Promise<Frame> {
+    return (await page.frames()).find(frame => frame.url().indexOf(url) !== -1);
   },
   close_browser: async() => {
     await setTimeout(async() => {
@@ -148,7 +165,7 @@ const meta = {
  };
 
 const tests = {
-  oauth_password_delay: 1,
+  oauth_password_delay: 2,
   handle_gmail_oauth: async function(oauth_page, account_email, action : "close" | "deny" | "approve") {
     let auth = meta.config.auth.google.filter(a => a.email === account_email)[0];
     await meta.wait(oauth_page, '#Email, #submit_approve_access, #identifierId, .w6VTHd');
@@ -182,7 +199,6 @@ const tests = {
     meta.log(`tests:handle_gmail_oauth:${account_email}:${action}`)
   },
   setup_recover: async function(settings_page, key_title, {wrong_passphrase=false, more_to_recover=false} : {wrong_passphrase?: boolean, more_to_recover?: boolean}={}) {
-    await settings_page.bringToFront();
     let k = meta.config.keys.filter(k => k.title === key_title)[0];
     await meta.wait_and_type(settings_page, '@input-recovery-pass-phrase', k.passphrase);
     if(wrong_passphrase) {
@@ -195,7 +211,6 @@ const tests = {
     meta.log(`tests:setup_recover:${key_title}`);
   },
   setup_manual_enter: async function(settings_page, key_title, {used_pgp_before=false, submit_pubkey=false, fix_key=false} : {used_pgp_before?: boolean, submit_pubkey?: boolean, fix_key?: boolean}={}) {
-    await settings_page.bringToFront();
     let k = meta.config.keys.filter(k => k.title === key_title)[0];
     if(used_pgp_before) {
       await meta.wait_and_click(settings_page, '@action-step0foundkey-choose-manual-enter');
@@ -211,14 +226,13 @@ const tests = {
     await meta.wait_and_click(settings_page, '@input-step2bmanualenter-save', {delay: 1});
     if(fix_key) {
       await meta.wait(settings_page, '@input-compatibility-fix-expire-years');
-      await meta.select(settings_page, '@input-compatibility-fix-expire-years', '1');
+      await meta.select_option(settings_page, '@input-compatibility-fix-expire-years', '1');
       await meta.wait_and_click(settings_page, '@action-fix-and-import-key');
     }
     await meta.wait_and_click(settings_page, '@action-step4done-account-settings');
     meta.log(`tests:setup_manual_enter:${key_title}:used_pgp_before=${used_pgp_before},submit_pubkey=${submit_pubkey},fix_key=${fix_key}`);
   },
   setup_manual_create: async function(settings_page, key_title, backup : "none" | "email" | "file", {used_pgp_before=false, submit_pubkey=false} : {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) {
-    await settings_page.bringToFront();
     let k = meta.config.keys.filter(k => k.title === key_title)[0];
     if(used_pgp_before) {
       await meta.wait_and_click(settings_page, '@action-step0foundkey-choose-manual-create');
@@ -336,7 +350,7 @@ const tests = {
   },
   initial_page_shows: async function() {
     let initial_page = await meta.trigger_and_await_new_page(browser);
-    await meta.wait(initial_page, '@initial-page'); // first page opened by flowcrypt, comes second
+    await meta.wait(initial_page, '@initial-page'); // first page opened by flowcrypt
     await initial_page.close();
     meta.log('tests:meta:initial page shows');
   },
@@ -345,9 +359,8 @@ const tests = {
     await meta.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
   },
   login_and_setup_tests: async function() {
-
     // setup flowcrypt.test.key.new.manual@gmail.com
-    const settings_page_0 = await meta.new_page('chrome/settings/index.htm');
+    const settings_page_0 = await meta.new_page(meta.url.settings);
     let oauth_popup_0 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_0, '@action-connect-to-gmail'));
     await this.handle_gmail_oauth(oauth_popup_0, 'flowcrypt.test.key.new.manual@gmail.com', 'close');
     meta.log('tests:login_and_setup_tests:permissions page shows when oauth closed');
@@ -384,7 +397,7 @@ const tests = {
     await new_settings_page.close();
 
     // log in flowcrypt.compatibility, test that setup prompts can be disabled. Then proceed to set up
-    const settings_page_1 = await meta.new_page('chrome/settings/index.htm');
+    const settings_page_1 = await meta.new_page(meta.url.settings);
     let oauth_popup_1 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_1, '@action-add-account'));
     await this.handle_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com', 'close');
     await this.close_overlay_dialog(settings_page_1);
@@ -418,9 +431,24 @@ const tests = {
     await this.handle_gmail_oauth(oauth_popup_4, 'flowcrypt.test.key.recovered@gmail.com', 'approve');
     await this.setup_recover(settings_page_1, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true}); // test wrong pass phrase first
     await this.setup_recover(settings_page_1, 'flowcrypt.test.key.recovered');
+    await settings_page_1.close();
+  },
+  settings_tests: async function () {
+    let settings_page = await meta.new_page(meta.url.settings);
+    await this.test_feedback_form(settings_page);
+    await settings_page.close();
+  },
+  test_feedback_form: async function (page) {
+    await meta.wait_and_click(page, '@action-open-modules-help');
+    await meta.wait(page, '@dialog');
+    await meta.sleep(1);
+    let help_frame = await meta.get_frame(page, 'help.htm');
+    await meta.wait_and_type(help_frame, '@input-feedback-message', 'testing help form from settings footer');
+    let dialog = await meta.trigger_and_await_new_dialog(page, () => meta.wait_and_click(help_frame, '@action-feedback-send'));
+    await dialog.accept();
+    meta.log('tests:test_feedback_form:settings');
   },
 };
-
 
 (async() => {
 
@@ -428,18 +456,18 @@ const tests = {
     args: [
       '--disable-extensions-except=chrome',
       '--load-extension=chrome',
-      `--window-size=${meta.size.width},${meta.size.height}`,
+      `--window-size=${meta.size.width},${meta.size.height+74}`,
     ],
-    headless: false,
+    headless: false, // to run headless-like: "xvfb-run node test.js"
     slowMo: 50,
   });
 
   await tests.initial_page_shows();
   await tests.login_and_setup_tests();
+  await tests.settings_tests();
   await tests.pgp_block_tests();
   await tests.compose_tests();
   await tests.gmail_tests();
-
   await meta.close_browser();
 
 })();
