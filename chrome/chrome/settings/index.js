@@ -265,7 +265,7 @@ $(".toggle-settings").click(function () {
   $("#settings").toggleClass("advanced");
 });
 
-$("#switch-account, #toggle-accounts-profile-img").click(function (event) {
+$(".action-toggle-accounts-menu").click(function (event) {
   event.stopPropagation();
   $("#alt-accounts").toggleClass("active");
   $(".ion-ios-arrow-down").toggleClass("up");
@@ -293,7 +293,7 @@ function menu_account_html(email, photo) {
   return [
     '<div class="row alt-accounts action_select_account">',
     '  <div class="col-sm-10">',
-    '    <div class="row contains_email">' + email + '</div>',
+    '    <div class="row contains_email" data-test="action-switch-to-account">' + email + '</div>',
     '  </div>',
     // '  <div class="col-sm-1 "><img class="profile-img " src="" alt=""></div>',
     '</div>',

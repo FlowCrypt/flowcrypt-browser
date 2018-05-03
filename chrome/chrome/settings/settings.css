@@ -137,6 +137,9 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   top: -3px;
   left: -8px;
 }
+.action-toggle-accounts-menu {
+  cursor: pointer;
+}
 .profile-row .down-option {
   /*background: black;*/
   width: 40px;

@@ -1,6 +1,6 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-import {Dialog, Frame, Page} from "puppeteer";
+import {Dialog, ElementHandle, Frame, Page} from "puppeteer";
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
@@ -21,26 +21,43 @@ const meta = {
   extension_url: function (path) {
     return `chrome-extension://${this.config.extension_id}/${path}`;
   },
-  _selector: function (name_or_selector : string) {
-    if(name_or_selector[0] === '@') {  // element @test-id
-      return `[data-test="${name_or_selector.substr(1)}"]`;
+  _is_xpath: function(selector : string) : boolean {
+    return selector.match(/^\/\//) !== null;
+  },
+  _selector: function (custom_selector_language_query : string) : string { // supply browser selector, xpath, @test-id or @test-id(contains this text)
+    let m;
+    if(meta._is_xpath(custom_selector_language_query)) {
+      return custom_selector_language_query;
+    } else if(m = custom_selector_language_query.match(/^@([a-z0-9\-]+)$/)) {
+      return `[data-test="${m[1]}"]`;
+    } else if(m = custom_selector_language_query.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) {
+      return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
-      return name_or_selector; // actual selector
+      return custom_selector_language_query;
     }
   },
   _selector_test_state: function (state) {
     return `[data-test-state="${state}"]`;
   },
-  _element: async function(page: Page | Frame, selector : string) {
-    return await page.$(meta._selector(selector));
+  _element: async function(page: Page | Frame, selector : string) : Promise<ElementHandle> {
+    selector = meta._selector(selector);
+    if(this._is_xpath(selector)) {
+      return (await page.$x(selector))[0];
+    } else {
+      return await page.$(selector);
+    }
   },
   sleep: function(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
   wait: async function (page : Page | Frame, selector : string|string[], {timeout=20, visible=true} : {timeout?: number, visible?: boolean}={}) {
-    let selectors = Array.isArray(selector) ? selector : [selector];
+    let selectors = (Array.isArray(selector) ? selector : [selector]).map(this._selector) as string[];
     for(let i = 0; i < selectors.length; i++) {
-      await page.waitForSelector(this._selector(selectors[i]), {timeout: timeout * 1000, visible: visible !== false});
+      if(this._is_xpath(selectors[i])) {
+        await (page as any).waitForXPath(selectors[i], {timeout: timeout * 1000, visible: visible !== false});  // @types/puppeteer doesn't know about page.waitForXPath
+      } else {
+        await page.waitForSelector(selectors[i], {timeout: timeout * 1000, visible: visible !== false});
+      }
     }
   },
   not_present: async function(page, selector) {
@@ -433,10 +450,22 @@ const tests = {
     await this.setup_recover(settings_page_1, 'flowcrypt.test.key.recovered');
     await settings_page_1.close();
   },
+  minimal_setup: async function() {
+    const settings_page = await meta.new_page(meta.url.settings);
+    let oauth_popup = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
+    await this.handle_gmail_oauth(oauth_popup, 'flowcrypt.compatibility@gmail.com', 'approve');
+    await this.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {more_to_recover: true});
+    await settings_page.close();
+  },
   settings_tests: async function () {
     let settings_page = await meta.new_page(meta.url.settings);
     await this.test_feedback_form(settings_page);
+    await this.switch_settings_account(settings_page, 'flowcrypt.compatibility@gmail.com');
     await settings_page.close();
+  },
+  switch_settings_account: async function (settings_page : Page, account_email : string) {
+    await meta.wait_and_click(settings_page, '@action-toggle-accounts-menu');
+    await meta.wait_and_click(settings_page, `@action-switch-to-account(${account_email})`);
   },
   test_feedback_form: async function (page) {
     await meta.wait_and_click(page, '@action-open-modules-help');
@@ -461,6 +490,10 @@ const tests = {
     headless: false, // to run headless-like: "xvfb-run node test.js"
     slowMo: 50,
   });
+
+  // await tests.initial_page_shows();
+  // await tests.minimal_setup();
+  // await tests.settings_tests();
 
   await tests.initial_page_shows();
   await tests.login_and_setup_tests();
