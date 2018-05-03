@@ -47,6 +47,9 @@ const meta = {
       return await page.$(selector);
     }
   },
+  _k: function(title) {
+    return this.config.keys.filter(k => k.title === title)[0];
+  },
   sleep: function(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
@@ -169,8 +172,19 @@ const meta = {
     }
     return page;
   },
-  get_frame: async function(page : Page, url : string) : Promise<Frame> {
-    return (await page.frames()).find(frame => frame.url().indexOf(url) !== -1);
+  get_frame: async function(page : Page, url : string|string[], {sleep=1}={sleep: 1}) : Promise<Frame> {
+    if(sleep) {
+      await meta.sleep(sleep);
+    }
+    let url_matchables = Array.isArray(url) ? url : [url];
+    return (await page.frames()).find(frame => {
+      for(let i = 0; i < url_matchables.length; i++) {
+        if(frame.url().indexOf(url_matchables[i]) === -1) {
+          return false;
+        }
+      }
+      return true;
+    });
   },
   close_browser: async() => {
     await setTimeout(async() => {
@@ -216,7 +230,7 @@ const tests = {
     meta.log(`tests:handle_gmail_oauth:${account_email}:${action}`)
   },
   setup_recover: async function(settings_page, key_title, {wrong_passphrase=false, more_to_recover=false} : {wrong_passphrase?: boolean, more_to_recover?: boolean}={}) {
-    let k = meta.config.keys.filter(k => k.title === key_title)[0];
+    let k = meta._k(key_title);
     await meta.wait_and_type(settings_page, '@input-recovery-pass-phrase', k.passphrase);
     if(wrong_passphrase) {
       let dialog = await meta.trigger_and_await_new_dialog(settings_page, () => meta.wait_and_click(settings_page, '@action-recover-account'));
@@ -228,7 +242,7 @@ const tests = {
     meta.log(`tests:setup_recover:${key_title}`);
   },
   setup_manual_enter: async function(settings_page, key_title, {used_pgp_before=false, submit_pubkey=false, fix_key=false} : {used_pgp_before?: boolean, submit_pubkey?: boolean, fix_key?: boolean}={}) {
-    let k = meta.config.keys.filter(k => k.title === key_title)[0];
+    let k = meta._k(key_title);
     if(used_pgp_before) {
       await meta.wait_and_click(settings_page, '@action-step0foundkey-choose-manual-enter');
     } else {
@@ -250,7 +264,7 @@ const tests = {
     meta.log(`tests:setup_manual_enter:${key_title}:used_pgp_before=${used_pgp_before},submit_pubkey=${submit_pubkey},fix_key=${fix_key}`);
   },
   setup_manual_create: async function(settings_page, key_title, backup : "none" | "email" | "file", {used_pgp_before=false, submit_pubkey=false} : {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) {
-    let k = meta.config.keys.filter(k => k.title === key_title)[0];
+    let k = meta._k(key_title);
     if(used_pgp_before) {
       await meta.wait_and_click(settings_page, '@action-step0foundkey-choose-manual-create');
     } else {
@@ -456,21 +470,42 @@ const tests = {
     await this.handle_gmail_oauth(oauth_popup, 'flowcrypt.compatibility@gmail.com', 'approve');
     await this.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {more_to_recover: true});
     await settings_page.close();
+    meta.log(`tests:minimal_setup`);
   },
   settings_tests: async function () {
     let settings_page = await meta.new_page(meta.url.settings);
     await this.test_feedback_form(settings_page);
     await this.switch_settings_account(settings_page, 'flowcrypt.compatibility@gmail.com');
+    await this.test_pass_phrase(settings_page, meta._k('flowcrypt.wrong.passphrase').passphrase, false);
+    await this.test_pass_phrase(settings_page, meta._k('flowcrypt.compatibility.1pp1').passphrase, true);
     await settings_page.close();
+    meta.log(`tests:settings:all`);
+  },
+  test_pass_phrase: async function (settings_page, passphrase, expect_match) {
+    await meta.wait_and_click(settings_page, '@action-open-security-page');
+    let security_frame = await meta.get_frame(settings_page, ['security.htm', 'placement=settings']); // placement=settings to differentiate from mini-security frame in settings
+    await meta.wait_and_click(security_frame, '@action-test-passphrase-begin');
+    await meta.wait_and_type(security_frame, '@input-test-passphrase', passphrase);
+    let click = () => meta.wait_and_click(security_frame, '@action-test-passphrase');
+    if(expect_match) {
+      await click();
+      await meta.wait_and_click(security_frame, '@action-test-passphrase-successful-close');
+    } else {
+      let dialog = await meta.trigger_and_await_new_dialog(settings_page, click);
+      await dialog.accept();
+      await this.close_overlay_dialog(settings_page);
+    }
+    await meta.wait_till_gone(settings_page, '@dialog');
+    meta.log(`tests:test_pass_phrase:expect-match-${expect_match}`);
   },
   switch_settings_account: async function (settings_page : Page, account_email : string) {
     await meta.wait_and_click(settings_page, '@action-toggle-accounts-menu');
     await meta.wait_and_click(settings_page, `@action-switch-to-account(${account_email})`);
+    meta.log(`tests:switch_settings_account:${account_email}`);
   },
   test_feedback_form: async function (page) {
     await meta.wait_and_click(page, '@action-open-modules-help');
     await meta.wait(page, '@dialog');
-    await meta.sleep(1);
     let help_frame = await meta.get_frame(page, 'help.htm');
     await meta.wait_and_type(help_frame, '@input-feedback-message', 'testing help form from settings footer');
     let dialog = await meta.trigger_and_await_new_dialog(page, () => meta.wait_and_click(help_frame, '@action-feedback-send'));
