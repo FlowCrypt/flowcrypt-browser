@@ -6,7 +6,7 @@ const fs = require('fs');
 
 interface ConfigInterface {
   extension_id: string,
-  auth: { google: {email: string, password: string}[], },
+  auth: { google: {email: string, password: string, backup: string}[],},
   keys: {title: string, passphrase: string, armored: string | null}[],
   messages: {name: string, content: string[], params: string}[],
 }
@@ -50,16 +50,40 @@ const meta = {
   _k: function(title) {
     return this.config.keys.filter(k => k.title === title)[0];
   },
+  attr: async function (element_handle: ElementHandle, name: string) : Promise<string> {
+    return await (await element_handle.getProperty(name)).jsonValue();
+  },
   sleep: function(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
-  wait: async function (page : Page | Frame, selector : string|string[], {timeout=20, visible=true} : {timeout?: number, visible?: boolean}={}) {
+  wait: async function (page : Page | Frame, selector : string|string[], {timeout=20, visible=true, satisfy='all'} : {timeout?: number, visible?: boolean, satisfy?: "all" | "any"}={}) {
     let selectors = (Array.isArray(selector) ? selector : [selector]).map(this._selector) as string[];
-    for(let i = 0; i < selectors.length; i++) {
-      if(this._is_xpath(selectors[i])) {
-        await (page as any).waitForXPath(selectors[i], {timeout: timeout * 1000, visible: visible !== false});  // @types/puppeteer doesn't know about page.waitForXPath
-      } else {
-        await page.waitForSelector(selectors[i], {timeout: timeout * 1000, visible: visible !== false});
+    timeout = Math.max(timeout, 1);
+    if(satisfy === 'all') {
+      for(let i = 0; i < selectors.length; i++) {
+        if (this._is_xpath(selectors[i])) {
+          await (page as any).waitForXPath(selectors[i], {timeout: timeout * 1000, visible: visible !== false});  // @types/puppeteer doesn't know about page.waitForXPath
+        } else {
+          await page.waitForSelector(selectors[i], {timeout: timeout * 1000, visible: visible !== false});
+        }
+      }
+    } else if (satisfy === 'any') {
+      while (timeout-- > 0) {
+        try {
+          for (let i = 0; i < selectors.length; i++) {
+            let elements = await (this._is_xpath(selectors[i]) ? page.$x(selectors[i]) : page.$$(selectors[i]));
+            for (let j = 0; j < elements.length; j++) {
+              if ((await elements[j].boundingBox()) !== null) { // element is visible
+                return elements[j];
+              }
+            }
+          }
+        } catch (e) {
+          if(e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+            throw e;
+          }
+        }
+        await meta.sleep(0.5);
       }
     }
   },
@@ -105,7 +129,7 @@ const meta = {
   select_option: async function (page : Page, selector : string, value) {
     return await page.evaluate((s, v) => jQuery(s).val(v), meta._selector(selector), value);
   },
-  wait_and_type: async function (page : Page | Frame, selector : string, text : string, delay=0) {
+  wait_and_type: async function (page : Page | Frame, selector : string, text : string, {delay=0} : {delay?: number}={}) {
     await this.wait(page, selector);
     if(delay) {
       await this.sleep(delay);
@@ -198,6 +222,10 @@ const meta = {
 const tests = {
   oauth_password_delay: 2,
   handle_gmail_oauth: async function(oauth_page, account_email, action : "close" | "deny" | "approve") {
+    let selectors = {
+      backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
+      approve_button: '#submit_approve_access',
+    };
     let auth = meta.config.auth.google.filter(a => a.email === account_email)[0];
     await meta.wait(oauth_page, '#Email, #submit_approve_access, #identifierId, .w6VTHd');
     if (await oauth_page.$('#Email') !== null) {
@@ -209,7 +237,7 @@ const tests = {
       await meta.wait_and_click(oauth_page, '#signIn', {delay: 1})
     } else if (await oauth_page.$('#identifierId') !== null) {
       await meta.wait(oauth_page, '#identifierId', {timeout: 60});
-      await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], 2);
+      await meta.wait_and_type(oauth_page, '#identifierId', auth['email'], {delay: 2});
       await meta.wait_and_click(oauth_page, '.zZhnYe', {delay: 2});  // confirm email
       await meta.sleep(this.oauth_password_delay);
       await meta.wait_and_type(oauth_page, '.zHQkBf', auth['password'], this.oauth_password_delay);
@@ -219,7 +247,14 @@ const tests = {
       await meta.sleep(2);
       return await this.handle_gmail_oauth(oauth_page, account_email, action) // start from beginning after clicking "other email acct"
     }
-    await meta.wait(oauth_page, '#submit_approve_access', {timeout: 60});
+    let element = await meta.wait(oauth_page, [selectors.approve_button, selectors.backup_email_verification_choice], {satisfy: "any"});
+    await meta.sleep(1);
+    if((await oauth_page.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
+      await element.click();
+      await meta.wait_and_type(oauth_page, '#knowledge-preregistered-email-response', auth.backup, {delay: 2});
+      await meta.wait_and_click(oauth_page, '#next', {delay: 2});
+      await meta.wait(oauth_page, '#submit_approve_access');
+    }
     if(action === 'close') {
       await oauth_page.close()
     } else if(action === 'deny') {
