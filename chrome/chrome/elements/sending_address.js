@@ -7,7 +7,7 @@ let hash = tool.crypto.hash.sha1;
 let container = $('.emails');
 
 flowcrypt_storage.get(url_params.account_email, ['addresses'], (storage) => {
-  container.html(storage.addresses.map(a => `<input type="radio" name="a" value="${tool.str.html_escape(a)}" id="${hash(a)}"> <label for="${hash(a)}">${a}</label><br>`));
+  container.html(storage.addresses.map(a => `<input type="radio" name="a" value="${tool.str.html_escape(a)}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`));
   container.find('input').first().prop('checked', true);
   container.find('input').click(function() {
     if($(this).val() !== storage.addresses[0]) {

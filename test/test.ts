@@ -138,6 +138,9 @@ const meta = {
       await e.type(text.substring(text.length - 10, text.length));
     }
   },
+  value: async function(page: Page | Frame, selector: string) {
+    return await page.evaluate((s) => { let e = document.querySelector(s); if(e.tagName==='SELECT') {return e.options[e.selectedIndex].value} else {return e.value} }, meta._selector(selector));
+  },
   read: async function (page: Page, selector: string) {
     return await page.evaluate((s) => document.querySelector(s).innerText, meta._selector(selector));
   },
@@ -398,10 +401,39 @@ const tests = {
     let compose_page = await meta.new_page();
     let compose_url = meta.extension_url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com');
 
-    await meta.sleep(1);
-    await compose_page.goto(compose_url);
-    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    async function open_compose_page_and_wait_till_ready(cp: Page) {
+      await cp.goto(compose_url);
+      await meta.wait_all(cp, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+      await meta.wait_all(cp, meta._selector_test_state('ready')); // wait until page ready  
+    }
+
+    async function change_default_sending_address(cp: Page, new_default: string) {
+      await meta.wait_and_click(cp, '@action-open-sending-address-settings');
+      await meta.wait_all(cp, '@dialog');
+      let sending_address_frame = await meta.get_frame(cp, 'sending_address.htm');
+      await meta.wait_and_click(sending_address_frame, `@action-choose-address(${new_default})`);
+      await meta.sleep(0.5); // page reload
+      await meta.wait_and_click(sending_address_frame, '@action-close-sending-address-settings');
+      await meta.wait_till_gone(cp, '@dialog');
+    }
+    
+    await open_compose_page_and_wait_till_ready(compose_page);
+    await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
+    await open_compose_page_and_wait_till_ready(compose_page);
+    let currently_selected_from = await meta.value(compose_page, '@input-from');
+    if(currently_selected_from !== 'flowcrypt.compatibility@gmail.com') {
+      throw Error('did not remember selected from addr: flowcrypt.compatibility@gmail.com');
+    }
+    await change_default_sending_address(compose_page, 'flowcryptcompatibility@gmail.com');
+    await open_compose_page_and_wait_till_ready(compose_page);
+    currently_selected_from = await meta.value(compose_page, '@input-from');
+    if(currently_selected_from !== 'flowcryptcompatibility@gmail.com') {
+      throw Error('did not remember selected from addr: flowcryptcompatibility@gmail.com');
+    }
+    await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
+    await meta.log('tests:compose:can set and remember default send address');
+
+    await open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human'); // test loading of contacts
     await meta.wait_all(compose_page, ['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     meta.log('tests:compose:can load contact based on name');
@@ -414,10 +446,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:fresh pubkey');
 
-    await meta.sleep(1);
-    await compose_page.goto(compose_url);
-    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: reused pubkey');
@@ -426,10 +455,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:reused pubkey');
 
-    await meta.sleep(1);
-    await compose_page.goto(compose_url);
-    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey');
@@ -440,10 +466,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:unknown pubkey');
 
-    await meta.sleep(1);
-    await compose_page.goto(compose_url);
-    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
     await meta.select_option(compose_page, '@imput-from', 'flowcryptcompatibility@gmail.com');
     await meta.click(compose_page, '@input-subject');
@@ -453,10 +476,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:from alias');
 
-    await meta.sleep(1);
-    await compose_page.goto(compose_url);
-    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files');
@@ -467,10 +487,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:with attachments');
 
-    await meta.sleep(1);
-    await compose_page.goto(compose_url);
-    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files + nonppg');
