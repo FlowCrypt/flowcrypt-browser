@@ -425,6 +425,15 @@ const tests = {
       await meta.type(cp, '@input-body', `This is an automated puppeteer test: ${subject}`);
     }
 
+    async function send(cp: Page | Frame, password?: string | undefined) {
+      if(password)
+        await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
+      await meta.wait_and_click(cp, '@action-send', {delay: 0.5});
+      if(password)
+        await meta.wait_and_click(compose_page, '@action-send', {delay: 0.5});  // in real usage, also have to click two times when using password - why?
+      await meta.wait_all(cp, meta._selector_test_state('closed')); // wait until page closed
+    }
+
     await open_compose_page_and_wait_till_ready(compose_page);
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
     await open_compose_page_and_wait_till_ready(compose_page);
@@ -446,51 +455,44 @@ const tests = {
     await meta.wait_and_click(compose_page, '@action-select-contact(human@flowcrypt.com)', {delay: 1}); // select a contact
     meta.log('tests:compose:can choose found contact');
     await fill_message(compose_page, null, 'freshly loaded pubkey');
-    await meta.click(compose_page, '@action-send');
-    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    await send(compose_page);
     meta.log('tests:compose:fresh pubkey');
 
     await open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human@flowcrypt.com', 'reused pubkey');
-    await meta.click(compose_page, '@action-send');
-    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    await send(compose_page);
     meta.log('tests:compose:reused pubkey');
 
     await open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
-    await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
-    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
-    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
-    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    await send(compose_page, 'test-pass');
     meta.log('tests:compose:unknown pubkey');
 
     await open_compose_page_and_wait_till_ready(compose_page);
-    await fill_message(compose_page, 'human@flowcrypt.com', 'from alias');
     await meta.select_option(compose_page, '@input-from', 'flowcryptcompatibility@gmail.com');
-    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to from an alias.');
-    await meta.click(compose_page, '@action-send');
-    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    await fill_message(compose_page, 'human@flowcrypt.com', 'from alias');
+    await send(compose_page);
     meta.log('tests:compose:from alias');
 
     await open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human@flowcrypt.com', 'with files');
     let file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
-    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    await send(compose_page);
     meta.log('tests:compose:with attachments');
 
     await open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-    await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
-    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
-    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
-    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    await send(compose_page, 'test-pass');
     meta.log('tests:compose:with attachments+nopgp');
 
     await open_compose_page_and_wait_till_ready(compose_page);
+    await fill_message(compose_page, 'human@flowcrypt.com', 'signed message');
+    await meta.click(compose_page, '@action-switch-to-sign');
+    await send(compose_page);
+    meta.log('tests:compose:signed message');
 
     await compose_page.close();
 
@@ -500,10 +502,7 @@ const tests = {
     let compose_frame = await meta.get_frame(settings_page, 'compose.htm');
     await meta.wait_all(compose_frame, ['@input-body', '@input-to', '@input-subject', '@action-send']);
     await meta.wait_all(compose_frame, meta._selector_test_state('ready')); // wait until page ready
-    await meta.type(compose_frame, '@input-to', 'human+manualcopypgp@flowcrypt.com');
-    await meta.click(compose_frame, '@input-subject');
-    await meta.type(compose_frame, '@input-subject', 'Automated puppeteer test: manual key');
-    await meta.type(compose_frame, '@input-body', 'This is an automated puppeteer test with a manually copied pubkey');
+    await fill_message(compose_frame, 'human+manualcopypgp@flowcrypt.com', 'manual copied key');
     await meta.wait_and_click(compose_frame, '@action-open-add-pubkey-dialog', {delay: 0.5});
     await meta.wait_all(compose_frame, '@dialog');
     let add_pubkey_dialog = await meta.get_frame(compose_frame, 'add_pubkey.htm');
