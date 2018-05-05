@@ -12,3 +12,4 @@
 /test/puppeteer.json
 /test/node_modules/
 /test/test.js
+/chrome/js/common/composer.js
