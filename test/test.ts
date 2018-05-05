@@ -132,7 +132,7 @@ const meta = {
     if(letter_by_letter || text.length < 20) {
       await e.type(text);
     } else {
-      await page.evaluate((s, t) => (document.querySelector(s) as HTMLInputElement).value = t, meta._selector(selector), text.substring(0, text.length - 10));
+      await page.evaluate((s, t) => {let e = document.querySelector(s); e[e.tagName === 'DIV' ? 'innerText' : 'value']=t;}, meta._selector(selector), text.substring(0, text.length - 10));
       await e.type(text.substring(text.length - 10, text.length));
     }
   },
@@ -427,6 +427,19 @@ const tests = {
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:unknown pubkey');
+
+    await meta.sleep(1);
+    await compose_page.goto(compose_url);
+    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
+    await meta.select_option(compose_page, '@imput-from', 'flowcryptcompatibility@gmail.com');
+    await meta.click(compose_page, '@input-subject');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: from alias: ' + meta.random());
+    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to from an alias.');
+    await meta.click(compose_page, '@action-send');
+    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    meta.log('tests:compose:from alias');
 
     await compose_page.close();
   },
