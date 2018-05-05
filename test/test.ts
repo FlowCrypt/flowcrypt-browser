@@ -145,7 +145,7 @@ const meta = {
     return await page.evaluate((s) => document.querySelector(s).innerText, meta._selector(selector));
   },
   select_option: async function (page: Page | Frame, selector: string, choice: string) {
-    return await page.evaluate((s, v) => (jQuery(s) as JQuery<HTMLSelectElement>).val(v).trigger('change'), meta._selector(selector), choice);
+    await page.evaluate((s, v) => jQuery(s).val(v).trigger('change'), meta._selector(selector), choice);
   },
   wait_and_type: async function (page: Page | Frame, selector: string, text: string, {delay=0.1}: {delay?: number}={}) {
     await meta.wait_all(page, selector);
@@ -416,20 +416,26 @@ const tests = {
       await meta.wait_and_click(sending_address_frame, '@action-close-sending-address-settings');
       await meta.wait_till_gone(cp, '@dialog');
     }
-    
+
+    async function fill_message(cp: Page | Frame, to: string | null, subject: string) {
+      if(to)
+        await meta.type(cp, '@input-to', to);
+      await meta.click(cp, '@input-subject');
+      await meta.type(cp, '@input-subject', `Automated puppeteer test: ${subject}`);
+      await meta.type(cp, '@input-body', `This is an automated puppeteer test: ${subject}`);
+    }
+
     await open_compose_page_and_wait_till_ready(compose_page);
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
     await open_compose_page_and_wait_till_ready(compose_page);
     let currently_selected_from = await meta.value(compose_page, '@input-from');
-    if(currently_selected_from !== 'flowcrypt.compatibility@gmail.com') {
+    if(currently_selected_from !== 'flowcrypt.compatibility@gmail.com')
       throw Error('did not remember selected from addr: flowcrypt.compatibility@gmail.com');
-    }
     await change_default_sending_address(compose_page, 'flowcryptcompatibility@gmail.com');
     await open_compose_page_and_wait_till_ready(compose_page);
     currently_selected_from = await meta.value(compose_page, '@input-from');
-    if(currently_selected_from !== 'flowcryptcompatibility@gmail.com') {
+    if(currently_selected_from !== 'flowcryptcompatibility@gmail.com')
       throw Error('did not remember selected from addr: flowcryptcompatibility@gmail.com');
-    }
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
     await meta.log('tests:compose:can set and remember default send address');
 
@@ -439,27 +445,19 @@ const tests = {
     meta.log('tests:compose:can load contact based on name');
     await meta.wait_and_click(compose_page, '@action-select-contact(human@flowcrypt.com)', {delay: 1}); // select a contact
     meta.log('tests:compose:can choose found contact');
-    await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: freshly loaded pubkey');
-    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a freshly loaded public key');
+    await fill_message(compose_page, null, 'freshly loaded pubkey');
     await meta.click(compose_page, '@action-send');
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:fresh pubkey');
 
     await open_compose_page_and_wait_till_ready(compose_page);
-    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
-    await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: reused pubkey');
-    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a reused public key');
+    await fill_message(compose_page, 'human@flowcrypt.com', 'reused pubkey');
     await meta.click(compose_page, '@action-send');
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:reused pubkey');
 
     await open_compose_page_and_wait_till_ready(compose_page);
-    await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
-    await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey');
-    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
+    await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
     await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
@@ -467,20 +465,15 @@ const tests = {
     meta.log('tests:compose:unknown pubkey');
 
     await open_compose_page_and_wait_till_ready(compose_page);
-    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
-    await meta.select_option(compose_page, '@imput-from', 'flowcryptcompatibility@gmail.com');
-    await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: from alias');
+    await fill_message(compose_page, 'human@flowcrypt.com', 'from alias');
+    await meta.select_option(compose_page, '@input-from', 'flowcryptcompatibility@gmail.com');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to from an alias.');
     await meta.click(compose_page, '@action-send');
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:from alias');
 
     await open_compose_page_and_wait_till_ready(compose_page);
-    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
-    await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files');
-    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent with attachments');
+    await fill_message(compose_page, 'human@flowcrypt.com', 'with files');
     let file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
@@ -488,10 +481,7 @@ const tests = {
     meta.log('tests:compose:with attachments');
 
     await open_compose_page_and_wait_till_ready(compose_page);
-    await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
-    await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files + nonppg');
-    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent with attachments to non-pgp');
+    await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
     await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
@@ -499,6 +489,8 @@ const tests = {
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:with attachments+nopgp');
+
+    await open_compose_page_and_wait_till_ready(compose_page);
 
     await compose_page.close();
 
