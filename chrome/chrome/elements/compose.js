@@ -122,10 +122,10 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
               window.flowcrypt_storage.set(null, admin_code_storage, callback);
             });
           },
-          storage_contact_get: (email, callback) => window.flowcrypt_storage.db_contact_get(null, email, callback),
-          storage_contact_update: (email, update, callback) => window.flowcrypt_storage.db_contact_update(null, email, update, callback),
-          storage_contact_save: (contact, callback) => window.flowcrypt_storage.db_contact_save(null, contact, callback),
-          storage_contact_search: (query, callback) => window.flowcrypt_storage.db_contact_search(null, query, callback),
+          storage_contact_get: (email) => catcher.Promise((resolve, reject) => window.flowcrypt_storage.db_contact_get(null, email, resolve)),
+          storage_contact_update: (email, update) => catcher.Promise((resolve, reject) => window.flowcrypt_storage.db_contact_update(null, email, update, resolve)),
+          storage_contact_save: (contact) => catcher.Promise((resolve, reject) => window.flowcrypt_storage.db_contact_save(null, contact, resolve)),
+          storage_contact_search: (query) => catcher.Promise((resolve, reject) => window.flowcrypt_storage.db_contact_search(null, query, resolve)),
           storage_contact_object: window.flowcrypt_storage.db_contact_object,
           email_provider_draft_get: (draft_id) => catcher.Promise((resolve, reject) => {
             tool.api.gmail.draft_get(url_params.account_email, draft_id, 'raw', (success, response) => {
@@ -158,9 +158,7 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
               }
             }, render_upload_progress);
           }),
-          email_provider_search_contacts: (query, known_contacts) => catcher.Promise((resolve, reject) => {
-            tool.api.gmail.search_contacts(url_params.account_email, query, known_contacts, resolve);
-          }),
+          email_provider_search_contacts: (query, known_contacts, multi_cb) => tool.api.gmail.search_contacts(url_params.account_email, query, known_contacts, multi_cb),
           email_provider_determine_reply_message_header_variables: (callback) => {
             tool.api.gmail.thread_get(url_params.account_email, url_params.thread_id, 'full', function (success, thread) {
               if (success && thread.messages && thread.messages.length > 0) {

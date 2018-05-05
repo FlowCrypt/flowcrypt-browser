@@ -15,6 +15,22 @@ interface SelectorCacher {
   now: (name: string) => JQuery,
 }
 
+interface Contact {
+  email: string,
+  name: string | null,
+  pubkey: string,
+  has_pgp: boolean,
+  searchable: string[],
+  client: string | null,
+  attested: boolean | null,
+  fingerprint: string | null,
+  longid: string | null,
+  keywords: string | null,
+  pending_lookup: number,
+  last_use: number | null,
+  date: number | null, // todo - should be removed. email provider search seems to return this?
+}
+
 class Subscription {
   active: boolean = null;
   method: "stripe" | "group" | "trial" = null;
@@ -134,17 +150,17 @@ class Subscription {
     storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {resolve()}),
     storage_passphrase_get: () => catcher.Promise((resolve, reject) => {resolve()}),
     storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => { callback(); },
-    storage_contact_get: (email, cb) => { if(cb) cb(null); },
-    storage_contact_update: (email, update, cb) => { if(cb) cb();},
-    storage_contact_save: (contact, cb) => { if(cb) cb(); },
-    storage_contact_search: (query, cb) => { if(cb) cb()},
-    storage_contact_object: (email, name, has_cryptup, pubkey, attested, pending_lookup, last_use) => {},
+    storage_contact_get: async (email): Promise<Contact|Contact[]> => null,
+    storage_contact_update: async (email, update): Promise<undefined> => undefined,
+    storage_contact_save: async (contact): Promise<undefined> => undefined,
+    storage_contact_search: async (query): Promise<Contact[]> => [],
+    storage_contact_object: (email, name, has_cryptup, pubkey, attested, pending_lookup, last_use): Contact => { return {} as Contact},
     email_provider_draft_get: (draft_id) => catcher.Promise((resolve, reject) => {reject()}),
     email_provider_draft_create: (mime_message) => catcher.Promise((resolve, reject) => {reject()}),
     email_provider_draft_update: (draft_id, mime_message) => catcher.Promise((resolve, reject) => {reject()}),
     email_provider_draft_delete: (draft_id) => catcher.Promise((resolve, reject) => {reject()}),
     email_provider_message_send: (message, render_upload_progress) => catcher.Promise((resolve, reject) => {reject()}),
-    email_provider_search_contacts: (query, known_contacts) => catcher.Promise((resolve, reject) => {resolve({new: [], all: []})}),
+    email_provider_search_contacts: (query, known_contacts, multi_cb) => undefined,
     email_provider_determine_reply_message_header_variables: (cb) => { if(cb) cb(); },
     email_provider_extract_armored_block: (message_id, success_cb, error_cb) => { if(error_cb) error_cb('not implemented'); },
     send_message_to_main_window: (channel, data?) => null,
@@ -457,23 +473,22 @@ class Subscription {
     }, 1000);
   }
 
-  function collect_all_available_public_keys(account_email, recipients, callback) {
-    app.storage_contact_get(recipients, function (contacts) {
-      app.storage_get_armored_public_key(account_email).then(armored_public_key => {
-        const armored_pubkeys = [armored_public_key];
-        const emails_without_pubkeys = [];
-        tool.each(contacts, function (i, contact) {
-          if (contact && contact.has_pgp) {
-            armored_pubkeys.push(contact.pubkey);
-          } else if (contact && keyserver_lookup_results_by_email[contact.email] && keyserver_lookup_results_by_email[contact.email].has_pgp) {
-            armored_pubkeys.push(keyserver_lookup_results_by_email[contact.email].pubkey);
-          } else {
-            emails_without_pubkeys.push(recipients[i]);
-          }
-        });
-        callback(armored_pubkeys, emails_without_pubkeys);
-      });
-    });
+  async function collect_all_available_public_keys(account_email, recipients) {
+    let contacts = await app.storage_contact_get(recipients);
+    let armored_public_key = await app.storage_get_armored_public_key(account_email);
+    const armored_pubkeys = [armored_public_key];
+    const emails_without_pubkeys = [];
+    for(let i in contacts) {
+      let contact = contacts[i];
+      if (contact && contact.has_pgp) {
+        armored_pubkeys.push(contact.pubkey);
+      } else if (contact && keyserver_lookup_results_by_email[contact.email] && keyserver_lookup_results_by_email[contact.email].has_pgp) {
+        armored_pubkeys.push(keyserver_lookup_results_by_email[contact.email].pubkey);
+      } else {
+        emails_without_pubkeys.push(recipients[i]);
+      }
+    }
+    return {armored_pubkeys, emails_without_pubkeys};
   }
 
   function is_compose_form_rendered_as_ready(recipients) {
@@ -517,7 +532,7 @@ class Subscription {
     }
   }
 
-  function extract_process_encrypt_and_send_message() {
+  async function extract_process_encrypt_and_send_message() {
     const recipients = get_recipients_from_dom();
     const subject = supplied_subject || $('#input_subject').val(); // replies have subject in url params
     const plaintext = $('#input_text').get(0).innerText;
@@ -525,19 +540,18 @@ class Subscription {
       S.now('send_btn_span').text('Loading');
       S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
       S.cached('send_btn_note').text('');
-      app.storage_get_subscription_info(function (subscription) {
-        collect_all_available_public_keys(account_email, recipients, function (armored_pubkeys, emails_without_pubkeys) {
-          const challenge = emails_without_pubkeys.length ? {answer: S.cached('input_password').val()} : null;
-          if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
-            if(S.cached('icon_sign').is('.active')) {
-              sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
-            } else {
-              encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
-            }
+      app.storage_get_subscription_info(async function (subscription) {
+      let {armored_pubkeys, emails_without_pubkeys} = await collect_all_available_public_keys(account_email, recipients);
+        const challenge = emails_without_pubkeys.length ? {answer: S.cached('input_password').val()} : null;
+        if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
+          if(S.cached('icon_sign').is('.active')) {
+            sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
           } else {
-            reset_send_btn();
+            encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
           }
-        });
+        } else {
+          reset_send_btn();
+        }
       });
     }
   }
@@ -612,13 +626,12 @@ class Subscription {
               tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
                 if (success) {
                   handle_send_btn_processing_error(function () {
-                    attach.collect_attachments(function (attachments) { // todo - not signing attachments
-                      app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
-                        S.now('send_btn_span').text('Sending');
-                        with_attached_pubkey_if_needed(signing_result).then(signing_result => {
-                          const body = {'text/plain': signing_result};
-                          do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-                        });
+                    attach.collect_attachments(async function (attachments) { // todo - not signing attachments
+                      await app.storage_contact_update(recipients, {last_use: Date.now()});
+                      S.now('send_btn_span').text('Sending');
+                      with_attached_pubkey_if_needed(signing_result).then(signing_result => {
+                        const body = {'text/plain': signing_result};
+                        do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
                       });
                     });
                   });
@@ -747,37 +760,36 @@ class Subscription {
 
   function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription, attachment_admin_codes=[]) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
-      with_attached_pubkey_if_needed(encrypted.data).then(encrypted_data => {
+      with_attached_pubkey_if_needed(encrypted.data).then(async(encrypted_data) => {
         encrypted.data = encrypted_data;
         let body = {'text/plain': encrypted.data};
         button_update_timeout = setTimeout(function () {
           S.now('send_btn_span').text('sending');
         }, 500);
-        app.storage_contact_update(recipients, {last_use: Date.now()}, function () {
-          if (challenge) {
-            upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
-              if (short_id) {
-                body = format_password_protected_email(short_id, body, armored_pubkeys);
-                body = format_email_text_footer(body);
-                app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, () => {
-                  do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-                });
-              } else {
-                if (error === tool.api.cryptup.auth_error) {
-                  if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-                    app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-                  }
-                } else {
-                  alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+        await app.storage_contact_update(recipients, {last_use: Date.now()});
+        if (challenge) {
+          upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
+            if (short_id) {
+              body = format_password_protected_email(short_id, body, armored_pubkeys);
+              body = format_email_text_footer(body);
+              app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, () => {
+                do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
+              });
+            } else {
+              if (error === tool.api.cryptup.auth_error) {
+                if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+                  app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
                 }
-                reset_send_btn();
+              } else {
+                alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
               }
-            });
-          } else {
-            body = format_email_text_footer(body);
-            do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
-          }
-        });
+              reset_send_btn();
+            }
+          });
+        } else {
+          body = format_email_text_footer(body);
+          do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
+        }
       });
     });
   }
@@ -806,40 +818,42 @@ class Subscription {
     });
   }
 
-  function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, callback) {
-    app.storage_contact_get(email, function (db_contact) {
-      if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
-        callback(db_contact);
-      } else {
-        tool.api.attester.lookup_email(email).done((success, result) => {
-          if (success && result && result.email) {
-            if (result.pubkey) {
-              const parsed = openpgp.key.readArmored(result.pubkey);
-              if (!parsed.keys[0]) {
-                catcher.log('Dropping found but incompatible public key', {
-                  for: result.email,
-                  err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null
-                });
-                result.pubkey = null;
-              } else if (parsed.keys[0].getEncryptionKeyPacket() === null) {
-                catcher.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {
-                  for: result.email,
-                  fingerprint: tool.crypto.key.fingerprint(parsed.keys[0])
-                });
-                result.pubkey = null;
-              }
+  async function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email): Promise<Contact | string> {
+    let db_contact = await app.storage_contact_get(email) as Contact;
+    if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
+      return db_contact;
+    } else {
+      try {
+        let result = await tool.api.attester.lookup_email(email);
+        if (result && result.email) {
+          if (result.pubkey) {
+            const parsed = openpgp.key.readArmored(result.pubkey);
+            if (!parsed.keys[0]) {
+              catcher.log('Dropping found but incompatible public key', {
+                for: result.email,
+                err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null
+              });
+              result.pubkey = null;
+            } else if (parsed.keys[0].getEncryptionKeyPacket() === null) {
+              catcher.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {
+                for: result.email,
+                fingerprint: tool.crypto.key.fingerprint(parsed.keys[0])
+              });
+              result.pubkey = null;
             }
-            let ks_contact = app.storage_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
-            keyserver_lookup_results_by_email[result.email] = ks_contact;
-            app.storage_contact_save(ks_contact, function () {
-              callback(ks_contact);
-            });
-          } else {
-            callback(PUBKEY_LOOKUP_RESULT_FAIL);
           }
-        });
+          let ks_contact = app.storage_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
+          keyserver_lookup_results_by_email[result.email] = ks_contact;
+          await app.storage_contact_save(ks_contact);
+          return ks_contact;
+        } else  {
+          return PUBKEY_LOOKUP_RESULT_FAIL;
+        }
+      } catch (e) {
+        console.log(e);
+        return PUBKEY_LOOKUP_RESULT_FAIL;
       }
-    });
+    }
   }
 
   function evaluate_receivers() {
@@ -849,7 +863,7 @@ class Subscription {
       if (tool.str.is_email_valid(email)) {
         S.now('send_btn_span').text(BTN_LOADING);
         set_input_text_height_manually_if_needed();
-        lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email, function (pubkey_lookup_result) {
+        lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email).then(pubkey_lookup_result => {
           render_pubkey_result(email_element, email, pubkey_lookup_result);
         });
       } else {
@@ -1118,7 +1132,6 @@ class Subscription {
   }
 
   function render_search_results(contacts, query) {
-    console.log({rendering: query, contacts: contacts, contact_search_in_progress: contact_search_in_progress});
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort(function (a, b) { // all that have pgp group on top. Without pgp bottom. Sort both groups by last used first.
       return (10 * (b.has_pgp - a.has_pgp)) + (b.last_use - a.last_use > 0 ? 1 : -1);
@@ -1171,41 +1184,33 @@ class Subscription {
     }
   }
 
-  function search_contacts(db_only=false) {
+  async function search_contacts(db_only=false) {
     const query = {substring: tool.str.parse_email(S.cached('input_to').val()).email};
     if (query.substring !== '') {
-      app.storage_contact_search(query, function (contacts) {
-        console.log({query: query, storage: contacts});
-        if (db_only || !can_read_emails) {
-          console.log('returning db only');
-          render_search_results(contacts, query);
-        } else {
-          contact_search_in_progress = true;
-          render_search_results(contacts, query);
-          app.email_provider_search_contacts(query.substring, contacts).done((success, search_contacts_results) => {
-            console.log({query: query, provider: search_contacts_results});
-            if (search_contacts_results.new.length) {
-              tool.each(search_contacts_results.new, function (i, contact) {
-                app.storage_contact_get(contact.email, function (in_db) {
-                  if (!in_db) {
-                    app.storage_contact_save(app.storage_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null), function () {
-                      search_contacts(true);
-                    });
-                  } else if (!in_db.name && contact.name) {
-                    const to_update = {name: contact.name};
-                    app.storage_contact_update(contact.email, to_update, () => {
-                      search_contacts(true);
-                    });
-                  }
-                });
-              });
-            } else {
-              render_search_results_loading_done();
-              contact_search_in_progress = false;
+      let contacts = await app.storage_contact_search(query);
+      if (db_only || !can_read_emails) {
+        render_search_results(contacts, query);
+      } else {
+        contact_search_in_progress = true;
+        render_search_results(contacts, query);
+        app.email_provider_search_contacts(query.substring, contacts, async (search_contacts_results) => {
+          if (search_contacts_results.new.length) {
+            for(let contact of search_contacts_results.new) {
+              let in_db = await app.storage_contact_get(contact.email) as Contact;
+              if (!in_db) {
+                await app.storage_contact_save(app.storage_contact_object(contact.email, contact.name, null, null, null, true, new Date(contact.date).getTime() || null));
+              } else if (!in_db.name && contact.name) {
+                const to_update = {name: contact.name};
+                await app.storage_contact_update(contact.email, to_update);
+              }
             }
-          });
-        }
-      });
+            await search_contacts(true);
+          } else {
+            render_search_results_loading_done();
+            contact_search_in_progress = false;
+          }
+        });
+      }
     } else {
       hide_contacts(); //todo - show suggestions of most contacted ppl etc
     }
@@ -1483,17 +1488,16 @@ class Subscription {
     let no_pgp_emails = get_recipients_from_dom('no_pgp');
     app.render_add_pubkey_dialog(no_pgp_emails);
     clearInterval(added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
-    added_pubkey_db_lookup_interval = setInterval(() => {
-      tool.each(no_pgp_emails, (i, email) => {
-        app.storage_contact_get(email, function (contact) {
-          if (contact && contact.has_pgp) {
-            $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
-            $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
-            clearInterval(added_pubkey_db_lookup_interval);
-            evaluate_receivers();
-          }
-        });
-      });
+    added_pubkey_db_lookup_interval = setInterval(async() => {
+      for(let email of no_pgp_emails) {
+        let contact = await app.storage_contact_get(email);
+        if (contact && (contact as Contact).has_pgp) {
+          $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
+          $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
+          clearInterval(added_pubkey_db_lookup_interval);
+          evaluate_receivers();
+        }
+      }
     }, 1000);
   });
 

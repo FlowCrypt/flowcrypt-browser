@@ -3016,6 +3016,9 @@
     return null;
   }
 
+  /**
+   * This will keep emitting callbacks with new emails as they are being discovered - may callback many times
+   */
   function api_gmail_search_contacts(account_email, user_query, known_contacts, callback) {
     var gmail_query = ['is:sent', USELESS_CONTACTS_FILTER];
     if(user_query) {
