@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
-    "checkJs": true
+    "checkJs": true,
+    "target": "ES2017",
+    "alwaysStrict": true
   }
 }
