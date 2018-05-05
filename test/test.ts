@@ -408,7 +408,7 @@ const tests = {
     await meta.wait_and_click(compose_page, '@action-select-contact(human@flowcrypt.com)', {delay: 1}); // select a contact
     meta.log('tests:compose:can choose found contact');
     await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: freshly loaded pubkey: ' + meta.random());
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: freshly loaded pubkey');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a freshly loaded public key');
     await meta.click(compose_page, '@action-send');
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
@@ -420,7 +420,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
     await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: reused pubkey: ' + meta.random());
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: reused pubkey');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a reused public key');
     await meta.click(compose_page, '@action-send');
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
@@ -432,7 +432,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
     await meta.type(compose_page, '@input-to', 'human+plain@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey: ' + meta.random());
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
     await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
@@ -447,11 +447,25 @@ const tests = {
     await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
     await meta.select_option(compose_page, '@imput-from', 'flowcryptcompatibility@gmail.com');
     await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: from alias: ' + meta.random());
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: from alias');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to from an alias.');
     await meta.click(compose_page, '@action-send');
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:from alias');
+
+    await meta.sleep(1);
+    await compose_page.goto(compose_url);
+    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
+    await meta.click(compose_page, '@input-subject');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files');
+    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent with attachments');
+    let file_input = await compose_page.$('input[type=file]');
+    await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
+    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
+    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    meta.log('tests:compose:with attachments');
 
     await compose_page.close();
 
@@ -463,7 +477,7 @@ const tests = {
     await meta.wait_all(compose_frame, meta._selector_test_state('ready')); // wait until page ready
     await meta.type(compose_frame, '@input-to', 'human+manualcopypgp@flowcrypt.com');
     await meta.click(compose_frame, '@input-subject');
-    await meta.type(compose_frame, '@input-subject', 'Automated puppeteer test: manual key: ' + meta.random());
+    await meta.type(compose_frame, '@input-subject', 'Automated puppeteer test: manual key');
     await meta.type(compose_frame, '@input-body', 'This is an automated puppeteer test with a manually copied pubkey');
     await meta.wait_and_click(compose_frame, '@action-open-add-pubkey-dialog', {delay: 0.5});
     await meta.wait_all(compose_frame, '@dialog');
@@ -476,7 +490,6 @@ const tests = {
     await alert.accept();
     await meta.wait_till_gone(settings_page, '@dialog');
     meta.log('tests:compose:manually copied pubkey');
-
     await settings_page.close();
   },
   close_overlay_dialog: async function(page: Page | Frame) {
@@ -623,7 +636,7 @@ const tests = {
     args: [
       '--disable-extensions-except=chrome',
       '--load-extension=chrome',
-      `--window-size=${meta.size.width},${meta.size.height+136}`,
+      `--window-size=${meta.size.width},${meta.size.height+134}`,
     ],
     headless: false, // to run headless-like: "xvfb-run node test.js"
     slowMo: 50,
