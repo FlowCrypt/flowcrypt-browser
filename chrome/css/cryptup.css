@@ -195,10 +195,10 @@ body#settings > div#content.dialog.add_pubkey select.copy_from_email { font-size
 body#settings > div#content.dialog.add_pubkey textarea.pubkey { width: 500px; height: 340px; font-size: 10px; padding: 8px; }
 body#settings > div#content.dialog.add_pubkey .button { width: 120px; margin-left: 13px; margin-right: 14px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose .action_settings { display: none; }
-body#settings > div#content.dialog.add_pubkey.inside_compose .line.copy_from { display: none; }
+body#settings > div#content.dialog.add_pubkey.inside_compose .copy_from_email { width: 160px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose { padding: 0; margin-bottom: 0; width: 500px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose select.email { width: 480px; }
-body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey { width: 462px; height: 250px; }
+body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey { width: 462px; height: 200px; }
 body#settings > div#content.dialog.add_pubkey.inside_compose separator { display: none; }
 
 body#settings > div#content.storage { padding-top: 30px; padding-bottom: 100px; min-height: 100%; height: 100%; margin: 0 auto; }

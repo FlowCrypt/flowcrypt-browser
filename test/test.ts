@@ -14,9 +14,18 @@ interface ConfigInterface {
 
 let browser: Browser;
 let results: Results = {success: [], error: [], start: Date.now()};
+let gmail_login_sequence : string[] = [];
 
 const meta = {
-  url: {settings: 'chrome/settings/index.htm'},
+  url: {
+    settings: (account_email?: string | undefined) => `chrome/settings/index.htm?account_email=${account_email || ''}`,
+    gmail: function(account_email?: string | undefined) {
+      if(!account_email) {
+        return 'https://mail.google.com/';
+      }
+      return `https://mail.google.com/mail/u/${gmail_login_sequence.indexOf(account_email)}/#inbox`;
+    },
+  },
   size: {width: 1280, height: 900},
   config: JSON.parse(fs.readFileSync('test/puppeteer.json', 'utf8')) as ConfigInterface,
   extension_url: function (path: string) {
@@ -96,20 +105,13 @@ const meta = {
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
     while(seconds_left-- >= 0) {
-      let not_found = 0;
-      for(let i = 0; i < selectors.length; i++) { // could refactor with wait_any
-        try {
-          await meta.wait_all(page, selectors[i], {timeout: 1});
-        } catch (e) {
-          if(e.message.indexOf('waiting') === 0 && e.message.indexOf('failed') !== -1) {
-            not_found++
-          } else {
-            console.log(e);
-          }
+      try {
+        await meta.wait_any(page, selectors, {timeout:0}); // if this fails, that means there are none left: return success
+        await meta.sleep(1);
+      } catch (e) {
+        if(e.message.indexOf('waiting failed') === 0) {
+          return;
         }
-      }
-      if(not_found === selectors.length) {
-        return;
       }
     }
     throw Error(`meta.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
@@ -139,21 +141,17 @@ const meta = {
   read: async function (page: Page, selector: string) {
     return await page.evaluate((s) => document.querySelector(s).innerText, meta._selector(selector));
   },
-  select_option: async function (page: Page, selector: string, choice: string) {
-    return await page.evaluate((s, v) => jQuery(s).val(v), meta._selector(selector), choice);
+  select_option: async function (page: Page | Frame, selector: string, choice: string) {
+    return await page.evaluate((s, v) => (jQuery(s) as JQuery<HTMLSelectElement>).val(v).trigger('change'), meta._selector(selector), choice);
   },
-  wait_and_type: async function (page: Page | Frame, selector: string, text: string, {delay=0}: {delay?: number}={}) {
+  wait_and_type: async function (page: Page | Frame, selector: string, text: string, {delay=0.1}: {delay?: number}={}) {
     await meta.wait_all(page, selector);
-    if(delay) {
-      await meta.sleep(delay);
-    }
+    await meta.sleep(delay);
     await meta.type(page, selector, text);
   },
-  wait_and_click: async function (page: Page | Frame, selector: string, {delay=0, confirm_gone=false}: {delay?: number, confirm_gone?: boolean}={}) {
+  wait_and_click: async function (page: Page | Frame, selector: string, {delay=0.1, confirm_gone=false}: {delay?: number, confirm_gone?: boolean}={}) {
     await meta.wait_all(page, selector);
-    if(delay) {
-      await meta.sleep(delay);
-    }
+    await meta.sleep(delay);
     await meta.click(page, selector);
     if(confirm_gone) {
       await meta.wait_till_gone(page, selector);
@@ -195,7 +193,7 @@ const meta = {
     await page.setViewport(meta.size);
     return page;
   },
-  trigger_and_await_new_dialog: function (page: Page, triggering_action = function () {}): Promise<Dialog> {
+  trigger_and_await_new_alert: function (page: Page, triggering_action = function () {}): Promise<Dialog> {
     return new Promise((resolve) => {
       page.on('dialog', resolve);
       triggering_action();
@@ -209,12 +207,19 @@ const meta = {
     }
     return page;
   },
-  get_frame: async function(page: Page, url: string|string[], {sleep=1}={sleep: 1}): Promise<Frame> {
+  get_frame: async function(page: Page | Frame, url: string|string[], {sleep=1}={sleep: 1}): Promise<Frame> {
     if(sleep) {
       await meta.sleep(sleep);
     }
     let url_matchables = Array.isArray(url) ? url: [url];
-    let frames = await page.frames();
+    let frames;
+    if(page.constructor.name === 'Page') {
+      frames = await (page as Page).frames();
+    } else if(page.constructor.name === 'Frame') {
+      frames = await (page as Frame).childFrames();
+    } else {
+      throw Error(`Unknown page.constructor.name: ${page.constructor.name}`);
+    }
     let frame = frames.find(frame => {
       for(let i = 0; i < url_matchables.length; i++) {
         if(frame.url().indexOf(url_matchables[i]) === -1) {
@@ -274,6 +279,9 @@ const tests = {
       await meta.wait_and_click(oauth_page, '#next', {delay: 2});
       await meta.wait_all(oauth_page, '#submit_approve_access');
     }
+    if(gmail_login_sequence.indexOf(account_email) === -1) {
+      gmail_login_sequence.push(account_email);
+    }
     if(action === 'close') {
       await oauth_page.close()
     } else if(action === 'deny') {
@@ -287,7 +295,7 @@ const tests = {
     let k = meta._k(key_title);
     await meta.wait_and_type(settings_page, '@input-recovery-pass-phrase', k.passphrase);
     if(wrong_passphrase) {
-      let dialog = await meta.trigger_and_await_new_dialog(settings_page, () => meta.wait_and_click(settings_page, '@action-recover-account'));
+      let dialog = await meta.trigger_and_await_new_alert(settings_page, () => meta.wait_and_click(settings_page, '@action-recover-account'));
       await dialog.accept();
     } else {
       await meta.wait_and_click(settings_page, '@action-recover-account');
@@ -373,7 +381,7 @@ const tests = {
   },
   gmail_tests: async function() {
     // standard gmail
-    let gmail_page = await meta.new_page('https://mail.google.com');
+    let gmail_page = await meta.new_page(meta.url.gmail());
     await meta.wait_and_click(gmail_page, '@action-secure-compose', {delay: 1});
     await meta.wait_all(gmail_page, '@container-new-message');
     meta.log('tests:gmail:secure compose button (mail.google.com)');
@@ -422,7 +430,7 @@ const tests = {
     await compose_page.goto(compose_url);
     await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
     await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
-    await meta.type(compose_page, '@input-to', 'human+test@flowcrypt.com');
+    await meta.type(compose_page, '@input-to', 'human+plain@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey: ' + meta.random());
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
@@ -446,6 +454,30 @@ const tests = {
     meta.log('tests:compose:from alias');
 
     await compose_page.close();
+
+    let settings_page = await meta.new_page(meta.url.settings('flowcrypt.compatibility@gmail.com'));
+    await meta.wait_and_click(settings_page, '@action-show-compose-page');
+    await meta.wait_all(settings_page, '@dialog');
+    let compose_frame = await meta.get_frame(settings_page, 'compose.htm');
+    await meta.wait_all(compose_frame, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait_all(compose_frame, meta._selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_frame, '@input-to', 'human+manualcopypgp@flowcrypt.com');
+    await meta.click(compose_frame, '@input-subject');
+    await meta.type(compose_frame, '@input-subject', 'Automated puppeteer test: manual key: ' + meta.random());
+    await meta.type(compose_frame, '@input-body', 'This is an automated puppeteer test with a manually copied pubkey');
+    await meta.wait_and_click(compose_frame, '@action-open-add-pubkey-dialog', {delay: 0.5});
+    await meta.wait_all(compose_frame, '@dialog');
+    let add_pubkey_dialog = await meta.get_frame(compose_frame, 'add_pubkey.htm');
+    await meta.wait_all(add_pubkey_dialog, '@input-select-copy-from');
+    await meta.select_option(add_pubkey_dialog, '@input-select-copy-from', 'human@flowcrypt.com');
+    await meta.wait_and_click(add_pubkey_dialog, '@action-add-pubkey');
+    await meta.wait_till_gone(compose_frame, '@dialog');
+    let alert = await meta.trigger_and_await_new_alert(settings_page, () => meta.wait_and_click(compose_frame, '@action-send', {delay: 2}));
+    await alert.accept();
+    await meta.wait_till_gone(settings_page, '@dialog');
+    meta.log('tests:compose:manually copied pubkey');
+
+    await settings_page.close();
   },
   close_overlay_dialog: async function(page: Page | Frame) {
     await meta.wait_and_click(page, '@dialog-close');
@@ -462,7 +494,7 @@ const tests = {
   },
   login_and_setup_tests: async function() {
     // setup flowcrypt.test.key.new.manual@gmail.com
-    const settings_page_0 = await meta.new_page(meta.url.settings);
+    const settings_page_0 = await meta.new_page(meta.url.settings());
     let oauth_popup_0 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_0, '@action-connect-to-gmail'));
     await tests.handle_gmail_oauth(oauth_popup_0, 'flowcrypt.test.key.new.manual@gmail.com', 'close');
     meta.log('tests:login_and_setup_tests:permissions page shows when oauth closed');
@@ -470,14 +502,14 @@ const tests = {
     meta.log('tests:login_and_setup_tests:permissions page can be closed');
     await settings_page_0.close();
     // open gmail, check that there is notification, close it, close gmail, reopen, check it's still there, proceed to set up through the link in it
-    let gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
+    let gmail_page_0 = await meta.new_page(meta.url.gmail('flowcrypt.test.key.new.manual@gmail.com'));
     await tests.wait_till_gmail_loaded(gmail_page_0);
     await meta.wait_all(gmail_page_0, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail setup notification shows up');
     await meta.wait_and_click(gmail_page_0, '@notification-setup-action-close', {confirm_gone: true});
     meta.log('tests:login_and_setup_tests:gmail setup notification goes away when close clicked');
     await gmail_page_0.close();
-    gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
+    gmail_page_0 = await meta.new_page(meta.url.gmail('flowcrypt.test.key.new.manual@gmail.com'));
     await tests.wait_till_gmail_loaded(gmail_page_0);
     await meta.wait_all(gmail_page_0, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail setup notification shows up again');
@@ -491,7 +523,7 @@ const tests = {
     await meta.wait_and_click(gmail_page_0, '@notification-successfully-setup-action-close', {confirm_gone: true});
     meta.log('tests:login_and_setup_tests:gmail success notification goes away after click');
     await gmail_page_0.close();
-    gmail_page_0 = await meta.new_page('https://mail.google.com/mail/u/0/#inbox');
+    gmail_page_0 = await meta.new_page(meta.url.gmail('flowcrypt.test.key.new.manual@gmail.com'));
     await tests.wait_till_gmail_loaded(gmail_page_0);
     await meta.not_present(gmail_page_0, ['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
     meta.log('tests:login_and_setup_tests:gmail success notification doesnt show up again');
@@ -499,17 +531,17 @@ const tests = {
     await new_settings_page.close();
 
     // log in flowcrypt.compatibility, test that setup prompts can be disabled. Then proceed to set up
-    const settings_page_1 = await meta.new_page(meta.url.settings);
+    const settings_page_1 = await meta.new_page(meta.url.settings());
     let oauth_popup_1 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_1, '@action-add-account'));
     await tests.handle_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com', 'close');
     await tests.close_overlay_dialog(settings_page_1);
-    let gmail_page_1 = await meta.new_page('https://mail.google.com/mail/u/1/#inbox');
+    let gmail_page_1 = await meta.new_page(meta.url.gmail('flowcrypt.compatibility@gmail.com'));
     await tests.wait_till_gmail_loaded(gmail_page_1);
     await meta.wait_all(gmail_page_1, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     await meta.wait_and_click(gmail_page_1, '@notification-setup-action-dismiss', {confirm_gone: true});
     meta.log('tests:login_and_setup_tests:gmail setup notification goes away when dismiss clicked');
     await gmail_page_1.close();
-    gmail_page_1 = await meta.new_page('https://mail.google.com/mail/u/1/#inbox');
+    gmail_page_1 = await meta.new_page(meta.url.gmail('flowcrypt.compatibility@gmail.com'));
     await tests.wait_till_gmail_loaded(gmail_page_1);
     await meta.not_present(gmail_page_1, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     await gmail_page_1.close();
@@ -536,7 +568,7 @@ const tests = {
     await settings_page_1.close();
   },
   minimal_setup: async function() {
-    const settings_page = await meta.new_page(meta.url.settings);
+    const settings_page = await meta.new_page(meta.url.settings());
     let oauth_popup = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page, '@action-connect-to-gmail'));
     await tests.handle_gmail_oauth(oauth_popup, 'flowcrypt.compatibility@gmail.com', 'approve');
     await tests.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {more_to_recover: true});
@@ -544,7 +576,7 @@ const tests = {
     meta.log(`tests:minimal_setup`);
   },
   settings_tests: async function () {
-    let settings_page = await meta.new_page(meta.url.settings);
+    let settings_page = await meta.new_page(meta.url.settings());
     await tests.test_feedback_form(settings_page);
     await tests.switch_settings_account(settings_page, 'flowcrypt.compatibility@gmail.com');
     await tests.test_pass_phrase(settings_page, meta._k('flowcrypt.wrong.passphrase').passphrase, false);
@@ -562,7 +594,7 @@ const tests = {
       await click();
       await meta.wait_and_click(security_frame, '@action-test-passphrase-successful-close');
     } else {
-      let dialog = await meta.trigger_and_await_new_dialog(settings_page, click);
+      let dialog = await meta.trigger_and_await_new_alert(settings_page, click);
       await dialog.accept();
       await tests.close_overlay_dialog(settings_page);
     }
@@ -579,7 +611,7 @@ const tests = {
     await meta.wait_all(page, '@dialog');
     let help_frame = await meta.get_frame(page, 'help.htm');
     await meta.wait_and_type(help_frame, '@input-feedback-message', 'testing help form from settings footer');
-    let dialog = await meta.trigger_and_await_new_dialog(page, () => meta.wait_and_click(help_frame, '@action-feedback-send'));
+    let dialog = await meta.trigger_and_await_new_alert(page, () => meta.wait_and_click(help_frame, '@action-feedback-send'));
     await dialog.accept();
     meta.log('tests:test_feedback_form:settings');
   },
@@ -591,15 +623,16 @@ const tests = {
     args: [
       '--disable-extensions-except=chrome',
       '--load-extension=chrome',
-      `--window-size=${meta.size.width},${meta.size.height+74}`,
+      `--window-size=${meta.size.width},${meta.size.height+136}`,
     ],
     headless: false, // to run headless-like: "xvfb-run node test.js"
     slowMo: 50,
+    // devtools: true,
   });
 
   // await tests.initial_page_shows();
   // await tests.minimal_setup();
-  // await tests.settings_tests();
+  // await tests.compose_tests();
 
   await tests.initial_page_shows();
   await tests.login_and_setup_tests();
