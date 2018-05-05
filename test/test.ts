@@ -430,7 +430,7 @@ const tests = {
     await compose_page.goto(compose_url);
     await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
     await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
-    await meta.type(compose_page, '@input-to', 'human+plain@flowcrypt.com');
+    await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: unknown pubkey');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a person without a pubkey');
@@ -466,6 +466,22 @@ const tests = {
     await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
     await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
     meta.log('tests:compose:with attachments');
+
+    await meta.sleep(1);
+    await compose_page.goto(compose_url);
+    await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+    await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
+    await meta.click(compose_page, '@input-subject');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files');
+    await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent with attachments to non-pgp');
+    file_input = await compose_page.$('input[type=file]');
+    await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
+    await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
+    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});
+    await meta.wait_and_click(compose_page, '@action-send', {delay: 1});  // in real usage, also have to click two times when using password - why?
+    await meta.wait_all(compose_page, meta._selector_test_state('closed')); // wait until page closed
+    meta.log('tests:compose:with attachments+nopgp');
 
     await compose_page.close();
 
@@ -636,7 +652,7 @@ const tests = {
     args: [
       '--disable-extensions-except=chrome',
       '--load-extension=chrome',
-      `--window-size=${meta.size.width},${meta.size.height+134}`,
+      `--window-size=${meta.size.width+10},${meta.size.height+132}`,
     ],
     headless: false, // to run headless-like: "xvfb-run node test.js"
     slowMo: 50,
