@@ -1,6 +1,6 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-interface FlowCryptWindow extends Window{
+interface FlowCryptWindow extends Window {
   tool: any,
   catcher: any,
   openpgp: any,
