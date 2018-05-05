@@ -473,7 +473,7 @@ const tests = {
     await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
     await meta.type(compose_page, '@input-to', 'human+nopgp@flowcrypt.com');
     await meta.click(compose_page, '@input-subject');
-    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files');
+    await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: with files + nonppg');
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent with attachments to non-pgp');
     file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
