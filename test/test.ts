@@ -394,7 +394,11 @@ const tests = {
     await compose_page.goto(compose_url);
     await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
     await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
-    await meta.type(compose_page, '@input-to', 'human@flowcrypt.com');
+    await meta.type(compose_page, '@input-to', 'human'); // test loading of contacts
+    await meta.wait_all(compose_page, ['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+    meta.log('tests:compose:can load contact based on name');
+    await meta.wait_and_click(compose_page, '@action-select-contact(human@flowcrypt.com)', {delay: 1}); // select a contact
+    meta.log('tests:compose:can choose found contact');
     await meta.click(compose_page, '@input-subject');
     await meta.type(compose_page, '@input-subject', 'Automated puppeteer test: freshly loaded pubkey: ' + meta.random());
     await meta.type(compose_page, '@input-body', 'This is an automated puppeteer test sent to a freshly loaded public key');

@@ -1106,7 +1106,7 @@
     if (renderable_contacts.length > 0 || contact_search_in_progress) {
       let ul_html = '';
       tool.each(renderable_contacts, function (i, contact) {
-        ul_html += '<li class="select_contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
+        ul_html += '<li class="select_contact" data-test="action-select-contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
         if (contact.has_pgp) {
           ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
         } else {
