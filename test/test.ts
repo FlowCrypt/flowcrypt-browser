@@ -8,13 +8,14 @@ interface Results { success: string[], error: string[], start: number}
 interface ConfigInterface {
   extension_id: string,
   auth: { google: {email: string, password: string, backup: string}[],},
-  keys: {title: string, passphrase: string, armored: string|null}[],
+  keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[],
   messages: {name: string, content: string[], params: string}[],
 }
 
 let browser: Browser;
 let results: Results = {success: [], error: [], start: Date.now()};
 let gmail_login_sequence : string[] = [];
+let assert = (received: any, expected: any, name: string) => { if(expected !== received) throw Error(`asserted ${name} to be "${String(expected)}" but got "${String(received)}"`); };
 
 const meta = {
   url: {
@@ -144,7 +145,7 @@ const meta = {
   is_checked: async function(page: Page|Frame, selector: string): Promise<boolean> {
     return await page.evaluate((s) => document.querySelector(s).checked, meta._selector(selector));
   },
-  read: async function (page: Page, selector: string) {
+  read: async function (page: Page|Frame, selector: string) {
     return await page.evaluate((s) => document.querySelector(s).innerText, meta._selector(selector));
   },
   select_option: async function (page: Page|Frame, selector: string, choice: string) {
@@ -645,19 +646,44 @@ const tests = {
   },
   settings_tests: async function () {
     let settings_page = await meta.new_page(meta.url.settings());
-    await tests.test_feedback_form(settings_page);
-    await tests.switch_settings_account(settings_page, 'flowcrypt.compatibility@gmail.com');
-    await tests.pass_phrase_test(settings_page, meta._k('flowcrypt.wrong.passphrase').passphrase, false);
-    await tests.pass_phrase_test(settings_page, meta._k('flowcrypt.compatibility.1pp1').passphrase, true);
+    await tests._settings_switch_account(settings_page, 'flowcrypt.compatibility@gmail.com');
+    await tests.settings_test_feedback_form(settings_page);
+    await tests.settings_pass_phrase_test(settings_page, meta._k('flowcrypt.wrong.passphrase').passphrase, false);
+    await tests.settings_pass_phrase_test(settings_page, meta._k('flowcrypt.compatibility.1pp1').passphrase, true);
+    await tests.settings_my_key_tests(settings_page, 'flowcrypt.compatibility.1pp1', 'button');
+    await tests.settings_my_key_tests(settings_page, 'flowcrypt.compatibility.1pp1', 'link');
     await settings_page.close();
     meta.log(`tests:settings:all`);
+  },
+  settings_my_key_tests: async function (settings_page: Page, expected_key_name: string, trigger: "button"|"link") {
+    await tests._toggle_settings_screen(settings_page, 'additional');
+    let my_key_frame = await tests._open_settings_page_and_await_new_frame(settings_page, trigger === 'button' ? '@action-open-pubkey-page' : '@action-show-key' , ['my_key.htm', 'placement=settings']);
+    await meta.sleep(1);
+    let k = meta._k(expected_key_name);
+    await meta.wait_all(my_key_frame, ['@content-key-words', '@content-armored-key']);
+    assert(await meta.read(my_key_frame, '@content-key-words'), k.keywords, 'my_key page keywords');
+    await meta.wait_and_click(my_key_frame, '@action-view-armored-key');
+    assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1, true, 'armored pubkey visible');
+    await meta.wait_and_click(my_key_frame, '@action-toggle-key-type(show private key)');
+    assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PRIVATE KEY BLOCK-----') !== -1, true, 'armored prv visible');
+    await meta.wait_and_click(my_key_frame, '@action-toggle-key-type(show public key)');
+    await meta.wait_and_click(my_key_frame, '@action-view-armored-key');
+    assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1, true, 'armored pubkey visible');
+    await meta.wait_and_click(settings_page, '@dialog-close');
+    await meta.wait_till_gone(settings_page, '@dialog');
+    await tests._toggle_settings_screen(settings_page, 'basic');
+    meta.log(`tests:settings_my_key_tests:${trigger}`);
+  },
+  _toggle_settings_screen: async function(settings_page: Page, to: "basic"|"additional") {
+    await meta.wait_and_click(settings_page, to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
+    await meta.wait_all(settings_page, to === 'basic' ? '@action-toggle-screen-additional' : '@action-toggle-screen-basic'); // wait for opposite button to show up
   },
   _open_settings_page_and_await_new_frame: async function (settings_page: Page, action_button_selector: string, frame_url_filter: string[]): Promise<Frame> {
     await meta.wait_and_click(settings_page, action_button_selector);
     await meta.wait_all(settings_page, '@dialog');
     return await meta.get_frame(settings_page, frame_url_filter); // placement=settings to differentiate from mini-security frame in settings
   },
-  pass_phrase_test: async function (settings_page: Page, passphrase: string, expect_match: boolean) {
+  settings_pass_phrase_test: async function (settings_page: Page, passphrase: string, expect_match: boolean) {
     let security_frame = await tests._open_settings_page_and_await_new_frame(settings_page, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await meta.wait_and_click(security_frame, '@action-test-passphrase-begin');
     await meta.wait_and_type(security_frame, '@input-test-passphrase', passphrase);
@@ -697,12 +723,12 @@ const tests = {
     await meta.wait_till_gone(settings_page, '@dialog');
     meta.log(`tests:change_pass_phrase_requirement:${outcome}`);
   },
-  switch_settings_account: async function (settings_page: Page, account_email: string) {
+  _settings_switch_account: async function (settings_page: Page, account_email: string) {
     await meta.wait_and_click(settings_page, '@action-toggle-accounts-menu');
     await meta.wait_and_click(settings_page, `@action-switch-to-account(${account_email})`);
     meta.log(`tests:switch_settings_account:${account_email}`);
   },
-  test_feedback_form: async function (page: Page) {
+  settings_test_feedback_form: async function (page: Page) {
     await meta.wait_and_click(page, '@action-open-modules-help');
     await meta.wait_all(page, '@dialog');
     let help_frame = await meta.get_frame(page, ['help.htm']);
@@ -728,7 +754,7 @@ const tests = {
 
   // await tests.initial_page_shows();
   // await tests.minimal_setup();
-  // await tests.compose_tests();
+  // await tests.settings_tests();
 
   await tests.initial_page_shows();
   await tests.login_and_setup_tests();
