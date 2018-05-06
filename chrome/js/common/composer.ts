@@ -1,45 +1,20 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-interface FlowCryptWindow extends Window {
-  tool: any,
-  catcher: any,
-  openpgp: any,
-  jQuery: JQuery,
-  flowcrypt_attach: any,
-  flowcrypt_storage: any,
-  lang: any,
-}
+/// <reference path="common.d.ts" />
 
-interface SelectorCacher {
-  cached: (name: string) => JQuery,
-  now: (name: string) => JQuery,
-}
-
-interface Contact {
-  email: string,
-  name: string | null,
-  pubkey: string,
-  has_pgp: boolean,
-  searchable: string[],
-  client: string | null,
-  attested: boolean | null,
-  fingerprint: string | null,
-  longid: string | null,
-  keywords: string | null,
-  pending_lookup: number,
-  last_use: number | null,
-  date: number | null, // todo - should be removed. email provider search seems to return this?
-}
+'use strict';
 
 class Subscription {
   active: boolean = null;
   method: "stripe" | "group" | "trial" = null;
 }
 
+
 (function() {
 
   let tool, catcher, openpgp, $, jQuery, flowcrypt_attach, storage;
   if(typeof exports !== 'object') {
+    // @ts-ignore;
     tool = (window as FlowCryptWindow).tool;
     catcher = (window as FlowCryptWindow).catcher;
     openpgp = (window as FlowCryptWindow).openpgp;
@@ -299,7 +274,7 @@ class Subscription {
         size_mb: 5,
         size: 5 * 1024 * 1024,
         count: 10,
-        oversize: function (combined_size) {
+        oversize: function () {
           let get_advanced = 'The files are over 5 MB. Advanced users can send files up to 25 MB.';
           if (!subscription.method) {
             get_advanced += '\n\nTry it free for 30 days.';
@@ -466,7 +441,7 @@ class Subscription {
           clearInterval(passphrase_interval);
           callback(passphrase);
         } else if (timeout_at && Date.now() > timeout_at) {
-          clearInterval();
+          clearInterval(passphrase_interval);
           callback(null);
         }
       });
