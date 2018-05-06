@@ -321,7 +321,7 @@ $('#step_3_manual input[name=input_backup_choice]').click(function () {
     $('.action_manual_backup').text('back up on paper');
     $('.action_manual_backup').removeClass('red').addClass('green');
   } else {
-    $('.action_manual_backup').text('test my luck without a backup');
+    $('.action_manual_backup').text('try my luck');
     $('.action_manual_backup').removeClass('green').addClass('red');
   }
 });
