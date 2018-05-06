@@ -1,5 +1,10 @@
 <div>
 
+<b>version 5.4.6 on May 6, 2018: Bugfixes</b>
+settings: design fixes
+composing: improved/fixed contact search
+internal: https warning when cross checking PKS fixed
+
 <b>version 5.4.5 on April 16, 2018: Error handling</b>
 composing: Footer settings screen overflowing fixed
 composing: stop including footer in email when trial ends
