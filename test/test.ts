@@ -756,7 +756,7 @@ const tests = {
     await meta.wait_and_click(page, '@action-open-modules-help');
     await meta.wait_all(page, '@dialog');
     let help_frame = await meta.get_frame(page, ['help.htm']);
-    await meta.wait_and_type(help_frame, '@input-feedback-message', 'testing help form from settings footer');
+    await meta.wait_and_type(help_frame, '@input-feedback-message', 'automated puppeteer test: help form from settings footer');
     let dialog = await meta.trigger_and_await_new_alert(page, () => meta.wait_and_click(help_frame, '@action-feedback-send'));
     await dialog.accept();
     meta.log('tests:test_feedback_form:settings');
