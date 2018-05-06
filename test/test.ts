@@ -8,7 +8,7 @@ interface Results { success: string[], error: string[], start: number}
 interface ConfigInterface {
   extension_id: string,
   auth: { google: {email: string, password: string, backup: string}[],},
-  keys: {title: string, passphrase: string, armored: string | null}[],
+  keys: {title: string, passphrase: string, armored: string|null}[],
   messages: {name: string, content: string[], params: string}[],
 }
 
@@ -18,8 +18,8 @@ let gmail_login_sequence : string[] = [];
 
 const meta = {
   url: {
-    settings: (account_email?: string | undefined) => `chrome/settings/index.htm?account_email=${account_email || ''}`,
-    gmail: function(account_email?: string | undefined) {
+    settings: (account_email?: string|undefined) => `chrome/settings/index.htm?account_email=${account_email || ''}`,
+    gmail: function(account_email?: string|undefined) {
       if(!account_email) {
         return 'https://mail.google.com/';
       }
@@ -49,7 +49,7 @@ const meta = {
   _selector_test_state: function (state: string) {
     return `[data-test-state="${state}"]`;
   },
-  _element: async function(page: Page | Frame, selector: string): Promise<ElementHandle | null> {
+  _element: async function(page: Page|Frame, selector: string): Promise<ElementHandle|null> {
     selector = meta._selector(selector);
     if(meta._is_xpath(selector)) {
       return (await page.$x(selector))[0];
@@ -69,7 +69,7 @@ const meta = {
   sleep: function(seconds: number) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   },
-  wait_all: async function (page: Page | Frame, selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}) {
+  wait_all: async function (page: Page|Frame, selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}) {
     let selectors = meta._selectors_as_processed_array(selector);
     for(let i = 0; i < selectors.length; i++) {
       if (meta._is_xpath(selectors[i])) {
@@ -79,7 +79,7 @@ const meta = {
       }
     }
   },
-  wait_any: async function (page: Page | Frame, selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}): Promise<ElementHandle> {
+  wait_any: async function (page: Page|Frame, selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}): Promise<ElementHandle> {
     timeout = Math.max(timeout, 1);
     let selectors = meta._selectors_as_processed_array(selector);
     while (timeout-- > 0) {
@@ -101,7 +101,7 @@ const meta = {
     }
     throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
   },
-  wait_till_gone: async function (page: Page | Frame, selector: string|string[], {timeout=5}: {timeout?: number}={timeout:5}) {
+  wait_till_gone: async function (page: Page|Frame, selector: string|string[], {timeout=5}: {timeout?: number}={timeout:5}) {
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
     while(seconds_left-- >= 0) {
@@ -116,17 +116,17 @@ const meta = {
     }
     throw Error(`meta.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   },
-  not_present: async function(page: Page | Frame, selector: string|string[]) {
+  not_present: async function(page: Page|Frame, selector: string|string[]) {
     await meta.wait_till_gone(page, selector, {timeout: 0});
   },
-  click: async function (page: Page | Frame, selector: string) {
+  click: async function (page: Page|Frame, selector: string) {
     let e = await meta._element(page, selector);
     if(!e) {
       throw Error(`Element not found: ${selector}`);
     }
     await e.click();
   },
-  type: async function (page: Page | Frame, selector: string, text: string, letter_by_letter=false) {
+  type: async function (page: Page|Frame, selector: string, text: string, letter_by_letter=false) {
     let e = await meta._element(page, selector);
     if(!e) {
       throw Error(`Element not found: ${selector}`);
@@ -138,21 +138,24 @@ const meta = {
       await e.type(text.substring(text.length - 10, text.length));
     }
   },
-  value: async function(page: Page | Frame, selector: string) {
+  value: async function(page: Page|Frame, selector: string): Promise<string> {
     return await page.evaluate((s) => { let e = document.querySelector(s); if(e.tagName==='SELECT') {return e.options[e.selectedIndex].value} else {return e.value} }, meta._selector(selector));
+  },
+  is_checked: async function(page: Page|Frame, selector: string): Promise<boolean> {
+    return await page.evaluate((s) => document.querySelector(s).checked, meta._selector(selector));
   },
   read: async function (page: Page, selector: string) {
     return await page.evaluate((s) => document.querySelector(s).innerText, meta._selector(selector));
   },
-  select_option: async function (page: Page | Frame, selector: string, choice: string) {
+  select_option: async function (page: Page|Frame, selector: string, choice: string) {
     await page.evaluate((s, v) => jQuery(s).val(v).trigger('change'), meta._selector(selector), choice);
   },
-  wait_and_type: async function (page: Page | Frame, selector: string, text: string, {delay=0.1}: {delay?: number}={}) {
+  wait_and_type: async function (page: Page|Frame, selector: string, text: string, {delay=0.1}: {delay?: number}={}) {
     await meta.wait_all(page, selector);
     await meta.sleep(delay);
     await meta.type(page, selector, text);
   },
-  wait_and_click: async function (page: Page | Frame, selector: string, {delay=0.1, confirm_gone=false}: {delay?: number, confirm_gone?: boolean}={}) {
+  wait_and_click: async function (page: Page|Frame, selector: string, {delay=0.1, confirm_gone=false}: {delay?: number, confirm_gone?: boolean}={}) {
     await meta.wait_all(page, selector);
     await meta.sleep(delay);
     await meta.click(page, selector);
@@ -160,7 +163,7 @@ const meta = {
       await meta.wait_till_gone(page, selector);
     }
   },
-  log: (text: string, error?: string | undefined) => {
+  log: (text: string, error?: string|undefined) => {
     if(!error) {
       console.log(`[ok] ${text}`);
       results.success.push(text);
@@ -210,11 +213,10 @@ const meta = {
     }
     return page;
   },
-  get_frame: async function(page: Page | Frame, url: string|string[], {sleep=1}={sleep: 1}): Promise<Frame> {
+  get_frame: async function(page: Page|Frame, url_matchables: string[], {sleep=1}={sleep: 1}): Promise<Frame> {
     if(sleep) {
       await meta.sleep(sleep);
     }
-    let url_matchables = Array.isArray(url) ? url: [url];
     let frames;
     if(page.constructor.name === 'Page') {
       frames = await (page as Page).frames();
@@ -247,7 +249,7 @@ const meta = {
 
 const tests = {
   oauth_password_delay: 2,
-  handle_gmail_oauth: async function(oauth_page: Page, account_email: string, action: "close" | "deny" | "approve") {
+  handle_gmail_oauth: async function(oauth_page: Page, account_email: string, action: "close"|"deny"|"approve") {
     let selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
@@ -328,7 +330,7 @@ const tests = {
     await meta.wait_and_click(settings_page, '@action-step4done-account-settings');
     meta.log(`tests:setup_manual_enter:${key_title}:used_pgp_before=${used_pgp_before},submit_pubkey=${submit_pubkey},fix_key=${fix_key}`);
   },
-  setup_manual_create: async function(settings_page: Page | Frame, key_title: string, backup: "none" | "email" | "file", {used_pgp_before=false, submit_pubkey=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) {
+  setup_manual_create: async function(settings_page: Page|Frame, key_title: string, backup: "none"|"email"|"file", {used_pgp_before=false, submit_pubkey=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) {
     let k = meta._k(key_title);
     if(used_pgp_before) {
       await meta.wait_and_click(settings_page, '@action-step0foundkey-choose-manual-create');
@@ -398,57 +400,67 @@ const tests = {
     await gmail_page.close();
   },
   compose_tests: async function() {
+    let k = meta._k('flowcrypt.compatibility.1pp1');
     let compose_page = await meta.new_page();
     let compose_url = meta.extension_url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com');
 
-    async function open_compose_page_and_wait_till_ready(cp: Page) {
-      await cp.goto(compose_url);
-      await meta.wait_all(cp, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-      await meta.wait_all(cp, meta._selector_test_state('ready')); // wait until page ready  
+    async function standalone_open_compose_page_and_wait_till_ready(_compose_page: Page) {
+      await _compose_page.goto(compose_url);
+      await meta.wait_all(_compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+      await meta.wait_all(_compose_page, meta._selector_test_state('ready')); // wait until page ready
     }
 
-    async function change_default_sending_address(cp: Page, new_default: string) {
-      await meta.wait_and_click(cp, '@action-open-sending-address-settings');
-      await meta.wait_all(cp, '@dialog');
-      let sending_address_frame = await meta.get_frame(cp, 'sending_address.htm');
+    async function settings_open_compose_page_and_wait_till_ready(_settings_page: Page) : Promise<Page|Frame> {
+      await meta.wait_and_click(_settings_page, '@action-show-compose-page');
+      await meta.wait_all(_settings_page, '@dialog');
+      let compose_frame = await meta.get_frame(_settings_page, ['compose.htm']);
+      await meta.wait_all(compose_frame, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+      await meta.wait_all(compose_frame, meta._selector_test_state('ready')); // wait until page ready
+      return compose_frame;
+    }
+
+    async function change_default_sending_address(_compose_page: Page, new_default: string) {
+      await meta.wait_and_click(_compose_page, '@action-open-sending-address-settings');
+      await meta.wait_all(_compose_page, '@dialog');
+      let sending_address_frame = await meta.get_frame(_compose_page, ['sending_address.htm']);
       await meta.wait_and_click(sending_address_frame, `@action-choose-address(${new_default})`);
       await meta.sleep(0.5); // page reload
       await meta.wait_and_click(sending_address_frame, '@action-close-sending-address-settings');
-      await meta.wait_till_gone(cp, '@dialog');
+      await meta.wait_till_gone(_compose_page, '@dialog');
     }
 
-    async function fill_message(cp: Page | Frame, to: string | null, subject: string) {
+    async function fill_message(_compose_page_or_frame: Page|Frame, to: string|null, subject: string) {
       if(to)
-        await meta.type(cp, '@input-to', to);
-      await meta.click(cp, '@input-subject');
-      await meta.type(cp, '@input-subject', `Automated puppeteer test: ${subject}`);
-      await meta.type(cp, '@input-body', `This is an automated puppeteer test: ${subject}`);
+        await meta.type(_compose_page_or_frame, '@input-to', to);
+      await meta.click(_compose_page_or_frame, '@input-subject');
+      await meta.type(_compose_page_or_frame, '@input-subject', `Automated puppeteer test: ${subject}`);
+      await meta.type(_compose_page_or_frame, '@input-body', `This is an automated puppeteer test: ${subject}`);
     }
 
-    async function send(cp: Page | Frame, password?: string | undefined) {
-      if(password)
-        await meta.wait_and_type(compose_page, '@input-password', 'test-pass');
-      await meta.wait_and_click(cp, '@action-send', {delay: 0.5});
-      if(password)
-        await meta.wait_and_click(compose_page, '@action-send', {delay: 0.5});  // in real usage, also have to click two times when using password - why?
-      await meta.wait_all(cp, meta._selector_test_state('closed')); // wait until page closed
+    async function send(_compose_page: Page, password?: string|undefined) {
+      if(password) {
+        await meta.wait_and_type(_compose_page, '@input-password', 'test-pass');
+        await meta.wait_and_click(_compose_page, '@action-send', {delay: 0.5}); // in real usage, also have to click two times when using password - why?
+      }
+      await meta.wait_and_click(_compose_page, '@action-send', {delay: 0.5});
+      await meta.wait_all(_compose_page, meta._selector_test_state('closed')); // wait until page closed
     }
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     let currently_selected_from = await meta.value(compose_page, '@input-from');
     if(currently_selected_from !== 'flowcrypt.compatibility@gmail.com')
       throw Error('did not remember selected from addr: flowcrypt.compatibility@gmail.com');
     await change_default_sending_address(compose_page, 'flowcryptcompatibility@gmail.com');
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     currently_selected_from = await meta.value(compose_page, '@input-from');
     if(currently_selected_from !== 'flowcryptcompatibility@gmail.com')
       throw Error('did not remember selected from addr: flowcryptcompatibility@gmail.com');
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
     await meta.log('tests:compose:can set and remember default send address');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await meta.type(compose_page, '@input-to', 'human'); // test loading of contacts
     await meta.wait_all(compose_page, ['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     meta.log('tests:compose:can load contact based on name');
@@ -458,54 +470,50 @@ const tests = {
     await send(compose_page);
     meta.log('tests:compose:fresh pubkey');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human@flowcrypt.com', 'reused pubkey');
     await send(compose_page);
     meta.log('tests:compose:reused pubkey');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
     await send(compose_page, 'test-pass');
     meta.log('tests:compose:unknown pubkey');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await meta.select_option(compose_page, '@input-from', 'flowcryptcompatibility@gmail.com');
     await fill_message(compose_page, 'human@flowcrypt.com', 'from alias');
     await send(compose_page);
     meta.log('tests:compose:from alias');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human@flowcrypt.com', 'with files');
     let file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
     await send(compose_page);
     meta.log('tests:compose:with attachments');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
     await send(compose_page, 'test-pass');
     meta.log('tests:compose:with attachments+nopgp');
 
-    await open_compose_page_and_wait_till_ready(compose_page);
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
     await fill_message(compose_page, 'human@flowcrypt.com', 'signed message');
     await meta.click(compose_page, '@action-switch-to-sign');
     await send(compose_page);
     meta.log('tests:compose:signed message');
 
-    await compose_page.close();
-
     let settings_page = await meta.new_page(meta.url.settings('flowcrypt.compatibility@gmail.com'));
-    await meta.wait_and_click(settings_page, '@action-show-compose-page');
-    await meta.wait_all(settings_page, '@dialog');
-    let compose_frame = await meta.get_frame(settings_page, 'compose.htm');
-    await meta.wait_all(compose_frame, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await meta.wait_all(compose_frame, meta._selector_test_state('ready')); // wait until page ready
+    let compose_frame : Page|Frame;
+
+    compose_frame = await settings_open_compose_page_and_wait_till_ready(settings_page);
     await fill_message(compose_frame, 'human+manualcopypgp@flowcrypt.com', 'manual copied key');
     await meta.wait_and_click(compose_frame, '@action-open-add-pubkey-dialog', {delay: 0.5});
     await meta.wait_all(compose_frame, '@dialog');
-    let add_pubkey_dialog = await meta.get_frame(compose_frame, 'add_pubkey.htm');
+    let add_pubkey_dialog = await meta.get_frame(compose_frame, ['add_pubkey.htm']);
     await meta.wait_all(add_pubkey_dialog, '@input-select-copy-from');
     await meta.select_option(add_pubkey_dialog, '@input-select-copy-from', 'human@flowcrypt.com');
     await meta.wait_and_click(add_pubkey_dialog, '@action-add-pubkey');
@@ -514,9 +522,32 @@ const tests = {
     await alert.accept();
     await meta.wait_till_gone(settings_page, '@dialog');
     meta.log('tests:compose:manually copied pubkey');
+
+    await tests.change_pass_phrase_requirement(settings_page, k.passphrase, 'session');
+
+    compose_frame = await settings_open_compose_page_and_wait_till_ready(settings_page);
+    await fill_message(compose_frame, 'human@flowcrypt.com', 'sign with entered pass phrase');
+    await meta.wait_and_click(compose_frame, '@action-switch-to-sign', {delay: 0.5});
+    await meta.wait_and_click(compose_frame, '@action-send');
+    let passphrase_dialog = await meta.get_frame(settings_page, ['passphrase.htm']);
+    await meta.wait_and_type(passphrase_dialog, '@input-pass-phrase', k.passphrase);
+    alert = await meta.trigger_and_await_new_alert(settings_page, () => meta.wait_and_click(passphrase_dialog, '@action-confirm-pass-phrase-entry')); // confirming pass phrase will send the message
+    await alert.accept(); // toto - could be error alert for all I know - should distinguish
+    await meta.wait_till_gone(settings_page, '@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
+    meta.log('tests:compose:signed with entered pass phrase');
+
+    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    await fill_message(compose_page, 'human@flowcrypt.com', 'signed message');
+    await meta.click(compose_page, '@action-switch-to-sign'); // should remember pass phrase in session from previous entry
+    await send(compose_page);
+    meta.log('tests:compose:signed message with pass phrase in session');
+
+    await tests.change_pass_phrase_requirement(settings_page, k.passphrase, 'storage');
+
+    await compose_page.close();
     await settings_page.close();
   },
-  close_overlay_dialog: async function(page: Page | Frame) {
+  close_overlay_dialog: async function(page: Page|Frame) {
     await meta.wait_and_click(page, '@dialog-close');
   },
   initial_page_shows: async function() {
@@ -616,14 +647,18 @@ const tests = {
     let settings_page = await meta.new_page(meta.url.settings());
     await tests.test_feedback_form(settings_page);
     await tests.switch_settings_account(settings_page, 'flowcrypt.compatibility@gmail.com');
-    await tests.test_pass_phrase(settings_page, meta._k('flowcrypt.wrong.passphrase').passphrase, false);
-    await tests.test_pass_phrase(settings_page, meta._k('flowcrypt.compatibility.1pp1').passphrase, true);
+    await tests.pass_phrase_test(settings_page, meta._k('flowcrypt.wrong.passphrase').passphrase, false);
+    await tests.pass_phrase_test(settings_page, meta._k('flowcrypt.compatibility.1pp1').passphrase, true);
     await settings_page.close();
     meta.log(`tests:settings:all`);
   },
-  test_pass_phrase: async function (settings_page: Page, passphrase: string, expect_match: boolean) {
-    await meta.wait_and_click(settings_page, '@action-open-security-page');
-    let security_frame = await meta.get_frame(settings_page, ['security.htm', 'placement=settings']); // placement=settings to differentiate from mini-security frame in settings
+  _open_settings_page_and_await_new_frame: async function (settings_page: Page, action_button_selector: string, frame_url_filter: string[]): Promise<Frame> {
+    await meta.wait_and_click(settings_page, action_button_selector);
+    await meta.wait_all(settings_page, '@dialog');
+    return await meta.get_frame(settings_page, frame_url_filter); // placement=settings to differentiate from mini-security frame in settings
+  },
+  pass_phrase_test: async function (settings_page: Page, passphrase: string, expect_match: boolean) {
+    let security_frame = await tests._open_settings_page_and_await_new_frame(settings_page, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await meta.wait_and_click(security_frame, '@action-test-passphrase-begin');
     await meta.wait_and_type(security_frame, '@input-test-passphrase', passphrase);
     let click = () => meta.wait_and_click(security_frame, '@action-test-passphrase');
@@ -638,6 +673,30 @@ const tests = {
     await meta.wait_till_gone(settings_page, '@dialog');
     meta.log(`tests:test_pass_phrase:expect-match-${expect_match}`);
   },
+  change_pass_phrase_requirement: async function (settings_page: Page, passphrase: string, outcome: "session"|"storage") {
+    let security_frame = await tests._open_settings_page_and_await_new_frame(settings_page, '@action-open-security-page', ['security.htm', 'placement=settings']);
+    await meta.wait_all(security_frame, '@input-toggle-require-pass-phrase');
+    await meta.sleep(1); // wait for form to init / fill
+    let require_pass_phrase_is_checked = await meta.is_checked(security_frame, '@input-toggle-require-pass-phrase');
+    if(require_pass_phrase_is_checked && outcome === 'session')
+      throw Error('change_pass_phrase_requirement: already checked to be in session only');
+    if(!require_pass_phrase_is_checked && outcome === 'storage')
+      throw Error('change_pass_phrase_requirement: already checked to be in storage');
+    await meta.click(security_frame, '@input-toggle-require-pass-phrase');
+    await meta.wait_and_type(security_frame, '@input-confirm-pass-phrase', passphrase);
+    await meta.wait_and_click(security_frame, '@action-confirm-pass-phrase-requirement-change');
+    await meta.sleep(1); // frame will now reload
+    await meta.wait_all(security_frame, '@input-toggle-require-pass-phrase');
+    await meta.sleep(1); // wait to init
+    require_pass_phrase_is_checked = await meta.is_checked(security_frame, '@input-toggle-require-pass-phrase');
+    if(!require_pass_phrase_is_checked && outcome === 'session')
+      throw Error('change_pass_phrase_requirement: did not remember to only save in sesion');
+    if(require_pass_phrase_is_checked && outcome === 'storage')
+      throw Error('change_pass_phrase_requirement: did not remember to save in storage');
+    await meta.wait_and_click(settings_page, '@dialog-close');
+    await meta.wait_till_gone(settings_page, '@dialog');
+    meta.log(`tests:change_pass_phrase_requirement:${outcome}`);
+  },
   switch_settings_account: async function (settings_page: Page, account_email: string) {
     await meta.wait_and_click(settings_page, '@action-toggle-accounts-menu');
     await meta.wait_and_click(settings_page, `@action-switch-to-account(${account_email})`);
@@ -646,7 +705,7 @@ const tests = {
   test_feedback_form: async function (page: Page) {
     await meta.wait_and_click(page, '@action-open-modules-help');
     await meta.wait_all(page, '@dialog');
-    let help_frame = await meta.get_frame(page, 'help.htm');
+    let help_frame = await meta.get_frame(page, ['help.htm']);
     await meta.wait_and_type(help_frame, '@input-feedback-message', 'testing help form from settings footer');
     let dialog = await meta.trigger_and_await_new_alert(page, () => meta.wait_and_click(help_frame, '@action-feedback-send'));
     await dialog.accept();

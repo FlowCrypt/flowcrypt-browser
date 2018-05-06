@@ -37,13 +37,13 @@
       <label for="hide_message_password"><input type="checkbox" id="hide_message_password"> Hide one-time message passwords when composing</label>
     </div>
     <div class="line passhprase_checkbox_container">
-      <label for="passphrase_to_open_email"><input type="checkbox" id="passphrase_to_open_email"> Require pass phrase to open encrypted email</label>
+      <label for="passphrase_to_open_email"><input type="checkbox" id="passphrase_to_open_email" data-test="input-toggle-require-pass-phrase"> Require pass phrase to open encrypted email</label>
     </div>
     <div class="line passphrase_entry_container" style="display: none;">
-      <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm" />
+      <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm" data-test="input-confirm-pass-phrase" />
     </div>
     <div class="line passphrase_entry_container" style="display: none;">
-      <div class="button green confirm_passphrase_requirement_change">continue</div>
+      <div class="button green confirm_passphrase_requirement_change" data-test="action-confirm-pass-phrase-requirement-change">continue</div>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <div class="button gray cancel_passphrase_requirement_change">cancel</div>
     </div>
