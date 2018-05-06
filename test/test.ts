@@ -548,9 +548,6 @@ const tests = {
     await compose_page.close();
     await settings_page.close();
   },
-  close_overlay_dialog: async function(page: Page|Frame) {
-    await meta.wait_and_click(page, '@dialog-close');
-  },
   initial_page_shows: async function() {
     let initial_page = await meta.trigger_and_await_new_page(browser);
     await meta.wait_all(initial_page, '@initial-page'); // first page opened by flowcrypt
@@ -567,7 +564,7 @@ const tests = {
     let oauth_popup_0 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_0, '@action-connect-to-gmail'));
     await tests.handle_gmail_oauth(oauth_popup_0, 'flowcrypt.test.key.new.manual@gmail.com', 'close');
     meta.log('tests:login_and_setup_tests:permissions page shows when oauth closed');
-    await tests.close_overlay_dialog(settings_page_0); // it is complaining that the oauth window was closed
+    await tests._close_settings_page_dialog(settings_page_0); // it is complaining that the oauth window was closed
     meta.log('tests:login_and_setup_tests:permissions page can be closed');
     await settings_page_0.close();
     // open gmail, check that there is notification, close it, close gmail, reopen, check it's still there, proceed to set up through the link in it
@@ -603,7 +600,7 @@ const tests = {
     const settings_page_1 = await meta.new_page(meta.url.settings());
     let oauth_popup_1 = await meta.trigger_and_await_new_page(browser, () => meta.wait_and_click(settings_page_1, '@action-add-account'));
     await tests.handle_gmail_oauth(oauth_popup_1, 'flowcrypt.compatibility@gmail.com', 'close');
-    await tests.close_overlay_dialog(settings_page_1);
+    await tests._close_settings_page_dialog(settings_page_1);
     let gmail_page_1 = await meta.new_page(meta.url.gmail('flowcrypt.compatibility@gmail.com'));
     await tests.wait_till_gmail_loaded(gmail_page_1);
     await meta.wait_all(gmail_page_1, ['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
@@ -644,6 +641,15 @@ const tests = {
     await settings_page.close();
     meta.log(`tests:minimal_setup`);
   },
+  settings_contacts: async function(settings_page: Page) {
+    await tests._toggle_settings_screen(settings_page, 'additional');
+    let contacts_frame = await tests._open_settings_page_and_await_new_frame(settings_page, '@action-open-contacts-page' , ['contacts.htm', 'placement=settings']);
+    await meta.wait_all(contacts_frame, '@page-contacts');
+    assert((await meta.read(contacts_frame, '@page-contacts')).indexOf('flowcrypt.compatibility@gmail.com') !== -1, true, 'flowcrypt.compatibility@gmail.com listed as a contact');
+    assert((await meta.read(contacts_frame, '@page-contacts')).indexOf('flowcryptcompatibility@gmail.com') !== -1, true, 'flowcryptcompatibility@gmail.com listed as a contact');
+    await tests._close_settings_page_dialog(settings_page);
+    await tests._toggle_settings_screen(settings_page, 'basic');
+  },
   settings_tests: async function () {
     let settings_page = await meta.new_page(meta.url.settings());
     await tests._settings_switch_account(settings_page, 'flowcrypt.compatibility@gmail.com');
@@ -652,8 +658,13 @@ const tests = {
     await tests.settings_pass_phrase_test(settings_page, meta._k('flowcrypt.compatibility.1pp1').passphrase, true);
     await tests.settings_my_key_tests(settings_page, 'flowcrypt.compatibility.1pp1', 'button');
     await tests.settings_my_key_tests(settings_page, 'flowcrypt.compatibility.1pp1', 'link');
+    await tests.settings_contacts(settings_page);
     await settings_page.close();
     meta.log(`tests:settings:all`);
+  },
+  _close_settings_page_dialog: async function(settings_page: Page) {
+    await meta.wait_and_click(settings_page, '@dialog-close');
+    await meta.wait_till_gone(settings_page, '@dialog');
   },
   settings_my_key_tests: async function (settings_page: Page, expected_key_name: string, trigger: "button"|"link") {
     await tests._toggle_settings_screen(settings_page, 'additional');
@@ -669,8 +680,7 @@ const tests = {
     await meta.wait_and_click(my_key_frame, '@action-toggle-key-type(show public key)');
     await meta.wait_and_click(my_key_frame, '@action-view-armored-key');
     assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1, true, 'armored pubkey visible');
-    await meta.wait_and_click(settings_page, '@dialog-close');
-    await meta.wait_till_gone(settings_page, '@dialog');
+    await tests._close_settings_page_dialog(settings_page);
     await tests._toggle_settings_screen(settings_page, 'basic');
     meta.log(`tests:settings_my_key_tests:${trigger}`);
   },
@@ -694,7 +704,7 @@ const tests = {
     } else {
       let dialog = await meta.trigger_and_await_new_alert(settings_page, click);
       await dialog.accept();
-      await tests.close_overlay_dialog(settings_page);
+      await tests._close_settings_page_dialog(settings_page);
     }
     await meta.wait_till_gone(settings_page, '@dialog');
     meta.log(`tests:test_pass_phrase:expect-match-${expect_match}`);
@@ -719,8 +729,7 @@ const tests = {
       throw Error('change_pass_phrase_requirement: did not remember to only save in sesion');
     if(require_pass_phrase_is_checked && outcome === 'storage')
       throw Error('change_pass_phrase_requirement: did not remember to save in storage');
-    await meta.wait_and_click(settings_page, '@dialog-close');
-    await meta.wait_till_gone(settings_page, '@dialog');
+    await tests._close_settings_page_dialog(settings_page);
     meta.log(`tests:change_pass_phrase_requirement:${outcome}`);
   },
   _settings_switch_account: async function (settings_page: Page, account_email: string) {
