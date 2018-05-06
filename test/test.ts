@@ -402,16 +402,18 @@ const tests = {
   },
   compose_tests: async function() {
     let k = meta._k('flowcrypt.compatibility.1pp1');
-    let compose_page = await meta.new_page();
     let compose_url = meta.extension_url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com');
+    let compose_page: Page;
 
-    async function standalone_open_compose_page_and_wait_till_ready(_compose_page: Page) {
-      await _compose_page.goto(compose_url);
-      await meta.wait_all(_compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
-      await meta.wait_all(_compose_page, meta._selector_test_state('ready')); // wait until page ready
+    async function open_compose_page_standalone(): Promise<Page> {
+      let compose_page = await meta.new_page();
+      await compose_page.goto(compose_url);
+      await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
+      await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
+      return compose_page;
     }
 
-    async function settings_open_compose_page_and_wait_till_ready(_settings_page: Page) : Promise<Page|Frame> {
+    async function open_compose_page_settings(_settings_page: Page) : Promise<Frame> {
       await meta.wait_and_click(_settings_page, '@action-show-compose-page');
       await meta.wait_all(_settings_page, '@dialog');
       let compose_frame = await meta.get_frame(_settings_page, ['compose.htm']);
@@ -438,79 +440,83 @@ const tests = {
       await meta.type(_compose_page_or_frame, '@input-body', `This is an automated puppeteer test: ${subject}`);
     }
 
-    async function send(_compose_page: Page, password?: string|undefined) {
+    async function send_and_close(_compose_page: Page, password?: string|undefined) {
       if(password) {
         await meta.wait_and_type(_compose_page, '@input-password', 'test-pass');
         await meta.wait_and_click(_compose_page, '@action-send', {delay: 0.5}); // in real usage, also have to click two times when using password - why?
       }
       await meta.wait_and_click(_compose_page, '@action-send', {delay: 0.5});
-      await meta.wait_all(_compose_page, meta._selector_test_state('closed')); // wait until page closed
+      await meta.wait_all(_compose_page, meta._selector_test_state('closed'), {timeout: 60}); // wait until page closed
+      await _compose_page.close();
     }
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    await compose_page.close();
+    compose_page = await open_compose_page_standalone();
     let currently_selected_from = await meta.value(compose_page, '@input-from');
     if(currently_selected_from !== 'flowcrypt.compatibility@gmail.com')
       throw Error('did not remember selected from addr: flowcrypt.compatibility@gmail.com');
     await change_default_sending_address(compose_page, 'flowcryptcompatibility@gmail.com');
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    await compose_page.close();
+    compose_page = await open_compose_page_standalone();
     currently_selected_from = await meta.value(compose_page, '@input-from');
     if(currently_selected_from !== 'flowcryptcompatibility@gmail.com')
       throw Error('did not remember selected from addr: flowcryptcompatibility@gmail.com');
     await change_default_sending_address(compose_page, 'flowcrypt.compatibility@gmail.com');
+    await compose_page.close();
     await meta.log('tests:compose:can set and remember default send address');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await meta.type(compose_page, '@input-to', 'human'); // test loading of contacts
     await meta.wait_all(compose_page, ['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     meta.log('tests:compose:can load contact based on name');
     await meta.wait_and_click(compose_page, '@action-select-contact(human@flowcrypt.com)', {delay: 1}); // select a contact
     meta.log('tests:compose:can choose found contact');
     await fill_message(compose_page, null, 'freshly loaded pubkey');
-    await send(compose_page);
+    await send_and_close(compose_page);
     meta.log('tests:compose:fresh pubkey');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await fill_message(compose_page, 'human@flowcrypt.com', 'reused pubkey');
-    await send(compose_page);
+    await send_and_close(compose_page);
     meta.log('tests:compose:reused pubkey');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
-    await send(compose_page, 'test-pass');
+    await send_and_close(compose_page, 'test-pass');
     meta.log('tests:compose:unknown pubkey');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await meta.select_option(compose_page, '@input-from', 'flowcryptcompatibility@gmail.com');
     await fill_message(compose_page, 'human@flowcrypt.com', 'from alias');
-    await send(compose_page);
+    await send_and_close(compose_page);
     meta.log('tests:compose:from alias');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await fill_message(compose_page, 'human@flowcrypt.com', 'with files');
     let file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-    await send(compose_page);
+    await send_and_close(compose_page);
     meta.log('tests:compose:with attachments');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     file_input = await compose_page.$('input[type=file]');
     await file_input!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-    await send(compose_page, 'test-pass');
+    await send_and_close(compose_page, 'test-pass');
     meta.log('tests:compose:with attachments+nopgp');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await fill_message(compose_page, 'human@flowcrypt.com', 'signed message');
     await meta.click(compose_page, '@action-switch-to-sign');
-    await send(compose_page);
+    await send_and_close(compose_page);
     meta.log('tests:compose:signed message');
 
     let settings_page = await meta.new_page(meta.url.settings('flowcrypt.compatibility@gmail.com'));
     let compose_frame : Page|Frame;
 
-    compose_frame = await settings_open_compose_page_and_wait_till_ready(settings_page);
+    compose_frame = await open_compose_page_settings(settings_page);
     await fill_message(compose_frame, 'human+manualcopypgp@flowcrypt.com', 'manual copied key');
     await meta.wait_and_click(compose_frame, '@action-open-add-pubkey-dialog', {delay: 0.5});
     await meta.wait_all(compose_frame, '@dialog');
@@ -526,7 +532,7 @@ const tests = {
 
     await tests.change_pass_phrase_requirement(settings_page, k.passphrase, 'session');
 
-    compose_frame = await settings_open_compose_page_and_wait_till_ready(settings_page);
+    compose_frame = await open_compose_page_settings(settings_page);
     await fill_message(compose_frame, 'human@flowcrypt.com', 'sign with entered pass phrase');
     await meta.wait_and_click(compose_frame, '@action-switch-to-sign', {delay: 0.5});
     await meta.wait_and_click(compose_frame, '@action-send');
@@ -537,15 +543,14 @@ const tests = {
     await meta.wait_till_gone(settings_page, '@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
     meta.log('tests:compose:signed with entered pass phrase');
 
-    await standalone_open_compose_page_and_wait_till_ready(compose_page);
+    compose_page = await open_compose_page_standalone();
     await fill_message(compose_page, 'human@flowcrypt.com', 'signed message pp in session');
     await meta.click(compose_page, '@action-switch-to-sign'); // should remember pass phrase in session from previous entry
-    await send(compose_page);
-    meta.log('tests:compose:signed message with pass phrase in session');
+    await send_and_close(compose_page);
+    meta.log('tests:compose:signed message with pp in session');
 
     await tests.change_pass_phrase_requirement(settings_page, k.passphrase, 'storage');
 
-    await compose_page.close();
     await settings_page.close();
   },
   initial_page_shows: async function() {
