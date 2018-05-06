@@ -537,7 +537,7 @@ const tests = {
     meta.log('tests:compose:signed with entered pass phrase');
 
     await standalone_open_compose_page_and_wait_till_ready(compose_page);
-    await fill_message(compose_page, 'human@flowcrypt.com', 'signed message');
+    await fill_message(compose_page, 'human@flowcrypt.com', 'signed message pp in session');
     await meta.click(compose_page, '@action-switch-to-sign'); // should remember pass phrase in session from previous entry
     await send(compose_page);
     meta.log('tests:compose:signed message with pass phrase in session');
