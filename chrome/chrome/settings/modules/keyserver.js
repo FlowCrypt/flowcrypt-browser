@@ -15,7 +15,7 @@ $('.email-address').text(url_params.account_email);
 $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
 window.flowcrypt_storage.get(url_params.account_email, ['attests_processed', 'attests_requested', 'addresses'], storage => {
-  tool.diagnose.keyserver_pubkeys(url_params.account_email, function (diagnosis) {
+  tool.api.attester.diagnose_keyserver_pubkeys(url_params.account_email, function (diagnosis) {
     if(diagnosis) {
       $('.summary').html('');
       render_diagnosis(diagnosis, storage.attests_requested, storage.attests_processed);

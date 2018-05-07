@@ -5,7 +5,7 @@
 /// <reference path="common.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 
-let openpgp = (window as FlowCryptWindow).openpgp;
+declare var openpgp; // todo - how to make this understand openpgp types from above?
 let storage = (window as FlowCryptWindow).flowcrypt_storage;
 
 // if(typeof exports === 'object') {
@@ -14,8 +14,7 @@ let storage = (window as FlowCryptWindow).flowcrypt_storage;
 //   storage = require('js/storage').legacy;
 // }
 
-
-let tool = window['tool'] = {
+let tool = {
   str: {
     parse_email: (email_string) => {
       if(tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
@@ -709,274 +708,6 @@ let tool = window['tool'] = {
       }
     },
   },
-  ui: {
-    spinner: (color, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
-      let path = '/img/svgs/spinner-' + color + '-small.svg';
-      let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
-      return `<i class="${placeholder_class}"><img src="${url}" /></i>`;
-    },
-    passphrase_toggle: (pass_phrase_input_ids, force_initial_show_or_hide) => {
-      let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
-      let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-      storage.get(null, ['hide_pass_phrases'], function (s) {
-        let show;
-        if(force_initial_show_or_hide === 'hide') {
-          show = false;
-        } else if(force_initial_show_or_hide === 'show') {
-          show = true;
-        } else {
-          show = !s.hide_pass_phrases;
-        }
-        tool.each(pass_phrase_input_ids, function (i, id) {
-          $('#' + id).addClass('toggled_passphrase');
-          if(show) {
-            $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
-            $('#' + id).attr('type', 'text');
-          } else {
-            $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
-            $('#' + id).attr('type', 'password');
-          }
-          $('#toggle_' + id).click(function () {
-            if($('#' + id).attr('type') === 'password') {
-              $('#' + id).attr('type', 'text');
-              $(this).html(button_hide);
-              storage.set(null, { hide_pass_phrases: false });
-            } else {
-              $('#' + id).attr('type', 'password');
-              $(this).html(button_show);
-              storage.set(null, { hide_pass_phrases: true });
-            }
-          });
-        });
-      });
-    },
-    enter: (callback) => {
-      return function(e) {
-        if (e.which == tool.env.key_codes().enter) {
-          callback();
-        }
-      };
-    },
-    build_jquery_selectors: (selectors) => {
-      let cache = {};
-      return {
-        cached: function(name) {
-          if(!cache[name]) {
-            if(typeof selectors[name] === 'undefined') {
-              tool.catch.report('unknown selector name: ' + name);
-            }
-            cache[name] = $(selectors[name]);
-          }
-          return cache[name];
-        },
-        now: function(name) {
-          if(typeof selectors[name] === 'undefined') {
-            tool.catch.report('unknown selector name: ' + name);
-          }
-          return $(selectors[name]);
-        },
-        selector: function (name) {
-          if(typeof selectors[name] === 'undefined') {
-            tool.catch.report('unknown selector name: ' + name);
-          }
-          return selectors[name];
-        }
-      };
-    },
-    scroll: (selector, repeat) => {
-      let el = $(selector).first()[0];
-      if(el) {
-        el.scrollIntoView();
-        tool.each(repeat, function(i, delay) { // useful if mobile keyboard is about to show up
-          setTimeout(function() {
-            el.scrollIntoView();
-          }, delay);
-        });
-      }
-    },
-    event: {
-      stop: () => {
-        return function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        };
-      },
-      protect: () => {
-        // prevent events that could potentially leak information about sensitive info from bubbling above the frame
-        $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', function(e) {
-          // don't ask me how come Chrome allows it to bubble cross-domain
-          // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
-          // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
-          // so this indeed seems like the only defense
-          // happened on only one machine, but could potentially happen to other users as well
-          // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
-          e.stopPropagation();
-        });
-      },
-      double: () => ({ name: 'double', id: tool.str.random(10) }),
-      parallel: () => ({ name: 'parallel', id: tool.str.random(10) }),
-      spree: (type='') => ({ name: `${type}spree`, id: tool.str.random(10) }),
-      prevent: (meta, callback) => { //todo: messy + needs refactoring
-        return function () {
-          if(meta.name === 'spree') {
-            clearTimeout(tool._.var.ui_event_fired[meta.id]);
-            tool._.var.ui_event_fired[meta.id] = setTimeout(callback, tool._.var.ui_event_SPREE_MS);
-          } else if(meta.name === 'slowspree') {
-            clearTimeout(tool._.var.ui_event_fired[meta.id]);
-            tool._.var.ui_event_fired[meta.id] = setTimeout(callback, tool._.var.ui_event_SLOW_SPREE_MS);
-          } else if(meta.name === 'veryslowspree') {
-            clearTimeout(tool._.var.ui_event_fired[meta.id]);
-            tool._.var.ui_event_fired[meta.id] = setTimeout(callback, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
-          } else {
-            if(meta.id in tool._.var.ui_event_fired) {
-              // if(meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
-              if(meta.name === 'double') {
-                if(Date.now() - tool._.var.ui_event_fired[meta.id] > tool._.var.ui_event_DOUBLE_MS) {
-                  tool._.var.ui_event_fired[meta.id] = Date.now();
-                  callback(this, meta.id);
-                }
-              }
-            } else {
-              tool._.var.ui_event_fired[meta.id] = Date.now();
-              callback(this, meta.id);
-            }
-          }
-        };
-      },
-      release: (id) => { // todo - I may have forgot to use this somewhere, used only parallel() - if that's how it works
-        if(id in tool._.var.ui_event_fired) {
-          let ms_to_release = tool._.var.ui_event_DOUBLE_MS + tool._.var.ui_event_fired[id] - Date.now();
-          if(ms_to_release > 0) {
-            setTimeout(function () {
-              delete tool._.var.ui_event_fired[id];
-            }, ms_to_release);
-          } else {
-            delete tool._.var.ui_event_fired[id];
-          }
-        }
-      },
-    },
-  },
-  browser: {
-    message: {
-      cb: '[***|callback_placeholder|***]',
-      bg_exec: (path, args, callback) => {
-        args = args.map(function (arg) {
-          if((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
-            return tool.file.object_url_create(arg);
-          } else {
-            return arg;
-          }
-        });
-        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, function (result) {
-          if(path === 'tool.crypto.message.decrypt') {
-            if(result && result.success && result.content && result.content.data && typeof result.content.data === 'string' && result.content.data.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-              tool.file.object_url_consume(result.content.data).then(function (result_content_data) {
-                result.content.data = result_content_data;
-                callback(result);
-              });
-            } else {
-              callback(result);
-            }
-          } else {
-            callback(result);
-          }
-        });
-      },
-      send: (destination_string, name, data, callback) => {
-        let msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };
-        let is_background_page = tool.env.is_background_script();
-        if(typeof  destination_string === 'undefined') { // don't know where to send the message
-          tool.catch.log('tool.browser.message.send to:undefined');
-          if(typeof callback !== 'undefined') {
-            callback();
-          }
-        } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
-          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback); // calling from background script to background script: skip messaging completely
-        } else if(is_background_page) {
-          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab, msg, undefined, function(r) {
-            tool.catch.try(function() {
-              if(typeof callback !== 'undefined') {
-                callback(r);
-              }
-            })();
-          });
-        } else {
-          chrome.runtime.sendMessage(msg, function(r) {
-            tool.catch.try(function() {
-              if(typeof callback !== 'undefined') {
-                callback(r);
-              }
-            })();
-          });
-        }
-      },
-      tab_id: (callback) => tool.browser.message.send(null, '_tab_', null, callback),
-      listen: (handlers, listen_for_tab_id) => {
-        tool.each(handlers, function(name, handler) {
-          // newly registered handlers with the same name will overwrite the old ones if tool.browser.message.listen is declared twice for the same frame
-          // original handlers not mentioned in newly set handlers will continue to work
-          tool._.var.browser_message_frame_registered_handlers[name] = handler;
-        });
-        tool.each(tool._.var.browser_message_STANDARD_HANDLERS, function(name, handler) {
-          if(tool._.var.browser_message_frame_registered_handlers[name] !== 'function') {
-            tool._.var.browser_message_frame_registered_handlers[name] = handler; // standard handlers are only added if not already set above
-          }
-        });
-        let processed = [];
-        chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
-          return tool.catch.try(function () {
-            if(msg.to === listen_for_tab_id || msg.to === 'broadcast') {
-              if(!tool.value(msg.uid).in(processed)) {
-                processed.push(msg.uid);
-                if(typeof tool._.var.browser_message_frame_registered_handlers[msg.name] !== 'undefined') {
-                  tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
-                } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
-                  if(tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-                    tool.catch.report('tool.browser.message.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
-                  } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
-                    console.log('tool.browser.message.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
-                  }
-                }
-              }
-            }
-            return msg.respondable === true;
-          })();
-        });
-      },
-      listen_background: (handlers) => {
-        if(!tool._.var.browser_message_background_script_registered_handlers) {
-          tool._.var.browser_message_background_script_registered_handlers = handlers;
-        } else {
-          tool.each(handlers, function(name, handler) {
-            tool._.var.browser_message_background_script_registered_handlers[name] = handler;
-          });
-        }
-        chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
-          let safe_respond = function (response) {
-            try { // avoiding unnecessary errors when target tab gets closed
-              respond(response);
-            } catch(e) {
-              if(e.message !== 'Attempting to use a disconnected port object') {
-                tool.catch.handle_exception(e);
-                throw e;
-              }
-            }
-          };
-          if(msg.to && msg.to !== 'broadcast') {
-            msg.sender = sender;
-            chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab, msg, undefined, safe_respond);
-          } else if(tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers))) {
-            tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, sender, safe_respond);
-          } else if(msg.to !== 'broadcast') {
-            tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
-          }
-          return msg.respondable === true;
-        });
-      },
-    },
-  },
   diagnose: {
     message_pubkeys: (account_email, message) => {
       if(typeof message === 'string') {
@@ -998,36 +729,6 @@ let tool = window['tool'] = {
             });
           });
           resolve(diagnosis);
-        });
-      });
-    },
-    keyserver_pubkeys: (account_email, callback) => {
-      let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
-      storage.get(account_email, ['addresses'], function (s) {
-        storage.keys_get(account_email).then(function(stored_keys) {
-          let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
-          tool.api.attester.lookup_email(tool.arr.unique([account_email].concat(s.addresses || []))).then(function(pubkey_search_results) {
-            tool.each((pubkey_search_results as any).results, function (i, pubkey_search_result) { // todo:ts any
-              if (!pubkey_search_result.pubkey) {
-                diagnosis.has_pubkey_missing = true;
-                diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
-              } else {
-                let match = true;
-                if (!tool.value(tool.crypto.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
-                  diagnosis.has_pubkey_mismatch = true;
-                  match = false;
-                }
-                diagnosis.results[pubkey_search_result.email] = {
-                  pubkey: pubkey_search_result.pubkey,
-                  attested: pubkey_search_result.attested,
-                  match: match
-                };
-              }
-            });
-            callback(diagnosis);
-          }, function(error) {
-            callback();
-          });
         });
       });
     },
@@ -1511,6 +1212,275 @@ let tool = window['tool'] = {
       ],
     }
   },
+  /* [BARE_ENGINE_OMIT_BEGIN] */
+  ui: {
+    spinner: (color, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
+      let path = '/img/svgs/spinner-' + color + '-small.svg';
+      let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
+      return `<i class="${placeholder_class}"><img src="${url}" /></i>`;
+    },
+    passphrase_toggle: (pass_phrase_input_ids, force_initial_show_or_hide) => {
+      let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
+      let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
+      storage.get(null, ['hide_pass_phrases'], function (s) {
+        let show;
+        if(force_initial_show_or_hide === 'hide') {
+          show = false;
+        } else if(force_initial_show_or_hide === 'show') {
+          show = true;
+        } else {
+          show = !s.hide_pass_phrases;
+        }
+        tool.each(pass_phrase_input_ids, function (i, id) {
+          $('#' + id).addClass('toggled_passphrase');
+          if(show) {
+            $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
+            $('#' + id).attr('type', 'text');
+          } else {
+            $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
+            $('#' + id).attr('type', 'password');
+          }
+          $('#toggle_' + id).click(function () {
+            if($('#' + id).attr('type') === 'password') {
+              $('#' + id).attr('type', 'text');
+              $(this).html(button_hide);
+              storage.set(null, { hide_pass_phrases: false });
+            } else {
+              $('#' + id).attr('type', 'password');
+              $(this).html(button_show);
+              storage.set(null, { hide_pass_phrases: true });
+            }
+          });
+        });
+      });
+    },
+    enter: (callback) => {
+      return function(e) {
+        if (e.which == tool.env.key_codes().enter) {
+          callback();
+        }
+      };
+    },
+    build_jquery_selectors: (selectors) => {
+      let cache = {};
+      return {
+        cached: function(name) {
+          if(!cache[name]) {
+            if(typeof selectors[name] === 'undefined') {
+              tool.catch.report('unknown selector name: ' + name);
+            }
+            cache[name] = $(selectors[name]);
+          }
+          return cache[name];
+        },
+        now: function(name) {
+          if(typeof selectors[name] === 'undefined') {
+            tool.catch.report('unknown selector name: ' + name);
+          }
+          return $(selectors[name]);
+        },
+        selector: function (name) {
+          if(typeof selectors[name] === 'undefined') {
+            tool.catch.report('unknown selector name: ' + name);
+          }
+          return selectors[name];
+        }
+      };
+    },
+    scroll: (selector, repeat) => {
+      let el = $(selector).first()[0];
+      if(el) {
+        el.scrollIntoView();
+        tool.each(repeat, function(i, delay) { // useful if mobile keyboard is about to show up
+          setTimeout(function() {
+            el.scrollIntoView();
+          }, delay);
+        });
+      }
+    },
+    event: {
+      stop: () => {
+        return function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        };
+      },
+      protect: () => {
+        // prevent events that could potentially leak information about sensitive info from bubbling above the frame
+        $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', function(e) {
+          // don't ask me how come Chrome allows it to bubble cross-domain
+          // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
+          // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
+          // so this indeed seems like the only defense
+          // happened on only one machine, but could potentially happen to other users as well
+          // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
+          e.stopPropagation();
+        });
+      },
+      double: () => ({ name: 'double', id: tool.str.random(10) }),
+      parallel: () => ({ name: 'parallel', id: tool.str.random(10) }),
+      spree: (type='') => ({ name: `${type}spree`, id: tool.str.random(10) }),
+      prevent: (meta, callback) => { //todo: messy + needs refactoring
+        return function () {
+          if(meta.name === 'spree') {
+            clearTimeout(tool._.var.ui_event_fired[meta.id]);
+            tool._.var.ui_event_fired[meta.id] = setTimeout(callback, tool._.var.ui_event_SPREE_MS);
+          } else if(meta.name === 'slowspree') {
+            clearTimeout(tool._.var.ui_event_fired[meta.id]);
+            tool._.var.ui_event_fired[meta.id] = setTimeout(callback, tool._.var.ui_event_SLOW_SPREE_MS);
+          } else if(meta.name === 'veryslowspree') {
+            clearTimeout(tool._.var.ui_event_fired[meta.id]);
+            tool._.var.ui_event_fired[meta.id] = setTimeout(callback, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
+          } else {
+            if(meta.id in tool._.var.ui_event_fired) {
+              // if(meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
+              if(meta.name === 'double') {
+                if(Date.now() - tool._.var.ui_event_fired[meta.id] > tool._.var.ui_event_DOUBLE_MS) {
+                  tool._.var.ui_event_fired[meta.id] = Date.now();
+                  callback(this, meta.id);
+                }
+              }
+            } else {
+              tool._.var.ui_event_fired[meta.id] = Date.now();
+              callback(this, meta.id);
+            }
+          }
+        };
+      },
+      release: (id) => { // todo - I may have forgot to use this somewhere, used only parallel() - if that's how it works
+        if(id in tool._.var.ui_event_fired) {
+          let ms_to_release = tool._.var.ui_event_DOUBLE_MS + tool._.var.ui_event_fired[id] - Date.now();
+          if(ms_to_release > 0) {
+            setTimeout(function () {
+              delete tool._.var.ui_event_fired[id];
+            }, ms_to_release);
+          } else {
+            delete tool._.var.ui_event_fired[id];
+          }
+        }
+      },
+    },
+  },
+  browser: {
+    message: {
+      cb: '[***|callback_placeholder|***]',
+      bg_exec: (path, args, callback) => {
+        args = args.map(function (arg) {
+          if((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
+            return tool.file.object_url_create(arg);
+          } else {
+            return arg;
+          }
+        });
+        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, function (result) {
+          if(path === 'tool.crypto.message.decrypt') {
+            if(result && result.success && result.content && result.content.data && typeof result.content.data === 'string' && result.content.data.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
+              tool.file.object_url_consume(result.content.data).then(function (result_content_data) {
+                result.content.data = result_content_data;
+                callback(result);
+              });
+            } else {
+              callback(result);
+            }
+          } else {
+            callback(result);
+          }
+        });
+      },
+      send: (destination_string, name, data, callback) => {
+        let msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };
+        let is_background_page = tool.env.is_background_script();
+        if(typeof  destination_string === 'undefined') { // don't know where to send the message
+          tool.catch.log('tool.browser.message.send to:undefined');
+          if(typeof callback !== 'undefined') {
+            callback();
+          }
+        } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
+          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback); // calling from background script to background script: skip messaging completely
+        } else if(is_background_page) {
+          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab, msg, undefined, function(r) {
+            tool.catch.try(function() {
+              if(typeof callback !== 'undefined') {
+                callback(r);
+              }
+            })();
+          });
+        } else {
+          chrome.runtime.sendMessage(msg, function(r) {
+            tool.catch.try(function() {
+              if(typeof callback !== 'undefined') {
+                callback(r);
+              }
+            })();
+          });
+        }
+      },
+      tab_id: (callback) => tool.browser.message.send(null, '_tab_', null, callback),
+      listen: (handlers, listen_for_tab_id) => {
+        tool.each(handlers, function(name, handler) {
+          // newly registered handlers with the same name will overwrite the old ones if tool.browser.message.listen is declared twice for the same frame
+          // original handlers not mentioned in newly set handlers will continue to work
+          tool._.var.browser_message_frame_registered_handlers[name] = handler;
+        });
+        tool.each(tool._.var.browser_message_STANDARD_HANDLERS, function(name, handler) {
+          if(tool._.var.browser_message_frame_registered_handlers[name] !== 'function') {
+            tool._.var.browser_message_frame_registered_handlers[name] = handler; // standard handlers are only added if not already set above
+          }
+        });
+        let processed = [];
+        chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
+          return tool.catch.try(function () {
+            if(msg.to === listen_for_tab_id || msg.to === 'broadcast') {
+              if(!tool.value(msg.uid).in(processed)) {
+                processed.push(msg.uid);
+                if(typeof tool._.var.browser_message_frame_registered_handlers[msg.name] !== 'undefined') {
+                  tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
+                } else if(msg.name !== '_tab_' && msg.to !== 'broadcast') {
+                  if(tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+                    tool.catch.report('tool.browser.message.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+                  } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
+                    console.log('tool.browser.message.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
+                  }
+                }
+              }
+            }
+            return msg.respondable === true;
+          })();
+        });
+      },
+      listen_background: (handlers) => {
+        if(!tool._.var.browser_message_background_script_registered_handlers) {
+          tool._.var.browser_message_background_script_registered_handlers = handlers;
+        } else {
+          tool.each(handlers, function(name, handler) {
+            tool._.var.browser_message_background_script_registered_handlers[name] = handler;
+          });
+        }
+        chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
+          let safe_respond = function (response) {
+            try { // avoiding unnecessary errors when target tab gets closed
+              respond(response);
+            } catch(e) {
+              if(e.message !== 'Attempting to use a disconnected port object') {
+                tool.catch.handle_exception(e);
+                throw e;
+              }
+            }
+          };
+          if(msg.to && msg.to !== 'broadcast') {
+            msg.sender = sender;
+            chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab, msg, undefined, safe_respond);
+          } else if(tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers))) {
+            tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, sender, safe_respond);
+          } else if(msg.to !== 'broadcast') {
+            tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+          }
+          return msg.respondable === true;
+        });
+      },
+    },
+  },
   api: {
     auth: {
       window: (auth_url, window_closed_by_user) => {
@@ -1943,6 +1913,36 @@ let tool = window['tool'] = {
         email: email,
         pubkey: pubkey,
       }),
+      diagnose_keyserver_pubkeys: (account_email, callback) => {
+        let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} };
+        storage.get(account_email, ['addresses'], function (s) {
+          storage.keys_get(account_email).then(function(stored_keys) {
+            let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
+            tool.api.attester.lookup_email(tool.arr.unique([account_email].concat(s.addresses || []))).then(function(pubkey_search_results) {
+              tool.each((pubkey_search_results as any).results, function (i, pubkey_search_result) { // todo:ts any
+                if (!pubkey_search_result.pubkey) {
+                  diagnosis.has_pubkey_missing = true;
+                  diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
+                } else {
+                  let match = true;
+                  if (!tool.value(tool.crypto.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
+                    diagnosis.has_pubkey_mismatch = true;
+                    match = false;
+                  }
+                  diagnosis.results[pubkey_search_result.email] = {
+                    pubkey: pubkey_search_result.pubkey,
+                    attested: pubkey_search_result.attested,
+                    match: match
+                  };
+                }
+              });
+              callback(diagnosis);
+            }, function(error) {
+              callback();
+            });
+          });
+        });
+      },  
       packet: {
         create_sign: (values, decrypted_prv) => {
           return tool.catch.Promise(function (resolve, reject) {
@@ -2297,7 +2297,8 @@ let tool = window['tool'] = {
         return Promise.all(promises);
       },
     }
-  },
+  }, 
+  /* [BARE_ENGINE_OMIT_END] */
   value: (v) => ({in: (array_or_str) => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
   e: (name, attrs) => $(`<${name}/>`, attrs)[0].outerHTML,
   each: (iterable, looper) => {
@@ -2419,14 +2420,6 @@ let tool = window['tool'] = {
           require(['emailjs-mime-builder'], callback);
         }
       }
-    },
-    browser_message_destination_parse: (destination_string) => {
-      let parsed = { tab: null, frame: null };
-      if(destination_string) {
-        parsed.tab = Number(destination_string.split(':')[0]);
-        parsed.frame = !isNaN(destination_string.split(':')[1]) ? Number(destination_string.split(':')[1]) : null;
-      }
-      return parsed;
     },
     crypto_armor_block_object: (type, content, missing_end=false) => ({type: type, content: content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text, start_at) => {
@@ -2661,6 +2654,15 @@ let tool = window['tool'] = {
         return seconds + ' second' + numberEnding(seconds);
       }
       return 'less than a second';
+    },
+    /* [BARE_ENGINE_OMIT_BEGIN] */
+    browser_message_destination_parse: (destination_string) => {
+      let parsed = { tab: null, frame: null };
+      if(destination_string) {
+        parsed.tab = Number(destination_string.split(':')[0]);
+        parsed.frame = !isNaN(destination_string.split(':')[1]) ? Number(destination_string.split(':')[1]) : null;
+      }
+      return parsed;
     },
     get_ajax_progress_xhr: (progress_callbacks) => {
       let progress_reporting_xhr = new (window as FlowCryptWindow).XMLHttpRequest();
@@ -3047,6 +3049,7 @@ let tool = window['tool'] = {
     api_attester_packet_armor: (content_text) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
     api_cryptup_call: (path, values, format='JSON') => tool._.api_call(tool.api.cryptup.url('api'), path, values, format, null, {'api-version': 3}),
     // api_cryptup_call: (path, values, format='JSON') => tool._.api_call('http://127.0.0.1:5001/, path, values, format, null, {'api-version': 3}),
+    /* [BARE_ENGINE_OMIT_END] */
   },
   catch: { // web and extension code
     handle_error: (error_message, url, line, col, error, is_manually_called, version, env) => {

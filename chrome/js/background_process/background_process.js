@@ -158,7 +158,6 @@ function execute_in_background_process_and_respond_when_done(request, sender, re
     }
     respond(result);
   }
-  let f = window;
   let has_callback = false;
   let args = (request.args || []).map(arg => {
     if(arg === tool.browser.message.cb) {
@@ -171,9 +170,16 @@ function execute_in_background_process_and_respond_when_done(request, sender, re
     }
   });
   Promise.all(args).then(resolved_args => {
-    tool.each(request.path.split('.'), (i, step) => {
-      f = f[step];
-    });
+    let f = null;
+    for(let step of request.path.split('.')) {
+      if(f === null && step === 'tool') {
+        f = tool;
+      } else if (f === null && step === 'window') {
+        f = window;
+      } else {
+        f = f[step];
+      }
+    }
     let returned = f.apply(null, resolved_args); // the actual operation
     if(!has_callback) {
       if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise

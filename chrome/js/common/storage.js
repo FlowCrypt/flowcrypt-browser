@@ -376,7 +376,7 @@
   }
 
   function db_contact_save(db, contact, callback) {
-    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, callback);
     } else {
       if (Array.isArray(contact)) {
@@ -400,7 +400,7 @@
   }
 
   function db_contact_update(db, email, update, callback) {
-    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, callback);
     } else {
       if(Array.isArray(email)) {
@@ -434,7 +434,7 @@
   }
 
   function db_contact_get(db, email_or_longid, callback) {
-    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, callback);
     } else {
       if(typeof email_or_longid !== 'object') {
@@ -474,7 +474,7 @@
 
 // query: substring, has_pgp, limit. All voluntary
   function db_contact_search(db, query, callback) {
-    if(db === null && window.tool && tool.browser && tool.browser.message.send) { // relay op through background process
+    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, callback);
     } else {
       tool.each(query, (key, value) => {
