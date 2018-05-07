@@ -650,6 +650,7 @@ const tests = {
     await tests._toggle_settings_screen(settings_page, 'additional');
     let contacts_frame = await tests._open_settings_page_and_await_new_frame(settings_page, '@action-open-contacts-page' , ['contacts.htm', 'placement=settings']);
     await meta.wait_all(contacts_frame, '@page-contacts');
+    await meta.sleep(1);
     assert((await meta.read(contacts_frame, '@page-contacts')).indexOf('flowcrypt.compatibility@gmail.com') !== -1, true, 'flowcrypt.compatibility@gmail.com listed as a contact');
     assert((await meta.read(contacts_frame, '@page-contacts')).indexOf('flowcryptcompatibility@gmail.com') !== -1, true, 'flowcryptcompatibility@gmail.com listed as a contact');
     await tests._close_settings_page_dialog(settings_page);
@@ -659,6 +660,7 @@ const tests = {
     await tests._toggle_settings_screen(settings_page, 'additional');
     let attester_frame = await tests._open_settings_page_and_await_new_frame(settings_page, '@action-open-attester-page' , ['keyserver.htm', 'placement=settings']);
     await meta.wait_all(attester_frame, '@page-attester');
+    await meta.sleep(1);
     assert((await meta.read(attester_frame, '@page-attester')).indexOf('flowcrypt.compatibility@gmail.com') !== -1, true, 'flowcrypt.compatibility@gmail.com listed in attester page');
     assert((await meta.read(attester_frame, '@page-attester')).indexOf('flowcryptcompatibility@gmail.com') !== -1, true, 'flowcryptcompatibility@gmail.com listed in attester page');
     await tests._close_settings_page_dialog(settings_page);
