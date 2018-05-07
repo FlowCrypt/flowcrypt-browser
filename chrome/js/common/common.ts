@@ -6,6 +6,7 @@
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 
 declare var openpgp; // todo - how to make this understand openpgp types from above?
+declare let $_HOST_html_to_text, MimeParser, MimeBuilder;
 let storage = (window as FlowCryptWindow).flowcrypt_storage;
 
 // if(typeof exports === 'object') {
@@ -45,8 +46,7 @@ let tool = {
         html_text = html_text.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
       }
       let e = document.createElement('iframe');
-      // @ts-ignore
-      e.sandbox = 'allow-same-origin';
+      (e as any).sandbox = 'allow-same-origin';
       e.srcdoc = html_text;
       e.style['display'] = 'none';
       e.onload = function() {
@@ -281,8 +281,7 @@ let tool = {
     },
     key_codes: () => ({ a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, }),
     set_up_require: () => {
-      // @ts-ignore
-      require.config({
+      (require as any).config({
         baseUrl: '/lib',
         paths: {
           'emailjs-addressparser': './emailjs/emailjs-addressparser',
@@ -423,8 +422,7 @@ let tool = {
         a.download = name;
         if(render_in) {
           a.textContent = 'DECRYPTED FILE';
-          // @ts-ignore
-          a.style = 'font-size: 16px; font-weight: bold;';
+          a.style.cssText = 'font-size: 16px; font-weight: bold;';
           render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
           render_in.append(a);
           render_in.css('height', 'auto');
@@ -489,9 +487,7 @@ let tool = {
   mime: {
     process: (mime_message, callback) => {
       tool.mime.decode(mime_message, function (success, decoded) {
-        // @ts-ignore
         if(typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
-          // @ts-ignore
           decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
         }
         let blocks = [];
@@ -2396,9 +2392,7 @@ let tool = {
     },
     mime_require: (group, callback) => {
       if(group === 'parser') {
-        // @ts-ignore
         if(typeof MimeParser !== 'undefined') { // browser
-          // @ts-ignore
           callback(MimeParser);
         } else if (typeof exports === 'object') { // electron
           callback(require('emailjs-mime-parser'));
@@ -2408,9 +2402,7 @@ let tool = {
           require(['emailjs-mime-parser'], callback);
         }
       } else {
-        // @ts-ignore
         if(typeof MimeBuilder !== 'undefined') { // browser
-          // @ts-ignore
           callback(MimeBuilder);
         } else if (typeof exports === 'object') { // electron
           callback(require('emailjs-mime-builder'));
