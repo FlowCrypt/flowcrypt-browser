@@ -5,13 +5,13 @@ interface BrowserWidnow extends Window {
 
 interface FlowCryptWindow extends BrowserWidnow {
     catcher: any,
-    openpgp: any,
     jQuery: JQuery,
     flowcrypt_attach: any,
     flowcrypt_storage: any,
     lang: any,
     iso88592: any,
     is_bare_engine: boolean,
+    openpgp: any,
 }
 
 interface FlowCryptManifest {

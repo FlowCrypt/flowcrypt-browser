@@ -6,7 +6,7 @@
 
 class Subscription {
   active: boolean = null;
-  method: "stripe" | "group" | "trial" = null;
+  method: "stripe"|"group"|"trial" = null;
 }
 
 
@@ -770,7 +770,9 @@ class Subscription {
   }
 
   function do_send_message(message, plaintext) {
-    tool.each(additional_message_headers, (k, h) => { message.headers[k] = h; });
+    for(let k in additional_message_headers) {
+      message.headers[k] = additional_message_headers[k];
+    }
     tool.each(message.attachments, (i, a) => { a.type = 'application/octet-stream'; }); // changing all mimeType so that Enigmail+Thunderbird does not attempt to display without decrypting
     app.email_provider_message_send(message, render_upload_progress).then(response => {
       const is_signed = S.cached('icon_sign').is('.active');
