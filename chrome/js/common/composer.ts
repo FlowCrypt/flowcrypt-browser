@@ -9,21 +9,18 @@ class Subscription {
   method: "stripe"|"group"|"trial" = null;
 }
 
-
 (function() {
 
-  let tool, catcher, openpgp, $, jQuery, flowcrypt_attach, storage;
-  if(typeof exports !== 'object') {
-    // @ts-ignore;
-    tool = (window as FlowCryptWindow).tool;
-    catcher = (window as FlowCryptWindow).catcher;
+  let openpgp, $, jQuery, flowcrypt_attach, storage;
+  if(typeof exports !== 'object') { // browser
     openpgp = (window as FlowCryptWindow).openpgp;
     $ = jQuery = (window as FlowCryptWindow).jQuery;
     flowcrypt_attach = (window as FlowCryptWindow).flowcrypt_attach;
     storage = (window as FlowCryptWindow).flowcrypt_storage;
-  } else {
+  } else { // electron
     require('module').globalPaths.push(process.cwd());
     tool = require('js/tool').tool;
+    // @ts-ignore
     catcher = require('js/tool').catcher;
     openpgp = require('openpgp');
     $ = jQuery = require('jquery');
@@ -121,20 +118,20 @@ class Subscription {
     storage_set_email_footer: (footer) => null,
     storage_get_hide_message_password: () => false,
     storage_get_subscription_info: (cb?) : Subscription => { if(typeof cb === 'function') { cb({}); } return new Subscription(); }, // returns cached result, callbacks with fresh result
-    storage_get_armored_public_key: (sender_email) => catcher.Promise((resolve, reject) => {resolve(null)}),
-    storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => catcher.Promise((resolve, reject) => {resolve()}),
-    storage_passphrase_get: () => catcher.Promise((resolve, reject) => {resolve()}),
+    storage_get_armored_public_key: (sender_email) => tool.catch.Promise((resolve, reject) => {resolve(null)}),
+    storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => tool.catch.Promise((resolve, reject) => {resolve()}),
+    storage_passphrase_get: () => tool.catch.Promise((resolve, reject) => {resolve()}),
     storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => { callback(); },
     storage_contact_get: async (email): Promise<Contact|Contact[]> => null,
     storage_contact_update: async (email, update): Promise<undefined> => undefined,
     storage_contact_save: async (contact): Promise<undefined> => undefined,
     storage_contact_search: async (query): Promise<Contact[]> => [],
     storage_contact_object: (email, name, has_cryptup, pubkey, attested, pending_lookup, last_use): Contact => { return {} as Contact},
-    email_provider_draft_get: (draft_id) => catcher.Promise((resolve, reject) => {reject()}),
-    email_provider_draft_create: (mime_message) => catcher.Promise((resolve, reject) => {reject()}),
-    email_provider_draft_update: (draft_id, mime_message) => catcher.Promise((resolve, reject) => {reject()}),
-    email_provider_draft_delete: (draft_id) => catcher.Promise((resolve, reject) => {reject()}),
-    email_provider_message_send: (message, render_upload_progress) => catcher.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_get: (draft_id) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_create: (mime_message) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_update: (draft_id, mime_message) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_delete: (draft_id) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_message_send: (message, render_upload_progress) => tool.catch.Promise((resolve, reject) => {reject()}),
     email_provider_search_contacts: (query, known_contacts, multi_cb) => undefined,
     email_provider_determine_reply_message_header_variables: (cb) => { if(cb) cb(); },
     email_provider_extract_armored_block: (message_id, success_cb, error_cb) => { if(error_cb) error_cb('not implemented'); },
@@ -222,7 +219,7 @@ class Subscription {
       S.cached('reply_message_prompt').html('Loading draft.. ' + tool.ui.spinner('green'));
     }
     app.email_provider_draft_get(draft_id).then(response => {
-      tool.mime.decode(tool.str.base64url_decode(response.message.raw), function (mime_success, parsed_message) {
+      tool.mime.decode(tool.str.base64url_decode((response as any).message.raw), function (mime_success, parsed_message) {
         let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '');
         if(armored) {
           S.cached('input_subject').val(parsed_message.headers.subject || '');
@@ -236,7 +233,7 @@ class Subscription {
       });
     }, error => {
       if (is_reply_box && error.status === 404) {
-        catcher.log('about to reload reply_message automatically: get draft 404', account_email);
+        tool.catch.log('about to reload reply_message automatically: get draft 404', account_email);
         setTimeout(function () {
           app.storage_set_draft_meta(false, draft_id, thread_id, null, null).then(() => {
             console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
@@ -353,8 +350,8 @@ class Subscription {
               if (!draft_id) {
                 app.email_provider_draft_create(mime_message).then(response => {
                   S.cached('send_btn_note').text('Saved');
-                  draft_id = response.id;
-                  app.storage_set_draft_meta(true, response.id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
+                  draft_id = (response as any).id;
+                  app.storage_set_draft_meta(true, (response as any).id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
                   // recursing one more time, because we need the draft_id we get from this reply in the message itself
                   // essentially everytime we save draft for the first time, we have to save it twice
                   // save_draft_in_process will remain true because well.. it's still in process
@@ -383,7 +380,9 @@ class Subscription {
     clearInterval(save_draft_interval);
     tool.time.wait(() => {if (!save_draft_in_process) { return true; }}).then(() => {
       if (draft_id) {
+        // @ts-ignore: .done()
         app.storage_set_draft_meta(false, draft_id, thread_id, null, null).done(() => {
+          // @ts-ignore: .done()
           app.email_provider_draft_delete(draft_id).done((success, result) => {
             callback();
           });
@@ -501,7 +500,7 @@ class Subscription {
     try {
       callback();
     } catch(err) {
-      catcher.handle_exception(err);
+      tool.catch.handle_exception(err);
       reset_send_btn();
       alert(String(err));
     }
@@ -611,7 +610,7 @@ class Subscription {
                     });
                   });
                 } else {
-                  catcher.report('error signing message. Error:' + signing_result);
+                  tool.catch.report('error signing message. Error:' + signing_result);
                   alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
                   reset_send_btn();
                 }
@@ -627,6 +626,7 @@ class Subscription {
   }
 
   function upload_attachments_to_cryptup(attachments, subscription, callback) {
+    // @ts-ignore: .validate()
     tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
       const items = [];
       tool.each(pf_response.approvals, function (i, approval) {
@@ -635,6 +635,7 @@ class Subscription {
       tool.api.aws.s3_upload(items, render_upload_progress).then(s3_results_successful => {
         tool.api.cryptup.message_confirm_files(items.map(function (item) {
           return item.fields.key;
+          // @ts-ignore: .validate()
         })).validate(r => r.confirmed && r.confirmed.length === items.length).then(cf_response => {
           tool.each(attachments, function (i) {
             attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
@@ -678,6 +679,7 @@ class Subscription {
 
   function add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, callback) {
     if (challenge && subscription.active) {
+      // @ts-ignore: .validate()
       tool.api.cryptup.message_token().validate(r => r.token).then(response => {
         callback(plaintext + '\n\n' + tool.e('div', {
             'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
@@ -711,6 +713,7 @@ class Subscription {
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through FlowCrypt and recipients get a link.
     // admin_code stays locally and helps the sender extend life of the message or delete it
+    // @ts-ignore: .validate()
     tool.api.cryptup.message_upload(encrypted_data, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
       callback(response.short, response.admin_code);
     }, error => {
@@ -723,7 +726,7 @@ class Subscription {
   }
 
   function with_attached_pubkey_if_needed(encrypted) {
-    return catcher.Promise((resolve, reject) => {
+    return tool.catch.Promise((resolve, reject) => {
       app.storage_get_armored_public_key(account_email).then(armored_public_key => {
         if (S.cached('icon_pubkey').is('.active')) {
           encrypted += '\n\n' + armored_public_key;
@@ -779,7 +782,7 @@ class Subscription {
       app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (is_reply_box ? 'reply' : 'message') + ' has been sent.'});
       draft_delete(() => {
         if(is_reply_box) {
-          render_reply_success(message, plaintext, response ? response.id : null);
+          render_reply_success(message, plaintext, response ? (response as any).id : null);
         } else {
           app.close_message();
         }
@@ -789,7 +792,7 @@ class Subscription {
       if(error && error.message && error.internal) {
         alert(error.message);
       } else {
-        catcher.report('email_provider message_send error response', error);
+        tool.catch.report('email_provider message_send error response', error);
         alert('Error sending message, try to re-open your web mail window and send again. Write me at human@flowcrypt.com if this happens repeatedly.');
       }
     });
@@ -801,26 +804,26 @@ class Subscription {
       return db_contact;
     } else {
       try {
-        let result = await tool.api.attester.lookup_email(email);
-        if (result && result.email) {
-          if (result.pubkey) {
-            const parsed = openpgp.key.readArmored(result.pubkey);
+        let response = await tool.api.attester.lookup_email(email);
+        if (response && (response as any).email) {
+          if ((response as any).pubkey) {
+            const parsed = openpgp.key.readArmored((response as any).pubkey);
             if (!parsed.keys[0]) {
-              catcher.log('Dropping found but incompatible public key', {
-                for: result.email,
+              tool.catch.log('Dropping found but incompatible public key', {
+                for: (response as any).email,
                 err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null
               });
-              result.pubkey = null;
+              (response as any).pubkey = null;
             } else if (parsed.keys[0].getEncryptionKeyPacket() === null) {
-              catcher.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {
-                for: result.email,
+              tool.catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {
+                for: (response as any).email,
                 fingerprint: tool.crypto.key.fingerprint(parsed.keys[0])
               });
-              result.pubkey = null;
+              (response as any).pubkey = null;
             }
           }
-          let ks_contact = app.storage_contact_object(result.email, db_contact && db_contact.name ? db_contact.name : null, result.has_cryptup ? 'cryptup' : 'pgp', result.pubkey, result.attested, false, Date.now());
-          keyserver_lookup_results_by_email[result.email] = ks_contact;
+          let ks_contact = app.storage_contact_object((response as any).email, db_contact && db_contact.name ? db_contact.name : null, (response as any).has_cryptup ? 'cryptup' : 'pgp', (response as any).pubkey, (response as any).attested, false, Date.now());
+          keyserver_lookup_results_by_email[(response as any).email] = ks_contact;
           await app.storage_contact_save(ks_contact);
           return ks_contact;
         } else  {

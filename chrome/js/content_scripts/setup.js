@@ -47,13 +47,13 @@ function content_script_setup_if_vacant(webmail_specific) {
     };
 
     window.TrySetDestroyableInterval = function (code, ms) {
-      let id = setInterval(window.catcher.try(code), ms);
+      let id = setInterval(catcher.try(code), ms);
       destroyable_intervals.push(id);
       return id;
     };
 
     window.TrySetDestryableTimeout = function (code, ms) {
-      let id = setTimeout(window.catcher.try(code), ms);
+      let id = setTimeout(catcher.try(code), ms);
       destroyable_timeouts.push(id);
       return id;
     };

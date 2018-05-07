@@ -4,7 +4,6 @@ interface BrowserWidnow extends Window {
 }
 
 interface FlowCryptWindow extends BrowserWidnow {
-    catcher: any,
     jQuery: JQuery,
     flowcrypt_attach: any,
     flowcrypt_storage: any,

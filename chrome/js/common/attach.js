@@ -6,21 +6,17 @@
 
   function init_attach(get_limits) {
 
-    var tool, catcher, $, jQuery, qq, template_path;
-    if(typeof exports !== 'object') { // browser extension
-      tool = window.tool;
-      catcher = window.catcher;
-      $ = jQuery = window.jQuery;
-      qq = window.qq;
-      template_path = '/chrome/elements/shared/attach.template.htm';
-    } else { // electron
-      require('module').globalPaths.push(process.cwd());
-      tool = require('js/tool').tool;
-      catcher = require('js/tool').catcher;
-      $ = jQuery = require('jquery');
-      qq = require('fine-uploader');
-      template_path = '../attach.template.htm';
-    }
+    // var $, jQuery, qq, template_path;
+    // if(typeof exports !== 'object') { // browser extension
+    var template_path = '/chrome/elements/shared/attach.template.htm';
+    // } else { // electron
+    //   require('module').globalPaths.push(process.cwd());
+    //   tool = require('js/tool').tool;
+    //   catcher = require('js/tool').catcher;
+    //   $ = jQuery = require('jquery');
+    //   qq = require('fine-uploader');
+    //   template_path = '../attach.template.htm';
+    // }
 
     var attached_files = {};
     var uploader = undefined;
