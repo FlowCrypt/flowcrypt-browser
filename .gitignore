@@ -13,4 +13,5 @@
 /test/node_modules/
 /test/test.js
 /chrome/js/common/composer.js
+/chrome/js/common/common.js
 /node_modules/
