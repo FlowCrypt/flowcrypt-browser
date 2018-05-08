@@ -3,6 +3,7 @@
     "checkJs": true,
     "target": "ES2017",
     "alwaysStrict": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "strictNullChecks": true
   }
 }

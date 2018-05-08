@@ -52,7 +52,7 @@ interface Contact {
 interface Attachment {
     name: string, 
     type: string, 
-    content?: string|Uint8Array,
+    content?: string|Uint8Array|null,
     data?: string, // todo - deprecate this - only use content
     size: number,
     url?: string|null,
@@ -89,7 +89,7 @@ interface Dict<T> {
 }
 
 interface PreventableEvent {
-    name: "double"|"parallel"|"spree"|"slowspree"|"veryslowspree",
+    name: 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree',
     id: string,
 }
 
@@ -108,17 +108,26 @@ interface DecryptedErrorCounts {
     format_errors: number,
 }
 
-interface Decrypted { // todo - should differentiate between DecryptSuccess and DecryptError
-    success: boolean,
+interface Decrypted {
+}
+
+interface DecryptSuccess extends Decrypted {
+    success: true,
+    content: OpenpgpDecryptResult,
     signature: MessageVerifyResult|null,
-    encrypted?: boolean|null,
-    content?: OpenpgpDecryptResult,
-    counts?: DecryptedErrorCounts, 
+    encrypted: boolean|null,
+}
+
+interface DecryptError extends Decrypted {
+    success: false,
+    counts: DecryptedErrorCounts, 
     unsecure_mdc?: boolean,
-    encrypted_for?: string[],
+    errors: string[],
     missing_passphrases?: string[],
-    errors?: string[],
     format_error?: string,
+    encrypted: null|boolean,
+    encrypted_for?: string[],
+    signature: null,
     message?: OpenpgpMessage,
 }
 
@@ -157,7 +166,7 @@ interface MimeAsHeadersAndBlocks {
     blocks: MessageBlock[],
 }
 
-type MessageBlockType = "text"|"public_key"|"private_key"|"attest_packet"|"cryptup_verification"|"signed_message"|"message"|"password_message";
+type MessageBlockType = 'text'|'public_key'|'private_key'|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
 
 interface MessageBlock {
     type: MessageBlockType, 
@@ -191,9 +200,9 @@ interface OpenpgpMessage {
 }
 
 interface MessageVerifyResult {
-    signer: string,
+    signer: string|null,
     contact: Contact|null,
-    match: boolean, 
+    match: boolean|null, 
     error: null|string,
 }
 
@@ -243,16 +252,16 @@ type FlatTypes = null|undefined|number|string|boolean;
 type Serializable = FlatTypes|FlatTypes[]|Dict<FlatTypes>|Dict<FlatTypes>[]
 type StorageResult = Dict<Serializable>
 type Callback = (r?: any) => void;
-type BrowserMessageHandler = (message: Dict<any>, sender: chrome.runtime.MessageSender|"background", respond: Callback) => void;
+type BrowserMessageHandler = (message: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
 type Options = Dict<any>;
 
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
-type ApiCallback = (ok: boolean, result: Dict<any>|string) => void;
+type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
 type ApiCallFormat = 'JSON'|'FORM';
-type ApiCallProgressCallback = (percent: number, loaded?: number, total?: number) => void;
+type ApiCallProgressCallback = (percent: number|null, loaded?: number, total?: number) => void;
 type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: ApiCallProgressCallback};
 type ApiCallMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ApiResponseFormat = 'json';
-type GmailApiResponseFormat = "raw"|"full"|'metadata';
+type GmailApiResponseFormat = 'raw'|'full'|'metadata';

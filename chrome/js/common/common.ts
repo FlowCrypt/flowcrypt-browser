@@ -9,6 +9,7 @@ declare let openpgp: any; // todo - how to make this understand openpgp types fr
 declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, MimeBuilder: any;
 let storage = (window as FlowCryptWindow).flowcrypt_storage;
 
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -44,6 +45,10 @@ let tool = {
       e.srcdoc = html_text;
       e.style['display'] = 'none';
       e.onload = function() {
+        if(e.contentDocument === null) {
+          tool.catch.report('e.contentDocument null');
+          return;
+        }
         let text = e.contentDocument.body.innerText;
         if(tool.env.browser().name === 'firefox') {
           text = text.replace(RegExp('(' + block_start + ')+', 'g'), block_start).replace(RegExp('(' + block_end + ')+', 'g'), block_end);
@@ -179,8 +184,11 @@ let tool = {
       if(tool.value('cryptup_file').in(decrypted_content)) {
         decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function (found_link) {
           let element = $(found_link);
-          let attachment_data = tool.str.html_attribute_decode(element.attr('cryptup-data')) as Attachment;
-          cryptup_attachments.push(tool.file.attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));
+          let cryptup_data = element.attr('cryptup-data');
+          if(cryptup_data) {
+            let attachment_data = tool.str.html_attribute_decode(cryptup_data) as Attachment;
+            cryptup_attachments.push(tool.file.attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));  
+          }
           return '';
         });
       }
@@ -188,8 +196,11 @@ let tool = {
     },
     extract_cryptup_reply_token: (decrypted_content: string) => {
       let cryptup_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
-      if(cryptup_token_element.length && cryptup_token_element.attr('cryptup-data')) {
-        return tool.str.html_attribute_decode(cryptup_token_element.attr('cryptup-data'));
+      if(cryptup_token_element.length) {
+        let cryptup_data = cryptup_token_element.attr('cryptup-data');
+        if(cryptup_data) {
+          return tool.str.html_attribute_decode(cryptup_data);
+        }
       }
     },
     strip_cryptup_reply_token: (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, ''),
@@ -210,13 +221,13 @@ let tool = {
         for(i = 0; s || i < sum.length; i++){
           s += (sum[i] || 0) * 10;
           sum[i] = s % 16;
-          s = (s - sum[i]) / 16
+          s = (s - sum[i]) / 16;
         }
       }
       while(sum.length){
-        hex.push(sum.pop().toString(16))
+        hex.push(sum.pop()!.toString(16));
       }
-      return hex.join('')
+      return hex.join('');
     },
     capitalize: (string: string): string => {
       return string.trim().split(' ').map(function(s) {
@@ -320,7 +331,7 @@ let tool = {
     },
     select: (array: any[], mapped_object_key: string) => array.map((obj) => obj[mapped_object_key]),
     // @ts-ignore - could be arr.indexOf or str.indexOf - works the same for this purpose but TS doesn't know?
-    contains: (arr: any[]|string, value: any) => arr && typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1,
+    contains: (arr: any[]|string, value: any): boolean => arr && typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1,
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => tool.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0),
@@ -347,7 +358,7 @@ let tool = {
     random: (min_value: number, max_value: number) => min_value + Math.round(Math.random() * (max_value - min_value)),
   },
   time: {
-    wait: (until_this_function_evaluates_true: () => boolean): Promise<void> => {
+    wait: (until_this_function_evaluates_true: () => boolean|undefined): Promise<void> => {
       return tool.catch.Promise(function (success, error) {
         let interval = setInterval(function () {
           let result = until_this_function_evaluates_true();
@@ -384,7 +395,7 @@ let tool = {
         });
       });
     },
-    download_as_uint8: (url: string, progress: (n: number|null, l: number, t: number) => void, callback: (success: boolean, uint8: Uint8Array|ErrorEvent) => void) => {
+    download_as_uint8: (url: string, progress:ApiCallProgressCallback|null=null, callback: (success: boolean, uint8: Uint8Array|ErrorEvent) => void) => {
       let request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
@@ -445,9 +456,9 @@ let tool = {
         }
       }
     },
-    attachment: (name='', type='application/octet-stream', content: string|Uint8Array, size=content.length, url:string=null): Attachment => { // todo - refactor as (content, name, type, LENGTH, url), making all but content voluntary
+    attachment: (name='', type='application/octet-stream', content: string|Uint8Array|null, size:number|null=null, url:string|null=null): Attachment => { // todo - refactor as (content, name, type, LENGTH, url), making all but content voluntary
       // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
-      return {name: name, type: type, content: content, size: size, url: url};
+      return {name: name, type: type, content: content, size: size || (content || '').length, url: url};
     },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
     keyinfo_as_pubkey_attachment: (ki: KeyInfo) => tool.file.attachment(`0x${ki.longid}.asc`, 'application/pgp-keys', ki.public),
@@ -561,7 +572,7 @@ let tool = {
       return text;
     },
     decode: (mime_message: string, callback: (success: boolean, decoded: MimeContent) => void) => {
-      let mime_content = {attachments: [], headers: {}, text: undefined, html: undefined, signature: undefined} as MimeContent;
+      let mime_content = {attachments: [], headers: {} as Headers, text: undefined, html: undefined, signature: undefined} as MimeContent;
       tool._.mime_require('parser', function (emailjs_mime_parser: any) {
         try {
           let parser = new emailjs_mime_parser();
@@ -617,7 +628,7 @@ let tool = {
         }
         let content_node: MimeParserNode;
         if(Object.keys(body).length === 1) {
-          content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"]);
+          content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
         } else {
           content_node = new MimeBuilder('multipart/alternative');
           tool.each(body, (type: string, content: string) => { content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, content))});
@@ -790,7 +801,7 @@ let tool = {
         }
         return null;
       },
-      headers: (block_type: MessageBlockType, format='string') => {
+      headers: (block_type: MessageBlockType|'null', format='string') => {
         if(format === 're') {
           let h = tool._.var.crypto_armor_headers_DICT[block_type || 'null'];
           if(typeof (h as any as RegExp).exec === 'function') {
@@ -1058,7 +1069,7 @@ let tool = {
           callback(tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]));
         });
       },
-      decrypt: (account_email: string, encrypted_data: string|Uint8Array, message_password: string|null, callback: (decrypted: Decrypted) => void, output_format:"utf8"|"binary"|null=null): void => {
+      decrypt: (account_email: string, encrypted_data: string|Uint8Array, message_password: string|null, callback: (decrypted: DecryptSuccess|DecryptError) => void, output_format:"utf8"|"binary"|null=null): void => {
         let first_100_bytes = encrypted_data.slice(0, 100);
         if(first_100_bytes instanceof Uint8Array) {
           first_100_bytes = tool.str.from_uint8(first_100_bytes);
@@ -1095,14 +1106,14 @@ let tool = {
           } else {
             let missing_passphrases = keys.without_passphrases.map(function (ki) { return ki.longid; });
             if(!keys.with_passphrases.length && !message_password) {
-              callback({success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors});
+              callback({success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors, encrypted: true});
             } else {
               let keyinfos_for_looper = keys.with_passphrases.slice(); // copy keyinfo array
               let keep_trying_until_decrypted_or_all_failed = function () {
                 tool.catch.try(function () {
                   if(!counts.decrypted && keyinfos_for_looper.length) {
                     try {
-                      openpgp.decrypt(tool._.crypto_message_get_decrypt_options(message, keyinfos_for_looper.shift(), is_armored, message_password, output_format)).then(function (decrypted: OpenpgpDecryptResult) {
+                      openpgp.decrypt(tool._.crypto_message_get_decrypt_options(message, keyinfos_for_looper.shift()!, is_armored, message_password, output_format)).then(function (decrypted: OpenpgpDecryptResult) {
                         tool.catch.try(function () {
                           if(!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
                             // let signature_result = keys.signed_by.length ? tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
@@ -1115,7 +1126,7 @@ let tool = {
                       }).catch(function (decrypt_error: Error) {
                         tool.catch.try(function () {
                           tool._.crypto_message_increment_decrypt_error_counts(counts, other_errors, message_password, decrypt_error);
-                          if(tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors})) {
+                          if(tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors, encrypted: true})) {
                             keep_trying_until_decrypted_or_all_failed();
                           }
                         })();
@@ -1123,7 +1134,7 @@ let tool = {
                     } catch(decrypt_exception) {
                       other_errors.push(String(decrypt_exception));
                       counts.attempts++;
-                      if(tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors})) {
+                      if(tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors, encrypted: true})) {
                         keep_trying_until_decrypted_or_all_failed();
                       }
                     }
@@ -1135,7 +1146,7 @@ let tool = {
           }
         });
       },
-      encrypt: (armored_pubkeys: string[], signing_prv: any, challenge: Challenge, data: string|Uint8Array, filename: string|null, armor: boolean, callback: (result: OpenpgpEncryptResult) => void) => {
+      encrypt: (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, callback: (result: OpenpgpEncryptResult) => void) => {
         let options: Options = { data: data, armor: armor };
         if(filename) {
           options['filename'] = filename;
@@ -1357,11 +1368,11 @@ let tool = {
             return arg;
           }
         });
-        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, (result: Decrypted) => {
+        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, (result: DecryptSuccess|DecryptError) => {
           if(path === 'tool.crypto.message.decrypt') {
             if(result && result.success && result.content && result.content.data && typeof result.content.data === 'string' && result.content.data.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
               tool.file.object_url_consume(result.content.data).then(function (result_content_data) {
-                result.content.data = result_content_data;
+                result.content!.data = result_content_data;
                 callback(result);
               });
             } else {
@@ -1372,7 +1383,7 @@ let tool = {
           }
         });
       },
-      send: (destination_string: string, name: string, data: Dict<any>, callback: Callback) => {
+      send: (destination_string: string|null, name: string, data: Dict<any>|null, callback: Callback) => {
         let msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };
         let is_background_page = tool.env.is_background_script();
         if(typeof  destination_string === 'undefined') { // don't know where to send the message
@@ -1383,7 +1394,7 @@ let tool = {
         } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
           tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback); // calling from background script to background script: skip messaging completely
         } else if(is_background_page) {
-          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab, msg, undefined, function(r) {
+          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, function(r) {
             tool.catch.try(function() {
               if(typeof callback !== 'undefined') {
                 callback(r);
@@ -1438,7 +1449,7 @@ let tool = {
           tool._.var.browser_message_background_script_registered_handlers = handlers;
         } else {
           tool.each(handlers, function(name: string, handler) {
-            tool._.var.browser_message_background_script_registered_handlers[name] = handler;
+            tool._.var.browser_message_background_script_registered_handlers![name] = handler; // is !null because added above
           });
         }
         chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
@@ -1454,9 +1465,9 @@ let tool = {
           };
           if(msg.to && msg.to !== 'broadcast') {
             msg.sender = sender;
-            chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab, msg, undefined, safe_respond);
-          } else if(tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers))) {
-            tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, sender, safe_respond);
+            chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
+          } else if(tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
+            tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because added above
           } else if(msg.to !== 'broadcast') {
             tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
           }
@@ -1470,14 +1481,16 @@ let tool = {
       window: (auth_url: string, window_closed_by_user: Callback) => {
         let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
         let window_closed_timer = setInterval(function () {
-          if(auth_code_window.closed) {
+          if(auth_code_window !== null && auth_code_window.closed) {
             clearInterval(window_closed_timer);
             window_closed_by_user();
           }
         }, 500);
         return function() {
           clearInterval(window_closed_timer);
-          auth_code_window.close();
+          if(auth_code_window !== null) {
+            auth_code_window.close();
+          }
         };
       },
       parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
@@ -1491,7 +1504,7 @@ let tool = {
         tool.browser.message.tab_id(function(tab_id) {
           auth_request.tab_id = tab_id;
           storage.get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (s: Dict<any>) {
-            if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes, s.google_token_scopes, auth_request.omit_read_scope)) {
+            if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes || null, s.google_token_scopes, auth_request.omit_read_scope || false)) {
               if(!tool.env.is_background_script()) {
                 tool.api.google.auth_popup(auth_request, s.google_token_scopes, respond);
               } else {
@@ -1519,20 +1532,28 @@ let tool = {
         auth_request.auth_responder_id = tool.str.random(20);
         tool._.var.api_google_auth_responders[auth_request.auth_responder_id] = respond;
         auth_request.scopes = auth_request.scopes || [];
-        tool.each(tool._.var.google_oauth2.scopes, function (i, scope) {
-          if(!tool.value(scope).in(auth_request.scopes)) {
+        tool.each(tool._.var.google_oauth2!.scopes, function (i, scope) {
+          if(!tool.value(scope).in(auth_request.scopes!)) {
             if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
-              auth_request.scopes.push(scope);
+              auth_request.scopes!.push(scope);
             }
           }
         });
         tool.each(current_google_token_scopes, function (i, scope) {
-          if(!tool.value(scope).in(auth_request.scopes)) {
-            auth_request.scopes.push(scope);
+          if(!tool.value(scope).in(auth_request.scopes!)) {
+            auth_request.scopes!.push(scope);
           }
         });
-        let result_listener = { google_auth_window_result: function(result: Dict<any>, sender: chrome.runtime.MessageSender, respond: Callback) { tool._.google_auth_window_result_handler(auth_request.auth_responder_id, result, respond); } };
-        if(auth_request.tab_id !== null) {
+        let result_listener = {
+          google_auth_window_result: function(result: Dict<any>, sender: chrome.runtime.MessageSender, respond: Callback) { 
+            if(auth_request.auth_responder_id) {
+              tool._.google_auth_window_result_handler(auth_request.auth_responder_id, result, respond); 
+            } else {
+              tool.catch.report(`result_listener.google_auth_window_result:auth_request.auth_responder_id:${auth_request.auth_responder_id}`);
+            }
+          },
+        };
+        if(auth_request.tab_id !== null && auth_request.tab_id !== undefined) {
           tool.browser.message.listen(result_listener, auth_request.tab_id);
         } else {
           tool.browser.message.listen_background(result_listener);
@@ -1547,13 +1568,17 @@ let tool = {
         function api_google_auth_window_closed_watcher() {
           if(auth_code_window !== null && typeof auth_code_window !== 'undefined' && auth_code_window.closed) { // on firefox it seems to be sometimes returning a null, due to popup blocking
             clearInterval(window_closed_timer);
-            let auth_responder = tool._.var.api_google_auth_responders[auth_request.auth_responder_id];
-            if(auth_responder !== tool._.var.api_google_AUTH_RESPONDED && typeof auth_responder === 'function') {
-              // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
-              // thus it's impossible for another process to try to respond before the next line
-              // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
-              auth_responder({success: false, result: 'closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
-              tool._.var.api_google_auth_responders[auth_request.auth_responder_id] = tool._.var.api_google_AUTH_RESPONDED;
+            if(!auth_request.auth_responder_id) {
+              tool.catch.report(`api_google_auth_window_closed_watcher:auth_request.auth_responder_id:${auth_request.auth_responder_id}`);
+            } else {
+              let auth_responder = tool._.var.api_google_auth_responders[auth_request.auth_responder_id];
+              if(auth_responder !== tool._.var.api_google_AUTH_RESPONDED && typeof auth_responder === 'function') {
+                // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
+                // thus it's impossible for another process to try to respond before the next line
+                // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
+                auth_responder({success: false, result: 'closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+                tool._.var.api_google_auth_responders[auth_request.auth_responder_id] = tool._.var.api_google_AUTH_RESPONDED;
+              }  
             }
           }
         }
@@ -1665,7 +1690,7 @@ let tool = {
       message_get: (account_email: string, message_id: string|string[], format: GmailApiResponseFormat, callback: any, results:Dict<any>={}) => { //format: raw, full or metadata
         if(tool.arr.is(message_id)) { // todo: chained requests are messy and slow. parallel processing with promises would be better
           if(message_id.length) {
-            let id = message_id.pop();
+            let id = message_id.pop()!; // checked .length above
             tool._.api_gmail_call(account_email, 'GET', 'messages/' + id, { format: format || 'full' }, function (success: boolean, response: Dict<any>) {
               if(success) {
                 results[id] = response;
@@ -1682,7 +1707,7 @@ let tool = {
         }
       },
       attachment_get: (account_email: string, message_id: string, attachment_id: string, callback: ApiCallback, progress_callback:Callback|null=null) => {
-        tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback, undefined, {download: progress_callback});
+        tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
       },
       find_header: (api_gmail_message_object: Dict<any>, header_name: string) => {
         let node = api_gmail_message_object.payload ? api_gmail_message_object.payload : api_gmail_message_object;
@@ -1735,7 +1760,7 @@ let tool = {
       },
       fetch_attachments: (account_email: string, attachments:Attachment[], callback: ApiCallback, results:Attachment[]=[]) => { //todo: parallelize with promises
         let attachment = attachments[results.length];
-        tool.api.gmail.attachment_get(account_email, attachment.message_id, attachment.id, (success: boolean, response: Dict<any>) => {
+        tool.api.gmail.attachment_get(account_email, attachment.message_id!, attachment.id!, (success: boolean, response: Dict<any>) => { // if .message_id or .id not present, api will fail anyway
           if(success) {
             attachment.data = response.data;
             results.push(attachment);
@@ -1776,7 +1801,7 @@ let tool = {
             if(format === 'full') {
               let bodies = tool.api.gmail.find_bodies(gmail_message_object);
               let attachments = tool.api.gmail.find_attachments(gmail_message_object);
-              let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'])) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'])));
+              let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'] || '')));
               if(armored_message_from_bodies) {
                 success_callback(armored_message_from_bodies);
               } else if(attachments.length) {
@@ -1786,7 +1811,7 @@ let tool = {
                     found = true;
                     tool.api.gmail.fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success: boolean, attachments: Attachment[]) {
                       if(fetch_attachments_success) {
-                        let armored_message_text = tool.str.base64url_decode(attachments[0].data);
+                        let armored_message_text = tool.str.base64url_decode(attachments[0].data!);
                         let armored_message = tool.crypto.armor.clip(armored_message_text);
                         if(armored_message) {
                           success_callback(armored_message);
@@ -1808,13 +1833,13 @@ let tool = {
               }
             } else { // format === raw
               tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw), function (success, mime_message) {
-                if(success) {
+                if(success && mime_message.text !== undefined) {
                   let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
                   if(armored_message) {
                     success_callback(armored_message);
                   } else {
                     error_callback('format');
-                  }
+                  }  
                 } else {
                   error_callback('format');
                 }
@@ -1850,7 +1875,7 @@ let tool = {
                     let keys:OpenpgpKey[] = [];
                     for(let downloaded_attachment of downloaded_attachments) {
                       try {
-                        let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
+                        let armored_key = tool.str.base64url_decode(downloaded_attachment.data!);
                         let key = openpgp.key.readArmored(armored_key).keys[0];
                         if(key.isPrivate()) {
                           keys.push(key);
@@ -1897,7 +1922,7 @@ let tool = {
         pubkey: pubkey,
       }),
       diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
-        let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string, match: boolean}> };
+        let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
         storage.get(account_email, ['addresses'], function (s: StorageResult) {
           storage.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
             let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
@@ -1952,8 +1977,8 @@ let tool = {
           let result = {
             success: false,
             content: {} as Dict<string>,
-            error: null as string,
-            text: null as string,
+            error: null as string|null,
+            text: null as string|null,
           };
           let packet_headers = tool.crypto.armor.headers('attest_packet', 're');
           let matches = text.match(RegExp(packet_headers.begin + '([^]+)' + packet_headers.end, 'm'));
@@ -2265,7 +2290,7 @@ let tool = {
         }
         for(let i in items) {
           let values = items[i].fields;
-          values.file = tool.file.attachment('encrpted_attachment', 'application/octet-stream', items[i].attachment.content);
+          values.file = tool.file.attachment('encrpted_attachment', 'application/octet-stream', items[i].attachment.content!);
           promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
             progress[i] = single_file_progress;
             tool.ui.event.prevent(tool.ui.event.spree(), function() {
@@ -2279,7 +2304,7 @@ let tool = {
     }
   }, 
   /* [BARE_ENGINE_OMIT_END] */
-  value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string) => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
+  value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
   e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML,
   noop: (): any => null,
   each: (iterable: Dict<any>, looper: (k: string|number, v: any) => false|void) => {
@@ -2298,7 +2323,7 @@ let tool = {
     var: { // meant to be used privately within this file like so: tool._.vars.???
       // internal variables
       ui_event_fired: {} as Dict<number>,
-      browser_message_background_script_registered_handlers: null as Dict<BrowserMessageHandler>,
+      browser_message_background_script_registered_handlers: null as Dict<BrowserMessageHandler>|null,
       browser_message_frame_registered_handlers: {} as Dict<BrowserMessageHandler>,
       api_google_auth_responders: {} as Dict<Callback|string>,
       // internal constants
@@ -2404,8 +2429,8 @@ let tool = {
     },
     crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type: type, content: content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
-      let result = {found: [] as MessageBlock[], continue_at: null as number};
-      let begin = original_text.indexOf(tool.crypto.armor.headers(null).begin, start_at);
+      let result = {found: [] as MessageBlock[], continue_at: null as number|null};
+      let begin = original_text.indexOf(tool.crypto.armor.headers('null').begin, start_at);
       if(begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, tool._.var.crypto_armor_header_MAX_LENGTH);
         tool.each(tool._.var.crypto_armor_headers_DICT, function(type: MessageBlockType, block_header) {
@@ -2425,7 +2450,7 @@ let tool = {
                 let regexp_end = original_text.match(block_header.end);
                 if(regexp_end) {
                   block_header.end.length = regexp_end[0].length;
-                  end = regexp_end.index;
+                  end = regexp_end.index || -1;
                 }
               }
               if(end !== -1) { // identified end of the same block
@@ -2473,8 +2498,8 @@ let tool = {
         with_passphrases: [],
         without_passphrases: [],
       } as InternalSortedKeysForDecrypt;
-      keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(id => tool.crypto.key.longid((id as any).bytes));
-      keys.signed_by = (message.getSigningKeyIds() || []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes));
+      keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
+      keys.signed_by = (message.getSigningKeyIds() || []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       storage.keys_get(account_email).then((private_keys_all: KeyInfo[]) => {
         keys.potentially_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
         if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
@@ -2484,7 +2509,7 @@ let tool = {
           for(let i in keys.potentially_matching) {
             if(passphrases[i] !== null) {
               let key = openpgp.key.readArmored(keys.potentially_matching[i].private).keys[0];
-              if(tool.crypto.key.decrypt(key, passphrases[i]).success) {
+              if(tool.crypto.key.decrypt(key, passphrases[i]!).success) {
                 keys.potentially_matching[i].decrypted = key;
                 keys.with_passphrases.push(keys.potentially_matching[i]);
               } else {
@@ -2506,7 +2531,7 @@ let tool = {
         });
       });
     },
-    crypto_message_zeroed_decrypt_error_counts: (keys:InternalSortedKeysForDecrypt=null) => {
+    crypto_message_zeroed_decrypt_error_counts: (keys:InternalSortedKeysForDecrypt|null=null) => {
       return {
         decrypted: 0,
         potentially_matching_keys: keys ? keys.potentially_matching.length : 0,
@@ -2518,12 +2543,12 @@ let tool = {
         format_errors: 0,
       };
     },
-    crypto_message_increment_decrypt_error_counts: (counts: DecryptedErrorCounts, other_errors: string[], one_time_message_password: string, decrypt_error: Error) => {
-      if(String(decrypt_error) === 'Error: Error decrypting message: Cannot read property \'isDecrypted\' of null' && !one_time_message_password) {
+    crypto_message_increment_decrypt_error_counts: (counts: DecryptedErrorCounts, other_errors: string[], message_password: string|null, decrypt_error: Error) => {
+      if(String(decrypt_error) === 'Error: Error decrypting message: Cannot read property \'isDecrypted\' of null' && !message_password) {
         counts.key_mismatch++; // wrong private key
-      } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !one_time_message_password) {
+      } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !message_password) {
         counts.key_mismatch++; // attempted opening password only message with key
-      } else if(one_time_message_password && tool.value(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
+      } else if(message_password && tool.value(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
         counts.wrong_password++; // wrong password
       } else if(String(decrypt_error) === 'Error: Error decrypting message: Decryption failed due to missing MDC in combination with modern cipher.') {
         counts.unsecure_mdc++;
@@ -2540,28 +2565,30 @@ let tool = {
      * @param result: result to be called back
      * @returns {boolean}: continue to next attempt
      */
-    crypto_message_chained_decryption_result_collector: (callback: Callback, result: Decrypted) => {
+    crypto_message_chained_decryption_result_collector: (callback: Callback, result: DecryptSuccess|DecryptError) => {
       if(result.success) {
         callback(result); // callback the moment there is successful decrypt
         return false; // do not try again
-      } else if(result.counts.attempts === result.counts.rounds && !result.counts.decrypted) {
-        if(result.counts.format_errors > 0) {
-          result.format_error = 'This message seems to be badly formatted.';
+      } else {
+        if(result.counts.attempts === result.counts.rounds && !result.counts.decrypted) {
+          if(result.counts.format_errors > 0) {
+            result.format_error = 'This message seems to be badly formatted.';
+          }
+          callback(result); // or callback if no success and this was the last attempt
+          return false; // do not try again
         }
-        callback(result); // or callback if no success and this was the last attempt
-        return false; // do not try again
+        return true; // next attempt
       }
-      return true; // next attempt
     },
-    crypto_message_get_decrypt_options: (message: OpenpgpMessage, ki: KeyInfo, is_armored: boolean, one_time_message_password: string, force_output_format:EncryptDecryptOutputFormat|null=null) => {
+    crypto_message_get_decrypt_options: (message: OpenpgpMessage, ki: KeyInfo, is_armored: boolean, message_password: string|null, force_output_format:EncryptDecryptOutputFormat|null=null) => {
       let options: Options = {
         message: message, 
         format: is_armored ? (force_output_format || 'utf8') : (force_output_format || 'binary'),
       };
-      if(!one_time_message_password) {
+      if(!message_password) {
         options.privateKey = ki.decrypted;
       } else {
-        options.password = tool.crypto.hash.challenge_answer(one_time_message_password);
+        options.password = tool.crypto.hash.challenge_answer(message_password);
       }
       return options;
     },
@@ -2626,8 +2653,8 @@ let tool = {
       return 'less than a second';
     },
     /* [BARE_ENGINE_OMIT_BEGIN] */
-    browser_message_destination_parse: (destination_string: string) => {
-      let parsed = { tab: null as number, frame: null as number };
+    browser_message_destination_parse: (destination_string: string|null) => {
+      let parsed = { tab: null as null|number, frame: null as null|number };
       if(destination_string) {
         parsed.tab = Number(destination_string.split(':')[0]);
         // @ts-ignore - adding nonsense into isNaN
@@ -2635,21 +2662,21 @@ let tool = {
       }
       return parsed;
     },
-    get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks) => {
+    get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks|null) => {
       let progress_reporting_xhr = new (window as FlowCryptWindow).XMLHttpRequest();
-      if(typeof progress_callbacks.upload === 'function') {
+      if(progress_callbacks && typeof progress_callbacks.upload === 'function') {
         progress_reporting_xhr.upload.addEventListener('progress', function(evt: ProgressEvent) {
-          progress_callbacks.upload(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null);
+          progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null); // checked ===function above
         }, false);
       }
-      if(typeof progress_callbacks.download === 'function') {
+      if(progress_callbacks && typeof progress_callbacks.download === 'function') {
         progress_reporting_xhr.onprogress = function (evt: ProgressEvent) {
-          progress_callbacks.download(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
+          progress_callbacks.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total); // checked ===function above
         };
       }
       return progress_reporting_xhr;
     },
-    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks, headers:Headers=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
+    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:Headers|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
       progress = progress || {} as ApiCallProgressCallbacks;
       let formatted_values:FormData|string;
       let content_type: string|false;
@@ -2683,7 +2710,7 @@ let tool = {
           processData: false,
           contentType: content_type,
           async: true,
-          timeout: typeof progress.upload === 'function' || typeof progress.download === 'function' ? undefined : 20000,
+          timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above 
           success: function (response) {
             tool.catch.try(function () {
               if(response && typeof response === 'object' && typeof response.error === 'object') {
@@ -2705,11 +2732,13 @@ let tool = {
         });
       });
     },
-    api_google_has_new_scope: (new_scopes: string[], original_scopes: string[], omit_read_scope: boolean) => {
-      if(!(original_scopes || []).length) { // no original scopes
-        return true;
+    api_google_has_new_scope: (new_scopes: string[]|null, original_scopes: string[], omit_read_scope: boolean) => {
+      new_scopes = new_scopes || [];
+      original_scopes = original_scopes || [];
+      if(!original_scopes.length) {
+        return true; // no original scopes
       }
-      if(!(new_scopes || []).length) { // no new scopes specified
+      if(!new_scopes.length) { // no new scopes specified
         return(original_scopes.length === 2 && !omit_read_scope); // however, previously there were only two of three scopes, and third was not omitted this time
       }
       for(let i = 0; i < new_scopes.length; i++) {
@@ -2719,15 +2748,15 @@ let tool = {
       }
       return false; // no new scope found
     },
-    api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2.state_header + JSON.stringify(status_object),
+    api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
     api_google_auth_code_url: (auth_request: AuthRequest) => {
-      return tool.env.url_create(tool._.var.google_oauth2.url_code, {
-        client_id: tool._.var.google_oauth2.client_id,
+      return tool.env.url_create(tool._.var.google_oauth2!.url_code, {
+        client_id: tool._.var.google_oauth2!.client_id,
         response_type: 'code',
         access_type: 'offline',
         state: tool._.api_google_auth_state_pack(auth_request),
-        redirect_uri: tool._.var.google_oauth2.url_redirect,
-        scope: auth_request.scopes.join(' '),
+        redirect_uri: tool._.var.google_oauth2!.url_redirect,
+        scope: (auth_request.scopes || []).join(' '),
         login_hint: auth_request.account_email,
       });
     },
@@ -2744,7 +2773,7 @@ let tool = {
     },
     google_auth_get_tokens: (code: string, callback: Callback, retries_left: number) => {
       $.ajax({
-        url: tool.env.url_create(tool._.var.google_oauth2.url_tokens, { grant_type: 'authorization_code', code: code, client_id: tool._.var.google_oauth2.client_id, redirect_uri: tool._.var.google_oauth2.url_redirect }),
+        url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code: code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
         method: 'POST',
         crossDomain: true,
         async: true,
@@ -2764,7 +2793,7 @@ let tool = {
     },
     google_auth_refresh_token: (refresh_token: string, callback: ApiCallback) => {
       $.ajax({
-        url: tool.env.url_create(tool._.var.google_oauth2.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: tool._.var.google_oauth2.client_id }),
+        url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
         method: 'POST',
         crossDomain: true,
         async: true,
@@ -2834,7 +2863,7 @@ let tool = {
     api_google_call: (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth=false) => {
       storage.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
         let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
-        if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
+        if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
           $.ajax({
             url: url,
             method: method,
@@ -2880,15 +2909,15 @@ let tool = {
         }
       });
     },
-    api_gmail_call: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth=false, progress:ApiCallProgressCallbacks=null, content_type:string=null) => {
+    api_gmail_call: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, callback: ApiCallback, fail_on_auth=false, progress:ApiCallProgressCallbacks|null=null, content_type:string|null=null) => {
       if(!account_email) {
         throw new Error('missing account_email in api_gmail_call');
       }
       progress = progress || {};
       storage.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
-        if(typeof auth.google_token_access !== 'undefined' && auth.google_token_expires > new Date().getTime()) { // have a valid gmail_api oauth token
+        if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
           let data, url;
-          if(typeof progress.upload === 'function') {
+          if(typeof progress!.upload === 'function') { // substituted with {} above
             url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
             data = parameters;
           } else {
@@ -2905,7 +2934,7 @@ let tool = {
             },
             url: url,
             method: method,
-            data: data,
+            data: data || undefined,
             headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
             crossDomain: true,
             contentType: content_type || 'application/json; charset=UTF-8',
@@ -2953,7 +2982,7 @@ let tool = {
         }
       });
     },
-    google_api_handle_auth_error: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth: boolean, error_response: any, base_api_function: any, progress:ApiCallProgressCallbacks=null, content_type:string=null) => {
+    google_api_handle_auth_error: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, callback: ApiCallback, fail_on_auth: boolean, error_response: any, base_api_function: any, progress:ApiCallProgressCallbacks|null=null, content_type:string|null=null) => {
       if(fail_on_auth !== true) {
         tool.api.google.auth({account_email: account_email}, function (response) {
           if(response && response.success === false && response.error === tool.api.error.network) {
@@ -3121,10 +3150,10 @@ let tool = {
     handle_exception: (exception: Error) => {
       let line, col;
       try {
-        let caller_line = exception.stack.split('\n')[1];
+        let caller_line = exception.stack!.split('\n')[1]; // will be catched below
         let matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
-        line = Number(matched[1]);
-        col = Number(matched[2]);
+        line = Number(matched![1]); // will be catched below
+        col = Number(matched![2]); // will be catched below
       } catch(line_err) {
         line = 0;
         col = 0;
