@@ -1,33 +1,24 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /// <reference path="common.d.ts" />
+/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 
 'use strict';
 
-class Subscription {
-  active: boolean = null;
-  method: "stripe"|"group"|"trial" = null;
-}
 
 (function() {
 
-  let openpgp, $, jQuery, flowcrypt_attach, storage;
-  if(typeof exports !== 'object') { // browser
-    openpgp = (window as FlowCryptWindow).openpgp;
-    $ = jQuery = (window as FlowCryptWindow).jQuery;
-    flowcrypt_attach = (window as FlowCryptWindow).flowcrypt_attach;
-    storage = (window as FlowCryptWindow).flowcrypt_storage;
-  } else { // electron
-    require('module').globalPaths.push(process.cwd());
-    tool = require('js/tool').tool;
-    // @ts-ignore
-    catcher = require('js/tool').catcher;
-    openpgp = require('openpgp');
-    $ = jQuery = require('jquery');
-    (window as FlowCryptWindow).lang = require('js/lang');
-    flowcrypt_attach = require('js/attach');
-    storage = require('js/storage').legacy;
+  class Subscription {
+    active: boolean = null;
+    method: "stripe"|"group"|"trial" = null;
   }
+
+  interface ContactsQuery {
+    substring: string,
+  }
+
+  let storage = (window as FlowCryptWindow).flowcrypt_storage;
+  let flowcrypt_attach = (window as FlowCryptWindow).flowcrypt_attach;
 
   const S = tool.ui.build_jquery_selectors({
     body: 'body',
@@ -73,7 +64,7 @@ class Subscription {
   };
 
   if(typeof exports !== 'object') {
-    window['flowcrypt_compose'] = _self;
+    (window as any).flowcrypt_compose = _self as any;
   } else {
     exports.compose = _self;
   }
@@ -90,75 +81,75 @@ class Subscription {
   let attach = flowcrypt_attach.init(get_max_attachment_size_and_oversize_notice);
 
   let last_draft = '';
-  let can_read_emails;
-  let last_reply_box_table_height;
+  let can_read_emails: boolean;
+  let last_reply_box_table_height = 0;
   let contact_search_in_progress = false;
-  let added_pubkey_db_lookup_interval;
+  let added_pubkey_db_lookup_interval: number;
   let save_draft_interval = setInterval(draft_save, SAVE_DRAFT_FREQUENCY);
   let save_draft_in_process = false;
-  let passphrase_interval;
+  let passphrase_interval: number;
   let include_pubkey_toggled_manually = false;
-  let my_addresses_on_pks = [];
-  let my_addresses_on_keyserver = [];
-  let recipients_missing_my_key = [];
-  let keyserver_lookup_results_by_email = {};
-  let subscribe_result_listener;
-  let additional_message_headers = {};
-  let button_update_timeout;
-  let is_reply_box, tab_id, account_email, thread_id, draft_id, supplied_subject, supplied_from, supplied_to, frame_id;
-  let reference_body_height;
+  let my_addresses_on_pks: string[] = [];
+  let my_addresses_on_keyserver: string[] = [];
+  let recipients_missing_my_key: string[] = [];
+  let keyserver_lookup_results_by_email: {[key: string]: PubkeySearchResult} = {};
+  let subscribe_result_listener: (subscription_active: boolean) => void;
+  let additional_message_headers: {[key: string]: string} = {};
+  let button_update_timeout: number;
+  let is_reply_box: boolean, tab_id: string, account_email: string, thread_id: string, draft_id:string, supplied_subject:string, supplied_from:string, supplied_to:string, frame_id:string;
+  let reference_body_height: number;
 
   let app = { // this is a list of empty defaults that will get overwritten wherever composer is used
     can_read_email: () => true,
-    does_recipient_have_my_pubkey: (email, cb) => { if(cb) { cb(); }},
-    storage_get_addresses: () => [account_email],
-    storage_get_addresses_pks: () => [],
-    storage_get_addresses_keyserver: () => [],
-    storage_get_email_footer: () => null,
-    storage_set_email_footer: (footer) => null,
-    storage_get_hide_message_password: () => false,
-    storage_get_subscription_info: (cb?) : Subscription => { if(typeof cb === 'function') { cb({}); } return new Subscription(); }, // returns cached result, callbacks with fresh result
-    storage_get_armored_public_key: (sender_email) => tool.catch.Promise((resolve, reject) => {resolve(null)}),
-    storage_set_draft_meta: (store_if_true, draft_id, thread_id, recipients, subject) => tool.catch.Promise((resolve, reject) => {resolve()}),
-    storage_passphrase_get: () => tool.catch.Promise((resolve, reject) => {resolve()}),
-    storage_add_admin_codes: (short_id, message_admin_code, attachment_admin_codes, callback) => { callback(); },
-    storage_contact_get: async (email): Promise<Contact|Contact[]> => null,
-    storage_contact_update: async (email, update): Promise<undefined> => undefined,
-    storage_contact_save: async (contact): Promise<undefined> => undefined,
-    storage_contact_search: async (query): Promise<Contact[]> => [],
-    storage_contact_object: (email, name, has_cryptup, pubkey, attested, pending_lookup, last_use): Contact => { return {} as Contact},
-    email_provider_draft_get: (draft_id) => tool.catch.Promise((resolve, reject) => {reject()}),
-    email_provider_draft_create: (mime_message) => tool.catch.Promise((resolve, reject) => {reject()}),
-    email_provider_draft_update: (draft_id, mime_message) => tool.catch.Promise((resolve, reject) => {reject()}),
-    email_provider_draft_delete: (draft_id) => tool.catch.Promise((resolve, reject) => {reject()}),
-    email_provider_message_send: (message, render_upload_progress) => tool.catch.Promise((resolve, reject) => {reject()}),
-    email_provider_search_contacts: (query, known_contacts, multi_cb) => undefined,
-    email_provider_determine_reply_message_header_variables: (cb) => { if(cb) cb(); },
-    email_provider_extract_armored_block: (message_id, success_cb, error_cb) => { if(error_cb) error_cb('not implemented'); },
-    send_message_to_main_window: (channel, data?) => null,
-    send_message_to_background_script: (channel, data) => null,
-    render_footer_dialog: () => null,
-    render_add_pubkey_dialog: (emails) => null,
-    render_reinsert_reply_box: (last_message_id, recipients) => null,
-    render_help_dialog: () => null,
-    render_sending_address_dialog: () => null,
-    factory_attachment: (attachment) => '<div>' + attachment.name + '</div>',
-    close_message: () => null,
-  };
+    does_recipient_have_my_pubkey: (email: string, cb: (has_pubkey: boolean) => void) => { if(cb) { cb(undefined); }},
+    storage_get_addresses: (): string[] => [account_email],
+    storage_get_addresses_pks: (): string[] => [],
+    storage_get_addresses_keyserver: (): string[] => [],
+    storage_get_email_footer: (): string => null,
+    storage_set_email_footer: (footer: string): void => null,
+    storage_get_hide_message_password: ():boolean => false,
+    storage_get_subscription_info: (cb?: (s: Subscription) => void) : Subscription|undefined => { if(typeof cb === 'function') { cb(new Subscription()); } return new Subscription(); }, // returns cached result, callbacks with fresh result
+    storage_get_armored_public_key: (sender_email: string) => tool.catch.Promise((resolve, reject) => {resolve(null)}),
+    storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => tool.catch.Promise((resolve, reject) => {resolve()}),
+    storage_passphrase_get: (): Promise<string|null> => tool.catch.Promise((resolve, reject) => { resolve(null); }) as Promise<null>,
+    storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: () => void) => { callback(); },
+    storage_contact_get: async (email: string): Promise<Contact|Contact[]> => null,
+    storage_contact_update: async (email: string, update: object): Promise<undefined> => undefined,
+    storage_contact_save: async (contact: Contact): Promise<undefined> => undefined,
+    storage_contact_search: async (query: ContactsQuery): Promise<Contact[]> => [],
+    storage_contact_object: (email: string, name: string, has_cryptup: boolean, pubkey: string, attested: boolean, pending_lookup: boolean, last_use: number): Contact => { return {} as Contact},
+    email_provider_draft_get: (draft_id: string) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_create: (mime_message: string) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_draft_delete: (draft_id: string) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: (progress: number) => void) => tool.catch.Promise((resolve, reject) => {reject()}),
+    email_provider_search_contacts: (query: ContactsQuery, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void): void => undefined,
+    email_provider_determine_reply_message_header_variables: (cb: (last_msg_id: string, headers: Headers) => void) => { if(cb) cb(null, {} as Headers); },
+    email_provider_extract_armored_block: (message_id: string, success_cb: (armored_msg: string) => void, error_cb: (err?: any) => void) => { if(error_cb) error_cb('not implemented'); },
+    send_message_to_main_window: (channel: string, data?: Object): void => null,
+    send_message_to_background_script: (channel: string, data?: Object): void => null,
+    render_footer_dialog: (): void => null,
+    render_add_pubkey_dialog: (emails: string[]): void => null,
+    render_reinsert_reply_box: (last_message_id: string, recipients: string[]): void => null,
+    render_help_dialog: ():void => null,
+    render_sending_address_dialog: ():void => null,
+    factory_attachment: (attachment: Attachment):string => `<div>${attachment.name}</div>`,
+    close_message: ():void => null,
+  } as NamedFunctionsObject;
 
-  function init(app_functions, variables) {
-    account_email = variables.account_email;
-    draft_id = variables.draft_id;
-    thread_id = variables.thread_id;
-    supplied_subject = variables.subject;
-    supplied_from = variables.from;
-    supplied_to = variables.to;
-    frame_id = variables.frame_id;
-    tab_id = variables.tab_id;
-    is_reply_box = variables.is_reply_box;
-    $.each(app_functions, (name, cb) => {
-      app[name] = cb;
-    });
+  function init(app_functions: NamedFunctionsObject, variables: UrlParams) {
+    account_email = variables.account_email as string;
+    draft_id = variables.draft_id as string;
+    thread_id = variables.thread_id as string;
+    supplied_subject = variables.subject as string;
+    supplied_from = variables.from as string;
+    supplied_to = variables.to as string;
+    frame_id = variables.frame_id as string;
+    tab_id = variables.tab_id as string;
+    is_reply_box = variables.is_reply_box as boolean;
+    for(let name in app_functions) {
+      app[name] = app_functions[name];
+    }
     my_addresses_on_pks = app.storage_get_addresses_pks() || [];
     my_addresses_on_keyserver = app.storage_get_addresses_keyserver() || [];
     can_read_emails = app.can_read_email();
@@ -177,7 +168,7 @@ class Subscription {
     initialize_compose_box(variables);
   }
 
-  function initialize_compose_box(variables) {
+  function initialize_compose_box(variables: UrlParams) {
     if(draft_id) {
       initial_draft_load();
     } else {
@@ -185,13 +176,13 @@ class Subscription {
         if(variables.skip_click_prompt) {
           render_reply_message_compose_table();
         } else {
-          $('#reply_click_area, #a_reply, #a_reply_all, #a_forward').click(function () {
+          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(function () {
             if ($(this).attr('id') === 'a_reply') {
               supplied_to = supplied_to.split(',')[0];
             } else if ($(this).attr('id') === 'a_forward') {
               supplied_to = '';
             }
-            render_reply_message_compose_table($(this).attr('id').replace('a_', ''));
+            render_reply_message_compose_table($(this).attr('id').replace('a_', '') as "reply"|"forward");
           });
         }
       }
@@ -218,7 +209,7 @@ class Subscription {
     if(is_reply_box) {
       S.cached('reply_message_prompt').html('Loading draft.. ' + tool.ui.spinner('green'));
     }
-    app.email_provider_draft_get(draft_id).then(response => {
+    app.email_provider_draft_get(draft_id).then((response: any) => {
       tool.mime.decode(tool.str.base64url_decode((response as any).message.raw), function (mime_success, parsed_message) {
         let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html) || '');
         if(armored) {
@@ -231,7 +222,7 @@ class Subscription {
           }
         }
       });
-    }, error => {
+    }, (error: any) => {
       if (is_reply_box && error.status === 404) {
         tool.catch.log('about to reload reply_message automatically: get draft 404', account_email);
         setTimeout(function () {
@@ -250,14 +241,14 @@ class Subscription {
     });
   }
 
-  function process_subscribe_result(new_subscription) {
+  function process_subscribe_result(new_subscription: Subscription) {
     if (typeof subscribe_result_listener === 'function') {
       subscribe_result_listener(new_subscription.active);
       subscribe_result_listener = undefined;
     }
   }
 
-  function show_subscribe_dialog_and_wait_for_response(data, sender, respond) {
+  function show_subscribe_dialog_and_wait_for_response(_data: any, _sender: string, respond: (subscribed: boolean) => void) {
     subscribe_result_listener = respond;
     app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: tab_id});
   }
@@ -304,14 +295,14 @@ class Subscription {
         size_mb: size_mb,
         size: size_mb * 1024 * 1024,
         count: 10,
-        oversize: function (combined_size) {
+        oversize: function (combined_size: number) {
           alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
         },
       };
     }
   }
 
-  function reset_send_btn(delay=null) {
+  function reset_send_btn(delay:number=null) {
     const do_reset = function () {
       S.cached('send_btn').html('<i class=""></i><span tabindex="4">' + (S.cached('icon_sign').is('.active') ? BTN_SIGN_AND_SEND : BTN_ENCRYPT_AND_SEND) + '</span>');
     };
@@ -323,20 +314,20 @@ class Subscription {
     }
   }
 
-  function passphrase_entry(entered) {
+  function passphrase_entry(entered: boolean) {
     if(!entered) {
       reset_send_btn();
       clearInterval(passphrase_interval);
     }
   }
 
-  function draft_save(force_save) {
+  function draft_save(force_save: boolean) {
     if (should_save_draft(S.cached('input_text').text()) || force_save === true) {
       save_draft_in_process = true;
       S.cached('send_btn_note').text('Saving');
-      app.storage_get_armored_public_key(account_email).then(armored_pubkey => {
+      app.storage_get_armored_public_key(account_email).then((armored_pubkey: string) => {
         if(armored_pubkey) {
-          tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted) {
+          tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted: {data: string}) {
             let body;
             if (thread_id) { // replied message
               body = '[cryptup:link:draft_reply:' + thread_id + ']\n\n' + encrypted.data;
@@ -345,26 +336,26 @@ class Subscription {
             } else {
               body = encrypted.data;
             }
-            let subject = S.cached('input_subject').val() || supplied_subject || 'FlowCrypt draft';
-            tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject}, [], function (mime_message) {
+            let subject = String(S.cached('input_subject').val()) || supplied_subject || 'FlowCrypt draft';
+            tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject} as any as Headers, [], (mime_message) => {
               if (!draft_id) {
-                app.email_provider_draft_create(mime_message).then(response => {
+                app.email_provider_draft_create(mime_message).then((response: any) => {
                   S.cached('send_btn_note').text('Saved');
-                  draft_id = (response as any).id;
-                  app.storage_set_draft_meta(true, (response as any).id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
+                  draft_id = response.id;
+                  app.storage_set_draft_meta(true, response.id, thread_id, get_recipients_from_dom(), S.cached('input_subject').val());
                   // recursing one more time, because we need the draft_id we get from this reply in the message itself
                   // essentially everytime we save draft for the first time, we have to save it twice
                   // save_draft_in_process will remain true because well.. it's still in process
                   draft_save(true); // force_save = true
-                }, error => {
+                }, (error: any) => {
                   S.cached('send_btn_note').text('Not saved');
                   save_draft_in_process = false; // it will only be set to false (done) if it's a failure (only in terms of the very first save)
                 });
               } else {
-                app.email_provider_draft_update(draft_id, mime_message).then(response => {
+                app.email_provider_draft_update(draft_id, mime_message).then((response: any) => {
                   S.cached('send_btn_note').text('Saved');
                   save_draft_in_process = false;
-                }, error => {
+                }, (error: any) => {
                   S.cached('send_btn_note').text('Not saved');
                   save_draft_in_process = false;
                 });
@@ -376,7 +367,7 @@ class Subscription {
     }
   }
 
-  function draft_delete(callback) {
+  function draft_delete(callback: () => void) {
     clearInterval(save_draft_interval);
     tool.time.wait(() => {if (!save_draft_in_process) { return true; }}).then(() => {
       if (draft_id) {
@@ -393,12 +384,12 @@ class Subscription {
     });
   }
 
-  function decrypt_and_render_draft(encrypted_draft, render_function, headers) {
-    app.storage_passphrase_get().then(passphrase => {
+  function decrypt_and_render_draft(encrypted_draft: string, render_function: () => void, headers: FromToHeaders) {
+    app.storage_passphrase_get().then((passphrase: string) => {
       if (passphrase !== null) {
         tool.crypto.message.decrypt(account_email, encrypted_draft, null, (result) => {
           if(result.success) {
-            tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'), function (safe_html_draft) {
+            tool.str.as_safe_html((result.content.data as string).replace(/\n/g, '<br>\n'), function (safe_html_draft: string) {
               S.cached('input_text').html(safe_html_draft);
               if (headers && headers.to && headers.to.length) {
                 S.cached('input_to').focus();
@@ -431,11 +422,11 @@ class Subscription {
     });
   }
 
-  function when_master_passphrase_entered(callback, seconds_timeout=null) {
+  function when_master_passphrase_entered(callback: (pp: string|null) => void, seconds_timeout:number=null) {
     clearInterval(passphrase_interval);
     const timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
-    passphrase_interval = setInterval(function () {
-      app.storage_passphrase_get().then(passphrase => {
+    passphrase_interval = window.setInterval(function () {
+      app.storage_passphrase_get().then((passphrase: string) => {
         if (passphrase !== null) {
           clearInterval(passphrase_interval);
           callback(passphrase);
@@ -447,8 +438,8 @@ class Subscription {
     }, 1000);
   }
 
-  async function collect_all_available_public_keys(account_email, recipients) {
-    let contacts = await app.storage_contact_get(recipients);
+  async function collect_all_available_public_keys(account_email: string, recipients: string[]) {
+    let contacts = await app.storage_contact_get(recipients) as Contact[];
     let armored_public_key = await app.storage_get_armored_public_key(account_email);
     const armored_pubkeys = [armored_public_key];
     const emails_without_pubkeys = [];
@@ -465,7 +456,7 @@ class Subscription {
     return {armored_pubkeys, emails_without_pubkeys};
   }
 
-  function is_compose_form_rendered_as_ready(recipients) {
+  function is_compose_form_rendered_as_ready(recipients: string[]) {
     if(tool.value(S.now('send_btn_span').text().toLowerCase().trim()).in([BTN_ENCRYPT_AND_SEND, BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
       return true;
     } else {
@@ -480,7 +471,7 @@ class Subscription {
     }
   }
 
-  function are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge) {
+  function are_compose_form_values_valid(recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null): boolean {
     const is_encrypt = !S.cached('icon_sign').is('.active');
     if(!recipients.length) {
       alert('Please add receiving email address.');
@@ -496,7 +487,7 @@ class Subscription {
     }
   }
 
-  function handle_send_btn_processing_error(callback) {
+  function handle_send_btn_processing_error(callback: () => void): void {
     try {
       callback();
     } catch(err) {
@@ -508,15 +499,15 @@ class Subscription {
 
   async function extract_process_encrypt_and_send_message() {
     const recipients = get_recipients_from_dom();
-    const subject = supplied_subject || $('#input_subject').val(); // replies have subject in url params
+    const subject = supplied_subject || String($('#input_subject').val()); // replies have subject in url params
     const plaintext = $('#input_text').get(0).innerText;
     if(is_compose_form_rendered_as_ready(recipients)) {
       S.now('send_btn_span').text('Loading');
       S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
       S.cached('send_btn_note').text('');
-      app.storage_get_subscription_info(async function (subscription) {
+      app.storage_get_subscription_info(async function (subscription: Subscription) {
       let {armored_pubkeys, emails_without_pubkeys} = await collect_all_available_public_keys(account_email, recipients);
-        const challenge = emails_without_pubkeys.length ? {answer: S.cached('input_password').val()} : null;
+        const challenge = emails_without_pubkeys.length ? {answer: String(S.cached('input_password').val())} : null;
         if(are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
           if(S.cached('icon_sign').is('.active')) {
             sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
@@ -530,13 +521,13 @@ class Subscription {
     }
   }
 
-  function encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
+  function encrypt_and_send(recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) {
     S.now('send_btn_span').text('Encrypting');
     add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, function (plaintext) {
       handle_send_btn_processing_error(function () {
-        attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments) {
+        attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments: Attachment[]) {
           if (attachments.length && challenge) { // these will be password encrypted attachments
-            button_update_timeout = setTimeout(function () {
+            button_update_timeout = window.setTimeout(function () {
               S.now('send_btn_span').text('sending');
             }, 500);
             upload_attachments_to_cryptup(attachments, subscription, function (all_good, upload_results, attachment_admin_codes, upload_error_message) {
@@ -561,12 +552,12 @@ class Subscription {
     });
   }
 
-  function sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription) {
+  function sign_and_send(recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) {
     S.now('send_btn_span').text('Signing');
-    storage.keys_get(account_email, 'primary').then(primary_k => {
+    storage.keys_get(account_email, 'primary').then((primary_k: KeyInfo) => {
       if (primary_k) {
         const prv = openpgp.key.readArmored(primary_k.private).keys[0];
-        app.storage_passphrase_get().then(passphrase => {
+        app.storage_passphrase_get().then((passphrase: string|null) => {
           if (passphrase === null) {
             app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
             when_master_passphrase_entered(function (passphrase) {
@@ -600,7 +591,7 @@ class Subscription {
               tool.crypto.message.sign(prv, format_email_text_footer({'text/plain': plaintext})['text/plain'], true, function (success, signing_result) {
                 if (success) {
                   handle_send_btn_processing_error(function () {
-                    attach.collect_attachments(async function (attachments) { // todo - not signing attachments
+                    attach.collect_attachments(async function (attachments: Attachment[]) { // todo - not signing attachments
                       await app.storage_contact_update(recipients, {last_use: Date.now()});
                       S.now('send_btn_span').text('Sending');
                       with_attached_pubkey_if_needed(signing_result).then(signing_result => {
@@ -625,31 +616,34 @@ class Subscription {
     });
   }
 
-  function upload_attachments_to_cryptup(attachments, subscription, callback) {
+  function upload_attachments_to_cryptup(attachments: Attachment[], subscription: Subscription, callback: (ok: boolean|null|object, uploads?: Attachment[]|null, ac?: string[]|null, err?: string) => void): void {
     // @ts-ignore: .validate()
     tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
-      const items = [];
-      tool.each(pf_response.approvals, function (i, approval) {
-        items.push({base_url: approval.base_url, fields: approval.fields, attachment: attachments[i]});
-      });
+      const items: any[] = [];
+      for(let i in pf_response.approvals) {
+        items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i as any as number]});
+      }
+      // @ts-ignore - call sig mismatch
       tool.api.aws.s3_upload(items, render_upload_progress).then(s3_results_successful => {
         tool.api.cryptup.message_confirm_files(items.map(function (item) {
           return item.fields.key;
           // @ts-ignore: .validate()
         })).validate(r => r.confirmed && r.confirmed.length === items.length).then(cf_response => {
-          tool.each(attachments, function (i) {
+          for(let i in attachments) {
             attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
-          });
+          }
           callback(true, attachments, cf_response.admin_codes);
-        }, error => {
+        }, (error: any) => {
           if (error.internal === 'validate') {
             callback(false, null, null, 'Could not verify that all files were uploaded properly, please try again.');
           } else {
             callback(false, null, null, error.message);
           }
         });
-      }, s3_results_has_failure => callback(false, null, null, 'Some files failed to upload, please try again'));
-    }, error => {
+      }, (s3_results_has_failure: any) => { // todo
+        callback(false, null, null, 'Some files failed to upload, please try again')
+      });
+    }, (error: any) => {
       if (error.internal === 'auth') {
         callback(error);
       } else {
@@ -658,26 +652,26 @@ class Subscription {
     });
   }
 
-  function render_upload_progress(progress) {
+  function render_upload_progress(progress: number) {
     if (attach.has_attachment()) {
       progress = Math.floor(progress);
       S.now('send_btn_span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
     }
   }
 
-  function add_uploaded_file_links_to_message_body(plaintext, attachments) {
+  function add_uploaded_file_links_to_message_body(plaintext: string, attachments: Attachment[]) {
     plaintext += '\n\n';
-    tool.each(attachments, function (i, attachment) {
-      const size_mb = attachment.size / (1024 * 1024);
+    for(let i in attachments) {
+      const size_mb = attachments[i].size / (1024 * 1024);
       const size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
-      const link_text = 'Attachment: ' + attachment.name + ' (' + attachment.type + ')' + size_text;
-      const cryptup_data = tool.str.html_attribute_encode({size: attachment.size, type: attachment.type, name: attachment.name});
-      plaintext += '<a href="' + attachment.url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
-    });
+      const link_text = 'Attachment: ' + attachments[i].name + ' (' + attachments[i].type + ')' + size_text;
+      const cryptup_data = tool.str.html_attribute_encode({size: attachments[i].size, type: attachments[i].type, name: attachments[i].name});
+      plaintext += '<a href="' + attachments[i].url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
+    }
     return plaintext;
   }
 
-  function add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, callback) {
+  function add_reply_token_to_message_body_if_needed(recipients: string[], subject: string, plaintext: string, challenge: Challenge, subscription: Subscription, callback: (res: string) => void): void {
     if (challenge && subscription.active) {
       // @ts-ignore: .validate()
       tool.api.cryptup.message_token().validate(r => r.token).then(response => {
@@ -689,7 +683,7 @@ class Subscription {
               token: response.token,
             })
           }));
-      }, error => {
+      }, (error: any) => {
         if (error.internal === 'auth') {
           if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
             app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
@@ -707,7 +701,7 @@ class Subscription {
     }
   }
 
-  function upload_encrypted_message_to_cryptup(encrypted_data, subscription, callback) {
+  function upload_encrypted_message_to_cryptup(encrypted_data: Uint8Array|string, subscription: Subscription, callback: (short: string|null, admin_code: string|null, error?: string|StandardError) => void): void {
     S.now('send_btn_span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
@@ -716,7 +710,7 @@ class Subscription {
     // @ts-ignore: .validate()
     tool.api.cryptup.message_upload(encrypted_data, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
       callback(response.short, response.admin_code);
-    }, error => {
+    }, (error: StandardError) => {
       if (error.internal === 'auth') {
         callback(null, null, tool.api.cryptup.auth_error);
       } else {
@@ -725,9 +719,9 @@ class Subscription {
     });
   }
 
-  function with_attached_pubkey_if_needed(encrypted) {
+  function with_attached_pubkey_if_needed(encrypted: string) {
     return tool.catch.Promise((resolve, reject) => {
-      app.storage_get_armored_public_key(account_email).then(armored_public_key => {
+      app.storage_get_armored_public_key(account_email).then((armored_public_key: string) => {
         if (S.cached('icon_pubkey').is('.active')) {
           encrypted += '\n\n' + armored_public_key;
         }
@@ -736,14 +730,12 @@ class Subscription {
     });
   }
 
-  function do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription, attachment_admin_codes=[]) {
+  function do_encrypt_message_body_and_format(armored_pubkeys: string[], challenge: Challenge, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
-      with_attached_pubkey_if_needed(encrypted.data).then(async(encrypted_data) => {
+      with_attached_pubkey_if_needed(encrypted.data as string).then(async(encrypted_data: string) => {
         encrypted.data = encrypted_data;
-        let body = {'text/plain': encrypted.data};
-        button_update_timeout = setTimeout(function () {
-          S.now('send_btn_span').text('sending');
-        }, 500);
+        let body = {'text/plain': encrypted.data} as SendableMessageBody;
+        button_update_timeout = window.setTimeout(() => { S.now('send_btn_span').text('sending') }, 500);
         await app.storage_contact_update(recipients, {last_use: Date.now()});
         if (challenge) {
           upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
@@ -772,22 +764,24 @@ class Subscription {
     });
   }
 
-  function do_send_message(message, plaintext) {
+  function do_send_message(message: SendableMessage, plaintext: string) {
     for(let k in additional_message_headers) {
       message.headers[k] = additional_message_headers[k];
     }
-    tool.each(message.attachments, (i, a) => { a.type = 'application/octet-stream'; }); // changing all mimeType so that Enigmail+Thunderbird does not attempt to display without decrypting
-    app.email_provider_message_send(message, render_upload_progress).then(response => {
+    for(let a of message.attachments) {
+      a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+    }
+    app.email_provider_message_send(message, render_upload_progress).then((response: any) => {
       const is_signed = S.cached('icon_sign').is('.active');
       app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (is_reply_box ? 'reply' : 'message') + ' has been sent.'});
       draft_delete(() => {
         if(is_reply_box) {
-          render_reply_success(message, plaintext, response ? (response as any).id : null);
+          render_reply_success(message, plaintext, response ? response.id : null);
         } else {
           app.close_message();
         }
       });
-    }, error => {
+    }, (error: StandardError) => {
       reset_send_btn();
       if(error && error.message && error.internal) {
         alert(error.message);
@@ -798,7 +792,7 @@ class Subscription {
     });
   }
 
-  async function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email): Promise<Contact | string> {
+  async function lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email: string): Promise<Contact|"fail"> {
     let db_contact = await app.storage_contact_get(email) as Contact;
     if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
       return db_contact;
@@ -889,7 +883,7 @@ class Subscription {
    *
    * @param update_reference_body_height - set to true to take a new snapshot of intended html body height
    */
-  function set_input_text_height_manually_if_needed(update_reference_body_height=null) {
+  function set_input_text_height_manually_if_needed(update_reference_body_height:boolean=false) {
     if(!is_reply_box && tool.env.browser().name === 'firefox') {
       let cell_height_except_text = 0;
       S.cached('all_cells_except_text').each(function() {
@@ -942,7 +936,7 @@ class Subscription {
     set_input_text_height_manually_if_needed();
   }
 
-  function respond_to_input_hotkeys(input_to_keydown_event) {
+  function respond_to_input_hotkeys(input_to_keydown_event: KeyboardEvent) {
     let value = S.cached('input_to').val();
     const keys = tool.env.key_codes();
     if (!value && input_to_keydown_event.which === keys.backspace) {
@@ -961,9 +955,8 @@ class Subscription {
     }
   }
 
-  function resize_reply_box(add_extra = null) {
+  function resize_reply_box(add_extra:number=0) {
     if (is_reply_box) {
-      add_extra = isNaN(add_extra) ? 0 : Number(add_extra);
       S.cached('input_text').css('max-width', (S.cached('body').width() - 20) + 'px');
       let min_height = 0;
       let current_height;
@@ -975,7 +968,7 @@ class Subscription {
       } else {
         current_height = S.cached('reply_message_prompt').outerHeight();
       }
-      if (current_height !== last_reply_box_table_height && Math.abs(current_height - (last_reply_box_table_height || 0)) > 2) { // more then two pixel difference compared to last time
+      if (current_height !== last_reply_box_table_height && Math.abs(current_height - last_reply_box_table_height) > 2) { // more then two pixel difference compared to last time
         last_reply_box_table_height = current_height;
         app.send_message_to_main_window('set_css', {
           selector: 'iframe#' + frame_id,
@@ -985,44 +978,44 @@ class Subscription {
     }
   }
 
-  function append_forwarded_message(text) {
+  function append_forwarded_message(text: string) {
     S.cached('input_text').append('<br/><br/>Forwarded message:<br/><br/>> ' + text.replace(/(?:\r\n|\r|\n)/g, '\> '));
     resize_reply_box();
   }
 
-  function retrieve_decrypt_and_add_forwarded_message(message_id) {
-    app.email_provider_extract_armored_block(message_id, function (armored_message) {
+  function retrieve_decrypt_and_add_forwarded_message(message_id: string) {
+    app.email_provider_extract_armored_block(message_id, function (armored_message: string) {
       tool.crypto.message.decrypt(account_email, armored_message, undefined, function (result) {
         if (result.success) {
           if (!tool.mime.resembles_message(result.content.data)) {
-            append_forwarded_message(tool.mime.format_content_to_display(result.content.data, armored_message));
+            append_forwarded_message(tool.mime.format_content_to_display(result.content.data as string, armored_message));
           } else {
-            tool.mime.decode(result.content.data, function (success, mime_parse_result) {
-              append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data, armored_message));
+            tool.mime.decode(result.content.data as string, (success, mime_parse_result) => {
+              append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data as string, armored_message));
             });
           }
         } else {
           S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
         }
       });
-    }, function (error_type, url_formatted_data_block) {
+    }, function (error_type: any, url_formatted_data_block: string) {
       if (url_formatted_data_block) {
         S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + url_formatted_data_block);
       }
     });
   }
 
-  function render_reply_message_compose_table(method = null) {
+  function render_reply_message_compose_table(method:"forward"|"reply"="reply") {
     S.cached('reply_message_prompt').css('display', 'none');
     S.cached('compose_table').css('display', 'table');
     S.cached('input_to').val(supplied_to + (supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
     render_compose_table();
     if (can_read_emails) {
-      app.email_provider_determine_reply_message_header_variables((last_message_id, headers) => {
+      app.email_provider_determine_reply_message_header_variables((last_message_id: string, headers: Headers) => {
         if(last_message_id && headers) {
-          $.each(headers, (n, h) => {
-            additional_message_headers[n] = h;
-          });
+          for(let name in headers) {
+            additional_message_headers[name] = headers[name];
+          }
           if(method === 'forward') {
             supplied_subject = 'Fwd: ' + supplied_subject;
             retrieve_decrypt_and_add_forwarded_message(last_message_id);
@@ -1056,7 +1049,7 @@ class Subscription {
     set_input_text_height_manually_if_needed();
   }
 
-  function select_contact(email, from_query) {
+  function select_contact(email: string, from_query: ContactsQuery) {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
     const possibly_bogus_address = tool.str.parse_email(possibly_bogus_recipient.text()).email;
     const q = tool.str.parse_email(from_query.substring).email;
@@ -1085,13 +1078,10 @@ class Subscription {
     update_pubkey_icon();
   }
 
-  function auth_contacts(account_email) {
+  function auth_contacts(account_email: string) {
     S.cached('input_to').val($('.recipients span').last().text());
     $('.recipients span').last().remove();
-    tool.api.google.auth({
-      account_email: account_email,
-      scopes: tool.api.gmail.scope(['read'])
-    }, function (google_auth_response) {
+    tool.api.google.auth({account_email: account_email, scopes: tool.api.gmail.scope(['read'])} as AuthRequest, function (google_auth_response: any) {
       if (google_auth_response.success === true) {
         can_read_emails = true;
         search_contacts();
@@ -1111,15 +1101,13 @@ class Subscription {
     }
   }
 
-  function render_search_results(contacts, query) {
+  function render_search_results(contacts: Contact[], query: ContactsQuery) {
     const renderable_contacts = contacts.slice();
-    renderable_contacts.sort(function (a, b) { // all that have pgp group on top. Without pgp bottom. Sort both groups by last used first.
-      return (10 * (b.has_pgp - a.has_pgp)) + (b.last_use - a.last_use > 0 ? 1 : -1);
-    });
+    renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + (b.last_use - a.last_use > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
     renderable_contacts.splice(8);
     if (renderable_contacts.length > 0 || contact_search_in_progress) {
       let ul_html = '';
-      tool.each(renderable_contacts, function (i, contact) {
+      for(let contact of renderable_contacts) {
         ul_html += '<li class="select_contact" data-test="action-select-contact" email="' + contact.email.replace(/<\/?b>/g, '') + '">';
         if (contact.has_pgp) {
           ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
@@ -1139,12 +1127,12 @@ class Subscription {
           ul_html += display_email;
         }
         ul_html += '</li>';
-      });
+      }
       if (contact_search_in_progress) {
         ul_html += '<li class="loading">loading...</li>';
       }
       S.cached('contacts').find('ul').html(ul_html);
-      S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+      S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self: HTMLElement) {
         select_contact(tool.str.parse_email($(self).attr('email')).email, query);
       }));
       S.cached('contacts').find('ul li.select_contact').hover(function () {
@@ -1165,7 +1153,7 @@ class Subscription {
   }
 
   async function search_contacts(db_only=false) {
-    const query = {substring: tool.str.parse_email(S.cached('input_to').val()).email};
+    const query = {substring: tool.str.parse_email(S.cached('input_to').val() as string).email};
     if (query.substring !== '') {
       let contacts = await app.storage_contact_search(query);
       if (db_only || !can_read_emails) {
@@ -1173,7 +1161,7 @@ class Subscription {
       } else {
         contact_search_in_progress = true;
         render_search_results(contacts, query);
-        app.email_provider_search_contacts(query.substring, contacts, async (search_contacts_results) => {
+        app.email_provider_search_contacts(query.substring, contacts, async (search_contacts_results: {new: Contact[], all: Contact[]}) => {
           if (search_contacts_results.new.length) {
             for(let contact of search_contacts_results.new) {
               let in_db = await app.storage_contact_get(contact.email) as Contact;
@@ -1200,7 +1188,7 @@ class Subscription {
     S.cached('contacts').css('display', 'none');
   }
 
-  function update_pubkey_icon(include=null) {
+  function update_pubkey_icon(include:boolean|null=null) {
     if (include === null) { // decide if pubkey should be included
       if (!include_pubkey_toggled_manually) { // leave it as is if toggled manually before
         update_pubkey_icon(recipients_missing_my_key.length && !tool.value(supplied_from || get_sender_from_dom()).in(my_addresses_on_pks));
@@ -1214,7 +1202,7 @@ class Subscription {
     }
   }
 
-  function update_footer_icon(include = null) {
+  function update_footer_icon(include:boolean|null=null) {
     if (include === null) { // decide if pubkey should be included
       update_footer_icon(!!app.storage_get_email_footer());
     } else { // set icon to specific state
@@ -1243,7 +1231,7 @@ class Subscription {
     show_hide_password_or_pubkey_container_and_color_send_button();
   }
 
-  function recipient_key_id_text(contact) {
+  function recipient_key_id_text(contact: Contact) {
     if (contact.client === 'cryptup' && contact.keywords) {
       return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
     } else if (contact.fingerprint) {
@@ -1253,14 +1241,14 @@ class Subscription {
     }
   }
 
-  function render_pubkey_result(email_element, email, contact) {
+  function render_pubkey_result(email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         let sending_address_on_pks = tool.value(supplied_from || get_sender_from_dom()).in(my_addresses_on_pks);
         let sending_address_on_keyserver = tool.value(supplied_from || get_sender_from_dom()).in(my_addresses_on_keyserver);
         if ((contact.client === 'cryptup' && !sending_address_on_keyserver) || (contact.client !== 'cryptup' && !sending_address_on_pks)) {
           // new message, and my key is not uploaded where the recipient would look for it
-          app.does_recipient_have_my_pubkey(email, function (already_has) {
+          app.does_recipient_have_my_pubkey(email, function (already_has: boolean) {
             if (!already_has) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
               recipients_missing_my_key.push(email);
             }
@@ -1303,23 +1291,23 @@ class Subscription {
     show_hide_password_or_pubkey_container_and_color_send_button();
   }
 
-  function get_recipients_from_dom(filter=null) {
+  function get_recipients_from_dom(filter:"no_pgp"|null=null): string[] {
     let selector;
     if (filter === 'no_pgp') {
       selector = '.recipients span.no_pgp';
     } else {
       selector = '.recipients span';
     }
-    const recipients = [];
+    const recipients: string[] = [];
     $(selector).each(function () {
       recipients.push($(this).text().trim());
     });
     return recipients;
   }
 
-  function get_sender_from_dom() {
+  function get_sender_from_dom(): string {
     if (S.now('input_from').length) {
-      return S.now('input_from').val();
+      return String(S.now('input_from').val());
     } else {
       return account_email;
     }
@@ -1329,7 +1317,7 @@ class Subscription {
     draft_delete(app.close_message);
   });
 
-  function render_reply_success(message, plaintext, message_id) {
+  function render_reply_success(message: SendableMessage, plaintext: string, message_id: string) {
     let is_signed = S.cached('icon_sign').is('.active');
     app.render_reinsert_reply_box(message_id, message.headers.To.split(',').map(a => tool.str.parse_email(a).email));
     if(is_signed) {
@@ -1358,7 +1346,7 @@ class Subscription {
     resize_reply_box();
   }
 
-  function simulate_ctrl_v(to_paste) {
+  function simulate_ctrl_v(to_paste: string) {
     const r = window.getSelection().getRangeAt(0);
     r.insertNode(r.createContextualFragment(to_paste));
   }
@@ -1367,9 +1355,10 @@ class Subscription {
     if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
+    // @ts-ignore
     $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), extract_process_encrypt_and_send_message)).keypress(tool.ui.enter(extract_process_encrypt_and_send_message));
-    S.cached('input_to').keydown(respond_to_input_hotkeys);
-    S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), search_contacts));
+    S.cached('input_to').keydown((ke: any) => respond_to_input_hotkeys(ke));
+    S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => search_contacts()));
     S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), render_receivers));
     S.cached('input_text').keyup(function () {
       S.cached('send_btn_note').text('');
@@ -1398,17 +1387,17 @@ class Subscription {
         evaluate_receivers();
       }
       setTimeout(() => { // delay automatic resizing until a second later
-        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), resize_reply_box));
-        S.cached('input_text').keyup(resize_reply_box);
+        $(window).resize(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => resize_reply_box()));
+        S.cached('input_text').keyup(() => resize_reply_box());
       }, 1000);
     } else {
       $('.close_new_message').click(app.close_message);
-      let addresses = app.storage_get_addresses();
+      let addresses = app.storage_get_addresses() as string[];
       if(addresses.length > 1) {
         let input_addr_container = $('#input_addresses_container');
         input_addr_container.addClass('show_send_from').append('<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
         input_addr_container.find('#input_from_settings').click(() => app.render_sending_address_dialog());
-        input_addr_container.find('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(update_pubkey_icon);
+        input_addr_container.find('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(() => update_pubkey_icon());
         if(tool.env.browser().name === 'firefox') {
           input_addr_container.find('#input_from_settings').css('margin-top', '20px');
         }
@@ -1417,7 +1406,7 @@ class Subscription {
     }
   }
 
-  function should_save_draft(message_body) {
+  function should_save_draft(message_body: string) {
     if (message_body && message_body !== last_draft) {
       last_draft = message_body;
       return true;
@@ -1426,7 +1415,7 @@ class Subscription {
     }
   }
 
-  function format_password_protected_email(short_id, original_body, armored_pubkeys) {
+  function format_password_protected_email(short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) {
     const decrypt_url = CRYPTUP_WEB_URL + '/' + short_id;
     const a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + (window as FlowCryptWindow).lang.compose.open_message + '</a>';
     const intro = S.cached('input_intro').length ? S.cached('input_intro').get(0).innerText.trim() : '';
@@ -1451,9 +1440,9 @@ class Subscription {
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  function format_email_text_footer(original_body) {
+  function format_email_text_footer(original_body: SendableMessageBody): SendableMessageBody {
     const email_footer = app.storage_get_email_footer();
-    const body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
+    const body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')} as SendableMessageBody;
     if (typeof original_body['text/html'] !== 'undefined') {
       body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
     }
@@ -1468,7 +1457,7 @@ class Subscription {
     let no_pgp_emails = get_recipients_from_dom('no_pgp');
     app.render_add_pubkey_dialog(no_pgp_emails);
     clearInterval(added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
-    added_pubkey_db_lookup_interval = setInterval(async() => {
+    added_pubkey_db_lookup_interval = window.setInterval(async() => {
       for(let email of no_pgp_emails) {
         let contact = await app.storage_contact_get(email);
         if (contact && (contact as Contact).has_pgp) {
@@ -1499,7 +1488,7 @@ class Subscription {
 
   S.cached('input_text').get(0).onpaste = function (e) {
     if(e.clipboardData.getData('text/html')) {
-      tool.str.html_as_text(e.clipboardData.getData('text/html'), function (text) {
+      tool.str.html_as_text(e.clipboardData.getData('text/html'), (text: string) => {
         simulate_ctrl_v(text.replace(/\n/g, '<br>'));
       });
       return false;
@@ -1519,6 +1508,7 @@ class Subscription {
     }
   });
 
+  // @ts-ignore
   S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
 
   S.cached('icon_sign').click(toggle_sign_icon);

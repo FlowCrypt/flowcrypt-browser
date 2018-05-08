@@ -2,6 +2,7 @@
   "compilerOptions": {
     "checkJs": true,
     "target": "ES2017",
-    "alwaysStrict": true
+    "alwaysStrict": true,
+    "noImplicitAny": true
   }
 }

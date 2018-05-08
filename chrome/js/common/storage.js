@@ -363,7 +363,7 @@
       email: email,
       name: name || null,
       pubkey: pubkey,
-      has_pgp: Number(Boolean(pubkey)),
+      has_pgp: Number(Boolean(pubkey)), // number because we use it for sorting
       searchable: db_create_search_index_list(email, name, Boolean(pubkey)),
       client: pubkey ? client : null,
       attested: pubkey ? Boolean(attested) : null,

@@ -110,7 +110,7 @@ function gmail_element_replacer(factory, account_email, addresses, can_read_emai
     $(selector.attachments_container_inner).each((i, attachments_container) => {
       attachments_container = $(attachments_container);
       let new_pgp_attachments = filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
-      let new_pgp_attachments_names = tool.arr.from_dome_node_list(new_pgp_attachments.find('.aV3')).map(x => $.trim($(x).text()));
+      let new_pgp_attachments_names = tool.arr.from_dom_node_list(new_pgp_attachments.find('.aV3')).map(x => $.trim($(x).text()));
       if(new_pgp_attachments.length) {
         let message_id = determine_message_id(attachments_container);
         if(message_id) {
