@@ -9,7 +9,6 @@ declare let openpgp: any; // todo - how to make this understand openpgp types fr
 declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, MimeBuilder: any;
 let storage = (window as FlowCryptWindow).flowcrypt_storage;
 
-
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -1898,7 +1897,7 @@ let tool = {
       },
     },
     attester: {
-      lookup_email: (email: string|string[]): Promise<PubkeySearchResult|PubkeySearchResult[]> => tool._.api_attester_call('lookup/email', {
+      lookup_email: (email: string|string[]): Promise<PubkeySearchResult|{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
         email: Array.isArray(email) ? email.map((a) => tool.str.parse_email(a).email) : tool.str.parse_email(email).email,
       }),
       initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false) => tool._.api_attester_call('initial/legacy_submit', {
@@ -1948,6 +1947,7 @@ let tool = {
         });
       },  
       packet: {
+        // tool.attest.packet.create_sign
         create_sign: (values: Dict<string>, decrypted_prv: OpenpgpKey) => {
           return tool.catch.Promise(function (resolve, reject) {
             let lines:string[] = [];
@@ -1965,6 +1965,7 @@ let tool = {
             }
           });
         },
+        // tool.attest.packet.parse
         parse: (text: string) => {
           let accepted_values = {
             'ACT': 'action',
@@ -2566,10 +2567,10 @@ let tool = {
      * @returns {boolean}: continue to next attempt
      */
     crypto_message_chained_decryption_result_collector: (callback: Callback, result: DecryptSuccess|DecryptError) => {
-      if(result.success) {
+      if(result.success === true) {
         callback(result); // callback the moment there is successful decrypt
         return false; // do not try again
-      } else {
+      } else if (result.success === false) {
         if(result.counts.attempts === result.counts.rounds && !result.counts.decrypted) {
           if(result.counts.format_errors > 0) {
             result.format_error = 'This message seems to be badly formatted.';
@@ -3176,7 +3177,7 @@ let tool = {
         tool.catch.handle_exception(e);
       }
     },
-    log: (name: string, details:Serializable|Error=undefined) => {
+    log: (name: string, details:Serializable|Error|Dict<Serializable>=undefined) => {
       name = 'tool.catch.log: ' + name;
       console.log(name);
       try {

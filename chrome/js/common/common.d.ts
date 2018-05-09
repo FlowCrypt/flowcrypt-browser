@@ -10,13 +10,17 @@ interface FlowCryptWindow extends BrowserWidnow {
     flowcrypt_attach: any,
     flowcrypt_storage: {
         keys_get: ((account_email: string, longid?: string) => Promise<KeyInfo[]|KeyInfo>),
-        get: (account_email: string|null, items: string[], cb: (s: StorageResult) => void) => void,
-        set: (account_email: string|null, items: Dict<Serializable>, cb?: () => void) => void,
+        get: (account_email: string|string[]|null, items: string[], cb: (s: StorageResult) => void) => void,
+        set: (account_email: string|null, items: Dict<Serializable>, cb?: Callback) => void,
         auth_info: (cb: (registered_email: string|null, registered_uuid: string|null, already_verified: boolean) => void) => void,
         account_emails_get: (cb: (emails: string[]) => void) => void,
         subscription: (cb: (stored_level: 'pro'|null, stored_expire:string, stored_active: boolean, stored_method: 'stripe'|'trial'|'group') => void) => void,
         passphrase_get: (account_email: string, longid: string) => Promise<string|null>,
         db_contact_get: (db: null, longids: string[], cb: (contacts: Contact[]) => void) => void,
+        db_open: (cb: (db: IDBDatabase|null|false) => void) => void,
+        session_set: (account_email: string, key: string, value: string|undefined) => Promise<string|undefined>,
+        session_get: (account_email: string, key: string) => Promise<string|undefined>,
+        remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,
     },
     lang: any,
     iso88592: any,
@@ -150,6 +154,7 @@ interface KeyInfo {
     private: string,
     fingerprint: string,
     longid: string,
+    primary: boolean,
     decrypted?: OpenpgpKey,
 }
 
@@ -252,7 +257,7 @@ type FlatTypes = null|undefined|number|string|boolean;
 type Serializable = FlatTypes|FlatTypes[]|Dict<FlatTypes>|Dict<FlatTypes>[]
 type StorageResult = Dict<Serializable>
 type Callback = (r?: any) => void;
-type BrowserMessageHandler = (message: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
+type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
 type Options = Dict<any>;
 
