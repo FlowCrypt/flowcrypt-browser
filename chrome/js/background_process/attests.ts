@@ -2,6 +2,11 @@
 
 'use strict';
 
+/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
+/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
+/// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
+/// <reference path="../common/common.d.ts" />
+
 const CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
 const CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
 const ATTESTERS = {

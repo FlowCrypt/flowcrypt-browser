@@ -5,6 +5,8 @@
 
 'use strict';
 
+declare var require: any;
+
 (function() {
 
   class Subscription {
@@ -336,7 +338,7 @@
               body = encrypted.data;
             }
             let subject = String(S.cached('input_subject').val()) || supplied_subject || 'FlowCrypt draft';
-            tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject} as any as Headers, [], (mime_message) => {
+            tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject} as RichHeaders, [], (mime_message) => {
               if (!draft_id) {
                 app.email_provider_draft_create(mime_message).then((response: any) => {
                   S.cached('send_btn_note').text('Saved');
@@ -1010,7 +1012,7 @@
     S.cached('input_to').val(supplied_to + (supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
     render_compose_table();
     if (can_read_emails) {
-      app.email_provider_determine_reply_message_header_variables((last_message_id: string, headers: Headers) => {
+      app.email_provider_determine_reply_message_header_variables((last_message_id: string, headers: FlatHeaders) => {
         if(last_message_id && headers) {
           for(let name in headers) {
             additional_message_headers[name] = headers[name];

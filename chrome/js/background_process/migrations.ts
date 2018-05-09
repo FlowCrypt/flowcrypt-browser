@@ -2,6 +2,11 @@
 
 'use strict';
 
+/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
+/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
+/// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
+/// <reference path="../common/common.d.ts" />
+
 function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: Callback) {
   (window as FlowCryptWindow).flowcrypt_storage.get(data.account_email, ['version'], function(account_storage) {
     (window as FlowCryptWindow).flowcrypt_storage.set(data.account_email, { version: catcher.version('int') }, respond_done);

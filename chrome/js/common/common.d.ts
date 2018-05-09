@@ -66,10 +66,6 @@ interface Attachment {
     id?: string,
 }
 
-interface Headers {
-    [key: string]: string,
-}
-
 interface FromToHeaders {
     from: string,
     to: string[],
@@ -91,6 +87,10 @@ interface Challenge {
 interface Dict<T> {
     [key: string]: T;
 }
+
+type FlatHeaders = Dict<string>;
+type RichHeaders = Dict<string|string[]>;
+
 
 interface PreventableEvent {
     name: 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree',
@@ -159,7 +159,7 @@ interface KeyInfo {
 }
 
 interface MimeContent {
-    headers: Headers,
+    headers: FlatHeaders,
     attachments: Attachment[],
     signature: string|undefined,
     html: string|undefined,
@@ -167,7 +167,7 @@ interface MimeContent {
 }
 
 interface MimeAsHeadersAndBlocks {
-    headers: Headers,
+    headers: FlatHeaders,
     blocks: MessageBlock[],
 }
 
@@ -196,6 +196,7 @@ interface OpenpgpKey {
     verifyPrimaryKey: () => number,
     subKeys: any[],
     decrypt: (pp: string) => boolean,
+    armor: () => string,
 }
 
 interface OpenpgpMessage {
@@ -229,7 +230,7 @@ interface SendableMessageBody {
 }
 
 interface SendableMessage {
-    headers: Headers,
+    headers: FlatHeaders,
     from: string,
     to: string[],
     subject: string,

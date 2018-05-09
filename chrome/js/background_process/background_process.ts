@@ -2,8 +2,10 @@
 
 'use strict';
 
-/// <reference path="../common/common.d.ts" />
+/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
+/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
+/// <reference path="../common/common.d.ts" />
 
 const MAX_MESSAGE_SIZE = 1024 * 1024;
 

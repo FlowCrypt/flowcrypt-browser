@@ -769,8 +769,8 @@ const tests = {
 
   browser = await puppeteer.launch({
     args: [
-      '--disable-extensions-except=chrome',
-      '--load-extension=chrome',
+      '--disable-extensions-except=build/chrome',
+      '--load-extension=build/chrome',
       `--window-size=${meta.size.width+10},${meta.size.height+132}`,
     ],
     headless: false, // to run headless-like: "xvfb-run node test.js"

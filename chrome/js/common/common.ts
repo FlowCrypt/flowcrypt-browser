@@ -2,11 +2,15 @@
 
 'use strict';
 
+/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
+/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="common.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 
 declare let openpgp: any; // todo - how to make this understand openpgp types from above?
 declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, MimeBuilder: any;
+declare var require: any;
+declare var exports: any;
 let storage = (window as FlowCryptWindow).flowcrypt_storage;
 
 let tool = {
@@ -284,7 +288,7 @@ let tool = {
     },
     key_codes: () => ({ a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, }),
     set_up_require: () => {
-      (require as any).config({
+      require.config({
         baseUrl: '/lib',
         paths: {
           'emailjs-addressparser': './emailjs/emailjs-addressparser',
@@ -571,7 +575,7 @@ let tool = {
       return text;
     },
     decode: (mime_message: string, callback: (success: boolean, decoded: MimeContent) => void) => {
-      let mime_content = {attachments: [], headers: {} as Headers, text: undefined, html: undefined, signature: undefined} as MimeContent;
+      let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
       tool._.mime_require('parser', function (emailjs_mime_parser: any) {
         try {
           let parser = new emailjs_mime_parser();
@@ -616,10 +620,10 @@ let tool = {
         }
       });
     },
-    encode: (body:string|SendableMessageBody, headers: Headers, attachments:Attachment[]=[], mime_message_callback: (mime_message: string) => void) => {
+    encode: (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[], mime_message_callback: (mime_message: string) => void) => {
       tool._.mime_require('builder', function (MimeBuilder: any) {
         let root_node = new MimeBuilder('multipart/mixed');
-        tool.each(headers, function (key: string, header: string) {
+        tool.each(headers, function (key: string, header: string|string[]) {
           root_node.addHeader(key, header);
         });
         if(typeof body === 'string') {
@@ -945,7 +949,7 @@ let tool = {
       normalize: (armored: string) => {
         try {
           armored = tool.crypto.armor.normalize(armored, 'key');
-          let key;
+          let key: OpenpgpKey|undefined = undefined;
           if(RegExp(tool.crypto.armor.headers('public_key', 're').begin).test(armored)) {
             key = openpgp.key.readArmored(armored).keys[0];
           } else if(RegExp(tool.crypto.armor.headers('message', 're').begin).test(armored)) {
@@ -1590,7 +1594,7 @@ let tool = {
         //   OpenPGP: 'id=' + primary_pubkey.fingerprint,
         // } : {},
         return {
-          headers: {} as Headers, 
+          headers: {} as FlatHeaders, 
           from: from,
           to: tool.arr.is(to) ? to as string[] : (to as string).split(','),
           subject: subject,
@@ -2413,7 +2417,6 @@ let tool = {
           callback(require('emailjs-mime-parser'));
         } else { // RequireJS
           tool.env.set_up_require();
-          // @ts-ignore
           require(['emailjs-mime-parser'], callback);
         }
       } else {
@@ -2423,7 +2426,6 @@ let tool = {
           callback(require('emailjs-mime-builder'));
         } else { // RequireJS
           tool.env.set_up_require();
-          // @ts-ignore
           require(['emailjs-mime-builder'], callback);
         }
       }
@@ -2677,7 +2679,7 @@ let tool = {
       }
       return progress_reporting_xhr;
     },
-    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:Headers|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
+    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
       progress = progress || {} as ApiCallProgressCallbacks;
       let formatted_values:FormData|string;
       let content_type: string|false;
@@ -3013,9 +3015,9 @@ let tool = {
       return { content_type: 'multipart/related; boundary=' + boundary, body: body };
     },
     api_gmail_loop_through_emails_to_compile_contacts: (account_email: string, query: string, callback: Callback, results:any[]=[]) => {
-      tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date'], (headers: Headers) => {
+      tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date'], (headers: FlatHeaders) => {
         if(headers && headers.to) {
-          let result = headers.to.split(/, ?/).map(tool.str.parse_email).map(function (r) {
+          let result = headers.to.split(/, ?/).map(tool.str.parse_email).map(function (r: any) {
             (r as any).date = headers.date;
             return r;
           });
@@ -3052,10 +3054,10 @@ let tool = {
       });
     },
     api_attester_packet_armor: (content_text: string) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
-    api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as any as Headers),
-    // api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('http://127.0.0.1:5002/, path, values, 'JSON', null, {'api-version': '3'} as any as Headers),
-    api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(tool.api.cryptup.url('api'), path, values, format, null, {'api-version': 3} as any as Headers),
-    // api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call('http://127.0.0.1:5001/', path, values, format, null, {'api-version': 3} as any as Headers),
+    api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
+    // api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('http://127.0.0.1:5002/, path, values, 'JSON', null, {'api-version': '3'} as HeadersDict),
+    api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(tool.api.cryptup.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
+    // api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call('http://127.0.0.1:5001/', path, values, format, null, {'api-version': '3'} as HeadersDict),
     /* [BARE_ENGINE_OMIT_END] */
   },
   catch: { // web and extension code

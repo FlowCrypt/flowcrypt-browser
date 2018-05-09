@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "checkJs": true,
     "target": "ES2017",
     "alwaysStrict": true,
     "noImplicitAny": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "sourceMap": true
   }
 }

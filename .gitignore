@@ -19,3 +19,4 @@
 /chrome/js/background_process/migrations.js
 /chrome/js/background_process/inject.js
 /node_modules/
+/build/*
