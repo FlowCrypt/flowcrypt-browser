@@ -1388,7 +1388,7 @@ let tool = {
           }
         });
       },
-      send: (destination_string: string|null, name: string, data: Dict<any>|null, callback?: Callback) => {
+      send: (destination_string: string|null, name: string, data: Dict<any>|null=null, callback?: Callback) => {
         let msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };
         let is_background_page = tool.env.is_background_script();
         if(typeof  destination_string === 'undefined') { // don't know where to send the message

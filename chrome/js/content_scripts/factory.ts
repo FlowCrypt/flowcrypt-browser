@@ -2,20 +2,20 @@
 
 'use strict';
 
-function element_factory(account_email, parent_tab_id, chrome_runtime_extension_url, reloadable_class, destroyable_class, set_params) {
+function element_factory(account_email: string, parent_tab_id: string, chrome_runtime_extension_url: string, reloadable_class:string='', destroyable_class:string, set_params:UrlParams={}) {
 
   reloadable_class = reloadable_class || '';
   var hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
   set_params = set_params || {};
 
-  function resolve_from_to(secondary_emails, my_email, their_emails) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
+  function resolve_from_to(secondary_emails: string[], my_email: string, their_emails: string[]) { //when replaying to email I've sent myself, make sure to send it to the other person, and not myself
     if(their_emails.length === 1 && tool.value(their_emails[0]).in(secondary_emails)) {
       return { from: their_emails[0], to: my_email }; //replying to myself, reverse the values to actually write to them
     }
     return { to: their_emails, from: my_email };
   }
 
-  function src_img(relative_path) {
+  function src_img(relative_path: string) {
     if(!chrome_runtime_extension_url) {
       catcher.report('Attempting to load an image without knowing runtime_id: ' + relative_path); // which will probably not work
       return '/img/' + relative_path;
@@ -24,7 +24,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
     }
   }
 
-  function src_logo(include_header, size) {
+  function src_logo(include_header: boolean, size:number=0) {
     if(size !== 16) {
       return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
     } else {
@@ -32,106 +32,93 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
     }
   }
 
-  function url_create_with_added_params(path, params) {
-    params = params || {};
-    tool.each(set_params, function (k, v) {
-      params[k] = v;
-    });
+  let ext_url = chrome.extension.getURL;
+  let new_id = () => `frame_${tool.str.random(10)}`;
+
+  function frame_src(path: string, params:UrlParams={}) {
+    tool.each(set_params, (k, v) => { params[k] = v; });
     return tool.env.url_create(path, params);
   }
 
-  function src_compose_message(draft_id) {
-    var params = { is_reply_box: false, account_email: account_email, parent_tab_id: parent_tab_id, draft_id: draft_id, placement: 'gmail' };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/compose.htm'), params);
+  function src_compose_message(draft_id: string) {
+    return frame_src(ext_url('chrome/elements/compose.htm'), { is_reply_box: false, account_email, parent_tab_id, draft_id, placement: 'gmail' });
   }
 
-  function src_passphrase_dialog(longids, type) {
-    var params = { account_email: account_email, type: type, longids: longids || [], parent_tab_id: parent_tab_id };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/passphrase.htm'), params);
+  function src_passphrase_dialog(longids:string[]=[], type: PassphraseDialogType) {
+    return frame_src(ext_url('chrome/elements/passphrase.htm'), { account_email, type, longids, parent_tab_id });
   }
 
-  function src_subscribe_dialog(verification_email_text, placement, source, subscribe_result_tab_id) {
-    var params = { account_email: account_email, verification_email_text: verification_email_text, placement: placement, source: source, parent_tab_id: parent_tab_id, subscribe_result_tab_id: subscribe_result_tab_id };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/subscribe.htm'), params);
+  function src_subscribe_dialog(verification_email_text: string, placement: Placement, source: string, subscribe_result_tab_id:string|null=null) {
+    return frame_src(ext_url('chrome/elements/subscribe.htm'), { account_email, verification_email_text, placement, source, parent_tab_id, subscribe_result_tab_id });
   }
 
-  function src_verification_dialog(verification_email_text) {
-    var params = { account_email: account_email, verification_email_text: verification_email_text, parent_tab_id: parent_tab_id };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/verification.htm'), params);
+  function src_verification_dialog(verification_email_text: string) {
+    return frame_src(ext_url('chrome/elements/verification.htm'), { account_email, verification_email_text, parent_tab_id });
   }
 
-  function src_attest(attest_packet) {
-    var params = { account_email: account_email, attest_packet: attest_packet, parent_tab_id: parent_tab_id };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/attest.htm'), params);
+  function src_attest(attest_packet: string) {
+    return frame_src(ext_url('chrome/elements/attest.htm'), { account_email, attest_packet, parent_tab_id });
   }
 
-  function src_add_pubkey_dialog(emails, placement) {
-    var params = { account_email: account_email, emails: emails, parent_tab_id: parent_tab_id, placement: placement };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/add_pubkey.htm'), params);
+  function src_add_pubkey_dialog(emails: string[], placement: Placement) {
+    return frame_src(ext_url('chrome/elements/add_pubkey.htm'), { account_email, emails, parent_tab_id, placement });
   }
 
-  function src_add_footer_dialog(placement) {
-    var params = { account_email: account_email, parent_tab_id: parent_tab_id, placement: placement };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/shared/footer.htm'), params);
+  function src_add_footer_dialog(placement: Placement) {
+    return frame_src(ext_url('chrome/elements/shared/footer.htm'), { account_email, parent_tab_id, placement });
   }
 
-  function src_sending_address_dialog(placement) {
-    var params = { account_email: account_email, parent_tab_id: parent_tab_id, placement: placement };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/sending_address.htm'), params);
+  function src_sending_address_dialog(placement: Placement) {
+    return frame_src(ext_url('chrome/elements/sending_address.htm'), { account_email, parent_tab_id, placement });
   }
 
-  function src_pgp_attachment_iframe(meta) {
-    var params = { account_email: account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id, url: meta.url };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/attachment.htm'), params);
+  function src_pgp_attachment_iframe(meta: UrlParams) {
+    var params = { account_email, message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, parent_tab_id: parent_tab_id, url: meta.url };
+    return frame_src(ext_url('chrome/elements/attachment.htm'), params);
   }
 
-  function src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short) {
-    var params = {
-      account_email: account_email, frame_id: 'frame_' + tool.str.random(10), message: armored, has_password: has_password, message_id: message_id,
-      sender_email: sender, is_outgoing: Boolean(is_outgoing), parent_tab_id: parent_tab_id, signature: signature, short: short,
-    };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/pgp_block.htm'), params);
+  function src_pgp_block_iframe(message: string, message_id: string, is_outgoing: boolean, sender_email: string, has_password: boolean, signature: string|null, short: string|null) {
+    return frame_src(ext_url('chrome/elements/pgp_block.htm'), { account_email, frame_id: new_id(), message, has_password, message_id, sender_email, is_outgoing, parent_tab_id, signature, short });
   }
 
-  function src_pgp_pubkey_iframe(armored_pubkey, is_outgoing) {
-    var params = { account_email: account_email, frame_id: 'frame_' + tool.str.random(10), armored_pubkey: armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id: parent_tab_id };
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/pgp_pubkey.htm'), params);
+  function src_pgp_pubkey_iframe(armored_pubkey: string, is_outgoing: boolean) {
+    return frame_src(ext_url('chrome/elements/pgp_pubkey.htm'), { account_email, frame_id: new_id(), armored_pubkey, minimized: Boolean(is_outgoing), parent_tab_id });
   }
 
-  function src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft) {
-    var params = {
+  function src_reply_message_iframe(conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) {
+    var params: UrlParams = {
       is_reply_box: true,
-      account_email: account_email,
+      account_email,
       frame_id: 'frame_' + tool.str.random(10),
       placement: 'gmail',
       thread_id: conversation_params.thread_id,
       skip_click_prompt: Boolean(skip_click_prompt),
       ignore_draft: Boolean(ignore_draft),
-      parent_tab_id: parent_tab_id,
+      parent_tab_id,
       thread_message_id: conversation_params.thread_message_id,
     };
     if(conversation_params.reply_to) { // for gmail and inbox. Outlook gets this from API
-      let headers = resolve_from_to(conversation_params.addresses, conversation_params.my_email, conversation_params.reply_to);
+      let headers = resolve_from_to(conversation_params.addresses as string[], conversation_params.my_email as string, conversation_params.reply_to as string[]);
       params.to = headers.to;
       params.from = headers.from;
       params.subject = 'Re: ' + conversation_params.subject;
     }
-    return url_create_with_added_params(chrome.extension.getURL('chrome/elements/compose.htm'), params);
+    return frame_src(ext_url('chrome/elements/compose.htm'), params);
   }
 
   function src_stripe_checkout() {
-    return url_create_with_added_params('https://flowcrypt.com/stripe.htm', { parent_tab_id: parent_tab_id });
+    return frame_src('https://flowcrypt.com/stripe.htm', { parent_tab_id });
   }
 
-  function iframe(src, classes, additional_attributes) {
-    let attributes = {id: tool.env.url_params(['frame_id'], src).frame_id, class: (classes || []).concat(reloadable_class).join(' '), src: src};
-    tool.each(additional_attributes, (a, v) => {
+  function iframe(src: string, classes:string[]=[], additional_attributes:UrlParams={}) {
+    let attributes: Dict<string> = {id: tool.env.url_params(['frame_id'], src).frame_id as string, class: (classes || []).concat(reloadable_class).join(' '), src: src};
+    tool.each(additional_attributes, (a: string, v: string) => {
       attributes[a] = v;
     });
     return tool.e('iframe', attributes);
   }
 
-  function dialog(content) {
+  function dialog(content: string) {
     return tool.e('div', { id: 'cryptup_dialog', html: content });
   }
 
@@ -151,29 +138,29 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       reply_message_iframe: src_reply_message_iframe,
     },
     meta: {
-      notification_container: () => '<center class="' + destroyable_class + ' webmail_notifications"></center>',
-      stylesheet: file => '<link class="' + destroyable_class + '" rel="stylesheet" href="' + chrome.extension.getURL('css/' + file + '.css') + '" />',
+      notification_container: () => `<center class="${destroyable_class} webmail_notifications"></center>`,
+      stylesheet: (file: string) => `<link class="${destroyable_class}" rel="stylesheet" href="${ext_url(`css/${file}.css`)}" />`,
     },
     dialog: {
-      passphrase: (longids, type) => dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'})),
-      subscribe: (verification_email_text, source, subscribe_result_tab_id) => dialog(iframe(src_subscribe_dialog(verification_email_text, 'dialog', source, subscribe_result_tab_id), ['mediumtall'], {scrolling: 'no'})),
-      add_pubkey: (emails) => dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'})),
+      passphrase: (longids: string[], type: PassphraseDialogType) => dialog(iframe(src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'})),
+      subscribe: (verif_email_text: string, source: string, subscr_res_tab_id: string) => dialog(iframe(src_subscribe_dialog(verif_email_text, 'dialog', source, subscr_res_tab_id), ['mediumtall'], {scrolling: 'no'})),
+      add_pubkey: (emails: string[]) => dialog(iframe(src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'})),
     },
     embedded: {
-      compose: (draft_id) => tool.e('div', {id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})}),
-      subscribe: (verification_email_text, source) => iframe(src_subscribe_dialog(verification_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'}),
-      verification: (verification_email_text) => iframe(src_verification_dialog(verification_email_text), ['short', 'embedded'], {scrolling: 'no'}),
-      attachment: (meta) => tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))}),
-      message: (armored, message_id, is_outgoing, sender, has_password, signature, short) => iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short), ['pgp_block']) + hide_gmail_new_message_in_thread_notification,
-      pubkey: (armored_pubkey, is_outgoing) => iframe(src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']),
-      reply: (conversation_params, skip_click_prompt, ignore_draft) => iframe(src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']),
-      passphrase: (longids) => dialog(iframe(src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'})),
-      attachment_status: (content) => tool.e('div', {class: 'attachment_loader', html: content}),
-      attest: (attest_packet) => iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'}),
+      compose: (draft_id: string) => tool.e('div', {id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: iframe(src_compose_message(draft_id), [], {scrolling: 'no'})}),
+      subscribe: (verif_email_text: string, source: string) => iframe(src_subscribe_dialog(verif_email_text, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'}),
+      verification: (verif_email_text: string) => iframe(src_verification_dialog(verif_email_text), ['short', 'embedded'], {scrolling: 'no'}),
+      attachment: (meta: UrlParams) => tool.e('span', {class: 'pgp_attachment', html: iframe(src_pgp_attachment_iframe(meta))}),
+      message: (armored: string, message_id: string, is_outgoing: boolean, sender: string, has_password: boolean, signature: string|null, short: string|null) => iframe(src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short), ['pgp_block']) + hide_gmail_new_message_in_thread_notification,
+      pubkey: (armored_pubkey: string, is_outgoing: boolean) => iframe(src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']),
+      reply: (conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) => iframe(src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']),
+      passphrase: (longids: string[]) => dialog(iframe(src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'})),
+      attachment_status: (content: string) => tool.e('div', {class: 'attachment_loader', html: content}),
+      attest: (attest_packet: string) => iframe(src_attest(attest_packet), ['short', 'embedded'], {scrolling: 'no'}),
       stripe_checkout: () => iframe(src_stripe_checkout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'}),
     },
     button: {
-      compose: (webmail_name) => {
+      compose: (webmail_name: WebMailName) => {
         if(webmail_name === 'inbox') {
           return '<div class="S ' + destroyable_class + '"><div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="' + src_logo(true) + '"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>';
         } else if(webmail_name === 'outlook') {
@@ -185,7 +172,7 @@ function element_factory(account_email, parent_tab_id, chrome_runtime_extension_
       reply: () => '<div class="' + destroyable_class + ' reply_message_button"><img src="' + src_img('svgs/reply-icon.svg') + '" /></div>',
       without_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ' + destroyable_class + '" data-tooltip="Show conversation without FlowCrypt"><span>see original</span></span>',
       with_cryptup: () => '<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ' + destroyable_class + '" data-tooltip="Use Secure Reply"><span>secure reply</span></span>',
-      recipients_use_encryption: (count, webmail_name) => {
+      recipients_use_encryption: (count: number, webmail_name: WebMailName) => {
         if(webmail_name !== 'gmail') {
           catcher.report('switch_to_secure not implemented for ' + webmail_name);
           return '';

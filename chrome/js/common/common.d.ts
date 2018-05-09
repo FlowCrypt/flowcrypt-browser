@@ -142,15 +142,9 @@ interface OpenpgpEncryptResult {
     data: string|Uint8Array,
 }
 
-interface NamedFunctionsObject {
-    [key: string]: (...args: any[]) => any,
-}
-
-type UrlParam = string|number|null|undefined|boolean;
-
-interface UrlParams {
-    [key: string]: UrlParam,
-}
+type NamedFunctionsObject = Dict<(...args: any[]) => any>;
+type UrlParam = string|number|null|undefined|boolean|string[];
+type UrlParams = Dict<UrlParam>;
 
 interface KeyInfo {
     public: string,
@@ -228,8 +222,6 @@ interface InternalSortedKeysForDecrypt {
     without_passphrases: KeyInfo[],
 }
 
-
-
 interface SendableMessageBody {
     'text/plain'?: string,
     'text/html'?: string,
@@ -260,6 +252,9 @@ interface AuthRequest {
     omit_read_scope?: boolean,
 }
 
+type WebMailName = 'gmail'|'outlook'|'inbox';
+type PassphraseDialogType = 'embedded'|'sign'|'attest';
+type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded';
 type FlatTypes = null|undefined|number|string|boolean;
 type Serializable = FlatTypes|FlatTypes[]|Dict<FlatTypes>|Dict<FlatTypes>[];
 type StorageResult = Dict<Serializable>;
