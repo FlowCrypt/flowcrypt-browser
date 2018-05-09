@@ -4,8 +4,8 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 /// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
-/// <reference path="common.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
+/// <reference path="common.d.ts" />
 
 declare let openpgp: any; // todo - how to make this understand openpgp types from above?
 declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, MimeBuilder: any;
@@ -1189,18 +1189,20 @@ let tool = {
         let time_to_crack = zxcvbn_result_guesses / tool._.var.crypto_password_GUESSES_PER_SECOND;
         for(let i = 0; i < tool._.var.crypto_password_CRACK_TIME_WORDS.length; i++) {
           let readable_time = tool._.readable_crack_time(time_to_crack);
-          if(tool.value(tool._.var.crypto_password_CRACK_TIME_WORDS[i][0]).in(readable_time)) { // looks for a word match from readable_crack_time, defaults on "weak"
+          // looks for a word match from readable_crack_time, defaults on "weak"
+          if(tool.value(tool._.var.crypto_password_CRACK_TIME_WORDS[i].match).in(readable_time)) {
             return {
-              word: tool._.var.crypto_password_CRACK_TIME_WORDS[i][1],
-              bar: tool._.var.crypto_password_CRACK_TIME_WORDS[i][2],
+              word: tool._.var.crypto_password_CRACK_TIME_WORDS[i].word,
+              bar: tool._.var.crypto_password_CRACK_TIME_WORDS[i].bar,
               time: readable_time,
               seconds: Math.round(time_to_crack),
-              pass: tool._.var.crypto_password_CRACK_TIME_WORDS[i][4],
-              color: tool._.var.crypto_password_CRACK_TIME_WORDS[i][3],
-              suggestions: [] as string[],
+              pass: tool._.var.crypto_password_CRACK_TIME_WORDS[i].pass,
+              color: tool._.var.crypto_password_CRACK_TIME_WORDS[i].color,
             };
           }
         }
+        tool.catch.report('estimate_strength: got to end without any result');
+        throw Error('(thrown) estimate_strength: got to end without any result');
       },
       weak_words: () => [
         'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
@@ -1386,7 +1388,7 @@ let tool = {
           }
         });
       },
-      send: (destination_string: string|null, name: string, data: Dict<any>|null, callback: Callback) => {
+      send: (destination_string: string|null, name: string, data: Dict<any>|null, callback?: Callback) => {
         let msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };
         let is_background_page = tool.env.is_background_script();
         if(typeof  destination_string === 'undefined') { // don't know where to send the message
@@ -1395,7 +1397,7 @@ let tool = {
             callback();
           }
         } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
-          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback); // calling from background script to background script: skip messaging completely
+          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', tool.noop); // calling from background script to background script: skip messaging completely
         } else if(is_background_page) {
           chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, function(r) {
             tool.catch.try(function() {
@@ -2364,13 +2366,13 @@ let tool = {
       ],
       crypto_password_GUESSES_PER_SECOND: 10000 * 2 * 4000, //(10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294 
       crypto_password_CRACK_TIME_WORDS: [
-        ['millenni', 'perfect', 100, 'green', true],
-        ['centu', 'great', 80, 'green', true],
-        ['year', 'good', 60, 'orange', true],
-        ['month', 'reasonable', 40, 'darkorange', true],
-        ['day', 'poor', 20, 'darkred', false],
-        ['', 'weak', 10, 'red', false],
-      ], // word search, word rating, bar percent, color, pass
+        {match: 'millenni', word: 'perfect',    bar: 100, color: 'green',       pass: true},
+        {match: 'centu',    word: 'great',      bar: 80,  color: 'green',       pass: true},
+        {match: 'year',     word: 'good',       bar: 60,  color: 'orange',      pass: true},
+        {match: 'month',    word: 'reasonable', bar: 40,  color: 'darkorange',  pass: true},
+        {match: 'day',      word: 'poor',       bar: 20,  color: 'darkred',     pass: false},
+        {match: '',         word: 'weak',       bar: 10,  color: 'red',         pass: false},
+      ],
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as any as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
     },

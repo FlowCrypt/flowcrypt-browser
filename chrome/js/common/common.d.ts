@@ -7,7 +7,9 @@ interface BrowserWidnow extends Window {
 
 interface FlowCryptWindow extends BrowserWidnow {
     jQuery: JQuery,
-    flowcrypt_attach: any,
+    flowcrypt_attach: {
+        init: Function,
+    },
     flowcrypt_storage: {
         keys_get: ((account_email: string, longid?: string) => Promise<KeyInfo[]|KeyInfo>),
         get: (account_email: string|string[]|null, items: string[], cb: (s: StorageResult) => void) => void,
@@ -21,6 +23,7 @@ interface FlowCryptWindow extends BrowserWidnow {
         session_set: (account_email: string, key: string, value: string|undefined) => Promise<string|undefined>,
         session_get: (account_email: string, key: string) => Promise<string|undefined>,
         remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,
+        key: (account_key_or_list: string|string[], key: string|string[]) => string|string[],
     },
     lang: any,
     iso88592: any,
@@ -197,6 +200,9 @@ interface OpenpgpKey {
     subKeys: any[],
     decrypt: (pp: string) => boolean,
     armor: () => string,
+    isPrivate: () => boolean,
+    getAllKeyPackets: () => any[],
+    users:  Dict<any>[],
 }
 
 interface OpenpgpMessage {
@@ -255,8 +261,8 @@ interface AuthRequest {
 }
 
 type FlatTypes = null|undefined|number|string|boolean;
-type Serializable = FlatTypes|FlatTypes[]|Dict<FlatTypes>|Dict<FlatTypes>[]
-type StorageResult = Dict<Serializable>
+type Serializable = FlatTypes|FlatTypes[]|Dict<FlatTypes>|Dict<FlatTypes>[];
+type StorageResult = Dict<Serializable>;
 type Callback = (r?: any) => void;
 type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
@@ -271,3 +277,8 @@ type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: Ap
 type ApiCallMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ApiResponseFormat = 'json';
 type GmailApiResponseFormat = 'raw'|'full'|'metadata';
+
+interface JQueryStatic {
+    featherlight: Function,
+}
+  
