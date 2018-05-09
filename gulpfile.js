@@ -9,14 +9,26 @@ let exec = require('child_process').exec;
 let config = (path) => JSON.parse(fs.readFileSync(path));
 let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
 
-let destination = 'build/chrome';
-let toCopy = ['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '.web-extension-id', 'changelog.txt', 'manifest.json'];
+let target = 'build/chrome';
+
+let recipe = {
+  crash: (reason='ending build process due to previous errors') => {
+    return function() {
+      this.once("finish", () => { 
+        console.error(`***** ${reason} *****`);
+        process.exit(1);
+      });
+    }
+  },
+  ts: (from, to) => gulp.src(from).pipe(gulpTypeScript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(gulp.dest(to)),
+  copy: (from, to) => gulp.src(from).pipe(gulp.dest(to)),
+}
 
 let subTask = {
-  flush: () => del(destination),
-  transpileProjectTs: () => gulp.src(source('**/*.ts')).pipe(gulpTypeScript(config('tsconfig.json').compilerOptions)).pipe(gulp.dest(destination)),
-  copySourceFiles: () => gulp.src(source(toCopy)).pipe(gulp.dest(destination)),
-  buildTest: () => gulp.src('test/test.ts').pipe(gulpTypeScript(config('tsconfig.json').compilerOptions)).pipe(gulp.dest('test/')),
+  flush: () => del(target),
+  transpileProjectTs: () => recipe.ts(source('**/*.ts') ,target),
+  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id', 'manifest.json']), target),
+  buildTest: () => recipe.ts('test/test.ts', 'test/'),
   runTest: (done) => {
     let test = exec('node test/test.js', (err, stdout, stderr) => done());
     test.stdout.pipe(process.stdout);
