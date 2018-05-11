@@ -5,8 +5,8 @@
 catcher.try(() => {
 
   const replace_pgp_elements_interval_ms = 1000;
-  let replace_pgp_elements_interval;
-  let replacer;
+  let replace_pgp_elements_interval: number;
+  let replacer: InboxElementReplacer;
   let full_name = '';
 
   content_script_setup_if_vacant({
@@ -30,15 +30,15 @@ catcher.try(() => {
     start: start,
   });
 
-  function start(account_email, inject, notifications, factory, notify_murdered) {
-    window.flowcrypt_storage.get(account_email, ['addresses', 'google_token_scopes'], storage => {
+  function start(account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) {
+    (window as FlowCryptWindow).flowcrypt_storage.get(account_email, ['addresses', 'google_token_scopes'], (storage: Dict<string[]>) => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-      inject.buttons();
-      replacer = inbox_element_replacer(factory, account_email, storage.addresses || [account_email], can_read_emails);
+      injector.buttons();
+      replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
       notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = TrySetDestroyableInterval(function () {
-        if(typeof window.$ === 'function') {
+      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(function () {
+        if(typeof (window as FlowCryptWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replace_pgp_elements_interval);

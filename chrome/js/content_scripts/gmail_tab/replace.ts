@@ -32,7 +32,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     this.gmail_variant = gmail_variant;
   }
 
-  everything() {
+  everything = () => {
     this.replace_armored_blocks();
     this.replace_attachments();
     this.replace_cryptup_tags();
@@ -41,7 +41,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     this.evaluate_standard_compose_receivers();
   }
 
-  set_reply_box_editable() {
+  set_reply_box_editable = () => {
     let reply_container_iframe = $('.reply_message_iframe_container > iframe').first();
     if(reply_container_iframe.length) {
       tool.ui.scroll(reply_container_iframe);
@@ -51,12 +51,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  reinsert_reply_box(subject: string, my_email: string, reply_to: string[], thread_id: string) {
+  reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
     let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embedded_reply(params, false, true));
   }
 
-  private replace_armored_blocks() {
+  private replace_armored_blocks = () => {
     let self = this;
     $(this.selector.message_outer).find(this.selector.message_inner_containing_pgp).not('.evaluated').each(function () { // for each email that contains PGP block
       $(this).addClass('evaluated');
@@ -70,12 +70,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
     });
   }
 
-  private add_cryptup_conversation_icon(container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) {
+  private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
     container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(on_click)));
   }
 
-  private replace_conversation_buttons(force:boolean=false) {
+  private replace_conversation_buttons = (force:boolean=false) => {
     let convo_upper_icons = $('div.ade:visible');
     let use_encryption_in_this_convo = $('iframe.pgp_block').filter(':visible').length || force;
     // reply buttons
@@ -114,7 +114,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private replace_cryptup_tags() {
+  private replace_cryptup_tags = () => {
     let self = this;
     $("div[contenteditable='true']:contains('[cryptup:link:')").not('.evaluated').each(function () {
       $(this).addClass('evaluated');
@@ -140,7 +140,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     });
   }
 
-  private replace_attachments() {
+  private replace_attachments = () => {
     $(this.selector.attachments_container_inner).each((i, attachments_container: HTMLElement|JQuery<HTMLElement>) => {
       attachments_container = $(attachments_container);
       let new_pgp_attachments = this.filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
@@ -148,7 +148,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       if(new_pgp_attachments.length) {
         let message_id = this.determine_message_id(attachments_container);
         if(message_id) {
-          if(can_read_emails) {
+          if(this.can_read_emails) {
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
             tool.api.gmail.message_get(this.account_email, message_id, 'full', (success: boolean, message: Dict<any>) => {
               if(success) {
@@ -170,7 +170,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     });
   }
 
-  private process_attachments(message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) {
+  private process_attachments = (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
     let message_element = this.get_message_body_element(message_id);
     let sender_email = this.get_sender_email(message_element);
     let is_outgoing = tool.value(sender_email).in(this.addresses);
@@ -232,7 +232,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private filter_attachments(potential_matches: JQuery<HTMLElement>|HTMLElement, patterns: string[]) {
+  private filter_attachments = (potential_matches: JQuery<HTMLElement>|HTMLElement, patterns: string[]) => {
     return $(potential_matches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function() {
       let name = this.innerText.trim();
       for(let i = 0; i < patterns.length; i++) {
@@ -250,7 +250,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }).closest('span.aZo, span.a5r');
   }
 
-  private hide_attachment(atachment_element: JQuery<HTMLElement>|HTMLElement, attachments_container_selector: JQuery<HTMLElement>|HTMLElement) {
+  private hide_attachment = (atachment_element: JQuery<HTMLElement>|HTMLElement, attachments_container_selector: JQuery<HTMLElement>|HTMLElement) => {
     atachment_element = $(atachment_element);
     attachments_container_selector = $(attachments_container_selector);
     atachment_element.hide();
@@ -259,11 +259,11 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private determine_message_id(inner_message_element: HTMLElement|JQuery<HTMLElement>) { // todo - test and use data-message-id with Gmail API once available
+  private determine_message_id = (inner_message_element: HTMLElement|JQuery<HTMLElement>) => { // todo - test and use data-message-id with Gmail API once available
     return $(inner_message_element).parents(this.selector.message_outer).attr('data-legacy-message-id') || '';
   }
 
-  private determine_thread_id(conversation_root_element: HTMLElement|JQuery<HTMLElement>) { // todo - test and use data-thread-id with Gmail API once available
+  private determine_thread_id = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => { // todo - test and use data-thread-id with Gmail API once available
     return $(conversation_root_element).find(this.selector.subject).attr('data-legacy-thread-id') || '';
   }
 
@@ -271,11 +271,11 @@ class GmailElementReplacer implements WebmailElementReplacer {
     return $(this.selector.message_outer).filter('[data-legacy-message-id="' + message_id + '"]').find(this.selector.message_inner);
   }
 
-  private wrap_message_body_element(html_content: string) {
+  private wrap_message_body_element = (html_content: string) => {
     return '<div class="message_inner_body evaluated">' + html_content + '</div>';
   }
 
-  private update_message_body_element(element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content: string) {
+  private update_message_body_element = (element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content: string) => {
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -303,23 +303,23 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private get_sender_email(message_element: HTMLElement|JQuery<HTMLElement>) {
+  private get_sender_email = (message_element: HTMLElement|JQuery<HTMLElement>) => {
     return ($(message_element).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private dom_get_message_sender(conversation_root_element: JQuery<HTMLElement>) {
+  private dom_get_message_sender = (conversation_root_element: JQuery<HTMLElement>) => {
     return (conversation_root_element.find('h3.iw span[email]').last().attr('email') || '').trim().toLowerCase();
   }
 
-  private dom_get_message_recipients(conversation_root_element: JQuery<HTMLElement>) {
+  private dom_get_message_recipients = (conversation_root_element: JQuery<HTMLElement>) => {
     return conversation_root_element.find('span.hb').last().find('span.g2').toArray().map(el => ($(el).attr('email') || '').toLowerCase()); // add all recipients including me
   }
 
-  private dom_get_message_subject(conversation_root_element: JQuery<HTMLElement>) {
+  private dom_get_message_subject = (conversation_root_element: JQuery<HTMLElement>) => {
     return $(conversation_root_element).find(this.selector.subject).text();
   }
 
-  private get_conversation_params(convo_root_el: JQuery<HTMLElement>) {
+  private get_conversation_params = (convo_root_el: JQuery<HTMLElement>) => {
     let headers = tool.api.common.reply_correspondents(this.account_email, this.addresses, this.dom_get_message_sender(convo_root_el), this.dom_get_message_recipients(convo_root_el));
     return {
       subject: this.dom_get_message_subject(convo_root_el),
@@ -331,11 +331,11 @@ class GmailElementReplacer implements WebmailElementReplacer {
     };
   }
 
-  private get_conversation_root_element(any_inner_element: HTMLElement) {
+  private get_conversation_root_element = (any_inner_element: HTMLElement) => {
     return $(any_inner_element).closest('div.if, td.Bu').first();
   }
 
-  private replace_standard_reply_box(editable:boolean=false, force:boolean=false) {
+  private replace_standard_reply_box = (editable:boolean=false, force:boolean=false) => {
     let self = this;
     $($('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_iframe_container, .reply_message_evaluated').filter(':visible').get().reverse()).each((i, reply_box) => {
       let root_element = this.get_conversation_root_element(reply_box);
@@ -357,7 +357,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     });
   }
 
-  private evaluate_standard_compose_receivers() {
+  private evaluate_standard_compose_receivers = () => {
     let standard_compose_selector = $('.aaZ:visible');
     if(standard_compose_selector.length) { // compose message is open
       standard_compose_selector.each((i, standard_compose_window: JQuery<HTMLElement>|HTMLElement) => {
