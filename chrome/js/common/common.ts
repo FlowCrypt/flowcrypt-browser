@@ -2145,7 +2145,7 @@ let tool = {
           }
         });
       },
-      account_update: (update_values: Dict<Serializable>) => {
+      account_update: (update_values?: Dict<Serializable>) => {
         return tool.catch.Promise(function(resolve, reject) {
           storage.auth_info(function (email, uuid, verified) {
             if(verified) {

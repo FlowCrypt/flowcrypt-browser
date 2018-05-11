@@ -131,7 +131,7 @@ function openpgp_key_encrypt(key: OpenpgpKey, passphrase: string) {
   }
 }
 
-function show_settings_page(page: string, add_url_text_or_params: string|UrlParams|null) {
+function show_settings_page(page: string, add_url_text_or_params?: string|UrlParams|null) {
   let page_params: UrlParams = {
     account_email: settings_url_params.account_email, 
     placement: 'settings', 

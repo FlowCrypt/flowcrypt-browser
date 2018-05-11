@@ -25,7 +25,9 @@ interface FlowCryptWindow extends BrowserWidnow {
         session_get: (account_email: string, key: string) => Promise<string|undefined>,
         remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,
         key: (account_key_or_list: string|string[], key: string|string[]) => string|string[],
-        account_emails_add: (email: string) => void,
+        account_emails_add: (email: string, callback?: Callback) => void,
+        keys_remove: (account_email: string, longid: string) => Promise<void>,
+        passphrase_save: (type: StorageType, account_email: string, longid: string, passphrase: string|undefined) => Promise<void>,
     },
     lang: any,
     iso88592: any,
@@ -301,7 +303,7 @@ type SelectorCache = {
     now: (name: string) => JQuery<HTMLElement>,
     selector: (name: string) => string,
 }
-
+type StorageType = 'session'|'local';
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
@@ -320,6 +322,10 @@ interface WebmailElementReplacer {
 }
 
 interface JQueryStatic {
+    featherlight: Function,
+}
+
+interface JQuery {
     featherlight: Function,
 }
 

@@ -2,8 +2,12 @@
 
 'use strict';
 
-let url_params = tool.env.url_params(['parent_tab_id']);
+tool.catch.try(() => {
 
-document.addEventListener('cryptup_stripe_result', catcher.try(() => {
-  tool.browser.message.send(url_params.parent_tab_id as string, 'stripe_result', { token: $('#stripe_result').text() });
-}));
+  let url_params = tool.env.url_params(['parent_tab_id']);
+
+  document.addEventListener('cryptup_stripe_result', tool.catch.try(() => {
+    tool.browser.message.send(url_params.parent_tab_id as string, 'stripe_result', { token: $('#stripe_result').text() });
+  }));
+
+})();
