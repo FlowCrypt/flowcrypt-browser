@@ -7,6 +7,7 @@ interface BrowserWidnow extends Window {
 
 interface FlowCryptWindow extends BrowserWidnow {
     jQuery: JQuery,
+    $: JQuery,
     flowcrypt_attach: {
         init: Function,
     },
@@ -24,11 +25,27 @@ interface FlowCryptWindow extends BrowserWidnow {
         session_get: (account_email: string, key: string) => Promise<string|undefined>,
         remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,
         key: (account_key_or_list: string|string[], key: string|string[]) => string|string[],
+        account_emails_add: (email: string) => void,
     },
     lang: any,
     iso88592: any,
     is_bare_engine: boolean,
     openpgp: any,
+}
+
+interface ContentScriptWindow extends FlowCryptWindow {
+    TrySetDestroyableTimeout: (code: Function, ms: number) => number,
+    TrySetDestroyableInterval: (code: Function, ms: number) => number,
+    injected: true; // background script will use this to test if scripts were already injected, and inject if not
+    account_email_global: null|string; // used by background script
+    same_world_global: true; // used by background_script
+    destruction_event: string;
+    destroyable_class: string;
+    reloadable_class: string;
+    destroyable_intervals: number[];
+    destroyable_timeouts: number[];
+    destroy: () => void,
+    vacant: () => boolean;
 }
 
 interface FlowCryptManifest {
@@ -140,6 +157,11 @@ interface DecryptError extends Decrypted {
 
 interface OpenpgpEncryptResult {
     data: string|Uint8Array,
+    message: {
+        packets: {
+            write: () => Uint8Array,
+        }
+    },
 }
 
 type NamedFunctionsObject = Dict<(...args: any[]) => any>;
@@ -256,7 +278,8 @@ type WebMailName = 'gmail'|'outlook'|'inbox';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded';
 type FlatTypes = null|undefined|number|string|boolean;
-type Serializable = FlatTypes|FlatTypes[]|Dict<FlatTypes>|Dict<FlatTypes>[];
+type SerializableTypes = FlatTypes|string[]|number[]|boolean[];
+type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 type StorageResult = Dict<Serializable>;
 type Callback = (r?: any) => void;
 type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
@@ -272,8 +295,32 @@ type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: Ap
 type ApiCallMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ApiResponseFormat = 'json';
 type GmailApiResponseFormat = 'raw'|'full'|'metadata';
+type NamedSelectors = Dict<JQuery<HTMLElement>>;
+type SelectorCache = {
+    cached: (name: string) => JQuery<HTMLElement>,
+    now: (name: string) => JQuery<HTMLElement>,
+    selector: (name: string) => string,
+}
+
+
+type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
+type WebmailVariantString = null|'html'|'standard'|'new';
+type WebmailSpecificInfo = {
+    name: WebMailName,
+    variant: WebmailVariantString,
+    get_user_account_email: () => string|undefined,
+    get_user_full_name: () => string|undefined,
+    get_replacer: () => WebmailElementReplacer,
+    start: (account_email: string, inject: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => void,
+}
+interface WebmailElementReplacer {
+    everything: () => void,
+    set_reply_box_editable: () => void,
+    reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void,
+}
 
 interface JQueryStatic {
     featherlight: Function,
 }
-  
+
+type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void}

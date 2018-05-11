@@ -328,7 +328,7 @@ declare var require: any;
       S.cached('send_btn_note').text('Saving');
       app.storage_get_armored_public_key(account_email).then((armored_pubkey: string) => {
         if(armored_pubkey) {
-          tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted: {data: string}) {
+          tool.crypto.message.encrypt([armored_pubkey], null, null, S.cached('input_text')[0].innerText, null, true, function (encrypted: OpenpgpEncryptResult) {
             let body;
             if (thread_id) { // replied message
               body = '[cryptup:link:draft_reply:' + thread_id + ']\n\n' + encrypted.data;
@@ -338,7 +338,7 @@ declare var require: any;
               body = encrypted.data;
             }
             let subject = String(S.cached('input_subject').val()) || supplied_subject || 'FlowCrypt draft';
-            tool.mime.encode(body, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject} as RichHeaders, [], (mime_message) => {
+            tool.mime.encode(body as string, {To: get_recipients_from_dom(), From: supplied_from || get_sender_from_dom(), Subject: subject} as RichHeaders, [], (mime_message) => {
               if (!draft_id) {
                 app.email_provider_draft_create(mime_message).then((response: any) => {
                   S.cached('send_btn_note').text('Saved');

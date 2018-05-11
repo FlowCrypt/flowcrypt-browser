@@ -30,17 +30,17 @@ tool.browser.message.tab_id(function(tab_id) {
     },
     passphrase_dialog: function (data) {
       if(!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog.passphrase(data.longids, data.type));
+        $('body').append(factory.dialog_passphrase(data.longids, data.type));
       }
     },
     subscribe_dialog: function (data) {
       if(!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog.subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
+        $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
       }
     },
     add_pubkey_dialog: function (data) {
       if(!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog.add_pubkey(data.emails));
+        $('body').append(factory.dialog_add_pubkey(data.emails));
       }
     },
     notification_show: function (data) {
@@ -54,8 +54,8 @@ tool.browser.message.tab_id(function(tab_id) {
 
   window.flowcrypt_storage.get(url_params.account_email, ['email_provider'], storage => {
     email_provider = storage.email_provider || 'gmail';
-    factory = element_factory(url_params.account_email, tab_id);
-    S.cached('body').prepend(factory.meta.notification_container());
+    factory = new Factory(url_params.account_email, tab_id);
+    S.cached('body').prepend(factory.meta_notification_container());
     if(email_provider !== 'gmail') {
       $('body').text('Not supported for ' + email_provider);
     } else {
@@ -121,12 +121,12 @@ function render_thread(thread_id) {
 function render_message(message) {
   let bodies = tool.api.gmail.find_bodies(message);
   let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'])) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'])));
-  let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']).replace(/\n/g, '<br>\n') : factory.embedded.message(armored_message_from_bodies, message.id);
+  let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id);
   S.cached('thread').append(tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
 }
 
 function render_reply_box(thread_id, last_message_id) {
-  S.cached('thread').append(tool.e('div', {class: 'reply line', html: factory.embedded.reply({thread_id: thread_id, thread_message_id: last_message_id})}));
+  S.cached('thread').append(tool.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id: thread_id, thread_message_id: last_message_id})}));
 }
 
 

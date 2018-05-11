@@ -2,38 +2,43 @@
 
 'use strict';
 
+/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
+/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
+
 catcher.try(() => {
 
   const replace_pgp_elements_interval_ms = 1000;
-  let replace_pgp_elements_interval;
-  let replacer;
+  let replace_pgp_elements_interval: number;
+  let replacer: GmailElementReplacer;
   let host_page_info = get_insights_from_host_variables();
 
   content_script_setup_if_vacant({
     name: 'gmail',
     variant: host_page_info.gmail_variant,
-    get_user_account_email: () => {
-      if(window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
-        if (host_page_info.email) {
-          return host_page_info.email;
-        }
-        let account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
-        if(account_email_loading_match !== null) { // try parse from loading div
-          return account_email_loading_match[0].trim().toLowerCase();
-        }
-        let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
-        if(tool.str.is_email_valid(email_from_account_dropdown)) {
-          return email_from_account_dropdown;
-        }
-      }
-    },
+    get_user_account_email: get_user_account_email,
     get_user_full_name: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
     get_replacer: () => replacer,
     start: start,
   });
 
+  function get_user_account_email(): undefined|string {
+    if(window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
+      if (host_page_info.email) {
+        return host_page_info.email;
+      }
+      let account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
+      if(account_email_loading_match !== null) { // try parse from loading div
+        return account_email_loading_match[0].trim().toLowerCase();
+      }
+      let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
+      if(tool.str.is_email_valid(email_from_account_dropdown)) {
+        return email_from_account_dropdown;
+      }
+    }
+  }
+
   function get_insights_from_host_variables() {
-    let insights = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
+    let insights: WebmailVariantObject = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
     $('body').append(['<script>', '(function(){',
       'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
       'let e = document.getElementById("FC_VAR_PASS");',
@@ -66,16 +71,16 @@ catcher.try(() => {
     return insights;
   }
 
-  function start(account_email, inject, notifications, factory, notify_murdered) {
+  function start(account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) {
     hijack_gmail_hotkeys();
-    window.flowcrypt_storage.get(account_email, ['addresses', 'google_token_scopes'], storage => {
+    (window as FlowCryptWindow).flowcrypt_storage.get(account_email, ['addresses', 'google_token_scopes'], (storage: Dict<string[]>) => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-      inject.buttons();
-      replacer = gmail_element_replacer(factory, account_email, storage.addresses || [account_email], can_read_emails, inject, host_page_info.gmail_variant);
+      injector.buttons();
+      replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, host_page_info.gmail_variant);
       notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = TrySetDestroyableInterval(() => {
-        if(typeof window.$ === 'function') {
+      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+        if(typeof (window as FlowCryptWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replace_pgp_elements_interval);

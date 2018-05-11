@@ -2,13 +2,15 @@
 
 'use strict';
 
+declare let qq: any;
+
 (function() {
 
-  function init_attach(get_limits) {
+  function init_attach(get_limits: () => AttachLimits) {
 
-    // var $, jQuery, qq, template_path;
+    // let $, jQuery, qq, template_path;
     // if(typeof exports !== 'object') { // browser extension
-    var template_path = '/chrome/elements/shared/attach.template.htm';
+    let template_path = '/chrome/elements/shared/attach.template.htm';
     // } else { // electron
     //   require('module').globalPaths.push(process.cwd());
     //   tool = require('js/tool').tool;
@@ -18,13 +20,13 @@
     //   template_path = '../attach.template.htm';
     // }
 
-    var attached_files = {};
-    var uploader = undefined;
-    var attachment_added_callback;
+    let attached_files: Dict<File> = {};
+    let uploader: any = undefined;
+    let attachment_added_callback: Callback;
 
-    function initialize_attach_dialog(element_id, button_id) {
+    function initialize_attach_dialog(element_id: string, button_id: string) {
       $('#qq-template').load(template_path, function () {
-        var config = {
+        let config = {
           autoUpload: false,
           // debug: true,
           element: $('#' + element_id).get(0),
@@ -33,12 +35,12 @@
             extraDropzones: $('#input_text'),
           },
           callbacks: {
-            onSubmitted: function(id, name) {
+            onSubmitted: function(id: number, name: string) {
               catcher.try(() => {
                 process_new_attachment(id, name);
               })();
             },
-            onCancel: function(id) {
+            onCancel: function(id: string) {
               catcher.try(() => {
                 cancel_attachment(id);
               })();
@@ -49,7 +51,7 @@
       });
     }
 
-    function set_attachment_added_callback(cb) {
+    function set_attachment_added_callback(cb: Callback) {
       attachment_added_callback = cb;
     }
 
@@ -61,23 +63,23 @@
       return Object.keys(attached_files).length > 0;
     }
 
-    function read_attachment_data_as_uint8(id, callback) {
-      var reader = new FileReader();
+    function read_attachment_data_as_uint8(id: number, callback: (r: Uint8Array) => void) {
+      let reader = new FileReader();
       reader.onload = function () {
         callback(new Uint8Array(reader.result));
       };
       reader.readAsArrayBuffer(attached_files[id]);
     }
 
-    function collect_attachment(id, callback) {
-      read_attachment_data_as_uint8(id, function (file_data) {
+    function collect_attachment(id: number, callback: Callback) {
+      read_attachment_data_as_uint8(id, (file_data) => {
         callback(tool.file.attachment(attached_files[id].name, attached_files[id].type, file_data));
       });
     }
 
-    function collect_attachments(callback) {
-      var attachments = [];
-      function add(attachment) {
+    function collect_attachments(callback: (attachments: Attachment[]) => void) {
+      let attachments: Attachment[] = [];
+      function add(attachment: Attachment) {
         attachments.push(attachment);
         if(attachments.length === Object.keys(attached_files).length) {
           callback(attachments);
@@ -86,15 +88,15 @@
       if(!Object.keys(attached_files).length) {
         callback(attachments);
       } else {
-        tool.each(attached_files, function (id) {
+        tool.each(attached_files, (id: number) => {
           collect_attachment(id, add);
         });
       }
     }
 
-    function collect_and_encrypt_attachments(armored_pubkeys, challenge, callback) {
-      var attachments = [];
-      function add(attachment) {
+    function collect_and_encrypt_attachments(armored_pubkeys: string[], challenge: Challenge, callback: (attachments: Attachment[]) => void) {
+      let attachments: Attachment[] = [];
+      function add(attachment: Attachment) {
         attachments.push(attachment);
         if(attachments.length === Object.keys(attached_files).length) {
           callback(attachments);
@@ -103,7 +105,7 @@
       if(!Object.keys(attached_files).length) {
         callback(attachments);
       } else {
-        tool.each(attached_files, function (id, file) {
+        tool.each(attached_files, function (id: number, file) {
           read_attachment_data_as_uint8(id, function (file_data) {
             tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false, function (encrypted_file_content) {
               add(tool.file.attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted_file_content.message.packets.write()));
@@ -114,20 +116,20 @@
     }
 
     function get_file_size_sum() {
-      var sum = 0;
+      let sum = 0;
       tool.each(attached_files, function(id, file) {
         sum += file.size;
       });
       return sum;
     }
 
-    function process_new_attachment(id, name) {
-      var limits = typeof get_limits === 'function' ? get_limits() : {};
+    function process_new_attachment(id: number, name: string) {
+      let limits: AttachLimits = typeof get_limits === 'function' ? get_limits() : {};
       if(limits.count && Object.keys(attached_files).length >= limits.count) {
         alert('Amount of attached files is limited to ' + limits.count);
         uploader.cancel(id);
       } else {
-        var new_file = uploader.getFile(id);
+        let new_file = uploader.getFile(id);
         if(limits.size && get_file_size_sum() + new_file.size > limits.size) {
           uploader.cancel(id);
           if(typeof limits.oversize === 'function') {
@@ -144,7 +146,7 @@
       }
     }
 
-    function cancel_attachment(id, name) {
+    function cancel_attachment(id: string) {
       delete attached_files[id];
     }
 
@@ -162,7 +164,7 @@
   if(typeof exports === 'object') {
     exports.init = init_attach;
   } else {
-    window.flowcrypt_attach = {init: init_attach};
+    (window as FlowCryptWindow).flowcrypt_attach = {init: init_attach};
   }
 
 })();

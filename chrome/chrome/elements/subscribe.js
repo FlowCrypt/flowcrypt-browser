@@ -110,7 +110,7 @@ tool.browser.message.tab_id(function (tab_id) {
   tool.browser.message.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id);
-  let html = window.lang.account.credit_or_debit + '<br><br>' + element_factory(url_params.account_email, tab_id).embedded.stripe_checkout() + '<br><a href="#">back</a>';
+  let html = window.lang.account.credit_or_debit + '<br><br>' + new Factory(url_params.account_email, tab_id).embedded.stripe_checkout() + '<br><a href="#">back</a>';
   $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
 });
 

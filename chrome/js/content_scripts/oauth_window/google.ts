@@ -2,10 +2,10 @@
 
 'use strict';
 
-const google_oauth2 = chrome.runtime.getManifest().oauth2;
+const google_oauth2 = (chrome.runtime.getManifest() as any as FlowCryptManifest).oauth2;
 
-function api_google_auth_state_unpack(status_string) {
-  return JSON.parse(status_string.replace(google_oauth2.state_header, '', 1));
+function api_google_auth_state_unpack(status_string: string) {
+  return JSON.parse(status_string.replace(google_oauth2.state_header, ''));
 }
 
 let interval = setInterval(() => {
@@ -17,7 +17,7 @@ let interval = setInterval(() => {
     let parts = document.title.split(' ', 2);
     let result = parts[0];
     let params = tool.env.url_params(['code', 'state', 'error'], parts[1]);
-    let state_object = api_google_auth_state_unpack(params.state);
+    let state_object = api_google_auth_state_unpack(params.state as string);
     tool.browser.message.send('broadcast', 'google_auth_window_result', { result: result, params: params, state: state_object }, () => {
       let close_title = 'Close this window';
       $('title').text(close_title);

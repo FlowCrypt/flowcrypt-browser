@@ -315,7 +315,7 @@ let tool = {
       }
       return unique;
     },
-    from_dom_node_list: (obj: NodeList): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+    from_dom_node_list: (obj: NodeList|JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
       let array = [];
       for(let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
         array[i] = obj[i];
@@ -847,20 +847,20 @@ let tool = {
           if(block.type === 'text' || block.type === 'private_key') {
             r += (Number(i) ? '\n\n' : '') + tool.str.html_escape(block.content) + '\n\n';
           } else if (block.type === 'message') {
-            r += factory.embedded.message(block.complete ? tool.crypto.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
+            r += factory.embedded_message(block.complete ? tool.crypto.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
           } else if (block.type === 'signed_message') {
-            r += factory.embedded.message(block.content, message_id, is_outgoing, sender_email, false);
+            r += factory.embedded_message(block.content, message_id, is_outgoing, sender_email, false);
           } else if (block.type === 'public_key') {
             // noinspection TypeScriptValidateJSTypes
-            r += factory.embedded.pubkey(tool.crypto.armor.normalize(block.content, 'public_key'), is_outgoing);
+            r += factory.embedded_pubkey(tool.crypto.armor.normalize(block.content, 'public_key'), is_outgoing);
           } else if (block.type === 'password_message') {
-            r += factory.embedded.message('', message_id, is_outgoing, sender_email, true, null, block.content); // here block.content is message short id
+            r += factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, block.content); // here block.content is message short id
           } else if (block.type === 'attest_packet') {
             // todo - find out why
             // noinspection TypeScriptValidateJSTypes
-            r += factory.embedded.attest(block.content);
+            r += factory.embedded_attest(block.content);
           } else if (block.type === 'cryptup_verification') {
-            r += factory.embedded.verification(block.content);
+            r += factory.embedded_verification(block.content);
           } else {
             tool.catch.report('dunno how to process block type: ' + block.type);
           }
@@ -1261,8 +1261,8 @@ let tool = {
         }
       };
     },
-    build_jquery_selectors: (selectors: Dict<string>) => {
-      let cache: Dict<JQuery<HTMLElement>> = {};
+    build_jquery_selectors: (selectors: Dict<string>): SelectorCache => {
+      let cache: NamedSelectors = {};
       return {
         cached: (name: string) => {
           if(!cache[name]) {
@@ -1287,7 +1287,7 @@ let tool = {
         }
       };
     },
-    scroll: (selector: string|JQuery<HTMLElement>, repeat: number[]) => {
+    scroll: (selector: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
       let el = $(selector).first()[0];
       if(el) {
         el.scrollIntoView();
@@ -3215,7 +3215,7 @@ let tool = {
         return tool.catch._.runtime['version'] || null;
       }
     },
-    try: (code: () => any) => {
+    try: (code: Function) => {
       return function () {
         try {
           return code();

@@ -13,7 +13,7 @@ tool.browser.message.tab_id(function (tab_id) {
     return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
   });
   attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-  let factory = element_factory(url_params.account_email, tab_id);
+  let factory = new Factory(url_params.account_email, tab_id);
 
   tool.browser.message.listen({
     close_dialog: function () {
@@ -47,7 +47,7 @@ tool.browser.message.tab_id(function (tab_id) {
         tool.file.save_to_downloads(attachment.name.replace(/\.(pgp|gpg|asc)$/i, ''), attachment.type, result.content.data);
       } else if((result.missing_passphrases || []).length) {
         missing_passprase_longids = result.missing_passphrases;
-        $('.passphrase_dialog').html(factory.embedded.passphrase(missing_passprase_longids));
+        $('.passphrase_dialog').html(factory.embedded_passphrase(missing_passprase_longids));
       } else {
         delete result.message;
         console.log(result);

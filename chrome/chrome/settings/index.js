@@ -20,7 +20,7 @@ tool.env.webmails(function(webmails) {
 tool.browser.message.tab_id(function (tab_id) {
   tab_id_global = tab_id;
 
-  let factory = element_factory(url_params.account_email, tab_id);
+  let factory = new Factory(url_params.account_email, tab_id);
 
   tool.browser.message.listen({
     open_page: function (data, sender, respond) {
@@ -38,11 +38,11 @@ tool.browser.message.tab_id(function (tab_id) {
     },
     add_pubkey_dialog: function (data, sender, respond) {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      window.open(factory.src.add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+      window.open(factory.src_add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: function (data) {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      window.open(factory.src.subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+      window.open(factory.src_subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: function (data) {
       alert(data.notification);
@@ -53,7 +53,7 @@ tool.browser.message.tab_id(function (tab_id) {
     },
     passphrase_dialog: function (data) {
       if(!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog.passphrase(data.longids, data.type));
+        $('body').append(factory.dialog_passphrase(data.longids, data.type));
       }
     },
     close_dialog: function (data) {

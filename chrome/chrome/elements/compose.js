@@ -17,7 +17,7 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
       tool.browser.message.tab_id(tab_id => {
 
         const can_read_email = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-        const factory = element_factory(url_params.account_email, tab_id);
+        const factory = new Factory(url_params.account_email, tab_id);
         if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id]) { // there may be a draft we want to load
           url_params.draft_id = storage.drafts_reply[url_params.thread_id];
         }
@@ -183,20 +183,20 @@ window.flowcrypt_storage.subscription((subscription_level, subscription_expire, 
               thread_message_id: last_message_id,
             });
           },
-          render_footer_dialog: () => $.featherlight({iframe: factory.src.add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
+          render_footer_dialog: () => $.featherlight({iframe: factory.src_add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
             $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
           }}),
           render_add_pubkey_dialog: (emails) => {
             if (url_params.placement !== 'settings') {
               tool.browser.message.send(url_params.parent_tab_id, 'add_pubkey_dialog', {emails: emails});
             } else {
-              $.featherlight({iframe: factory.src.add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: window.flowcrypt_compose.S.cached('body').height() - 50});
+              $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: window.flowcrypt_compose.S.cached('body').height() - 50});
             }
           },
           render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: url_params.account_email, page: '/chrome/settings/modules/help.htm' }),
-          render_sending_address_dialog: () => $.featherlight({iframe: factory.src.sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
+          render_sending_address_dialog: () => $.featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
           close_message: close_message,
-          factory_attachment: (attachment) => factory.embedded.attachment(attachment, []),
+          factory_attachment: (attachment) => factory.embedded_attachment(attachment, []),
         }, {
           account_email: url_params.account_email,
           draft_id: url_params.draft_id,
