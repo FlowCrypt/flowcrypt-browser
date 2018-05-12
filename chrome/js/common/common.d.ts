@@ -40,6 +40,7 @@ interface FlowCryptWindow extends BrowserWidnow {
     iso88592: any,
     is_bare_engine: boolean,
     openpgp: any,
+    flowcrypt_account: any,
 }
 
 interface ContentScriptWindow extends FlowCryptWindow {
@@ -357,5 +358,6 @@ interface PromiseConstructor {
 
 interface SubscriptionInfo {
     active: boolean|null;
-    method: "stripe"|"group"|"trial"|null;
+    method: 'stripe'|'group'|'trial'|null;
+    level: 'pro'|null,
   }

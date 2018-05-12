@@ -12,6 +12,7 @@ declare var require: any;
   class Subscription implements SubscriptionInfo { // todo - look into this later, is a class necessary? If so, it should be elsewhere
     active = null;
     method = null;
+    level = null;
   }
 
   interface ContactsQuery {
