@@ -5,7 +5,7 @@ interface BrowserWidnow extends Window {
     onunhandledrejection: (e: any) => void,
 }
 
-type DbContactFilter = { has_pgp: boolean }
+type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number }
 
 interface FlowCryptWindow extends BrowserWidnow {
     jQuery: JQuery,
@@ -42,6 +42,7 @@ interface FlowCryptWindow extends BrowserWidnow {
     is_bare_engine: boolean,
     openpgp: any,
     flowcrypt_account: any,
+    mnemonic: (hex: string) => string,
 }
 
 interface ContentScriptWindow extends FlowCryptWindow {

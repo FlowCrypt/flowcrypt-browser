@@ -24,7 +24,7 @@ tool.catch.try(() => {
       } else if(!keyserver_result.pubkey || !keyserver_result.attested || tool.crypto.key.fingerprint(primary_pubkey_armored) === tool.crypto.key.fingerprint(keyserver_result.pubkey)) {
         show_settings_page('/chrome/settings/modules/keyserver.htm');
       } else { // email previously attested, and there indeed is a pubkey mismatch
-        $('#status').html('Original key KeyWords:<br/><span class="good">' + mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!) + '<br/>' + tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced') + '</span>'); // all pubkeys on keyserver should have computable longid
+        $('#status').html('Original key KeyWords:<br/><span class="good">' + (window as FlowCryptWindow).mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!) + '<br/>' + tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced') + '</span>'); // all pubkeys on keyserver should have computable longid
         $('#step_2b_manual_enter').css('display', 'block');
         $('.action_request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
           let old_key = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];

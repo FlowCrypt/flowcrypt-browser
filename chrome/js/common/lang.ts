@@ -3,7 +3,7 @@
 'use strict';
 
 
-(function(){
+(() => {
 
   var _self = {
     account: {
@@ -57,7 +57,7 @@
 
 
   if(typeof window === 'object') {
-    window.lang = _self;
+    (window as FlowCryptWindow).lang = _self;
   }
 
   if(typeof exports === 'object') {

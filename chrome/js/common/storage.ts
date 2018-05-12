@@ -10,7 +10,7 @@
     return window.location && tool.value('_generated_background_page.html').in(window.location.href);
   }
 
-  function try_promise(f) {
+  function try_promise(f: Function) {
     return new Promise(function(resolve, reject) {
       try {
         f(resolve, reject);
@@ -25,31 +25,29 @@
     });
   }
 
-  function storage_key(account_key_or_list, key) {
-    if(typeof account_key_or_list === 'object') {
-      let all_results = [];
-      tool.each(account_key_or_list, (i, account_key) => {
+  function storage_key(account_key_or_list: string|string[], key: string|string[]) {
+    if(Array.isArray(account_key_or_list)) {
+      let all_results: string[] = [];
+      for(let account_key of account_key_or_list) {
         all_results = all_results.concat(storage_key(account_key, key));
-      });
+      }
       return all_results;
     } else {
       let prefix = 'cryptup_' + account_key_or_list.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
-      if(typeof key === 'object') {
-        let account_storage_keys = [];
-        tool.each(key, (i, k) => {
-          account_storage_keys.push(prefix + k);
-        });
-        return account_storage_keys;
+      if(Array.isArray(key)) {
+        return key.map(k => prefix + k);
       } else {
         return prefix + key;
       }
     }
   }
 
-  function account_storage_object_keys_to_original(account_or_accounts, storage_object) {
+  // todo: how does this deal with null?
+  function account_storage_object_keys_to_original(account_or_accounts: string|string[]|null, storage_object: Dict<string>) {
     if(typeof account_or_accounts === 'string') {
-      let fixed_keys_object = {};
-      tool.each(storage_object, (k, v) => {
+      let fixed_keys_object: Dict<string> = {};
+      tool.each(storage_object, (k: string, v) => {
+        // @ts-ignore - todo - look into later
         let fixed_key = k.replace(storage_key(account_or_accounts, ''), '');
         if(fixed_key !== k) {
           fixed_keys_object[fixed_key] = v;
@@ -57,31 +55,32 @@
       });
       return fixed_keys_object;
     } else {
-      let results_by_account = {};
-      tool.each(account_or_accounts, (i, account) => {
-        results_by_account[account] = account_storage_object_keys_to_original(account, storage_object);
-      });
+      let results_by_account: Dict<string[]> = {};
+      // @ts-ignore - look into this later
+      for(let account of account_or_accounts) {
+        results_by_account[account] = account_storage_object_keys_to_original(account, storage_object) as any as string[];
+      }
       return results_by_account;
     }
   }
 
-  function session_get(account_email, key) {
-    return try_promise((resolve, reject) => {
+  function session_get(account_email: string, key: string) {
+    return try_promise((resolve: Callback, reject: Callback) => {
       if(env_is_background_script()) {
-        resolve(window.sessionStorage[storage_key(account_email, key)]);
+        resolve(window.sessionStorage[storage_key(account_email, key) as string]);
       } else {
         tool.browser.message.send(null, 'session_get', {account_email: account_email, key: key}, resolve);
       }
     });
   }
 
-  function session_set(account_email, key, value) {
-    return try_promise((resolve, reject) => {
+  function session_set(account_email: string, key: string, value: string) {
+    return try_promise((resolve: Callback, reject: Callback) => {
       if(env_is_background_script()) {
         if(typeof value !== 'undefined') {
-          sessionStorage[storage_key(account_email, key)] = String(value);
+          sessionStorage[storage_key(account_email, key) as string] = String(value);
         } else {
-          sessionStorage.removeItem(storage_key(account_email, key));
+          sessionStorage.removeItem(storage_key(account_email, key) as string);
         }
         resolve();
       } else {
@@ -90,8 +89,8 @@
     });
   }
 
-  function passphrase_save(storage_type, account_email, longid, passphrase) {
-    return try_promise((resolve, reject) => {
+  function passphrase_save(storage_type: StorageType, account_email: string, longid: string, passphrase: string) {
+    return try_promise((resolve: Callback, reject: Callback) => {
       let storage_k = 'passphrase_' + longid;
       if (storage_type === 'session') {
         session_set(account_email, storage_k, passphrase).then(resolve, reject);
@@ -99,7 +98,7 @@
         if(typeof passphrase === 'undefined') {
           extension_storage_remove(account_email, [storage_k], resolve);
         } else {
-          let to_save = {};
+          let to_save: Dict<string> = {};
           to_save[storage_k] = passphrase;
           extension_storage_set(account_email, to_save, resolve);
         }
@@ -107,10 +106,12 @@
     });
   }
 
-  function passphrase_get(account_email, longid, ignore_session) {
-    return try_promise((resolve, reject) => {
+  window.localStorage
+
+  function passphrase_get(account_email: string, longid: string, ignore_session:boolean=false) {
+    return try_promise((resolve: Callback, reject: Callback) => {
       let storage_k = 'passphrase_' + longid;
-      extension_storage_get(account_email, [storage_k], storage => {
+      extension_storage_get(account_email, [storage_k], (storage: Storage) => {
         if(typeof storage[storage_k] === 'string') {
           resolve(storage[storage_k]);
         } else {
@@ -122,26 +123,27 @@
     });
   }
 
-  function keys_get(account_email, longid) {
-    return try_promise((resolve, reject) => {
-      extension_storage_get(account_email, ['keys'], storage => {
+  function keys_get(account_email: string, longid:string|null=null) {
+    return try_promise((resolve: Callback, reject: Callback) => {
+      extension_storage_get(account_email, ['keys'], (storage: {keys: KeyInfo[]|undefined}) => {
         let keys = storage.keys || [];
-        if(typeof longid !== 'undefined') { // looking for a specific key(s)
-          let found;
-          if(typeof longid === 'object') { // looking for an array of keys
+        if(typeof longid !== 'undefined' && longid !== null) { // looking for a specific key(s)
+          let found: KeyInfo|KeyInfo[]|null;
+          if(Array.isArray(longid)) { // looking for an array of keys
             found = [];
-            tool.each(keys, (i, keyinfo) => {
+            for(let keyinfo of keys) {
               if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
                 found.push(keyinfo);
               }
-            });
+            }
           } else { // looking for a single key
             found = null;
-            tool.each(keys, (i, keyinfo) => {
+            for(let keyinfo of keys) {
               if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
                 found = keyinfo;
+                break;
               }
-            });
+            }
           }
           resolve(found);
         } else { // return all keys
@@ -151,34 +153,35 @@
     });
   }
 
-  function keys_object(armored_prv, primary = false) {
-    let longid = tool.crypto.key.longid(armored_prv);
-    return {
+  function keys_object(armored_prv: string, primary=false) {
+    let longid = tool.crypto.key.longid(armored_prv)!;
+    return { // todo - should we not be checking longid!==null? or is it checked before calling this?
       private: armored_prv,
       public: tool.crypto.key.read(armored_prv).toPublic().armor(),
       primary: primary,
       longid: longid,
-      fingerprint: tool.crypto.key.fingerprint(armored_prv),
-      keywords: window.mnemonic(longid),
+      fingerprint: tool.crypto.key.fingerprint(armored_prv)!,
+      keywords: (window as FlowCryptWindow).mnemonic(longid),
     };
   }
 
-  function keys_add(account_email, new_key_armored) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
-    return try_promise((resolve, reject) => {
-      keys_get(account_email).then(private_keys => {
+  function keys_add(account_email: string, new_key_armored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+    return try_promise((resolve: Callback, reject: Callback) => {
+      keys_get(account_email).then((keyinfos: KeyInfo[]) => {
         let updated = false;
         let new_key_longid = tool.crypto.key.longid(new_key_armored);
         if (new_key_longid) {
-          tool.each(private_keys, (i, keyinfo) => {
-            if (new_key_longid === keyinfo.longid) { // replacing a key
-              private_keys[i] = keys_object(new_key_armored, keyinfo.primary);
+          for(let i in keyinfos) {
+            if (new_key_longid === keyinfos[i].longid) { // replacing a key
+              keyinfos[i] = keys_object(new_key_armored, keyinfos[i].primary) as KeyInfo;
               updated = true;
             }
-          });
-          if (!updated) {
-            private_keys.push(keys_object(new_key_armored, private_keys.length === 0));
           }
-          extension_storage_set(account_email, {keys: private_keys}, resolve);
+          if (!updated) {
+            keyinfos.push(keys_object(new_key_armored, keyinfos.length === 0));
+          }
+          // @ts-ignore - look into this later
+          extension_storage_set(account_email, {keys: keyinfos}, resolve);
         } else {
           resolve();
         }
@@ -186,26 +189,27 @@
     });
   }
 
-  function keys_remove(account_email, remove_longid) {
-    return try_promise((resolve, reject) => {
+  function keys_remove(account_email: string, remove_longid: string) {
+    return try_promise((resolve: Callback, reject: Callback) => {
       keys_get(account_email).then(private_keys => {
-        let filtered_private_keys = [];
+        let filtered_private_keys: KeyInfo[] = [];
         tool.each(private_keys, (i, keyinfo) => {
           if(keyinfo.longid !== remove_longid) {
             filtered_private_keys.push(keyinfo);
           }
         });
-        extension_storage_set(account_email, {keys: filtered_private_keys}, resolve);
+        extension_storage_set(account_email, {keys: filtered_private_keys as any as Serializable[]}, resolve);
       });
     });
   }
 
-  function extension_storage_set(account_email, values, callback) {
+  function extension_storage_set(account_email: string|null, values: Dict<Serializable[]|Serializable>, callback: VoidCallback) {
     if(!account_email) {
       account_email = global_storage_scope;
     }
     let storage_update = {};
     tool.each(values, (key, value) => {
+      // @ts-ignore - review later
       storage_update[storage_key(account_email, key)] = value;
     });
     chrome.storage.local.set(storage_update, () => {
@@ -217,7 +221,7 @@
     });
   }
 
-  function extension_storage_get(account_or_accounts, keys, callback) {
+  function extension_storage_get(account_or_accounts: string|string[]|null, keys: string[], callback: Callback) {
     if(!account_or_accounts) {
       account_or_accounts = global_storage_scope;
     }
@@ -228,7 +232,7 @@
     });
   }
 
-  function extension_storage_remove(account_email, key_or_keys, callback) {
+  function extension_storage_remove(account_email: string, key_or_keys: string[], callback: VoidCallback) {
     if(!account_email) {
       account_email = global_storage_scope;
     }
@@ -241,9 +245,9 @@
     });
   }
 
-  function account_emails_get(callback) {
+  function account_emails_get(callback: (emails: string[]) => void) {
     extension_storage_get(null, ['account_emails'], storage => {
-      let account_emails = [];
+      let account_emails: string[] = [];
       if(typeof storage.account_emails !== 'undefined') {
         tool.each(JSON.parse(storage.account_emails), function (i, account_email) {
           if(!tool.value(account_email.toLowerCase()).in(account_emails)) {
@@ -255,7 +259,7 @@
     });
   }
 
-  function account_emails_add(account_email, callback) { //todo: concurrency issues with another tab loaded at the same time
+  function account_emails_add(account_email: string, callback: VoidCallback) { //todo: concurrency issues with another tab loaded at the same time
     account_emails_get(function (account_emails) {
       if(!account_email) {
         catcher.report('attempting to save empty account_email: ' + account_email);
@@ -271,13 +275,13 @@
     });
   }
 
-  function flowcrypt_auth_info(callback) {
+  function flowcrypt_auth_info(callback: (registered_email: string|null, registered_uuid: string|null, already_verified: boolean) => void) {
     extension_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], storage => {
       callback(storage.cryptup_account_email, storage.cryptup_account_uuid, storage.cryptup_account_verified);
     });
   }
 
-  function flowcrypt_subscription(callback) {
+  function flowcrypt_subscription(callback: (stored_level: 'pro'|null, stored_expire:string|null, stored_active: boolean, stored_method: 'stripe'|'trial'|'group'|null) => void) {
     extension_storage_get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], s => {
       if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
         callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, !s.cryptup_account_subscription.expired, s.cryptup_account_subscription.method || 'trial');
@@ -289,22 +293,26 @@
 
   /* db */
 
-  function normalize_string(str) {
+  function normalize_string(str: string) {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  function db_error_handle(exception, error_stack, callback) {
+  function db_error_handle(exception: Error, error_stack: string, callback: ((r: false|null) => void)|null) {
     exception.stack = error_stack.replace(/^Error/, String(exception));
     if(exception.message === 'Internal error opening backing store for indexedDB.open.') {
-      callback(false);
+      if(callback) {
+        callback(false);
+      }
     } else {
       catcher.handle_exception(exception);
-      callback(null);
+      if(callback) {
+        callback(null);
+      }
     }
   }
 
-  function db_open(callback) {
-    let open_db;
+  function db_open(callback: (db: IDBDatabase|null|false) => void) {
+    let open_db: IDBOpenDBRequest;
     open_db = indexedDB.open('cryptup', 2);
     open_db.onupgradeneeded = function (event) {
       let contacts;
@@ -324,25 +332,25 @@
       handled++;
       callback(open_db.result);
     });
-    let stack_fill = (new Error()).stack;
+    let stack_fill = String((new Error()).stack);
     open_db.onblocked = catcher.try(() => db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
     open_db.onerror = catcher.try(() => db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
   }
 
-  function db_index(has_pgp, substring) {
+  function db_index(has_pgp: boolean, substring: string) {
     if(!substring) {
       throw new Error('db_index has to include substring');
     }
     return(has_pgp ? 't:' : 'f:') + substring;
   }
 
-  function db_create_search_index_list(email, name, has_pgp) {
+  function db_create_search_index_list(email: string, name: string|null, has_pgp: boolean) {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
     let parts = [email, name];
     parts = parts.concat(email.split(/[^a-z0-9]/));
     parts = parts.concat(name.split(/[^a-z0-9]/));
-    let index = [];
+    let index: string[] = [];
     tool.each(parts, (i, part) => {
       if(part) {
         let substring = '';
@@ -358,7 +366,8 @@
     return index;
   }
 
-  function db_contact_object(email, name, client, pubkey, attested, pending_lookup, last_use) {
+  function db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) {
+    let fingerprint = pubkey ? tool.crypto.key.fingerprint(pubkey) : null;
     return {
       email: email,
       name: name || null,
@@ -367,16 +376,16 @@
       searchable: db_create_search_index_list(email, name, Boolean(pubkey)),
       client: pubkey ? client : null,
       attested: pubkey ? Boolean(attested) : null,
-      fingerprint: pubkey ? tool.crypto.key.fingerprint(pubkey) : null,
-      longid: pubkey ? tool.crypto.key.longid(pubkey) : null,
-      keywords: pubkey ? mnemonic(tool.crypto.key.longid(pubkey)) : null,
+      fingerprint: fingerprint,
+      longid: fingerprint ? tool.crypto.key.longid(fingerprint) : null,
+      keywords: fingerprint ? (window as FlowCryptWindow).mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
       pending_lookup: pubkey ? 0 : Number(Boolean(pending_lookup)),
       last_use: last_use || null,
-    };
+    } as Contact;
   }
 
-  function db_contact_save(db, contact, callback) {
-    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
+  function db_contact_save(db: IDBDatabase|null, contact: Contact, callback: VoidCallback) {
+    if(db === null) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, callback);
     } else {
       if (Array.isArray(contact)) {
@@ -393,14 +402,14 @@
         let contacts = tx.objectStore('contacts');
         contacts.put(contact);
         tx.oncomplete = catcher.try(callback);
-        let stack_fill = (new Error()).stack;
+        let stack_fill = String((new Error()).stack);
         tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
       }
     }
   }
 
-  function db_contact_update(db, email, update, callback) {
-    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
+  function db_contact_update(db: IDBDatabase|null, email: string, update: Contact, callback: VoidCallback) {
+    if(db === null) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, callback);
     } else {
       if(Array.isArray(email)) {
@@ -413,12 +422,15 @@
           });
         });
       } else {
-        db_contact_get(db, email, (original) => {
-          let updated = {};
-          tool.each(original, (k, original_value) => {
+        db_contact_get(db, email, (original_contact: Contact) => {
+          // @ts-ignore
+          let updated: Contact = {};
+          tool.each(original_contact, (k, original_value) => {
             if(k in update) {
+              // @ts-ignore
               updated[k] = update[k];
             } else {
+              // @ts-ignore
               updated[k] = original_value;
             }
           });
@@ -426,19 +438,19 @@
           let contacts = tx.objectStore('contacts');
           contacts.put(db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
           tx.oncomplete = catcher.try(callback);
-          let stack_fill = (new Error()).stack;
+          let stack_fill = String((new Error()).stack);
           tx.onabort = catcher.try(() => db_error_handle(tx.error, stack_fill, callback));
         });
       }
     }
   }
 
-  function db_contact_get(db, email_or_longid, callback) {
-    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
+  function db_contact_get(db: null|IDBDatabase, email_or_longid: string[]|string, callback: (contacts: Contact[]|Contact|null) => void) {
+    if(db === null) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, callback);
     } else {
       if(typeof email_or_longid !== 'object') {
-        let get;
+        let get: IDBRequest;
         if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
           get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
         } else { // longid
@@ -451,14 +463,15 @@
             callback(null);
           }
         });
-        let stack_fill = (new Error()).stack;
+        let stack_fill = String((new Error()).stack);
         get.onerror = function () {
+          // @ts-ignore
           db_error_handle(get.error, stack_fill, callback);
         };
       } else {
         let results = new Array(email_or_longid.length);
         let finished = 0;
-        tool.each(email_or_longid, (i, single_email_or_longid) => {
+        tool.each(email_or_longid, (i: number, single_email_or_longid) => {
           db_contact_get(db, single_email_or_longid, contact => {
             results[i] = contact;
             if(++finished >= email_or_longid.length) {
@@ -472,9 +485,8 @@
 
   const db_query_keys = ['limit', 'substring', 'has_pgp'];
 
-// query: substring, has_pgp, limit. All voluntary
-  function db_contact_search(db, query, callback) {
-    if(db === null && typeof tool === 'object' && tool.browser && tool.browser.message.send) { // relay op through background process
+  function db_contact_search(db: IDBDatabase|null, query: DbContactFilter, callback: (contacts: Contact[]) => void) {
+    if(db === null) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, callback);
     } else {
       tool.each(query, (key, value) => {
@@ -483,9 +495,9 @@
         }
       });
       let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
-      let search;
+      let search: IDBRequest|undefined = undefined;
       if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
-        query.substring = normalize_string(query.substring);
+        query.substring = normalize_string(query.substring || '');
         if(query.substring) {
           db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true, }, (results_with_pgp) => {
             if(query.limit && results_with_pgp.length === query.limit) {
@@ -507,9 +519,9 @@
         }
       }
       if(typeof search !== 'undefined') {
-        let found = [];
+        let found: Contact[] = [];
         search.onsuccess = catcher.try(() => {
-          let cursor = search.result;
+          let cursor = search!.result; // set it above
           if(!cursor || found.length === query.limit) {
             callback(found);
           } else {
@@ -517,13 +529,14 @@
             cursor.continue();
           }
         });
-        let stack_fill = (new Error()).stack;
-        search.onerror = catcher.try(() => db_error_handle(search.error, stack_fill, callback));
+        let stack_fill = String((new Error()).stack);
+        // @ts-ignore
+        search.onerror = catcher.try(() => db_error_handle(search!.error, stack_fill, callback)); // set it above
       }
     }
   }
 
-  window.flowcrypt_storage = {
+  (window as FlowCryptWindow).flowcrypt_storage = {
     set: extension_storage_set,
     get: extension_storage_get,
     session_set: session_set,
@@ -540,6 +553,7 @@
     db_open: db_open,
     subscription: flowcrypt_subscription,
     auth_info: flowcrypt_auth_info,
+    // @ts-ignore - look into this later
     keys_object: keys_object,
     keys_add: keys_add,
     keys_get: keys_get,
