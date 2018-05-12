@@ -128,6 +128,7 @@ interface PreventableEvent {
 
 interface OpenpgpDecryptResult {
     data: string|Uint8Array,
+    filename?: string,
 }
 
 interface DecryptedErrorCounts {

@@ -415,7 +415,7 @@ let tool = {
       };
       request.send();
     },
-    save_to_downloads: (name: string, type: string, content: Uint8Array|string|Blob, render_in: JQuery<HTMLElement>) => {
+    save_to_downloads: (name: string, type: string, content: Uint8Array|string|Blob, render_in:JQuery<HTMLElement>|null=null) => {
       let blob = new Blob([content], { type: type });
       if(window.navigator && window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveBlob(blob, name);
@@ -1711,7 +1711,7 @@ let tool = {
           tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id, { format: format || 'full' }, callback);
         }
       },
-      attachment_get: (account_email: string, message_id: string, attachment_id: string, callback: ApiCallback, progress_callback:Callback|null=null) => {
+      attachment_get: (account_email: string, message_id: string, attachment_id: string, callback: ApiCallback, progress_callback:ApiCallProgressCallback|null=null) => {
         tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
       },
       find_header: (api_gmail_message_object: Dict<any>, header_name: string) => {
