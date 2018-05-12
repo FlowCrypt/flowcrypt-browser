@@ -17,11 +17,9 @@ class Factory {
     this.set_params['parent_tab_id'] = parent_tab_id;
   }
 
-  src_img(relative_path: string) {
-    return `img/${relative_path}`;
-  }
+  src_img = (relative_path: string) => this.ext_url(`img/${relative_path}`);
 
-  src_logo(include_header: boolean, size:number=0) {
+  src_logo = (include_header: boolean, size:number=0) => {
     if(size !== 16) {
       return(include_header ? 'data:image/png;base64,' : '') + 'iVBORw0KGgoAAAANSUhEUgAAABMAAAAOCAYAAADNGCeJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMdAREakDr07QAAAFFJREFUOMtjVOpWYqAWYGFgYGC4W3L3PwMDA4NyjzIjTAKfGDag3KPMyMRARcBCjiZcrqWqywbem7giYnBFAM1cRjtv4kvhhCKD6jmAkZoZHQBF3hzwjZcuRAAAAABJRU5ErkJggg==';
     } else {
@@ -29,7 +27,7 @@ class Factory {
     }
   }
 
-  private frame_src(path: string, params:UrlParams={}) {
+  private frame_src = (path: string, params:UrlParams={}) => {
     tool.each(this.set_params, (k, v) => { params[k] = v; });
     return tool.env.url_create(path, params);
   }
