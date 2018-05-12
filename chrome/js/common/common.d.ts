@@ -5,6 +5,8 @@ interface BrowserWidnow extends Window {
     onunhandledrejection: (e: any) => void,
 }
 
+type ContactFilter = { has_pgp: boolean }
+
 interface FlowCryptWindow extends BrowserWidnow {
     jQuery: JQuery,
     $: JQuery,
@@ -19,10 +21,11 @@ interface FlowCryptWindow extends BrowserWidnow {
         account_emails_get: (cb: (emails: string[]) => void) => void,
         subscription: (cb: (stored_level: 'pro'|null, stored_expire:string, stored_active: boolean, stored_method: 'stripe'|'trial'|'group') => void) => void,
         passphrase_get: (account_email: string, longid: string) => Promise<string|null>,
-        db_contact_get: (db: null, longids: string[], cb: (contacts: Contact[]) => void) => void,
+        db_contact_get: (db: null, longids: string[]|string, cb: (contacts: Contact[]|Contact) => void) => void,
         db_open: (cb: (db: IDBDatabase|null|false) => void) => void,
-        db_contact_object: (email: string, name: string, client: string, pubkey: string, attested: boolean, pending_lookup:boolean, last_use: number) => Contact,
-        db_contact_save: (db: IDBDatabase|null, contacts: Contact[], callback: Callback) => void,
+        db_contact_object: (email: string, name: string|null, client: string, pubkey: string, attested: boolean|null, pending_lookup:boolean, last_use: number) => Contact,
+        db_contact_save: (db: IDBDatabase|null, contacts: Contact[]|Contact, callback: Callback) => void,
+        db_contact_search: (db: IDBDatabase|null, filter: ContactFilter, cb: Callback) => void,
         session_set: (account_email: string, key: string, value: string|undefined) => Promise<string|undefined>,
         session_get: (account_email: string, key: string) => Promise<string|undefined>,
         remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,

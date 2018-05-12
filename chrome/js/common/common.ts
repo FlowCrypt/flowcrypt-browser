@@ -2525,7 +2525,7 @@ let tool = {
             }
           }
           if(keys.signed_by.length && typeof storage.db_contact_get === 'function') {
-            storage.db_contact_get(null, keys.signed_by, function (verification_contacts) {
+            storage.db_contact_get(null, keys.signed_by, function (verification_contacts: Contact[]) {
               keys.verification_contacts = verification_contacts.filter(contact => contact !== null);
               keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey).keys));
               callback(keys);
