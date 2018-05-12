@@ -1418,7 +1418,7 @@ let tool = {
         }
       },
       tab_id: (callback: Callback) => tool.browser.message.send(null, '_tab_', null, callback),
-      listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id: string) => {
+      listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
         tool.each(handlers, function(name: string, handler: BrowserMessageHandler) {
           // newly registered handlers with the same name will overwrite the old ones if tool.browser.message.listen is declared twice for the same frame
           // original handlers not mentioned in newly set handlers will continue to work
@@ -1673,12 +1673,12 @@ let tool = {
           format: format
         }, callback);
       },
-      draft_send: (account_email: string, id: string, callback: Callback) => {  // todo - not used yet, and should be
+      draft_send: (account_email: string, id: string, callback: ApiCallback) => {  // todo - not used yet, and should be
         tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
           id: id,
         }, callback);
       },
-      message_send: (account_email: string, message: SendableMessage, callback: Callback, progress_callback: ApiCallProgressCallback) => {
+      message_send: (account_email: string, message: SendableMessage, callback: ApiCallback, progress_callback?: ApiCallProgressCallback) => {
         message.headers.From = message.from;
         message.headers.To = message.to.join(',');
         message.headers.Subject = message.subject;

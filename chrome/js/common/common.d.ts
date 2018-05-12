@@ -13,6 +13,7 @@ interface FlowCryptWindow extends BrowserWidnow {
     flowcrypt_attach: {
         init: Function,
     },
+    flowcrypt_compose: any,
     flowcrypt_storage: {
         keys_get: ((account_email: string, longid?: string) => Promise<KeyInfo[]|KeyInfo>),
         get: (account_email: string|string[]|null, items: string[], cb: (s: StorageResult) => void) => void,
@@ -229,6 +230,7 @@ interface OpenpgpKey {
     isPrivate: () => boolean,
     toPublic: () => OpenpgpKey,
     getAllKeyPackets: () => any[],
+    getSigningKeyPacket: () => any,
     users:  Dict<any>[],
 }
 
@@ -297,6 +299,7 @@ type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.Me
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
 type Options = Dict<any>;
 
+type LongidToMnemonic = (longid: string) => string;
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
