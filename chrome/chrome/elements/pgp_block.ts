@@ -52,7 +52,7 @@ tool.catch.try(() => {
   
   function render_content(content: string, is_error: boolean, callback: VoidCallback) {
     if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
-      (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, { successfully_received_at_leat_one_message: true });
+      Store.set(url_params.account_email as string, { successfully_received_at_leat_one_message: true });
     }
     tool.str.as_safe_html(content, function(safe_html) {
       render_html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
@@ -226,7 +226,7 @@ tool.catch.try(() => {
   }
   
   function recover_stored_admin_codes() {
-    (window as FlowCryptWindow).flowcrypt_storage.get(null, ['admin_codes'], storage => {
+    Store.get(null, ['admin_codes'], storage => {
       if(url_params.short && storage.admin_codes && storage.admin_codes[url_params.short as string] && storage.admin_codes[url_params.short as string].codes) {
         admin_codes = storage.admin_codes[url_params.short as string].codes;
       }
@@ -235,7 +235,7 @@ tool.catch.try(() => {
   
   function render_message_expiration_renew_options() {
     let parent = $(this).parent();
-    (window as FlowCryptWindow).flowcrypt_storage.subscription(function (level, expire, active, method) {
+    Store.subscription(function (level, expire, active, method) {
       if(level && active) {
         parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
         $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
@@ -333,7 +333,7 @@ tool.catch.try(() => {
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else {
-          (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then(primary_k => {
+          Store.keys_get(url_params.account_email as string, 'primary').then(primary_k => {
             if(!result.counts.potentially_matching_keys && !primary_k) {
               render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
             } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
@@ -363,7 +363,7 @@ tool.catch.try(() => {
   
   function render_passphrase_prompt(missing_or_wrong_passphrase_key_longids: string[]) {
     missing_or_wrong_passprases = {};
-    Promise.all(missing_or_wrong_passphrase_key_longids.map(longid => (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, longid))).then(passphrases => {
+    Promise.all(missing_or_wrong_passphrase_key_longids.map(longid => Store.passphrase_get(url_params.account_email as string, longid))).then(passphrases => {
       for(let i in missing_or_wrong_passphrase_key_longids) {
         missing_or_wrong_passprases[missing_or_wrong_passphrase_key_longids[i]] = passphrases[i];
         render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_message, undefined, function () {
@@ -395,7 +395,7 @@ tool.catch.try(() => {
   
   function check_passphrase_changed() {
     let longids = Object.keys(missing_or_wrong_passprases);
-    Promise.all(longids.map(longid => (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, longid))).then(updated_passphrases => {
+    Promise.all(longids.map(longid => Store.passphrase_get(url_params.account_email as string, longid))).then(updated_passphrases => {
       tool.each(longids, function (i, longid) {
         if((missing_or_wrong_passprases[longid] || null) !== updated_passphrases[longids.indexOf(longid)]) {
           missing_or_wrong_passprases = {};
@@ -512,7 +512,7 @@ tool.catch.try(() => {
     }
   }
   
-  (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_done', 'google_token_scopes'], storage => {
+  Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes'], storage => {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     if(storage.setup_done) {
       initialize();

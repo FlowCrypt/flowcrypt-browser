@@ -9,8 +9,8 @@ tool.catch.try(() => {
   $('.loading').html(tool.ui.spinner('green', 'large_spinner'));
   
   tool.api.cryptup.account_check_sync(function () {
-    (window as FlowCryptWindow).flowcrypt_storage.auth_info(function (email, uuid, verified){
-      (window as FlowCryptWindow).flowcrypt_storage.subscription(function(level, expire, active, method) {
+    Store.auth_info(function (email, uuid, verified){
+      Store.subscription(function(level, expire, active, method) {
         // @ts-ignore - todo - this should be tested & potentially fixed
         $('.email').text(email);
         $('.level').text('advanced');

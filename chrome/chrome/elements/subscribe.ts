@@ -50,12 +50,12 @@ tool.catch.try(() => {
   }));
   
   tool.api.cryptup.account_check_sync(function() {
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['google_token_scopes'], storage => {
+    Store.get(url_params.account_email as string, ['google_token_scopes'], storage => {
       (window as FlowCryptWindow).flowcrypt_account.config({
         render_status: render_status,
         CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read'),
       });
-      (window as FlowCryptWindow).flowcrypt_storage.subscription(function (level, expire, active, method) {
+      Store.subscription(function (level, expire, active, method) {
         if(!active) {
           if(level && expire) {
             if(method === 'trial') {

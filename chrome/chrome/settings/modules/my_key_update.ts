@@ -11,7 +11,7 @@ tool.catch.try(() => {
   let input_private_key = $('.input_private_key');
   let prv_headers = tool.crypto.armor.headers('private_key');
   
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, url_params.longid as string || 'primary').then((keyinfo: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, url_params.longid as string || 'primary').then((keyinfo: KeyInfo) => {
   
     if(keyinfo === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
@@ -50,11 +50,11 @@ tool.catch.try(() => {
     }));
   
     function store_updated_key_and_passphrase(updated_prv: OpenpgpKey, updated_prv_passphrase: string) {
-      (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, keyinfo.longid, true).then((stored_passphrase: string) => {
+      Store.passphrase_get(url_params.account_email as string, keyinfo.longid, true).then((stored_passphrase: string) => {
         Promise.all([ // update key and pass phrase
-          (window as FlowCryptWindow).flowcrypt_storage.keys_add(url_params.account_email as string, updated_prv.armor()),
-          (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('local', url_params.account_email as string, keyinfo.longid, stored_passphrase !== null ? updated_prv_passphrase : undefined),
-          (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('session', url_params.account_email as string, keyinfo.longid, stored_passphrase !== null ? undefined : updated_prv_passphrase),
+          Store.keys_add(url_params.account_email as string, updated_prv.armor()),
+          Store.passphrase_save('local', url_params.account_email as string, keyinfo.longid, stored_passphrase !== null ? updated_prv_passphrase : undefined),
+          Store.passphrase_save('session', url_params.account_email as string, keyinfo.longid, stored_passphrase !== null ? undefined : updated_prv_passphrase),
         ]).then(() => {
           alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
           window.location.href = url_my_key_page;

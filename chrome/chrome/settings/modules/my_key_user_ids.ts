@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   $('.action_show_public_key').attr('href', tool.env.url_create('my_key.htm', url_params));
 
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, url_params.longid as string || 'primary').then((keyinfo: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, url_params.longid as string || 'primary').then((keyinfo: KeyInfo) => {
 
     if(keyinfo === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');

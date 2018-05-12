@@ -15,9 +15,9 @@ class Notifications {
   }
 
   show_initial = (account_email: string) => {
-    (window as FlowCryptWindow).flowcrypt_storage.get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], (account_storage: Dict<boolean>) => {
+    Store.get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple'], (account_storage: Dict<boolean>) => {
       if(!account_storage.notification_setup_done_seen) {
-        (window as FlowCryptWindow).flowcrypt_storage.set(account_email, { notification_setup_done_seen: true }, () => {
+        Store.set(account_email, { notification_setup_done_seen: true }, () => {
           this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
         });
       } else if(account_storage.key_backup_prompt !== false && account_storage.setup_simple === true) {

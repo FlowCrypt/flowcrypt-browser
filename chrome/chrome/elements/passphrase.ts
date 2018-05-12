@@ -20,7 +20,7 @@ tool.catch.try(() => {
   }
   tool.ui.passphrase_toggle(['passphrase']);
 
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string).then((all_private_keys: KeyInfo[]) => {
+  Store.keys_get(url_params.account_email as string).then((all_private_keys: KeyInfo[]) => {
     let selected_private_keys = all_private_keys;
     if(url_params.longids) {
       let longids = (url_params.longids as string).split(',');
@@ -66,7 +66,7 @@ tool.catch.try(() => {
         if(tool.crypto.key.decrypt(prv, pass).success) {
           is_correct = true;
           let storage: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
-          (window as FlowCryptWindow).flowcrypt_storage.passphrase_save(storage, url_params.account_email as string, keyinfo.longid, pass).then(() => {
+          Store.passphrase_save(storage, url_params.account_email as string, keyinfo.longid, pass).then(() => {
             tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
             tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
           });

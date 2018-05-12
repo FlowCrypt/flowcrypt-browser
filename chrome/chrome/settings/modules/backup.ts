@@ -9,7 +9,7 @@ tool.catch.try(() => {
   
   tool.ui.passphrase_toggle(['password', 'password2']);
   
-  (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_simple', 'email_provider'], storage => {
+  Store.get(url_params.account_email as string, ['setup_simple', 'email_provider'], storage => {
     email_provider = storage.email_provider || 'gmail';
   
     if(url_params.action === 'setup') {
@@ -24,7 +24,7 @@ tool.catch.try(() => {
     } else if(url_params.action === 'passphrase_change_gmail_backup') {
       if(storage.setup_simple) {
         display_block('loading');
-        (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+        Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
           (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email as string, primary_ki.private, function (success) {
             if(success) {
               $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
@@ -64,7 +64,7 @@ tool.catch.try(() => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     display_block('loading');
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth'], storage => {
+    Store.get(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth'], storage => {
       if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
         tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys: OpenpgpKey[]) {
           if(success) {
@@ -184,13 +184,13 @@ tool.catch.try(() => {
       let btn_text = $(self).text();
       $(self).html(tool.ui.spinner('white'));
       console.log('p1');
-      (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+      Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
         let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
         openpgp_key_encrypt(prv, new_passphrase);
         console.log('p2');
         Promise.all([
-          (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('local', url_params.account_email as string, primary_ki.longid, new_passphrase),
-          (window as FlowCryptWindow).flowcrypt_storage.keys_add(url_params.account_email as string, prv.armor()),
+          Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, new_passphrase),
+          Store.keys_add(url_params.account_email as string, prv.armor()),
         ]).then(() => {
           console.log('p3');
           (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email as string, prv.armor(), function (success: boolean) {
@@ -214,7 +214,7 @@ tool.catch.try(() => {
   }
   
   function backup_on_email_provider(primary_ki: KeyInfo) {
-    (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid).then((pass_phrase: string) => {
+    Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then((pass_phrase: string) => {
       if(!is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
         return;
       }
@@ -251,7 +251,7 @@ tool.catch.try(() => {
   }
   
   function write_backup_done_and_render(prompt: number|false, method: KeyBackupMethod) {
-    (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, { key_backup_prompt: prompt, key_backup_method: method }, function () {
+    Store.set(url_params.account_email as string, { key_backup_prompt: prompt, key_backup_method: method }, function () {
       if(url_params.action === 'setup') {
         window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
       } else {
@@ -262,7 +262,7 @@ tool.catch.try(() => {
   
   $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+    Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
       if(primary_ki === null) {
         return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
       }
@@ -304,7 +304,7 @@ tool.catch.try(() => {
   
   $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     if(url_params.action === 'setup') {
-      (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, { key_backup_prompt: false }, function () {
+      Store.set(url_params.account_email as string, { key_backup_prompt: false }, function () {
         window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
       });
     } else {

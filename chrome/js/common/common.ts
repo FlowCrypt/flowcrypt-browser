@@ -11,7 +11,6 @@ declare let openpgp: any; // todo - how to make this understand openpgp types fr
 declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, MimeBuilder: any;
 declare var require: any;
 declare var exports: any;
-let storage = (window as FlowCryptWindow).flowcrypt_storage;
 
 let tool = {
   str: {
@@ -719,7 +718,7 @@ let tool = {
       }
       return tool.catch.Promise(function(resolve, reject) {
         let message_key_ids = (message as OpenpgpMessage).getEncryptionKeyIds();
-        storage.keys_get(account_email).then((private_keys: KeyInfo[]) => {
+        Store.keys_get(account_email).then((private_keys: KeyInfo[]) => {
           let local_key_ids = [].concat.apply([], private_keys.map((ki) => ki.public).map(tool._.crypto_key_ids));
           let diagnosis = { found_match: false, receivers: message_key_ids.length };
           for(let msg_k_id of message_key_ids) {
@@ -1223,7 +1222,7 @@ let tool = {
     passphrase_toggle: (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
       let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
       let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-      storage.get(null, ['hide_pass_phrases'], function (s) {
+      Store.get(null, ['hide_pass_phrases'], function (s) {
         let show: boolean;
         if(force_initial_show_or_hide === 'hide') {
           show = false;
@@ -1245,11 +1244,11 @@ let tool = {
             if($('#' + id).attr('type') === 'password') {
               $('#' + id).attr('type', 'text');
               $(this).html(button_hide);
-              storage.set(null, { hide_pass_phrases: false });
+              Store.set(null, { hide_pass_phrases: false });
             } else {
               $('#' + id).attr('type', 'password');
               $(this).html(button_show);
-              storage.set(null, { hide_pass_phrases: true });
+              Store.set(null, { hide_pass_phrases: true });
             }
           });
         };
@@ -1509,7 +1508,7 @@ let tool = {
       auth: (auth_request: AuthRequest, respond: Callback) => {
         tool.browser.message.tab_id(function(tab_id) {
           auth_request.tab_id = tab_id;
-          storage.get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (s: Dict<any>) {
+          Store.get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes'], function (s: Dict<any>) {
             if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes || null, s.google_token_scopes, auth_request.omit_read_scope || false)) {
               if(!tool.env.is_background_script()) {
                 tool.api.google.auth_popup(auth_request, s.google_token_scopes, respond);
@@ -1592,7 +1591,7 @@ let tool = {
     },
     common: {
       message: (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): SendableMessage => {
-        // let primary_pubkey = storage.keys_get(account_email, 'primary'); // todo - changing to async - add back later
+        // let primary_pubkey = Store.keys_get(account_email, 'primary'); // todo - changing to async - add back later
         // headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
         //   OpenPGP: 'id=' + primary_pubkey.fingerprint,
         // } : {},
@@ -1929,8 +1928,8 @@ let tool = {
       }),
       diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
         let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
-        storage.get(account_email, ['addresses'], function (s: StorageResult) {
-          storage.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
+        Store.get(account_email, ['addresses'], function (s: StorageResult) {
+          Store.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
             let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
             tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then(function(pubkey_search_results) {
               tool.each((pubkey_search_results as any).results, function (i, pubkey_search_result) { // todo:ts any
@@ -2076,7 +2075,7 @@ let tool = {
       }),
       account_login: (account_email: string, token:string|null=null) => {
         return tool.catch.Promise(function(resolve, reject) {
-          storage.auth_info((registered_email, registered_uuid, already_verified) => {
+          Store.auth_info((registered_email, registered_uuid, already_verified) => {
             let uuid = registered_uuid || tool.crypto.hash.sha1(tool.str.random(40));
             let email = registered_email || account_email;
             tool._.api_cryptup_call('account/login', {
@@ -2086,7 +2085,7 @@ let tool = {
             // @ts-ignore
             }).validate((r: {registered: boolean, verified: boolean, subscription: SubscriptionInfo}) => r.registered === true).then(function (response) {
               let to_save: Dict<Serializable> = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
-              storage.set(null, to_save, function () {
+              Store.set(null, to_save, function () {
                 resolve({verified: response.verified === true, subscription: response.subscription});
               });
             }, reject);
@@ -2097,11 +2096,11 @@ let tool = {
         emails: emails,
       }),
       account_check_sync: (callback:Callback=function(){}) => { // callbacks true on updated, false not updated, null for could not fetch
-        storage.account_emails_get((emails) => {
+        Store.account_emails_get((emails) => {
           if(emails.length) {
             tool.api.cryptup.account_check(emails).then((response: any) => {
-              storage.auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
-                storage.subscription(function(stored_level, stored_expire, stored_active, stored_method) {
+              Store.auth_info(function (cryptup_account_email, cryptup_account_uuid, cryptup_account_verified) {
+                Store.subscription(function(stored_level, stored_expire, stored_active, stored_method) {
                   let local_storage_update:Dict<FlatTypes> = {};
                   if(response.email) {
                     if(response.email !== cryptup_account_email) {
@@ -2129,7 +2128,7 @@ let tool = {
                   }
                   if(Object.keys(local_storage_update).length) {
                     tool.catch.log('updating account subscription from ' + stored_level + ' to ' + (response.subscription ? response.subscription.level : null), response);
-                    storage.set(null, local_storage_update, function() {
+                    Store.set(null, local_storage_update, function() {
                       callback(true);
                     });
                   } else {
@@ -2148,7 +2147,7 @@ let tool = {
       },
       account_update: (update_values?: Dict<Serializable>) => {
         return tool.catch.Promise(function(resolve, reject) {
-          storage.auth_info(function (email, uuid, verified) {
+          Store.auth_info(function (email, uuid, verified) {
             if(verified) {
               let request = {account: email, uuid: uuid} as Dict<Serializable>;
               tool.each(update_values || {}, (k, v) => { request[k] = v; });
@@ -2162,7 +2161,7 @@ let tool = {
       },
       account_subscribe: (product: string, method: string, payment_source_token:string|null=null) => {
         return tool.catch.Promise(function(resolve, reject) {
-          storage.auth_info(function (email, uuid, verified) {
+          Store.auth_info(function (email, uuid, verified) {
             if(verified) {
               tool._.api_cryptup_call('account/subscribe', {
                 account: email,
@@ -2171,7 +2170,7 @@ let tool = {
                 source: payment_source_token,
                 product: product,
               }).then(function(response: any) {
-                storage.set(null, { cryptup_account_subscription: response.subscription }, function () {
+                Store.set(null, { cryptup_account_subscription: response.subscription }, function () {
                   resolve(response);
                 });
               }, reject);
@@ -2189,7 +2188,7 @@ let tool = {
               lengths: lengths,
             }).then(resolve, reject);
           } else if(auth_method === 'uuid') {
-            storage.auth_info(function (email, uuid, verified) {
+            Store.auth_info(function (email, uuid, verified) {
               if(verified) {
                 tool._.api_cryptup_call('message/presign_files', {
                   account: email,
@@ -2223,7 +2222,7 @@ let tool = {
                 content: content,
               }, 'FORM').then(resolve, reject);
             } else {
-              storage.auth_info(function (email, uuid, verified) {
+              Store.auth_info(function (email, uuid, verified) {
                 if(verified) {
                   tool._.api_cryptup_call('message/upload', {
                     account: email,
@@ -2240,7 +2239,7 @@ let tool = {
       },
       message_token: () => {
         return tool.catch.Promise(function (resolve, reject) {
-          storage.auth_info(function (email, uuid, verified) {
+          Store.auth_info(function (email, uuid, verified) {
             if(verified) {
               tool._.api_cryptup_call('message/token', {
                 account: email,
@@ -2254,7 +2253,7 @@ let tool = {
       },
       message_expiration: (admin_codes: string[], add_days:null|number=null) => {
         return tool.catch.Promise(function (resolve, reject) {
-          storage.auth_info(function (email, uuid, verified) {
+          Store.auth_info(function (email, uuid, verified) {
             if(verified) {
               tool._.api_cryptup_call('message/expiration', {
                 account: email,
@@ -2508,12 +2507,12 @@ let tool = {
       } as InternalSortedKeysForDecrypt;
       keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       keys.signed_by = (message.getSigningKeyIds() || []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
-      storage.keys_get(account_email).then((private_keys_all: KeyInfo[]) => {
+      Store.keys_get(account_email).then((private_keys_all: KeyInfo[]) => {
         keys.potentially_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
         if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
           keys.potentially_matching = private_keys_all;
         }
-        Promise.all(keys.potentially_matching.map(ki => storage.passphrase_get(account_email, ki.longid))).then((passphrases) => {
+        Promise.all(keys.potentially_matching.map(ki => Store.passphrase_get(account_email, ki.longid))).then((passphrases) => {
           for(let i in keys.potentially_matching) {
             if(passphrases[i] !== null) {
               let key = openpgp.key.readArmored(keys.potentially_matching[i].private).keys[0];
@@ -2527,8 +2526,8 @@ let tool = {
               keys.without_passphrases.push(keys.potentially_matching[i]);
             }
           }
-          if(keys.signed_by.length && typeof storage.db_contact_get === 'function') {
-            storage.db_contact_get(null, keys.signed_by, function (verification_contacts: Contact[]) {
+          if(keys.signed_by.length && typeof Store.db_contact_get === 'function') {
+            Store.db_contact_get(null, keys.signed_by, function (verification_contacts: Contact[]) {
               keys.verification_contacts = verification_contacts.filter(contact => contact !== null);
               keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey).keys));
               callback(keys);
@@ -2777,7 +2776,7 @@ let tool = {
       if(typeof tokens_object.refresh_token !== 'undefined') {
         to_save['google_token_refresh'] = tokens_object.refresh_token;
       }
-      storage.set(account_email, to_save, callback);
+      Store.set(account_email, to_save, callback);
     },
     google_auth_get_tokens: (code: string, callback: Callback, retries_left: number) => {
       $.ajax({
@@ -2869,7 +2868,7 @@ let tool = {
       }
     },
     api_google_call: (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth=false) => {
-      storage.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
+      Store.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
         let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
         if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
           $.ajax({
@@ -2922,7 +2921,7 @@ let tool = {
         throw new Error('missing account_email in api_gmail_call');
       }
       progress = progress || {};
-      storage.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
+      Store.get(account_email, ['google_token_access', 'google_token_expires'], function (auth) {
         if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
           let data, url;
           if(typeof progress!.upload === 'function') { // substituted with {} above
@@ -3141,13 +3140,13 @@ let tool = {
         console.log('%cFlowCrypt ISSUE:' + user_log_message, 'font-weight: bold;');
       }
       try {
-        if(typeof storage.get === 'function' && typeof storage.set === 'function') {
-          storage.get(null, ['errors'], function (s: any) {
+        if(typeof Store.get === 'function' && typeof Store.set === 'function') {
+          Store.get(null, ['errors'], function (s: any) {
             if(typeof s.errors === 'undefined') {
               s.errors = [] as Error[];
             }
             s.errors.unshift((error as Error).stack || error_message); // todo - remove cast & debug
-            storage.set(null, s);
+            Store.set(null, s);
           });
         }
       } catch (storage_err) {
@@ -3199,12 +3198,12 @@ let tool = {
         }
         e.stack = e.stack + '\n\n\ndetails: ' + details;
         try {
-          storage.get(null, ['errors'], function (s: any) {
+          Store.get(null, ['errors'], function (s: any) {
             if(typeof s.errors === 'undefined') {
               s.errors = [];
             }
             s.errors.unshift(e.stack || name);
-            storage.set(null, s);
+            Store.set(null, s);
           });
         } catch (storage_err) {
           console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);

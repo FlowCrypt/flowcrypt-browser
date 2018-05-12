@@ -32,7 +32,7 @@ tool.catch.try(() => {
     callbacks.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_check_sync(updated => {
-        (window as FlowCryptWindow).flowcrypt_storage.auth_info((email, uuid, verified) => {
+        Store.auth_info((email, uuid, verified) => {
           if(verified) {
             do_subscribe(chosen_product, source).then(resolve, error => {
               if(error.internal === 'auth') {
@@ -59,7 +59,7 @@ tool.catch.try(() => {
 
   function do_subscribe(chosen_product: Product, source:string|null=null) {
     return catcher.Promise((resolve, reject) => {
-      (window as FlowCryptWindow).flowcrypt_storage.remove(null, 'cryptup_subscription_attempt', () => {
+      Store.remove(null, ['cryptup_subscription_attempt'], () => {
         return tool.api.cryptup.account_subscribe(chosen_product.id!, chosen_product.method!, source).then(response => {
           if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
             resolve(response.subscription);
@@ -126,7 +126,7 @@ tool.catch.try(() => {
       callbacks.render_status('A little while more..');
     }
     let end = Date.now() + timeout * 1000;
-    (window as FlowCryptWindow).flowcrypt_storage.auth_info((account, uuid, verified) => {
+    Store.auth_info((account, uuid, verified) => {
       callbacks.find_matching_tokens_from_email(account!, uuid!, (success: string, tokens: string[]) => {
         if(success && tokens) {
           callback(tokens as string[]);
@@ -141,7 +141,7 @@ tool.catch.try(() => {
 
   function save_subscription_attempt(product: Product, source: string, callback: VoidCallback) {
     product.source = source;
-    (window as FlowCryptWindow).flowcrypt_storage.set(null, { 'cryptup_subscription_attempt': product }, callback);
+    Store.set(null, { 'cryptup_subscription_attempt': product }, callback);
   }
 
   function verify(account_email: string, tokens: string[]) {
@@ -179,7 +179,7 @@ tool.catch.try(() => {
 
   function register_new_device(account_email: string) {
     return catcher.Promise((resolve, reject) => {
-      (window as FlowCryptWindow).flowcrypt_storage.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
+      Store.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
         callbacks.render_status('checking..', true);
         register_and_attempt_to_verify(account_email).then(resolve, reject);
       });

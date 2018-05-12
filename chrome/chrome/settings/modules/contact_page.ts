@@ -60,8 +60,8 @@ tool.catch.try(() => {
       S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
       S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
         S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
-        (window as FlowCryptWindow).flowcrypt_storage.auth_info(function(email: string) {  // @ts-doublecheck - is it really always a string?
-          (window as FlowCryptWindow).flowcrypt_storage.get(email, ['full_name'], (storage: {full_name: string|null}) => {
+        Store.auth_info(function(email: string) {  // @ts-doublecheck - is it really always a string?
+          Store.get(email, ['full_name'], (storage: {full_name: string|null}) => {
             find_available_alias(email, function(alias) {
               let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(email.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
               // @ts-ignore

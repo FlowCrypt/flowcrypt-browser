@@ -8,14 +8,14 @@ tool.catch.try(() => {
 
   tool.ui.passphrase_toggle(['passphrase_entry']);
 
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
 
     if(url_params.embedded) {
       $('.change_passhrase_container, .title_container').css('display', 'none');
       $('.line').css('padding', '7px 0');
     }
 
-    (window as FlowCryptWindow).flowcrypt_storage.subscription(function (level, expire, active, method) {
+    Store.subscription(function (level, expire, active, method) {
       if(active) {
         $('.select_loader_container').html(tool.ui.spinner('green'));
         tool.api.cryptup.account_update().then(response => {
@@ -45,7 +45,7 @@ tool.catch.try(() => {
     });
 
     if(primary_ki !== null) { // not set up yet
-      (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
+      Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
         if(stored_passphrase === null) {
           $('#passphrase_to_open_email').prop('checked', true);
         }
@@ -66,11 +66,11 @@ tool.catch.try(() => {
 
     $('.confirm_passphrase_requirement_change').click(function () {
       if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
-        (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid).then(stored_passphrase => {
+        Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(stored_passphrase => {
           if($('input#passphrase_entry').val() === stored_passphrase) {
             Promise.all([
-              (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('local', url_params.account_email as string, primary_ki.longid, undefined),
-              (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('session', url_params.account_email as string, primary_ki.longid, undefined),
+              Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, undefined),
+              Store.passphrase_save('session', url_params.account_email as string, primary_ki.longid, undefined),
             ]).then(() => window.location.reload());
           } else {
             alert('Pass phrase did not match, please try again.');
@@ -80,7 +80,7 @@ tool.catch.try(() => {
       } else { // save pass phrase
         var key = openpgp.key.readArmored(primary_ki.private).keys[0];
         if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val() as string).success) { // text input
-          (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('local', url_params.account_email as string, primary_ki.longid, $('input#passphrase_entry').val() as string).then(() => window.location.reload()); // text input
+          Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, $('input#passphrase_entry').val() as string).then(() => window.location.reload()); // text input
         } else {
           alert('Pass phrase did not match, please try again.');
           $('input#passphrase_entry').val('').focus();
@@ -92,10 +92,10 @@ tool.catch.try(() => {
       window.location.reload();
     });
 
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['hide_message_password'], storage => {
+    Store.get(url_params.account_email as string, ['hide_message_password'], storage => {
       $('#hide_message_password').prop('checked', storage.hide_message_password === true);
       $('#hide_message_password').change(function () {
-        (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, {hide_message_password: $(this).is(':checked')}, function () {
+        Store.set(url_params.account_email as string, {hide_message_password: $(this).is(':checked')}, function () {
           window.location.reload();
         });
       });

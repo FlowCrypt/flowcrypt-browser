@@ -16,8 +16,8 @@ tool.catch.try(() => {
     throw new Error('unknown action: ' + url_params.action);
   }
   
-  (window as FlowCryptWindow).flowcrypt_storage.account_emails_get((account_emails) => {
-    (window as FlowCryptWindow).flowcrypt_storage.get(account_emails, ['setup_done'], (account_storages) => {
+  Store.account_emails_get((account_emails) => {
+    Store.get(account_emails, ['setup_done'], (account_storages) => {
       let ul_emails = '';
       tool.each(account_storages, (email: string, storage) => {
         if(storage.setup_done === true) {

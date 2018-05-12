@@ -15,7 +15,6 @@ declare var require: any;
     level = null;
   }
 
-  let storage = (window as FlowCryptWindow).flowcrypt_storage;
   let flowcrypt_attach = (window as FlowCryptWindow).flowcrypt_attach;
 
   const S = tool.ui.build_jquery_selectors({
@@ -552,7 +551,7 @@ declare var require: any;
 
   function sign_and_send(recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) {
     S.now('send_btn_span').text('Signing');
-    storage.keys_get(account_email, 'primary').then((primary_k: KeyInfo) => {
+    Store.keys_get(account_email, 'primary').then((primary_k: KeyInfo) => {
       if (primary_k) {
         const prv = openpgp.key.readArmored(primary_k.private).keys[0];
         app.storage_passphrase_get().then((passphrase: string|null) => {

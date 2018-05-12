@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
   
-  (window as FlowCryptWindow).flowcrypt_storage.subscription((subscription_level, subscription_expire, subscription_active, subscription_method) => {
+  Store.subscription((subscription_level, subscription_expire, subscription_active, subscription_method) => {
     let subscription = { level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method };
   
     type ComposeStorage = {
@@ -23,7 +23,7 @@ tool.catch.try(() => {
     }
   
     const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, storage_keys, (storage: ComposeStorage) => {
+    Store.get(url_params.account_email as string, storage_keys, (storage: ComposeStorage) => {
   
       recover_missing_url_params(() => {
   
@@ -39,7 +39,7 @@ tool.catch.try(() => {
             can_read_email: () => can_read_email,
             does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
               their_email = tool.str.parse_email(their_email).email;
-              (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['pubkey_sent_to'], function (pubkey_sent_to_storage: {pubkey_sent_to: string[]}) {
+              Store.get(url_params.account_email as string, ['pubkey_sent_to'], function (pubkey_sent_to_storage: {pubkey_sent_to: string[]}) {
                 if (tool.value(their_email).in(pubkey_sent_to_storage.pubkey_sent_to)) {
                   callback(true);
                 } else if (!can_read_email) {
@@ -49,7 +49,7 @@ tool.catch.try(() => {
                   const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
                   tool.api.gmail.message_list(url_params.account_email as string, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response: any) {
                     if (success && response.messages) {
-                      (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email),}, function () {
+                      Store.set(url_params.account_email as string, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email),}, function () {
                         callback(true);
                       });
                     } else {
@@ -65,12 +65,12 @@ tool.catch.try(() => {
             storage_get_email_footer: () => storage.email_footer,
             storage_set_email_footer: (footer: string|null) => {
               storage.email_footer = footer;
-              (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, {email_footer: footer}); // async
+              Store.set(url_params.account_email as string, {email_footer: footer}); // async
             },
             storage_get_hide_message_password: () => !!storage.hide_message_password,
             storage_get_subscription_info: (cb: (si: SubscriptionInfo) => void) => { // returns cached result, callbacks with fresh result
               if(typeof cb === 'function') {
-                (window as FlowCryptWindow).flowcrypt_storage.subscription(function(subscription_level, subscription_expire, subscription_active, subscription_method) {
+                Store.subscription(function(subscription_level, subscription_expire, subscription_active, subscription_method) {
                   subscription = {level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method};
                   cb(subscription);
                 });
@@ -79,7 +79,7 @@ tool.catch.try(() => {
             },
             storage_get_armored_public_key: (sender_email: string) => {
               return catcher.Promise((resolve, reject) => {
-                (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
+                Store.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
                   if(primary_k) {
                     resolve(primary_k.public);
                   } else {
@@ -89,7 +89,7 @@ tool.catch.try(() => {
               });
             },
             storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => catcher.Promise((resolve, reject) => {
-              (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose'], function (draft_storage: {drafts_reply: Dict<string>, drafts_compose: Dict<string>}) {
+              Store.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose'], function (draft_storage: {drafts_reply: Dict<string>, drafts_compose: Dict<string>}) {
                 let drafts: Dict<string|{recipients: string[], subject: string, date: number}>;
                 if (thread_id) { // it's a reply
                   drafts = draft_storage.drafts_reply || {};
@@ -98,7 +98,7 @@ tool.catch.try(() => {
                   } else {
                     delete drafts[thread_id];
                   }
-                  (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, {drafts_reply: drafts as Serializable}, () => {
+                  Store.set(url_params.account_email as string, {drafts_reply: drafts as Serializable}, () => {
                     resolve();
                   });
                 } else { // it's a new message
@@ -108,7 +108,7 @@ tool.catch.try(() => {
                   } else {
                     delete drafts[draft_id];
                   }
-                  (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, {drafts_compose: drafts as Serializable}, () => {
+                  Store.set(url_params.account_email as string, {drafts_compose: drafts as Serializable}, () => {
                     resolve();
                   });
                 }
@@ -116,31 +116,31 @@ tool.catch.try(() => {
             }),
             storage_passphrase_get: () => {
               return catcher.Promise((resolve, reject) => {
-                (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+                Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
                   if(primary_ki === null) {
                     resolve(null); // flowcrypt just uninstalled or reset?
                   } else {
-                    (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid).then(resolve, reject);
+                    Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(resolve, reject);
                   }
                 });
               });
             },
             storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => {
   
-              (window as FlowCryptWindow).flowcrypt_storage.get(null, ['admin_codes'], (admin_code_storage: {admin_codes: Dict<{date: number, codes: string[]}>}) => {
+              Store.get(null, ['admin_codes'], (admin_code_storage: {admin_codes: Dict<{date: number, codes: string[]}>}) => {
                 admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
                 admin_code_storage.admin_codes[short_id] = {
                   date: Date.now(),
                   codes: [message_admin_code].concat(attachment_admin_codes || []),
                 };
-                (window as FlowCryptWindow).flowcrypt_storage.set(null, admin_code_storage as any as Dict<Serializable>, callback);
+                Store.set(null, admin_code_storage as any as Dict<Serializable>, callback);
               });
             },
-            storage_contact_get: (email: string) => catcher.Promise((resolve, reject) => (window as FlowCryptWindow).flowcrypt_storage.db_contact_get(null, email, resolve)),
-            storage_contact_update: (email: string, update: Contact) => catcher.Promise((resolve, reject) => (window as FlowCryptWindow).flowcrypt_storage.db_contact_update(null, email, update, resolve)),
-            storage_contact_save: (contact: Contact) => catcher.Promise((resolve, reject) => (window as FlowCryptWindow).flowcrypt_storage.db_contact_save(null, contact, resolve)),
-            storage_contact_search: (query: DbContactFilter) => catcher.Promise((resolve, reject) => (window as FlowCryptWindow).flowcrypt_storage.db_contact_search(null, query, resolve)),
-            storage_contact_object: (window as FlowCryptWindow).flowcrypt_storage.db_contact_object,
+            storage_contact_get: (email: string) => catcher.Promise((resolve, reject) => Store.db_contact_get(null, email, resolve)),
+            storage_contact_update: (email: string, update: Contact) => catcher.Promise((resolve, reject) => Store.db_contact_update(null, email, update, resolve)),
+            storage_contact_save: (contact: Contact) => catcher.Promise((resolve, reject) => Store.db_contact_save(null, contact, resolve)),
+            storage_contact_search: (query: DbContactFilter) => catcher.Promise((resolve, reject) => Store.db_contact_search(null, query, resolve)),
+            storage_contact_object: Store.db_contact_object,
             email_provider_draft_get: (draft_id: string) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw', (success, response) => {
                 (success ? resolve : reject)(response);

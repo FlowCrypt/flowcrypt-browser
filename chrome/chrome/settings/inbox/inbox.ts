@@ -59,7 +59,7 @@ tool.catch.try(() => {
       },
     }, tab_id);
   
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['email_provider'], storage => {
+    Store.get(url_params.account_email as string, ['email_provider'], storage => {
       email_provider = storage.email_provider || 'gmail';
       S.cached('body').prepend(factory.meta_notification_container());
       if(email_provider !== 'gmail') {

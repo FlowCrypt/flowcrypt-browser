@@ -15,7 +15,7 @@ tool.catch.try(() => {
   if(!url_params.account_email) {
     render_setup_done(false);
   } else {
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_done'], storage => {
+    Store.get(url_params.account_email as string, ['setup_done'], storage => {
       render_setup_done(storage.setup_done);
     });
   }

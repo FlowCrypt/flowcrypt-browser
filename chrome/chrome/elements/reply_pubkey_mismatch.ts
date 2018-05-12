@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   const url_params = tool.env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
 
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
   
     const attachment = tool.file.keyinfo_as_pubkey_attachment(primary_k);
     let additional_message_headers: FlatHeaders;

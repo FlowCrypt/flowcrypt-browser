@@ -38,7 +38,7 @@ tool.catch.try(() => {
   });
   
   // show alternative account addresses in setup form + save them for later
-  (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider'], storage => {
+  Store.get(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider'], storage => {
     if(storage.email_provider === 'gmail') {
       if(!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         $('.auth_denied_warning').css('display', 'block');
@@ -64,7 +64,7 @@ tool.catch.try(() => {
   
   function save_and_fill_submit_option(addresses: string[]) {
     all_addresses = tool.arr.unique(addresses.concat(url_params.account_email as string));
-    (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, { addresses: all_addresses }, function () {
+    Store.set(url_params.account_email as string, { addresses: all_addresses }, function () {
       show_submit_all_addresses_option(all_addresses);
     });
   }
@@ -98,7 +98,7 @@ tool.catch.try(() => {
     if(!url_params.account_email) {
       window.location.href = 'index.htm';
     }
-    (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
+    Store.get(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
       email_provider = storage.email_provider as EmailProvider || 'gmail';
       if(storage.setup_done) {
         if(url_params.action !== 'add_key') {
@@ -148,7 +148,7 @@ tool.catch.try(() => {
       if(success && keys) {
         recovered_keys = keys;
         recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-        (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string).then((stored_keys: KeyInfo[]) => {
+        Store.keys_get(url_params.account_email as string).then((stored_keys: KeyInfo[]) => {
           recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
           render_setup_done(url_params.account_email as string);
           $('#step_4_more_to_recover .action_recover_remaining').click();
@@ -161,7 +161,7 @@ tool.catch.try(() => {
   
   // options: {submit_main, submit_all}
   function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: Options, callback: Callback) {
-    (window as FlowCryptWindow).flowcrypt_storage.get(account_email, ['addresses'], (storage: {addresses: string[]|undefined}) => {
+    Store.get(account_email, ['addresses'], (storage: {addresses: string[]|undefined}) => {
       if(options.submit_main) {
         // @ts-ignore
         tool.api.attester.test_welcome(account_email, armored_pubkey).validate((r: {sent: boolean}) => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
@@ -187,12 +187,12 @@ tool.catch.try(() => {
     if(key_backup_prompt) {
       window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
     } else {
-      (window as FlowCryptWindow).flowcrypt_storage.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
+      Store.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
         if (recovered_keys_longid_count > stored_keys.length) { // recovery where not all keys were processed: some may have other pass phrase
           display_block('step_4_more_to_recover');
           $('h1').text('More keys to recover');
           $('.email').text(account_email);
-          (window as FlowCryptWindow).flowcrypt_storage.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
+          Store.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
             $('.private_key_count').text(stored_keys.length);
             $('.backups_count').text(recovered_keys.length);
           });
@@ -216,7 +216,7 @@ tool.catch.try(() => {
         key_backup_prompt: options.key_backup_prompt,
         is_newly_created_key: options.is_newly_created_key === true,
       };
-      (window as FlowCryptWindow).flowcrypt_storage.set(account_email, storage, function () {
+      Store.set(account_email, storage, function () {
         render_setup_done(account_email, options.key_backup_prompt);
       });
     });
@@ -227,8 +227,8 @@ tool.catch.try(() => {
     for(let i = 0; i < prvs.length; i++) { // save all keys
       let longid = tool.crypto.key.longid(prvs[i]);
       if(longid) {
-        promise_factories.push(() => (window as FlowCryptWindow).flowcrypt_storage.keys_add(account_email, prvs[i].armor()));
-        promise_factories.push(() => (window as FlowCryptWindow).flowcrypt_storage.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, longid!, options.passphrase));
+        promise_factories.push(() => Store.keys_add(account_email, prvs[i].armor()));
+        promise_factories.push(() => Store.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, longid!, options.passphrase));
       } else {
         tool.catch.report('longid was null when saving');
       }
@@ -237,9 +237,9 @@ tool.catch.try(() => {
       let contacts: Contact[] = [];
       tool.each(all_addresses, function (i, address) {
         let attested = Boolean(address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
-        contacts.push((window as FlowCryptWindow).flowcrypt_storage.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
+        contacts.push(Store.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
       });
-      (window as FlowCryptWindow).flowcrypt_storage.db_contact_save(null, contacts, callback);
+      Store.db_contact_save(null, contacts, callback);
     });
   }
   
@@ -271,7 +271,7 @@ tool.catch.try(() => {
           result.gender = response.gender;
           result.locale = response.locale;
           result.picture = response.picture;
-          (window as FlowCryptWindow).flowcrypt_storage.set(account_email, result, function () {
+          Store.set(account_email, result, function () {
             callback(result);
           });
         } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
@@ -339,7 +339,7 @@ tool.catch.try(() => {
         };
         recovered_key_matching_passphrases.push(passphrase);
         save_keys(url_params.account_email as string, matching_keys, options, function () {
-          (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_done'], storage => {
+          Store.get(url_params.account_email as string, ['setup_done'], storage => {
             if(!storage.setup_done) { // normal situation
               finalize_setup(url_params.account_email as string, matching_keys[0].toPublic().armor(), options);
             } else { // setup was finished before, just added more keys now
@@ -363,7 +363,7 @@ tool.catch.try(() => {
   $('#step_4_more_to_recover .action_recover_remaining').click(function () {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
-    (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string).then((stored_keys: KeyInfo[]) => {
+    Store.keys_get(url_params.account_email as string).then((stored_keys: KeyInfo[]) => {
       let got = stored_keys.length;
       let bups = recovered_keys.length;
       let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';

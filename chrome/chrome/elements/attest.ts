@@ -8,8 +8,8 @@ tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
   
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
-    (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid).then(passphrase => {
+  Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+    Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(passphrase => {
       if(passphrase !== null) {
         process_attest(passphrase);
       } else {
@@ -21,7 +21,7 @@ tool.catch.try(() => {
           tool.browser.message.listen({
             passphrase_entry: (message: {entered: boolean}, sender, respond) => {
               if(message.entered) {
-                (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid).then(process_attest);
+                Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(process_attest);
               }
             },
           })

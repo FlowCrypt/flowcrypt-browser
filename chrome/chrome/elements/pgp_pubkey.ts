@@ -24,7 +24,7 @@ tool.catch.try(() => {
     if(pubkeys.length > 1) {
       $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
     } else {
-      (window as FlowCryptWindow).flowcrypt_storage.db_contact_get(null, $('.input_email').val() as string, function (contact: Contact) { // text input
+      Store.db_contact_get(null, $('.input_email').val() as string, function (contact: Contact) { // text input
         $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
       });
     }
@@ -82,17 +82,17 @@ tool.catch.try(() => {
       $.each(pubkeys, (i, pubkey) => {
         let email_address = tool.str.parse_email(pubkey.users[0].userId.userid).email;
         if(tool.str.is_email_valid(email_address)) {
-          contacts.push((window as FlowCryptWindow).flowcrypt_storage.db_contact_object(email_address, null, 'pgp', pubkey.armor(), null, false, Date.now()));
+          contacts.push(Store.db_contact_object(email_address, null, 'pgp', pubkey.armor(), null, false, Date.now()));
         }
       });
-      (window as FlowCryptWindow).flowcrypt_storage.db_contact_save(null, contacts, function () {
+      Store.db_contact_save(null, contacts, function () {
         $(self).replaceWith('<span class="good">added public keys</span>');
         $('.input_email').remove();
       });
     } else {
       if(tool.str.is_email_valid($('.input_email').val() as string)) { // text input
-        let contact = (window as FlowCryptWindow).flowcrypt_storage.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
-        (window as FlowCryptWindow).flowcrypt_storage.db_contact_save(null, contact, function () {
+        let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
+        Store.db_contact_save(null, contact, function () {
           $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
           $('.input_email').remove();
         });

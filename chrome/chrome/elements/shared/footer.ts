@@ -8,9 +8,9 @@ tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']); // placement: compose||settings
   
-  (window as FlowCryptWindow).flowcrypt_storage.subscription(function (level, expire, active) {
+  Store.subscription(function (level, expire, active) {
     if(active) {
-      (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['email_footer'], storage => {
+      Store.get(url_params.account_email as string, ['email_footer'], storage => {
         $('.input_email_footer').val(storage.email_footer as string);
       });
       $('.user_subscribed').css('display', 'block');
@@ -36,9 +36,9 @@ tool.catch.try(() => {
   });
   
   function save_footer_if_has_subscription_and_requested(requested: boolean, footer: string, cb: Callback) {
-    (window as FlowCryptWindow).flowcrypt_storage.subscription(function (level, expire, active) {
+    Store.subscription(function (level, expire, active) {
       if(requested && active) {
-        (window as FlowCryptWindow).flowcrypt_storage.set(url_params.account_email as string, { 'email_footer': footer }, cb);
+        Store.set(url_params.account_email as string, { 'email_footer': footer }, cb);
       } else {
         cb();
       }

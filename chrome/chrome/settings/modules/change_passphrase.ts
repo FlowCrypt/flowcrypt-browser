@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   tool.ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string).then((private_keys: KeyInfo[]) => {
+  Store.keys_get(url_params.account_email as string).then((private_keys: KeyInfo[]) => {
     if(private_keys.length > 1) {
       $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
       $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');
@@ -16,11 +16,11 @@ tool.catch.try(() => {
     }
   });
 
-  (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
     if(primary_ki === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
     }
-    (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid).then(original_passphrase => {
+    Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(original_passphrase => {
 
       if(original_passphrase === null) {
         display_block('step_0_enter');
@@ -83,13 +83,13 @@ tool.catch.try(() => {
           // @ts-ignore - todo - check this
           tool.crypto.key.decrypt(prv, original_passphrase);
           openpgp_key_encrypt(prv, new_passphrase);
-          (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
+          Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
             Promise.all([
-              (window as FlowCryptWindow).flowcrypt_storage.keys_add(url_params.account_email as string, prv.armor()),
-              (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('local', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined),
-              (window as FlowCryptWindow).flowcrypt_storage.passphrase_save('session', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase),
+              Store.keys_add(url_params.account_email as string, prv.armor()),
+              Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined),
+              Store.passphrase_save('session', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase),
             ]).then(() => { // Pass phrase change done in the extension storage. A new backup should be created (protected by updated pass phrase).
-              (window as FlowCryptWindow).flowcrypt_storage.get(url_params.account_email as string, ['setup_simple'], storage => {
+              Store.get(url_params.account_email as string, ['setup_simple'], storage => {
                 if(storage.setup_simple) {
                   show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
                 } else {

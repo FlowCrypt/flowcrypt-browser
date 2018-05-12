@@ -22,24 +22,24 @@ function get_background_process_start_reason() {
 }
 
 migrate_global(function () {
-  (window as FlowCryptWindow).flowcrypt_storage.set(null, { version: catcher.version('int') });
-  (window as FlowCryptWindow).flowcrypt_storage.get(null, ['settings_seen'], (s) => {
+  Store.set(null, { version: catcher.version('int') });
+  Store.get(null, ['settings_seen'], (s) => {
     if(!s.settings_seen) {
       open_settings_page('initial.htm'); // called after the very first installation of the plugin
-      (window as FlowCryptWindow).flowcrypt_storage.set(null, {settings_seen: true});
+      Store.set(null, {settings_seen: true});
     }
   });
 });
 
-(window as FlowCryptWindow).flowcrypt_storage.db_open(db => {
+Store.db_open(db => {
   if(db === false) {
     open_settings_page('corrupted.htm'); // called if database is corrupted
   }
   tool.browser.message.listen_background({
     bg_exec: execute_in_background_process_and_respond_when_done,
     db: (request, sender, respond) => db ? db_operation(request as {f: string, args: any[]}, sender, respond, db) : null,
-    session_set: session_set,
-    session_get: session_get,
+    session_set: bg_session_set,
+    session_get: bg_session_get,
     close_popup: close_popup_handler,
     migrate_account: migrate_account,
     settings: open_settings_page_handler,
@@ -68,9 +68,9 @@ migrate_global(function () {
 
 update_uninstall_url(null, 'background', tool.noop);
 
-(window as FlowCryptWindow).flowcrypt_storage.get(null, ['errors'], (s: Dict<string[]>) => {
+Store.get(null, ['errors'], (s: Dict<string[]>) => {
   if(s.errors && s.errors.length && s.errors.length > 100) {
-    (window as FlowCryptWindow).flowcrypt_storage.remove(null, 'errors');
+    Store.remove(null, ['errors']);
   }
 });
 
@@ -117,7 +117,7 @@ function get_cryptup_settings_tab_id_if_open(callback: Callback) {
 }
 
 function update_uninstall_url(request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
-  (window as FlowCryptWindow).flowcrypt_storage.account_emails_get(function (account_emails) {
+  Store.account_emails_get(function (account_emails) {
     if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
       catcher.try(function () {
         chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
@@ -139,7 +139,7 @@ function open_settings_page(path:string='index.htm', account_email:string|null=n
     if(account_email) {
       open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
     } else {
-      (window as FlowCryptWindow).flowcrypt_storage.account_emails_get(function (account_emails) {
+      Store.account_emails_get(function (account_emails) {
         open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
       });
     }
@@ -157,7 +157,7 @@ function db_operation(request: {f: string, args: any[]}, sender: chrome.runtime.
     // if(db === false && request.f === 'db_delete') { window.flowcrypt_storage[request.f].apply(null, [].concat(request.args, [respond]));} else
     if(db) {
       // @ts-ignore - todo - evaluate this later
-      (window as FlowCryptWindow).flowcrypt_storage[request.f].apply(null, [db].concat(request.args, [respond]));
+      Store[request.f].apply(null, [db].concat(request.args, [respond]));
     } else {
       catcher.log('db corrupted, skipping: ' + request.f);
     }
@@ -208,10 +208,10 @@ function execute_in_background_process_and_respond_when_done(message: Dict<any>,
   });
 }
 
-function session_set(request: {account_email: string, key: string, value: string|undefined}, sender: chrome.runtime.MessageSender, respond: Callback) {
-  (window as FlowCryptWindow).flowcrypt_storage.session_set(request.account_email, request.key, request.value).then(respond);
+function bg_session_set(request: {account_email: string, key: string, value: string|undefined}, sender: chrome.runtime.MessageSender, respond: Callback) {
+  Store.session_set(request.account_email, request.key, request.value).then(respond);
 }
 
-function session_get(request: {account_email: string, key: string}, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
-  (window as FlowCryptWindow).flowcrypt_storage.session_get(request.account_email, request.key).then(respond);
+function bg_session_get(request: {account_email: string, key: string}, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
+  Store.session_get(request.account_email, request.key).then(respond);
 }
