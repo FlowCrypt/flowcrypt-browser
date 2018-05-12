@@ -1658,7 +1658,7 @@ let tool = {
           },
         }, callback);
       },
-      draft_delete: (account_email: string, id: string, callback: Callback) => {
+      draft_delete: (account_email: string, id: string, callback: ApiCallback) => {
         tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null, callback);
       },
       draft_update: (account_email: string, id: string, mime_message: string, callback: ApiCallback) => {

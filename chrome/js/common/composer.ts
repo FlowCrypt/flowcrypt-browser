@@ -15,10 +15,6 @@ declare var require: any;
     level = null;
   }
 
-  interface ContactsQuery {
-    substring: string,
-  }
-
   let storage = (window as FlowCryptWindow).flowcrypt_storage;
   let flowcrypt_attach = (window as FlowCryptWindow).flowcrypt_attach;
 
@@ -118,14 +114,14 @@ declare var require: any;
     storage_contact_get: async (email: string): Promise<Contact|Contact[]|null> => null,
     storage_contact_update: async (email: string, update: object): Promise<undefined> => undefined,
     storage_contact_save: async (contact: Contact): Promise<undefined> => undefined,
-    storage_contact_search: async (query: ContactsQuery): Promise<Contact[]> => [],
+    storage_contact_search: async (query: ProviderContactsQuery): Promise<Contact[]> => [],
     storage_contact_object: (email: string, name: string, has_cryptup: boolean, pubkey: string, attested: boolean, pending_lookup: boolean, last_use: number): Contact => { return {} as Contact},
     email_provider_draft_get: (draft_id: string) => tool.catch.Promise((resolve, reject) => {reject()}),
     email_provider_draft_create: (mime_message: string) => tool.catch.Promise((resolve, reject) => {reject()}),
     email_provider_draft_update: (draft_id: string, mime_message: string) => tool.catch.Promise((resolve, reject) => {reject()}),
     email_provider_draft_delete: (draft_id: string) => tool.catch.Promise((resolve, reject) => {reject()}),
     email_provider_message_send: (message: SendableMessage, render_upload_progress: (progress: number) => void) => tool.catch.Promise((resolve, reject) => {reject()}),
-    email_provider_search_contacts: (query: ContactsQuery, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void): void => undefined,
+    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void): void => undefined,
     email_provider_determine_reply_message_header_variables: (cb: (last_msg_id: string, headers: Headers) => void) => { if(cb) cb('', {} as Headers); },
     email_provider_extract_armored_block: (message_id: string, success_cb: (armored_msg: string) => void, error_cb: (err?: any) => void) => { if(error_cb) error_cb('not implemented'); },
     send_message_to_main_window: (channel: string, data?: Object): void => undefined,
@@ -1051,7 +1047,7 @@ declare var require: any;
     set_input_text_height_manually_if_needed();
   }
 
-  function select_contact(email: string, from_query: ContactsQuery) {
+  function select_contact(email: string, from_query: ProviderContactsQuery) {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
     const possibly_bogus_address = tool.str.parse_email(possibly_bogus_recipient.text()).email;
     const q = tool.str.parse_email(from_query.substring).email;
@@ -1103,7 +1099,7 @@ declare var require: any;
     }
   }
 
-  function render_search_results(contacts: Contact[], query: ContactsQuery) {
+  function render_search_results(contacts: Contact[], query: ProviderContactsQuery) {
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
     renderable_contacts.splice(8);

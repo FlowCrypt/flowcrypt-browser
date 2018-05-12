@@ -5,7 +5,7 @@ interface BrowserWidnow extends Window {
     onunhandledrejection: (e: any) => void,
 }
 
-type ContactFilter = { has_pgp: boolean }
+type DbContactFilter = { has_pgp: boolean }
 
 interface FlowCryptWindow extends BrowserWidnow {
     jQuery: JQuery,
@@ -26,7 +26,8 @@ interface FlowCryptWindow extends BrowserWidnow {
         db_open: (cb: (db: IDBDatabase|null|false) => void) => void,
         db_contact_object: (email: string, name: string|null, client: string, pubkey: string, attested: boolean|null, pending_lookup:boolean, last_use: number) => Contact,
         db_contact_save: (db: IDBDatabase|null, contacts: Contact[]|Contact, callback: Callback) => void,
-        db_contact_search: (db: IDBDatabase|null, filter: ContactFilter, cb: Callback) => void,
+        db_contact_search: (db: IDBDatabase|null, filter: DbContactFilter, cb: Callback) => void,
+        db_contact_update: (db: IDBDatabase|null, email: string, update: Contact, cb: Callback) => void,
         session_set: (account_email: string, key: string, value: string|undefined) => Promise<string|undefined>,
         session_get: (account_email: string, key: string) => Promise<string|undefined>,
         remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,
@@ -290,11 +291,11 @@ interface AuthRequest {
 
 type WebMailName = 'gmail'|'outlook'|'inbox';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
-type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded';
+type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
 type FlatTypes = null|undefined|number|string|boolean;
 type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
-type StorageResult = Dict<Serializable>;
+type StorageResult = Dict<Serializable>|any;
 type Callback = (r?: any) => void;
 type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
@@ -304,6 +305,7 @@ type LongidToMnemonic = (longid: string) => string;
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
+
 type ApiCallFormat = 'JSON'|'FORM';
 type ApiCallProgressCallback = (percent: number|null, loaded?: number, total?: number) => void;
 type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: ApiCallProgressCallback};
@@ -318,6 +320,7 @@ type SelectorCache = {
 }
 type StorageType = 'session'|'local';
 type EmailProvider = 'gmail';
+type ProviderContactsQuery = { substring: string };
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
