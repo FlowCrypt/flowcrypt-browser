@@ -289,7 +289,7 @@ interface AuthRequest {
     omit_read_scope?: boolean,
 }
 
-type WebMailName = 'gmail'|'outlook'|'inbox';
+type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
 type FlatTypes = null|undefined|number|string|boolean;
@@ -340,6 +340,7 @@ interface WebmailElementReplacer {
     set_reply_box_editable: () => void,
     reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void,
 }
+type NotificationWithCallbacks = {notification: string, callbacks: Dict<Callback>};
 
 interface JQueryStatic {
     featherlight: Function,

@@ -160,7 +160,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
           $('body').append(factory.dialog_add_pubkey(data.emails));
         }
       },
-      notification_show: (data: {notification: string, callbacks: Dict<Callback>}) => {
+      notification_show: (data: NotificationWithCallbacks) => {
         notifications.show(data.notification, data.callbacks);
         $('body').one('click', catcher.try(notifications.clear));
       },
