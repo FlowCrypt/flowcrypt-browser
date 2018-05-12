@@ -2160,7 +2160,7 @@ let tool = {
           });
         });
       },
-      account_subscribe: (product: string, method: string, payment_source_token: string) => {
+      account_subscribe: (product: string, method: string, payment_source_token:string|null=null) => {
         return tool.catch.Promise(function(resolve, reject) {
           storage.auth_info(function (email, uuid, verified) {
             if(verified) {

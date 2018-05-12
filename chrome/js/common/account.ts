@@ -3,7 +3,7 @@
 'use strict';
 
 
-(function() {
+tool.catch.try(() => {
 
   const cryptup_verification_email_sender = 'verify@cryptup.org';
 
@@ -19,20 +19,20 @@
       null: {id: null, method: null, name: null, level: null},
       trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
       advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
-    },
+    } as Dict<Product>,
     CAN_READ_EMAIL: true,
   };
 
-  let callbacks = {
-    render_status: function () {},
+  let callbacks: NamedFunctionsObject = {
+    render_status: function (text: string, show_spinner?:boolean) {},
     find_matching_tokens_from_email: fetch_token_emails_on_gmail_and_find_matching_token,
   };
 
-  function subscribe(account_email, chosen_product, source) {
+  function subscribe(account_email: string, chosen_product: Product, source: string) {
     callbacks.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_check_sync(updated => {
-        window.flowcrypt_storage.auth_info((email, uuid, verified) => {
+        (window as FlowCryptWindow).flowcrypt_storage.auth_info((email, uuid, verified) => {
           if(verified) {
             do_subscribe(chosen_product, source).then(resolve, error => {
               if(error.internal === 'auth') {
@@ -57,10 +57,10 @@
     });
   }
 
-  function do_subscribe(chosen_product, source=null) {
+  function do_subscribe(chosen_product: Product, source:string|null=null) {
     return catcher.Promise((resolve, reject) => {
-      window.flowcrypt_storage.remove(null, 'cryptup_subscription_attempt', () => {
-        return tool.api.cryptup.account_subscribe(chosen_product.id, chosen_product.method, source).then(response => {
+      (window as FlowCryptWindow).flowcrypt_storage.remove(null, 'cryptup_subscription_attempt', () => {
+        return tool.api.cryptup.account_subscribe(chosen_product.id!, chosen_product.method!, source).then(response => {
           if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
             resolve(response.subscription);
           } else {
@@ -71,7 +71,7 @@
     });
   }
 
-  function parse_token_email_text(verification_email_text, stored_uuid_to_cross_check) {
+  function parse_token_email_text(verification_email_text: string, stored_uuid_to_cross_check: string) {
     let token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
     if(token_link_match !== null) {
       let token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
@@ -81,24 +81,24 @@
     }
   }
 
-  function fetch_token_emails_on_gmail_and_find_matching_token(account_email, uuid, callback) {
+  function fetch_token_emails_on_gmail_and_find_matching_token(account_email: string, uuid: string, callback: ApiCallback) {
     let called_back = false;
-    function callback_once(v1, v2) {
+    function callback_once(v1: boolean, v2: any) {
       if(!called_back) {
         called_back = true;
         callback(v1, v2);
       }
     }
-    let tokens = [];
-    tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, (list_success, response) => {
+    let tokens: string[] = [];
+    tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, (list_success, response: any) => {
       if(list_success) {
         if(response.messages) {
-          tool.api.gmail.message_get(account_email, response.messages.map(m => m.id), 'full', (get_success, messages) => {
+          tool.api.gmail.message_get(account_email, response.messages.map((m: any) => m.id), 'full', (get_success: boolean, messages: any) => {
             if(get_success) {
               tool.each(messages, (id, gmail_message_object) => {
                 if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
                   let token = parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
-                  if(token) {
+                  if(token && typeof token === 'string') {
                     tokens.push(token);
                   }
                 }
@@ -119,17 +119,17 @@
   }
 
 
-  function wait_for_token_email(timeout, callback) {
+  function wait_for_token_email(timeout: number, callback: (tokens: string[]|null) => void) {
     if(timeout < 20) {
       callbacks.render_status('Still working..');
     } else if(timeout < 10) {
       callbacks.render_status('A little while more..');
     }
     let end = Date.now() + timeout * 1000;
-    window.flowcrypt_storage.auth_info((account, uuid, verified) => {
-      callbacks.find_matching_tokens_from_email(account, uuid, (success, tokens) => {
+    (window as FlowCryptWindow).flowcrypt_storage.auth_info((account, uuid, verified) => {
+      callbacks.find_matching_tokens_from_email(account!, uuid!, (success: string, tokens: string[]) => {
         if(success && tokens) {
-          callback(tokens);
+          callback(tokens as string[]);
         } else if(Date.now() < end) {
           setTimeout(() => wait_for_token_email((end - Date.now()) / 1000, callback), 5000);
         } else {
@@ -139,12 +139,12 @@
     });
   }
 
-  function save_subscription_attempt(product, source, callback) {
+  function save_subscription_attempt(product: Product, source: string, callback: VoidCallback) {
     product.source = source;
-    window.flowcrypt_storage.set(null, { 'cryptup_subscription_attempt': product }, callback);
+    (window as FlowCryptWindow).flowcrypt_storage.set(null, { 'cryptup_subscription_attempt': product }, callback);
   }
 
-  function verify(account_email, tokens) {
+  function verify(account_email: string, tokens: string[]) {
     callbacks.render_status('verifying your email address..', true);
     return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_login(account_email, tokens.pop()).then(resolve, error => {
@@ -157,7 +157,7 @@
     });
   }
 
-  function register_and_attempt_to_verify(account_email) {
+  function register_and_attempt_to_verify(account_email: string) {
     callbacks.render_status('registering..', true);
     return catcher.Promise((resolve, reject) => {
       tool.api.cryptup.account_login(account_email).then(response => {
@@ -177,27 +177,28 @@
     });
   }
 
-  function register_new_device(account_email) {
+  function register_new_device(account_email: string) {
     return catcher.Promise((resolve, reject) => {
-      window.flowcrypt_storage.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
-        render_status('checking..', true);
+      (window as FlowCryptWindow).flowcrypt_storage.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }, () => {
+        callbacks.render_status('checking..', true);
         register_and_attempt_to_verify(account_email).then(resolve, reject);
       });
     });
   }
 
-  function set_event_handlers(_callbacks) {
+  function set_event_handlers(_callbacks: NamedFunctionsObject) {
     $.each(_callbacks, (name, handler) => {
       callbacks[name] = handler;
     });
   }
 
   if(typeof window === 'object') {
-    window.flowcrypt_account = _self;
+    (window as FlowCryptWindow).flowcrypt_account = _self;
   }
 
   if(typeof exports === 'object') {
     $.each(_self, (k, f) => {
+      // @ts-ignore
       exports[a] = f;
     });
   }

@@ -308,6 +308,9 @@ type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
 
+type PaymentMethod = 'stripe'|'group'|'trial';
+type ProductLevel = 'pro'|null;
+type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel, source?: string};
 type ApiCallFormat = 'JSON'|'FORM';
 type ApiCallProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
 type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: ApiCallProgressCallback};
