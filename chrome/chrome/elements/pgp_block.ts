@@ -58,7 +58,7 @@ tool.catch.try(() => {
       render_html(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
       // if(unsecure_mdc_ignored && !is_error) {
       //   set_frame_color('red');
-      //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + (window as FlowCryptWindow).lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
+      //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
       // }
       if(is_error) {
         $('.action_show_raw_pgp_block').click(function () {
@@ -124,12 +124,12 @@ tool.catch.try(() => {
   function handle_private_key_mismatch(account_email: string, message: string) { //todo - make it work for multiple stored keys
     tool.browser.message.bg_exec('tool.diagnose.message_pubkeys', [account_email, message], function (msg_diagnosis) {
       if(msg_diagnosis.found_match) {
-        render_error((window as FlowCryptWindow).lang.pgp_block.cant_open + (window as FlowCryptWindow).lang.pgp_block.encrypted_correctly_file_bug);
+        render_error(Lang.pgp_block.cant_open + Lang.pgp_block.encrypted_correctly_file_bug);
       } else {
         if(msg_diagnosis.receivers === 1) {
-          render_error((window as FlowCryptWindow).lang.pgp_block.cant_open + (window as FlowCryptWindow).lang.pgp_block.single_sender + (window as FlowCryptWindow).lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
+          render_error(Lang.pgp_block.cant_open + Lang.pgp_block.single_sender + Lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
         } else {
-          render_error((window as FlowCryptWindow).lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
+          render_error(Lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
         }
       }
     });
@@ -315,7 +315,7 @@ tool.catch.try(() => {
     if(typeof url_params.signature !== 'string') {
       tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, url_params.message, optional_password, tool.browser.message.cb], function (result) {
         if(typeof result === 'undefined') {
-          render_error((window as FlowCryptWindow).lang.general.restart_browser_and_try_again);
+          render_error(Lang.general.restart_browser_and_try_again);
         } else if(result.success) {
           if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
             console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
@@ -328,14 +328,14 @@ tool.catch.try(() => {
             console.log('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
             initialize(true);
           } else {
-            render_error((window as FlowCryptWindow).lang.pgp_block.bad_format + '\n\n' + result.format_error);
+            render_error(Lang.pgp_block.bad_format + '\n\n' + result.format_error);
           }
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else {
           (window as FlowCryptWindow).flowcrypt_storage.keys_get(url_params.account_email as string, 'primary').then(primary_k => {
             if(!result.counts.potentially_matching_keys && !primary_k) {
-              render_error((window as FlowCryptWindow).lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
+              render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
             } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
               if(url_params.has_password && !optional_password) {
                 render_password_prompt();
@@ -346,10 +346,10 @@ tool.catch.try(() => {
               alert('Incorrect answer, please try again');
               render_password_prompt();
             } else if(result.counts.errors) {
-              render_error((window as FlowCryptWindow).lang.pgp_block.cant_open + (window as FlowCryptWindow).lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
+              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
             } else {
               delete result.message;
-              render_error((window as FlowCryptWindow).lang.pgp_block.cant_open + (window as FlowCryptWindow).lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
             }
           });
         }
@@ -366,7 +366,7 @@ tool.catch.try(() => {
     Promise.all(missing_or_wrong_passphrase_key_longids.map(longid => (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(url_params.account_email as string, longid))).then(passphrases => {
       for(let i in missing_or_wrong_passphrase_key_longids) {
         missing_or_wrong_passprases[missing_or_wrong_passphrase_key_longids[i]] = passphrases[i];
-        render_error('<a href="#" class="enter_passphrase">' + (window as FlowCryptWindow).lang.pgp_block.enter_passphrase + '</a> ' + (window as FlowCryptWindow).lang.pgp_block.to_open_message, undefined, function () {
+        render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_message, undefined, function () {
           clearInterval(passphrase_interval);
           passphrase_interval = window.setInterval(check_passphrase_changed, 1000);
           $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
@@ -380,7 +380,7 @@ tool.catch.try(() => {
   }
   
   function render_password_prompt() {
-    let prompt = '<p>' + (window as FlowCryptWindow).lang.pgp_block.question_decryt_prompt + '</p>';
+    let prompt = '<p>' + Lang.pgp_block.question_decryt_prompt + '</p>';
     prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
     render_content(prompt, true, function () {
@@ -409,13 +409,13 @@ tool.catch.try(() => {
   
   function render_password_encrypted_message_load_fail(link_result: ApirFcMessageLink) {
     if(link_result.expired) {
-      let expiration_m = (window as FlowCryptWindow).lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + (window as FlowCryptWindow).lang.pgp_block.messages_dont_expire + '\n\n';
+      let expiration_m = Lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
       if(link_result.deleted) {
-        expiration_m += (window as FlowCryptWindow).lang.pgp_block.message_destroyed;
+        expiration_m += Lang.pgp_block.message_destroyed;
       } else if(url_params.is_outgoing && admin_codes) {
         expiration_m += '<div class="button gray2 extend_expiration">renew message</div>';
       } else if(!url_params.is_outgoing) {
-        expiration_m += (window as FlowCryptWindow).lang.pgp_block.ask_sender_renew;
+        expiration_m += Lang.pgp_block.ask_sender_renew;
       }
       expiration_m += '\n\n<div class="button gray2 action_security">security settings</div>';
       render_error(expiration_m, null, function() {
@@ -426,9 +426,9 @@ tool.catch.try(() => {
         $('.extend_expiration').click(render_message_expiration_renew_options);
       });
     } else if (!link_result.url) {
-      render_error((window as FlowCryptWindow).lang.pgp_block.cannot_locate + (window as FlowCryptWindow).lang.pgp_block.broken_link);
+      render_error(Lang.pgp_block.cannot_locate + Lang.pgp_block.broken_link);
     } else {
-      render_error((window as FlowCryptWindow).lang.pgp_block.cannot_locate + (window as FlowCryptWindow).lang.general.write_me_to_fix_it + ' Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
+      render_error(Lang.pgp_block.cannot_locate + Lang.general.write_me_to_fix_it + ' Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
     }
   }
   
@@ -495,10 +495,10 @@ tool.catch.try(() => {
             if(tool.value(tool.crypto.armor.headers('public_key').end).in(url_formatted_data_block)) {
               window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: url_formatted_data_block, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email as string, parent_tab_id: url_params.parent_tab_id as string, frame_id: url_params.frame_id });
             } else {
-              render_error((window as FlowCryptWindow).lang.pgp_block.cant_open + (window as FlowCryptWindow).lang.pgp_block.dont_know_how_open, url_formatted_data_block);
+              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open, url_formatted_data_block);
             }
           } else if(error_type === 'connection') {
-            render_error((window as FlowCryptWindow).lang.pgp_block.connection_error, url_formatted_data_block);
+            render_error(Lang.pgp_block.connection_error, url_formatted_data_block);
           } else {
             alert('Unknown error type: ' + error_type);
           }
@@ -517,7 +517,7 @@ tool.catch.try(() => {
     if(storage.setup_done) {
       initialize();
     } else {
-      render_error((window as FlowCryptWindow).lang.pgp_block.refresh_window, url_params.message as string || '');
+      render_error(Lang.pgp_block.refresh_window, url_params.message as string || '');
     }
   });  
 

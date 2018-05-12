@@ -251,7 +251,7 @@ declare var require: any;
     app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: tab_id});
   }
 
-  S.cached('icon_pubkey').attr('title', (window as FlowCryptWindow).lang.compose.include_pubkey_icon_title);
+  S.cached('icon_pubkey').attr('title', Lang.compose.include_pubkey_icon_title);
 
   function get_max_attachment_size_and_oversize_notice() {
     let subscription = app.storage_get_subscription_info();
@@ -1087,7 +1087,7 @@ declare var require: any;
         alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
       } else {
         console.log(google_auth_response);
-        alert((window as FlowCryptWindow).lang.general.something_went_wrong_try_again);
+        alert(Lang.general.something_went_wrong_try_again);
       }
     });
   }
@@ -1196,9 +1196,9 @@ declare var require: any;
       }
     } else { // set icon to specific state
       if (include) {
-        S.cached('icon_pubkey').addClass('active').attr('title', (window as FlowCryptWindow).lang.compose.include_pubkey_icon_title_active);
+        S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.include_pubkey_icon_title_active);
       } else {
-        S.cached('icon_pubkey').removeClass('active').attr('title', (window as FlowCryptWindow).lang.compose.include_pubkey_icon_title);
+        S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.include_pubkey_icon_title);
       }
     }
   }
@@ -1219,12 +1219,12 @@ declare var require: any;
     if (!S.cached('icon_sign').is('.active')) {
       S.cached('icon_sign').addClass('active');
       S.cached('compose_table').addClass('sign');
-      S.cached('title').text((window as FlowCryptWindow).lang.compose.header_title_compose_sign);
+      S.cached('title').text(Lang.compose.header_title_compose_sign);
       S.cached('input_password').val('');
     } else {
       S.cached('icon_sign').removeClass('active');
       S.cached('compose_table').removeClass('sign');
-      S.cached('title').text((window as FlowCryptWindow).lang.compose.header_title_compose_encrypt);
+      S.cached('title').text(Lang.compose.header_title_compose_encrypt);
     }
     if (tool.value(S.now('send_btn_span').text()).in([BTN_SIGN_AND_SEND, BTN_ENCRYPT_AND_SEND])) {
       reset_send_btn();
@@ -1418,7 +1418,7 @@ declare var require: any;
 
   function format_password_protected_email(short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) {
     const decrypt_url = CRYPTUP_WEB_URL + '/' + short_id;
-    const a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + (window as FlowCryptWindow).lang.compose.open_message + '</a>';
+    const a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
     const intro = S.cached('input_intro').length ? S.cached('input_intro').get(0).innerText.trim() : '';
     const text = [];
     const html = [];
@@ -1426,11 +1426,11 @@ declare var require: any;
       text.push(intro + '\n');
       html.push(intro.replace(/\n/, '<br>') + '<br><br>');
     }
-    text.push((window as FlowCryptWindow).lang.compose.message_encrypted_text + decrypt_url + '\n');
+    text.push(Lang.compose.message_encrypted_text + decrypt_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + tool.crypto.armor.headers('null').begin + '</div>');
-    html.push((window as FlowCryptWindow).lang.compose.message_encrypted_html + a + '<br><br>');
-    html.push((window as FlowCryptWindow).lang.compose.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
+    html.push(Lang.compose.message_encrypted_html + a + '<br><br>');
+    html.push(Lang.compose.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
     const html_cryptup_web_url_link = '<a href="' + tool.str.html_escape(CRYPTUP_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(CRYPTUP_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(CRYPTUP_WEB_URL, html_cryptup_web_url_link).replace(/\n/g, '<br>\n');

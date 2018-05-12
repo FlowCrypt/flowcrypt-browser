@@ -116,7 +116,7 @@ tool.catch.try(() => {
     tool.browser.message.listen({
       stripe_result: stripe_credit_card_entered_handler,
     }, tab_id);
-    let html = (window as FlowCryptWindow).lang.account.credit_or_debit + '<br><br>' + new Factory(url_params.account_email as string, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
+    let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(url_params.account_email as string, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
     $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
   });
   
