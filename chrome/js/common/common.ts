@@ -267,7 +267,8 @@ let tool = {
     is_background_script: () => Boolean(window.location && tool.value('_generated_background_page.html').in(window.location.href)),
     is_extension: () => tool.env.runtime_id() !== null,
     url_params: (expected_keys: string[], string:string|null=null) => {
-      let value_pairs = (string || window.location.search.replace('?', '')).split('&');
+      let url = (string || window.location.search.replace('?', ''));
+      let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
       let url_data: UrlParams = {};
       for(let value_pair of value_pairs) {
         let pair = value_pair.split('=');
@@ -2356,6 +2357,8 @@ let tool = {
       browser_message_MAX_SIZE: 1024 * 1024, // 1MB
       browser_message_STANDARD_HANDLERS: {
         set_css: function (data: {css: Dict<string|number>, selector: string}) {
+          console.log('set_css');
+          console.log(data);
           $(data.selector).css(data.css);
         },
       },
