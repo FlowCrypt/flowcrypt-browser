@@ -21,7 +21,7 @@ interface FlowCryptWindow extends BrowserWidnow {
         auth_info: (cb: (registered_email: string|null, registered_uuid: string|null, already_verified: boolean) => void) => void,
         account_emails_get: (cb: (emails: string[]) => void) => void,
         subscription: (cb: (stored_level: 'pro'|null, stored_expire:string, stored_active: boolean, stored_method: 'stripe'|'trial'|'group') => void) => void,
-        passphrase_get: (account_email: string, longid: string) => Promise<string|null>,
+        passphrase_get: (account_email: string, longid: string, ignore_session?: boolean) => Promise<string|null>,
         db_contact_get: (db: null, longids: string[]|string, cb: (contacts: Contact[]|Contact) => void) => void,
         db_open: (cb: (db: IDBDatabase|null|false) => void) => void,
         db_contact_object: (email: string, name: string|null, client: string, pubkey: string, attested: boolean|null, pending_lookup:boolean, last_use: number) => Contact,
@@ -289,6 +289,7 @@ interface AuthRequest {
     omit_read_scope?: boolean,
 }
 
+type KeyBackupMethod = 'file'|'inbox'|'none';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
@@ -324,6 +325,8 @@ type ProviderContactsQuery = { substring: string };
 
 // specific api results
 type ApirFcMessageLink = {expire: string, deleted: boolean, url: string, expired: boolean};
+type ApirFcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string}
+type ApirFcAccountUpdate = {result: ApirFcAccountUpdate$result}
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';

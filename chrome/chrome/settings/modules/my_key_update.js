@@ -41,7 +41,7 @@ window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid ||
           });
         } else {
           alert('Key update: This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
-          window.location = url_my_key_page;
+          window.location.href = url_my_key_page;
         }
       }
     }
@@ -55,7 +55,7 @@ window.flowcrypt_storage.keys_get(url_params.account_email, url_params.longid ||
         window.flowcrypt_storage.passphrase_save('session', url_params.account_email, keyinfo.longid, stored_passphrase !== null ? undefined : updated_prv_passphrase),
       ]).then(() => {
         alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
-        window.location = url_my_key_page;
+        window.location.href = url_my_key_page;
       });
     });
 
