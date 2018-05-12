@@ -12,6 +12,7 @@ class Injector {
     'gmail': 'div.aic',
     'inbox': 'div.jp',
     'outlook': 'div._fce_b',
+    'settings': '#does_not_have',
   };
 
   constructor(webmail_name: WebMailName, webmail_variant: WebmailVariantString, factory: Factory) {
