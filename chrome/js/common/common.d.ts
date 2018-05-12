@@ -24,7 +24,7 @@ interface FlowCryptWindow extends BrowserWidnow {
         passphrase_get: (account_email: string, longid: string, ignore_session?: boolean) => Promise<string|null>,
         db_contact_get: (db: null, longids: string[]|string, cb: (contacts: Contact[]|Contact) => void) => void,
         db_open: (cb: (db: IDBDatabase|null|false) => void) => void,
-        db_contact_object: (email: string, name: string|null, client: string, pubkey: string, attested: boolean|null, pending_lookup:boolean, last_use: number) => Contact,
+        db_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean, last_use: number|null) => Contact,
         db_contact_save: (db: IDBDatabase|null, contacts: Contact[]|Contact, callback: Callback) => void,
         db_contact_search: (db: IDBDatabase|null, filter: DbContactFilter, cb: Callback) => void,
         db_contact_update: (db: IDBDatabase|null, email: string, update: Contact, cb: Callback) => void,
@@ -188,6 +188,7 @@ interface KeyInfo {
     longid: string,
     primary: boolean,
     decrypted?: OpenpgpKey,
+    keywords: string,
 }
 
 interface MimeContent {

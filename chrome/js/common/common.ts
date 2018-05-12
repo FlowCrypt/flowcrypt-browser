@@ -838,7 +838,7 @@ let tool = {
           }
         }
       },
-      replace_blocks: (factory: any, original_text: string, message_id: string, sender_email: string, is_outgoing: boolean) => {
+      replace_blocks: (factory: Factory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
         let blocks = tool.crypto.armor.detect_blocks(original_text);
         if(blocks.length === 1 && blocks[0].type === 'text') {
           return;

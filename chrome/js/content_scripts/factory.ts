@@ -68,11 +68,11 @@ class Factory {
     return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), { message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, url: meta.url });
   }
 
-  src_pgp_block_iframe = (message: string, message_id: string, is_outgoing: boolean, sender_email: string, has_password: boolean, signature: string|null|boolean, short: string|null) => {
+  src_pgp_block_iframe = (message: string, message_id: string|null, is_outgoing: boolean|null, sender_email: string|null, has_password: boolean, signature: string|null|boolean, short: string|null) => {
     return this.frame_src(this.ext_url('chrome/elements/pgp_block.htm'), { frame_id: this.new_id(), message, has_password, message_id, sender_email, is_outgoing, signature, short });
   }
 
-  src_pgp_pubkey_iframe = (armored_pubkey: string, is_outgoing: boolean) => {
+  src_pgp_pubkey_iframe = (armored_pubkey: string, is_outgoing: boolean|null) => {
     return this.frame_src(this.ext_url('chrome/elements/pgp_pubkey.htm'), { frame_id: this.new_id(), armored_pubkey, minimized: Boolean(is_outgoing), });
   }
 
@@ -135,11 +135,11 @@ class Factory {
     return tool.e('span', {class: 'pgp_attachment', html: this.iframe(this.src_pgp_attachment_iframe(meta))});
   }
 
-  embedded_message = (armored: string, message_id: string, is_outgoing: boolean, sender: string, has_password: boolean, signature:string|null|boolean=null, short:string|null=null) => {
+  embedded_message = (armored: string, message_id: string|null, is_outgoing: boolean|null, sender: string|null, has_password: boolean, signature:string|null|boolean=null, short:string|null=null) => {
     return this.iframe(this.src_pgp_block_iframe(armored, message_id, is_outgoing, sender, has_password, signature, short), ['pgp_block']) + this.hide_gmail_new_message_in_thread_notification;
   }
 
-  embedded_pubkey = (armored_pubkey: string, is_outgoing: boolean) => {
+  embedded_pubkey = (armored_pubkey: string, is_outgoing: boolean|null) => {
     return this.iframe(this.src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']);
   }
 
