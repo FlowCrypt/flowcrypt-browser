@@ -377,7 +377,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
                 results.unknown.push(email);
                 this.recipient_has_pgp[email] = null; // loading
                 // @ts-ignore
-                tool.api.attester.lookup_email(email).validate(r => r.email).then(response => {
+                tool.api.attester.lookup_email(email).validate(r => r.email).then((response: PubkeySearchResult) => {
                   this.recipient_has_pgp[email!] = !!response.pubkey; // true or false
                 }, (error: StandardError) => {
                   this.recipient_has_pgp[email!] = undefined; // unknown

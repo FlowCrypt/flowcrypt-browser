@@ -1504,7 +1504,7 @@ let tool = {
       network: 'API_ERROR_NETWORK',
     },
     google: {
-      user_info: (account_email: string, callback: Callback) => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}, callback),
+      user_info: (account_email: string, callback: ApiCallback) => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}, callback),
       auth: (auth_request: AuthRequest, respond: Callback) => {
         tool.browser.message.tab_id(function(tab_id) {
           auth_request.tab_id = tab_id;
@@ -2082,9 +2082,9 @@ let tool = {
               account: email,
               uuid: uuid,
               token: token,
-              // @ts-ignore
-            }).validate(function (r) {return r.registered === true;}).then(function (response) {
-              let to_save = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
+            // @ts-ignore
+            }).validate((r: {registered: boolean, verified: boolean, subscription: SubscriptionInfo}) => r.registered === true).then(function (response) {
+              let to_save: Dict<Serializable> = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
               storage.set(null, to_save, function () {
                 resolve({verified: response.verified === true, subscription: response.subscription});
               });
@@ -2152,7 +2152,7 @@ let tool = {
               let request = {account: email, uuid: uuid} as Dict<Serializable>;
               tool.each(update_values || {}, (k, v) => { request[k] = v; });
               // @ts-ignore
-              tool._.api_cryptup_call('account/update', request).validate(function(r) {return typeof r.result === 'object' }).then(resolve, reject);
+              tool._.api_cryptup_call('account/update', request).validate((r: Dict<any>) => typeof r.result === 'object').then(resolve, reject);
             } else {
               reject(tool.api.cryptup.auth_error);
             }
@@ -3368,7 +3368,8 @@ let catcher = tool.catch; // legacy code expects this
     return rpt;
   };
 
-  (Promise as any).prototype.validate = (Promise as any).prototype.validate || function(validity_checker: (r: any) => boolean) {
+  // @ts-ignore
+  Promise.prototype.validate = Promise.prototype.validate || function(validity_checker: (r: any) => boolean) {
     let original_promise = this;
     return tool.catch.Promise(function(resolve, reject) {
       original_promise.then(function(response: any) {
@@ -3385,7 +3386,8 @@ let catcher = tool.catch; // legacy code expects this
     });
   };
 
-  (Promise as any).prototype.done = (Promise as any).prototype.done || function(next: (ok: boolean, v: any) => void) {
+  // @ts-ignore
+  Promise.prototype.done = Promise.prototype.done || function(next: (ok: boolean, v: any) => void) {
     return this.then(function(x: any) {
       next(true, x);
     }, function(x: any) {
@@ -3393,7 +3395,7 @@ let catcher = tool.catch; // legacy code expects this
     });
   };
 
-  (Promise as any).sequence = (Promise as any).sequence || function (promise_factories: (() => void)[]) {
+  Promise.sequence = Promise.sequence || function (promise_factories: (() => void)[]) {
     return tool.catch.Promise(function (resolve, reject) {
       let all_results: any[] = [];
       return promise_factories.reduce((chained_promises: Promise<any>, create_promise) => {

@@ -9,9 +9,9 @@ declare var require: any;
 
 (function() {
 
-  class Subscription {
-    active: boolean|null = null;
-    method: "stripe"|"group"|"trial"|null = null;
+  class Subscription implements SubscriptionInfo { // todo - look into this later, is a class necessary? If so, it should be elsewhere
+    active = null;
+    method = null;
   }
 
   interface ContactsQuery {
@@ -619,7 +619,7 @@ declare var require: any;
 
   function upload_attachments_to_cryptup(attachments: Attachment[], subscription: Subscription, callback: (ok: boolean|null|object, uploads?: Attachment[]|null, ac?: string[]|null, err?: string) => void): void {
     // @ts-ignore: .validate()
-    tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
+    tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate((r: {approvals:Dict<any>[]}) => r.approvals && r.approvals.length === attachments.length).then(pf_response => {
       const items: any[] = [];
       for(let i in pf_response.approvals) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i as any as number]});
@@ -629,7 +629,7 @@ declare var require: any;
         tool.api.cryptup.message_confirm_files(items.map(function (item) {
           return item.fields.key;
           // @ts-ignore: .validate()
-        })).validate(r => r.confirmed && r.confirmed.length === items.length).then(cf_response => {
+        })).validate(r => r.confirmed && r.confirmed.length === items.length).then((cf_response: {admin_codes: string[]}) => {
           for(let i in attachments) {
             attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
           }
@@ -675,7 +675,7 @@ declare var require: any;
   function add_reply_token_to_message_body_if_needed(recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription, callback: (res: string) => void): void {
     if (challenge && subscription.active) {
       // @ts-ignore: .validate()
-      tool.api.cryptup.message_token().validate(r => r.token).then(response => {
+      tool.api.cryptup.message_token().validate(r => r.token).then((response: {token: string}) => {
         callback(plaintext + '\n\n' + tool.e('div', {
             'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
               sender: supplied_from || get_sender_from_dom(),

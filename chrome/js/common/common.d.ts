@@ -21,6 +21,8 @@ interface FlowCryptWindow extends BrowserWidnow {
         passphrase_get: (account_email: string, longid: string) => Promise<string|null>,
         db_contact_get: (db: null, longids: string[], cb: (contacts: Contact[]) => void) => void,
         db_open: (cb: (db: IDBDatabase|null|false) => void) => void,
+        db_contact_object: (email: string, name: string, client: string, pubkey: string, attested: boolean, pending_lookup:boolean, last_use: number) => Contact,
+        db_contact_save: (db: IDBDatabase|null, contacts: Contact[], callback: Callback) => void,
         session_set: (account_email: string, key: string, value: string|undefined) => Promise<string|undefined>,
         session_get: (account_email: string, key: string) => Promise<string|undefined>,
         remove: (account_email: string|null, key_or_keys: string|string[], callback?: Callback) => void,
@@ -28,6 +30,7 @@ interface FlowCryptWindow extends BrowserWidnow {
         account_emails_add: (email: string, callback?: Callback) => void,
         keys_remove: (account_email: string, longid: string) => Promise<void>,
         passphrase_save: (type: StorageType, account_email: string, longid: string, passphrase: string|undefined) => Promise<void>,
+        keys_add: (account_email: string, armored_prv: string) => Promise<void>,
     },
     lang: any,
     iso88592: any,
@@ -97,8 +100,9 @@ interface PubkeySearchResult {
     email: string,
     pubkey: string|null,
     has_pgp: boolean|null,
-    client: string|null,
+    client: string|null, // todo - really?
     attested: boolean|null,
+    has_cryptup: boolean|null,
 }
 
 interface Challenge {
@@ -219,6 +223,7 @@ interface OpenpgpKey {
     decrypt: (pp: string) => boolean,
     armor: () => string,
     isPrivate: () => boolean,
+    toPublic: () => OpenpgpKey,
     getAllKeyPackets: () => any[],
     users:  Dict<any>[],
 }
@@ -280,7 +285,7 @@ type WebMailName = 'gmail'|'outlook'|'inbox';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded';
 type FlatTypes = null|undefined|number|string|boolean;
-type SerializableTypes = FlatTypes|string[]|number[]|boolean[];
+type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 type StorageResult = Dict<Serializable>;
 type Callback = (r?: any) => void;
@@ -304,6 +309,7 @@ type SelectorCache = {
     selector: (name: string) => string,
 }
 type StorageType = 'session'|'local';
+type EmailProvider = 'gmail';
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
@@ -330,3 +336,19 @@ interface JQuery {
 }
 
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void}
+
+type PromiseFactory<T> = () => T | PromiseLike<T>;
+
+interface PromiseConstructor {
+    sequence<T>(promise_factories: PromiseFactory<T>[]): Promise<T[]>;
+}
+
+// interface Promise<T> {
+//     done<T>(callback: (success: boolean, result: T) => void): void;
+//     validate<T>(validator: (result: T) => boolean): Promise<T>;
+// }
+
+interface SubscriptionInfo {
+    active: boolean|null;
+    method: "stripe"|"group"|"trial"|null;
+  }

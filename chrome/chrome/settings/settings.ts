@@ -17,7 +17,7 @@ tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
 
-function fetch_account_aliases_from_gmail(account_email: string, callback: Callback, query: string, _from_emails:string[]=[]) {
+function fetch_account_aliases_from_gmail(account_email: string, callback: Callback, query?: string, _from_emails:string[]=[]) {
   query = query || 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
   tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
     if(headers && headers.from) {
@@ -98,7 +98,7 @@ function submit_pubkeys(addresses: string[], pubkey: string, callback: Callback,
     let address = addresses.pop()!; // just checked above
     let attest = (address === settings_url_params.account_email); // only request attestation of main email
     // @ts-ignore
-    tool.api.attester.initial_legacy_submit(address, pubkey, attest).done((key_submitted, response) => {
+    tool.api.attester.initial_legacy_submit(address, pubkey, attest).done((key_submitted, response: {attested: boolean, saved: boolean}) => {
       if(attest && key_submitted) {
         if(!response.attested) {
           save_attest_request(settings_url_params.account_email as string, 'CRYPTUP', function () {
