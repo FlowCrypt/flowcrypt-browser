@@ -307,7 +307,7 @@ type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
 
 type ApiCallFormat = 'JSON'|'FORM';
-type ApiCallProgressCallback = (percent: number|null, loaded?: number, total?: number) => void;
+type ApiCallProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
 type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: ApiCallProgressCallback};
 type ApiCallMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ApiResponseFormat = 'json';
@@ -321,6 +321,9 @@ type SelectorCache = {
 type StorageType = 'session'|'local';
 type EmailProvider = 'gmail';
 type ProviderContactsQuery = { substring: string };
+
+// specific api results
+type ApirFcMessageLink = {expire: string, deleted: boolean, url: string, expired: boolean};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';

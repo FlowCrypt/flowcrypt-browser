@@ -14,11 +14,11 @@ const ATTESTERS = {
 };
 
 let currently_watching: Dict<number> = {};
-let can_read_emails: Dict<boolean> = {};
+let attest_ts_can_read_emails: Dict<boolean> = {};
 let packet_headers = tool.crypto.armor.headers('attest_packet');
 
 refresh_attest_requests_and_privileges(function (account_email, attests_requested) {
-  if(attests_requested && attests_requested.length && can_read_emails[account_email]) {
+  if(attests_requested && attests_requested.length && attest_ts_can_read_emails[account_email]) {
     watch_for_attest_email(account_email);
   }
 });
@@ -55,7 +55,7 @@ function check_email_for_attests_and_respond(account_email: string) {
       if(primary_ki !== null) {
         (window as FlowCryptWindow).flowcrypt_storage.passphrase_get(account_email, primary_ki.longid).then(passphrase => {
           if(passphrase !== null) {
-            if(S.attests_requested && S.attests_requested.length && can_read_emails[account_email]) {
+            if(S.attests_requested && S.attests_requested.length && attest_ts_can_read_emails[account_email]) {
               fetch_attest_emails(account_email, (success, messages) => {
                 if(success && messages) {
                   for(let message of messages) {
@@ -156,7 +156,7 @@ function refresh_attest_requests_and_privileges(process_account_email_callback: 
   (window as FlowCryptWindow).flowcrypt_storage.account_emails_get(function (account_emails) {
     (window as FlowCryptWindow).flowcrypt_storage.get(account_emails, ['attests_requested', 'google_token_scopes'], multi_storage => {
       tool.each(multi_storage, (account_email: string, storage) => {
-        can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+        attest_ts_can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
         if(process_account_email_callback) {
           process_account_email_callback(account_email, storage.attests_requested);
         }

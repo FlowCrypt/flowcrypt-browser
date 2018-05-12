@@ -2284,7 +2284,7 @@ let tool = {
       }),
       link_message: (short: string) => tool._.api_cryptup_call('link/message', {
         short: short,
-      }),
+      }) as Promise<ApirFcMessageLink>,
       link_me: (alias: string) => tool._.api_cryptup_call('link/me', {
         alias: alias,
       }),
@@ -2303,7 +2303,7 @@ let tool = {
             progress[i] = single_file_progress;
             tool.ui.event.prevent(tool.ui.event.spree(), function() {
               // this should of course be weighted average. How many years until someone notices?
-              progress_callback(tool.arr.average(progress)); // May 2018 - nobody noticed
+              progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
             })();
           }}));
         }
@@ -2674,7 +2674,7 @@ let tool = {
       let progress_reporting_xhr = new (window as FlowCryptWindow).XMLHttpRequest();
       if(progress_callbacks && typeof progress_callbacks.upload === 'function') {
         progress_reporting_xhr.upload.addEventListener('progress', function(evt: ProgressEvent) {
-          progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null); // checked ===function above
+          progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
         }, false);
       }
       if(progress_callbacks && typeof progress_callbacks.download === 'function') {
