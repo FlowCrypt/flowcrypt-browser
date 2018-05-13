@@ -148,7 +148,7 @@ tool.catch.try(() => {
       if(success && keys) {
         recovered_keys = keys;
         recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-        Store.keys_get(url_params.account_email as string).then((stored_keys: KeyInfo[]) => {
+        Store.keys_get(url_params.account_email as string).then(stored_keys => {
           recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
           render_setup_done(url_params.account_email as string);
           $('#step_4_more_to_recover .action_recover_remaining').click();
@@ -187,12 +187,12 @@ tool.catch.try(() => {
     if(key_backup_prompt) {
       window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
     } else {
-      Store.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
+      Store.keys_get(account_email).then(stored_keys => {
         if (recovered_keys_longid_count > stored_keys.length) { // recovery where not all keys were processed: some may have other pass phrase
           display_block('step_4_more_to_recover');
           $('h1').text('More keys to recover');
           $('.email').text(account_email);
-          Store.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
+          Store.keys_get(account_email).then(stored_keys => {
             $('.private_key_count').text(stored_keys.length);
             $('.backups_count').text(recovered_keys.length);
           });
@@ -363,7 +363,7 @@ tool.catch.try(() => {
   $('#step_4_more_to_recover .action_recover_remaining').click(function () {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
-    Store.keys_get(url_params.account_email as string).then((stored_keys: KeyInfo[]) => {
+    Store.keys_get(url_params.account_email as string).then(stored_keys => {
       let got = stored_keys.length;
       let bups = recovered_keys.length;
       let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';

@@ -122,34 +122,15 @@ class Store {
     }
   }
 
-  static async keys_get(account_email: string, longid:string|null=null): Promise<KeyInfo|KeyInfo[]|null> {
-    let storage: {keys: KeyInfo[]|undefined} = await Store.get(account_email, ['keys']);
-    let keys = storage.keys || [];
-    if(typeof longid !== 'undefined' && longid !== null) { // looking for a specific key(s)
-      let found: KeyInfo|KeyInfo[]|null;
-      if(Array.isArray(longid)) { // looking for an array of keys
-        found = [];
-        for(let keyinfo of keys) {
-          if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
-            found.push(keyinfo);
-          }
-        }
-      } else { // looking for a single key
-        found = null;
-        for(let keyinfo of keys) {
-          if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
-            found = keyinfo;
-            break;
-          }
-        }
-      }
-      return found;
-    } else { // return all keys
+  static async keys_get(account_email: string, longids:string[]|null=null) {
+    let keys: KeyInfo[] = (await Store.get(account_email, ['keys'])).keys || [];
+    if(!longids) {
       return keys
     }
+    return keys.filter(ki => tool.value(ki.longid).in(longids) || (tool.value('primary').in(longids) && ki.primary));
   }
 
-  static keys_object(armored_prv: string, primary=false) {
+  static keys_object(armored_prv: string, primary=false): KeyInfo {
     let longid = tool.crypto.key.longid(armored_prv)!;
     return { // todo - should we not be checking longid!==null? or is it checked before calling this?
       private: armored_prv,
@@ -162,13 +143,13 @@ class Store {
   }
 
   static async keys_add(account_email: string, new_key_armored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
-    let keyinfos = await Store.keys_get(account_email) as KeyInfo[];
+    let keyinfos = await Store.keys_get(account_email);
     let updated = false;
     let new_key_longid = tool.crypto.key.longid(new_key_armored);
     if (new_key_longid) {
       for(let i in keyinfos) {
         if (new_key_longid === keyinfos[i].longid) { // replacing a key
-          keyinfos[i] = Store.keys_object(new_key_armored, keyinfos[i].primary) as KeyInfo;
+          keyinfos[i] = Store.keys_object(new_key_armored, keyinfos[i].primary);
           updated = true;
         }
       }
@@ -180,9 +161,9 @@ class Store {
   }
 
   static async keys_remove(account_email: string, remove_longid: string): Promise<void> {
-    let private_keys = await Store.keys_get(account_email) as KeyInfo[];
-    let filtered_private_keys = private_keys.map((ki: KeyInfo) => ki.longid === remove_longid ? null : ki).filter((ki: KeyInfo|null) => ki !== null);
-    await Store.set(account_email, {keys: filtered_private_keys as any as Serializable[]});
+    let private_keys = await Store.keys_get(account_email);
+    let filtered_private_keys = private_keys.filter(ki => ki.longid !== remove_longid);
+    await Store.set(account_email, {keys: filtered_private_keys});
   }
 
   static set(account_email: string|null, values: Dict<Serializable[]|Serializable|KeyInfo[]>): Promise<void> {
@@ -237,12 +218,12 @@ class Store {
     }
   }
 
-  static async auth_info(): Promise<StoredAuthInfo> { // todo - changed!
+  static async auth_info(): Promise<StoredAuthInfo> {
     let storage = await Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified']);
     return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null, verified: storage.cryptup_account_verified || false};
   }
 
-  static async subscription(): Promise<Subscription> { // todo - changed!
+  static async subscription(): Promise<Subscription> {
     let s = await Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription']);
     if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       return new Subscription(s.cryptup_account_subscription);

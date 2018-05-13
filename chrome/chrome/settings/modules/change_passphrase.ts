@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   tool.ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
-  Store.keys_get(url_params.account_email as string).then((private_keys: KeyInfo[]) => {
+  Store.keys_get(url_params.account_email as string).then(private_keys => {
     if(private_keys.length > 1) {
       $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
       $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');
@@ -16,7 +16,7 @@ tool.catch.try(() => {
     }
   });
 
-  Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
     if(primary_ki === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
     }

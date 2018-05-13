@@ -11,7 +11,7 @@ tool.catch.try(() => {
   let input_private_key = $('.input_private_key');
   let prv_headers = tool.crypto.armor.headers('private_key');
   
-  Store.keys_get(url_params.account_email as string, url_params.longid as string || 'primary').then((keyinfo: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']).then(([keyinfo]) => {
   
     if(keyinfo === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');

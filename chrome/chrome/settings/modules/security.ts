@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   tool.ui.passphrase_toggle(['passphrase_entry']);
 
-  Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
 
     if(url_params.embedded) {
       $('.change_passhrase_container, .title_container').css('display', 'none');

@@ -20,7 +20,7 @@ tool.catch.try(() => {
   }
   tool.ui.passphrase_toggle(['passphrase']);
 
-  Store.keys_get(url_params.account_email as string).then((all_private_keys: KeyInfo[]) => {
+  Store.keys_get(url_params.account_email as string).then((all_private_keys) => {
     let selected_private_keys = all_private_keys;
     if(url_params.longids) {
       let longids = (url_params.longids as string).split(',');

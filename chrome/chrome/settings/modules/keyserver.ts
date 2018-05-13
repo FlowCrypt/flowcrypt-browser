@@ -120,7 +120,7 @@ tool.catch.try(() => {
   }
 
   function action_submit_or_request_attestation(email: string) {
-    Store.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
+    Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
       if(email === url_params.account_email) { // request attestation
         save_attest_request(url_params.account_email, 'CRYPTUP', function () {
           // @ts-ignore

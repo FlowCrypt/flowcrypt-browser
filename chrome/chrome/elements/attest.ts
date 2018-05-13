@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
   
-  Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
     Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(passphrase => {
       if(passphrase !== null) {
         process_attest(passphrase);

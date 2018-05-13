@@ -75,7 +75,7 @@ tool.catch.try(() => {
             },
             storage_get_armored_public_key: (sender_email: string) => {
               return catcher.Promise((resolve, reject) => {
-                Store.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
+                Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
                   if(primary_k) {
                     resolve(primary_k.public);
                   } else {
@@ -108,7 +108,7 @@ tool.catch.try(() => {
             }),
             storage_passphrase_get: () => {
               return catcher.Promise((resolve, reject) => {
-                Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+                Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
                   if(primary_ki === null) {
                     resolve(null); // flowcrypt just uninstalled or reset?
                   } else {

@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
-  Store.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
 
     let primary_pubkey_armored = primary_k.public;
 

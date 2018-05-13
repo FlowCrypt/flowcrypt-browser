@@ -39,7 +39,7 @@ tool.catch.try(() => {
         text.push('global_storage: ' + JSON.stringify(global_storage));
         text.push('account_storage: ' + JSON.stringify(account_storage));
         text.push('');
-        Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
+        Store.keys_get(account_email).then(keyinfos => {
           tool.each(keyinfos, function (i, keyinfo) {
             text.push('');
             text.push('key_longid: ' + keyinfo.longid);

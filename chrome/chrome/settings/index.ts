@@ -103,7 +103,7 @@ catcher.try(() => {
             if(url_params.advanced) {
               $("#settings").toggleClass("advanced");
             }
-            Store.keys_get(url_params.account_email as string).then((private_keys: KeyInfo[]) => {
+            Store.keys_get(url_params.account_email as string).then(private_keys => {
               if(private_keys.length > 4) {
                 $('.key_list').css('overflow-y', 'scroll');
               }

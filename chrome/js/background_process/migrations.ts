@@ -67,7 +67,7 @@ function legacy_local_storage_read(value: string) {
 }
 
 function account_update_status_keyserver(account_email: string) { // checks which emails were registered on Attester
-  Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
+  Store.keys_get(account_email).then(keyinfos => {
     let my_longids = keyinfos.map(ki => ki.longid);
     Store.get(account_email, ['addresses', 'addresses_keyserver']).then(function(storage: Dict<string[]>) {
       if(storage.addresses && storage.addresses.length) {
@@ -86,7 +86,7 @@ function account_update_status_keyserver(account_email: string) { // checks whic
 }
 
 function account_update_status_pks(account_email: string) { // checks if any new emails were registered on pks lately
-  Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
+  Store.keys_get(account_email).then(keyinfos => {
     let my_longids = keyinfos.map(ki => ki.longid);
     let hkp = new openpgp.HKP('https://pgp.key-server.io');
     Store.get(account_email, ['addresses', 'addresses_pks']).then(function(storage: Dict<string[]>) {

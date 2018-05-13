@@ -333,7 +333,7 @@ tool.catch.try(() => {
         } else if(result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else {
-          Store.keys_get(url_params.account_email as string, 'primary').then(primary_k => {
+          Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
             if(!result.counts.potentially_matching_keys && !primary_k) {
               render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
             } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {

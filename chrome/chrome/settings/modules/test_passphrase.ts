@@ -8,7 +8,7 @@ tool.catch.try(() => {
 
   tool.ui.passphrase_toggle(['password']);
 
-  Store.keys_get(url_params.account_email as string, 'primary').then((primary_k: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
 
     if(primary_k === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');

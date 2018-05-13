@@ -9,7 +9,7 @@ tool.catch.try(() => {
   $('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm', url_params));
   $('.action_view_update').attr('href', tool.env.url_create('my_key_update.htm', url_params));
 
-  Store.keys_get(url_params.account_email as string, url_params.longid as string || 'primary').then((keyinfo: KeyInfo) => {
+  Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']).then(([keyinfo]) => {
 
     if(keyinfo === null) {
       return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');

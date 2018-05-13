@@ -24,7 +24,7 @@ tool.catch.try(() => {
     } else if(url_params.action === 'passphrase_change_gmail_backup') {
       if(storage.setup_simple) {
         display_block('loading');
-        Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+        Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
           (email_provider === 'gmail' ? backup_key_on_gmail : backup_key_on_outlook)(url_params.account_email as string, primary_ki.private, function (success) {
             if(success) {
               $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
@@ -184,7 +184,7 @@ tool.catch.try(() => {
       let btn_text = $(self).text();
       $(self).html(tool.ui.spinner('white'));
       console.log('p1');
-      Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+      Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
         let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
         openpgp_key_encrypt(prv, new_passphrase);
         console.log('p2');
@@ -262,7 +262,7 @@ tool.catch.try(() => {
   
   $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    Store.keys_get(url_params.account_email as string, 'primary').then((primary_ki: KeyInfo) => {
+    Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
       if(primary_ki === null) {
         return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
       }

@@ -51,7 +51,7 @@ function stop_watching(account_email: string) {
 
 function check_email_for_attests_and_respond(account_email: string) {
   Store.get(account_email, ['attests_requested']).then((storage: Dict<string[]>) => {
-    Store.keys_get(account_email, 'primary').then((primary_ki: KeyInfo) => {
+    Store.keys_get(account_email, ['primary']).then(([primary_ki]) => {
       if(primary_ki !== null) {
         Store.passphrase_get(account_email, primary_ki.longid).then(passphrase => {
           if(passphrase !== null) {
@@ -80,7 +80,7 @@ function check_email_for_attests_and_respond(account_email: string) {
 
 function process_attest_packet_text(account_email: string, attest_packet_text: string, passphrase: string|null, callback: (email: string, ap: string, ok: boolean, msg: string) => void) {
   let attest = tool.api.attester.packet.parse(attest_packet_text);
-  Store.keys_get(account_email, 'primary').then((primary_ki: KeyInfo) => {
+  Store.keys_get(account_email, ['primary']).then(([primary_ki]) => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     is_already_attested(account_email, attest.content.attester, is_attested => {
       if (!is_attested) {

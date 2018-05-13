@@ -10,7 +10,7 @@ tool.catch.try(() => {
   
   $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
   
-  Store.keys_get(url_params.account_email as string).then((keyinfos: KeyInfo[]) => {
+  Store.keys_get(url_params.account_email as string).then(keyinfos => {
     let private_keys_long_ids = keyinfos.map(ki => ki.longid);
   
     tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys) {

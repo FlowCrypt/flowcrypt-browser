@@ -718,8 +718,8 @@ let tool = {
       }
       return tool.catch.Promise(function(resolve, reject) {
         let message_key_ids = (message as OpenpgpMessage).getEncryptionKeyIds();
-        Store.keys_get(account_email).then((private_keys: KeyInfo[]) => {
-          let local_key_ids = [].concat.apply([], private_keys.map((ki) => ki.public).map(tool._.crypto_key_ids));
+        Store.keys_get(account_email).then(private_keys => {
+          let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(tool._.crypto_key_ids));
           let diagnosis = { found_match: false, receivers: message_key_ids.length };
           for(let msg_k_id of message_key_ids) {
             for(let local_k_id of local_key_ids) {
@@ -1591,7 +1591,7 @@ let tool = {
     },
     common: {
       message: (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): SendableMessage => {
-        // let primary_pubkey = Store.keys_get(account_email, 'primary'); // todo - changing to async - add back later
+        // let [primary_pubkey] = await Store.keys_get(account_email, ['primary']); // todo - changing to async - add back later
         // headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
         //   OpenPGP: 'id=' + primary_pubkey.fingerprint,
         // } : {},
@@ -1929,7 +1929,7 @@ let tool = {
       diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
         let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
         Store.get(account_email, ['addresses']).then(function (s: StorageResult) {
-          Store.keys_get(account_email).then((stored_keys: KeyInfo[]) => {
+          Store.keys_get(account_email).then(stored_keys => {
             let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
             tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then(function(pubkey_search_results) {
               tool.each((pubkey_search_results as any).results, function (i, pubkey_search_result) { // todo:ts any
@@ -2507,7 +2507,7 @@ let tool = {
       } as InternalSortedKeysForDecrypt;
       keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       keys.signed_by = (message.getSigningKeyIds() || []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
-      Store.keys_get(account_email).then((private_keys_all: KeyInfo[]) => {
+      Store.keys_get(account_email).then(private_keys_all => {
         keys.potentially_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
         if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
           keys.potentially_matching = private_keys_all;
