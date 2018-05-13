@@ -8,8 +8,7 @@ tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
   
-  Store.subscription((subscription_level, subscription_expire, subscription_active, subscription_method) => {
-    let subscription = { level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method };
+  Store.subscription().then((subscription) => {
   
     type ComposeStorage = {
       google_token_scopes: string[],
@@ -23,7 +22,7 @@ tool.catch.try(() => {
     }
   
     const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-    Store.get(url_params.account_email as string, storage_keys, (storage: ComposeStorage) => {
+    Store.get(url_params.account_email as string, storage_keys).then((storage: ComposeStorage) => {
   
       recover_missing_url_params(() => {
   
@@ -39,7 +38,7 @@ tool.catch.try(() => {
             can_read_email: () => can_read_email,
             does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
               their_email = tool.str.parse_email(their_email).email;
-              Store.get(url_params.account_email as string, ['pubkey_sent_to'], function (pubkey_sent_to_storage: {pubkey_sent_to: string[]}) {
+              Store.get(url_params.account_email as string, ['pubkey_sent_to']).then(function (pubkey_sent_to_storage: {pubkey_sent_to: string[]}) {
                 if (tool.value(their_email).in(pubkey_sent_to_storage.pubkey_sent_to)) {
                   callback(true);
                 } else if (!can_read_email) {
@@ -49,9 +48,7 @@ tool.catch.try(() => {
                   const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
                   tool.api.gmail.message_list(url_params.account_email as string, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response: any) {
                     if (success && response.messages) {
-                      Store.set(url_params.account_email as string, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email),}, function () {
-                        callback(true);
-                      });
+                      Store.set(url_params.account_email as string, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
                     } else {
                       callback(false);
                     }
@@ -70,12 +67,11 @@ tool.catch.try(() => {
             storage_get_hide_message_password: () => !!storage.hide_message_password,
             storage_get_subscription_info: (cb: (si: SubscriptionInfo) => void) => { // returns cached result, callbacks with fresh result
               if(typeof cb === 'function') {
-                Store.subscription(function(subscription_level, subscription_expire, subscription_active, subscription_method) {
-                  subscription = {level: subscription_level, expire: subscription_expire, active: subscription_active, method: subscription_method};
+                Store.subscription().then(subscription => {
                   cb(subscription);
                 });
               }
-              return subscription;
+              return subscription; // todo - deprecate
             },
             storage_get_armored_public_key: (sender_email: string) => {
               return catcher.Promise((resolve, reject) => {
@@ -89,7 +85,7 @@ tool.catch.try(() => {
               });
             },
             storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => catcher.Promise((resolve, reject) => {
-              Store.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose'], function (draft_storage: {drafts_reply: Dict<string>, drafts_compose: Dict<string>}) {
+              Store.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(function (draft_storage: {drafts_reply: Dict<string>, drafts_compose: Dict<string>}) {
                 let drafts: Dict<string|{recipients: string[], subject: string, date: number}>;
                 if (thread_id) { // it's a reply
                   drafts = draft_storage.drafts_reply || {};
@@ -98,9 +94,7 @@ tool.catch.try(() => {
                   } else {
                     delete drafts[thread_id];
                   }
-                  Store.set(url_params.account_email as string, {drafts_reply: drafts as Serializable}, () => {
-                    resolve();
-                  });
+                  Store.set(url_params.account_email as string, {drafts_reply: drafts as Serializable}).then(resolve);
                 } else { // it's a new message
                   drafts = draft_storage.drafts_compose || {};
                   if (store_if_true) {
@@ -108,9 +102,7 @@ tool.catch.try(() => {
                   } else {
                     delete drafts[draft_id];
                   }
-                  Store.set(url_params.account_email as string, {drafts_compose: drafts as Serializable}, () => {
-                    resolve();
-                  });
+                  Store.set(url_params.account_email as string, {drafts_compose: drafts as Serializable}).then(resolve);
                 }
               });
             }),
@@ -126,14 +118,13 @@ tool.catch.try(() => {
               });
             },
             storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => {
-  
-              Store.get(null, ['admin_codes'], (admin_code_storage: {admin_codes: Dict<{date: number, codes: string[]}>}) => {
+              Store.get(null, ['admin_codes']).then((admin_code_storage: {admin_codes: Dict<{date: number, codes: string[]}>}) => {
                 admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
                 admin_code_storage.admin_codes[short_id] = {
                   date: Date.now(),
                   codes: [message_admin_code].concat(attachment_admin_codes || []),
                 };
-                Store.set(null, admin_code_storage as any as Dict<Serializable>, callback);
+                Store.set(null, admin_code_storage as any as Dict<Serializable>).then(callback);
               });
             },
             storage_contact_get: (email: string) => catcher.Promise((resolve, reject) => Store.db_contact_get(null, email, resolve)),

@@ -2,6 +2,26 @@
 
 'use strict';
 
+class Subscription implements SubscriptionInfo {
+  active: boolean|null = null;
+  method: PaymentMethod|null = null;
+  level: ProductLevel|null = null;
+  expire: string|null = null;
+
+  constructor(stored_subscription: {active: boolean, method: PaymentMethod, level: ProductLevel, expire: string}|null) {
+    if(stored_subscription) {
+      this.active = stored_subscription.active;
+      this.method = stored_subscription.method;
+      this.level = stored_subscription.level;
+      this.expire = stored_subscription.expire;  
+    }
+  }
+
+  expired() {
+    return this.level && this.expire && !this.active;
+  }
+}
+
 class Store {
 
   private static global_storage_scope = 'global';
@@ -11,11 +31,11 @@ class Store {
     return window.location && tool.value('_generated_background_page.html').in(window.location.href);
   }
 
-  static key(account_key_or_list: string|string[], key: string|string[]) {
+  static index(account_key_or_list: string|string[], key: string|string[]) {
     if(Array.isArray(account_key_or_list)) {
       let all_results: string[] = [];
       for(let account_key of account_key_or_list) {
-        all_results = all_results.concat(Store.key(account_key, key));
+        all_results = all_results.concat(Store.index(account_key, key));
       }
       return all_results;
     } else {
@@ -28,13 +48,11 @@ class Store {
     }
   }
 
-  // todo: how does this deal with null?
-  private static account_storage_object_keys_to_original(account_or_accounts: string|string[]|null, storage_object: Dict<string>) {
+  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: Dict<string>) {
     if(typeof account_or_accounts === 'string') {
       let fixed_keys_object: Dict<string> = {};
       tool.each(storage_object, (k: string, v) => {
-        // @ts-ignore
-        let fixed_key = k.replace(Store.key(account_or_accounts, ''), '');
+        let fixed_key = k.replace(Store.index(account_or_accounts as string, '') as string, ''); // checked it's a string above
         if(fixed_key !== k) {
           fixed_keys_object[fixed_key] = v;
         }
@@ -42,7 +60,7 @@ class Store {
       return fixed_keys_object;
     } else {
       let results_by_account: Dict<string[]> = {};
-      // @ts-ignore - look into this later
+      
       for(let account of account_or_accounts) {
         results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as any as string[];
       }
@@ -50,91 +68,85 @@ class Store {
     }
   }
 
-  static session_get(account_email: string, key: string) {
-    return new Promise((resolve: Callback, reject: Callback) => {
+  static session_get(account_email: string, key: string): Promise<string|null> {
+    return new Promise((resolve) => {
       if(Store.env_is_background_script()) {
-        resolve(window.sessionStorage[Store.key(account_email, key) as string]);
+        resolve(window.sessionStorage[Store.index(account_email, key) as string]);
       } else {
         tool.browser.message.send(null, 'session_get', {account_email: account_email, key: key}, resolve);
       }
     });
   }
 
-  static session_set(account_email: string, key: string, value: string|undefined) {
-    return new Promise((resolve: Callback, reject: Callback) => {
-      if(Store.env_is_background_script()) {
-        if(typeof value !== 'undefined') {
-          sessionStorage[Store.key(account_email, key) as string] = String(value);
-        } else {
-          sessionStorage.removeItem(Store.key(account_email, key) as string);
-        }
-        resolve();
+  private static relay_to_background(channel: string, message:Dict<any>|null=null): Promise<any> {
+    return new Promise((resolve) => {
+      tool.browser.message.send(null, channel, message, resolve);
+    });
+  }
+
+  static async session_set(account_email: string, key: string, value: string|undefined): Promise<void> {
+    if(Store.env_is_background_script()) {
+      if(typeof value !== 'undefined') {
+        sessionStorage[Store.index(account_email, key) as string] = String(value);
       } else {
-        tool.browser.message.send(null, 'session_set', {account_email: account_email, key: key, value: value}, resolve);
+        sessionStorage.removeItem(Store.index(account_email, key) as string);
       }
-    });
+    } else {
+      await Store.relay_to_background('session_set', {account_email: account_email, key: key, value: value});
+    }
   }
 
-  static passphrase_save(storage_type: StorageType, account_email: string, longid: string, passphrase: string|undefined) {
-    return new Promise((resolve: Callback, reject: Callback) => {
-      let storage_k = 'passphrase_' + longid;
-      if (storage_type === 'session') {
-        Store.session_set(account_email, storage_k, passphrase).then(resolve, reject);
+  static async passphrase_save(storage_type: StorageType, account_email: string, longid: string, passphrase: string|undefined) {
+    let storage_k = 'passphrase_' + longid;
+    if (storage_type === 'session') {
+      await Store.session_set(account_email, storage_k, passphrase);
+    } else {
+      if(typeof passphrase === 'undefined') {
+        await Store.remove(account_email, [storage_k]);
       } else {
-        if(typeof passphrase === 'undefined') {
-          Store.remove(account_email, [storage_k], resolve);
-        } else {
-          let to_save: Dict<string> = {};
-          to_save[storage_k] = passphrase;
-          Store.set(account_email, to_save, resolve);
-        }
+        let to_save: Dict<string> = {};
+        to_save[storage_k] = passphrase;
+        await Store.set(account_email, to_save);
       }
-    });
+    }
   }
 
-  static passphrase_get(account_email: string, longid: string, ignore_session:boolean=false): Promise<string|null> {
-    return new Promise((resolve: (passphrase: string|null) => void, reject: Callback) => {
-      let storage_k = 'passphrase_' + longid;
-      Store.get(account_email, [storage_k], (storage: Storage) => {
-        if(typeof storage[storage_k] === 'string') {
-          resolve(storage[storage_k]);
-        } else {
-          Store.session_get(account_email, storage_k).then(from_session => {
-            resolve(from_session && !ignore_session ? from_session : null);
-          });
-        }
-      });
-    });
+  static async passphrase_get(account_email: string, longid: string, ignore_session:boolean=false): Promise<string|null> {
+    let storage_k = 'passphrase_' + longid;
+    let storage = await Store.get(account_email, [storage_k]);
+    if(typeof storage[storage_k] === 'string') {
+      return storage[storage_k]
+    } else {
+      let from_session = await Store.session_get(account_email, storage_k);
+      return from_session && !ignore_session ? from_session : null;
+    }
   }
 
-  static keys_get(account_email: string, longid:string|null=null) {
-    return new Promise((resolve: Callback, reject: Callback) => {
-      Store.get(account_email, ['keys'], (storage: {keys: KeyInfo[]|undefined}) => {
-        let keys = storage.keys || [];
-        if(typeof longid !== 'undefined' && longid !== null) { // looking for a specific key(s)
-          let found: KeyInfo|KeyInfo[]|null;
-          if(Array.isArray(longid)) { // looking for an array of keys
-            found = [];
-            for(let keyinfo of keys) {
-              if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
-                found.push(keyinfo);
-              }
-            }
-          } else { // looking for a single key
-            found = null;
-            for(let keyinfo of keys) {
-              if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
-                found = keyinfo;
-                break;
-              }
-            }
+  static async keys_get(account_email: string, longid:string|null=null): Promise<KeyInfo|KeyInfo[]|null> {
+    let storage: {keys: KeyInfo[]|undefined} = await Store.get(account_email, ['keys']);
+    let keys = storage.keys || [];
+    if(typeof longid !== 'undefined' && longid !== null) { // looking for a specific key(s)
+      let found: KeyInfo|KeyInfo[]|null;
+      if(Array.isArray(longid)) { // looking for an array of keys
+        found = [];
+        for(let keyinfo of keys) {
+          if(tool.value(keyinfo.longid).in(longid) || (tool.value('primary').in(longid) && keyinfo.primary)) {
+            found.push(keyinfo);
           }
-          resolve(found);
-        } else { // return all keys
-          resolve(keys);
         }
-      });
-    });
+      } else { // looking for a single key
+        found = null;
+        for(let keyinfo of keys) {
+          if(keyinfo.longid === longid || (longid === 'primary' && keyinfo.primary)) {
+            found = keyinfo;
+            break;
+          }
+        }
+      }
+      return found;
+    } else { // return all keys
+      return keys
+    }
   }
 
   static keys_object(armored_prv: string, primary=false) {
@@ -149,130 +161,94 @@ class Store {
     };
   }
 
-  static keys_add(account_email: string, new_key_armored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
-    return new Promise((resolve: Callback, reject: Callback) => {
-      Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
-        let updated = false;
-        let new_key_longid = tool.crypto.key.longid(new_key_armored);
-        if (new_key_longid) {
-          for(let i in keyinfos) {
-            if (new_key_longid === keyinfos[i].longid) { // replacing a key
-              keyinfos[i] = Store.keys_object(new_key_armored, keyinfos[i].primary) as KeyInfo;
-              updated = true;
-            }
-          }
-          if (!updated) {
-            keyinfos.push(Store.keys_object(new_key_armored, keyinfos.length === 0));
-          }
-          // @ts-ignore - look into this later
-          Store.set(account_email, {keys: keyinfos}, resolve);
-        } else {
-          resolve();
+  static async keys_add(account_email: string, new_key_armored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+    let keyinfos = await Store.keys_get(account_email) as KeyInfo[];
+    let updated = false;
+    let new_key_longid = tool.crypto.key.longid(new_key_armored);
+    if (new_key_longid) {
+      for(let i in keyinfos) {
+        if (new_key_longid === keyinfos[i].longid) { // replacing a key
+          keyinfos[i] = Store.keys_object(new_key_armored, keyinfos[i].primary) as KeyInfo;
+          updated = true;
         }
+      }
+      if (!updated) {
+        keyinfos.push(Store.keys_object(new_key_armored, keyinfos.length === 0));
+      }
+      await Store.set(account_email, {keys: keyinfos});
+    }
+  }
+
+  static async keys_remove(account_email: string, remove_longid: string): Promise<void> {
+    let private_keys = await Store.keys_get(account_email) as KeyInfo[];
+    let filtered_private_keys = private_keys.map((ki: KeyInfo) => ki.longid === remove_longid ? null : ki).filter((ki: KeyInfo|null) => ki !== null);
+    await Store.set(account_email, {keys: filtered_private_keys as any as Serializable[]});
+  }
+
+  static set(account_email: string|null, values: Dict<Serializable[]|Serializable|KeyInfo[]>): Promise<void> {
+    let _account = Store._global_storage_index_if_null(account_email);
+    let storage_update: Dict<any> = {};
+    tool.each(values, (key: string, value) => {
+      storage_update[Store.index(_account, key) as string] = value;
+    });
+    return new Promise(resolve => chrome.storage.local.set(storage_update, () => resolve()));
+  }
+
+  static _global_storage_index_if_null(account: string[]|string|null): string[]|string {
+    return (account === null) ? Store.global_storage_scope : account;
+  }
+
+  static async get(accounts: string[]|string|null, keys: string[]): Promise<StorageResult> {
+    let _accounts = Store._global_storage_index_if_null(accounts);
+    return new Promise(resolve => {
+      chrome.storage.local.get(Store.index(_accounts, keys), storage_object => {
+        resolve(Store.account_storage_object_keys_to_original(_accounts, storage_object));
       });
     });
   }
 
-  static keys_remove(account_email: string, remove_longid: string) {
-    return new Promise((resolve: Callback, reject: Callback) => {
-      Store.keys_get(account_email).then(private_keys => {
-        let filtered_private_keys: KeyInfo[] = [];
-        tool.each(private_keys, (i, keyinfo) => {
-          if(keyinfo.longid !== remove_longid) {
-            filtered_private_keys.push(keyinfo);
-          }
-        });
-        Store.set(account_email, {keys: filtered_private_keys as any as Serializable[]}, resolve);
-      });
-    });
+  static async remove(account_email: string|null, keys: string[]) {
+    let _account = Store._global_storage_index_if_null(account_email);
+    return new Promise(resolve => chrome.storage.local.remove(Store.index(_account, keys), () => resolve()));
   }
 
-  static set(account_email: string|null, values: Dict<Serializable[]|Serializable>, callback?: VoidCallback) {
-    if(!account_email) {
-      account_email = Store.global_storage_scope;
-    }
-    let storage_update = {};
-    tool.each(values, (key, value) => {
-      // @ts-ignore
-      storage_update[Store.key(account_email, key)] = value;
-    });
-    chrome.storage.local.set(storage_update, () => {
-      catcher.try(() => {
-        if(typeof callback === 'function') {
-          callback();
+  static async account_emails_get(): Promise<string[]> {
+    let storage = await Store.get(null, ['account_emails']);
+    let account_emails: string[] = [];
+    if(typeof storage.account_emails !== 'undefined') {
+      for(let account_email of JSON.parse(storage.account_emails)) {
+        if(!tool.value(account_email.toLowerCase()).in(account_emails)) {
+          account_emails.push(account_email.toLowerCase());
         }
-      })();
-    });
-  }
-
-  static get(account_or_accounts: string|string[]|null, keys: string[], callback: Callback) {
-    if(!account_or_accounts) {
-      account_or_accounts = Store.global_storage_scope;
+      }
     }
-    chrome.storage.local.get(Store.key(account_or_accounts, keys), storage_object => {
-      catcher.try(() => {
-        callback(Store.account_storage_object_keys_to_original(account_or_accounts, storage_object));
-      })();
-    });
+    return account_emails;
   }
 
-  static remove(account_email: string|null, key_or_keys: string[], callback?: VoidCallback) {
+  static async account_emails_add(account_email: string): Promise<void> { //todo: concurrency issues with another tab loaded at the same time
     if(!account_email) {
-      account_email = Store.global_storage_scope;
+      catcher.report('attempting to save empty account_email: ' + account_email);
     }
-    chrome.storage.local.remove(Store.key(account_email, key_or_keys), () => {
-      catcher.try(() => {
-        if(typeof callback !== 'undefined') {
-          callback();
-        }
-      })();
-    });
+    let account_emails = await Store.account_emails_get();
+    if(!tool.value(account_email).in(account_emails) && account_email) {
+      account_emails.push(account_email);
+      await Store.set(null, { account_emails: JSON.stringify(account_emails) });
+      await Store.relay_to_background('update_uninstall_url');
+    }
   }
 
-  static account_emails_get(callback: (emails: string[]) => void) {
-    Store.get(null, ['account_emails'], storage => {
-      let account_emails: string[] = [];
-      if(typeof storage.account_emails !== 'undefined') {
-        tool.each(JSON.parse(storage.account_emails), function (i, account_email) {
-          if(!tool.value(account_email.toLowerCase()).in(account_emails)) {
-            account_emails.push(account_email.toLowerCase());
-          }
-        });
-      }
-      callback(account_emails);
-    });
+  static async auth_info(): Promise<StoredAuthInfo> { // todo - changed!
+    let storage = await Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified']);
+    return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null, verified: storage.cryptup_account_verified || false};
   }
 
-  static account_emails_add(account_email: string, callback?: VoidCallback) { //todo: concurrency issues with another tab loaded at the same time
-    Store.account_emails_get(function (account_emails) {
-      if(!account_email) {
-        catcher.report('attempting to save empty account_email: ' + account_email);
-      }
-      if(!tool.value(account_email).in(account_emails) && account_email) {
-        account_emails.push(account_email);
-        Store.set(null, { account_emails: JSON.stringify(account_emails) }, () => {
-          tool.browser.message.send(null, 'update_uninstall_url', null, callback);
-        });
-      } else if(typeof callback !== 'undefined') {
-        callback();
-      }
-    });
-  }
-
-  static auth_info(callback: (registered_email: string|null, registered_uuid: string|null, already_verified: boolean) => void) {
-    Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified'], storage => {
-      callback(storage.cryptup_account_email, storage.cryptup_account_uuid, storage.cryptup_account_verified);
-    });
-  }
-
-  static subscription(callback: (stored_level: 'pro'|null, stored_expire:string|null, stored_active: boolean, stored_method: 'stripe'|'trial'|'group'|null) => void) {
-    Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription'], s => {
-      if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
-        callback(s.cryptup_account_subscription.level, s.cryptup_account_subscription.expire, !s.cryptup_account_subscription.expired, s.cryptup_account_subscription.method || 'trial');
-      } else {
-        callback(null, null, false, null);
-      }
-    });
+  static async subscription(): Promise<Subscription> { // todo - changed!
+    let s = await Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription']);
+    if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
+      return new Subscription(s.cryptup_account_subscription);
+    } else {
+      return new Subscription(null);
+    }
   }
 
   /* db */
@@ -335,18 +311,18 @@ class Store {
     parts = parts.concat(email.split(/[^a-z0-9]/));
     parts = parts.concat(name.split(/[^a-z0-9]/));
     let index: string[] = [];
-    tool.each(parts, (i, part) => {
+    for(let part of parts) {
       if(part) {
         let substring = '';
-        tool.each(part.split(''), (i, letter) => {
+        for(let letter of part.split('')) {
           substring += letter;
           let normalized = Store.normalize_string(substring);
           if(!tool.value(normalized).in(index)) {
             index.push(Store.db_index(has_pgp, normalized));
           }
-        });
+        }
       }
-    });
+    }
     return index;
   }
 
@@ -471,11 +447,11 @@ class Store {
     if(db === null) { // relay op through background process
       tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, callback);
     } else {
-      tool.each(query, (key, value) => {
+      for(let key of Object.keys(query)) {
         if(!tool.value(key).in(Store.db_query_keys)) {
           throw new Error('db_contact_search: unknown key: ' + key);
         }
-      });
+      }
       let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
       let search: IDBRequest|undefined = undefined;
       if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value

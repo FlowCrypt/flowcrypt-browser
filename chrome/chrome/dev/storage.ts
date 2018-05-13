@@ -16,7 +16,7 @@ tool.catch.try(() => {
   }
   
   if(controls) {
-    Store.account_emails_get(function (account_emails) {
+    Store.account_emails_get().then((account_emails) => {
       $('.emails').append('<a href="' + tool.env.url_create('storage.htm', {controls: url_params.controls || ''}) + '">all</a>');
       $('.emails').append('<a href="' + tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}) + '">global</a>');
       $('.namespace').append('<option value="global">global</option>');
@@ -42,7 +42,7 @@ tool.catch.try(() => {
   chrome.storage.local.get(storage => {
     let real_filter: string;
     if(url_params.filter) {
-      real_filter = Store.key(url_params.filter as string, url_params.keys as string || '') as string;
+      real_filter = Store.index(url_params.filter as string, url_params.keys as string || '') as string;
     } else {
       real_filter = '';
     }
@@ -68,9 +68,7 @@ tool.catch.try(() => {
           var storage_update: Dict<Serializable> = {};
           storage_update[$('.key').val() as string] = JSON.parse($('.value').val() as string); // it's a text input
           var account_email = $('.namespace').val() === 'global' ? null : decodeURIComponent($('.namespace').val() as string); // it's a text input
-          Store.set(account_email, storage_update, function () {
-            window.location.reload();
-          });
+          Store.set(account_email, storage_update).then(() => window.location.reload());
         }
       } catch(e) {
         $('.error').text(e.name + ':' + e.message);

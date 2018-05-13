@@ -176,6 +176,8 @@ interface MimeContent {
     text: string|undefined,
 }
 
+type StoredAuthInfo = {account_email: string|null, uuid: string|null, verified: boolean|null};
+
 interface MimeAsHeadersAndBlocks {
     headers: FlatHeaders,
     blocks: MessageBlock[],

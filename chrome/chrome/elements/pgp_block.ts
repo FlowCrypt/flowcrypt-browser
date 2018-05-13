@@ -226,7 +226,7 @@ tool.catch.try(() => {
   }
   
   function recover_stored_admin_codes() {
-    Store.get(null, ['admin_codes'], storage => {
+    Store.get(null, ['admin_codes']).then(storage => {
       if(url_params.short && storage.admin_codes && storage.admin_codes[url_params.short as string] && storage.admin_codes[url_params.short as string].codes) {
         admin_codes = storage.admin_codes[url_params.short as string].codes;
       }
@@ -235,12 +235,12 @@ tool.catch.try(() => {
   
   function render_message_expiration_renew_options() {
     let parent = $(this).parent();
-    Store.subscription(function (level, expire, active, method) {
-      if(level && active) {
+    Store.subscription().then(subscription => {
+      if(subscription.level && subscription.active) {
         parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
         $('.do_extend').click(tool.ui.event.prevent(tool.ui.event.double(), handle_extend_message_expiration_clicked));
       } else {
-        if (level && !active && method === 'trial') {
+        if (subscription.level && !subscription.active && subscription.method === 'trial') {
           alert('Your trial has ended. Please renew your subscription to proceed.');
         } else {
           alert('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
@@ -512,7 +512,7 @@ tool.catch.try(() => {
     }
   }
   
-  Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes'], storage => {
+  Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes']).then(storage => {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
     if(storage.setup_done) {
       initialize();

@@ -16,7 +16,7 @@ tool.catch.try(() => {
 
   $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
-  Store.get(url_params.account_email as string, ['attests_processed', 'attests_requested', 'addresses'], storage => {
+  Store.get(url_params.account_email as string, ['attests_processed', 'attests_requested', 'addresses']).then(storage => {
     tool.api.attester.diagnose_keyserver_pubkeys(url_params.account_email as string, function (diagnosis) {
       if(diagnosis) {
         $('.summary').html('');
@@ -92,8 +92,8 @@ tool.catch.try(() => {
       action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-      Store.get(url_params.account_email as string, ['addresses'], storage => {
-        Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}, function () {
+      Store.get(url_params.account_email as string, ['addresses']).then(storage => {
+        Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}).then(function () {
           window.location.reload();
         });
       });
@@ -114,7 +114,7 @@ tool.catch.try(() => {
     $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
       $(self).html(tool.ui.spinner('green'));
       fetch_account_aliases_from_gmail(url_params.account_email as string, function(addresses) {
-        Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email)) }, () => window.location.reload());
+        Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email)) }).then(() => window.location.reload());
       });
     }));
   }

@@ -38,7 +38,7 @@ tool.catch.try(() => {
   });
   
   // show alternative account addresses in setup form + save them for later
-  Store.get(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider'], storage => {
+  Store.get(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider']).then(storage => {
     if(storage.email_provider === 'gmail') {
       if(!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         $('.auth_denied_warning').css('display', 'block');
@@ -64,7 +64,7 @@ tool.catch.try(() => {
   
   function save_and_fill_submit_option(addresses: string[]) {
     all_addresses = tool.arr.unique(addresses.concat(url_params.account_email as string));
-    Store.set(url_params.account_email as string, { addresses: all_addresses }, function () {
+    Store.set(url_params.account_email as string, { addresses: all_addresses }).then(function () {
       show_submit_all_addresses_option(all_addresses);
     });
   }
@@ -98,7 +98,7 @@ tool.catch.try(() => {
     if(!url_params.account_email) {
       window.location.href = 'index.htm';
     }
-    Store.get(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth'], storage => {
+    Store.get(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth']).then(storage => {
       email_provider = storage.email_provider as EmailProvider || 'gmail';
       if(storage.setup_done) {
         if(url_params.action !== 'add_key') {
@@ -161,7 +161,7 @@ tool.catch.try(() => {
   
   // options: {submit_main, submit_all}
   function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: Options, callback: Callback) {
-    Store.get(account_email, ['addresses'], (storage: {addresses: string[]|undefined}) => {
+    Store.get(account_email, ['addresses']).then((storage: {addresses: string[]|undefined}) => {
       if(options.submit_main) {
         // @ts-ignore
         tool.api.attester.test_welcome(account_email, armored_pubkey).validate((r: {sent: boolean}) => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
@@ -216,7 +216,7 @@ tool.catch.try(() => {
         key_backup_prompt: options.key_backup_prompt,
         is_newly_created_key: options.is_newly_created_key === true,
       };
-      Store.set(account_email, storage, function () {
+      Store.set(account_email, storage).then(function () {
         render_setup_done(account_email, options.key_backup_prompt);
       });
     });
@@ -271,7 +271,7 @@ tool.catch.try(() => {
           result.gender = response.gender;
           result.locale = response.locale;
           result.picture = response.picture;
-          Store.set(account_email, result, function () {
+          Store.set(account_email, result).then(function () {
             callback(result);
           });
         } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
@@ -339,7 +339,7 @@ tool.catch.try(() => {
         };
         recovered_key_matching_passphrases.push(passphrase);
         save_keys(url_params.account_email as string, matching_keys, options, function () {
-          Store.get(url_params.account_email as string, ['setup_done'], storage => {
+          Store.get(url_params.account_email as string, ['setup_done']).then(storage => {
             if(!storage.setup_done) { // normal situation
               finalize_setup(url_params.account_email as string, matching_keys[0].toPublic().armor(), options);
             } else { // setup was finished before, just added more keys now

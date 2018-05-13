@@ -15,8 +15,8 @@ tool.catch.try(() => {
       $('.line').css('padding', '7px 0');
     }
 
-    Store.subscription(function (level, expire, active, method) {
-      if(active) {
+    Store.subscription().then(subscription => {
+      if(subscription.active) {
         $('.select_loader_container').html(tool.ui.spinner('green'));
         tool.api.cryptup.account_update().then(response => {
           $('.select_loader_container').html('');
@@ -92,12 +92,10 @@ tool.catch.try(() => {
       window.location.reload();
     });
 
-    Store.get(url_params.account_email as string, ['hide_message_password'], storage => {
+    Store.get(url_params.account_email as string, ['hide_message_password']).then(storage => {
       $('#hide_message_password').prop('checked', storage.hide_message_password === true);
       $('#hide_message_password').change(function () {
-        Store.set(url_params.account_email as string, {hide_message_password: $(this).is(':checked')}, function () {
-          window.location.reload();
-        });
+        Store.set(url_params.account_email as string, {hide_message_password: $(this).is(':checked')}).then(() => window.location.reload());
       });
     });
 

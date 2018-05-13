@@ -9,7 +9,7 @@ tool.catch.try(() => {
   
   tool.ui.passphrase_toggle(['password', 'password2']);
   
-  Store.get(url_params.account_email as string, ['setup_simple', 'email_provider'], storage => {
+  Store.get(url_params.account_email as string, ['setup_simple', 'email_provider']).then(storage => {
     email_provider = storage.email_provider || 'gmail';
   
     if(url_params.action === 'setup') {
@@ -64,7 +64,7 @@ tool.catch.try(() => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     display_block('loading');
-    Store.get(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth'], storage => {
+    Store.get(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']).then(storage => {
       if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
         tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys: OpenpgpKey[]) {
           if(success) {
@@ -251,7 +251,7 @@ tool.catch.try(() => {
   }
   
   function write_backup_done_and_render(prompt: number|false, method: KeyBackupMethod) {
-    Store.set(url_params.account_email as string, { key_backup_prompt: prompt, key_backup_method: method }, function () {
+    Store.set(url_params.account_email as string, { key_backup_prompt: prompt, key_backup_method: method }).then(function () {
       if(url_params.action === 'setup') {
         window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
       } else {
@@ -304,7 +304,7 @@ tool.catch.try(() => {
   
   $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     if(url_params.action === 'setup') {
-      Store.set(url_params.account_email as string, { key_backup_prompt: false }, function () {
+      Store.set(url_params.account_email as string, { key_backup_prompt: false }).then(function () {
         window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
       });
     } else {

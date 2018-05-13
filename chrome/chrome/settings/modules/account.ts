@@ -9,18 +9,18 @@ tool.catch.try(() => {
   $('.loading').html(tool.ui.spinner('green', 'large_spinner'));
   
   tool.api.cryptup.account_check_sync(function () {
-    Store.auth_info(function (email, uuid, verified){
-      Store.subscription(function(level, expire, active, method) {
+    Store.auth_info().then((auth_info: StoredAuthInfo) => {
+      Store.subscription().then(subscription => {
         // @ts-ignore - todo - this should be tested & potentially fixed
-        $('.email').text(email);
+        $('.email').text(auth_info.account_email);
         $('.level').text('advanced');
-        $('.expire').text(expire ? expire.split(' ')[0] : 'lifetime');
-        if(method === 'stripe') {
+        $('.expire').text(subscription.expire ? subscription.expire.split(' ')[0] : 'lifetime');
+        if(subscription.method === 'stripe') {
           $('.line.cancel').css('display', 'block');
           $('.expire_label').text('Renews on');
           $('.price').text('$5 monthly');
           $('.method').text('Credit Card (processed by Stripe Payments)');
-        } else if(method === 'group') {
+        } else if(subscription.method === 'group') {
           $('.price').text('Group billing');
           $('.hide_if_group_billing').css('display', 'none');
         } else {
@@ -31,7 +31,7 @@ tool.catch.try(() => {
             show_settings_page('/chrome/elements/subscribe.htm', '&placement=settings');
           })
         }
-        if(method !== 'group') {
+        if(subscription.method !== 'group') {
           $('.get_group_billing').css('display', 'block');
         }
         $('.loading').text(' ');

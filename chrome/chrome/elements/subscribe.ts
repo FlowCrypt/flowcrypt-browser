@@ -50,34 +50,34 @@ tool.catch.try(() => {
   }));
   
   tool.api.cryptup.account_check_sync(function() {
-    Store.get(url_params.account_email as string, ['google_token_scopes'], storage => {
+    Store.get(url_params.account_email as string, ['google_token_scopes']).then(storage => {
       (window as FlowCryptWindow).flowcrypt_account.config({
         render_status: render_status,
         CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read'),
       });
-      Store.subscription(function (level, expire, active, method) {
-        if(!active) {
-          if(level && expire) {
-            if(method === 'trial') {
-              $('.status').text('Your trial has expired on ' + tool.time.expiration_format(expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
-            } else if(method === 'group') {
+      Store.subscription().then(subscription => {
+        if(!subscription.active) {
+          if(subscription.level && subscription.expire) {
+            if(subscription.method === 'trial') {
+              $('.status').text('Your trial has expired on ' + tool.time.expiration_format(subscription.expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
+            } else if(subscription.method === 'group') {
               $('.status').text('Your group licensing is due for renewal. Please check with company leadership.');
             } else {
-              $('.status').text('Your subscription has ended on ' + expire + '. Renew now to continue using FlowCrypt Advanced.');
+              $('.status').text('Your subscription has ended on ' + subscription.expire + '. Renew now to continue using FlowCrypt Advanced.');
             }
             $('.action_get_trial').css('display', 'none');
             $('.action_show_stripe').removeClass('gray').addClass('green');
           } else {
             $('.status').text('After the trial period, your account will automatically switch back to Free Forever.');
           }
-        } else if(active && method === 'trial') {
+        } else if(subscription.active && subscription.method === 'trial') {
           $('.status').html('After the trial period, your account will automatically switch back to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
         } else {
           // todo - upgrade to business
         }
-        if(active) {
+        if(subscription.active) {
           if(url_params.source !== 'auth_error') {
-            if(method === 'trial') {
+            if(subscription.method === 'trial') {
               $('.list_table').css('display', 'none');
               $('.action_get_trial').css('display', 'none');
               $('.action_show_stripe').removeClass('gray').addClass('green');

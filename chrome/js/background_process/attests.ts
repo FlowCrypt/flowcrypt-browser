@@ -50,12 +50,12 @@ function stop_watching(account_email: string) {
 }
 
 function check_email_for_attests_and_respond(account_email: string) {
-  Store.get(account_email, ['attests_requested'], (S: Dict<string[]>) => {
+  Store.get(account_email, ['attests_requested']).then((storage: Dict<string[]>) => {
     Store.keys_get(account_email, 'primary').then((primary_ki: KeyInfo) => {
       if(primary_ki !== null) {
         Store.passphrase_get(account_email, primary_ki.longid).then(passphrase => {
           if(passphrase !== null) {
-            if(S.attests_requested && S.attests_requested.length && attest_ts_can_read_emails[account_email]) {
+            if(storage.attests_requested && storage.attests_requested.length && attest_ts_can_read_emails[account_email]) {
               fetch_attest_emails(account_email, (success, messages) => {
                 if(success && messages) {
                   for(let message of messages) {
@@ -153,8 +153,8 @@ function fetch_attest_emails(account_email: string, callback: (ok: boolean, mess
 }
 
 function refresh_attest_requests_and_privileges(process_account_email_callback: ((e: string, a: string[]) => void)|null, refresh_done_callback:Callback|null=null) {
-  Store.account_emails_get(function (account_emails) {
-    Store.get(account_emails, ['attests_requested', 'google_token_scopes'], multi_storage => {
+  Store.account_emails_get().then(account_emails => {
+    Store.get(account_emails, ['attests_requested', 'google_token_scopes']).then(multi_storage => {
       tool.each(multi_storage, (account_email: string, storage) => {
         attest_ts_can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
         if(process_account_email_callback) {
@@ -177,23 +177,23 @@ function get_attester_emails() {
 }
 
 function is_already_attested(account_email: string, attester: string, callback: Callback) {
-  Store.get(account_email, ['attests_processed'], (S: Dict<string[]>) => {
-    callback(tool.value(attester).in(S.attests_processed));
+  Store.get(account_email, ['attests_processed']).then((storage: Dict<string[]>) => {
+    callback(tool.value(attester).in(storage.attests_processed));
   });
 }
 
 function account_storage_mark_as_attested(account_email: string, attester: string, callback: Callback) {
   stop_watching(account_email);
-  Store.get(account_email, ['attests_requested', 'attests_processed'], (S: Dict<string[]>) => {
-    if(tool.value(attester).in(S.attests_requested)) {
-      S.attests_requested.splice(S.attests_requested.indexOf(attester), 1); //remove attester from requested
-      if(typeof S.attests_processed === 'undefined') {
-        S.attests_processed = [];
+  Store.get(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
+    if(tool.value(attester).in(storage.attests_requested)) {
+      storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
+      if(typeof storage.attests_processed === 'undefined') {
+        storage.attests_processed = [];
       }
-      if(!tool.value(attester).in(S.attests_processed)) {
-        S.attests_processed.push(attester); //add attester as processed if not already there
+      if(!tool.value(attester).in(storage.attests_processed)) {
+        storage.attests_processed.push(attester); //add attester as processed if not already there
       }
-      Store.set(account_email, S, callback);
+      Store.set(account_email, storage).then(callback);
     } else {
       callback();
     }
@@ -202,7 +202,7 @@ function account_storage_mark_as_attested(account_email: string, attester: strin
 
 function add_attest_log(account_email:string, packet:string, success:boolean, attestation_result_text:string='', callback:Callback|null=null) {
   console.log('attest result ' + success + ': ' + attestation_result_text);
-  Store.get(account_email, ['attest_log'], (storage: Dict<Dict<FlatTypes>[]>) => {
+  Store.get(account_email, ['attest_log']).then((storage: Dict<Dict<FlatTypes>[]>) => {
     if(!storage.attest_log) {
       storage.attest_log = [];
     } else if(storage.attest_log.length > 100) {

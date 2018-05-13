@@ -8,8 +8,8 @@
 /// <reference path="../common/common.d.ts" />
 
 function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: Callback) {
-  Store.get(data.account_email, ['version'], function(account_storage) {
-    Store.set(data.account_email, { version: catcher.version('int') }, respond_done);
+  Store.get(data.account_email, ['version']).then(function(account_storage) {
+    Store.set(data.account_email, { version: catcher.version('int') }).then(respond_done);
     account_update_status_pks(data.account_email);
     account_update_status_keyserver(data.account_email);
   });
@@ -69,7 +69,7 @@ function legacy_local_storage_read(value: string) {
 function account_update_status_keyserver(account_email: string) { // checks which emails were registered on Attester
   Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
     let my_longids = keyinfos.map(ki => ki.longid);
-    Store.get(account_email, ['addresses', 'addresses_keyserver'], function(storage: Dict<string[]>) {
+    Store.get(account_email, ['addresses', 'addresses_keyserver']).then(function(storage: Dict<string[]>) {
       if(storage.addresses && storage.addresses.length) {
         tool.api.attester.lookup_email(storage.addresses).then((results: {results: PubkeySearchResult[]}) => {
           let addresses_keyserver = [];
@@ -89,7 +89,7 @@ function account_update_status_pks(account_email: string) { // checks if any new
   Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
     let my_longids = keyinfos.map(ki => ki.longid);
     let hkp = new openpgp.HKP('https://pgp.key-server.io');
-    Store.get(account_email, ['addresses', 'addresses_pks'], function(storage: Dict<string[]>) {
+    Store.get(account_email, ['addresses', 'addresses_pks']).then(function(storage: Dict<string[]>) {
       let addresses_pks = storage.addresses_pks || [];
       for (let email of storage.addresses || [account_email]) {
         if(!tool.value(email).in(addresses_pks)) {

@@ -9,12 +9,6 @@ declare var require: any;
 
 (function() {
 
-  class Subscription implements SubscriptionInfo { // todo - look into this later, is a class necessary? If so, it should be elsewhere
-    active = null;
-    method = null;
-    level = null;
-  }
-
   let flowcrypt_attach = (window as FlowCryptWindow).flowcrypt_attach;
 
   const S = tool.ui.build_jquery_selectors({
@@ -105,7 +99,7 @@ declare var require: any;
     storage_get_email_footer: (): string|null => null,
     storage_set_email_footer: (footer: string): void => undefined,
     storage_get_hide_message_password: ():boolean => false,
-    storage_get_subscription_info: (cb?: (s: Subscription) => void) : Subscription|undefined => { if(typeof cb === 'function') { cb(new Subscription()); } return new Subscription(); }, // returns cached result, callbacks with fresh result
+    storage_get_subscription_info: (cb?: (s: Subscription) => void) : Subscription|undefined => { if(typeof cb === 'function') { cb(new Subscription(null)); } return new Subscription(null); }, // returns cached result, callbacks with fresh result
     storage_get_armored_public_key: (sender_email: string) => tool.catch.Promise((resolve, reject) => {resolve(null)}),
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => tool.catch.Promise((resolve, reject) => {resolve()}),
     storage_passphrase_get: (): Promise<string|null> => tool.catch.Promise((resolve, reject) => { resolve(null); }) as Promise<null>,

@@ -34,12 +34,12 @@ tool.catch.try(() => {
       '',
       'account_email: ' + account_email,
     ];
-    Store.get(null, ['version'], function (global_storage) {
-      Store.get(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name'], function (account_storage) {
+    Store.get(null, ['version']).then(function (global_storage) {
+      Store.get(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']).then(function (account_storage) {
         text.push('global_storage: ' + JSON.stringify(global_storage));
         text.push('account_storage: ' + JSON.stringify(account_storage));
         text.push('');
-        Store.keys_get(account_email).then(keyinfos => {
+        Store.keys_get(account_email).then((keyinfos: KeyInfo[]) => {
           tool.each(keyinfos, function (i, keyinfo) {
             text.push('');
             text.push('key_longid: ' + keyinfo.longid);
@@ -55,7 +55,7 @@ tool.catch.try(() => {
   
   
   if(url_params.account_email) {
-    Store.get(null, ['dev_outlook_allow'], storage => {
+    Store.get(null, ['dev_outlook_allow']).then(storage => {
       if(storage.dev_outlook_allow === true) {
         $('.action_allow_outlook').prop('checked', true);
       }
@@ -64,7 +64,7 @@ tool.catch.try(() => {
     $('.email').text(url_params.account_email as string);
   
     $('.action_allow_outlook').change(function () {
-      Store.set(null, {'dev_outlook_allow': $(this).prop('checked')}, () => window.location.reload());
+      Store.set(null, {'dev_outlook_allow': $(this).prop('checked')}).then(() => window.location.reload());
     });
   
     $('.action_open_decrypt').click(function () {
@@ -79,7 +79,7 @@ tool.catch.try(() => {
       $(self).html(tool.ui.spinner('white'));
       fetch_account_aliases_from_gmail(url_params.account_email as string, function(addresses) {
         let all = tool.arr.unique(addresses.concat(url_params.account_email));
-        Store.set(url_params.account_email as string, { addresses: all }, function () {
+        Store.set(url_params.account_email as string, { addresses: all }).then(function () {
           alert('Updated to: ' + all.join(', '));
           window.location.reload();
         });
@@ -111,14 +111,14 @@ tool.catch.try(() => {
     });
   
     $('.action_flush_attest_info').click(function () {
-      Store.remove(url_params.account_email as string, ['attests_requested', 'attests_processed', 'attest_log'], function () {
+      Store.remove(url_params.account_email as string, ['attests_requested', 'attests_processed', 'attest_log']).then(function () {
         alert('Internal attest info flushed');
         window.location.reload();
       });
     });
   
     $('.action_reset_managing_auth').click(() => {
-      Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified'], () => {
+      Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified']).then(() => {
         tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
       });
     });

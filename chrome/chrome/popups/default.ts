@@ -6,7 +6,7 @@ tool.catch.try(() => {
 
   tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab) {
     if(active_tab && active_tab.account_email !== null) {
-      Store.get(active_tab.account_email, ['setup_done'], storage => {
+      Store.get(active_tab.account_email, ['setup_done']).then(storage => {
         if(storage.setup_done) {
           choose_email_or_settings_popup(active_tab.account_email);
         } else {
@@ -16,9 +16,9 @@ tool.catch.try(() => {
     } else if(active_tab && active_tab.provider !== null && active_tab.same_world === true) {
       set_up_accont_prompt_popup(active_tab.account_email);
     } else {
-      Store.account_emails_get(function (account_emails) {
+      Store.account_emails_get().then((account_emails) => {
         if(account_emails && account_emails.length) {
-          Store.get(account_emails, ['setup_done'], function (account_storages) {
+          Store.get(account_emails, ['setup_done']).then((account_storages) => {
             let functioning_accounts = 0;
             tool.each(account_storages, function (email, storage) {
               functioning_accounts += Number(storage.setup_done === true);

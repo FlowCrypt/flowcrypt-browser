@@ -21,10 +21,10 @@ function get_background_process_start_reason() {
   return background_process_start_reason;
 }
 
-migrate_global(function () {
+migrate_global(() => {
   Store.set(null, { version: catcher.version('int') });
-  Store.get(null, ['settings_seen'], (s) => {
-    if(!s.settings_seen) {
+  Store.get(null, ['settings_seen']).then((storage) => {
+    if(!storage.settings_seen) {
       open_settings_page('initial.htm'); // called after the very first installation of the plugin
       Store.set(null, {settings_seen: true});
     }
@@ -68,7 +68,7 @@ Store.db_open(db => {
 
 update_uninstall_url(null, 'background', tool.noop);
 
-Store.get(null, ['errors'], (s: Dict<string[]>) => {
+Store.get(null, ['errors']).then((s: Dict<string[]>) => {
   if(s.errors && s.errors.length && s.errors.length > 100) {
     Store.remove(null, ['errors']);
   }
@@ -117,7 +117,7 @@ function get_cryptup_settings_tab_id_if_open(callback: Callback) {
 }
 
 function update_uninstall_url(request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
-  Store.account_emails_get(function (account_emails) {
+  Store.account_emails_get().then((account_emails) => {
     if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
       catcher.try(function () {
         chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
@@ -139,7 +139,7 @@ function open_settings_page(path:string='index.htm', account_email:string|null=n
     if(account_email) {
       open_tab(tool.env.url_create(base_path, { account_email: account_email, page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
     } else {
-      Store.account_emails_get(function (account_emails) {
+      Store.account_emails_get().then((account_emails) => {
         open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page: page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
       });
     }

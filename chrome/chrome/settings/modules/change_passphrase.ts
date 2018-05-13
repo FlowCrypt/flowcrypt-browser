@@ -89,7 +89,7 @@ tool.catch.try(() => {
               Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined),
               Store.passphrase_save('session', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase),
             ]).then(() => { // Pass phrase change done in the extension storage. A new backup should be created (protected by updated pass phrase).
-              Store.get(url_params.account_email as string, ['setup_simple'], storage => {
+              Store.get(url_params.account_email as string, ['setup_simple']).then(storage => {
                 if(storage.setup_simple) {
                   show_settings_page('/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
                 } else {

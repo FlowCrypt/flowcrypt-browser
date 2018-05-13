@@ -8,12 +8,12 @@ tool.catch.try(() => {
   let hash = tool.crypto.hash.sha1;
   let container = $('.emails');
   
-  Store.get(url_params.account_email as string, ['addresses'], (storage: {addresses: string[]}) => {
+  Store.get(url_params.account_email as string, ['addresses']).then((storage: {addresses: string[]}) => {
     container.html(storage.addresses.map(address_to_html_radio).join(''));
     container.find('input').first().prop('checked', true);
     container.find('input').click(function() {
       if($(this).val() !== storage.addresses[0]) {
-        Store.set(url_params.account_email as string, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}, () => window.location.reload());
+        Store.set(url_params.account_email as string, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}).then(() => window.location.reload());
       }
     });
   });
@@ -25,7 +25,7 @@ tool.catch.try(() => {
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
     $(self).html(tool.ui.spinner('green'));
     fetch_account_aliases_from_gmail(url_params.account_email as string, function(addresses) {
-      Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email)) }, () => window.location.reload());
+      Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email)) }).then(() => window.location.reload());
     });
   }));
   

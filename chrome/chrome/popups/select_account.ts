@@ -16,8 +16,8 @@ tool.catch.try(() => {
     throw new Error('unknown action: ' + url_params.action);
   }
   
-  Store.account_emails_get((account_emails) => {
-    Store.get(account_emails, ['setup_done'], (account_storages) => {
+  Store.account_emails_get().then((account_emails) => {
+    Store.get(account_emails, ['setup_done']).then((account_storages) => {
       let ul_emails = '';
       tool.each(account_storages, (email: string, storage) => {
         if(storage.setup_done === true) {

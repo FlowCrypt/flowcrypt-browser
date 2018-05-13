@@ -56,7 +56,7 @@ function render_password_strength(parent_selector: string, input_selector: strin
 }
 
 function save_attest_request(account_email: string, attester: string, callback: Callback) {
-  Store.get(account_email, ['attests_requested', 'attests_processed'], (storage: Dict<string[]>) => {
+  Store.get(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if(!tool.value(attester).in(storage.attests_requested)) {
@@ -65,7 +65,7 @@ function save_attest_request(account_email: string, attester: string, callback: 
     if(typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [];
     }
-    Store.set(account_email, storage, function () {
+    Store.set(account_email, storage).then(function () {
       tool.browser.message.send(null, 'attest_requested', {
         account_email: account_email,
       }, callback);
@@ -74,7 +74,7 @@ function save_attest_request(account_email: string, attester: string, callback: 
 }
 
 function mark_as_attested(account_email: string, attester: string, callback: Callback) {
-  Store.get(account_email, ['attests_requested', 'attests_processed'], (storage: Dict<string[]>) => {
+  Store.get(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if(tool.value(attester).in(storage.attests_requested)) {
@@ -85,7 +85,7 @@ function mark_as_attested(account_email: string, attester: string, callback: Cal
     } else if(!tool.value(attester).in(storage.attests_processed)) {
       storage.attests_processed.push(attester); //add attester as processed if not already there
     }
-    Store.set(account_email, storage, callback);
+    Store.set(account_email, storage).then(() => callback());
   });
 }
 
@@ -170,12 +170,12 @@ function reset_cryptup_account_storages(account_email: string, callback: Callbac
   if(!account_email) {
     throw new Error('Missing account_email to reset');
   }
-  Store.account_emails_get(function (account_emails) {
+  Store.account_emails_get().then((account_emails) => {
     if(!tool.value(account_email).in(account_emails)) {
       throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
     }
     let keys_to_remove: string[] = [];
-    let filter = Store.key(account_email, '') as string;
+    let filter = Store.index(account_email, '') as string;
     if(!filter) {
       throw new Error('Filter is empty for account_email"' + account_email + '"');
     }
@@ -185,7 +185,7 @@ function reset_cryptup_account_storages(account_email: string, callback: Callbac
           keys_to_remove.push(key.replace(filter, ''));
         }
       });
-      Store.remove(account_email, keys_to_remove, function () {
+      Store.remove(account_email, keys_to_remove).then(function () {
         tool.each(localStorage, function (key: string, value) {
           if(key.indexOf(filter) === 0) {
             localStorage.removeItem(key);

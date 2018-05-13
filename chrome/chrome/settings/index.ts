@@ -90,7 +90,7 @@ catcher.try(() => {
       if(url_params.account_email) {
         $('.email-address').text(url_params.account_email as string);
         $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
-        Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes', 'email_provider'], storage => {
+        Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes', 'email_provider']).then(storage => {
           google_token_scopes = storage.google_token_scopes as string[];
           if(storage.setup_done) {
             render_subscription_status_header();
@@ -117,7 +117,7 @@ catcher.try(() => {
           }
         });
       } else {
-        Store.account_emails_get(function (account_emails) {
+        Store.account_emails_get().then((account_emails) => {
           if(account_emails && account_emails[0]) {
             window.location.href = tool.env.url_create('index.htm', { account_email: account_emails[0] });
           } else {
@@ -146,23 +146,23 @@ catcher.try(() => {
   
   function render_subscription_status_header() {
     tool.api.cryptup.account_check_sync(updated_with_new_info => {
-      Store.subscription(function (level, expire, active, method) {
-        if(active) {
+      Store.subscription().then(subscription => {
+        if(subscription.active) {
           $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(function () {
             show_settings_page('/chrome/settings/modules/account.htm');
           }).css('cursor', 'pointer');
-          if(method === 'trial') {
-            $('.logo-row .subscription .expire').text(expire ? ('trial until ' + expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+          if(subscription.method === 'trial') {
+            $('.logo-row .subscription .expire').text(subscription.expire ? ('trial until ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
             $('.logo-row .subscription .upgrade').css('display', 'inline-block');
-          } else if (method === 'group') {
+          } else if (subscription.method === 'group') {
             $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
           }
         } else {
           $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
-          if(level && expire && method) {
-            if(method === 'trial') {
+          if(subscription.level && subscription.expire && subscription.method) {
+            if(subscription.method === 'trial') {
               $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
-            } else if(method === 'group') {
+            } else if(subscription.method === 'group') {
               $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
             }
             $('.logo-row .subscription .upgrade').text('renew');
@@ -200,13 +200,13 @@ catcher.try(() => {
   function new_google_account_authentication_prompt(account_email?: string, omit_read_scope=false) {
     tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope: omit_read_scope, tab_id: tab_id_global }, google_token_scopes, function (response) {
       if(response && response.success === true && response.account_email) {
-        Store.account_emails_add(response.account_email, function () {
-          Store.get(response.account_email, ['setup_done'], storage => {
+        Store.account_emails_add(response.account_email).then(function () {
+          Store.get(response.account_email, ['setup_done']).then(storage => {
             if(storage.setup_done) { // this was just an additional permission
               alert('You\'re all set.');
               window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
             } else {
-              Store.set(response.account_email, {email_provider: 'gmail'}, function () {
+              Store.set(response.account_email, {email_provider: 'gmail'}).then(function () {
                 window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
               });
             }
@@ -276,7 +276,7 @@ catcher.try(() => {
     $(".add-account").toggleClass("hidden");
   });
   
-  Store.account_emails_get(function (account_emails) {
+  Store.account_emails_get().then((account_emails) => {
     tool.each(account_emails, function (i, email) {
       $('#alt-accounts').prepend(menu_account_html(email));
     });
