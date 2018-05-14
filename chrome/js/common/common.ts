@@ -3324,7 +3324,6 @@ let catcher = tool.catch; // legacy code expects this
   if(typeof (window as FlowCryptWindow).openpgp !== 'undefined' && typeof (window as FlowCryptWindow).openpgp.config !== 'undefined' && typeof (window as FlowCryptWindow).openpgp.config.versionstring !== 'undefined' && typeof (window as FlowCryptWindow).openpgp.config.commentstring !== 'undefined') {
     (window as FlowCryptWindow).openpgp.config.versionstring = 'FlowCrypt ' + (tool.catch.version() || '') + ' Gmail Encryption flowcrypt.com';
     (window as FlowCryptWindow).openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
-    (window as FlowCryptWindow).openpgp.config.ignore_mdc_error = true;  // todo - report back to user once openpgp.js has the functionality https://github.com/openpgpjs/openpgpjs/issues/651
   }
 
   (RegExp as any).escape = (s: string) => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
