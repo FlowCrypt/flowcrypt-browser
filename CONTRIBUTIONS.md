@@ -8,6 +8,9 @@ By contributing to this library (a pull request or a direct commit), unless othe
 Tankred Hase (https://github.com/tanx)
  - wrote or contributed to core libraries that FlowCrypt uses (OpenPGP.js, email.js)
 
+ProtonMail Team
+ - current active maintainer of OpenPGP.js library
+
 Armando Flores (http://armando.sx/)
  - most of the settings page design (Basic and Advanced)
  - contributions to setup page
