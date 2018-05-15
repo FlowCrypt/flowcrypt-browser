@@ -20,13 +20,12 @@ tool.catch.try(() => {
     });
   }
   
-  function set_button_text() {
+  async function set_button_text() {
     if(pubkeys.length > 1) {
       $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
     } else {
-      Store.db_contact_get(null, $('.input_email').val() as string, function (contact: Contact) { // text input
-        $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
-      });
+      let contact = await Store.db_contact_get(null, $('.input_email').val() as string) as Contact; // text input
+      $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
     }
   }
   
@@ -76,26 +75,24 @@ tool.catch.try(() => {
   }
   send_resize_message();
   
-  $('.action_add_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+  $('.action_add_contact').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
     if(pubkeys.length > 1) {
       let contacts: Contact[] = [];
-      $.each(pubkeys, (i, pubkey) => {
+      for(let pubkey of pubkeys) {
         let email_address = tool.str.parse_email(pubkey.users[0].userId.userid).email;
         if(tool.str.is_email_valid(email_address)) {
           contacts.push(Store.db_contact_object(email_address, null, 'pgp', pubkey.armor(), null, false, Date.now()));
         }
-      });
-      Store.db_contact_save(null, contacts, function () {
-        $(self).replaceWith('<span class="good">added public keys</span>');
-        $('.input_email').remove();
-      });
+      }
+      await Store.db_contact_save(null, contacts);
+      $(self).replaceWith('<span class="good">added public keys</span>');
+      $('.input_email').remove();
     } else {
       if(tool.str.is_email_valid($('.input_email').val() as string)) { // text input
         let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
-        Store.db_contact_save(null, contact, function () {
-          $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
-          $('.input_email').remove();
-        });
+        await Store.db_contact_save(null, contact);
+        $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
+        $('.input_email').remove();
       } else {
         alert('This email is invalid, please check for typos. Not added.');
         $('.input_email').focus();

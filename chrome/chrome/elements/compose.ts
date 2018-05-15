@@ -127,10 +127,10 @@ tool.catch.try(() => {
                 Store.set(null, admin_code_storage as any as Dict<Serializable>).then(callback);
               });
             },
-            storage_contact_get: (email: string) => catcher.Promise((resolve, reject) => Store.db_contact_get(null, email, resolve)),
-            storage_contact_update: (email: string, update: Contact) => catcher.Promise((resolve, reject) => Store.db_contact_update(null, email, update, resolve)),
-            storage_contact_save: (contact: Contact) => catcher.Promise((resolve, reject) => Store.db_contact_save(null, contact, resolve)),
-            storage_contact_search: (query: DbContactFilter) => catcher.Promise((resolve, reject) => Store.db_contact_search(null, query, resolve)),
+            storage_contact_get: (email: string) => Store.db_contact_get(null, email),
+            storage_contact_update: (email: string, update: Contact) => Store.db_contact_update(null, email, update),
+            storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
+            storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
             storage_contact_object: Store.db_contact_object,
             email_provider_draft_get: (draft_id: string) => catcher.Promise((resolve, reject) => {
               tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw', (success, response) => {

@@ -353,4 +353,4 @@ interface SubscriptionInfo {
     active: boolean|null;
     method: 'stripe'|'group'|'trial'|null;
     level: 'pro'|null,
-  }
+}

@@ -489,6 +489,7 @@ declare var require: any;
   }
 
   async function extract_process_encrypt_and_send_message() {
+    console.log(1);
     const recipients = get_recipients_from_dom();
     const subject = supplied_subject || String($('#input_subject').val()); // replies have subject in url params
     const plaintext = $('#input_text').get(0).innerText;
@@ -513,10 +514,12 @@ declare var require: any;
   }
 
   function encrypt_and_send(recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) {
+    console.log(2);
     S.now('send_btn_span').text('Encrypting');
     add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, function (plaintext) {
       handle_send_btn_processing_error(function () {
         attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, function (attachments: Attachment[]) {
+          console.log(3);
           if (attachments.length && challenge) { // these will be password encrypted attachments
             button_update_timeout = window.setTimeout(function () {
               S.now('send_btn_span').text('sending');
@@ -536,6 +539,7 @@ declare var require: any;
               }
             });
           } else {
+            console.log(4);
             do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription);
           }
         });
@@ -722,12 +726,17 @@ declare var require: any;
   }
 
   function do_encrypt_message_body_and_format(armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) {
+    console.log(5);
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, function (encrypted) {
+      console.log(6);
       with_attached_pubkey_if_needed(encrypted.data as string).then(async(encrypted_data: string) => {
+        console.log(7);
         encrypted.data = encrypted_data;
         let body = {'text/plain': encrypted.data} as SendableMessageBody;
         button_update_timeout = window.setTimeout(() => { S.now('send_btn_span').text('sending') }, 500);
+        console.log(8);
         await app.storage_contact_update(recipients, {last_use: Date.now()});
+        console.log(9);
         if (challenge) {
           upload_encrypted_message_to_cryptup(encrypted.data, subscription, function (short_id, message_admin_code, error) {
             if (short_id) {
@@ -748,6 +757,7 @@ declare var require: any;
             }
           });
         } else {
+          console.log(10);
           body = format_email_text_footer(body);
           do_send_message(tool.api.common.message(account_email, supplied_from || get_sender_from_dom(), recipients, subject, body, attachments, thread_id), plaintext);
         }
@@ -756,20 +766,26 @@ declare var require: any;
   }
 
   function do_send_message(message: SendableMessage, plaintext: string) {
+    console.log(11);
     for(let k in additional_message_headers) {
       message.headers[k] = additional_message_headers[k];
     }
     for(let a of message.attachments) {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
+    console.log(12);
     app.email_provider_message_send(message, render_upload_progress).then((response: any) => {
+      console.log(13);
       const is_signed = S.cached('icon_sign').is('.active');
       app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (is_reply_box ? 'reply' : 'message') + ' has been sent.'});
+      console.log(14);
       draft_delete(() => {
+        console.log(15);
         if(is_reply_box) {
           render_reply_success(message, plaintext, response ? response.id : null);
         } else {
           app.close_message();
+          console.log(16);
         }
       });
     }, (error: StandardError) => {
@@ -1148,8 +1164,10 @@ declare var require: any;
 
   async function search_contacts(db_only=false) {
     const query = {substring: tool.str.parse_email(S.cached('input_to').val() as string).email};
+    console.log(query);
     if (query.substring !== '') {
       let contacts = await app.storage_contact_search(query);
+      console.log(contacts);
       if (db_only || !can_read_emails) {
         render_search_results(contacts, query);
       } else {

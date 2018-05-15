@@ -235,11 +235,11 @@ tool.catch.try(() => {
     }
     Promise.sequence(promise_factories).then(() => { // sequential write because storage has race condition
       let contacts: Contact[] = [];
-      tool.each(all_addresses, function (i, address) {
+      for(let address of all_addresses) {
         let attested = Boolean(address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
         contacts.push(Store.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
-      });
-      Store.db_contact_save(null, contacts, callback);
+      }
+      Store.db_contact_save(null, contacts).then(callback);
     });
   }
   
@@ -319,14 +319,14 @@ tool.catch.try(() => {
     if(passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
       alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
     } else if(passphrase) {
-      tool.each(recovered_keys, function (i, recovered_key) {
+      for(let recovered_key of recovered_keys) {
         let longid = tool.crypto.key.longid(recovered_key);
         let armored = recovered_key.armor();
         if(longid && !tool.value(longid).in(recovered_keys_successful_longids) && tool.crypto.key.decrypt(recovered_key, passphrase).success) {
           recovered_keys_successful_longids.push(longid);
           matching_keys.push(openpgp.key.readArmored(armored).keys[0]);
         }
-      });
+      }
       if(matching_keys.length) {
         let options = {
           submit_main: false, // todo - think about submitting when recovering
@@ -338,8 +338,12 @@ tool.catch.try(() => {
           recovered: true,
         };
         recovered_key_matching_passphrases.push(passphrase);
+        console.log('setup: saving keys');
         save_keys(url_params.account_email as string, matching_keys, options, function () {
+          console.log('save_keys completely done');
           Store.get(url_params.account_email as string, ['setup_done']).then(storage => {
+            console.log('got setup done');
+            console.log(storage);
             if(!storage.setup_done) { // normal situation
               finalize_setup(url_params.account_email as string, matching_keys[0].toPublic().armor(), options);
             } else { // setup was finished before, just added more keys now

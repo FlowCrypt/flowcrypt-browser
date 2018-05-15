@@ -154,10 +154,9 @@ function close_popup_handler(q: chrome.tabs.QueryInfo, sender: chrome.runtime.Me
 
 function db_operation(request: {f: string, args: any[]}, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) {
   catcher.try(() => {
-    // if(db === false && request.f === 'db_delete') { window.flowcrypt_storage[request.f].apply(null, [].concat(request.args, [respond]));} else
     if(db) {
-      // @ts-ignore - todo - evaluate this later
-      Store[request.f].apply(null, [db].concat(request.args, [respond]));
+      // @ts-ignore
+      Store[request.f].apply(null, [db].concat(request.args)).then(respond);
     } else {
       catcher.log('db corrupted, skipping: ' + request.f);
     }

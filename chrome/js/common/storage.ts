@@ -325,154 +325,129 @@ class Store {
     } as Contact;
   }
 
-  static db_contact_save(db: IDBDatabase|null, contact: Contact|Contact[], callback: VoidCallback) {
-    if(db === null) { // relay op through background process
-      tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, callback);
-    } else {
-      if (Array.isArray(contact)) {
-        let processed = 0;
-        tool.each(contact, (i, single_contact) => {
-          Store.db_contact_save(db, single_contact, () => {
-            if (++processed === contact.length && typeof callback === 'function') {
-              callback();
-            }
-          });
-        });
+  static db_contact_save(db: IDBDatabase|null, contact: Contact|Contact[]) {
+    return new Promise(async(resolve, reject) => {
+      if(db === null) { // relay op through background process
+        tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, () => resolve()); // todo - currently will silently swallow errors
       } else {
-        let tx = db.transaction('contacts', 'readwrite');
-        let contacts = tx.objectStore('contacts');
-        contacts.put(contact);
-        tx.oncomplete = catcher.try(callback);
-        let stack_fill = String((new Error()).stack);
-        tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, callback));
-      }
-    }
-  }
-
-  static db_contact_update(db: IDBDatabase|null, email: string, update: Contact, callback: VoidCallback) {
-    if(db === null) { // relay op through background process
-      tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, callback);
-    } else {
-      if(Array.isArray(email)) {
-        let processed = 0;
-        tool.each(email, (i, single_email) => {
-          Store.db_contact_update(db, single_email, update, () => {
-            if(++processed === email.length && typeof callback === 'function') {
-              callback();
-            }
-          });
-        });
-      } else {
-        Store.db_contact_get(db, email, (original_contact: Contact) => {
-          // @ts-ignore
-          let updated: Contact = {};
-          tool.each(original_contact, (k, original_value) => {
-            if(k in update) {
-              // @ts-ignore
-              updated[k] = update[k];
-            } else {
-              // @ts-ignore
-              updated[k] = original_value;
-            }
-          });
+        if (Array.isArray(contact)) {
+          for(let single_contact of contact) {
+            await Store.db_contact_save(db, single_contact);
+          }
+          resolve();
+        } else {
           let tx = db.transaction('contacts', 'readwrite');
-          let contacts = tx.objectStore('contacts');
-          contacts.put(Store.db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
-          tx.oncomplete = catcher.try(callback);
+          let contactsTable = tx.objectStore('contacts');
+          contactsTable.put(contact);
+          tx.oncomplete = () => resolve();
           let stack_fill = String((new Error()).stack);
-          tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, callback));
-        });
-      }
-    }
+          tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, reject));
+        }
+      }  
+    });
   }
 
-  static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]|string, callback: (contacts: Contact[]|Contact|null) => void) {
-    if(db === null) { // relay op through background process
-      tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, callback);
-    } else {
-      if(typeof email_or_longid !== 'object') {
-        let get: IDBRequest;
-        if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
-          get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
-        } else { // longid
-          get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
-        }
-        get.onsuccess = catcher.try(() => {
-          if(get.result !== undefined) {
-            callback(get.result);
-          } else {
-            callback(null);
-          }
-        });
-        let stack_fill = String((new Error()).stack);
-        get.onerror = function () {
-          // @ts-ignore
-          Store.db_error_handle(get.error, stack_fill, callback);
-        };
+  static db_contact_update(db: IDBDatabase|null, email: string, update: Contact) {
+    return new Promise(async(resolve, reject) => {
+      if(db === null) { // relay op through background process
+        tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, resolve); // todo - currently will silently swallow errors
       } else {
-        let results = new Array(email_or_longid.length);
-        let finished = 0;
-        tool.each(email_or_longid, (i: number, single_email_or_longid) => {
-          Store.db_contact_get(db, single_email_or_longid, contact => {
-            results[i] = contact;
-            if(++finished >= email_or_longid.length) {
-              callback(results);
-            }
-          });
-        });
+        if(Array.isArray(email)) {
+          for(let single_email of email) {
+            await Store.db_contact_update(db, single_email, update);
+          }
+          resolve();
+        } else {
+          let updated = await Store.db_contact_get(db, email) as Contact;
+          for(let k of Object.keys(update)) {
+            // @ts-ignore
+            updated[k] = update[k];
+          }
+          let tx = db.transaction('contacts', 'readwrite');
+          let contactsTable = tx.objectStore('contacts');
+          contactsTable.put(Store.db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
+          tx.oncomplete = catcher.try(resolve);
+          let stack_fill = String((new Error()).stack);
+          tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, reject));
+        }
       }
-    }
+    });
   }
 
-  static db_contact_search(db: IDBDatabase|null, query: DbContactFilter, callback: (contacts: Contact[]) => void) {
-    if(db === null) { // relay op through background process
-      tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, callback);
-    } else {
-      for(let key of Object.keys(query)) {
-        if(!tool.value(key).in(Store.db_query_keys)) {
-          throw new Error('db_contact_search: unknown key: ' + key);
+  static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]|string): Promise<Contact[]|Contact|null> {
+    return new Promise(async(resolve, reject) => {
+      if(db === null) { // relay op through background process
+        tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, resolve);  // todo - currently will silently swallow errors
+      } else {
+        if(!Array.isArray(email_or_longid)) {
+          let get: IDBRequest;
+          if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
+            get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
+          } else { // longid
+            get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
+          }
+          get.onsuccess = catcher.try(() => resolve(get.result !== undefined ? get.result : null));
+          let stack_fill = String((new Error()).stack);
+          get.onerror = () => Store.db_error_handle(get.error, stack_fill, reject);
+        } else {
+          let results: Contact[] = [];
+          for(let single_email_or_longid of email_or_longid) {
+            results.push(await Store.db_contact_get(db, single_email_or_longid) as Contact);
+          }
+          resolve(results);
         }
-      }
-      let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
-      let search: IDBRequest|undefined = undefined;
-      if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
-        query.substring = Store.normalize_string(query.substring || '');
-        if(query.substring) {
-          Store.db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true, }, (results_with_pgp) => {
+      }  
+    });
+  }
+
+  static db_contact_search(db: IDBDatabase|null, query: DbContactFilter): Promise<Contact[]> {
+    return new Promise(async(resolve, reject) => {
+      if(db === null) { // relay op through background process
+        tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, resolve);
+      } else {
+        for(let key of Object.keys(query)) {
+          if(!tool.value(key).in(Store.db_query_keys)) {
+            throw new Error('db_contact_search: unknown key: ' + key);
+          }
+        }
+        let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
+        let search: IDBRequest|undefined = undefined;
+        if(typeof query.has_pgp === 'undefined') { // any query.has_pgp value
+          query.substring = Store.normalize_string(query.substring || '');
+          if(query.substring) {
+            let results_with_pgp = await Store.db_contact_search(db, { substring: query.substring, limit: query.limit, has_pgp: true });
             if(query.limit && results_with_pgp.length === query.limit) {
-              callback(results_with_pgp);
+              resolve(results_with_pgp);
             } else {
-              Store.db_contact_search(db, { substring: query.substring, limit: query.limit ? query.limit - results_with_pgp.length : undefined, has_pgp: false, }, results_without_pgp => {
-                callback(results_with_pgp.concat(results_without_pgp));
-              });
+              let results_without_pgp = await Store.db_contact_search(db, { substring: query.substring, limit: query.limit ? query.limit - results_with_pgp.length : undefined, has_pgp: false });
+              resolve(results_with_pgp.concat(results_without_pgp));
+            }
+          } else {
+            search = contacts.openCursor();
+          }
+        } else { // specific query.has_pgp value
+          if(query.substring) {
+            search = contacts.index('search').openCursor(IDBKeyRange.only(Store.db_index(query.has_pgp, query.substring)));
+          } else {
+            search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
+          }
+        }
+        if(typeof search !== 'undefined') {
+          let found: Contact[] = [];
+          search.onsuccess = catcher.try(() => {
+            let cursor = search!.result; // checked it above
+            if(!cursor || found.length === query.limit) {
+              resolve(found);
+            } else {
+              found.push(cursor.value);
+              cursor.continue();
             }
           });
-        } else {
-          search = contacts.openCursor();
-        }
-      } else { // specific query.has_pgp value
-        if(query.substring) {
-          search = contacts.index('search').openCursor(IDBKeyRange.only(Store.db_index(query.has_pgp, query.substring)));
-        } else {
-          search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
+          let stack_fill = String((new Error()).stack);
+          search.onerror = catcher.try(() => Store.db_error_handle(search!.error, stack_fill, reject)); // checked it above
         }
       }
-      if(typeof search !== 'undefined') {
-        let found: Contact[] = [];
-        search.onsuccess = catcher.try(() => {
-          let cursor = search!.result; // set it above
-          if(!cursor || found.length === query.limit) {
-            callback(found);
-          } else {
-            found.push(cursor.value);
-            cursor.continue();
-          }
-        });
-        let stack_fill = String((new Error()).stack);
-        // @ts-ignore
-        search.onerror = catcher.try(() => Store.db_error_handle(search!.error, stack_fill, callback)); // set it above
-      }
-    }
+    });
   }
 
 }

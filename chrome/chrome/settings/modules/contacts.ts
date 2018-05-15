@@ -13,7 +13,7 @@ tool.catch.try(() => {
     tool.browser.message.listen({}, tab_id); // set_css
 
     function render_contact_list() {
-      Store.db_contact_search(null, { has_pgp: true }, (contacts: Contact[]) => {
+      Store.db_contact_search(null, { has_pgp: true }).then(contacts => {
 
         $('.line.actions').html('&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
           let all_armored_public_keys = contacts.map(c => c.pubkey.trim()).join('\n');
@@ -40,21 +40,20 @@ tool.catch.try(() => {
           $('table#emails').append('<tr email="' + contact.email + '"><td>' + contact.email + '</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>');
         });
 
-        $('a.action_show').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-          Store.db_contact_get(null, $(self).closest('tr').attr('email')!, function (contact: Contact) { // defined above
-            $('.hide_when_rendering_subpage').css('display', 'none');
-            $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + contact.email);
-            if(contact.client === 'cryptup') {
-              $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
-            } else {
-              $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
-            }
-            $('#view_contact .key_dump').text(contact.pubkey);
-            $('#view_contact .key_fingerprint').text(contact.fingerprint!);
-            $('#view_contact .key_words').text(contact.keywords!);
-            $('#view_contact').css('display', 'block');
-            $('#page_back_button').click(render_contact_list);
-          });
+        $('a.action_show').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+          let contact = await Store.db_contact_get(null, $(self).closest('tr').attr('email')!) as Contact; // defined above
+          $('.hide_when_rendering_subpage').css('display', 'none');
+          $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + contact.email);
+          if(contact.client === 'cryptup') {
+            $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
+          } else {
+            $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+          }
+          $('#view_contact .key_dump').text(contact.pubkey);
+          $('#view_contact .key_fingerprint').text(contact.fingerprint!);
+          $('#view_contact .key_words').text(contact.keywords!);
+          $('#view_contact').css('display', 'block');
+          $('#page_back_button').click(render_contact_list);
         }));
 
         $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
@@ -66,13 +65,14 @@ tool.catch.try(() => {
           $('#page_back_button').click(render_contact_list);
         }));
 
-        $('#edit_contact .action_save_edited_pubkey').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+        $('#edit_contact .action_save_edited_pubkey').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
           let armored_pubkey = $('#edit_contact .input_pubkey').val() as string; // textarea
           let email = $('#edit_contact .input_pubkey').attr('email');
           if(!armored_pubkey || !email) {
             alert('No public key entered');
           } else if(tool.crypto.key.fingerprint(armored_pubkey) !== null) {
-            Store.db_contact_save(null, Store.db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()), render_contact_list);
+            await Store.db_contact_save(null, Store.db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()));
+            render_contact_list();
           } else {
             alert('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
             $('#edit_contact .input_pubkey').val('').focus();
@@ -99,8 +99,9 @@ tool.catch.try(() => {
           }
         }));
 
-        $('a.action_remove').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-          Store.db_contact_save(null, Store.db_contact_object($(self).closest('tr').attr('email')!, null, null, null, null, false, null), render_contact_list);
+        $('a.action_remove').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+          await Store.db_contact_save(null, Store.db_contact_object($(self).closest('tr').attr('email')!, null, null, null, null, false, null));
+          render_contact_list();
         }));
 
       });
