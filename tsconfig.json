@@ -5,5 +5,8 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "sourceMap": true
-  }
+  },
+  "include": [
+    "chrome/**/*"
+  ]
 }
