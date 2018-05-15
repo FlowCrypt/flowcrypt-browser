@@ -20,3 +20,4 @@
 /chrome/js/background_process/inject.js
 /node_modules/
 /build/*
+*.code-workspace
