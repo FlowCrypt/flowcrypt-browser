@@ -139,8 +139,8 @@ tool.catch.try(() => {
   }
 
   function save_subscription_attempt(product: Product, source: string, callback: VoidCallback) {
-    product.source = source;
-    Store.set(null, { 'cryptup_subscription_attempt': product }).then(callback);
+    (product as SubscriptionAttempt).source = source;
+    Store.set(null, { 'cryptup_subscription_attempt': product as SubscriptionAttempt }).then(callback);
   }
 
   function verify(account_email: string, tokens: string[]) {

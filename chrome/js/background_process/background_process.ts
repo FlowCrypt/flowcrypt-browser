@@ -22,7 +22,7 @@ function get_background_process_start_reason() {
 }
 
 migrate_global(async() => {
-  await Store.set(null, { version: catcher.version('int') });
+  await Store.set(null, { version: catcher.version('int') as number|null });
   let storage = await Store.get(null, ['settings_seen']);
   if(!storage.settings_seen) {
     open_settings_page('initial.htm'); // called after the very first installation of the plugin

@@ -14,7 +14,7 @@ tool.catch.try(() => {
     tool.api.attester.diagnose_keyserver_pubkeys(url_params.account_email as string, function (diagnosis) {
       if(diagnosis) {
         $('.summary').html('');
-        render_diagnosis(diagnosis, storage.attests_requested, storage.attests_processed);
+        render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
       } else {
         $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
         $('a.reload').click(function () {
@@ -24,7 +24,7 @@ tool.catch.try(() => {
     });
   });
 
-  function render_diagnosis(diagnosis: any, attests_requested: any[], attests_processed: any[]) {
+  function render_diagnosis(diagnosis: any, attests_requested: string[], attests_processed: string[]) {
     tool.each(diagnosis.results, function (email, result) {
       let note, action, remove, color;
       if(result.pubkey === null) {
@@ -87,9 +87,7 @@ tool.catch.try(() => {
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       Store.get(url_params.account_email as string, ['addresses']).then(storage => {
-        Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(storage.addresses, $(self).attr('email'))}).then(function () {
-          window.location.reload();
-        });
+        Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(storage.addresses || [], $(self).attr('email'))}).then(() => window.location.reload());
       });
     }));
     $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {

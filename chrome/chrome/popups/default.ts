@@ -18,11 +18,11 @@ tool.catch.try(() => {
     } else {
       Store.account_emails_get().then((account_emails) => {
         if(account_emails && account_emails.length) {
-          Store.get(account_emails, ['setup_done']).then((account_storages) => {
+          Store.get_by_account(account_emails, ['setup_done']).then(account_storages => {
             let functioning_accounts = 0;
-            tool.each(account_storages, function (email, storage) {
-              functioning_accounts += Number(storage.setup_done === true);
-            });
+            for(let email of Object.keys(account_storages)) {
+              functioning_accounts += Number(account_storages[email].setup_done === true);
+            }
             if(!functioning_accounts) {
               redirect_to_initial_setup();
             } else {

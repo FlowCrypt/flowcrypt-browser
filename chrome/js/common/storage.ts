@@ -8,12 +8,12 @@ class Subscription implements SubscriptionInfo {
   level: ProductLevel|null = null;
   expire: string|null = null;
 
-  constructor(stored_subscription: {active: boolean, method: PaymentMethod, level: ProductLevel, expire: string}|null) {
+  constructor(stored_subscription: {active: boolean|null, method: PaymentMethod|null, level: ProductLevel, expire?: string|null}|null) {
     if(stored_subscription) {
       this.active = stored_subscription.active;
       this.method = stored_subscription.method;
       this.level = stored_subscription.level;
-      this.expire = stored_subscription.expire;  
+      this.expire = stored_subscription.expire || null;
     }
   }
 
@@ -48,9 +48,9 @@ class Store {
     }
   }
 
-  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: Dict<string>) {
+  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStored): Stored | Dict<Stored> {
     if(typeof account_or_accounts === 'string') {
-      let fixed_keys_object: Dict<string> = {};
+      let fixed_keys_object: Stored = {};
       tool.each(storage_object, (k: string, v) => {
         let fixed_key = k.replace(Store.index(account_or_accounts as string, '') as string, ''); // checked it's a string above
         if(fixed_key !== k) {
@@ -59,10 +59,9 @@ class Store {
       });
       return fixed_keys_object;
     } else {
-      let results_by_account: Dict<string[]> = {};
-      
+      let results_by_account: Dict<Stored> = {};
       for(let account of account_or_accounts) {
-        results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as any as string[];
+        results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as Stored;
       }
       return results_by_account;
     }
@@ -114,7 +113,9 @@ class Store {
   static async passphrase_get(account_email: string, longid: string, ignore_session:boolean=false): Promise<string|null> {
     let storage_k = 'passphrase_' + longid;
     let storage = await Store.get(account_email, [storage_k]);
+    // @ts-ignore
     if(typeof storage[storage_k] === 'string') {
+      // @ts-ignore
       return storage[storage_k]
     } else {
       let from_session = await Store.session_get(account_email, storage_k);
@@ -123,7 +124,8 @@ class Store {
   }
 
   static async keys_get(account_email: string, longids:string[]|null=null) {
-    let keys: KeyInfo[] = (await Store.get(account_email, ['keys'])).keys || [];
+    let stored = await Store.get(account_email, ['keys']);
+    let keys: KeyInfo[] = stored.keys || [];
     if(!longids) {
       return keys
     }
@@ -166,7 +168,7 @@ class Store {
     await Store.set(account_email, {keys: filtered_private_keys});
   }
 
-  static set(account_email: string|null, values: Dict<Serializable[]|Serializable|KeyInfo[]>): Promise<void> {
+  static set(account_email: string|null, values: Stored): Promise<void> {
     let _account = Store._global_storage_index_if_null(account_email);
     let storage_update: Dict<any> = {};
     tool.each(values, (key: string, value) => {
@@ -179,11 +181,19 @@ class Store {
     return (account === null) ? Store.global_storage_scope : account;
   }
 
-  static async get(accounts: string[]|string|null, keys: string[]): Promise<StorageResult> {
+  static get_by_account(accounts: string[], keys: string[]): Promise<Dict<Stored>> {
+    return new Promise(resolve => {
+      chrome.storage.local.get(Store.index(accounts, keys) as string[], (storage_object: RawStored) => {
+        resolve(Store.account_storage_object_keys_to_original(accounts, storage_object) as Dict<Stored>);
+      });
+    });
+  }
+
+  static get(accounts: string|null, keys: string[]): Promise<Stored> {
     let _accounts = Store._global_storage_index_if_null(accounts);
     return new Promise(resolve => {
-      chrome.storage.local.get(Store.index(_accounts, keys), storage_object => {
-        resolve(Store.account_storage_object_keys_to_original(_accounts, storage_object));
+      chrome.storage.local.get(Store.index(_accounts, keys) as string[], (storage_object: RawStored) => {
+        resolve(Store.account_storage_object_keys_to_original(_accounts, storage_object) as Stored);
       });
     });
   }

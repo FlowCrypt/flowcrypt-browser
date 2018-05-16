@@ -4,7 +4,7 @@
 
 tool.catch.try(() => {
 
-  type RenderableStorage = Dict<{key: string, value: Serializable}>;
+  type RenderableStorage = Dict<{key: string, value: Storable}>;
 
   let url_params = tool.env.url_params(['filter', 'keys', 'controls', 'title']);
   
@@ -48,7 +48,7 @@ tool.catch.try(() => {
       real_filter = '';
     }
     let filtered: RenderableStorage = {};
-    tool.each(storage, function (key: string, value: Serializable) {
+    tool.each(storage, function (key: string, value: Storable) {
       if(tool.value(real_filter).in(key)) {
         filtered[key.replace(real_filter, '')] = {key: key, value: value};
       }
@@ -68,7 +68,7 @@ tool.catch.try(() => {
         if(namespace_selector.val() === '-- namespace --' || $('.type').val() === '-- type --' || !key_selector.val()) {
           alert('Namespace, key and type need to be filled');
         } else {
-          let storage_update: Dict<Serializable> = {};
+          let storage_update: Stored = {};
           storage_update[key_selector.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
           let account_email = namespace_selector.val() === 'global' ? null : decodeURIComponent(namespace_selector.val() as string); // it's a text input
           Store.set(account_email, storage_update).then(() => window.location.reload());

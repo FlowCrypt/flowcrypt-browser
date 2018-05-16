@@ -154,13 +154,13 @@ function fetch_attest_emails(account_email: string, callback: (ok: boolean, mess
 
 function refresh_attest_requests_and_privileges(process_account_email_callback: ((e: string, a: string[]) => void)|null, refresh_done_callback:Callback|null=null) {
   Store.account_emails_get().then(account_emails => {
-    Store.get(account_emails, ['attests_requested', 'google_token_scopes']).then(multi_storage => {
-      tool.each(multi_storage, (account_email: string, storage) => {
-        attest_ts_can_read_emails[account_email] = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+    Store.get_by_account(account_emails, ['attests_requested', 'google_token_scopes']).then(storages => {
+      for(let email of Object.keys(storages)) {
+        attest_ts_can_read_emails[email] = tool.api.gmail.has_scope(storages[email].google_token_scopes || [], 'read');
         if(process_account_email_callback) {
-          process_account_email_callback(account_email, storage.attests_requested);
+          process_account_email_callback(email, storages[email].attests_requested || []);
         }
-      });
+      }
       if(refresh_done_callback) {
         refresh_done_callback();
       }
@@ -202,7 +202,7 @@ function account_storage_mark_as_attested(account_email: string, attester: strin
 
 function add_attest_log(account_email:string, packet:string, success:boolean, attestation_result_text:string='', callback:Callback|null=null) {
   console.log('attest result ' + success + ': ' + attestation_result_text);
-  Store.get(account_email, ['attest_log']).then((storage: Dict<Dict<FlatTypes>[]>) => {
+  Store.get(account_email, ['attest_log']).then(storage => {
     if(!storage.attest_log) {
       storage.attest_log = [];
     } else if(storage.attest_log.length > 100) {

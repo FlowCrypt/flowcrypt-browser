@@ -61,7 +61,7 @@ tool.catch.try(() => {
       S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
         S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
         Store.auth_info().then(function(auth_info: StoredAuthInfo) {  // @ts-doublecheck - is it really always a string?
-          Store.get(auth_info.account_email, ['full_name']).then((storage: {full_name: string|null}) => {
+          Store.get(auth_info.account_email, ['full_name']).then(storage => {
             find_available_alias(auth_info.account_email!, function(alias) {
               let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
               // @ts-ignore

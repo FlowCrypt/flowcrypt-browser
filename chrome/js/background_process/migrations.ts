@@ -9,7 +9,7 @@
 
 function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: Callback) {
   Store.get(data.account_email, ['version']).then(function(account_storage) {
-    Store.set(data.account_email, { version: catcher.version('int') }).then(respond_done);
+    Store.set(data.account_email, { version: catcher.version('int') as number|null }).then(respond_done);
     account_update_status_pks(data.account_email);
     account_update_status_keyserver(data.account_email);
   });

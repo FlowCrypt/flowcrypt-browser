@@ -514,7 +514,7 @@ tool.catch.try(() => {
   }
   
   Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes']).then(storage => {
-    can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
+    can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
     if(storage.setup_done) {
       initialize();
     } else {

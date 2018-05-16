@@ -284,14 +284,13 @@ interface AuthRequest {
     omit_read_scope?: boolean,
 }
 
-type KeyBackupMethod = 'file'|'inbox'|'none';
+type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
 type FlatTypes = null|undefined|number|string|boolean;
 type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
-type StorageResult = Dict<Serializable>|any;
 type Callback = (r?: any) => void;
 type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
@@ -304,7 +303,7 @@ type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
 
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
-type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel, source?: string};
+type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
 type ApiCallFormat = 'JSON'|'FORM';
 type ApiCallProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
 type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: ApiCallProgressCallback};
@@ -366,6 +365,68 @@ interface PromiseConstructor {
 
 interface SubscriptionInfo {
     active: boolean|null;
-    method: 'stripe'|'group'|'trial'|null;
-    level: 'pro'|null,
+    method: PaymentMethod|null;
+    level: 'pro'|null;
+}
+
+interface SubscriptionAttempt extends Product {
+    source: string;
+}
+
+type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
+type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
+
+type StoredReplyDraftMeta = string; // draft_id
+type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number}
+type StoredAdminCode = {date: number, codes: string[]};
+type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
+type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
+
+interface RawStored {
+    [key: string]: Storable;
+}
+
+interface Stored {
+    [key: string]: Storable;
+
+    // global
+    version?: number|null;
+    keys?: KeyInfo[];
+    account_emails?: string; // stringified array
+    errors?: string[];
+    settings_seen?: boolean;
+    hide_pass_phrases?: boolean;
+    cryptup_account_email?: string;
+    cryptup_account_uuid?: string;
+    cryptup_account_subscription?: SubscriptionInfo;
+    cryptup_account_verified?: boolean;
+    dev_outlook_allow?: boolean;
+    cryptup_subscription_attempt?: SubscriptionAttempt;
+    admin_codes?: Dict<StoredAdminCode>;
+    attest_log?: StoredAttestLog[];
+    
+    // per account
+    notification_setup_needed_dismissed?: boolean;
+    email_provider?: EmailProvider;
+    google_token_access?: string;
+    google_token_expires?: number;
+    google_token_scopes?: string[];
+    hide_message_password?: boolean; // is global?
+    addresses?: string[];
+    addresses_pks?: string[];
+    addresses_keyserver?: string[];
+    email_footer?: string|null;
+    drafts_reply?: Dict<StoredReplyDraftMeta>;
+    drafts_compose?: Dict<StoredComposeDraftMeta>;
+    pubkey_sent_to?: string[];
+    full_name?: string;
+    cryptup_enabled?: boolean;
+    setup_done?: boolean;
+    setup_simple?: boolean;
+    key_backup_method?: KeyBackupMethod;
+    attests_requested?: string[]; // attester names
+    attests_processed?: string[]; // attester names
+    key_backup_prompt?: number|false;
+    successfully_received_at_leat_one_message?: boolean;
+    notification_setup_done_seen?: boolean;
 }

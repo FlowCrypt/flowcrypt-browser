@@ -65,7 +65,7 @@ tool.catch.try(() => {
     $('h1').text('Key Backups');
     display_block('loading');
     Store.get(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']).then(storage => {
-      if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes, 'read')) {
+      if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read')) {
         tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys: OpenpgpKey[]) {
           if(success) {
             display_block('step_0_status');

@@ -1521,11 +1521,11 @@ let tool = {
                 respond({success: false, error: 'Cannot produce auth window from background script'});
               }
             } else {
-              tool._.google_auth_refresh_token(s.google_token_refresh, function (success: boolean, result: Dict<any>|"API_ERROR_NETWORK") {
+              tool._.google_auth_refresh_token(s.google_token_refresh, (success, result) => {
                 if (!success && result === tool.api.error.network) {
                   respond({success: false, error: tool.api.error.network});
-                } else if (typeof (result as Dict<any>).access_token !== 'undefined') {
-                  tool._.google_auth_save_tokens(auth_request.account_email, result as Dict<any>, s.google_token_scopes, function () {
+                } else if (typeof (result as GoogleAuthTokensResponse).access_token !== 'undefined') {
+                  tool._.google_auth_save_tokens(auth_request.account_email, result as GoogleAuthTokensResponse, s.google_token_scopes, function () {
                     respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
                   });
                 } else if(!tool.env.is_background_script()) {
@@ -1933,9 +1933,9 @@ let tool = {
       }),
       diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
         let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
-        Store.get(account_email, ['addresses']).then(function (s: StorageResult) {
+        Store.get(account_email, ['addresses']).then(function (s: Stored) {
           Store.keys_get(account_email).then(stored_keys => {
-            let stored_keys_longids = stored_keys.map(function(ki) { return ki.longid; });
+            let stored_keys_longids = stored_keys.map(ki => ki.longid);
             tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then(function(pubkey_search_results) {
               tool.each((pubkey_search_results as any).results, function (i, pubkey_search_result) { // todo:ts any
                 if (!pubkey_search_result.pubkey) {
@@ -2089,7 +2089,7 @@ let tool = {
               token: token,
             // @ts-ignore
             }).validate((r: {registered: boolean, verified: boolean, subscription: SubscriptionInfo}) => r.registered === true).then(function (response) {
-              let to_save: Dict<Serializable> = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
+              let to_save = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
               Store.set(null, to_save).then(function () {
                 resolve({verified: response.verified === true, subscription: response.subscription});
               });
@@ -2772,8 +2772,8 @@ let tool = {
         login_hint: auth_request.account_email,
       });
     },
-    google_auth_save_tokens: (account_email: string, tokens_object: Dict<FlatTypes>, scopes: string, callback: Callback) => {
-      let to_save: Dict<Serializable> = {
+    google_auth_save_tokens: (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[], callback: Callback) => {
+      let to_save: Stored = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
         google_token_scopes: scopes,
@@ -2783,7 +2783,7 @@ let tool = {
       }
       Store.set(account_email, to_save).then(callback);
     },
-    google_auth_get_tokens: (code: string, callback: Callback, retries_left: number) => {
+    google_auth_get_tokens: (code: string, callback: (r: GoogleAuthTokensResponse|AjaxError) => void, retries_left: number) => {
       $.ajax({
         url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code: code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
         method: 'POST',
@@ -2803,14 +2803,14 @@ let tool = {
         },
       });
     },
-    google_auth_refresh_token: (refresh_token: string, callback: ApiCallback) => {
+    google_auth_refresh_token: (refresh_token: string, callback: (ok: boolean, r: GoogleAuthTokensResponse|string|AjaxError) => void) => {
       $.ajax({
         url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
         method: 'POST',
         crossDomain: true,
         async: true,
         success: function (response) {
-          callback(true, response);
+          callback(true, response as GoogleAuthTokensResponse);
         },
         error: function (XMLHttpRequest, status, error) {
           if(XMLHttpRequest.status === 0 && status === 'error') { // connection error
@@ -2849,9 +2849,9 @@ let tool = {
           switch(result.result) {
             case 'Success':
             tool._.google_auth_get_tokens(result.params.code, function (tokens_object) {
-                if(typeof tokens_object.access_token !== 'undefined') {
-                  tool._.google_auth_check_email(result.state.account_email, tokens_object.access_token, function (account_email) {
-                    tool._.google_auth_save_tokens(account_email, tokens_object, result.state.scopes, function () {
+                if(typeof (tokens_object as GoogleAuthTokensResponse).access_token !== 'undefined') {
+                  tool._.google_auth_check_email(result.state.account_email, (tokens_object as GoogleAuthTokensResponse).access_token, function (account_email) {
+                    tool._.google_auth_save_tokens(account_email, tokens_object as GoogleAuthTokensResponse, result.state.scopes, function () {
                       (auth_responder as Callback)({account_email: account_email, success: true, result: 'success', message_id: result.state.message_id});
                     });
                   });

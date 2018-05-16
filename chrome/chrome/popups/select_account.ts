@@ -17,13 +17,13 @@ tool.catch.try(() => {
   }
   
   Store.account_emails_get().then((account_emails) => {
-    Store.get(account_emails, ['setup_done']).then((account_storages) => {
+    Store.get_by_account(account_emails, ['setup_done']).then(account_storages => {
       let ul_emails = '';
-      tool.each(account_storages, (email: string, storage) => {
-        if(storage.setup_done === true) {
+      for(let email of Object.keys(account_storages)) {
+        if(account_storages[email].setup_done === true) {
           ul_emails += `<li><a class="button gray2 long" href="#" email="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</a></li>`;
         }
-      });
+      }
       $('ul.emails').html(ul_emails).find('a').click(function () {
         tool.browser.message.send(null, 'settings', { account_email: $(this).attr('email'), page: page }, () => window.close());
       });

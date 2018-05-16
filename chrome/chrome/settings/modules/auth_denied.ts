@@ -16,7 +16,7 @@ tool.catch.try(() => {
     render_setup_done(false);
   } else {
     Store.get(url_params.account_email as string, ['setup_done']).then(storage => {
-      render_setup_done(storage.setup_done);
+      render_setup_done(storage.setup_done || false);
     });
   }
 

@@ -4,23 +4,12 @@
 
 tool.catch.try(async() => {
 
-  type ComposeStorage = {
-    google_token_scopes: string[],
-    addresses: string[],
-    addresses_pks: string[],
-    addresses_keyserver: string[],
-    email_footer: string|null,
-    email_provider: EmailProvider,
-    hide_message_password: boolean,
-    drafts_reply: any,
-  }
-
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
   let subscription = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-  let storage: ComposeStorage = await Store.get(url_params.account_email as string, storage_keys);
+  let storage = await Store.get(url_params.account_email as string, storage_keys);
   await recover_missing_url_params();
 
   tool.browser.message.tab_id(tab_id => {
@@ -35,8 +24,8 @@ tool.catch.try(async() => {
       can_read_email: () => can_read_email,
       does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
         their_email = tool.str.parse_email(their_email).email;
-        Store.get(url_params.account_email as string, ['pubkey_sent_to']).then(function (pubkey_sent_to_storage: {pubkey_sent_to: string[]}) {
-          if (tool.value(their_email).in(pubkey_sent_to_storage.pubkey_sent_to)) {
+        Store.get(url_params.account_email as string, ['pubkey_sent_to']).then(storage => {
+          if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
             callback(true);
           } else if (!can_read_email) {
             callback(undefined);
@@ -45,7 +34,7 @@ tool.catch.try(async() => {
             const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
             tool.api.gmail.message_list(url_params.account_email as string, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response: any) {
               if (success && response.messages) {
-                Store.set(url_params.account_email as string, {pubkey_sent_to: (pubkey_sent_to_storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
+                Store.set(url_params.account_email as string, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
               } else {
                 callback(false);
               }
@@ -56,7 +45,7 @@ tool.catch.try(async() => {
       storage_get_addresses: () => storage.addresses || [url_params.account_email as string],
       storage_get_addresses_pks: () => storage.addresses_pks || [],
       storage_get_addresses_keyserver: () => storage.addresses_keyserver || [],
-      storage_get_email_footer: () => storage.email_footer,
+      storage_get_email_footer: () => storage.email_footer || null,
       storage_set_email_footer: (footer: string|null) => {
         storage.email_footer = footer;
         // noinspection JSIgnoredPromiseFromCall
@@ -83,24 +72,24 @@ tool.catch.try(async() => {
         });
       },
       storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => catcher.Promise((resolve, reject) => {
-        Store.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(function (draft_storage: {drafts_reply: Dict<string>, drafts_compose: Dict<string>}) {
-          let drafts: Dict<string|{recipients: string[], subject: string, date: number}>;
+        Store.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
           if (thread_id) { // it's a reply
-            drafts = draft_storage.drafts_reply || {};
+            let drafts = draft_storage.drafts_reply || {};
             if (store_if_true) {
               drafts[thread_id] = draft_id;
             } else {
               delete drafts[thread_id];
             }
-            Store.set(url_params.account_email as string, {drafts_reply: drafts as Serializable}).then(resolve);
+            Store.set(url_params.account_email as string, {drafts_reply: drafts}).then(resolve);
           } else { // it's a new message
+            let drafts = draft_storage.drafts_compose || {};
             drafts = draft_storage.drafts_compose || {};
             if (store_if_true) {
               drafts[draft_id] = {recipients: recipients, subject: subject, date: new Date().getTime()};
             } else {
               delete drafts[draft_id];
             }
-            Store.set(url_params.account_email as string, {drafts_compose: drafts as Serializable}).then(resolve);
+            Store.set(url_params.account_email as string, {drafts_compose: drafts}).then(resolve);
           }
         });
       }),
@@ -116,13 +105,13 @@ tool.catch.try(async() => {
         });
       },
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => {
-        Store.get(null, ['admin_codes']).then((admin_code_storage: {admin_codes: Dict<{date: number, codes: string[]}>}) => {
+        Store.get(null, ['admin_codes']).then(admin_code_storage => {
           admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
           admin_code_storage.admin_codes[short_id] = {
             date: Date.now(),
             codes: [message_admin_code].concat(attachment_admin_codes || []),
           };
-          Store.set(null, admin_code_storage as any as Dict<Serializable>).then(callback);
+          Store.set(null, admin_code_storage).then(callback);
         });
       },
       storage_contact_get: (email: string[]) => Store.db_contact_get(null, email),
@@ -251,7 +240,7 @@ tool.catch.try(async() => {
       tool.api.gmail.message_get(url_params.account_email as string, url_params.thread_message_id as string, 'metadata', function (success: boolean, gmail_message_object: any) {
         if (success) {
           url_params.thread_id = gmail_message_object.threadId;
-          let reply = tool.api.common.reply_correspondents(url_params.account_email as string, storage.addresses, tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+          let reply = tool.api.common.reply_correspondents(url_params.account_email as string, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
           if(!url_params.to) {
             url_params.to = reply.to.join(',');
           }
