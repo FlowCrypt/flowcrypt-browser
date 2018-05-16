@@ -78,6 +78,7 @@ function account_update_status_keyserver(account_email: string) { // checks whic
               addresses_keyserver.push(result.email);
             }
           }
+          // noinspection JSIgnoredPromiseFromCall
           Store.set(account_email, { addresses_keyserver: addresses_keyserver, });
         }, function(error) {});
       }
@@ -100,6 +101,7 @@ function account_update_status_pks(account_email: string) { // checks if any new
                 if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
                   addresses_pks.push(email);
                   console.log(email + ' newly found matching pubkey on PKS');
+                  // noinspection JSIgnoredPromiseFromCall
                   Store.set(account_email, { addresses_pks: addresses_pks, });
                 }
               }

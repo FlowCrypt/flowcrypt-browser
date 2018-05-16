@@ -4,7 +4,7 @@
 
 tool.catch.try(() => {
 
-  var url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
   tool.ui.passphrase_toggle(['input_passphrase']);
   

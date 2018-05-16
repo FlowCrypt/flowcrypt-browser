@@ -13,7 +13,7 @@ tool.catch.try(() => {
       if(passphrase !== null) {
         process_attest(passphrase);
       } else {
-        $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>')
+        $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
         $('.action_passphrase').click(function() {
           tool.browser.message.send(url_params.parent_tab_id as string, 'passphrase_dialog', {type: 'attest'});
         });

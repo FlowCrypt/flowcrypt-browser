@@ -59,6 +59,7 @@ tool.catch.try(() => {
         $('.input_email').css({display: 'none'});
         $('.add_contact').append(' for ' + pubkeys.map(pubkey => tool.str.parse_email(pubkey.users[0].userId.userid).email).filter(e => tool.str.is_email_valid(e)).join(', '));
       }
+      // noinspection JSIgnoredPromiseFromCall
       set_button_text();
     }
   } else {

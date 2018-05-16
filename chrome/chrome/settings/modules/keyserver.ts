@@ -4,12 +4,6 @@
 
 tool.catch.try(() => {
 
-  const l = {
-    all_good: 'Your account is well set up. If you cannot open some of your received email, please inform your contacts to update their information about your public key. ',
-    mismatch: 'There is at least one incorrect pubkey record. Your encrypted email may be unreadable as a result. ',
-    missing: 'Some receiving emails are not registered for encryption, and your contancts will not know they can send you encrypted email. ',
-  };
-
   let url_params = tool.env.url_params(['account_email']);
 
   $('.email-address').text(url_params.account_email as string);
@@ -110,7 +104,7 @@ tool.catch.try(() => {
         }, 30000);
       });
     }));
-    var refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
+    let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
     $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
       $(self).html(tool.ui.spinner('green'));
       fetch_account_aliases_from_gmail(url_params.account_email as string, function(addresses) {

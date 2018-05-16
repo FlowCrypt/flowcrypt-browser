@@ -39,7 +39,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     this.replace_conversation_buttons();
     this.replace_standard_reply_box();
     this.evaluate_standard_compose_receivers();
-  }
+  };
 
   set_reply_box_editable = () => {
     let reply_container_iframe = $('.reply_message_iframe_container > iframe').first();
@@ -49,12 +49,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
     } else {
       this.replace_standard_reply_box(true);
     }
-  }
+  };
 
   reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
     let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embedded_reply(params, false, true));
-  }
+  };
 
   private replace_armored_blocks = () => {
     let self = this;
@@ -68,12 +68,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let new_selector = self.update_message_body_element(this, 'set', replacement.replace(/\n/g, '<br>'));
       }
     });
-  }
+  };
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
     container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(on_click)));
-  }
+  };
 
   private replace_conversation_buttons = (force:boolean=false) => {
     let convo_upper_icons = $('div.ade:visible');
@@ -112,7 +112,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     }
-  }
+  };
 
   private replace_cryptup_tags = () => {
     let self = this;
@@ -121,7 +121,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       let button = '';
       let button_href_id: string|undefined = undefined;
       // todo - below should be replaced with search to make it less confusing
-      $(this).html().replace(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)\]/g, function (full_link: string, name: string, id: string) {
+      $(this).html().replace(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/g, function (full_link: string, name: string, id: string) {
         if(name === 'draft_compose') {
           button = '<a href="#" class="open_draft">Open draft</a>';
           button_href_id = id;
@@ -138,7 +138,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         $('body').append(self.factory.embedded_compose(button_href_id));
       }));
     });
-  }
+  };
 
   private replace_attachments = () => {
     $(this.selector.attachments_container_inner).each((i, attachments_container: HTMLElement|JQuery<HTMLElement>) => {
@@ -168,7 +168,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     });
-  }
+  };
 
   private process_attachments = (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
     let message_element = this.get_message_body_element(message_id);
@@ -230,7 +230,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       });
       this.process_attachments(message_id, google_drive_attachments, attachments_container_inner, true);
     }
-  }
+  };
 
   private filter_attachments = (potential_matches: JQuery<HTMLElement>|HTMLElement, patterns: string[]) => {
     return $(potential_matches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function() {
@@ -248,7 +248,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       }
       return false;
     }).closest('span.aZo, span.a5r');
-  }
+  };
 
   private hide_attachment = (atachment_element: JQuery<HTMLElement>|HTMLElement, attachments_container_selector: JQuery<HTMLElement>|HTMLElement) => {
     atachment_element = $(atachment_element);
@@ -257,23 +257,23 @@ class GmailElementReplacer implements WebmailElementReplacer {
     if(!atachment_element.length) {
       attachments_container_selector.children('.attachment_loader').text('Missing file info');
     }
-  }
+  };
 
   private determine_message_id = (inner_message_element: HTMLElement|JQuery<HTMLElement>) => { // todo - test and use data-message-id with Gmail API once available
     return $(inner_message_element).parents(this.selector.message_outer).attr('data-legacy-message-id') || '';
-  }
+  };
 
   private determine_thread_id = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => { // todo - test and use data-thread-id with Gmail API once available
     return $(conversation_root_element).find(this.selector.subject).attr('data-legacy-thread-id') || '';
-  }
+  };
 
   private get_message_body_element(message_id: string) { // todo - test
     return $(this.selector.message_outer).filter('[data-legacy-message-id="' + message_id + '"]').find(this.selector.message_inner);
-  }
+  };
 
   private wrap_message_body_element = (html_content: string) => {
     return '<div class="message_inner_body evaluated">' + html_content + '</div>';
-  }
+  };
 
   private update_message_body_element = (element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content: string) => {
     // Messages in Gmail UI have to be replaced in a very particular way
@@ -301,23 +301,23 @@ class GmailElementReplacer implements WebmailElementReplacer {
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);
     }
-  }
+  };
 
   private get_sender_email = (message_element: HTMLElement|JQuery<HTMLElement>) => {
     return ($(message_element).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
-  }
+  };
 
   private dom_get_message_sender = (conversation_root_element: JQuery<HTMLElement>) => {
     return (conversation_root_element.find('h3.iw span[email]').last().attr('email') || '').trim().toLowerCase();
-  }
+  };
 
   private dom_get_message_recipients = (conversation_root_element: JQuery<HTMLElement>) => {
     return conversation_root_element.find('span.hb').last().find('span.g2').toArray().map(el => ($(el).attr('email') || '').toLowerCase()); // add all recipients including me
-  }
+  };
 
   private dom_get_message_subject = (conversation_root_element: JQuery<HTMLElement>) => {
     return $(conversation_root_element).find(this.selector.subject).text();
-  }
+  };
 
   private get_conversation_params = (convo_root_el: JQuery<HTMLElement>) => {
     let headers = tool.api.common.reply_correspondents(this.account_email, this.addresses, this.dom_get_message_sender(convo_root_el), this.dom_get_message_recipients(convo_root_el));
@@ -329,11 +329,11 @@ class GmailElementReplacer implements WebmailElementReplacer {
       thread_id: this.determine_thread_id(convo_root_el),
       thread_message_id: this.determine_message_id($(convo_root_el).find(this.selector.message_inner).last()),
     };
-  }
+  };
 
   private get_conversation_root_element = (any_inner_element: HTMLElement) => {
     return $(any_inner_element).closest('div.if, td.Bu').first();
-  }
+  };
 
   private replace_standard_reply_box = (editable:boolean=false, force:boolean=false) => {
     let self = this;
@@ -355,7 +355,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
     });
-  }
+  };
 
   private evaluate_standard_compose_receivers = () => {
     let standard_compose_selector = $('.aaZ:visible');
@@ -401,6 +401,6 @@ class GmailElementReplacer implements WebmailElementReplacer {
         }
       });
     }
-  }
+  };
 
 }

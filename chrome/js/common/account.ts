@@ -2,7 +2,6 @@
 
 'use strict';
 
-
 tool.catch.try(() => {
 
   const cryptup_verification_email_sender = 'verify@cryptup.org';

@@ -103,6 +103,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
       factory = new Factory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
       inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
       inject.meta();
+      // noinspection JSIgnoredPromiseFromCall
       Store.account_emails_add(account_email);
       save_account_email_full_name_if_needed(account_email);
       let show_setup_needed_notification_if_setup_not_done = true;
@@ -185,6 +186,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
     (window as ContentScriptWindow).TrySetDestroyableTimeout(function () {
       let full_name = webmail_specific.get_user_full_name();
       if(full_name) {
+        // noinspection JSIgnoredPromiseFromCall
         Store.set(account_email, {full_name});
       } else {
         save_account_email_full_name(account_email);

@@ -6,7 +6,7 @@ tool.catch.try(() => {
 
   Store.get(null, ['errors']).then((storage: {errors: string[]}) => {
     if(storage.errors && storage.errors.length) {
-      var errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
+      let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
       $('.pre').html(errors);
     }
   });

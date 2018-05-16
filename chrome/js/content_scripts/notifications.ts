@@ -26,11 +26,11 @@ class Notifications {
         });
       }
     });
-  }
+  };
 
   clear = () => {
     $('.webmail_notifications').html('');
-  }
+  };
 
   show = (text: string, callbacks:Dict<Callback>={}) => {
     $('.webmail_notifications').html(`<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);

@@ -548,7 +548,8 @@ let tool = {
     },
     resembles_message: (message: string|Uint8Array) => {
       let m = message.slice(0, 1000);
-      if(m instanceof  Uint8Array) {
+      // noinspection SuspiciousInstanceOfGuard
+      if(m instanceof Uint8Array) {
         m = tool.str.from_uint8(m);
       }
       m = m.toLowerCase();
@@ -811,7 +812,7 @@ let tool = {
             return h;
           }
           return tool.obj.map(h, function (header_value) {
-            if(typeof h === 'string') {
+            if(typeof header_value === 'string') {
               return header_value.replace(/ /g, '\\\s'); // regexp match friendly
             } else {
               return header_value;
@@ -1074,6 +1075,7 @@ let tool = {
       },
       decrypt: (account_email: string, encrypted_data: string|Uint8Array, message_password: string|null, callback: (decrypted: DecryptSuccess|DecryptError) => void, output_format:"utf8"|"binary"|null=null): void => {
         let first_100_bytes = encrypted_data.slice(0, 100);
+        // noinspection SuspiciousInstanceOfGuard - Uint8Array.slice of course returns Uint8Array
         if(first_100_bytes instanceof Uint8Array) {
           first_100_bytes = tool.str.from_uint8(first_100_bytes);
         }
@@ -1232,26 +1234,29 @@ let tool = {
           show = !s.hide_pass_phrases;
         }
         for(let id of pass_phrase_input_ids) {
-          $('#' + id).addClass('toggled_passphrase');
+          let passphrase_input = $('#' + id);
+          passphrase_input.addClass('toggled_passphrase');
           if(show) {
-            $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
-            $('#' + id).attr('type', 'text');
+            passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
+            passphrase_input.attr('type', 'text');
           } else {
-            $('#' + id).after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
-            $('#' + id).attr('type', 'password');
+            passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
+            passphrase_input.attr('type', 'password');
           }
           $('#toggle_' + id).click(function () {
-            if($('#' + id).attr('type') === 'password') {
+            if(passphrase_input.attr('type') === 'password') {
               $('#' + id).attr('type', 'text');
               $(this).html(button_hide);
+              // noinspection JSIgnoredPromiseFromCall
               Store.set(null, { hide_pass_phrases: false });
             } else {
               $('#' + id).attr('type', 'password');
               $(this).html(button_show);
+              // noinspection JSIgnoredPromiseFromCall
               Store.set(null, { hide_pass_phrases: true });
             }
           });
-        };
+        }
       });
     },
     enter: (callback: () => void) => {
@@ -1782,7 +1787,7 @@ let tool = {
       search_contacts: (account_email: string, user_query: string, known_contacts: Contact[], callback: Callback) => { // This will keep triggering callback with new emails as they are being discovered
         let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
         if(user_query) {
-          let variations_of_to = user_query.split(/[ \.]/g).filter(function(v) {!tool.value(v).in(['com', 'org', 'net']);});
+          let variations_of_to = user_query.split(/[ .]/g).filter(v => !tool.value(v).in(['com', 'org', 'net']));
           if(!tool.value(user_query).in(variations_of_to)) {
             variations_of_to.push(user_query);
           }
@@ -3146,6 +3151,7 @@ let tool = {
               s.errors = [] as Error[];
             }
             s.errors.unshift((error as Error).stack || error_message); // todo - remove cast & debug
+            // noinspection JSIgnoredPromiseFromCall
             Store.set(null, s);
           });
         }
@@ -3170,6 +3176,7 @@ let tool = {
     },
     report: (name: string, details:Serializable|StandardError|PromiseRejectionEvent=undefined) => {
       try {
+        // noinspection ExceptionCaughtLocallyJS
         throw new Error(name);
       } catch(e) {
         if(typeof details !== 'string') {
@@ -3187,6 +3194,7 @@ let tool = {
       name = 'tool.catch.log: ' + name;
       console.log(name);
       try {
+        // noinspection ExceptionCaughtLocallyJS
         throw new Error(name);
       } catch(e) {
         if(typeof details !== 'string') {
@@ -3203,6 +3211,7 @@ let tool = {
               s.errors = [];
             }
             s.errors.unshift(e.stack || name);
+            // noinspection JSIgnoredPromiseFromCall
             Store.set(null, s);
           });
         } catch (storage_err) {

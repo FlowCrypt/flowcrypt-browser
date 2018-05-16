@@ -59,6 +59,7 @@ tool.catch.try(async() => {
       storage_get_email_footer: () => storage.email_footer,
       storage_set_email_footer: (footer: string|null) => {
         storage.email_footer = footer;
+        // noinspection JSIgnoredPromiseFromCall
         Store.set(url_params.account_email as string, {email_footer: footer}); // async
       },
       storage_get_hide_message_password: () => !!storage.hide_message_password,

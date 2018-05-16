@@ -30,13 +30,13 @@ class Injector {
 
   meta = () => {
     this.S.cached('body').addClass(`cryptup_${this.webmail_name} cryptup_${this.webmail_name}_${this.webmail_variant}`).append(this.factory.meta_stylesheet('webmail') + this.factory.meta_notification_container());
-  }
+  };
 
   open_compose_window = () => {
     if(this.S.now('compose_window').length === 0) {
       this.S.cached('body').append(this.factory.embedded_compose());
     }
-  }
+  };
 
   buttons = () => {
     if(this.S.now('compose_button_container').length === 0) { // don't inject too early

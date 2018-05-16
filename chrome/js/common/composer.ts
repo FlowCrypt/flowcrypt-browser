@@ -148,6 +148,7 @@ class Composer {
     if (this.app.storage_get_hide_message_password()) {
       this.S.cached('input_password').attr('type', 'password');
     }
+    // noinspection JSIgnoredPromiseFromCall
     this.initialize_compose_box(variables);
     this.initialize_actions();
   }
@@ -197,7 +198,7 @@ class Composer {
         },
       };
     }
-  }
+  };
 
   private initialize_actions = () => {
     let S = this.S;
@@ -259,17 +260,17 @@ class Composer {
     // @ts-ignore
     S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
     S.cached('icon_sign').click(() => this.toggle_sign_icon());
-  }
+  };
 
   show_subscribe_dialog_and_wait_for_response = (_data: any, _sender: chrome.runtime.MessageSender | "background", respond: (subscribed: boolean) => void) => {
     this.subscribe_result_listener = respond;
     this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
-  }
+  };
 
-  private initialize_compose_box = (variables: UrlParams)  => {
+  private initialize_compose_box = async (variables: UrlParams)  => {
     let that = this;
     if(this.draft_id) {
-      this.initial_draft_load();
+      await this.initial_draft_load();
     } else {
       if(this.is_reply_box) {
         if(variables.skip_click_prompt) {
@@ -302,7 +303,7 @@ class Composer {
       this.render_compose_table();
     }
     $('body').attr('data-test-state', 'ready');  //set as ready so that automated tests can evaluate results
-  }
+  };
 
   private initial_draft_load = async ()  =>{
     if(this.is_reply_box) {
@@ -310,11 +311,11 @@ class Composer {
     }
     try {
       let draft_get_response: any = await this.app.email_provider_draft_get(this.draft_id);
-      tool.mime.decode(tool.str.base64url_decode(draft_get_response.message.raw), (mime_success, parsed_message) => {
+      tool.mime.decode(tool.str.base64url_decode(draft_get_response.message.raw), async (mime_success, parsed_message) => {
         let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
         if(armored) {
           this.S.cached('input_subject').val(parsed_message.headers.subject || '');
-          this.decrypt_and_render_draft(armored, this.is_reply_box ? this.render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
+          await this.decrypt_and_render_draft(armored, this.is_reply_box ? this.render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
         } else {
           console.log('tool.api.gmail.draft_get tool.mime.decode else {}');
           if(this.is_reply_box) {
@@ -337,15 +338,15 @@ class Composer {
           this.render_reply_message_compose_table();
         }
       }
-  }
-  }
+    }
+  };
 
   process_subscribe_result = (new_subscription: Subscription)  =>{
     if (typeof this.subscribe_result_listener === 'function') {
       this.subscribe_result_listener(new_subscription.active || false);
       this.subscribe_result_listener = undefined;
     }
-  }
+  };
 
   private reset_send_btn = (delay:number|null=null)  => {
     const do_reset = () => this.S.cached('send_btn').html('<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
@@ -355,17 +356,17 @@ class Composer {
     } else {
       setTimeout(do_reset, delay);
     }
-  }
+  };
 
   passphrase_entry = (entered: boolean)  => {
     if(!entered) {
       this.reset_send_btn();
       clearInterval(this.passphrase_interval);
     }
-  }
+  };
 
   private draft_save = async (force_save:boolean=false) => {
-    if (this.should_save_draft(this.S.cached('input_text').text()) || force_save === true) {
+    if (this.should_save_draft(this.S.cached('input_text').text()) || force_save) {
       this.save_draft_in_process = true;
       this.S.cached('send_btn_note').text('Saving');
       let armored_pubkey = await this.app.storage_get_armored_public_key(this.account_email);
@@ -386,7 +387,7 @@ class Composer {
                 let new_draft = await this.app.email_provider_draft_create(mime_message);
                   this.S.cached('send_btn_note').text('Saved');
                 this.draft_id = new_draft.id;
-                this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
+                await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
                   // recursing one more time, because we need the draft_id we get from this reply in the message itself
                   // essentially everytime we save draft for the first time, we have to save it twice
                   // save_draft_in_process will remain true because well.. it's still in process
@@ -404,52 +405,52 @@ class Composer {
             });
         }
     }
-  }
+  };
 
   private draft_delete = async ()  => {
     clearInterval(this.save_draft_interval);
     await tool.time.wait(() => !this.save_draft_in_process ? true : undefined);
-      if (this.draft_id) {
+    if (this.draft_id) {
       await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
       await this.app.email_provider_draft_delete(this.draft_id);
-      }
-  }
+    }
+  };
 
   private decrypt_and_render_draft = async (encrypted_draft: string, render_function: (() => void)|null, headers: FromToHeaders)  => {
     let passphrase = this.app.storage_passphrase_get();
-      if (passphrase !== null) {
-        tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, (result) => {
-          if(result.success) {
-            tool.str.as_safe_html((result.content.data as string).replace(/\n/g, '<br>\n'), (safe_html_draft: string) => {
-              this.S.cached('input_text').html(safe_html_draft);
-              if (headers && headers.to && headers.to.length) {
-                this.S.cached('input_to').focus();
-                this.S.cached('input_to').val(headers.to.join(','));
-                this.S.cached('input_text').focus();
-              }
-              if (headers && headers.from) {
-                this.S.now('input_from').val(headers.from);
-              }
-              this.set_input_text_height_manually_if_needed();
-              if (render_function) {
-                render_function();
-              }
-            });
-          } else {
-            this.set_input_text_height_manually_if_needed()
+    if (passphrase !== null) {
+      tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, (result) => {
+        if(result.success) {
+          tool.str.as_safe_html((result.content.data as string).replace(/\n/g, '<br>\n'), (safe_html_draft: string) => {
+            this.S.cached('input_text').html(safe_html_draft);
+            if (headers && headers.to && headers.to.length) {
+              this.S.cached('input_to').focus();
+              this.S.cached('input_to').val(headers.to.join(','));
+              this.S.cached('input_text').focus();
+            }
+            if (headers && headers.from) {
+              this.S.now('input_from').val(headers.from);
+            }
+            this.set_input_text_height_manually_if_needed();
             if (render_function) {
               render_function();
             }
+          });
+        } else {
+          this.set_input_text_height_manually_if_needed();
+          if (render_function) {
+            render_function();
           }
-        }, 'utf8');
-      } else {
-        if (this.is_reply_box) {
-          this.S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
-        await this.when_master_passphrase_entered();
-        this.decrypt_and_render_draft(encrypted_draft, render_function, headers);
         }
+      }, 'utf8');
+    } else {
+      if (this.is_reply_box) {
+        this.S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
+        await this.when_master_passphrase_entered();
+        await this.decrypt_and_render_draft(encrypted_draft, render_function, headers);
       }
-  }
+    }
+  };
 
   private when_master_passphrase_entered = (seconds_timeout:number|null=null): Promise<string|null> => {
     return new Promise(resolve => {
@@ -464,9 +465,9 @@ class Composer {
           clearInterval(this.passphrase_interval);
           resolve(null);
         }
-      }, 1000);  
-      });
-  }
+      }, 1000);
+    });
+  };
 
   private collect_all_available_public_keys = async(account_email: string, recipients: string[]) => {
     let contacts = await this.app.storage_contact_get(recipients);
@@ -488,7 +489,7 @@ class Composer {
       }
     }
     return {armored_pubkeys, emails_without_pubkeys};
-  }
+  };
 
   private is_compose_form_rendered_as_ready = (recipients: string[])  => {
     if(tool.value(this.S.now('send_btn_span').text().toLowerCase().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
@@ -503,7 +504,7 @@ class Composer {
       }
       return false;
     }
-  }
+  };
 
   private are_compose_form_values_valid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null): boolean  => {
     const is_encrypt = !this.S.cached('icon_sign').is('.active');
@@ -514,12 +515,10 @@ class Composer {
       alert('Some recipients don\'t have encryption set up. Please add a password.');
       this.S.cached('input_password').focus();
       return false;
-    } else if((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?'))) {
-      return true; //todo - tailor for replying w/o subject
     } else {
-      return false;
+      return Boolean((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?')));
     }
-  }
+  };
 
   private handle_send_btn_processing_error = (callback: () => void): void  => {
     try {
@@ -529,7 +528,7 @@ class Composer {
       this.reset_send_btn();
       alert(String(err));
     }
-  }
+  };
 
   private extract_process_encrypt_and_send_message = async() => {
     const recipients = this.get_recipients_from_dom();
@@ -540,11 +539,11 @@ class Composer {
       this.S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       this.app.storage_get_subscription_info(async (subscription: Subscription) => {
-      let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
+        let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
         const challenge = emails_without_pubkeys.length ? {answer: String(this.S.cached('input_password').val())} : null;
         if(this.are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
           if(this.S.cached('icon_sign').is('.active')) {
-            this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+            await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
           } else {
             this.encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
           }
@@ -553,7 +552,7 @@ class Composer {
         }
       });
     }
-  }
+  };
 
   private encrypt_and_send = (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
     this.S.now('send_btn_span').text('Encrypting');
@@ -582,7 +581,7 @@ class Composer {
         });
       });
     });
-  }
+  };
 
   private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
     this.S.now('send_btn_span').text('Signing');
@@ -593,7 +592,7 @@ class Composer {
       if (passphrase === null) {
           this.app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         if ((await this.when_master_passphrase_entered(60)) !== null) { // pass phrase entered
-          this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+          await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
           clearInterval(this.passphrase_interval);
           this.reset_send_btn();
@@ -621,11 +620,12 @@ class Composer {
             if (success) {
               this.handle_send_btn_processing_error(() => {
                 this.attach.collect_attachments(async (attachments: Attachment[]) => { // todo - not signing attachments
-                  this.app.storage_contact_update(recipients, {last_use: Date.now()}); // does not have to be awaited
+                  // noinspection JSIgnoredPromiseFromCall
+                  this.app.storage_contact_update(recipients, {last_use: Date.now()});
                   this.S.now('send_btn_span').text('Sending');
                   signing_result = await this.with_attached_pubkey_if_needed(signing_result);
                   const body = {'text/plain': signing_result};
-                  this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+                  await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
                 });
               });
             } else {
@@ -640,42 +640,42 @@ class Composer {
       alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
       this.reset_send_btn();
     }
-  }
+  };
 
   private upload_attachments_to_cryptup = (attachments: Attachment[], subscription: Subscription, callback: (ok: boolean|null|object, uploads?: Attachment[]|null, ac?: string[]|null, err?: string) => void): void  => {
     (async() => {
       try {
-    // @ts-ignore: .validate()
+        // @ts-ignore: .validate()
         let pf_response = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate((r: {approvals:Dict<any>[]}) => r.approvals && r.approvals.length === attachments.length);
-      const items: any[] = [];
-      for(let i in pf_response.approvals) {
-        items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i as any as number]});
-      }
+        const items: any[] = [];
+        for(let i in pf_response.approvals) {
+          items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i as any as number]});
+        }
         await tool.api.aws.s3_upload(items, this.render_upload_progress);
         // @ts-ignore: .validate()
         let {admin_codes} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key)).validate(r => r.confirmed && r.confirmed.length === items.length);
-          for(let i in attachments) {
-            attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
-          }
+        for(let i in attachments) {
+          attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
+        }
         callback(true, attachments, admin_codes);
       } catch(error) {
         if(error && typeof error === 'object' && error.internal === 'validate') {
-            callback(false, null, null, 'Could not verify that all files were uploaded properly, please try again.');
+          callback(false, null, null, 'Could not verify that all files were uploaded properly, please try again.');
         } else if (error && typeof error === 'object' && error.internal === 'auth') {
           callback(error);
-          } else {
+        } else {
           callback(false, null, null, error && typeof error === 'object' && error.message ? error.message : 'Some files failed to upload, please try again');
-          }
+        }
       }
     })();
-  }
+  };
 
   private render_upload_progress = (progress: number)  => {
     if (this.attach.has_attachment()) {
       progress = Math.floor(progress);
       this.S.now('send_btn_span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
     }
-  }
+  };
 
   private add_uploaded_file_links_to_message_body = (plaintext: string, attachments: Attachment[])  => {
     plaintext += '\n\n';
@@ -687,7 +687,7 @@ class Composer {
       plaintext += '<a href="' + attachments[i].url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
     }
     return plaintext;
-  }
+  };
 
   private add_reply_token_to_message_body_if_needed = (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription, callback: (res: string) => void): void  => {
     if (challenge && subscription.active) {
@@ -717,7 +717,7 @@ class Composer {
     } else {
       callback(plaintext);
     }
-  }
+  };
 
   private upload_encrypted_message_to_cryptup = (encrypted_data: Uint8Array|string, subscription: Subscription, callback: (short: string|null, admin_code: string|null, error?: string|StandardError) => void): void  => {
     this.S.now('send_btn_span').text('Sending');
@@ -735,7 +735,7 @@ class Composer {
         callback(null, null, error.internal || error.message);
       }
     });
-  }
+  };
 
   private with_attached_pubkey_if_needed = async (encrypted: string) => {
         if (this.S.cached('icon_pubkey').is('.active')) {
@@ -743,7 +743,7 @@ class Composer {
           encrypted += '\n\n' + armored_public_key;
         }
       return encrypted
-  }
+  };
 
   private do_encrypt_message_body_and_format = (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[])  => {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, async (encrypted) => {
@@ -756,8 +756,8 @@ class Composer {
             if (short_id && message_admin_code) {
               body = this.format_password_protected_email(short_id, body, armored_pubkeys);
               body = this.format_email_text_footer(body);
-              this.app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, () => {
-                this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+              this.app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, async() => {
+                await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
               });
             } else {
               if (error === tool.api.cryptup.auth_error) {
@@ -772,10 +772,10 @@ class Composer {
           });
         } else {
           body = this.format_email_text_footer(body);
-          this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+          await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
         }
       });
-  }
+  };
 
   private do_send_message = async (message: SendableMessage, plaintext: string)  => {
     try {
@@ -803,7 +803,7 @@ class Composer {
         alert('Error sending message, try to re-open your web mail window and send again. Write me at human@flowcrypt.com if this happens repeatedly.');
       }
     }
-  }
+  };
 
   private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async(email: string): Promise<Contact|"fail"> => {
     let [db_contact] = await this.app.storage_contact_get([email]);
@@ -841,7 +841,7 @@ class Composer {
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
       }
     }
-  }
+  };
 
   private evaluate_receivers = ()  => {
     let that = this;
@@ -859,13 +859,13 @@ class Composer {
       }
     });
     this.set_input_text_height_manually_if_needed()
-  }
+  };
 
   private get_password_validation_warning = ()  => {
     if (!this.S.cached('input_password').val()) {
       return 'No password entered';
     }
-  }
+  };
 
   private show_message_password_ui_and_color_button = ()  => {
     this.S.cached('password_or_pubkey').css('display', 'table-row');
@@ -888,7 +888,7 @@ class Composer {
       this.S.cached('add_intro').css('display', 'block');
     }
     this.set_input_text_height_manually_if_needed();
-  }
+  };
 
   /**
    * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
@@ -909,7 +909,7 @@ class Composer {
       }
       this.S.cached('input_text').css('height', this.reference_body_height - cell_height_except_text);
     }
-  }
+  };
 
   private hide_message_password_ui = ()  => {
     this.S.cached('password_or_pubkey').css('display', 'none');
@@ -918,7 +918,7 @@ class Composer {
     this.S.cached('input_intro').text('');
     this.S.cached('intro_container').css('display', 'none');
     this.set_input_text_height_manually_if_needed();
-  }
+  };
 
   private show_hide_password_or_pubkey_container_and_color_send_button = ()  => {
     this.reset_send_btn();
@@ -948,7 +948,7 @@ class Composer {
       }
     }
     this.set_input_text_height_manually_if_needed();
-  }
+  };
 
   private respond_to_input_hotkeys = (input_to_keydown_event: KeyboardEvent)  => {
     let value = this.S.cached('input_to').val();
@@ -967,7 +967,7 @@ class Composer {
       this.S.cached('input_to').focus().blur();
       return false;
     }
-  }
+  };
 
   resize_reply_box = (add_extra:number=0)  => {
     if (this.is_reply_box) {
@@ -990,12 +990,12 @@ class Composer {
         });
       }
     }
-  }
+  };
 
   private append_forwarded_message = (text: string)  => {
     this.S.cached('input_text').append('<br/><br/>Forwarded message:<br/><br/>> ' + text.replace(/(?:\r\n|\r|\n)/g, '\> '));
     this.resize_reply_box();
-  }
+  };
 
   private retrieve_decrypt_and_add_forwarded_message = (message_id: string)  => {
     this.app.email_provider_extract_armored_block(message_id, (armored_message: string) => {
@@ -1017,7 +1017,7 @@ class Composer {
         this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + url_formatted_data_block);
       }
     });
-  }
+  };
 
   private render_reply_message_compose_table = (method:"forward"|"reply"="reply")  => {
     this.S.cached('reply_message_prompt').css('display', 'none');
@@ -1027,7 +1027,7 @@ class Composer {
     if (this.can_read_emails) {
       this.app.email_provider_determine_reply_message_header_variables((last_message_id: string, headers: FlatHeaders) => {
         if(last_message_id && headers) {
-          for(let name in headers) {
+          for(let name of Object.keys(headers)) {
             this.additional_message_headers[name] = headers[name];
           }
           if(method === 'forward') {
@@ -1043,7 +1043,7 @@ class Composer {
       $('.new_message_button').click(() => this.app.send_message_to_main_window('open_new_message'));
     }
     this.resize_reply_box();
-  }
+  };
 
   private render_receivers = ()  => {
     const input_to = (this.S.cached('input_to').val() as string).toLowerCase();
@@ -1061,7 +1061,7 @@ class Composer {
     this.resize_input_to();
     this.evaluate_receivers();
     this.set_input_text_height_manually_if_needed();
-  }
+  };
 
   private select_contact = (email: string, from_query: ProviderContactsQuery)  => {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
@@ -1078,11 +1078,11 @@ class Composer {
       }
     }, tool.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
     this.hide_contacts();
-  }
+  };
 
   private resize_input_to = () => { // below both present in template
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
-  }
+  };
 
   private remove_receiver = ()  => {
     this.recipients_missing_my_key = tool.arr.without_value(this.recipients_missing_my_key, $(this).parent().text());
@@ -1090,15 +1090,16 @@ class Composer {
     this.resize_input_to();
     this.show_hide_password_or_pubkey_container_and_color_send_button();
     this.update_pubkey_icon();
-  }
+  };
 
   private auth_contacts = (account_email: string)  => {
-    this.S.cached('input_to').val($('.recipients span').last().text());
-    $('.recipients span').last().remove();
-    tool.api.google.auth({account_email: account_email, scopes: tool.api.gmail.scope(['read'])} as AuthRequest, (google_auth_response: any) => {
+    let last_recipient = $('.recipients span').last();
+    this.S.cached('input_to').val(last_recipient.text());
+    last_recipient.last().remove();
+    tool.api.google.auth({account_email: account_email, scopes: tool.api.gmail.scope(['read'])} as AuthRequest, async (google_auth_response: any) => {
       if (google_auth_response.success === true) {
         this.can_read_emails = true;
-        this.search_contacts();
+        await this.search_contacts();
       } else if (google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
         alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
       } else {
@@ -1106,14 +1107,14 @@ class Composer {
         alert(Lang.general.something_went_wrong_try_again);
       }
     });
-  }
+  };
 
   private render_search_results_loading_done = ()  => {
     this.S.cached('contacts').find('ul li.loading').remove();
     if (!this.S.cached('contacts').find('ul li').length) {
       this.hide_contacts();
     }
-  }
+  };
 
   private render_search_results = (contacts: Contact[], query: ProviderContactsQuery)  => {
     let that = this;
@@ -1162,7 +1163,7 @@ class Composer {
     } else {
       this.hide_contacts();
     }
-  }
+  };
 
   private search_contacts = async(db_only=false) => {
     const query = {substring: tool.str.parse_email(this.S.cached('input_to').val() as string).email};
@@ -1196,11 +1197,11 @@ class Composer {
     } else {
       this.hide_contacts(); //todo - show suggestions of most contacted ppl etc
     }
-  }
+  };
 
   private hide_contacts = ()  => {
     this.S.cached('contacts').css('display', 'none');
-  }
+  };
 
   private update_pubkey_icon = (include:boolean|null=null)  => {
     if (include === null) { // decide if pubkey should be included
@@ -1214,7 +1215,7 @@ class Composer {
         this.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.include_pubkey_icon_title);
       }
     }
-  }
+  };
 
   update_footer_icon = (include:boolean|null=null)  => {
     if (include === null) { // decide if pubkey should be included
@@ -1226,7 +1227,7 @@ class Composer {
         this.S.cached('icon_footer').removeClass('active');
       }
     }
-  }
+  };
 
   private toggle_sign_icon = ()  => {
     if (!this.S.cached('icon_sign').is('.active')) {
@@ -1243,7 +1244,7 @@ class Composer {
       this.reset_send_btn();
     }
     this.show_hide_password_or_pubkey_container_and_color_send_button();
-  }
+  };
 
   private recipient_key_id_text = (contact: Contact)  => {
     if (contact.client === 'cryptup' && contact.keywords) {
@@ -1253,7 +1254,7 @@ class Composer {
     } else {
       return '';
     }
-  }
+  };
 
   private render_pubkey_result = (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong")  => {
     if ($('body#new_message').length) {
@@ -1303,7 +1304,7 @@ class Composer {
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.show_hide_password_or_pubkey_container_and_color_send_button();
-  }
+  };
 
   private get_recipients_from_dom = (filter:"no_pgp"|null=null): string[]  => {
     let selector;
@@ -1317,7 +1318,7 @@ class Composer {
       recipients.push($(this).text().trim());
     });
     return recipients;
-  }
+  };
 
   private get_sender_from_dom = (): string  => {
     if (this.S.now('input_from').length) {
@@ -1325,7 +1326,7 @@ class Composer {
     } else {
       return this.account_email;
     }
-  }
+  };
 
   private render_reply_success = (message: SendableMessage, plaintext: string, message_id: string)  => {
     let is_signed = this.S.cached('icon_sign').is('.active');
@@ -1354,12 +1355,12 @@ class Composer {
       this.S.cached('replied_attachments').html(message.attachments.map(a => {a.message_id = message_id; return this.app.factory_attachment(a)}).join('')).css('display', 'block');
     }
     this.resize_reply_box();
-  }
+  };
 
   private simulate_ctrl_v = (to_paste: string)  => {
     const r = window.getSelection().getRangeAt(0);
     r.insertNode(r.createContextualFragment(to_paste));
-  }
+  };
 
   private render_compose_table = ()  => {
     if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
@@ -1404,7 +1405,7 @@ class Composer {
       }
       this.set_input_text_height_manually_if_needed();
     }
-  }
+  };
 
   private should_save_draft = (message_body: string)  => {
     if (message_body && message_body !== this.last_draft) {
@@ -1413,7 +1414,7 @@ class Composer {
     } else {
       return false;
     }
-  }
+  };
 
   private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[])  => {
     const decrypt_url = this.CRYPTUP_WEB_URL + '/' + short_id;
@@ -1438,7 +1439,7 @@ class Composer {
     }
     html.push('</div>');
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
-  }
+  };
 
   private format_email_text_footer = (original_body: SendableMessageBody): SendableMessageBody  => {
     const email_footer = this.app.storage_get_email_footer();
@@ -1447,7 +1448,7 @@ class Composer {
       body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
     }
     return body;
-  }
+  };
 
   static default_app_functions = (): ComposerAppFunctionsInterface => {
     return {
@@ -1487,6 +1488,6 @@ class Composer {
       close_message: () => null,
       factory_attachment: (attachment: Attachment) => `<div>${attachment.name}</div>`,
     };
-  }
+  };
 
 }

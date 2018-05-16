@@ -21,14 +21,13 @@ function get_background_process_start_reason() {
   return background_process_start_reason;
 }
 
-migrate_global(() => {
-  Store.set(null, { version: catcher.version('int') });
-  Store.get(null, ['settings_seen']).then((storage) => {
-    if(!storage.settings_seen) {
-      open_settings_page('initial.htm'); // called after the very first installation of the plugin
-      Store.set(null, {settings_seen: true});
-    }
-  });
+migrate_global(async() => {
+  await Store.set(null, { version: catcher.version('int') });
+  let storage = await Store.get(null, ['settings_seen']);
+  if(!storage.settings_seen) {
+    open_settings_page('initial.htm'); // called after the very first installation of the plugin
+    await Store.set(null, {settings_seen: true});
+  }
 });
 
 Store.db_open(db => {
@@ -70,6 +69,7 @@ update_uninstall_url(null, 'background', tool.noop);
 
 Store.get(null, ['errors']).then((s: Dict<string[]>) => {
   if(s.errors && s.errors.length && s.errors.length > 100) {
+    // noinspection JSIgnoredPromiseFromCall
     Store.remove(null, ['errors']);
   }
 });

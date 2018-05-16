@@ -209,6 +209,6 @@ function add_attest_log(account_email:string, packet:string, success:boolean, at
       storage.attest_log = [{attempt: 100, success: false, result: 'DELETED 100 LOGS'}];
     }
     storage.attest_log.push({attempt: storage.attest_log.length + 1, packet: packet, success: success, result: attestation_result_text});
-    Store.set(account_email, storage);
+    Store.set(account_email, storage).then(callback);
   });
 }

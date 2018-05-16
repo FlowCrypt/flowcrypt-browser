@@ -52,6 +52,7 @@ tool.catch.try(() => {
   
   function render_content(content: string, is_error: boolean, callback: VoidCallback) {
     if(!is_error && !url_params.is_outgoing) { //successfully opened incoming message
+      // noinspection JSIgnoredPromiseFromCall
       Store.set(url_params.account_email as string, { successfully_received_at_leat_one_message: true });
     }
     tool.str.as_safe_html(content, function(safe_html) {

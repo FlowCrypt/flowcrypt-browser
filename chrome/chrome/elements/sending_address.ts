@@ -20,7 +20,7 @@ tool.catch.try(() => {
   
   function address_to_html_radio(a: string) {
     return `<input type="radio" name="a" value="${tool.str.html_escape(a)}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
-  };
+  }
 
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
     $(self).html(tool.ui.spinner('green'));

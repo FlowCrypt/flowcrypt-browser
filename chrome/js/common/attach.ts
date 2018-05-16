@@ -94,7 +94,7 @@ declare let qq: any;
       }
     }
 
-    function collect_and_encrypt_attachments(armored_pubkeys: string[], challenge: Challenge, callback: (attachments: Attachment[]) => void) {
+    function collect_and_encrypt_attachments(armored_pubkeys: string[], challenge: Challenge|null, callback: (attachments: Attachment[]) => void) {
       let attachments: Attachment[] = [];
       function add(attachment: Attachment) {
         attachments.push(attachment);
