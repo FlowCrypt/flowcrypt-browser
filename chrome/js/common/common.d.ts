@@ -47,7 +47,7 @@ interface SelectorCacher {
 interface Contact {
     email: string,
     name: string | null,
-    pubkey: string,
+    pubkey: string | null,
     has_pgp: 0|1,
     searchable: string[],
     client: string | null,

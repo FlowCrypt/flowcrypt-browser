@@ -19,11 +19,14 @@ tool.catch.try(() => {
       $('select.copy_from_email').append('<option value="' + contact.email + '">' + contact.email + '</option>');
     }
   
-    $('select.copy_from_email').change(function () {
+    $('select.copy_from_email').change(async function () {
       if($(this).val()) {
-        Store.db_contact_get(null, $(this).val() as string).then((contact: Contact) => {
+        let [contact] = await Store.db_contact_get(null, [$(this).val() as string]);
+        if(contact && contact.pubkey) {
           $('.pubkey').val(contact.pubkey).prop('disabled', true);
-        });
+        } else {
+          alert('Contact not found.');
+        }
       } else {
         $('.pubkey').val('').prop('disabled', false);
       }

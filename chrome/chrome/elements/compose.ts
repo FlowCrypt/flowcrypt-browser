@@ -124,7 +124,7 @@ tool.catch.try(async() => {
           Store.set(null, admin_code_storage as any as Dict<Serializable>).then(callback);
         });
       },
-      storage_contact_get: (email: string) => Store.db_contact_get(null, email),
+      storage_contact_get: (email: string[]) => Store.db_contact_get(null, email),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
       storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
       storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),

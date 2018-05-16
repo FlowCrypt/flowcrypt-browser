@@ -24,7 +24,7 @@ tool.catch.try(() => {
     if(pubkeys.length > 1) {
       $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
     } else {
-      let contact = await Store.db_contact_get(null, $('.input_email').val() as string) as Contact; // text input
+      let [contact] = await Store.db_contact_get(null, [$('.input_email').val() as string]); // text input
       $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
     }
   }

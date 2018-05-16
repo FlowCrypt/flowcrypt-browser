@@ -21,7 +21,7 @@ interface ComposerAppFunctionsInterface {
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>,
     storage_passphrase_get: () => Promise<string|null>,
     storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: () => void) => void,
-    storage_contact_get: (email: string|string[]) => Promise<Contact|Contact[]|null>,
+    storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>,
     storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>,
     storage_contact_save:  (contact: Contact) =>  Promise<void>,
     storage_contact_search: (query: ProviderContactsQuery) => Promise<Contact[]>,
@@ -212,8 +212,8 @@ class Composer {
       clearInterval(this.added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
       this.added_pubkey_db_lookup_interval = window.setInterval(async() => {
         for(let email of no_pgp_emails) {
-          let contact = await this.app.storage_contact_get(email);
-          if (contact && (contact as Contact).has_pgp) {
+          let [contact] = await this.app.storage_contact_get([email]);
+          if (contact && contact.has_pgp) {
             $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
             $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
             clearInterval(this.added_pubkey_db_lookup_interval);
@@ -469,7 +469,7 @@ class Composer {
   }
 
   private collect_all_available_public_keys = async(account_email: string, recipients: string[]) => {
-    let contacts = await this.app.storage_contact_get(recipients) as Contact[];
+    let contacts = await this.app.storage_contact_get(recipients);
     let armored_public_key = await this.app.storage_get_armored_public_key(account_email);
     if(armored_public_key === null) {
       let [ki] = await Store.keys_get(account_email, ['primary']);
@@ -479,7 +479,7 @@ class Composer {
     const emails_without_pubkeys = [];
     for(let i in contacts) {
       let contact = contacts[i];
-      if (contact && contact.has_pgp) {
+      if (contact && contact.has_pgp && contact.pubkey) {
         armored_pubkeys.push(contact.pubkey);
       } else if (contact && this.ks_lookups_by_email[contact.email] && this.ks_lookups_by_email[contact.email].has_pgp && this.ks_lookups_by_email[contact.email].pubkey) {
         armored_pubkeys.push(this.ks_lookups_by_email[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
@@ -806,7 +806,7 @@ class Composer {
   }
 
   private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async(email: string): Promise<Contact|"fail"> => {
-    let db_contact = await this.app.storage_contact_get(email) as Contact;
+    let [db_contact] = await this.app.storage_contact_get([email]);
     if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
       return db_contact;
     } else {
@@ -1178,7 +1178,7 @@ class Composer {
         this.app.email_provider_search_contacts(query.substring, contacts, async (search_contacts_results: {new: Contact[], all: Contact[]}) => {
           if (search_contacts_results.new.length) {
             for(let contact of search_contacts_results.new) {
-              let in_db = await this.app.storage_contact_get(contact.email) as Contact;
+              let [in_db] = await this.app.storage_contact_get([contact.email]);
               if (!in_db) {
                 await this.app.storage_contact_save(this.app.storage_contact_object(contact.email, contact.name, null, null, null, true, contact.date ? new Date(contact.date).getTime() : null));
               } else if (!in_db.name && contact.name) {
@@ -1465,7 +1465,7 @@ class Composer {
       storage_set_draft_meta: () => Promise.resolve(),
       storage_passphrase_get: () => Promise.resolve(null),
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => callback(),
-      storage_contact_get: (email: string) => Promise.resolve(null),
+      storage_contact_get: (email: string[]) => Promise.resolve([]),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
       storage_contact_save: (contact: Contact) => Promise.resolve(),
       storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),

@@ -307,22 +307,23 @@ class Store {
     return index;
   }
 
-  static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) {
+  static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): Contact {
     let fingerprint = pubkey ? tool.crypto.key.fingerprint(pubkey) : null;
     return {
       email: email,
       name: name || null,
       pubkey: pubkey,
-      has_pgp: Number(Boolean(pubkey)), // number because we use it for sorting
+      has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
       searchable: Store.db_create_search_index_list(email, name, Boolean(pubkey)),
       client: pubkey ? client : null,
       attested: pubkey ? Boolean(attested) : null,
       fingerprint: fingerprint,
       longid: fingerprint ? tool.crypto.key.longid(fingerprint) : null,
       keywords: fingerprint ? (window as FlowCryptWindow).mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
-      pending_lookup: pubkey ? 0 : Number(Boolean(pending_lookup)),
+      pending_lookup: pubkey ? 0 : (pending_lookup ? 1 : 0),
       last_use: last_use || null,
-    } as Contact;
+      date: null,
+    };
   }
 
   static db_contact_save(db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> {
@@ -358,41 +359,46 @@ class Store {
           }
           resolve();
         } else {
-          let updated = await Store.db_contact_get(db, email) as Contact;
-          for(let k of Object.keys(update)) {
-            // @ts-ignore
-            updated[k] = update[k];
+          let [contact] = await Store.db_contact_get(db, [email]);
+          if(contact === null) {
+            reject({message: 'contact not found', internal: 'missing_contact', code: null});
+          } else {
+            for(let k of Object.keys(update)) {
+              // @ts-ignore
+              contact[k] = update[k];
+            }
+            let tx = db.transaction('contacts', 'readwrite');
+            let contactsTable = tx.objectStore('contacts');
+            contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
+            tx.oncomplete = catcher.try(resolve);
+            let stack_fill = String((new Error()).stack);
+            tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, reject));  
           }
-          let tx = db.transaction('contacts', 'readwrite');
-          let contactsTable = tx.objectStore('contacts');
-          contactsTable.put(Store.db_contact_object(email, updated.name, updated.client, updated.pubkey, updated.attested, updated.pending_lookup, updated.last_use));
-          tx.oncomplete = catcher.try(resolve);
-          let stack_fill = String((new Error()).stack);
-          tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, reject));
         }
       }
     });
   }
 
-  static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]|string): Promise<Contact[]|Contact|null> {
+  static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]): Promise<(Contact|null)[]> {
     return new Promise(async(resolve, reject) => {
       if(db === null) { // relay op through background process
         tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, resolve);  // todo - currently will silently swallow errors
       } else {
-        if(!Array.isArray(email_or_longid)) {
+        if(email_or_longid.length === 1) {
           let get: IDBRequest;
-          if(!(/^[A-F0-9]{16}$/g).test(email_or_longid)) { // email
-            get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid);
+          if(!(/^[A-F0-9]{16}$/g).test(email_or_longid[0])) { // email
+            get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid[0]);
           } else { // longid
-            get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid);
+            get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid[0]);
           }
-          get.onsuccess = catcher.try(() => resolve(get.result !== undefined ? get.result : null));
+          get.onsuccess = catcher.try(() => resolve([get.result !== undefined ? get.result : null]));
           let stack_fill = String((new Error()).stack);
           get.onerror = () => Store.db_error_handle(get.error, stack_fill, reject);
         } else {
-          let results: Contact[] = [];
+          let results: (Contact|null)[] = [];
           for(let single_email_or_longid of email_or_longid) {
-            results.push(await Store.db_contact_get(db, single_email_or_longid) as Contact);
+            let [contact] = await Store.db_contact_get(db, [single_email_or_longid]);
+            results.push(contact);
           }
           resolve(results);
         }
