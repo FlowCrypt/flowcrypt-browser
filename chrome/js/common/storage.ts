@@ -325,7 +325,7 @@ class Store {
     } as Contact;
   }
 
-  static db_contact_save(db: IDBDatabase|null, contact: Contact|Contact[]) {
+  static db_contact_save(db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> {
     return new Promise(async(resolve, reject) => {
       if(db === null) { // relay op through background process
         tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, () => resolve()); // todo - currently will silently swallow errors
@@ -347,7 +347,7 @@ class Store {
     });
   }
 
-  static db_contact_update(db: IDBDatabase|null, email: string, update: Contact) {
+  static db_contact_update(db: IDBDatabase|null, email: string|string[], update: ContactUpdate): Promise<void> {
     return new Promise(async(resolve, reject) => {
       if(db === null) { // relay op through background process
         tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, resolve); // todo - currently will silently swallow errors

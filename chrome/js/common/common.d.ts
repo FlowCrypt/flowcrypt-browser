@@ -13,7 +13,6 @@ interface FlowCryptWindow extends BrowserWidnow {
     flowcrypt_attach: {
         init: Function,
     },
-    flowcrypt_compose: any,
     iso88592: any,
     is_bare_engine: boolean,
     openpgp: any,
@@ -59,6 +58,22 @@ interface Contact {
     pending_lookup: number,
     last_use: number | null,
     date: number | null, // todo - should be removed. email provider search seems to return this?
+}
+
+interface ContactUpdate {
+    email?: string,
+    name?: string | null,
+    pubkey?: string,
+    has_pgp?: 0|1,
+    searchable?: string[],
+    client?: string | null,
+    attested?: boolean | null,
+    fingerprint?: string | null,
+    longid?: string | null,
+    keywords?: string | null,
+    pending_lookup?: number,
+    last_use?: number | null,
+    date?: number | null, // todo - should be removed. email provider search seems to return this?
 }
 
 interface Attachment {

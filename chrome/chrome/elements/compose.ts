@@ -34,7 +34,7 @@ tool.catch.try(() => {
             url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
           }
   
-          (window as FlowCryptWindow).flowcrypt_compose.init({
+          let composer = new Composer({
             can_read_email: () => can_read_email,
             does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
               their_email = tool.str.parse_email(their_email).email;
@@ -65,7 +65,7 @@ tool.catch.try(() => {
               Store.set(url_params.account_email as string, {email_footer: footer}); // async
             },
             storage_get_hide_message_password: () => !!storage.hide_message_password,
-            storage_get_subscription_info: (cb: (si: SubscriptionInfo) => void) => { // returns cached result, callbacks with fresh result
+            storage_get_subscription_info: (cb: (si: Subscription) => void) => { // returns cached result, callbacks with fresh result
               if(typeof cb === 'function') {
                 Store.subscription().then(subscription => {
                   cb(subscription);
@@ -128,7 +128,7 @@ tool.catch.try(() => {
               });
             },
             storage_contact_get: (email: string) => Store.db_contact_get(null, email),
-            storage_contact_update: (email: string, update: Contact) => Store.db_contact_update(null, email, update),
+            storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
             storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
             storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
             storage_contact_object: Store.db_contact_object,
@@ -175,7 +175,7 @@ tool.catch.try(() => {
                 }
               });
             },
-            email_provider_extract_armored_block: (message_id: string, success: Callback, error: Callback) => tool.api.gmail.extract_armored_block(url_params.account_email as string, message_id, 'full', success, error),
+            email_provider_extract_armored_block: (message_id: string, success: Callback, error: (error_type: any, url_formatted_data_block: string) => void) => tool.api.gmail.extract_armored_block(url_params.account_email as string, message_id, 'full', success, error),
             send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(url_params.parent_tab_id as string, channel, data),
             send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
             render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
@@ -195,7 +195,7 @@ tool.catch.try(() => {
               if (url_params.placement !== 'settings') {
                 tool.browser.message.send(url_params.parent_tab_id as string, 'add_pubkey_dialog', {emails: emails});
               } else {
-                $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: (window as FlowCryptWindow).flowcrypt_compose.S.cached('body').height() - 50});
+                $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: composer.S.cached('body').height()! - 50}); // body element is present
               }
             },
             render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: url_params.account_email as string, page: '/chrome/settings/modules/help.htm' }),
@@ -216,23 +216,23 @@ tool.catch.try(() => {
           });
   
           tool.browser.message.listen({
-            close_dialog: function (data) {
+            close_dialog: function (data, sender, respond) {
               $('.featherlight.featherlight-iframe').remove();
             },
-            set_footer: function (data: {footer: string|null}) {
+            set_footer: function (data: {footer: string|null}, sender, respond) {
               storage.email_footer = data.footer;
-              (window as FlowCryptWindow).flowcrypt_compose.update_footer_icon();
+              composer.update_footer_icon();
               $('.featherlight.featherlight-iframe').remove();
             },
-            subscribe: (window as FlowCryptWindow).flowcrypt_compose.show_subscribe_dialog_and_wait_for_response,
-            subscribe_result: (new_subscription: SubscriptionInfo) => {
+            subscribe: (data, sender, respond) => composer.show_subscribe_dialog_and_wait_for_response,
+            subscribe_result: (new_subscription: Subscription) => {
               if (new_subscription.active && !subscription.active) {
                 subscription.active = new_subscription.active;
               }
-              (window as FlowCryptWindow).flowcrypt_compose.process_subscribe_result(new_subscription);
+              composer.process_subscribe_result(new_subscription);
             },
             passphrase_entry: function (data) {
-              (window as FlowCryptWindow).flowcrypt_compose.passphrase_entry(data && data.entered);
+              composer.passphrase_entry(data && data.entered);
             },
             reply_pubkey_mismatch: function (data) {
               if (url_params.is_reply_box) {
