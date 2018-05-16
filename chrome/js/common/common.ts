@@ -828,9 +828,10 @@ let tool = {
         let start_at = 0;
         while(true) {
           let r = tool._.crypto_armor_detect_block_next(original_text, start_at);
-          if(r.found) {
-            blocks = blocks.concat(r.found);
+          if(!r) {
+            return blocks;
           }
+          blocks = blocks.concat(r.found);
           if(!r.continue_at) {
             return blocks;
           } else {
@@ -844,28 +845,28 @@ let tool = {
           return;
         }
         let r = '';
-        tool.each(blocks, (i: number, block: MessageBlock) => {
-          if(block.type === 'text' || block.type === 'private_key') {
-            r += (Number(i) ? '\n\n' : '') + tool.str.html_escape(block.content) + '\n\n';
-          } else if (block.type === 'message') {
-            r += factory.embedded_message(block.complete ? tool.crypto.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
-          } else if (block.type === 'signed_message') {
-            r += factory.embedded_message(block.content, message_id, is_outgoing, sender_email, false);
-          } else if (block.type === 'public_key') {
+        for(let i in blocks) {
+          if(blocks[i].type === 'text' || blocks[i].type === 'private_key') {
+            r += (Number(i) ? '\n\n' : '') + tool.str.html_escape(blocks[i].content) + '\n\n';
+          } else if (blocks[i].type === 'message') {
+            r += factory.embedded_message(blocks[i].complete ? tool.crypto.armor.normalize(blocks[i].content, 'message') : '', message_id, is_outgoing, sender_email, false);
+          } else if (blocks[i].type === 'signed_message') {
+            r += factory.embedded_message(blocks[i].content, message_id, is_outgoing, sender_email, false);
+          } else if (blocks[i].type === 'public_key') {
             // noinspection TypeScriptValidateJSTypes
-            r += factory.embedded_pubkey(tool.crypto.armor.normalize(block.content, 'public_key'), is_outgoing);
-          } else if (block.type === 'password_message') {
-            r += factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, block.content); // here block.content is message short id
-          } else if (block.type === 'attest_packet') {
+            r += factory.embedded_pubkey(tool.crypto.armor.normalize(blocks[i].content, 'public_key'), is_outgoing);
+          } else if (blocks[i].type === 'password_message') {
+            r += factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, blocks[i].content); // here blocks[i].content is message short id
+          } else if (blocks[i].type === 'attest_packet') {
             // todo - find out why
             // noinspection TypeScriptValidateJSTypes
-            r += factory.embedded_attest(block.content);
-          } else if (block.type === 'cryptup_verification') {
-            r += factory.embedded_verification(block.content);
+            r += factory.embedded_attest(blocks[i].content);
+          } else if (blocks[i].type === 'cryptup_verification') {
+            r += factory.embedded_verification(blocks[i].content);
           } else {
-            tool.catch.report('dunno how to process block type: ' + block.type);
+            tool.catch.report('dunno how to process block type: ' + blocks[i].type);
           }
-        });
+        }
         return r;
       },
       normalize: (armored: string, type:string) => {
@@ -1423,16 +1424,16 @@ let tool = {
       },
       tab_id: (callback: Callback) => tool.browser.message.send(null, '_tab_', null, callback),
       listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
-        tool.each(handlers, function(name: string, handler: BrowserMessageHandler) {
+        for(let name of Object.keys(handlers)) {
           // newly registered handlers with the same name will overwrite the old ones if tool.browser.message.listen is declared twice for the same frame
           // original handlers not mentioned in newly set handlers will continue to work
-          tool._.var.browser_message_frame_registered_handlers[name] = handler;
-        });
-        tool.each(tool._.var.browser_message_STANDARD_HANDLERS, function(name: string, handler: BrowserMessageHandler) {
+          tool._.var.browser_message_frame_registered_handlers[name] = handlers[name];
+        }
+        for(let name of Object.keys(tool._.var.browser_message_STANDARD_HANDLERS)) {
           if(typeof tool._.var.browser_message_frame_registered_handlers[name] !== 'function') {
-            tool._.var.browser_message_frame_registered_handlers[name] = handler; // standard handlers are only added if not already set above
+            tool._.var.browser_message_frame_registered_handlers[name] = tool._.var.browser_message_STANDARD_HANDLERS[name]; // standard handlers are only added if not already set above
           }
-        });
+        }
         let processed:string[] = [];
         chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
           return tool.catch.try(function () {
@@ -1458,9 +1459,9 @@ let tool = {
         if(!tool._.var.browser_message_background_script_registered_handlers) {
           tool._.var.browser_message_background_script_registered_handlers = handlers;
         } else {
-          tool.each(handlers, function(name: string, handler) {
-            tool._.var.browser_message_background_script_registered_handlers![name] = handler; // is !null because added above
-          });
+          for(let name of Object.keys(handlers)) {
+            tool._.var.browser_message_background_script_registered_handlers[name] = handlers[name];
+          }
         }
         chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
           let safe_respond = function (response: any) {
@@ -1542,18 +1543,18 @@ let tool = {
         auth_request.auth_responder_id = tool.str.random(20);
         tool._.var.api_google_auth_responders[auth_request.auth_responder_id] = respond;
         auth_request.scopes = auth_request.scopes || [];
-        tool.each(tool._.var.google_oauth2!.scopes, function (i, scope) {
-          if(!tool.value(scope).in(auth_request.scopes!)) {
+        for(let scope of tool._.var.google_oauth2!.scopes) {
+          if(!tool.value(scope).in(auth_request.scopes)) {
             if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
-              auth_request.scopes!.push(scope);
+              auth_request.scopes.push(scope);
             }
           }
-        });
-        tool.each(current_google_token_scopes, function (i, scope) {
-          if(!tool.value(scope).in(auth_request.scopes!)) {
-            auth_request.scopes!.push(scope);
+        }
+        for(let scope of current_google_token_scopes) {
+          if(!tool.value(scope).in(auth_request.scopes)) {
+            auth_request.scopes.push(scope);
           }
-        });
+        }
         let result_listener = {
           google_auth_window_result: function(result: Dict<any>, sender: chrome.runtime.MessageSender, respond: Callback) { 
             if(auth_request.auth_responder_id) {
@@ -1614,7 +1615,7 @@ let tool = {
         let reply_to_estimate = [last_message_sender].concat(last_message_recipients);
         let reply_to:string[] = [];
         let my_email = account_email;
-        tool.each(reply_to_estimate, function (i, email) {
+        for(let email of reply_to_estimate) {
           if(email) {
             if(tool.value(tool.str.parse_email(email).email).in(addresses)) { // my email
               my_email = email;
@@ -1622,7 +1623,7 @@ let tool = {
               reply_to.push(tool.str.parse_email(email).email); // reply to all except my emails
             }
           }
-        });
+        }
         if(!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
           reply_to = tool.arr.unique(reply_to_estimate);
         }
@@ -1736,9 +1737,9 @@ let tool = {
           tool.api.gmail.find_attachments(gmail_email_object.payload, internal_results, internal_message_id);
         }
         if(typeof gmail_email_object.parts !== 'undefined') {
-          tool.each(gmail_email_object.parts, function (i, part) {
+          for(let part of gmail_email_object.parts) {
             tool.api.gmail.find_attachments(part, internal_results, internal_message_id);
-          });
+          }
         }
         if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.attachmentId !== 'undefined') {
           let attachment = {
@@ -1759,9 +1760,9 @@ let tool = {
           tool.api.gmail.find_bodies(gmail_email_object.payload, internal_results);
         }
         if(typeof gmail_email_object.parts !== 'undefined') {
-          tool.each(gmail_email_object.parts, function (i, part) {
+          for(let part of gmail_email_object.parts) {
             tool.api.gmail.find_bodies(part, internal_results);
-          });
+          }
         }
         if(typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.data !== 'undefined' && gmail_email_object.body.size !== 0) {
           internal_results[gmail_email_object.mimeType] = gmail_email_object.body.data;
@@ -1816,7 +1817,7 @@ let tool = {
                 success_callback(armored_message_from_bodies);
               } else if(attachments.length) {
                 let found = false;
-                tool.each(attachments, function (i, attachment_meta) {
+                for(let attachment_meta of attachments) {
                   if(attachment_meta.treat_as === 'message') {
                     found = true;
                     tool.api.gmail.fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success: boolean, attachments: Attachment[]) {
@@ -1832,9 +1833,9 @@ let tool = {
                         error_callback('connection');
                       }
                     });
-                    return false;
+                    break;
                   }
-                });
+                }
                 if(!found) {
                   error_callback('format', tool.str.pretty_print(gmail_message_object.payload));
                 }
@@ -1878,9 +1879,9 @@ let tool = {
               tool.api.gmail.message_get(account_email, message_ids, 'full', function (success: boolean, messages: Dict<any>) {
                 if(success) {
                   let attachments:Attachment[] = [];
-                  tool.each(messages, (id, message) => {
-                    attachments = attachments.concat(tool.api.gmail.find_attachments(message));
-                  });
+                  for(let id of Object.keys(messages)) {
+                    attachments = attachments.concat(tool.api.gmail.find_attachments(messages[id]));
+                  }
                   tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments: Attachment[]) {
                     let keys:OpenpgpKey[] = [];
                     for(let downloaded_attachment of downloaded_attachments) {
@@ -2365,7 +2366,7 @@ let tool = {
           console.log(data);
           $(data.selector).css(data.css);
         },
-      },
+      } as Dict<BrowserMessageHandler>,
       crypto_password_SENTENCE_PRESENT_TEST: /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/,
       crypto_password_SENTECES: [
         /This\smessage\sis\sencrypted.+\n\n?/gm, // todo - should be in a common place as the code that generated it
@@ -2445,7 +2446,8 @@ let tool = {
       let begin = original_text.indexOf(tool.crypto.armor.headers('null').begin, start_at);
       if(begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, tool._.var.crypto_armor_header_MAX_LENGTH);
-        tool.each(tool._.var.crypto_armor_headers_DICT, function(type: MessageBlockType, block_header) {
+        for(let type of Object.keys(tool._.var.crypto_armor_headers_DICT)) {
+          let block_header = tool._.var.crypto_armor_headers_DICT[type];
           if(block_header.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header.begin);
             if(index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
@@ -2460,16 +2462,17 @@ let tool = {
                 end = original_text.indexOf(block_header.end, begin + block_header.begin.length);
               } else { // regexp
                 let regexp_end = original_text.match(block_header.end);
-                if(regexp_end) {
-                  block_header.end.length = regexp_end[0].length;
+                if(regexp_end !== null) {
+                  // @ts-ignore - ISSUE_A is this editting the block_header DICT values?!
+                  (block_header.end as string).length = regexp_end[0].length;
                   end = regexp_end.index || -1;
                 }
               }
               if(end !== -1) { // identified end of the same block
                 if(type !== 'password_message') {
-                  result.found.push(tool._.crypto_armor_block_object(type, original_text.substring(begin, end + block_header.end.length).trim()));
+                  result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substring(begin, end + (block_header.end as string).length).trim())); // todo - ISSUE_A
                 } else {
-                  let pm_full_text = original_text.substring(begin, end + block_header.end.length).trim();
+                  let pm_full_text = original_text.substring(begin, end + (block_header.end as string).length).trim(); // todo - ISSUE_A
                   let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
                   if(pm_short_id_match) {
                     result.found.push(tool._.crypto_armor_block_object(type, pm_short_id_match[0]));
@@ -2477,14 +2480,14 @@ let tool = {
                     result.found.push(tool._.crypto_armor_block_object('text', pm_full_text));
                   }
                 }
-                result.continue_at = end + block_header.end.length;
+                result.continue_at = end + (block_header.end as string).length; // todo - ISSUE_A
               } else { // corresponding end not found
-                result.found.push(tool._.crypto_armor_block_object(type, original_text.substr(begin), true));
+                result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substr(begin), true));
               }
               return false;
             }
           }
-        });
+        }
       } else {
         let potential_text = original_text.substr(start_at).trim();
         if(potential_text) {
