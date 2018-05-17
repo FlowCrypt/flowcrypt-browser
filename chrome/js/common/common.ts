@@ -333,13 +333,10 @@ let tool = {
       }
       return result;
     },
-    select: (array: any[], mapped_object_key: string) => array.map((obj) => obj[mapped_object_key]),
-    // @ts-ignore - could be arr.indexOf or str.indexOf - works the same for this purpose but TS doesn't know?
-    contains: (arr: any[]|string, value: any): boolean => arr && typeof arr.indexOf === 'function' && arr.indexOf(value) !== -1,
+    contains: (arr: any[]|string, value: any): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => tool.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0),
-    is: Array.isArray, // may deprecate later
   },
   obj: {
     map: (original_obj: any, f: (v: any) => any): any => {
@@ -1218,7 +1215,7 @@ let tool = {
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
       let path = `/img/svgs/spinner-${color}-small.svg`;
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
-      return `<i class="${placeholder_class}"><img src="${url}" /></i>`;
+      return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
     passphrase_toggle: (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
       let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
@@ -1602,7 +1599,7 @@ let tool = {
         return {
           headers: {} as FlatHeaders, 
           from: from,
-          to: tool.arr.is(to) ? to as string[] : (to as string).split(','),
+          to: Array.isArray(to) ? to as string[] : (to as string).split(','),
           subject: subject,
           body: typeof body === 'object' ? body : {'text/plain': body},
           attachments: attachments,
@@ -1697,7 +1694,7 @@ let tool = {
         }, callback);
       },
       message_get: (account_email: string, message_id: string|string[], format: GmailApiResponseFormat, callback: any, results:Dict<any>={}) => { //format: raw, full or metadata
-        if(tool.arr.is(message_id)) { // todo: chained requests are messy and slow. parallel processing with promises would be better
+        if(Array.isArray(message_id)) { // todo: chained requests are messy and slow. parallel processing with promises would be better
           if(message_id.length) {
             let id = message_id.pop()!; // checked .length above
             tool._.api_gmail_call(account_email, 'GET', 'messages/' + id, { format: format || 'full' }, function (success: boolean, response: Dict<any>) {
@@ -2320,15 +2317,6 @@ let tool = {
   value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
   e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML,
   noop: (): any => null,
-  each: (iterable: Dict<any>, looper: (k: string|number, v: any) => false|void) => {
-    for (let k in iterable) {
-      if(iterable.hasOwnProperty(k)){
-        if(looper(k, iterable[k]) === false) {
-          break;
-        }
-      }
-    }
-  },
   enums: {
     recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
   },

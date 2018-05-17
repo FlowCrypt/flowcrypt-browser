@@ -28,7 +28,9 @@ class Factory {
   };
 
   private frame_src = (path: string, params:UrlParams={}) => {
-    tool.each(this.set_params, (k, v) => { params[k] = v; });
+    for(let k of Object.keys(this.set_params)) {
+      params[k] = this.set_params[k];
+    }
     return tool.env.url_create(path, params);
   };
 
@@ -207,9 +209,9 @@ class Factory {
 
   private iframe = (src: string, classes:string[]=[], additional_attributes:UrlParams={}) => {
     let attributes: Dict<string> = {id: tool.env.url_params(['frame_id'], src).frame_id as string, class: (classes || []).concat(this.reloadable_class).join(' '), src: src};
-    tool.each(additional_attributes, (a: string, v: string) => {
-      attributes[a] = v;
-    });
+    for(let name of Object.keys(additional_attributes)) {
+      attributes[name] = String(additional_attributes[name]);
+    }
     return tool.e('iframe', attributes);
   };
 

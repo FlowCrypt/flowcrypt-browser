@@ -40,9 +40,9 @@ tool.catch.try(() => {
     $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {
       $('#send_btn').text('sending..');
       let message = tool.api.common.message(url_params.account_email as string, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
-      tool.each(additional_message_headers, (k, h) => {
-        message.headers[k] = h;
-      });
+      for(let k of Object.keys(additional_message_headers)) {
+        message.headers[k] = additional_message_headers[k];
+      }
       tool.api.gmail.message_send(url_params.account_email as string, message, (success, response) => {
         if(success) {
           tool.browser.message.send(url_params.parent_tab_id as string, 'notification_show', { notification: 'Message sent.' });

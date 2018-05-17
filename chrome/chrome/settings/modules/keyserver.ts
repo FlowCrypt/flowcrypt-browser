@@ -25,7 +25,8 @@ tool.catch.try(() => {
   });
 
   function render_diagnosis(diagnosis: any, attests_requested: string[], attests_processed: string[]) {
-    tool.each(diagnosis.results, function (email, result) {
+    for(let email of Object.keys(diagnosis.results)) {
+      let result = diagnosis.results[email];
       let note, action, remove, color;
       if(result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
@@ -80,7 +81,7 @@ tool.catch.try(() => {
         }
       }
       $('table#emails').append('<tr><td>' + email + remove + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
-    });
+    }
     $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       $(self).html(tool.ui.spinner('white'));
       action_submit_or_request_attestation($(self).attr('email')!);

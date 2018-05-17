@@ -23,7 +23,9 @@ class Subscription implements SubscriptionInfo {
 }
 
 class Store {
-
+  
+  // static [f: string]: Function; // https://github.com/Microsoft/TypeScript/issues/6480
+  
   private static global_storage_scope = 'global';
   private static db_query_keys = ['limit', 'substring', 'has_pgp'];
 
@@ -51,12 +53,12 @@ class Store {
   private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStored): Stored | Dict<Stored> {
     if(typeof account_or_accounts === 'string') {
       let fixed_keys_object: Stored = {};
-      tool.each(storage_object, (k: string, v) => {
+      for(let k of Object.keys(storage_object)) {
         let fixed_key = k.replace(Store.index(account_or_accounts as string, '') as string, ''); // checked it's a string above
         if(fixed_key !== k) {
-          fixed_keys_object[fixed_key] = v;
+          fixed_keys_object[fixed_key] = storage_object[k];
         }
-      });
+      }
       return fixed_keys_object;
     } else {
       let results_by_account: Dict<Stored> = {};
@@ -171,9 +173,9 @@ class Store {
   static set(account_email: string|null, values: Stored): Promise<void> {
     let _account = Store._global_storage_index_if_null(account_email);
     let storage_update: Dict<any> = {};
-    tool.each(values, (key: string, value) => {
-      storage_update[Store.index(_account, key) as string] = value;
-    });
+    for(let key of Object.keys(values)) {
+      storage_update[Store.index(_account, key) as string] = values[key];
+    }
     return new Promise(resolve => chrome.storage.local.set(storage_update, () => resolve()));
   }
 

@@ -144,14 +144,14 @@ function open_settings_page(path:string='index.htm', account_email:string|null=n
 
 function close_popup_handler(q: chrome.tabs.QueryInfo, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
   chrome.tabs.query(q, tabs => {
-    chrome.tabs.remove(tool.arr.select(tabs, 'id'));
+    chrome.tabs.remove(tabs.map(t => t.id!));
   });
 }
 
 function db_operation(request: {f: string, args: any[]}, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) {
   catcher.try(() => {
     if(db) {
-      // @ts-ignore
+      // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
       Store[request.f].apply(null, [db].concat(request.args)).then(respond);
     } else {
       catcher.log('db corrupted, skipping: ' + request.f);

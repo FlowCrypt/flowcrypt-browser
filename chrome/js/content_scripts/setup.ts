@@ -29,12 +29,12 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
       catcher.try(() => {
         console.log('Updating FlowCrypt');
         document.removeEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
-        tool.each((window as ContentScriptWindow).destroyable_intervals, function (i, id) {
+        for(let id of (window as ContentScriptWindow).destroyable_intervals) {
           clearInterval(id);
-        });
-        tool.each((window as ContentScriptWindow).destroyable_timeouts, function (i, id) {
+        }
+        for(let id of (window as ContentScriptWindow).destroyable_timeouts) {
           clearTimeout(id);
-        });
+        }
         $('.' + (window as ContentScriptWindow).destroyable_class).remove();
         $('.' + (window as ContentScriptWindow).reloadable_class).each(function (i, reloadable_element) {
           $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);

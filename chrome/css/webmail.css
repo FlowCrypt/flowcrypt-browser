@@ -1,14 +1,14 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /* notifications */
-center.webmail_notifications { position: absolute; top: 0; left: 0; width: 100%; z-index: 999; height: 1px; }
-center.webmail_notifications div.webmail_notification { background-color: rgb(249, 237, 190); border: 1px solid rgb(240, 195, 109); border-radius: 2px;
+div.webmail_notifications { position: absolute; top: 0; left: 0; width: 100%; z-index: 999; height: 0px; }
+div.webmail_notifications div.webmail_notification { background-color: rgb(249, 237, 190); border: 1px solid rgb(240, 195, 109); border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0; color: rgb(34, 34, 34); font-family: arial, sans-serif; font-size: 12.8px; font-weight: bold;
   line-height: 16px; padding: 6px 10px; z-index: 999; margin-top: 50px; display:inline-block; margin-right: 50px; margin-left: 50px; }
-center.webmail_notifications div.webmail_notification a { color: black; padding-left: 6px; padding-right: 2px; }
-center.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
-body.cryptup_inbox center.webmail_notifications { position: fixed; }
-body.cryptup_outlook center.webmail_notifications div.webmail_notification { margin-top: 10px; }
+div.webmail_notifications div.webmail_notification a { color: black; padding-left: 6px; padding-right: 2px; }
+div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
+body.cryptup_inbox div.webmail_notifications { position: fixed; }
+body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin-top: 10px; }
 
 /* buttons body.cryptup_inbox */
 body.cryptup_inbox div.new_message_button { background-color: #31A217; height: 40px; position: relative; width: 40px; box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);

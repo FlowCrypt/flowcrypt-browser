@@ -26,8 +26,8 @@ function migrate_local_storage_to_extension_storage(callback: Callback) {
     callback(); // nothing in localStorage
   } else {
     let values: Dict<FlatTypes> = {};
-    tool.each(localStorage, (legacy_storage_key: string, legacy_storage_value: string) => {
-      let value = legacy_local_storage_read(legacy_storage_value);
+    for(let legacy_storage_key of Object.keys(localStorage)) {
+      let value = legacy_local_storage_read(localStorage[legacy_storage_key]);
       if(legacy_storage_key === 'settings_seen') {
         values['cryptup_global_settings_seen'] = true;
       } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
@@ -40,7 +40,7 @@ function migrate_local_storage_to_extension_storage(callback: Callback) {
       } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
         values[legacy_storage_key] = value;
       }
-    });
+    }
     chrome.storage.local.set(values, () => {
       localStorage.clear();
       callback();

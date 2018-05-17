@@ -94,14 +94,14 @@ tool.catch.try(() => {
         if(response.messages) {
           tool.api.gmail.message_get(account_email, response.messages.map((m: any) => m.id), 'full', (get_success: boolean, messages: any) => {
             if(get_success) {
-              tool.each(messages, (id, gmail_message_object) => {
-                if(gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body.size > 0) {
-                  let token = parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
+              for(let gmail_message_object of Object.values(messages)) {
+                if((gmail_message_object as any).payload.mimeType === 'text/plain' && (gmail_message_object as any).payload.body.size > 0) {
+                  let token = parse_token_email_text(tool.str.base64url_decode((gmail_message_object as any).payload.body.data), uuid);
                   if(token && typeof token === 'string') {
                     tokens.push(token);
                   }
                 }
-              });
+              }
               tokens.reverse();
               callback_once(Boolean(tokens.length), tokens.length ? tokens : null);
             } else {

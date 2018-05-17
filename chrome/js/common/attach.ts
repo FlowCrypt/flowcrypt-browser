@@ -35,7 +35,7 @@ declare let qq: any;
             extraDropzones: $('#input_text'),
           },
           callbacks: {
-            onSubmitted: function(id: number, name: string) {
+            onSubmitted: function(id: string, name: string) {
               catcher.try(() => {
                 process_new_attachment(id, name);
               })();
@@ -63,7 +63,7 @@ declare let qq: any;
       return Object.keys(attached_files).length > 0;
     }
 
-    function read_attachment_data_as_uint8(id: number, callback: (r: Uint8Array) => void) {
+    function read_attachment_data_as_uint8(id: string, callback: (r: Uint8Array) => void) {
       let reader = new FileReader();
       reader.onload = function () {
         callback(new Uint8Array(reader.result));
@@ -71,7 +71,7 @@ declare let qq: any;
       reader.readAsArrayBuffer(attached_files[id]);
     }
 
-    function collect_attachment(id: number, callback: Callback) {
+    function collect_attachment(id: string, callback: Callback) {
       read_attachment_data_as_uint8(id, (file_data) => {
         callback(tool.file.attachment(attached_files[id].name, attached_files[id].type, file_data));
       });
@@ -88,9 +88,9 @@ declare let qq: any;
       if(!Object.keys(attached_files).length) {
         callback(attachments);
       } else {
-        tool.each(attached_files, (id: number) => {
+        for(let id of Object.keys(attached_files)) {
           collect_attachment(id, add);
-        });
+        }
       }
     }
 
@@ -105,25 +105,26 @@ declare let qq: any;
       if(!Object.keys(attached_files).length) {
         callback(attachments);
       } else {
-        tool.each(attached_files, function (id: number, file) {
+        for(let id of Object.keys(attached_files)) {
+          let file = attached_files[id];
           read_attachment_data_as_uint8(id, function (file_data) {
             tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false, function (encrypted_file_content) {
               add(tool.file.attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted_file_content.message.packets.write()));
             });
           });
-        });
+        }
       }
     }
 
     function get_file_size_sum() {
       let sum = 0;
-      tool.each(attached_files, function(id, file) {
+      for(let file of Object.values(attached_files)) {
         sum += file.size;
-      });
+      }
       return sum;
     }
 
-    function process_new_attachment(id: number, name: string) {
+    function process_new_attachment(id: string, name: string) {
       let limits: AttachLimits = typeof get_limits === 'function' ? get_limits() : {};
       if(limits.count && Object.keys(attached_files).length >= limits.count) {
         alert('Amount of attached files is limited to ' + limits.count);

@@ -138,9 +138,9 @@ function show_settings_page(page: string, add_url_text_or_params?: string|UrlPar
     parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global,
   };
   if(typeof add_url_text_or_params === 'object' && add_url_text_or_params) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
-    tool.each(add_url_text_or_params, function(k, v) {
-      page_params[k] = v;
-    });
+    for(let k of Object.keys(add_url_text_or_params)) {
+      page_params[k] = add_url_text_or_params[k];
+    }
     add_url_text_or_params = null;
   }
   let new_location = tool.env.url_create(page, page_params) + (add_url_text_or_params || '');
@@ -180,22 +180,22 @@ function reset_cryptup_account_storages(account_email: string, callback: Callbac
       throw new Error('Filter is empty for account_email"' + account_email + '"');
     }
     chrome.storage.local.get(storage => {
-      tool.each(storage, function (key: string, value) {
+      for(let key of Object.keys(storage)) {
         if(key.indexOf(filter) === 0) {
           keys_to_remove.push(key.replace(filter, ''));
         }
-      });
+      }
       Store.remove(account_email, keys_to_remove).then(function () {
-        tool.each(localStorage, function (key: string, value) {
+        for(let key of Object.keys(localStorage)) {
           if(key.indexOf(filter) === 0) {
             localStorage.removeItem(key);
           }
-        });
-        tool.each(sessionStorage, function (key: string, value) {
+        }
+        for(let key of Object.keys(sessionStorage)) {
           if(key.indexOf(filter) === 0) {
             sessionStorage.removeItem(key);
           }
-        });
+        }
         callback();
       });
     });

@@ -170,9 +170,9 @@ function refresh_attest_requests_and_privileges(process_account_email_callback: 
 
 function get_attester_emails() {
   let emails: string[] = [];
-  tool.each(ATTESTERS, (id, attester) => {
+  for(let attester of Object.values(ATTESTERS)) {
     emails.push(attester.email);
-  });
+  }
   return emails;
 }
 

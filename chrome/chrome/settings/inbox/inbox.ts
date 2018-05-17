@@ -70,7 +70,7 @@ tool.catch.try(() => {
           if(!list_success || typeof list_result.messages === 'undefined') {
             $('body').text('Connection error trying to get list of messages');
           } else {
-            let thread_ids = tool.arr.unique(tool.arr.select(list_result.messages, 'threadId'));
+            let thread_ids = tool.arr.unique(list_result.messages.map((m: any) => m.threadId));
             for(let thread_id of thread_ids) {
               thread_element_add(thread_id);
               tool.api.gmail.message_get(url_params.account_email as string, thread_id, 'metadata', function(item_success: boolean, item_result: any) {
