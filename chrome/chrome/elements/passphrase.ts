@@ -29,11 +29,11 @@ tool.catch.try(() => {
     if(all_private_keys.length > 1) {
       let html: string;
       if(selected_private_keys.length === 1) {
-        html = 'For the following key: <span class="good">' + (window as FlowCryptWindow).mnemonic(selected_private_keys[0].longid) + '</span> (KeyWords)';
+        html = 'For the following key: <span class="good">' + (window as FcWindow).mnemonic(selected_private_keys[0].longid) + '</span> (KeyWords)';
       } else {
         html = 'Pass phrase needed for any of the following keys:';
         for(let i in selected_private_keys) {
-          html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + (window as FlowCryptWindow).mnemonic(selected_private_keys[i].longid) + '</div>';
+          html += 'KeyWords ' + String(i + 1) + ': <div class="good">' + (window as FcWindow).mnemonic(selected_private_keys[i].longid) + '</div>';
         }
       }
       $('.which_key').html(html);

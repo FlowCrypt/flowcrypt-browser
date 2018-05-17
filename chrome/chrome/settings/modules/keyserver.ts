@@ -116,12 +116,10 @@ tool.catch.try(() => {
     Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
       if(email === url_params.account_email) { // request attestation
         save_attest_request(url_params.account_email, 'CRYPTUP', function () {
-          // @ts-ignore
-          tool.api.attester.initial_legacy_submit(email, primary_k.public, true).done(() => window.location.reload());
+          tool.api.attester.initial_legacy_submit(email, primary_k.public, true).resolved(() => window.location.reload());
         });
       } else { // submit only
-        // @ts-ignore
-        tool.api.attester.initial_legacy_submit(email, primary_k.public, false).done(() => window.location.reload());
+        tool.api.attester.initial_legacy_submit(email, primary_k.public, false).resolved(() => window.location.reload());
       }
     });
   }

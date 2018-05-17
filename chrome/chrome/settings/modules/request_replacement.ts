@@ -14,17 +14,14 @@ tool.catch.try(() => {
 
     let prv_headers = tool.crypto.armor.headers('private_key');
 
-    // @ts-ignore
-    tool.api.attester.lookup_email(url_params.account_email as string).done(function (success: boolean, keyserver_result: PubkeySearchResult) {
+    tool.api.attester.lookup_email(url_params.account_email as string).resolved((success, keyserver_result: PubkeySearchResult) => {
       if(!success) {
         $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>');
-        $('.reload').click(function () {
-          window.location.reload();
-        });
+        $('.reload').click(() => window.location.reload());
       } else if(!keyserver_result.pubkey || !keyserver_result.attested || tool.crypto.key.fingerprint(primary_pubkey_armored) === tool.crypto.key.fingerprint(keyserver_result.pubkey)) {
         show_settings_page('/chrome/settings/modules/keyserver.htm');
       } else { // email previously attested, and there indeed is a pubkey mismatch
-        $('#status').html('Original key KeyWords:<br/><span class="good">' + (window as FlowCryptWindow).mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!) + '<br/>' + tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced') + '</span>'); // all pubkeys on keyserver should have computable longid
+        $('#status').html('Original key KeyWords:<br/><span class="good">' + (window as FcWindow).mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!) + '<br/>' + tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced') + '</span>'); // all pubkeys on keyserver should have computable longid
         $('#step_2b_manual_enter').css('display', 'block');
         $('.action_request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
           let old_key = openpgp.key.readArmored($('#step_2b_manual_enter .input_private_key').val()).keys[0];
@@ -47,7 +44,6 @@ tool.catch.try(() => {
               'PUB': tool.crypto.key.fingerprint(primary_pubkey_armored) as string,
             };
             tool.api.attester.packet.create_sign(request_replacement, old_key).then(signed_packet => {
-              // @ts-ignore
               tool.api.attester.replace_request(url_params.account_email as string, signed_packet, primary_pubkey_armored).validate(r => r.saved).then(response => {
                 save_attest_request(url_params.account_email as string, 'CRYPTUP', function () { //todo - should be the original attester
                   alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');

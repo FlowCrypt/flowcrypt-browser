@@ -254,7 +254,6 @@ tool.catch.try(() => {
   function handle_extend_message_expiration_clicked(self: HTMLAnchorElement) {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
     $(self).parent().html('Updating..' + tool.ui.spinner('green'));
-    // @ts-ignore
     tool.api.cryptup.message_expiration(admin_codes, n_days).validate(r => r.updated).then((response) => window.location.reload(), (error: StandardError) => {
       if(error.internal === 'auth') {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
@@ -464,8 +463,7 @@ tool.catch.try(() => {
     } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from FlowCrypt API
       render_text('Loading message...');
       recover_stored_admin_codes();
-      // @ts-ignore
-      tool.api.cryptup.link_message(url_params.short as string).validate(r => typeof r.url !== 'undefined').then((m_link_result: ApirFcMessageLink) => {
+      tool.api.cryptup.link_message(url_params.short as string).validate(r => typeof r.url !== 'undefined').then(m_link_result => {
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
           tool.file.download_as_uint8(m_link_result.url, null, function (success, download_uint_result) {

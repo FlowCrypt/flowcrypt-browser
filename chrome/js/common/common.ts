@@ -3,7 +3,6 @@
 'use strict';
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="common.d.ts" />
 
@@ -358,7 +357,7 @@ let tool = {
     random: (min_value: number, max_value: number) => min_value + Math.round(Math.random() * (max_value - min_value)),
   },
   time: {
-    wait: (until_this_function_evaluates_true: () => boolean|undefined): Promise<void> => {
+    wait: (until_this_function_evaluates_true: () => boolean|undefined): FcPromise<void> => {
       return tool.catch.Promise(function (success, error) {
         let interval = setInterval(function () {
           let result = until_this_function_evaluates_true();
@@ -568,7 +567,7 @@ let tool = {
       }
       text = (text || '').replace(/\r?\n/g, '<br>\n');
       if(text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
-        return (window as FlowCryptWindow).iso88592.decode(text);
+        return (window as FcWindow).iso88592.decode(text);
       }
       return text;
     },
@@ -801,21 +800,13 @@ let tool = {
         return null;
       },
       headers: (block_type: MessageBlockType|'null', format='string') => {
-        if(format === 're') {
-          let h = tool._.var.crypto_armor_headers_DICT[block_type || 'null'];
-          if(typeof (h as any as RegExp).exec === 'function') {
-            return h;
+        return tool.obj.map(tool._.var.crypto_armor_headers_DICT[block_type], (header_value) => {
+          if(typeof header_value === 'string' && format === 're') {
+            return header_value.replace(/ /g, '\\\s'); // regexp match friendly
+          } else {
+            return header_value;
           }
-          return tool.obj.map(h, function (header_value) {
-            if(typeof header_value === 'string') {
-              return header_value.replace(/ /g, '\\\s'); // regexp match friendly
-            } else {
-              return header_value;
-            }
-          });
-        } else {
-          return tool._.var.crypto_armor_headers_DICT[block_type || 'null'];
-        }
+        });
       },
       detect_blocks: (original_text: string) => {
         let blocks: MessageBlock[] = [];
@@ -1682,7 +1673,7 @@ let tool = {
         message.headers.From = message.from;
         message.headers.To = message.to.join(',');
         message.headers.Subject = message.subject;
-        tool.mime.encode(message.body as any as SendableMessageBody, message.headers, message.attachments, (mime_message) => {
+        tool.mime.encode(message.body, message.headers, message.attachments, (mime_message) => {
           let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
           tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, {upload: progress_callback || tool.noop}, request.content_type);
         });
@@ -1861,7 +1852,6 @@ let tool = {
           if(success && typeof message_list_response.messages !== 'undefined') {
             tool._.api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, message_list_response.messages, header_names, callback);
           } else {
-            // @ts-ignore
             callback(); // if the request is !success, it will just return undefined, which may not be the best
           }
         });
@@ -1904,29 +1894,41 @@ let tool = {
       },
     },
     attester: {
-      lookup_email: (email: string|string[]): Promise<PubkeySearchResult|{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
-        email: Array.isArray(email) ? email.map((a) => tool.str.parse_email(a).email) : tool.str.parse_email(email).email,
-      }),
-      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false) => tool._.api_attester_call('initial/legacy_submit', {
-        email: tool.str.parse_email(email).email,
-        pubkey: pubkey.trim(),
-        attest: attest,
-      }),
-      initial_confirm: (signed_attest_packet: string) => tool._.api_attester_call('initial/confirm', {
-        signed_message: signed_attest_packet,
-      }),
-      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string) => tool._.api_attester_call('replace/request', {
-        signed_message: signed_attest_packet,
-        new_pubkey: new_pubkey,
-        email: email,
-      }),
-      replace_confirm: (signed_attest_packet: string) => tool._.api_attester_call('replace/confirm', {
-        signed_message: signed_attest_packet,
-      }),
-      test_welcome: (email: string, pubkey: string) => tool._.api_attester_call('test/welcome', {
-        email: email,
-        pubkey: pubkey,
-      }),
+      lookup_email: (email: string|string[]): FcPromise<PubkeySearchResult|{results: PubkeySearchResult[]}> => {
+        return tool._.api_attester_call('lookup/email', {
+          email: Array.isArray(email) ? email.map(a => tool.str.parse_email(a).email) : tool.str.parse_email(email).email,
+        });
+      },
+      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): FcPromise<ApirAttInitialLegacySugmit> => {
+        return tool._.api_attester_call('initial/legacy_submit', {
+          email: tool.str.parse_email(email).email,
+          pubkey: pubkey.trim(),
+          attest: attest,
+        }); 
+      },
+      initial_confirm: (signed_attest_packet: string): FcPromise<ApirAttInitialConfirm> => {
+        return tool._.api_attester_call('initial/confirm', {
+          signed_message: signed_attest_packet,
+        });
+      },
+      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): FcPromise<ApirAttReplaceRequest> => {
+        return tool._.api_attester_call('replace/request', {
+          signed_message: signed_attest_packet,
+          new_pubkey: new_pubkey,
+          email: email,
+        });
+      },
+      replace_confirm: (signed_attest_packet: string): FcPromise<ApirAttReplaceConfirm> => {
+        return tool._.api_attester_call('replace/confirm', {
+          signed_message: signed_attest_packet,
+        });
+      },
+      test_welcome: (email: string, pubkey: string): FcPromise<ApirAttTestWelcome> => {
+        return tool._.api_attester_call('test/welcome', {
+          email: email,
+          pubkey: pubkey,
+        });
+      },
       diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
         let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
         Store.get(account_email, ['addresses']).then(function (s: Stored) {
@@ -2063,16 +2065,18 @@ let tool = {
           'web': 'https://flowcrypt.com/',
         } as Dict<string>)[type];
       },
-      help_feedback: (account_email: string, message: string) => tool._.api_cryptup_call('help/feedback', {
-        email: account_email,
-        message: message,
-      }),
+      help_feedback: (account_email: string, message: string): FcPromise<ApirFcHelpFeedback> => {
+        return tool._.api_cryptup_call('help/feedback', {
+          email: account_email,
+          message: message,
+        });
+      },
       help_uninstall: (email: string, client: string) => tool._.api_cryptup_call('help/uninstall', {
         email: email,
         client: client,
         metrics: null,
       }),
-      account_login: (account_email: string, token:string|null=null) => {
+      account_login: (account_email: string, token:string|null=null): FcPromise<{verified: boolean, subscription: SubscriptionInfo}> => {
         return tool.catch.Promise(function(resolve, reject) {
           Store.auth_info().then(auth_info => {
             let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
@@ -2081,8 +2085,7 @@ let tool = {
               account: email,
               uuid: uuid,
               token: token,
-            // @ts-ignore
-            }).validate((r: {registered: boolean, verified: boolean, subscription: SubscriptionInfo}) => r.registered === true).then(function (response) {
+            }).validate((r: ApirFcAccountLogin) => r.registered === true).then((response: ApirFcAccountLogin) => {
               let to_save = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
               Store.set(null, to_save).then(function () {
                 resolve({verified: response.verified === true, subscription: response.subscription});
@@ -2144,7 +2147,7 @@ let tool = {
           }
         });
       },
-      account_update: (update_values?: Dict<Serializable>) => {
+      account_update: (update_values?: Dict<Serializable>): FcPromise<ApirFcAccountUpdate> => {
         return tool.catch.Promise(function(resolve, reject) {
           Store.auth_info().then(function (auth_info) {
             if(auth_info.verified) {
@@ -2154,8 +2157,7 @@ let tool = {
                   request[k] = update_values[k];
                 }
               }
-              // @ts-ignore
-              tool._.api_cryptup_call('account/update', request).validate((r: Dict<any>) => typeof r.result === 'object').then(resolve, reject);
+              tool._.api_cryptup_call('account/update', request).validate((r: ApirFcAccountUpdate) => typeof r.result === 'object').then(resolve, reject);
             } else {
               reject(tool.api.cryptup.auth_error);
             }
@@ -2183,7 +2185,7 @@ let tool = {
           });
         });
       },
-      message_presign_files: (attachments: Attachment[], auth_method: FlowCryptApiAuthMethods) => {
+      message_presign_files: (attachments: Attachment[], auth_method: FlowCryptApiAuthMethods): FcPromise<ApirFcMessagePresignFiles> => {
         return tool.catch.Promise(function (resolve, reject) {
           let lengths = attachments.map(function (a) { return a.size; });
           if(!auth_method) {
@@ -2211,10 +2213,12 @@ let tool = {
           }
         });
       },
-      message_confirm_files: (identifiers: string[]) => tool._.api_cryptup_call('message/confirm_files', {
-        identifiers: identifiers,
-      }),
-      message_upload: (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods) => { // todo - DEPRECATE THIS. Send as JSON to message/store
+      message_confirm_files: (identifiers: string[]): FcPromise<ApirFcMessageConfirmFiles> => {
+        return tool._.api_cryptup_call('message/confirm_files', {
+          identifiers: identifiers,
+        });
+      },
+      message_upload: (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): FcPromise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
         return tool.catch.Promise(function (resolve, reject) {
           if(encrypted_data_armored.length > 100000) {
             reject({code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
@@ -2240,7 +2244,7 @@ let tool = {
           }
         });
       },
-      message_token: () => {
+      message_token: (): FcPromise<ApirFcMessageToken> => {
         return tool.catch.Promise(function (resolve, reject) {
           Store.auth_info().then(auth_info => {
             if(auth_info.verified) {
@@ -2254,7 +2258,7 @@ let tool = {
           });
         });
       },
-      message_expiration: (admin_codes: string[], add_days:null|number=null) => {
+      message_expiration: (admin_codes: string[], add_days:null|number=null): FcPromise<ApirFcMessageExpiration> => {
         return tool.catch.Promise(function (resolve, reject) {
           Store.auth_info().then(auth_info => {
             if(auth_info.verified) {
@@ -2284,9 +2288,11 @@ let tool = {
         sender: sender,
         message: message,
       }),
-      link_message: (short: string) => tool._.api_cryptup_call('link/message', {
-        short: short,
-      }) as Promise<ApirFcMessageLink>,
+      link_message: (short: string): FcPromise<ApirFcMessageLink> => {
+        return tool._.api_cryptup_call('link/message', {
+          short: short,
+        });
+      },
       link_me: (alias: string) => tool._.api_cryptup_call('link/me', {
         alias: alias,
       }),
@@ -2369,7 +2375,7 @@ let tool = {
         {match: 'day',      word: 'poor',       bar: 20,  color: 'darkred',     pass: false},
         {match: '',         word: 'weak',       bar: 10,  color: 'red',         pass: false},
       ],
-      google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as any as FlowCryptManifest).oauth2 : null,
+      google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
     },
     // meant to be used privately within this file like so: tool._.???
@@ -2666,7 +2672,7 @@ let tool = {
       return parsed;
     },
     get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks|null) => {
-      let progress_reporting_xhr = new (window as FlowCryptWindow).XMLHttpRequest();
+      let progress_reporting_xhr = new (window as FcWindow).XMLHttpRequest();
       if(progress_callbacks && typeof progress_callbacks.upload === 'function') {
         progress_reporting_xhr.upload.addEventListener('progress', function(evt: ProgressEvent) {
           progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
@@ -2679,7 +2685,7 @@ let tool = {
       }
       return progress_reporting_xhr;
     },
-    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
+    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST'): FcPromise<any> => {
       progress = progress || {} as ApiCallProgressCallbacks;
       let formatted_values:FormData|string;
       let content_type: string|false;
@@ -3098,7 +3104,7 @@ let tool = {
       } else {
         console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
       }
-      if(is_manually_called !== true && tool.catch._.original_on_error && tool.catch._.original_on_error !== (tool.catch.handle_error as any as ErrorEventHandler)) {
+      if(is_manually_called !== true && tool.catch._.original_on_error && tool.catch._.original_on_error !== (tool.catch.handle_error as ErrorEventHandler)) {
         tool.catch._.original_on_error.apply(this, arguments); // Call any previously assigned handler
       }
       if(((error as Error).stack || '').indexOf('PRIVATE') !== -1) { // todo - remove cast & debug
@@ -3256,7 +3262,7 @@ let tool = {
       // @ts-ignore
       this_will_fail();
     },
-    Promise: (f: (resolve: (result?: any) => void, reject: (error?: any) => void) => void): Promise<any> => {
+    Promise: (f: (resolve: (result?: any) => void, reject: (error?: any) => void) => void): FcPromise<any> => {
       return new Promise(function(resolve, reject) {
         try {
           f(resolve, reject);
@@ -3264,7 +3270,7 @@ let tool = {
           tool.catch.handle_exception(e);
           reject({code: null, message: 'Error happened, please write me at human@flowcrypt.com to fix this\n\nError: ' + e.message, internal: 'exception'});
         }
-      })
+      }) as FcPromise<any>;
     },
     promise_error_alert: (note: string) => {
       return function (error: Error) {
@@ -3292,11 +3298,11 @@ let tool = {
       initialize: () => {
         figure_out_flowcrypt_runtime();
 
-        (window as FlowCryptWindow).onerror = (tool.catch.handle_error as any as ErrorEventHandler);
-        (window as FlowCryptWindow).onunhandledrejection = tool.catch.handle_promise_error;
+        (window as FcWindow).onerror = (tool.catch.handle_error as ErrorEventHandler);
+        (window as FcWindow).onunhandledrejection = tool.catch.handle_promise_error;
       
         function figure_out_flowcrypt_runtime() {
-          if((window as FlowCryptWindow).is_bare_engine !== true) {
+          if((window as FcWindow).is_bare_engine !== true) {
             try {
               tool.catch._.runtime['version'] = chrome.runtime.getManifest().version;
             } catch(err) {
@@ -3323,9 +3329,9 @@ let catcher = tool.catch; // legacy code expects this
 
 (function ( /* EXTENSIONS AND CONFIG */ ) {
 
-  if(typeof (window as FlowCryptWindow).openpgp !== 'undefined' && typeof (window as FlowCryptWindow).openpgp.config !== 'undefined' && typeof (window as FlowCryptWindow).openpgp.config.versionstring !== 'undefined' && typeof (window as FlowCryptWindow).openpgp.config.commentstring !== 'undefined') {
-    (window as FlowCryptWindow).openpgp.config.versionstring = 'FlowCrypt ' + (tool.catch.version() || '') + ' Gmail Encryption flowcrypt.com';
-    (window as FlowCryptWindow).openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
+  if(typeof (window as FcWindow).openpgp !== 'undefined' && typeof (window as FcWindow).openpgp.config !== 'undefined' && typeof (window as FcWindow).openpgp.config.versionstring !== 'undefined' && typeof (window as FcWindow).openpgp.config.commentstring !== 'undefined') {
+    (window as FcWindow).openpgp.config.versionstring = 'FlowCrypt ' + (tool.catch.version() || '') + ' Gmail Encryption flowcrypt.com';
+    (window as FcWindow).openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
   }
 
   (RegExp as any).escape = (s: string) => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -3371,8 +3377,7 @@ let catcher = tool.catch; // legacy code expects this
     return rpt;
   };
 
-  // @ts-ignore
-  Promise.prototype.validate = Promise.prototype.validate || function(validity_checker: (r: any) => boolean) {
+  (Promise as any).prototype.validate = (Promise as any).prototype.validate || function(validity_checker: (r: any) => boolean) {
     let original_promise = this;
     return tool.catch.Promise(function(resolve, reject) {
       original_promise.then(function(response: any) {
@@ -3389,8 +3394,7 @@ let catcher = tool.catch; // legacy code expects this
     });
   };
 
-  // @ts-ignore
-  Promise.prototype.done = Promise.prototype.done || function(next: (ok: boolean, v: any) => void) {
+  (Promise as any).prototype.resolved = (Promise as any).prototype.resolved || function(next: (ok: boolean, v: any) => void) {
     return this.then(function(x: any) {
       next(true, x);
     }, function(x: any) {

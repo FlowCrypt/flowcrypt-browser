@@ -165,7 +165,7 @@ declare let qq: any;
   if(typeof exports === 'object') {
     exports.init = init_attach;
   } else {
-    (window as FlowCryptWindow).flowcrypt_attach = {init: init_attach};
+    (window as FcWindow).flowcrypt_attach = {init: init_attach};
   }
 
 })();

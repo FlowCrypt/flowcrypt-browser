@@ -2076,8 +2076,7 @@
   }
 
   if(typeof window === 'object') {
-    // @ts-ignore
-    window.mnemonic = mnemonic;
+    (window as any).mnemonic = mnemonic;
   }
 
   if(typeof exports === 'object') {

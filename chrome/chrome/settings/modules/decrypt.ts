@@ -11,7 +11,7 @@ tool.catch.try(() => {
     let original_content: string;
     let missing_passprase_longids: string[] = [];
   
-    let attach_js = (window as FlowCryptWindow).flowcrypt_attach.init(() => {
+    let attach_js = (window as FcWindow).flowcrypt_attach.init(() => {
       return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
     });
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');

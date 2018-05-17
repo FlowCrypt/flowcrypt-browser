@@ -3,7 +3,6 @@
 'use strict';
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
@@ -187,12 +186,11 @@ function execute_in_background_process_and_respond_when_done(message: Dict<any>,
       } else if (f === null && step === 'window') {
         f = window;
       } else {
-        // @ts-ignore
+        // @ts-ignore - traversible / eventually callable object
         f = f[step];
       }
     }
-    // @ts-ignore
-    let returned = f.apply(null, resolved_args); // the actual operation
+    let returned = (f as Function).apply(null, resolved_args); // the actual operation
     if(!has_callback) {
       if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
         returned.then(convert_large_data_to_object_urls_and_respond, catcher.handle_promise_error);

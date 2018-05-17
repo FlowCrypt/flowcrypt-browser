@@ -37,21 +37,21 @@ tool.catch.try(() => {
   
   $('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
     button_spin(self);
-    (window as FlowCryptWindow).flowcrypt_account.subscribe(
+    (window as FcWindow).flowcrypt_account.subscribe(
       url_params.account_email, 
-      (window as FlowCryptWindow).flowcrypt_account.PRODUCTS.trial,
+      (window as FcWindow).flowcrypt_account.PRODUCTS.trial,
       null,
     ).then(handle_successful_upgrade, handle_error_response);
   }));
   
   $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
     button_spin(self);
-    (window as FlowCryptWindow).flowcrypt_account.register_new_device(url_params.account_email).then(close_dialog, handle_error_response);
+    (window as FcWindow).flowcrypt_account.register_new_device(url_params.account_email).then(close_dialog, handle_error_response);
   }));
   
   tool.api.cryptup.account_check_sync(function() {
     Store.get(url_params.account_email as string, ['google_token_scopes']).then(storage => {
-      (window as FlowCryptWindow).flowcrypt_account.config({
+      (window as FcWindow).flowcrypt_account.config({
         render_status: render_status,
         CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read'),
       });
@@ -122,9 +122,9 @@ tool.catch.try(() => {
   
   function stripe_credit_card_entered_handler(data: {token: string}, sender: any, respond: Callback) {
     $('.stripe_checkout').html('').css('display', 'none');
-    (window as FlowCryptWindow).flowcrypt_account.subscribe(
+    (window as FcWindow).flowcrypt_account.subscribe(
       url_params.account_email, 
-      (window as FlowCryptWindow).flowcrypt_account.PRODUCTS.advanced_monthly, 
+      (window as FcWindow).flowcrypt_account.PRODUCTS.advanced_monthly, 
       data.token,
     ).then(handle_successful_upgrade, handle_error_response);
   }

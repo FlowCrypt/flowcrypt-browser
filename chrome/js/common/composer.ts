@@ -1,7 +1,6 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /// <reference path="common.d.ts" />
-/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 
 'use strict';
 
@@ -120,7 +119,7 @@ class Composer {
   private reference_body_height: number;
 
   constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams) {
-    this.attach = (window as FlowCryptWindow).flowcrypt_attach.init(this.get_max_attachment_size_and_oversize_notice);
+    this.attach = (window as FcWindow).flowcrypt_attach.init(this.get_max_attachment_size_and_oversize_notice);
     this.app = app_functions;
     this.save_draft_interval = setInterval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
 
@@ -257,7 +256,7 @@ class Composer {
       await this.draft_delete();
       this.app.close_message();
     });
-    // @ts-ignore
+    // @ts-ignore - $.bind unknown signature?
     S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
     S.cached('icon_sign').click(() => this.toggle_sign_icon());
   };
@@ -645,14 +644,12 @@ class Composer {
   private upload_attachments_to_cryptup = (attachments: Attachment[], subscription: Subscription, callback: (ok: boolean|null|object, uploads?: Attachment[]|null, ac?: string[]|null, err?: string) => void): void  => {
     (async() => {
       try {
-        // @ts-ignore: .validate()
-        let pf_response = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate((r: {approvals:Dict<any>[]}) => r.approvals && r.approvals.length === attachments.length);
+        let pf_response: ApirFcMessagePresignFiles = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length);
         const items: any[] = [];
         for(let i in pf_response.approvals) {
-          items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i as any as number]});
+          items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
         }
         await tool.api.aws.s3_upload(items, this.render_upload_progress);
-        // @ts-ignore: .validate()
         let {admin_codes} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key)).validate(r => r.confirmed && r.confirmed.length === items.length);
         for(let i in attachments) {
           attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
@@ -691,16 +688,14 @@ class Composer {
 
   private add_reply_token_to_message_body_if_needed = (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription, callback: (res: string) => void): void  => {
     if (challenge && subscription.active) {
-      // @ts-ignore: .validate()
-      tool.api.cryptup.message_token().validate(r => r.token).then((response: {token: string}) => {
-        callback(plaintext + '\n\n' + tool.e('div', {
-            'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
-              sender: this.supplied_from || this.get_sender_from_dom(),
-              recipient: tool.arr.without_value(tool.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
-              subject: subject,
-              token: response.token,
-            })
-          }));
+      tool.api.cryptup.message_token().validate(r => r.token).then(response => {
+        let fc_data_html_attribute = tool.str.html_attribute_encode({
+          sender: this.supplied_from || this.get_sender_from_dom(),
+          recipient: tool.arr.without_value(tool.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
+          subject: subject,
+          token: response.token,
+        });
+        callback(plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': fc_data_html_attribute}));
       }, (error: any) => {
         if (error.internal === 'auth') {
           if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
@@ -719,13 +714,12 @@ class Composer {
     }
   };
 
-  private upload_encrypted_message_to_cryptup = (encrypted_data: Uint8Array|string, subscription: Subscription, callback: (short: string|null, admin_code: string|null, error?: string|StandardError) => void): void  => {
+  private upload_encrypted_message_to_cryptup = (encrypted_data: string, subscription: Subscription, callback: (short: string|null, admin_code: string|null, error?: string|StandardError) => void): void  => {
     this.S.now('send_btn_span').text('Sending');
     // this is used when sending encrypted messages to people without encryption plugin
     // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
     // the encrypted data goes through FlowCrypt and recipients get a link.
     // admin_code stays locally and helps the sender extend life of the message or delete it
-    // @ts-ignore: .validate()
     tool.api.cryptup.message_upload(encrypted_data, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
       callback(response.short, response.admin_code);
     }, (error: StandardError) => {
@@ -1364,7 +1358,7 @@ class Composer {
     if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
-    // @ts-ignore
+    // @ts-ignore - unknown $.keypress signature
     $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_encrypt_and_send_message())).keypress(tool.ui.enter(() => extract_process_encrypt_and_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));

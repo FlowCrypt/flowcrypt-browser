@@ -3,7 +3,6 @@
 'use strict';
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
@@ -92,7 +91,6 @@ function process_attest_packet_text(account_email: string, attest_packet_text: s
               tool.crypto.message.sign(key, attest.text, true, (success, result) => {
                 if (success) {
                   let keyserver_api_response = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(result) : tool.api.attester.replace_confirm(result);
-                  // @ts-ignore
                   keyserver_api_response.validate(r => r.attested).then(response => {
                     account_storage_mark_as_attested(account_email, attest.content.attester, () => {
                       callback(account_email, attest_packet_text, true, 'Successfully attested ' + account_email);

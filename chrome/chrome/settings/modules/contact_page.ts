@@ -5,7 +5,7 @@
 tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
-  let attach_js = (window as FlowCryptWindow).flowcrypt_attach.init(function () { return { size_mb: 5, size: 5 * 1024 * 1024, count: 1 }; });
+  let attach_js = (window as FcWindow).flowcrypt_attach.init(function () { return { size_mb: 5, size: 5 * 1024 * 1024, count: 1 }; });
   let new_photo_file: Attachment;
   
   const S = tool.ui.build_jquery_selectors({
@@ -64,7 +64,6 @@ tool.catch.try(() => {
           Store.get(auth_info.account_email, ['full_name']).then(storage => {
             find_available_alias(auth_info.account_email!, function(alias) {
               let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
-              // @ts-ignore
               tool.api.cryptup.account_update(initial).validate(r => r.updated).then(response => window.location.reload(), error => {
                 alert('Failed to enable your Contact Page. Please try again.\n\n' + error.message);
                 window.location.reload();
@@ -88,8 +87,7 @@ tool.catch.try(() => {
       if(new_photo_file) {
         update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content as Uint8Array));
       }
-      // @ts-ignore
-      tool.api.cryptup.account_update(update).done(() => window.location.reload());
+      tool.api.cryptup.account_update(update).resolved(() => window.location.reload());
     }
   }));
   

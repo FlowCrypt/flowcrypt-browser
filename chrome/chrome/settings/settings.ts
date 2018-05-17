@@ -3,7 +3,6 @@
 'use strict';
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="common.d.ts" />
 
@@ -97,8 +96,7 @@ function submit_pubkeys(addresses: string[], pubkey: string, callback: Callback,
   if(addresses.length) {
     let address = addresses.pop()!; // just checked above
     let attest = (address === settings_url_params.account_email); // only request attestation of main email
-    // @ts-ignore
-    tool.api.attester.initial_legacy_submit(address, pubkey, attest).done((key_submitted, response: {attested: boolean, saved: boolean}) => {
+    tool.api.attester.initial_legacy_submit(address, pubkey, attest).resolved((key_submitted, response) => {
       if(attest && key_submitted) {
         if(!response.attested) {
           save_attest_request(settings_url_params.account_email as string, 'CRYPTUP', function () {
@@ -203,7 +201,7 @@ function reset_cryptup_account_storages(account_email: string, callback: Callbac
 }
 
 function initialize_private_key_import_ui() {
-  let attach_js = (window as FlowCryptWindow).flowcrypt_attach.init(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+  let attach_js = (window as FcWindow).flowcrypt_attach.init(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
   attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
   attach_js.set_attachment_added_callback((file: Attachment) => {
     let content = tool.str.from_uint8(file.content as Uint8Array);

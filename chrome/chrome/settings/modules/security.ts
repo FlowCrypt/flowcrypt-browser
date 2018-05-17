@@ -24,8 +24,7 @@ tool.catch.try(() => {
           $('.default_message_expire').change(function () {
             $('.select_loader_container').html(tool.ui.spinner('green'));
             $('.default_message_expire').css('display', 'none');
-            // @ts-ignore
-            tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}).done(() => window.location.reload());
+            tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())}).resolved(() => window.location.reload());
           });
         }, error => {
           if(error.internal === 'auth' && !url_params.embedded) {

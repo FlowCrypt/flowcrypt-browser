@@ -17,8 +17,7 @@ tool.catch.try(() => {
 
     let key = openpgp.key.readArmored(keyinfo.private).keys[0];
 
-    // @ts-ignore
-    tool.api.attester.lookup_email(url_params.account_email as string).validate(r => r.pubkey && tool.crypto.key.longid(r.pubkey) === keyinfo.longid).then((response: PubkeySearchResult) => {
+    tool.api.attester.lookup_email(url_params.account_email as string).validate((r: PubkeySearchResult) => r.pubkey && tool.crypto.key.longid(r.pubkey) === keyinfo.longid).then((response: PubkeySearchResult) => {
       let url = tool.api.cryptup.url('pubkey', url_params.account_email as string);
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }, (error: StandardError) => {

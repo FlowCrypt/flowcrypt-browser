@@ -131,8 +131,7 @@ catcher.try(() => {
   }
   
   function render_encrypted_contact_page_status() {
-    // @ts-ignore
-    tool.api.cryptup.account_update().done((success: boolean, response: Dict<Dict<string>>) => {
+    tool.api.cryptup.account_update().resolved((success, response) => {
       let status_container = $('.public_profile_indicator_container');
       if(success && response && response.result && response.result.alias) {
         status_container.find('.status-indicator-text').css('display', 'none');

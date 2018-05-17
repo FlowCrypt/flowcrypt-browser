@@ -192,14 +192,7 @@ tool.catch.try(() => {
   }
 
   if(typeof window === 'object') {
-    (window as FlowCryptWindow).flowcrypt_account = _self;
-  }
-
-  if(typeof exports === 'object') {
-    $.each(_self, (k, f) => {
-      // @ts-ignore
-      exports[a] = f;
-    });
+    (window as FcWindow).flowcrypt_account = _self;
   }
 
 })();

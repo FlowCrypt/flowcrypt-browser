@@ -3,7 +3,6 @@
 'use strict';
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/jquery/index.d.ts" />
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
@@ -95,7 +94,6 @@ function account_update_status_pks(account_email: string) { // checks if any new
       for (let email of storage.addresses || [account_email]) {
         if(!tool.value(email).in(addresses_pks)) {
           try {
-            // @ts-ignore
             hkp.lookup({ query: email }).then((pubkey: string) => {
               if(typeof pubkey !== 'undefined') {
                 if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {

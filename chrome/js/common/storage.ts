@@ -115,10 +115,8 @@ class Store {
   static async passphrase_get(account_email: string, longid: string, ignore_session:boolean=false): Promise<string|null> {
     let storage_k = 'passphrase_' + longid;
     let storage = await Store.get(account_email, [storage_k]);
-    // @ts-ignore
     if(typeof storage[storage_k] === 'string') {
-      // @ts-ignore
-      return storage[storage_k]
+      return storage[storage_k] as string; // checked above
     } else {
       let from_session = await Store.session_get(account_email, storage_k);
       return from_session && !ignore_session ? from_session : null;
@@ -142,7 +140,7 @@ class Store {
       primary: primary,
       longid: longid,
       fingerprint: tool.crypto.key.fingerprint(armored_prv)!,
-      keywords: (window as FlowCryptWindow).mnemonic(longid),
+      keywords: (window as FcWindow).mnemonic(longid),
     };
   }
 
@@ -331,7 +329,7 @@ class Store {
       attested: pubkey ? Boolean(attested) : null,
       fingerprint: fingerprint,
       longid: fingerprint ? tool.crypto.key.longid(fingerprint) : null,
-      keywords: fingerprint ? (window as FlowCryptWindow).mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
+      keywords: fingerprint ? (window as FcWindow).mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
       pending_lookup: pubkey ? 0 : (pending_lookup ? 1 : 0),
       last_use: last_use || null,
       date: null,
@@ -376,7 +374,7 @@ class Store {
             reject({message: 'contact not found', internal: 'missing_contact', code: null});
           } else {
             for(let k of Object.keys(update)) {
-              // @ts-ignore
+              // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
               contact[k] = update[k];
             }
             let tx = db.transaction('contacts', 'readwrite');

@@ -107,8 +107,7 @@ tool.catch.try(() => {
           prepare_and_render_add_key_from_backup();
         }
       } else {
-        // @ts-ignore
-        tool.api.attester.lookup_email(url_params.account_email as string).done((keyserver_success, keyserver_result: PubkeySearchResult) => {
+        tool.api.attester.lookup_email(url_params.account_email as string).resolved((keyserver_success, keyserver_result: PubkeySearchResult) => {
           initialize_private_key_import_ui(); // for step_2b_manual_enter
           if(keyserver_success && keyserver_result && keyserver_result.pubkey) { // todo - handle network failure when fetching pubkey, show "retry"
             if(keyserver_result.attested) {
@@ -163,8 +162,7 @@ tool.catch.try(() => {
   function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: Options, callback: Callback) {
     Store.get(account_email, ['addresses']).then((storage: {addresses: string[]|undefined}) => {
       if(options.submit_main) {
-        // @ts-ignore
-        tool.api.attester.test_welcome(account_email, armored_pubkey).validate((r: {sent: boolean}) => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
+        tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
         let addresses;
         if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
           addresses = storage.addresses.concat(account_email);

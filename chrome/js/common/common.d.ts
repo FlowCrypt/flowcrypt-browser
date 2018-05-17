@@ -7,7 +7,7 @@ interface BrowserWidnow extends Window {
 
 type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number }
 
-interface FlowCryptWindow extends BrowserWidnow {
+interface FcWindow extends BrowserWidnow {
     jQuery: JQuery,
     $: JQuery,
     flowcrypt_attach: {
@@ -20,7 +20,7 @@ interface FlowCryptWindow extends BrowserWidnow {
     mnemonic: (hex: string) => string,
 }
 
-interface ContentScriptWindow extends FlowCryptWindow {
+interface ContentScriptWindow extends FcWindow {
     TrySetDestroyableTimeout: (code: Function, ms: number) => number,
     TrySetDestroyableInterval: (code: Function, ms: number) => number,
     injected: true; // background script will use this to test if scripts were already injected, and inject if not
@@ -35,7 +35,7 @@ interface ContentScriptWindow extends FlowCryptWindow {
     vacant: () => boolean;
 }
 
-interface FlowCryptManifest {
+interface FlowCryptManifest extends chrome.runtime.Manifest {
     oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]},
 }
   
@@ -322,9 +322,22 @@ type EmailProvider = 'gmail';
 type ProviderContactsQuery = { substring: string };
 
 // specific api results
+type ApirFcHelpFeedback = {sent: boolean};
+type ApirFcAccountLogin = {registered: boolean, verified: boolean, subscription: SubscriptionInfo};
+type ApirFcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number};
+type ApirFcAccountUpdate = {result: ApirFcAccountUpdate$result, updated: boolean};
+type ApirFcMessagePresignFiles = {approvals: {base_url: string, fields: {key: string}}[]};
+type ApirFcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
+type ApirFcMessageToken = {token: string};
+type ApirFcMessageUpload = {short: string, admin_code: string};
 type ApirFcMessageLink = {expire: string, deleted: boolean, url: string, expired: boolean};
-type ApirFcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string}
-type ApirFcAccountUpdate = {result: ApirFcAccountUpdate$result}
+type ApirFcMessageExpiration = {updated: boolean};
+
+type ApirAttInitialConfirm = {attested: boolean};
+type ApirAttReplaceRequest = {saved: boolean};
+type ApirAttReplaceConfirm = {attested: boolean};
+type ApirAttTestWelcome = {sent: boolean};
+type ApirAttInitialLegacySugmit = {attested: boolean, saved: boolean};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
@@ -430,4 +443,10 @@ interface Stored {
     key_backup_prompt?: number|false;
     successfully_received_at_leat_one_message?: boolean;
     notification_setup_done_seen?: boolean;
+}
+
+// interface Promise<T> { // this conflicts with @types/jquery
+interface FcPromise<T> extends Promise<T> {
+    validate: (validator: (r: T) => void) => Promise<T>;
+    resolved: (next: (ok: boolean, r: T) => void) => void;
 }

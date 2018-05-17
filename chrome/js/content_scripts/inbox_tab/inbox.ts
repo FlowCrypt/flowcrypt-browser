@@ -38,7 +38,7 @@ catcher.try(() => {
       notifications.show_initial(account_email);
       replacer.everything();
       replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(function () {
-        if(typeof (window as FlowCryptWindow).$ === 'function') {
+        if(typeof (window as FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replace_pgp_elements_interval);
