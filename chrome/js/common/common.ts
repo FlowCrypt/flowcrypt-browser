@@ -278,12 +278,13 @@ let tool = {
       return url_data;
     },
     url_create: (link: string, params: UrlParams) => {
-      tool.each(params, (key, value) => {
+      for(let key of Object.keys(params)) {
+        let value = params[key];
         if(typeof value !== 'undefined') {
           let transformed = tool.obj.key_by_value(tool._.var.env_url_param_DICT, value);
           link += (!tool.value('?').in(link) ? '?' : '&') + key + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
         }
-      });
+      }
       return link;
     },
     key_codes: () => ({ a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, }),
@@ -342,11 +343,10 @@ let tool = {
   },
   obj: {
     map: (original_obj: any, f: (v: any) => any): any => {
-      let mapped = {};
-      tool.each(original_obj, (k: string, v: any) => {
-        // @ts-ignore
-        mapped[k] = f(v);
-      });
+      let mapped: {[key: string]: any} = {};
+      for(let k of Object.keys(original_obj)) {
+        mapped[k] = f(original_obj[k]);
+      }
       return mapped;
     },
     key_by_value: (obj: any, v: any): any => {
@@ -583,9 +583,9 @@ let tool = {
           let parsed: {[key: string]: MimeParserNode} = {};
           parser.onheader = function (node: MimeParserNode) {
             if(!String(node.path.join('.'))) { // root node headers
-              tool.each(node.headers, (name: string, value: any) => {
-                mime_content.headers[name] = value[0].value;
-              });
+              for(let name of Object.keys(node.headers)) {
+                mime_content.headers[name] = node.headers[name][0].value;
+              }
             }
           };
           parser.onbody = function (node: MimeParserNode) {
@@ -595,7 +595,7 @@ let tool = {
             }
           };
           parser.onend = function () {
-            tool.each(parsed, function (path: string, node: MimeParserNode) {
+            for(let node of Object.values(parsed)) {
               if(tool._.mime_node_type(node) === 'application/pgp-signature') {
                 mime_content.signature = node.rawContent;
               } else if(tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
@@ -606,36 +606,34 @@ let tool = {
                 let node_content = tool.str.from_uint8(node.content);
                 mime_content.attachments.push(tool.file.attachment(tool._.mime_node_filename(node), tool._.mime_node_type(node), node_content));
               }
-            });
-            tool.catch.try(function () {
-              callback(true, mime_content);
-            })();
+            }
+            tool.catch.try(() => callback(true, mime_content))();
           };
           parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
           parser.end();
         } catch(e) {
           tool.catch.handle_exception(e);
-          tool.catch.try(function () {
-            callback(false, mime_content);
-          })();
+          tool.catch.try(() => callback(false, mime_content))();
         }
       });
     },
     encode: (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[], mime_message_callback: (mime_message: string) => void) => {
       tool._.mime_require('builder', function (MimeBuilder: any) {
         let root_node = new MimeBuilder('multipart/mixed');
-        tool.each(headers, function (key: string, header: string|string[]) {
-          root_node.addHeader(key, header);
-        });
+        for(let key of Object.keys(headers)) {
+          root_node.addHeader(key, headers[key]);
+        }
         if(typeof body === 'string') {
-          body = {'text/plain': body} as SendableMessageBody;
+          body = {'text/plain': body};
         }
         let content_node: MimeParserNode;
         if(Object.keys(body).length === 1) {
           content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
         } else {
           content_node = new MimeBuilder('multipart/alternative');
-          tool.each(body, (type: string, content: string) => { content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, content))});
+          for(let type of Object.keys(body)) {
+            content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+          }
         }
         root_node.appendChild(content_node);
         for(let attachment of attachments) {
@@ -1687,7 +1685,7 @@ let tool = {
         message.headers.From = message.from;
         message.headers.To = message.to.join(',');
         message.headers.Subject = message.subject;
-        tool.mime.encode(message.body as any as SendableMessageBody, message.headers, message.attachments, function(mime_message) {
+        tool.mime.encode(message.body as any as SendableMessageBody, message.headers, message.attachments, (mime_message) => {
           let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
           tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, {upload: progress_callback || tool.noop}, request.content_type);
         });
@@ -1937,8 +1935,8 @@ let tool = {
         Store.get(account_email, ['addresses']).then(function (s: Stored) {
           Store.keys_get(account_email).then(stored_keys => {
             let stored_keys_longids = stored_keys.map(ki => ki.longid);
-            tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then(function(pubkey_search_results) {
-              tool.each((pubkey_search_results as any).results, function (i, pubkey_search_result) { // todo:ts any
+            tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then((pubkey_search_results: {results: PubkeySearchResult[]}) => {
+              for(let pubkey_search_result of pubkey_search_results.results) {
                 if (!pubkey_search_result.pubkey) {
                   diagnosis.has_pubkey_missing = true;
                   diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
@@ -1948,9 +1946,9 @@ let tool = {
                     diagnosis.has_pubkey_mismatch = true;
                     match = false;
                   }
-                  diagnosis.results[pubkey_search_result.email] = {pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested, match: match};
+                  diagnosis.results[pubkey_search_result.email] = {pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested || false, match: match};
                 }
-              });
+              }
               callback(diagnosis);
             }, function(error) {
               callback();
@@ -1963,9 +1961,9 @@ let tool = {
         create_sign: (values: Dict<string>, decrypted_prv: OpenpgpKey) => {
           return tool.catch.Promise(function (resolve, reject) {
             let lines:string[] = [];
-            tool.each(values, function (key, value) {
-              lines.push(key + ':' + value);
-            });
+            for(let key of Object.keys(values)) {
+              lines.push(key + ':' + values[key]);
+            }
             let content_text = lines.join('\n');
             let packet = tool.api.attester.packet.parse(tool._.api_attester_packet_armor(content_text));
             if(packet.success !== true) {
@@ -1998,59 +1996,57 @@ let tool = {
           if(matches && matches[1]) {
             result.text = matches[1].replace(/^\s+|\s+$/g, '');
             let lines = result.text.split('\n');
-            tool.each(lines, function (i, line) {
+            for(let line of lines) {
               let line_parts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
               if(line_parts.length !== 2) {
                 result.error = 'Wrong content line format';
-                return false;
+                result.content = {};
+                return result;
               }
               if(!accepted_values[line_parts[0]]) {
                 result.error = 'Unknown line key';
-                return false;
+                result.content = {};
+                return result;
               }
               if(result.content[accepted_values[line_parts[0]]]) {
                 result.error = 'Duplicate line key';
-                return false;
+                result.content = {};
+                return result;
               }
               result.content[accepted_values[line_parts[0]]] = line_parts[1];
-            });
-            if(result.error !== null) {
+            }
+            if(result.content['fingerprint'] && result.content['fingerprint'].length !== 40) { //todo - we should use regex here, everywhere
+              result.error = 'Wrong PUB line value format';
               result.content = {};
               return result;
-            } else {
-              if(result.content['fingerprint'] && result.content['fingerprint'].length !== 40) { //todo - we should use regex here, everywhere
-                result.error = 'Wrong PUB line value format';
-                result.content = {};
-                return result;
-              }
-              if(result.content['email_hash'] && result.content['email_hash'].length !== 40) {
-                result.error = 'Wrong ADD line value format';
-                result.content = {};
-                return result;
-              }
-              if(result.content['str_random'] && result.content['str_random'].length !== 40) {
-                result.error = 'Wrong RAN line value format';
-                result.content = {};
-                return result;
-              }
-              if(result.content['fingerprint_old'] && result.content['fingerprint_old'].length !== 40) {
-                result.error = 'Wrong OLD line value format';
-                result.content = {};
-                return result;
-              }
-              if(result.content['action'] && !tool.value(result.content['action']).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
-                result.error = 'Wrong ACT line value format';
-                result.content = {};
-                return result;
-              }
-              if(result.content['attester'] && !tool.value(result.content['attester']).in(['CRYPTUP'])) {
-                result.error = 'Wrong ATT line value format';
-                result.content = {};
-                return result;
-              }
-              result.success = true;
+            }
+            if(result.content['email_hash'] && result.content['email_hash'].length !== 40) {
+              result.error = 'Wrong ADD line value format';
+              result.content = {};
               return result;
             }
+            if(result.content['str_random'] && result.content['str_random'].length !== 40) {
+              result.error = 'Wrong RAN line value format';
+              result.content = {};
+              return result;
+            }
+            if(result.content['fingerprint_old'] && result.content['fingerprint_old'].length !== 40) {
+              result.error = 'Wrong OLD line value format';
+              result.content = {};
+              return result;
+            }
+            if(result.content['action'] && !tool.value(result.content['action']).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
+              result.error = 'Wrong ACT line value format';
+              result.content = {};
+              return result;
+            }
+            if(result.content['attester'] && !tool.value(result.content['attester']).in(['CRYPTUP'])) {
+              result.error = 'Wrong ATT line value format';
+              result.content = {};
+              return result;
+            }
+            result.success = true;
+            return result;
           } else {
             result.error = 'Could not locate packet headers';
             result.content = {};
@@ -2156,7 +2152,11 @@ let tool = {
           Store.auth_info().then(function (auth_info) {
             if(auth_info.verified) {
               let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
-              tool.each(update_values || {}, (k, v) => { request[k] = v; });
+              if(update_values) {
+                for(let k of Object.keys(update_values)) {
+                  request[k] = update_values[k];
+                }
+              }
               // @ts-ignore
               tool._.api_cryptup_call('account/update', request).validate((r: Dict<any>) => typeof r.result === 'object').then(resolve, reject);
             } else {
@@ -2611,7 +2611,7 @@ let tool = {
       let openpgpjs_original_isValidEncryptionKeyPacket = function(keyPacket: any, signature: any) {
         return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
       };
-      tool.each(keys, function (i, key) {
+      for(let key of keys) {
         for(let subKey of key.subKeys) {
           subKey.isValidEncryptionKey = function (primaryKey: any) {
             let verifyResult = this.verify(primaryKey);
@@ -2626,7 +2626,7 @@ let tool = {
             return false;
           };
         }
-      });
+      }
     },
     readable_crack_time: (total_seconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
       function numberEnding(number: number) {
@@ -2700,13 +2700,14 @@ let tool = {
         content_type = 'application/json; charset=UTF-8';
       } else if(format === 'FORM') {
         formatted_values = new FormData();
-        tool.each(values, function (name: string, value) {
+        for(let name of Object.keys(values)) {
+          let value = values[name];
           if(typeof value === 'object' && value.name && value.content && value.type) {
             (formatted_values as FormData).append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
           } else {
             (formatted_values as FormData).append(name, value);
           }
-        });
+        }
         content_type = false;
       } else {
         throw Error('unknown format:' + String(format));
@@ -3011,18 +3012,19 @@ let tool = {
       }
     },
     encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
+      console.log(parts);
       let boundary = 'this_sucks_' + tool.str.random(10);
       let body = '';
-      tool.each(parts, function(type, data) {
+      for(let type of Object.keys(parts)) {
         body += '--' + boundary + '\n';
         body += 'Content-Type: ' + type + '\n';
         if(tool.value('json').in(type as string)) {
-          body += '\n' + data + '\n\n';
+          body += '\n' + parts[type] + '\n\n';
         } else {
           body += 'Content-Transfer-Encoding: base64\n';
-          body += '\n' + btoa(data) + '\n\n';
+          body += '\n' + btoa(parts[type]) + '\n\n';
         }
-      });
+      }
       body += '--' + boundary + '--';
       return { content_type: 'multipart/related; boundary=' + boundary, body: body };
     },

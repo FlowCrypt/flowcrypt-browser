@@ -188,7 +188,7 @@ tool.catch.try(async() => {
       render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: url_params.account_email as string, page: '/chrome/settings/modules/help.htm' }),
       render_sending_address_dialog: () => $.featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
       close_message: close_message,
-      factory_attachment: (attachment: Attachment) => factory.embedded_attachment(attachment as any as UrlParams),
+      factory_attachment: (attachment: Attachment) => factory.embedded_attachment(attachment),
     }, {
       account_email: url_params.account_email as string,
       draft_id: url_params.draft_id,

@@ -61,7 +61,7 @@ tool.catch.try(() => {
     $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
       let pass = $('#passphrase').val() as string; // it's a text input
       let is_correct = false;
-      tool.each(selected_private_keys, function (i, keyinfo) { // if passphrase matches more keys, it will save them all
+      for(let keyinfo of selected_private_keys) { // if passphrase matches more keys, it will save them all
         let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
         if(tool.crypto.key.decrypt(prv, pass).success) {
           is_correct = true;
@@ -70,9 +70,9 @@ tool.catch.try(() => {
             tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
             tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
           });
-          return false;
+          break;
         }
-      });
+      }
       if(!is_correct) {
         render_error();
         setTimeout(render_normal, 1500);

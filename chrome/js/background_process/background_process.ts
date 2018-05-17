@@ -102,17 +102,13 @@ function get_active_tab_info(message: Dict<any>|null, sender: chrome.runtime.Mes
 function get_cryptup_settings_tab_id_if_open(callback: Callback) {
   chrome.tabs.query({ currentWindow: true }, tabs => {
     let extension = chrome.extension.getURL('/');
-    let found = false;
-    tool.each(tabs, (i, tab) => {
-      if(tool.value(extension).in(tab.url)) {
+    for(let tab of tabs) {
+      if(tool.value(extension).in(tab.url || '')) {
         callback(tab.id);
-        found = true;
-        return false;
+        return;
       }
-    });
-    if(!found) {
-      callback(null);
     }
+    callback(null);
   });
 }
 

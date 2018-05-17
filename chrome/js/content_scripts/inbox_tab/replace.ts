@@ -95,12 +95,13 @@ class InboxElementReplacer implements WebmailElementReplacer {
     });
   };
 
+  // todo - mostly the same as gmail/replace.ts
   private process_attachments = (message_id: string, message_element: JQuery<HTMLElement>, attachment_metas: Attachment[], attachments_container: JQuery<HTMLElement>|HTMLElement, skip_google_drive=false) => {
     let sender_email = this.dom_extract_sender_email(message_element);
     let is_outgoing = tool.value(sender_email).in(this.addresses);
     attachments_container = $(attachments_container);
-    tool.each(attachment_metas, (i, attachment_meta) => {
-      if(attachment_meta.treat_as !== 'original') {
+    for(let attachment_meta of attachment_metas) {
+      if(attachment_meta.treat_as !== 'standard') {
         let attachment_selector = (attachments_container as JQuery<HTMLElement>).find(this.get_attachment_selector(attachment_meta.name)).first();
         this.hide_attachment(attachment_selector, attachments_container);
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
@@ -108,7 +109,8 @@ class InboxElementReplacer implements WebmailElementReplacer {
         } else if(attachment_meta.treat_as === 'message') {
           message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block');
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id, (success, downloaded_attachment: Attachment) => {
+          // todo - make sure attachment_meta.id present
+          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!, (success, downloaded_attachment: Attachment) => {
             if(success) {
               let armored_key = tool.str.base64url_decode(downloaded_attachment.data!);
               if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
@@ -131,7 +133,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
           }
         }
       }
-    });
+    }
     let not_processed_attachments_loaders = attachments_container.find('.attachment_loader');
     if(!skip_google_drive && not_processed_attachments_loaders.length && message_element.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above

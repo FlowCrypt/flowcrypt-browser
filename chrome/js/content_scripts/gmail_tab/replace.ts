@@ -177,8 +177,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
     attachments_container_inner = $(attachments_container_inner);
     attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let rendered_attachments_count = attachment_metas.length;
-    tool.each(attachment_metas, (i, attachment_meta) => {
-      if(attachment_meta.treat_as !== 'original') {
+    for(let attachment_meta of attachment_metas) {
+      if(attachment_meta.treat_as !== 'standard') {
         attachments_container_inner = $(attachments_container_inner);
         let attachment_selector = this.filter_attachments(attachments_container_inner.children(), [attachment_meta.name]).first();
         this.hide_attachment(attachment_selector, attachments_container_inner);
@@ -191,7 +191,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
             message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
           }
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id, (success, downloaded_attachment: {data: string}) => {
+          // todo - verify that attachment_meta.id always present in this context
+          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!, (success, downloaded_attachment: {data: string}) => {
             if(success) {
               let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
               if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
@@ -211,7 +212,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           message_element = this.update_message_body_element(message_element, replace ? 'set': 'append', embedded_signed_message);
         }
       }
-    });
+    }
     if(rendered_attachments_count === 0) {
       attachments_container_inner.parents(this.selector.attachments_container_outer).first().hide();
     }

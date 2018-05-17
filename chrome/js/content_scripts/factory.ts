@@ -64,7 +64,7 @@ class Factory {
     return this.frame_src(this.ext_url('chrome/elements/sending_address.htm'), { placement });
   };
 
-  src_pgp_attachment_iframe = (meta: UrlParams) => {
+  src_pgp_attachment_iframe = (meta: Attachment) => {
     return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), { message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, url: meta.url });
   };
 
@@ -131,7 +131,7 @@ class Factory {
     return this.iframe(this.src_verification_dialog(verif_email_text), ['short', 'embedded'], {scrolling: 'no'});
   };
 
-  embedded_attachment = (meta: UrlParams) => {
+  embedded_attachment = (meta: Attachment) => {
     return tool.e('span', {class: 'pgp_attachment', html: this.iframe(this.src_pgp_attachment_iframe(meta))});
   };
 

@@ -21,18 +21,18 @@ tool.catch.try(() => {
       emails_selector.append('<a href="' + tool.env.url_create('storage.htm', {controls: url_params.controls || ''}) + '">all</a>');
       emails_selector.append('<a href="' + tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}) + '">global</a>');
       $('.namespace').append('<option value="global">global</option>');
-      tool.each(account_emails, function (i, account_email) {
+      for(let account_email of account_emails) {
         $('.emails').append('<a href="' + tool.env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}) + '">' + account_email + '</a>');
         $('.namespace').append('<option value="' + encodeURIComponent(account_email) + '">' + account_email + '</option>');
-      });
+      }
     });
   }
   
   function render(obj: RenderableStorage) {
-    tool.each(obj, function(filtered_key, data) {
-      let del = controls ? ' <span class="bad delete" key="' + data.key + '" style="cursor: pointer;">[X]</span>' : '';
-      $('.pre').append('<div><b>' + filtered_key + del + '</b> ' + tool.str.pretty_print(data.value) + '</div>');
-    });
+    for(let filtered_key of Object.keys(obj)) {
+      let del = controls ? ' <span class="bad delete" key="' + obj[filtered_key].key + '" style="cursor: pointer;">[X]</span>' : '';
+      $('.pre').append('<div><b>' + filtered_key + del + '</b> ' + tool.str.pretty_print(obj[filtered_key].value) + '</div>');
+    }
     $('.delete').click(function() {
       chrome.storage.local.remove($(this).attr('key')!, function () { // we set the attr key above
         window.location.reload();
@@ -48,11 +48,11 @@ tool.catch.try(() => {
       real_filter = '';
     }
     let filtered: RenderableStorage = {};
-    tool.each(storage, function (key: string, value: Storable) {
+    for(let key of Object.keys(storage)) {
       if(tool.value(real_filter).in(key)) {
-        filtered[key.replace(real_filter, '')] = {key: key, value: value};
+        filtered[key.replace(real_filter, '')] = {key: key, value: storage[key]};
       }
-    });
+    }
     if(!Object.keys(filtered).length) {
       filtered = {'result': {key: 'result', value: 'nothing found'}};
     }

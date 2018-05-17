@@ -14,9 +14,9 @@ catcher.try(() => {
   });
   
   tool.env.webmails(function(webmails) {
-    tool.each(webmails, function(i, webmail_name) {
+    for(let webmail_name of webmails) {
       $('.signin_button.' + webmail_name).css('display', 'inline-block');
-    });
+    }
   });
   
   tool.browser.message.tab_id(function (tab_id) {
@@ -175,7 +175,7 @@ catcher.try(() => {
   
   function add_key_rows_html(private_keys: KeyInfo[]) {
     let html = '';
-    tool.each(private_keys, function (i, keyinfo) {
+    for(let keyinfo of private_keys) {
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       let date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
       let primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + keyinfo.longid + '">remove</a>)';
@@ -183,7 +183,7 @@ catcher.try(() => {
       html += '  <div class="col-sm-12"><a href="#" data-test="action-show-key" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + keyinfo.longid + '">' + tool.str.parse_email(prv.users[0].userId.userid).email + '</a> from ' + date + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
       html += '  <div class="col-sm-12">KeyWords: <span class="good">' + keyinfo.keywords + '</span></div>';
       html += '</div>';
-    });
+    }
     $('.key_list').append(html);
     $('.action_show_key').click(function () {
       show_settings_page($(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
@@ -277,9 +277,9 @@ catcher.try(() => {
   });
   
   Store.account_emails_get().then((account_emails) => {
-    tool.each(account_emails, function (i, email) {
+    for(let email of account_emails) {
       $('#alt-accounts').prepend(menu_account_html(email));
-    });
+    }
     $('.action_select_account').click(function () {
       window.location.href = tool.env.url_create('index.htm', { account_email: $(this).find('.contains_email').text() });
     });

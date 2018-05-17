@@ -17,11 +17,11 @@ tool.catch.try(() => {
       if(success && Array.isArray(keys)) {
         if(keys && keys.length) {
           let not_imported_backup_longids: string[] = [];
-          tool.each(tool.arr.unique(keys.map(tool.crypto.key.longid)), function (i, longid) {
+          for(let longid of tool.arr.unique(keys.map(tool.crypto.key.longid))) {
             if(!tool.value(longid).in(private_keys_long_ids)) {
               not_imported_backup_longids.push(longid);
             }
-          });
+          }
           if(not_imported_backup_longids.length) {
             $('label[for=source_backup]').text('Load from backup (' + not_imported_backup_longids.length + ' new to import)');
           } else {

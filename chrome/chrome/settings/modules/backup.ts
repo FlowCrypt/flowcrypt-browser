@@ -50,9 +50,9 @@ tool.catch.try(() => {
   
   function display_block(name: string) {
     let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
-    tool.each(blocks, function (i, block) {
+    for(let block of blocks) {
       $('#' + block).css('display', 'none');
-    });
+    }
     $('#' + name).css('display', 'block');
   }
   

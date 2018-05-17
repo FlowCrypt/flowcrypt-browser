@@ -294,13 +294,13 @@ tool.catch.try(() => {
       tool.mime.decode(decrypted_content, function (success, result) {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content as string, url_params.message as string), false, function () {
           let renderable_attachments: Attachment[] = [];
-          tool.each(result.attachments, function(i, attachment) {
+          for(let attachment of result.attachments) {
             if(tool.file.treat_as(attachment) !== 'public_key') {
               renderable_attachments.push(attachment);
             } else {
-              public_keys.push(attachment.content);
+              public_keys.push(attachment.content as string); // todo - verify that this is indeed a string
             }
-          });
+          }
           if(renderable_attachments.length) {
             render_inner_attachments(result.attachments);
           }
@@ -397,14 +397,14 @@ tool.catch.try(() => {
   function check_passphrase_changed() {
     let longids = Object.keys(missing_or_wrong_passprases);
     Promise.all(longids.map(longid => Store.passphrase_get(url_params.account_email as string, longid))).then(updated_passphrases => {
-      tool.each(longids, function (i, longid) {
+      for(let longid of longids) {
         if((missing_or_wrong_passprases[longid] || null) !== updated_passphrases[longids.indexOf(longid)]) {
           missing_or_wrong_passprases = {};
           clearInterval(passphrase_interval);
           decrypt_and_render();
-          return false;
+          break;
         }
-      });
+      }
     });
   }
   

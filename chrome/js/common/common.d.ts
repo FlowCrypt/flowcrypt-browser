@@ -255,6 +255,7 @@ interface InternalSortedKeysForDecrypt {
 }
 
 interface SendableMessageBody {
+    [key: string]: string|undefined,
     'text/plain'?: string,
     'text/html'?: string,
 }

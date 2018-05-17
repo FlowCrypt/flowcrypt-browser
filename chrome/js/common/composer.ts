@@ -328,8 +328,8 @@ class Composer {
         tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         setTimeout(async() => {
           await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
-            console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
-            window.location.reload();
+          console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
+          window.location.reload();
         }, 500);
       } else {
         console.log('tool.api.gmail.draft_get success===false');
@@ -370,22 +370,22 @@ class Composer {
       this.save_draft_in_process = true;
       this.S.cached('send_btn_note').text('Saving');
       let armored_pubkey = await this.app.storage_get_armored_public_key(this.account_email);
-        if(armored_pubkey) {
-          tool.crypto.message.encrypt([armored_pubkey], null, null, this.S.cached('input_text')[0].innerText, null, true, (encrypted: OpenpgpEncryptResult) => {
-            let body;
-            if (this.thread_id) { // replied message
-              body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
-            } else if (this.draft_id) {
-              body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
-            } else {
-              body = encrypted.data;
-            }
-            let subject = String(this.S.cached('input_subject').val()) || this.supplied_subject || 'FlowCrypt draft';
+      if(armored_pubkey) {
+        tool.crypto.message.encrypt([armored_pubkey], null, null, this.S.cached('input_text')[0].innerText, null, true, (encrypted: OpenpgpEncryptResult) => {
+          let body;
+          if (this.thread_id) { // replied message
+            body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
+          } else if (this.draft_id) {
+            body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
+          } else {
+            body = encrypted.data;
+          }
+          let subject = String(this.S.cached('input_subject').val()) || this.supplied_subject || 'FlowCrypt draft';
           tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
             try {
               if (!this.draft_id) {
                 let new_draft = await this.app.email_provider_draft_create(mime_message);
-                  this.S.cached('send_btn_note').text('Saved');
+                this.S.cached('send_btn_note').text('Saved');
                 this.draft_id = new_draft.id;
                 await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
                   // recursing one more time, because we need the draft_id we get from this reply in the message itself
@@ -394,16 +394,16 @@ class Composer {
                 await this.draft_save(true); // force_save = true  
               } else {
                 await this.app.email_provider_draft_update(this.draft_id, mime_message);
-                  this.S.cached('send_btn_note').text('Saved');
+                this.S.cached('send_btn_note').text('Saved');
               }
             } catch(error) {
               console.log(error);
-                  this.S.cached('send_btn_note').text('Not saved');
+              this.S.cached('send_btn_note').text('Not saved');
             }
-                  this.save_draft_in_process = false;
-                });
-            });
-        }
+            this.save_draft_in_process = false;
+          });
+        });
+      }
     }
   };
 
@@ -590,7 +590,7 @@ class Composer {
       const prv = openpgp.key.readArmored(primary_k.private).keys[0];
       let passphrase = await this.app.storage_passphrase_get();
       if (passphrase === null) {
-          this.app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
+        this.app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         if ((await this.when_master_passphrase_entered(60)) !== null) { // pass phrase entered
           await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
@@ -738,62 +738,62 @@ class Composer {
   };
 
   private with_attached_pubkey_if_needed = async (encrypted: string) => {
-        if (this.S.cached('icon_pubkey').is('.active')) {
-        let armored_public_key = await this.app.storage_get_armored_public_key(this.account_email);
-          encrypted += '\n\n' + armored_public_key;
-        }
-      return encrypted
+    if (this.S.cached('icon_pubkey').is('.active')) {
+    let armored_public_key = await this.app.storage_get_armored_public_key(this.account_email);
+      encrypted += '\n\n' + armored_public_key;
+    }
+    return encrypted
   };
 
   private do_encrypt_message_body_and_format = (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[])  => {
     tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, async (encrypted) => {
       encrypted.data = await this.with_attached_pubkey_if_needed(encrypted.data as string);
-        let body = {'text/plain': encrypted.data} as SendableMessageBody;
-        this.button_update_timeout = window.setTimeout(() => { this.S.now('send_btn_span').text('sending') }, 500);
-        await this.app.storage_contact_update(recipients, {last_use: Date.now()});
-        if (challenge) {
-          this.upload_encrypted_message_to_cryptup(encrypted.data, subscription, (short_id, message_admin_code, error) => {
-            if (short_id && message_admin_code) {
-              body = this.format_password_protected_email(short_id, body, armored_pubkeys);
-              body = this.format_email_text_footer(body);
-              this.app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, async() => {
-                await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
-              });
-            } else {
-              if (error === tool.api.cryptup.auth_error) {
-                if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-                  this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-                }
-              } else {
-                alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
+      let body = {'text/plain': encrypted.data} as SendableMessageBody;
+      this.button_update_timeout = window.setTimeout(() => { this.S.now('send_btn_span').text('sending') }, 500);
+      await this.app.storage_contact_update(recipients, {last_use: Date.now()});
+      if (challenge) {
+        this.upload_encrypted_message_to_cryptup(encrypted.data, subscription, (short_id, message_admin_code, error) => {
+          if (short_id && message_admin_code) {
+            body = this.format_password_protected_email(short_id, body, armored_pubkeys);
+            body = this.format_email_text_footer(body);
+            this.app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, async() => {
+              await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+            });
+          } else {
+            if (error === tool.api.cryptup.auth_error) {
+              if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+                this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
               }
-              this.reset_send_btn();
+            } else {
+              alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
             }
-          });
-        } else {
-          body = this.format_email_text_footer(body);
-          await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
-        }
-      });
+            this.reset_send_btn();
+          }
+        });
+      } else {
+        body = this.format_email_text_footer(body);
+        await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      }
+    });
   };
 
   private do_send_message = async (message: SendableMessage, plaintext: string)  => {
     try {
-    for(let k in this.additional_message_headers) {
-      message.headers[k] = this.additional_message_headers[k];
-    }
-    for(let a of message.attachments) {
-      a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
-    }
+      for(let k in this.additional_message_headers) {
+        message.headers[k] = this.additional_message_headers[k];
+      }
+      for(let a of message.attachments) {
+        a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+      }
       let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
       const is_signed = this.S.cached('icon_sign').is('.active');
       this.app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
       await this.draft_delete();
-        if(this.is_reply_box) {
+      if(this.is_reply_box) {
         this.render_reply_success(message, plaintext, message_sent_response.id);
-        } else {
-          this.app.close_message();
-        }
+      } else {
+        this.app.close_message();
+      }
     } catch (error) {
       this.reset_send_btn();
       if(error && error.message && error.internal) {
@@ -1167,10 +1167,8 @@ class Composer {
 
   private search_contacts = async(db_only=false) => {
     const query = {substring: tool.str.parse_email(this.S.cached('input_to').val() as string).email};
-    console.log(query);
     if (query.substring !== '') {
       let contacts = await this.app.storage_contact_search(query);
-      console.log(contacts);
       if (db_only || !this.can_read_emails) {
         this.render_search_results(contacts, query);
       } else {

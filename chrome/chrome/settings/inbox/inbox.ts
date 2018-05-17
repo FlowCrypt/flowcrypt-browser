@@ -71,7 +71,7 @@ tool.catch.try(() => {
             $('body').text('Connection error trying to get list of messages');
           } else {
             let thread_ids = tool.arr.unique(tool.arr.select(list_result.messages, 'threadId'));
-            tool.each(thread_ids, function(i, thread_id) {
+            for(let thread_id of thread_ids) {
               thread_element_add(thread_id);
               tool.api.gmail.message_get(url_params.account_email as string, thread_id, 'metadata', function(item_success: boolean, item_result: any) {
                 let thread_item = $('.threads #' + thread_list_item_id(thread_id));
@@ -88,7 +88,7 @@ tool.catch.try(() => {
                   });
                 }
               });
-            });
+            }
           }
         });
   

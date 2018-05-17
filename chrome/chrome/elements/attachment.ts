@@ -169,12 +169,12 @@ tool.catch.try(() => {
     if(!url_params.url && !url_params.attachment_id && url_params.message_id) {
       tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'full', (success: boolean, result: Dict<any>) => {
         if(success && result && result.payload && result.payload.parts) {
-          tool.each(result.payload.parts, (i, attachment_meta) => {
+          for(let attachment_meta of result.payload.parts) {
             if(attachment_meta.filename === url_params.name && attachment_meta.body && attachment_meta.body.size === url_params.size && attachment_meta.body.attachmentId) {
               url_params.attachment_id = attachment_meta.body.attachmentId;
-              return false;
+              break;
             }
-          });
+          }
           cb();
         } else {
           window.location.reload();

@@ -40,12 +40,12 @@ tool.catch.try(() => {
         text.push('account_storage: ' + JSON.stringify(account_storage));
         text.push('');
         Store.keys_get(account_email).then(keyinfos => {
-          tool.each(keyinfos, function (i, keyinfo) {
+          for(let keyinfo of keyinfos) {
             text.push('');
             text.push('key_longid: ' + keyinfo.longid);
             text.push('key_primary: ' + keyinfo.primary);
             text.push(keyinfo.private);
-          });
+          }
           text.push('');
           callback(text.join('\n'));
         });
