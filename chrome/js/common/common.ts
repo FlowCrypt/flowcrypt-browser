@@ -206,6 +206,7 @@ let tool = {
     },
     strip_cryptup_reply_token: (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, ''),
     strip_public_keys: (decrypted_content: string, found_public_keys: string[]) => {
+      decrypted_content = tool.str.normalize_spaces(decrypted_content);
       for(let block of tool.crypto.armor.detect_blocks(decrypted_content)) {
         if(block.type === 'public_key') {
           found_public_keys.push(block.content);
@@ -819,12 +820,11 @@ let tool = {
         original_text = tool.str.normalize_spaces(original_text);
         let start_at = 0;
         while(true) {
-          let r = tool._.crypto_armor_detect_block_next(original_text, start_at);
-          if(!r) {
-            return blocks;
+          var r = tool._.crypto_armor_detect_block_next(original_text, start_at);
+          if(r.found) {
+            blocks = blocks.concat(r.found);
           }
-          blocks = blocks.concat(r.found);
-          if(!r.continue_at) {
+          if(r.continue_at === null) {
             return blocks;
           } else {
             start_at = r.continue_at;
@@ -2347,11 +2347,7 @@ let tool = {
       api_gmail_SCOPE_DICT: {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'} as Dict<string>,
       browser_message_MAX_SIZE: 1024 * 1024, // 1MB
       browser_message_STANDARD_HANDLERS: {
-        set_css: function (data: {css: Dict<string|number>, selector: string}) {
-          console.log('set_css');
-          console.log(data);
-          $(data.selector).css(data.css);
-        },
+        set_css: (data: {css: Dict<string|number>, selector: string}) => $(data.selector).css(data.css),
       } as Dict<BrowserMessageHandler>,
       crypto_password_SENTENCE_PRESENT_TEST: /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/,
       crypto_password_SENTECES: [
@@ -2433,9 +2429,9 @@ let tool = {
       if(begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, tool._.var.crypto_armor_header_MAX_LENGTH);
         for(let type of Object.keys(tool._.var.crypto_armor_headers_DICT)) {
-          let block_header = tool._.var.crypto_armor_headers_DICT[type];
-          if(block_header.replace) {
-            let index_of_confirmed_begin = potential_begin_header.indexOf(block_header.begin);
+          let block_header_def = tool._.var.crypto_armor_headers_DICT[type];
+          if(block_header_def.replace) {
+            let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
             if(index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
               if(begin > start_at) {
                 let potential_text_before_block_begun = original_text.substring(start_at, begin).trim();
@@ -2444,21 +2440,21 @@ let tool = {
                 }
               }
               let end: number = -1;
-              if(typeof block_header.end === 'string') {
-                end = original_text.indexOf(block_header.end, begin + block_header.begin.length);
+              if(typeof block_header_def.end === 'string') {
+                end = original_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
               } else { // regexp
-                let regexp_end = original_text.match(block_header.end);
+                let regexp_end = original_text.match(block_header_def.end);
                 if(regexp_end !== null) {
                   // @ts-ignore - ISSUE_A is this editting the block_header DICT values?!
-                  (block_header.end as string).length = regexp_end[0].length;
+                  (block_header_def.end as string).length = regexp_end[0].length;
                   end = regexp_end.index || -1;
                 }
               }
               if(end !== -1) { // identified end of the same block
                 if(type !== 'password_message') {
-                  result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substring(begin, end + (block_header.end as string).length).trim())); // todo - ISSUE_A
+                  result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substring(begin, end + (block_header_def.end as string).length).trim())); // todo - ISSUE_A
                 } else {
-                  let pm_full_text = original_text.substring(begin, end + (block_header.end as string).length).trim(); // todo - ISSUE_A
+                  let pm_full_text = original_text.substring(begin, end + (block_header_def.end as string).length).trim(); // todo - ISSUE_A
                   let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
                   if(pm_short_id_match) {
                     result.found.push(tool._.crypto_armor_block_object(type, pm_short_id_match[0]));
@@ -2466,11 +2462,11 @@ let tool = {
                     result.found.push(tool._.crypto_armor_block_object('text', pm_full_text));
                   }
                 }
-                result.continue_at = end + (block_header.end as string).length; // todo - ISSUE_A
+                result.continue_at = end + (block_header_def.end as string).length; // todo - ISSUE_A
               } else { // corresponding end not found
                 result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substr(begin), true));
               }
-              return false;
+              break;
             }
           }
         }

@@ -274,9 +274,9 @@ tool.catch.try(() => {
     }
     if(!tool.mime.resembles_message(decrypted_content)) {
       let cryptup_attachments: Attachment[] = [];
-      decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content as string, cryptup_attachments) as string;
-      decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content as string) as string;
-      decrypted_content = tool.str.strip_public_keys(decrypted_content as string, public_keys) as string;
+      decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
+      decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content);
+      decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
       if(public_keys.length) {
         tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys: public_keys});
       }
