@@ -2,11 +2,12 @@
 let gulp = require('gulp');
 let newer = require('gulp-newer');
 let typescript = require('gulp-typescript');
-var sourcemaps = require('gulp-sourcemaps');
-var jeditor = require("gulp-json-editor");
+let sourcemaps = require('gulp-sourcemaps');
+let jeditor = require("gulp-json-editor");
 let fs = require('fs');
 let del = require('del');
 let exec = require('child_process').exec;
+let inquirer = require('inquirer');
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
 let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
@@ -33,6 +34,7 @@ let recipe = {
     subprocess.stderr.pipe(process.stderr);
   }),
   copyEditJson: (from, to, json_processor) => gulp.src(from).pipe(jeditor(json_processor)).pipe(gulp.dest(to)),
+  confirm: (keyword) => inquirer.prompt([{type: 'input', message: `Type "${keyword}" to confirm`, name: 'r'}]).then(q => q.r === keyword ? null : process.exit(1)),
 }
 
 let subTask = {
@@ -54,6 +56,7 @@ let subTask = {
   runTest: () => recipe.exec('node test/test.js'),
   runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
   releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
+  releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),
 }
 
 let task = {
@@ -74,7 +77,7 @@ let task = {
   runFirefox: subTask.runFirefox,
   release: gulp.series(
     subTask.releaseChrome,
-    // subTask.releaseFirefox,
+    subTask.releaseFirefox,
   ),
 }
 

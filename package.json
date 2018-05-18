@@ -12,6 +12,7 @@
     "gulp-newer": "^1.4.0",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.2",
+    "inquirer": "^5.2.0",
     "typescript": "^2.8.3"
   },
   "scripts": {
