@@ -7,7 +7,7 @@ tool.catch.try(async() => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
-  let subscription = await Store.subscription();
+  let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
   let storage = await Store.get_account(url_params.account_email as string, storage_keys);
   await recover_missing_url_params();
@@ -52,24 +52,14 @@ tool.catch.try(async() => {
         Store.set(url_params.account_email as string, {email_footer: footer}); // async
       },
       storage_get_hide_message_password: () => !!storage.hide_message_password,
-      storage_get_subscription_info: (cb: (si: Subscription) => void) => { // returns cached result, callbacks with fresh result
-        if(typeof cb === 'function') {
-          Store.subscription().then(subscription => {
-            cb(subscription);
-          });
+      storage_get_subscription: () => Store.subscription(),
+      storage_get_armored_public_key: async (sender_email: string) => {
+        let [primary_k] = await Store.keys_get(url_params.account_email as string, ['primary']);
+        if(primary_k) {
+          return primary_k.public;
+        } else {
+          throw Error('FlowCrypt is not properly set up. No Public Key found in storage.');
         }
-        return subscription; // todo - deprecate
-      },
-      storage_get_armored_public_key: (sender_email: string) => {
-        return catcher.Promise((resolve, reject) => {
-          Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
-            if(primary_k) {
-              resolve(primary_k.public);
-            } else {
-              reject('FlowCrypt is not properly set up. No Public Key found in storage.')
-            }
-          });
-        });
       },
       storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => catcher.Promise((resolve, reject) => {
         Store.get_account(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
@@ -104,15 +94,14 @@ tool.catch.try(async() => {
           });
         });
       },
-      storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => {
-        Store.get_global(['admin_codes']).then(admin_code_storage => {
-          admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
-          admin_code_storage.admin_codes[short_id] = {
-            date: Date.now(),
-            codes: [message_admin_code].concat(attachment_admin_codes || []),
-          };
-          Store.set(null, admin_code_storage).then(callback);
-        });
+      storage_add_admin_codes: async (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => {
+        let admin_code_storage = await Store.get_global(['admin_codes']);
+        admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
+        admin_code_storage.admin_codes[short_id] = {
+          date: Date.now(),
+          codes: [message_admin_code].concat(attachment_admin_codes || []),
+        };
+        await Store.set(null, admin_code_storage);
       },
       storage_contact_get: (email: string[]) => Store.db_contact_get(null, email),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
@@ -200,7 +189,7 @@ tool.catch.try(async() => {
       tab_id: tab_id,
       is_reply_box: url_params.is_reply_box,
       skip_click_prompt: url_params.skip_click_prompt,
-    });
+    }, subscription_when_page_was_opened);
 
     tool.browser.message.listen({
       close_dialog: function (data, sender, respond) {
@@ -213,8 +202,8 @@ tool.catch.try(async() => {
       },
       subscribe: (data, sender, respond) => composer.show_subscribe_dialog_and_wait_for_response,
       subscribe_result: (new_subscription: Subscription) => {
-        if (new_subscription.active && !subscription.active) {
-          subscription.active = new_subscription.active;
+        if (new_subscription.active && !subscription_when_page_was_opened.active) {
+          subscription_when_page_was_opened.active = new_subscription.active;
         }
         composer.process_subscribe_result(new_subscription);
       },

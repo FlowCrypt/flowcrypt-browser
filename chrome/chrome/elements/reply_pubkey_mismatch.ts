@@ -15,7 +15,7 @@ tool.catch.try(() => {
   
     let app_functions = Composer.default_app_functions();
     app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => tool.browser.message.send(url_params.parent_tab_id as string, channel, data);
-    let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id});
+    let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
   
     for(let to of (url_params.to as string).split(',')) {
       $('.recipients').append(tool.e('span', {text: to}));

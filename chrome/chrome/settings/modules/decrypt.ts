@@ -11,9 +11,7 @@ tool.catch.try(() => {
     let original_content: string;
     let missing_passprase_longids: string[] = [];
   
-    let attach_js = (window as FcWindow).flowcrypt_attach.init(() => {
-      return {count: 1, size: 100 * 1024 * 1024, size_mb: 100};
-    });
+    let attach_js = new Attach(() => ({count: 1, size: 100 * 1024 * 1024, size_mb: 100}));
     attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     let factory = new Factory(url_params.account_email as string, tab_id);
   
@@ -37,7 +35,7 @@ tool.catch.try(() => {
       if(ids.length === 1) {
         original_content = $(self).html();
         $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
-        attach_js.collect_attachment(ids[0], decrypt_and_download);
+        attach_js.collect_attachment(ids[0]).then(decrypt_and_download);
       } else {
         alert('Please add a file to decrypt');
       }

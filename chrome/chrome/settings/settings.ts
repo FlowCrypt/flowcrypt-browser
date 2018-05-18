@@ -201,9 +201,9 @@ function reset_cryptup_account_storages(account_email: string, callback: Callbac
 }
 
 function initialize_private_key_import_ui() {
-  let attach_js = (window as FcWindow).flowcrypt_attach.init(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
-  attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-  attach_js.set_attachment_added_callback((file: Attachment) => {
+  let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+  attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+  attach.set_attachment_added_callback((file: Attachment) => {
     let content = tool.str.from_uint8(file.content as Uint8Array);
     let k;
     if(tool.value(tool.crypto.armor.headers('private_key').begin).in(content)) {

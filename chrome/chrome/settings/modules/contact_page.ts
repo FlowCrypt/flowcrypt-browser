@@ -5,7 +5,7 @@
 tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
-  let attach_js = (window as FcWindow).flowcrypt_attach.init(function () { return { size_mb: 5, size: 5 * 1024 * 1024, count: 1 }; });
+  let attach_js = new Attach(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let new_photo_file: Attachment;
   
   const S = tool.ui.build_jquery_selectors({

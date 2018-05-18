@@ -44,7 +44,8 @@ tool.catch.try(() => {
               'PUB': tool.crypto.key.fingerprint(primary_pubkey_armored) as string,
             };
             tool.api.attester.packet.create_sign(request_replacement, old_key).then(signed_packet => {
-              tool.api.attester.replace_request(url_params.account_email as string, signed_packet, primary_pubkey_armored).validate(r => r.saved).then(response => {
+              // todo - avoid "as string" below
+              tool.api.attester.replace_request(url_params.account_email as string, signed_packet as string, primary_pubkey_armored).validate(r => r.saved).then(response => {
                 save_attest_request(url_params.account_email as string, 'CRYPTUP', function () { //todo - should be the original attester
                   alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
                   show_settings_page('/chrome/settings/modules/keyserver.htm');

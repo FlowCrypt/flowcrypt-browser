@@ -15,11 +15,11 @@ interface ComposerAppFunctionsInterface {
     storage_get_email_footer: () => string|null,
     storage_set_email_footer: (footer: string|null) => void,
     storage_get_hide_message_password: () => boolean,
-    storage_get_subscription_info: (cb?: (s: Subscription) => void) => Subscription,
+    storage_get_subscription: () => Promise<Subscription>,
     storage_get_armored_public_key: (sender_email: string) => Promise<null|string>,
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>,
     storage_passphrase_get: () => Promise<string|null>,
-    storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: () => void) => void,
+    storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise<void>,
     storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>,
     storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>,
     storage_contact_save:  (contact: Contact) =>  Promise<void>,
@@ -43,6 +43,11 @@ interface ComposerAppFunctionsInterface {
     factory_attachment: (attachment: Attachment) => string,
     close_message: () => void,
 }
+
+class ComposerUserError extends Error {}
+class ComposerNotReadyError extends ComposerUserError {}
+class ComposerNetworkError extends Error {}
+class ComposerResetBtnTrigger extends Error {}
 
 class Composer {
 
@@ -79,7 +84,7 @@ class Composer {
     contacts: '#contacts',
   }) as SelectorCacher;
 
-  private attach: any;
+  private attach: Attach;
   private app: ComposerAppFunctionsInterface;
 
   private SAVE_DRAFT_FREQUENCY = 3000;
@@ -118,8 +123,8 @@ class Composer {
   private frame_id: string;
   private reference_body_height: number;
 
-  constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams) {
-    this.attach = (window as FcWindow).flowcrypt_attach.init(this.get_max_attachment_size_and_oversize_notice);
+  constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
+    this.attach = new Attach(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
     this.save_draft_interval = setInterval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
 
@@ -135,7 +140,6 @@ class Composer {
     this.my_addresses_on_pks = this.app.storage_get_addresses_pks() || [];
     this.my_addresses_on_keyserver = this.app.storage_get_addresses_keyserver() || [];
     this.can_read_emails = this.app.can_read_email();
-    let subscription = this.app.storage_get_subscription_info();
     if (subscription.active) {
       this.update_footer_icon();
     } else if (this.app.storage_get_email_footer()) { // footer set but subscription not active - subscription expired
@@ -152,8 +156,7 @@ class Composer {
     this.initialize_actions();
   }
 
-  private get_max_attachment_size_and_oversize_notice = () => {
-    let subscription = this.app.storage_get_subscription_info();
+  private get_max_attachment_size_and_oversize_notice = (subscription: Subscription) => {
     if (!subscription.active) {
       return {
         size_mb: 5,
@@ -370,37 +373,36 @@ class Composer {
       this.S.cached('send_btn_note').text('Saving');
       let armored_pubkey = await this.app.storage_get_armored_public_key(this.account_email);
       if(armored_pubkey) {
-        tool.crypto.message.encrypt([armored_pubkey], null, null, this.S.cached('input_text')[0].innerText, null, true, (encrypted: OpenpgpEncryptResult) => {
-          let body;
-          if (this.thread_id) { // replied message
-            body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
-          } else if (this.draft_id) {
-            body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
-          } else {
-            body = encrypted.data;
-          }
-          let subject = String(this.S.cached('input_subject').val()) || this.supplied_subject || 'FlowCrypt draft';
-          tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
-            try {
-              if (!this.draft_id) {
-                let new_draft = await this.app.email_provider_draft_create(mime_message);
-                this.S.cached('send_btn_note').text('Saved');
-                this.draft_id = new_draft.id;
-                await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
-                  // recursing one more time, because we need the draft_id we get from this reply in the message itself
-                  // essentially everytime we save draft for the first time, we have to save it twice
-                  // save_draft_in_process will remain true because well.. it's still in process
-                await this.draft_save(true); // force_save = true  
-              } else {
-                await this.app.email_provider_draft_update(this.draft_id, mime_message);
-                this.S.cached('send_btn_note').text('Saved');
-              }
-            } catch(error) {
-              console.log(error);
-              this.S.cached('send_btn_note').text('Not saved');
+        let encrypted = await tool.crypto.message.encrypt([armored_pubkey], null, null, this.S.cached('input_text')[0].innerText, null, true);
+        let body;
+        if (this.thread_id) { // replied message
+          body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
+        } else if (this.draft_id) {
+          body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
+        } else {
+          body = encrypted.data;
+        }
+        let subject = String(this.S.cached('input_subject').val()) || this.supplied_subject || 'FlowCrypt draft';
+        tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
+          try {
+            if (!this.draft_id) {
+              let new_draft = await this.app.email_provider_draft_create(mime_message);
+              this.S.cached('send_btn_note').text('Saved');
+              this.draft_id = new_draft.id;
+              await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
+                // recursing one more time, because we need the draft_id we get from this reply in the message itself
+                // essentially everytime we save draft for the first time, we have to save it twice
+                // save_draft_in_process will remain true because well.. it's still in process
+              await this.draft_save(true); // force_save = true  
+            } else {
+              await this.app.email_provider_draft_update(this.draft_id, mime_message);
+              this.S.cached('send_btn_note').text('Saved');
             }
-            this.save_draft_in_process = false;
-          });
+          } catch(error) {
+            console.log(error);
+            this.S.cached('send_btn_note').text('Not saved');
+          }
+          this.save_draft_in_process = false;
         });
       }
     }
@@ -490,96 +492,91 @@ class Composer {
     return {armored_pubkeys, emails_without_pubkeys};
   };
 
-  private is_compose_form_rendered_as_ready = (recipients: string[])  => {
+  private throw_if_form_not_ready = (recipients: string[]): void => {
     if(tool.value(this.S.now('send_btn_span').text().toLowerCase().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
-      return true;
-    } else {
-      if(this.S.now('send_btn_span').text().toLowerCase().trim() === this.BTN_WRONG_ENTRY) {
-        alert('Please re-enter recipients marked in red color.');
-      } else if(!recipients || !recipients.length) {
-        alert('Please add a recipient first');
-      } else {
-        alert('Still working, please wait.');
-      }
-      return false;
+      return; // all good
     }
+    if(this.S.now('send_btn_span').text().toLowerCase().trim() === this.BTN_WRONG_ENTRY) {
+      throw new ComposerUserError('Please re-enter recipients marked in red color.');
+    }
+    if(!recipients || !recipients.length) {
+      throw new ComposerUserError('Please add a recipient first');
+    }
+    throw new ComposerNotReadyError('Still working, please wait.');
   };
 
-  private are_compose_form_values_valid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null): boolean  => {
+  private throw_if_form_values_invalid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null) => {
     const is_encrypt = !this.S.cached('icon_sign').is('.active');
     if(!recipients.length) {
-      alert('Please add receiving email address.');
-      return false;
-    } else if(is_encrypt && emails_without_pubkeys.length && (!challenge || !challenge.answer)) {
-      alert('Some recipients don\'t have encryption set up. Please add a password.');
+      throw new ComposerUserError('Please add receiving email address.');
+    }
+    if(is_encrypt && emails_without_pubkeys.length && (!challenge || !challenge.answer)) {
       this.S.cached('input_password').focus();
-      return false;
+      throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
+    }
+    if(!((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?')))) {
+      throw new ComposerResetBtnTrigger();
+    }
+  };
+
+  private handle_send_error(error: Error|StandardError) {
+    if(typeof error === 'object' && error.hasOwnProperty('internal')) {
+      if((error as StandardError).internal === 'auth') {
+        if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+          this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+        }
+      } else {
+        tool.catch.report('StandardError | failed to send message', error);
+        alert((error as StandardError).internal || error.message);
+      }
     } else {
-      return Boolean((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?')));
+      if(!((error instanceof ComposerUserError) || ((error instanceof ComposerResetBtnTrigger)))) {
+        tool.catch.report('Error/Exception | failed to send message', error);
+      }
+      if(!((error instanceof ComposerResetBtnTrigger) || (error instanceof ComposerNotReadyError))) {
+        alert(String(error));
+      }
     }
-  };
+    if(!(error instanceof ComposerNotReadyError)) {
+      this.reset_send_btn(100);
+    }
+  }
 
-  private handle_send_btn_processing_error = (callback: () => void): void  => {
+  private extract_process_send_message = async() => {
     try {
-      callback();
-    } catch(err) {
-      tool.catch.handle_exception(err);
-      this.reset_send_btn();
-      alert(String(err));
-    }
-  };
-
-  private extract_process_encrypt_and_send_message = async() => {
-    const recipients = this.get_recipients_from_dom();
-    const subject = this.supplied_subject || String($('#input_subject').val()); // replies have subject in url params
-    const plaintext = $('#input_text').get(0).innerText;
-    if(this.is_compose_form_rendered_as_ready(recipients)) {
+      const recipients = this.get_recipients_from_dom();
+      const subject = this.supplied_subject || String($('#input_subject').val()); // replies have subject in url params
+      const plaintext = $('#input_text').get(0).innerText;
+      this.throw_if_form_not_ready(recipients);
       this.S.now('send_btn_span').text('Loading');
       this.S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
-      this.app.storage_get_subscription_info(async (subscription: Subscription) => {
-        let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
-        const challenge = emails_without_pubkeys.length ? {answer: String(this.S.cached('input_password').val())} : null;
-        if(this.are_compose_form_values_valid(recipients, emails_without_pubkeys, subject, plaintext, challenge)) {
-          if(this.S.cached('icon_sign').is('.active')) {
-            await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
-          } else {
-            this.encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
-          }
-        } else {
-          this.reset_send_btn();
-        }
-      });
+      let subscription = await this.app.storage_get_subscription();
+      let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
+      const challenge = emails_without_pubkeys.length ? {answer: String(this.S.cached('input_password').val())} : null;
+      this.throw_if_form_values_invalid(recipients, emails_without_pubkeys, subject, plaintext, challenge);
+      if(this.S.cached('icon_sign').is('.active')) {
+        await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+      } else {
+        await this.encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+      }
+    } catch(e) {
+      this.handle_send_error(e);
     }
   };
 
-  private encrypt_and_send = (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
+  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
     this.S.now('send_btn_span').text('Encrypting');
-    this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription, (plaintext) => {
-      this.handle_send_btn_processing_error(() => {
-        this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge, (attachments: Attachment[]) => {
-          if (attachments.length && challenge) { // these will be password encrypted attachments
-            this.button_update_timeout = window.setTimeout(() => this.S.now('send_btn_span').text('sending'), 500);
-            this.upload_attachments_to_cryptup(attachments, subscription, (all_good, upload_results, attachment_admin_codes, upload_error_message) => {
-              if (all_good === true && upload_results && attachment_admin_codes) {
-                plaintext = this.add_uploaded_file_links_to_message_body(plaintext, upload_results);
-                this.do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
-              } else if (all_good === tool.api.cryptup.auth_error) {
-                if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-                  this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-                }
-                this.reset_send_btn(100);
-              } else {
-                alert('There was an error uploading attachments. Please try it again. Write me at human@flowcrypt.com if it happens repeatedly.\n\n' + upload_error_message);
-                this.reset_send_btn(100);
-              }
-            });
-          } else {
-            this.do_encrypt_message_body_and_format(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription);
-          }
-        });
-      });
-    });
+    plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
+    let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
+    if (attachments.length && challenge) { // these will be password encrypted attachments
+      this.button_update_timeout = window.setTimeout(() => this.S.now('send_btn_span').text('sending'), 500);
+      let attachment_admin_codes = await this.upload_attachments_to_cryptup(attachments, subscription);
+      plaintext = this.add_uploaded_file_links_to_message_body(plaintext, attachments);
+      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
+    } else {
+      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription);
+    }
   };
 
   private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
@@ -597,43 +594,30 @@ class Composer {
           this.reset_send_btn();
         }
       } else {
-        tool.env.set_up_require();
-        require(['emailjs-mime-codec'], (MimeCodec: any) => {
+        let MimeCodec = await tool.env.require('emailjs-mime-codec');
+        // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
+        // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
+        // resulting in.. wait for it.. signatures that don't match
+        // if you are reading this and have ideas about better solutions which:
+        //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
+        //  - don't require text to be sent as an attachment
+        //  - don't require all other clients to support PGP/MIME
+        // then please let me know. Eagerly waiting! In the meanwhile..
+        plaintext = MimeCodec.foldLines(plaintext, 76, true);
 
-          // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
-          // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
-          // resulting in.. wait for it.. signatures that don't match
-          // if you are reading this and have ideas about better solutions which:
-          //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
-          //  - don't require text to be sent as an attachment
-          //  - don't require all other clients to support PGP/MIME
-          // then please let me know. Eagerly waiting! In the meanwhile..
-          plaintext = MimeCodec.foldLines(plaintext, 76, true);
+        // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
+        // Removing them here will prevent Gmail from screwing up the signature
+        plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
 
-          // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
-          // Removing them here will prevent Gmail from screwing up the signature
-          plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-
-          tool.crypto.key.decrypt(prv, passphrase!); // checked !== null above
-          tool.crypto.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '', true, (success, signing_result) => {
-            if (success) {
-              this.handle_send_btn_processing_error(() => {
-                this.attach.collect_attachments(async (attachments: Attachment[]) => { // todo - not signing attachments
-                  // noinspection JSIgnoredPromiseFromCall
-                  this.app.storage_contact_update(recipients, {last_use: Date.now()});
-                  this.S.now('send_btn_span').text('Sending');
-                  signing_result = await this.with_attached_pubkey_if_needed(signing_result);
-                  const body = {'text/plain': signing_result};
-                  await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
-                });
-              });
-            } else {
-              tool.catch.report('error signing message. Error:' + signing_result);
-              alert('There was an error signing this message. Please write me at human@flowcrypt.com, I resolve similar issues very quickly.\n\n' + signing_result);
-              this.reset_send_btn();
-            }
-          });
-        });
+        tool.crypto.key.decrypt(prv, passphrase!); // checked !== null above
+        let signed_data = await tool.crypto.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '', true) as string; // todo - confirm
+        let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
+        // noinspection JSIgnoredPromiseFromCall
+        this.app.storage_contact_update(recipients, {last_use: Date.now()});
+        this.S.now('send_btn_span').text('Sending');
+        signed_data = await this.with_attached_pubkey_if_needed(signed_data);
+        const body = {'text/plain': signed_data};
+        await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
@@ -641,30 +625,28 @@ class Composer {
     }
   };
 
-  private upload_attachments_to_cryptup = (attachments: Attachment[], subscription: Subscription, callback: (ok: boolean|null|object, uploads?: Attachment[]|null, ac?: string[]|null, err?: string) => void): void  => {
-    (async() => {
-      try {
-        let pf_response: ApirFcMessagePresignFiles = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length);
-        const items: any[] = [];
-        for(let i in pf_response.approvals) {
-          items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
-        }
-        await tool.api.aws.s3_upload(items, this.render_upload_progress);
-        let {admin_codes} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key)).validate(r => r.confirmed && r.confirmed.length === items.length);
-        for(let i in attachments) {
-          attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
-        }
-        callback(true, attachments, admin_codes);
-      } catch(error) {
-        if(error && typeof error === 'object' && error.internal === 'validate') {
-          callback(false, null, null, 'Could not verify that all files were uploaded properly, please try again.');
-        } else if (error && typeof error === 'object' && error.internal === 'auth') {
-          callback(error);
-        } else {
-          callback(false, null, null, error && typeof error === 'object' && error.message ? error.message : 'Some files failed to upload, please try again');
-        }
+  private upload_attachments_to_cryptup = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
+    try {
+      let pf_response: ApirFcMessagePresignFiles = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length);
+      const items: any[] = [];
+      for(let i in pf_response.approvals) {
+        items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
       }
-    })();
+      await tool.api.aws.s3_upload(items, this.render_upload_progress);
+      let {admin_codes} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key)).validate(r => r.confirmed && r.confirmed.length === items.length);
+      for(let i in attachments) {
+        attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
+      }
+      return admin_codes;
+    } catch(error) {
+      if(error && typeof error === 'object' && error.internal === 'validate') {
+        throw new ComposerNetworkError('Could not verify that all files were uploaded properly, please try again.');
+      } else if (error && typeof error === 'object' && error.internal === 'auth') {
+        throw error;
+      } else {
+        throw new ComposerNetworkError(error && typeof error === 'object' && error.message ? error.message : 'Some files failed to upload, please try again');
+      }
+    }
   };
 
   private render_upload_progress = (progress: number)  => {
@@ -686,49 +668,31 @@ class Composer {
     return plaintext;
   };
 
-  private add_reply_token_to_message_body_if_needed = (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription, callback: (res: string) => void): void  => {
-    if (challenge && subscription.active) {
-      tool.api.cryptup.message_token().validate(r => r.token).then(response => {
-        let fc_data_html_attribute = tool.str.html_attribute_encode({
-          sender: this.supplied_from || this.get_sender_from_dom(),
-          recipient: tool.arr.without_value(tool.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
-          subject: subject,
-          token: response.token,
-        });
-        callback(plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': fc_data_html_attribute}));
-      }, (error: any) => {
-        if (error.internal === 'auth') {
-          if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-            this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-          }
-          this.reset_send_btn();
-        } else if (error.internal === 'subscription') {
-          callback(plaintext); // just skip and leave as is
-        } else {
-          alert('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + error.message);
-          this.reset_send_btn();
-        }
-      });
-    } else {
-      callback(plaintext);
+  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string>  => {
+    if (!challenge || !subscription.active) {
+      return plaintext;
     }
-  };
-
-  private upload_encrypted_message_to_cryptup = (encrypted_data: string, subscription: Subscription, callback: (short: string|null, admin_code: string|null, error?: string|StandardError) => void): void  => {
-    this.S.now('send_btn_span').text('Sending');
-    // this is used when sending encrypted messages to people without encryption plugin
-    // used to send it as a parameter in URL, but the URLs are way too long and not all clients can deal with it
-    // the encrypted data goes through FlowCrypt and recipients get a link.
-    // admin_code stays locally and helps the sender extend life of the message or delete it
-    tool.api.cryptup.message_upload(encrypted_data, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code).then(response => {
-      callback(response.short, response.admin_code);
-    }, (error: StandardError) => {
-      if (error.internal === 'auth') {
-        callback(null, null, tool.api.cryptup.auth_error);
+    let response;
+    try {
+      response = await tool.api.cryptup.message_token().validate(r => r.token);
+    } catch (message_token_error) {
+      if (message_token_error.internal === 'auth') {
+        if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+          this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+        }
+        throw new ComposerResetBtnTrigger();
+      } else if (message_token_error.internal === 'subscription') {
+        return plaintext;
       } else {
-        callback(null, null, error.internal || error.message);
+        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + message_token_error.message);
       }
-    });
+    }
+    return plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': tool.str.html_attribute_encode({
+      sender: this.supplied_from || this.get_sender_from_dom(),
+      recipient: tool.arr.without_value(tool.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
+      subject: subject,
+      token: response.token,
+    })});
   };
 
   private with_attached_pubkey_if_needed = async (encrypted: string) => {
@@ -739,63 +703,41 @@ class Composer {
     return encrypted
   };
 
-  private do_encrypt_message_body_and_format = (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[])  => {
-    tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, async (encrypted) => {
-      encrypted.data = await this.with_attached_pubkey_if_needed(encrypted.data as string);
-      let body = {'text/plain': encrypted.data} as SendableMessageBody;
-      this.button_update_timeout = window.setTimeout(() => { this.S.now('send_btn_span').text('sending') }, 500);
-      await this.app.storage_contact_update(recipients, {last_use: Date.now()});
-      if (challenge) {
-        this.upload_encrypted_message_to_cryptup(encrypted.data, subscription, (short_id, message_admin_code, error) => {
-          if (short_id && message_admin_code) {
-            body = this.format_password_protected_email(short_id, body, armored_pubkeys);
-            body = this.format_email_text_footer(body);
-            this.app.storage_add_admin_codes(short_id, message_admin_code, attachment_admin_codes, async() => {
-              await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
-            });
-          } else {
-            if (error === tool.api.cryptup.auth_error) {
-              if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-                this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-              }
-            } else {
-              alert('Could not send message, probably due to internet connection. Please click the SEND button again to retry.\n\n(Error:' + error + ')');
-            }
-            this.reset_send_btn();
-          }
-        });
-      } else {
-        body = this.format_email_text_footer(body);
-        await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
-      }
-    });
+  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
+    let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true);
+    encrypted.data = await this.with_attached_pubkey_if_needed(encrypted.data as string);
+    let body = {'text/plain': encrypted.data} as SendableMessageBody;
+    await this.app.storage_contact_update(recipients, {last_use: Date.now()});
+    this.S.now('send_btn_span').text('sending');
+    if (challenge) {
+      // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
+      // admin_code stays locally and helps the sender extend life of the message or delete it
+      let {short, admin_code} = await tool.api.cryptup.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code); // just set it above
+      body = this.format_password_protected_email(short, body, armored_pubkeys);
+      body = this.format_email_text_footer(body);
+      await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
+      await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+    } else {
+      body = this.format_email_text_footer(body);
+      await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+    }
   };
 
   private do_send_message = async (message: SendableMessage, plaintext: string)  => {
-    try {
-      for(let k in this.additional_message_headers) {
-        message.headers[k] = this.additional_message_headers[k];
-      }
-      for(let a of message.attachments) {
-        a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
-      }
-      let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
-      const is_signed = this.S.cached('icon_sign').is('.active');
-      this.app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
-      await this.draft_delete();
-      if(this.is_reply_box) {
-        this.render_reply_success(message, plaintext, message_sent_response.id);
-      } else {
-        this.app.close_message();
-      }
-    } catch (error) {
-      this.reset_send_btn();
-      if(error && error.message && error.internal) {
-        alert(error.message);
-      } else {
-        tool.catch.report('email_provider message_send error response', error);
-        alert('Error sending message, try to re-open your web mail window and send again. Write me at human@flowcrypt.com if this happens repeatedly.');
-      }
+    for(let k in this.additional_message_headers) {
+      message.headers[k] = this.additional_message_headers[k];
+    }
+    for(let a of message.attachments) {
+      a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+    }
+    let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
+    const is_signed = this.S.cached('icon_sign').is('.active');
+    this.app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
+    await this.draft_delete();
+    if(this.is_reply_box) {
+      this.render_reply_success(message, plaintext, message_sent_response.id);
+    } else {
+      this.app.close_message();
     }
   };
 
@@ -1359,7 +1301,7 @@ class Composer {
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
     // @ts-ignore - unknown $.keypress signature
-    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_encrypt_and_send_message())).keypress(tool.ui.enter(() => extract_process_encrypt_and_send_message()));
+    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message())).keypress(tool.ui.enter(() => extract_process_encrypt_and_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));
     this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.render_receivers()));
@@ -1453,11 +1395,11 @@ class Composer {
       storage_get_email_footer: () => null,
       storage_set_email_footer: () => null,
       storage_get_hide_message_password: () => false,
-      storage_get_subscription_info: (cb: (si: Subscription) => void) => { if(typeof cb === 'function') {cb(new Subscription(null));} return new Subscription(null); },
+      storage_get_subscription: () => Promise.resolve(new Subscription(null)),
       storage_get_armored_public_key: (sender_email: string) => Promise.resolve(null),
       storage_set_draft_meta: () => Promise.resolve(),
       storage_passphrase_get: () => Promise.resolve(null),
-      storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => callback(),
+      storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
       storage_contact_save: (contact: Contact) => Promise.resolve(),

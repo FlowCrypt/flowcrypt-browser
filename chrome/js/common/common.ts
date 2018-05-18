@@ -287,6 +287,12 @@ let tool = {
       return link;
     },
     key_codes: () => ({ a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, }),
+    require: (lib_name: 'emailjs-mime-codec'): Promise<any> => {
+      return new Promise(resolve => {
+        tool.env.set_up_require();
+        require([lib_name], resolve);
+      });
+    },
     set_up_require: () => {
       require.config({
         baseUrl: '/lib',
@@ -1024,9 +1030,10 @@ let tool = {
       },
     },
     message: {
-      sign: (signing_prv: any, data: string|Uint8Array, armor: boolean, callback: (success: boolean, result: any) => void): void => {
+      sign: async (signing_prv: any, data: string|Uint8Array, armor: boolean): Promise<string|Uint8Array> => {
         let options = { data: data, armor: armor, privateKeys: signing_prv, };
-        openpgp.sign(options).then((result: {data: string|Uint8Array}) => {callback(true, result.data)}, (error: Error) => {callback(false, error.message)});
+        let sign_result = await openpgp.sign(options);
+        return sign_result.data;
       },
       verify: (message: any, keys_for_verification: OpenpgpKey[], optional_contact: Contact|null=null) => {
         let signature = { signer: null, contact: optional_contact,  match: null, error: null } as MessageVerifyResult;
@@ -1138,7 +1145,7 @@ let tool = {
           }
         });
       },
-      encrypt: (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, callback: (result: OpenpgpEncryptResult) => void) => {
+      encrypt: (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean): Promise<OpenpgpEncryptResult> => {
         let options: Options = { data: data, armor: armor };
         if(filename) {
           options['filename'] = filename;
@@ -1162,15 +1169,7 @@ let tool = {
         if(signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
           options['privateKeys'] = [signing_prv];
         }
-        openpgp.encrypt(options).then(function (result: OpenpgpEncryptResult) {
-          tool.catch.try(function () { // todo - this is very awkward, should create a Try wrapper with a better api
-            callback(result);
-          })();
-        }, function (error: Error) {
-          console.log(error);
-          alert('Error encrypting message, please try again. If you see this repeatedly, contact me at human@flowcrypt.com.');
-          //todo: make the UI behave well on errors
-        });
+        return openpgp.encrypt(options); // returns a promise
       },
     },
     password: {
@@ -1956,25 +1955,18 @@ let tool = {
         });
       },  
       packet: {
-        // tool.attest.packet.create_sign
-        create_sign: (values: Dict<string>, decrypted_prv: OpenpgpKey) => {
-          return tool.catch.Promise(function (resolve, reject) {
-            let lines:string[] = [];
-            for(let key of Object.keys(values)) {
-              lines.push(key + ':' + values[key]);
-            }
-            let content_text = lines.join('\n');
-            let packet = tool.api.attester.packet.parse(tool._.api_attester_packet_armor(content_text));
-            if(packet.success !== true) {
-              reject({code: null, message: packet.error, internal: 'parse'});
-            } else {
-              tool.crypto.message.sign(decrypted_prv, content_text, true, function (success, signed_attest_packet) {
-                resolve(signed_attest_packet);
-              });
-            }
-          });
+        create_sign: async (values: Dict<string>, decrypted_prv: OpenpgpKey) => {
+          let lines:string[] = [];
+          for(let key of Object.keys(values)) {
+            lines.push(key + ':' + values[key]);
+          }
+          let content_text = lines.join('\n');
+          let packet = tool.api.attester.packet.parse(tool._.api_attester_packet_armor(content_text));
+          if(packet.success !== true) {
+            throw {code: null, message: packet.error, internal: 'parse'};
+          }
+          return await tool.crypto.message.sign(decrypted_prv, content_text, true);
         },
-        // tool.attest.packet.parse
         parse: (text: string) => {
           let accepted_values = {
             'ACT': 'action',
@@ -3006,7 +2998,6 @@ let tool = {
       }
     },
     encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
-      console.log(parts);
       let boundary = 'this_sucks_' + tool.str.random(10);
       let body = '';
       for(let type of Object.keys(parts)) {
@@ -3173,7 +3164,7 @@ let tool = {
       tool.catch._.runtime = tool.catch._.runtime || {};
       tool.catch.handle_error(exception.message, window.location.href, line, col, exception, true, tool.catch._.runtime['version'], tool.catch._.runtime['environment']);
     },
-    report: (name: string, details:Serializable|StandardError|PromiseRejectionEvent=undefined) => {
+    report: (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
       try {
         // noinspection ExceptionCaughtLocallyJS
         throw new Error(name);

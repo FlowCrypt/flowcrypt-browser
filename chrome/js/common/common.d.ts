@@ -10,9 +10,6 @@ type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number }
 interface FcWindow extends BrowserWidnow {
     jQuery: JQuery,
     $: JQuery,
-    flowcrypt_attach: {
-        init: Function,
-    },
     iso88592: any,
     is_bare_engine: boolean,
     openpgp: any,
