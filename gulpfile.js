@@ -3,12 +3,14 @@ let gulp = require('gulp');
 let newer = require('gulp-newer');
 let typescript = require('gulp-typescript');
 var sourcemaps = require('gulp-sourcemaps');
+var jeditor = require("gulp-json-editor");
 let fs = require('fs');
 let del = require('del');
 let exec = require('child_process').exec;
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
 let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
+let version = config('package.json').version;
 
 let target = 'build/chrome';
 
@@ -28,12 +30,17 @@ let recipe = {
     subprocess.stdout.pipe(process.stdout);
     subprocess.stderr.pipe(process.stderr);
   }),
+  copyEditJson: (from, to, json_processor) => gulp.src(from).pipe(jeditor(json_processor)).pipe(gulp.dest(to)),
 }
 
 let subTask = {
   flush: () => del(target),
   transpileProjectTs: () => recipe.ts(source('**/*.ts') ,target),
-  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id', 'manifest.json']), target),
+  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), target),
+  copyEditManifest: () => recipe.copyEditJson(source('manifest.json'), target, (manifest) => {
+    manifest.version = version;
+    return manifest;
+  }),
   buildTest: () => recipe.ts('test/test.ts', 'test/'),
   runTest: () => recipe.exec('node test/test.js'),
 }
@@ -44,6 +51,7 @@ let task = {
     gulp.parallel(
       subTask.transpileProjectTs, 
       subTask.copySourceFiles,
+      subTask.copyEditManifest,
     ),
     // gulp.chromeToFirefox,
   ),

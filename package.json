@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "5.4.6",
+  "version": "5.5.0",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "devDependencies": {
     "@types/chrome": "0.0.65",
@@ -8,6 +8,7 @@
     "@types/openpgp": "0.0.29",
     "del": "^3.0.0",
     "gulp": "^4.0.0",
+    "gulp-json-editor": "^2.4.1",
     "gulp-newer": "^1.4.0",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.2",
