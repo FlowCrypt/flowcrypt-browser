@@ -1,0 +1,10 @@
+{
+  "manifest_version": 2,
+  "name": "Add iframe to google 404 page",
+  "description": "...",
+  "version": "0.0.1",
+  "permissions": ["https://google.com/404"],
+  "content_scripts": [{"matches": ["https://google.com/404"], "js": ["add_iframe.js"]}],
+  "web_accessible_resources": ["iframe.htm"],
+  "minimum_chrome_version": "55"
+}
