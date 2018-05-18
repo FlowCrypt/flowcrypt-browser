@@ -269,7 +269,7 @@ class Composer {
     this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
   };
 
-  private initialize_compose_box = async (variables: UrlParams)  => {
+  private initialize_compose_box = async (variables: UrlParams) => {
     let that = this;
     if(this.draft_id) {
       await this.initial_draft_load();
@@ -350,7 +350,7 @@ class Composer {
     }
   };
 
-  private reset_send_btn = (delay:number|null=null)  => {
+  private reset_send_btn = (delay:number|null=null) => {
     const do_reset = () => this.S.cached('send_btn').html('<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
     clearTimeout(this.button_update_timeout);
     if (!delay) {
@@ -360,7 +360,7 @@ class Composer {
     }
   };
 
-  passphrase_entry = (entered: boolean)  => {
+  passphrase_entry = (entered: boolean) => {
     if(!entered) {
       this.reset_send_btn();
       clearInterval(this.passphrase_interval);
@@ -408,7 +408,7 @@ class Composer {
     }
   };
 
-  private draft_delete = async ()  => {
+  private draft_delete = async () => {
     clearInterval(this.save_draft_interval);
     await tool.time.wait(() => !this.save_draft_in_process ? true : undefined);
     if (this.draft_id) {
@@ -417,7 +417,7 @@ class Composer {
     }
   };
 
-  private decrypt_and_render_draft = async (encrypted_draft: string, render_function: (() => void)|null, headers: FromToHeaders)  => {
+  private decrypt_and_render_draft = async (encrypted_draft: string, render_function: (() => void)|null, headers: FromToHeaders) => {
     let passphrase = this.app.storage_passphrase_get();
     if (passphrase !== null) {
       tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, (result) => {
@@ -565,7 +565,7 @@ class Composer {
     }
   };
 
-  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
+  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
@@ -579,7 +579,7 @@ class Composer {
     }
   };
 
-  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription)  => {
+  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
     let [primary_k] = await Store.keys_get(this.account_email, ['primary']);
     if (primary_k) {
@@ -649,14 +649,14 @@ class Composer {
     }
   };
 
-  private render_upload_progress = (progress: number)  => {
+  private render_upload_progress = (progress: number) => {
     if (this.attach.has_attachment()) {
       progress = Math.floor(progress);
       this.S.now('send_btn_span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
     }
   };
 
-  private add_uploaded_file_links_to_message_body = (plaintext: string, attachments: Attachment[])  => {
+  private add_uploaded_file_links_to_message_body = (plaintext: string, attachments: Attachment[]) => {
     plaintext += '\n\n';
     for(let i in attachments) {
       const size_mb = attachments[i].size / (1024 * 1024);
@@ -668,7 +668,7 @@ class Composer {
     return plaintext;
   };
 
-  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string>  => {
+  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
@@ -723,7 +723,7 @@ class Composer {
     }
   };
 
-  private do_send_message = async (message: SendableMessage, plaintext: string)  => {
+  private do_send_message = async (message: SendableMessage, plaintext: string) => {
     for(let k in this.additional_message_headers) {
       message.headers[k] = this.additional_message_headers[k];
     }
@@ -779,7 +779,7 @@ class Composer {
     }
   };
 
-  private evaluate_receivers = ()  => {
+  private evaluate_receivers = () => {
     let that = this;
     $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').each(function () {
       const email_element = this;
@@ -797,13 +797,13 @@ class Composer {
     this.set_input_text_height_manually_if_needed()
   };
 
-  private get_password_validation_warning = ()  => {
+  private get_password_validation_warning = () => {
     if (!this.S.cached('input_password').val()) {
       return 'No password entered';
     }
   };
 
-  private show_message_password_ui_and_color_button = ()  => {
+  private show_message_password_ui_and_color_button = () => {
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     if (this.S.cached('input_password').val() || this.S.cached('input_password').is(':focus')) {
@@ -833,7 +833,7 @@ class Composer {
    *
    * @param update_reference_body_height - set to true to take a new snapshot of intended html body height
    */
-  private set_input_text_height_manually_if_needed = (update_reference_body_height:boolean=false)  => {
+  private set_input_text_height_manually_if_needed = (update_reference_body_height:boolean=false) => {
     if(!this.is_reply_box && tool.env.browser().name === 'firefox') {
       let cell_height_except_text = 0;
       this.S.cached('all_cells_except_text').each(function() {
@@ -847,7 +847,7 @@ class Composer {
     }
   };
 
-  private hide_message_password_ui = ()  => {
+  private hide_message_password_ui = () => {
     this.S.cached('password_or_pubkey').css('display', 'none');
     this.S.cached('input_password').val('');
     this.S.cached('add_intro').css('display', 'none');
@@ -856,7 +856,7 @@ class Composer {
     this.set_input_text_height_manually_if_needed();
   };
 
-  private show_hide_password_or_pubkey_container_and_color_send_button = ()  => {
+  private show_hide_password_or_pubkey_container_and_color_send_button = () => {
     this.reset_send_btn();
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
@@ -886,7 +886,7 @@ class Composer {
     this.set_input_text_height_manually_if_needed();
   };
 
-  private respond_to_input_hotkeys = (input_to_keydown_event: KeyboardEvent)  => {
+  private respond_to_input_hotkeys = (input_to_keydown_event: KeyboardEvent) => {
     let value = this.S.cached('input_to').val();
     const keys = tool.env.key_codes();
     if (!value && input_to_keydown_event.which === keys.backspace) {
@@ -905,7 +905,7 @@ class Composer {
     }
   };
 
-  resize_reply_box = (add_extra:number=0)  => {
+  resize_reply_box = (add_extra:number=0) => {
     if (this.is_reply_box) {
       this.S.cached('input_text').css('max-width', (this.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let min_height = 0;
@@ -928,12 +928,12 @@ class Composer {
     }
   };
 
-  private append_forwarded_message = (text: string)  => {
+  private append_forwarded_message = (text: string) => {
     this.S.cached('input_text').append('<br/><br/>Forwarded message:<br/><br/>> ' + text.replace(/(?:\r\n|\r|\n)/g, '\> '));
     this.resize_reply_box();
   };
 
-  private retrieve_decrypt_and_add_forwarded_message = (message_id: string)  => {
+  private retrieve_decrypt_and_add_forwarded_message = (message_id: string) => {
     this.app.email_provider_extract_armored_block(message_id, (armored_message: string) => {
       tool.crypto.message.decrypt(this.account_email, armored_message, null, (result) => {
         if (result.success) {
@@ -955,7 +955,7 @@ class Composer {
     });
   };
 
-  private render_reply_message_compose_table = (method:"forward"|"reply"="reply")  => {
+  private render_reply_message_compose_table = (method:"forward"|"reply"="reply") => {
     this.S.cached('reply_message_prompt').css('display', 'none');
     this.S.cached('compose_table').css('display', 'table');
     this.S.cached('input_to').val(this.supplied_to + (this.supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
@@ -981,7 +981,7 @@ class Composer {
     this.resize_reply_box();
   };
 
-  private render_receivers = ()  => {
+  private render_receivers = () => {
     const input_to = (this.S.cached('input_to').val() as string).toLowerCase();
     if (tool.value(',').in(input_to)) {
       const emails = input_to.split(',');
@@ -999,7 +999,7 @@ class Composer {
     this.set_input_text_height_manually_if_needed();
   };
 
-  private select_contact = (email: string, from_query: ProviderContactsQuery)  => {
+  private select_contact = (email: string, from_query: ProviderContactsQuery) => {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
     const possibly_bogus_address = tool.str.parse_email(possibly_bogus_recipient.text()).email;
     const q = tool.str.parse_email(from_query.substring).email;
@@ -1020,7 +1020,7 @@ class Composer {
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
   };
 
-  private remove_receiver = ()  => {
+  private remove_receiver = () => {
     this.recipients_missing_my_key = tool.arr.without_value(this.recipients_missing_my_key, $(this).parent().text());
     $(this).parent().remove();
     this.resize_input_to();
@@ -1028,7 +1028,7 @@ class Composer {
     this.update_pubkey_icon();
   };
 
-  private auth_contacts = (account_email: string)  => {
+  private auth_contacts = (account_email: string) => {
     let last_recipient = $('.recipients span').last();
     this.S.cached('input_to').val(last_recipient.text());
     last_recipient.last().remove();
@@ -1045,14 +1045,14 @@ class Composer {
     });
   };
 
-  private render_search_results_loading_done = ()  => {
+  private render_search_results_loading_done = () => {
     this.S.cached('contacts').find('ul li.loading').remove();
     if (!this.S.cached('contacts').find('ul li').length) {
       this.hide_contacts();
     }
   };
 
-  private render_search_results = (contacts: Contact[], query: ProviderContactsQuery)  => {
+  private render_search_results = (contacts: Contact[], query: ProviderContactsQuery) => {
     let that = this;
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
@@ -1133,11 +1133,11 @@ class Composer {
     }
   };
 
-  private hide_contacts = ()  => {
+  private hide_contacts = () => {
     this.S.cached('contacts').css('display', 'none');
   };
 
-  private update_pubkey_icon = (include:boolean|null=null)  => {
+  private update_pubkey_icon = (include:boolean|null=null) => {
     if (include === null) { // decide if pubkey should be included
       if (!this.include_pubkey_toggled_manually) { // leave it as is if toggled manually before
         this.update_pubkey_icon(Boolean(this.recipients_missing_my_key.length) && !tool.value(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks));
@@ -1151,7 +1151,7 @@ class Composer {
     }
   };
 
-  update_footer_icon = (include:boolean|null=null)  => {
+  update_footer_icon = (include:boolean|null=null) => {
     if (include === null) { // decide if pubkey should be included
       this.update_footer_icon(!!this.app.storage_get_email_footer());
     } else { // set icon to specific state
@@ -1163,7 +1163,7 @@ class Composer {
     }
   };
 
-  private toggle_sign_icon = ()  => {
+  private toggle_sign_icon = () => {
     if (!this.S.cached('icon_sign').is('.active')) {
       this.S.cached('icon_sign').addClass('active');
       this.S.cached('compose_table').addClass('sign');
@@ -1180,7 +1180,7 @@ class Composer {
     this.show_hide_password_or_pubkey_container_and_color_send_button();
   };
 
-  private recipient_key_id_text = (contact: Contact)  => {
+  private recipient_key_id_text = (contact: Contact) => {
     if (contact.client === 'cryptup' && contact.keywords) {
       return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
     } else if (contact.fingerprint) {
@@ -1190,7 +1190,7 @@ class Composer {
     }
   };
 
-  private render_pubkey_result = (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong")  => {
+  private render_pubkey_result = (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         let sending_address_on_pks = tool.value(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks);
@@ -1240,7 +1240,7 @@ class Composer {
     this.show_hide_password_or_pubkey_container_and_color_send_button();
   };
 
-  private get_recipients_from_dom = (filter:"no_pgp"|null=null): string[]  => {
+  private get_recipients_from_dom = (filter:"no_pgp"|null=null): string[] => {
     let selector;
     if (filter === 'no_pgp') {
       selector = '.recipients span.no_pgp';
@@ -1254,7 +1254,7 @@ class Composer {
     return recipients;
   };
 
-  private get_sender_from_dom = (): string  => {
+  private get_sender_from_dom = (): string => {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
     } else {
@@ -1262,7 +1262,7 @@ class Composer {
     }
   };
 
-  private render_reply_success = (message: SendableMessage, plaintext: string, message_id: string)  => {
+  private render_reply_success = (message: SendableMessage, plaintext: string, message_id: string) => {
     let is_signed = this.S.cached('icon_sign').is('.active');
     this.app.render_reinsert_reply_box(message_id, message.headers.To.split(',').map(a => tool.str.parse_email(a).email));
     if(is_signed) {
@@ -1291,12 +1291,12 @@ class Composer {
     this.resize_reply_box();
   };
 
-  private simulate_ctrl_v = (to_paste: string)  => {
+  private simulate_ctrl_v = (to_paste: string) => {
     const r = window.getSelection().getRangeAt(0);
     r.insertNode(r.createContextualFragment(to_paste));
   };
 
-  private render_compose_table = ()  => {
+  private render_compose_table = () => {
     if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
@@ -1341,7 +1341,7 @@ class Composer {
     }
   };
 
-  private should_save_draft = (message_body: string)  => {
+  private should_save_draft = (message_body: string) => {
     if (message_body && message_body !== this.last_draft) {
       this.last_draft = message_body;
       return true;
@@ -1350,7 +1350,7 @@ class Composer {
     }
   };
 
-  private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[])  => {
+  private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) => {
     const decrypt_url = this.CRYPTUP_WEB_URL + '/' + short_id;
     const a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
     const intro = this.S.cached('input_intro').length ? this.S.cached('input_intro').get(0).innerText.trim() : '';
@@ -1375,7 +1375,7 @@ class Composer {
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   };
 
-  private format_email_text_footer = (original_body: SendableMessageBody): SendableMessageBody  => {
+  private format_email_text_footer = (original_body: SendableMessageBody): SendableMessageBody => {
     const email_footer = this.app.storage_get_email_footer();
     const body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')} as SendableMessageBody;
     if (typeof original_body['text/html'] !== 'undefined') {
