@@ -1,9 +1,10 @@
 
 let gulp = require('gulp');
-let gulpNewer = require('gulp-newer');
-let del = require('del');
-let gulpTypeScript = require('gulp-typescript');
+let newer = require('gulp-newer');
+let typescript = require('gulp-typescript');
+var sourcemaps = require('gulp-sourcemaps');
 let fs = require('fs');
+let del = require('del');
 let exec = require('child_process').exec;
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
@@ -20,7 +21,7 @@ let recipe = {
       });
     }
   },
-  ts: (from, to) => gulp.src(from).pipe(gulpTypeScript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(gulp.dest(to)),
+  ts: (from, to) => gulp.src(from).pipe(sourcemaps.init()).pipe(typescript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(sourcemaps.write()).pipe(gulp.dest(to)),
   copy: (from, to) => gulp.src(from).pipe(gulp.dest(to)),
 }
 
