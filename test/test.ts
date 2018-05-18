@@ -771,6 +771,7 @@ const tests = {
 
   browser = await puppeteer.launch({
     args: [
+      '--disable-features=site-per-process', // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
       '--disable-extensions-except=build/chrome',
       '--load-extension=build/chrome',
       `--window-size=${meta.size.width+10},${meta.size.height+132}`,
