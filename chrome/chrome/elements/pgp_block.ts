@@ -227,7 +227,7 @@ tool.catch.try(() => {
   }
   
   function recover_stored_admin_codes() {
-    Store.get(null, ['admin_codes']).then(storage => {
+    Store.get_global(['admin_codes']).then(storage => {
       if(url_params.short && storage.admin_codes && storage.admin_codes[url_params.short as string] && storage.admin_codes[url_params.short as string].codes) {
         admin_codes = storage.admin_codes[url_params.short as string].codes;
       }
@@ -511,7 +511,7 @@ tool.catch.try(() => {
     }
   }
   
-  Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes']).then(storage => {
+  Store.get_account(url_params.account_email as string, ['setup_done', 'google_token_scopes']).then(storage => {
     can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
     if(storage.setup_done) {
       initialize();

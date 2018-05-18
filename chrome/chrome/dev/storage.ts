@@ -68,7 +68,7 @@ tool.catch.try(() => {
         if(namespace_selector.val() === '-- namespace --' || $('.type').val() === '-- type --' || !key_selector.val()) {
           alert('Namespace, key and type need to be filled');
         } else {
-          let storage_update: Stored = {};
+          let storage_update: BaseStore = {};
           storage_update[key_selector.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
           let account_email = namespace_selector.val() === 'global' ? null : decodeURIComponent(namespace_selector.val() as string); // it's a text input
           Store.set(account_email, storage_update).then(() => window.location.reload());

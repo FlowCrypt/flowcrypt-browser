@@ -8,7 +8,7 @@ tool.catch.try(() => {
   let hash = tool.crypto.hash.sha1;
   let container = $('.emails');
   
-  Store.get(url_params.account_email as string, ['addresses']).then((storage: {addresses: string[]}) => {
+  Store.get_account(url_params.account_email as string, ['addresses']).then((storage: {addresses: string[]}) => {
     container.html(storage.addresses.map(address_to_html_radio).join(''));
     container.find('input').first().prop('checked', true);
     container.find('input').click(function() {

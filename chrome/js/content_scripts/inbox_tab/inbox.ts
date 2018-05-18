@@ -31,7 +31,7 @@ catcher.try(() => {
   });
 
   function start(account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) {
-    Store.get(account_email, ['addresses', 'google_token_scopes']).then((storage: Dict<string[]>) => {
+    Store.get_account(account_email, ['addresses', 'google_token_scopes']).then((storage: Dict<string[]>) => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       injector.buttons();
       replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);

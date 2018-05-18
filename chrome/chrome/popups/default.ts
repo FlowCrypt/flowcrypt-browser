@@ -6,7 +6,7 @@ tool.catch.try(() => {
 
   tool.browser.message.send(null, 'get_active_tab_info', {}, function (active_tab) {
     if(active_tab && active_tab.account_email !== null) {
-      Store.get(active_tab.account_email, ['setup_done']).then(storage => {
+      Store.get_account(active_tab.account_email, ['setup_done']).then(storage => {
         if(storage.setup_done) {
           choose_email_or_settings_popup(active_tab.account_email);
         } else {
@@ -18,7 +18,7 @@ tool.catch.try(() => {
     } else {
       Store.account_emails_get().then((account_emails) => {
         if(account_emails && account_emails.length) {
-          Store.get_by_account(account_emails, ['setup_done']).then(account_storages => {
+          Store.get_accounts(account_emails, ['setup_done']).then(account_storages => {
             let functioning_accounts = 0;
             for(let email of Object.keys(account_storages)) {
               functioning_accounts += Number(account_storages[email].setup_done === true);

@@ -50,9 +50,9 @@ class Store {
     }
   }
 
-  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStored): Stored | Dict<Stored> {
+  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStore): BaseStore | Dict<BaseStore> {
     if(typeof account_or_accounts === 'string') {
-      let fixed_keys_object: Stored = {};
+      let fixed_keys_object: BaseStore = {};
       for(let k of Object.keys(storage_object)) {
         let fixed_key = k.replace(Store.index(account_or_accounts as string, '') as string, ''); // checked it's a string above
         if(fixed_key !== k) {
@@ -61,9 +61,9 @@ class Store {
       }
       return fixed_keys_object;
     } else {
-      let results_by_account: Dict<Stored> = {};
+      let results_by_account: Dict<BaseStore> = {};
       for(let account of account_or_accounts) {
-        results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as Stored;
+        results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as BaseStore;
       }
       return results_by_account;
     }
@@ -114,7 +114,7 @@ class Store {
 
   static async passphrase_get(account_email: string, longid: string, ignore_session:boolean=false): Promise<string|null> {
     let storage_k = 'passphrase_' + longid;
-    let storage = await Store.get(account_email, [storage_k]);
+    let storage = await Store.get_account(account_email, [storage_k]);
     if(typeof storage[storage_k] === 'string') {
       return storage[storage_k] as string; // checked above
     } else {
@@ -124,7 +124,7 @@ class Store {
   }
 
   static async keys_get(account_email: string, longids:string[]|null=null) {
-    let stored = await Store.get(account_email, ['keys']);
+    let stored = await Store.get_account(account_email, ['keys']);
     let keys: KeyInfo[] = stored.keys || [];
     if(!longids) {
       return keys
@@ -168,43 +168,48 @@ class Store {
     await Store.set(account_email, {keys: filtered_private_keys});
   }
 
-  static set(account_email: string|null, values: Stored): Promise<void> {
-    let _account = Store._global_storage_index_if_null(account_email);
-    let storage_update: Dict<any> = {};
-    for(let key of Object.keys(values)) {
-      storage_update[Store.index(_account, key) as string] = values[key];
-    }
-    return new Promise(resolve => chrome.storage.local.set(storage_update, () => resolve()));
-  }
-
   static _global_storage_index_if_null(account: string[]|string|null): string[]|string {
     return (account === null) ? Store.global_storage_scope : account;
   }
 
-  static get_by_account(accounts: string[], keys: string[]): Promise<Dict<Stored>> {
+  static set(account_email: string|null, values: BaseStore): Promise<void> {
+    let storage_update: Dict<any> = {};
+    for(let key of Object.keys(values)) {
+      storage_update[Store.index(Store._global_storage_index_if_null(account_email), key) as string] = values[key];
+    }
+    return new Promise(resolve => chrome.storage.local.set(storage_update, () => resolve()));
+  }
+
+  static get_global(keys: string[]): Promise<GlobalStore> {
     return new Promise(resolve => {
-      chrome.storage.local.get(Store.index(accounts, keys) as string[], (storage_object: RawStored) => {
-        resolve(Store.account_storage_object_keys_to_original(accounts, storage_object) as Dict<Stored>);
+      chrome.storage.local.get(Store.index(Store.global_storage_scope, keys) as string[], (storage_object: RawStore) => {
+        resolve(Store.account_storage_object_keys_to_original(Store.global_storage_scope, storage_object) as GlobalStore);
       });
     });
   }
 
-  static get(accounts: string|null, keys: string[]): Promise<Stored> {
-    let _accounts = Store._global_storage_index_if_null(accounts);
+  static get_account(account: string, keys: string[]): Promise<AccountStore> {
     return new Promise(resolve => {
-      chrome.storage.local.get(Store.index(_accounts, keys) as string[], (storage_object: RawStored) => {
-        resolve(Store.account_storage_object_keys_to_original(_accounts, storage_object) as Stored);
+      chrome.storage.local.get(Store.index(account, keys) as string[], (storage_object: RawStore) => {
+        resolve(Store.account_storage_object_keys_to_original(account, storage_object) as AccountStore);
+      });
+    });
+  }
+
+  static get_accounts(accounts: string[], keys: string[]): Promise<Dict<AccountStore>> {
+    return new Promise(resolve => {
+      chrome.storage.local.get(Store.index(accounts, keys) as string[], (storage_object: RawStore) => {
+        resolve(Store.account_storage_object_keys_to_original(accounts, storage_object) as Dict<AccountStore>);
       });
     });
   }
 
   static async remove(account_email: string|null, keys: string[]) {
-    let _account = Store._global_storage_index_if_null(account_email);
-    return new Promise(resolve => chrome.storage.local.remove(Store.index(_account, keys), () => resolve()));
+    return new Promise(resolve => chrome.storage.local.remove(Store.index(Store._global_storage_index_if_null(account_email), keys), () => resolve()));
   }
 
   static async account_emails_get(): Promise<string[]> {
-    let storage = await Store.get(null, ['account_emails']);
+    let storage = await Store.get_global(['account_emails']);
     let account_emails: string[] = [];
     if(typeof storage.account_emails !== 'undefined') {
       for(let account_email of JSON.parse(storage.account_emails)) {
@@ -229,12 +234,12 @@ class Store {
   }
 
   static async auth_info(): Promise<StoredAuthInfo> {
-    let storage = await Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified']);
+    let storage = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified']);
     return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null, verified: storage.cryptup_account_verified || false};
   }
 
   static async subscription(): Promise<Subscription> {
-    let s = await Store.get(null, ['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription']);
+    let s = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription']);
     if(s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       return new Subscription(s.cryptup_account_subscription);
     } else {

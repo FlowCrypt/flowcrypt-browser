@@ -38,7 +38,7 @@ tool.catch.try(() => {
   });
   
   // show alternative account addresses in setup form + save them for later
-  Store.get(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider']).then(storage => {
+  Store.get_account(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider']).then(storage => {
     if(storage.email_provider === 'gmail') {
       if(!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         $('.auth_denied_warning').css('display', 'block');
@@ -98,7 +98,7 @@ tool.catch.try(() => {
     if(!url_params.account_email) {
       window.location.href = 'index.htm';
     }
-    Store.get(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth']).then(storage => {
+    Store.get_account(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth']).then(storage => {
       email_provider = storage.email_provider as EmailProvider || 'gmail';
       if(storage.setup_done) {
         if(url_params.action !== 'add_key') {
@@ -160,7 +160,7 @@ tool.catch.try(() => {
   
   // options: {submit_main, submit_all}
   function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: Options, callback: Callback) {
-    Store.get(account_email, ['addresses']).then((storage: {addresses: string[]|undefined}) => {
+    Store.get_account(account_email, ['addresses']).then((storage: {addresses: string[]|undefined}) => {
       if(options.submit_main) {
         tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
         let addresses;
@@ -339,7 +339,7 @@ tool.catch.try(() => {
         console.log('setup: saving keys');
         save_keys(url_params.account_email as string, matching_keys, options, function () {
           console.log('save_keys completely done');
-          Store.get(url_params.account_email as string, ['setup_done']).then(storage => {
+          Store.get_account(url_params.account_email as string, ['setup_done']).then(storage => {
             console.log('got setup done');
             console.log(storage);
             if(!storage.setup_done) { // normal situation

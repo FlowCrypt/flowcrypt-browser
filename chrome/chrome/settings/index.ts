@@ -90,7 +90,7 @@ catcher.try(() => {
       if(url_params.account_email) {
         $('.email-address').text(url_params.account_email as string);
         $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
-        Store.get(url_params.account_email as string, ['setup_done', 'google_token_scopes', 'email_provider']).then(storage => {
+        Store.get_account(url_params.account_email as string, ['setup_done', 'google_token_scopes', 'email_provider']).then(storage => {
           google_token_scopes = storage.google_token_scopes as string[];
           if(storage.setup_done) {
             render_subscription_status_header();
@@ -200,7 +200,7 @@ catcher.try(() => {
     tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope: omit_read_scope, tab_id: tab_id_global }, google_token_scopes, function (response) {
       if(response && response.success === true && response.account_email) {
         Store.account_emails_add(response.account_email).then(function () {
-          Store.get(response.account_email, ['setup_done']).then(storage => {
+          Store.get_account(response.account_email, ['setup_done']).then(storage => {
             if(storage.setup_done) { // this was just an additional permission
               alert('You\'re all set.');
               window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });

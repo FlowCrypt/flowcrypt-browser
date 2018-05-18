@@ -9,7 +9,7 @@ tool.catch.try(() => {
   
   tool.ui.passphrase_toggle(['password', 'password2']);
   
-  Store.get(url_params.account_email as string, ['setup_simple', 'email_provider']).then(storage => {
+  Store.get_account(url_params.account_email as string, ['setup_simple', 'email_provider']).then(storage => {
     email_provider = storage.email_provider || 'gmail';
   
     if(url_params.action === 'setup') {
@@ -64,7 +64,7 @@ tool.catch.try(() => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     display_block('loading');
-    Store.get(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']).then(storage => {
+    Store.get_account(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']).then(storage => {
       if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read')) {
         tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys: OpenpgpKey[]) {
           if(success) {

@@ -108,7 +108,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
       save_account_email_full_name_if_needed(account_email);
       let show_setup_needed_notification_if_setup_not_done = true;
       let wait_for_setup_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(function () {
-        Store.get(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']).then(storage => {
+        Store.get_account(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']).then(storage => {
           if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
             notifications.clear();
             initialize(account_email, tab_id);
@@ -173,7 +173,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
   }
 
   function save_account_email_full_name_if_needed(account_email: string) {
-    Store.get(account_email, ['full_name']).then(storage => {
+    Store.get_account(account_email, ['full_name']).then(storage => {
       if(typeof storage.full_name === 'undefined') {
         save_account_email_full_name(account_email);
       }

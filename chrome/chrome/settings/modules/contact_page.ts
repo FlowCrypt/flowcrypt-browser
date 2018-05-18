@@ -60,9 +60,9 @@ tool.catch.try(() => {
       S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
       S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
         S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
-        Store.auth_info().then(function(auth_info: StoredAuthInfo) {  // @ts-doublecheck - is it really always a string?
-          Store.get(auth_info.account_email, ['full_name']).then(storage => {
-            find_available_alias(auth_info.account_email!, function(alias) {
+        Store.auth_info().then(function(auth_info: StoredAuthInfo) { // todo - @ts-doublecheck - is it really always a string?
+          Store.get_account(auth_info.account_email!, ['full_name']).then(storage => { // double check 
+            find_available_alias(auth_info.account_email!, function(alias) { // double check
               let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
               tool.api.cryptup.account_update(initial).validate(r => r.updated).then(response => window.location.reload(), error => {
                 alert('Failed to enable your Contact Page. Please try again.\n\n' + error.message);

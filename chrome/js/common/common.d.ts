@@ -396,16 +396,15 @@ type StoredAdminCode = {date: number, codes: string[]};
 type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
 type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
 
-interface RawStored {
+interface RawStore {
     [key: string]: Storable;
 }
 
-interface Stored {
-    [key: string]: Storable;
+interface BaseStore extends RawStore {
+}
 
-    // global
+interface GlobalStore extends BaseStore {
     version?: number|null;
-    keys?: KeyInfo[];
     account_emails?: string; // stringified array
     errors?: string[];
     settings_seen?: boolean;
@@ -417,9 +416,10 @@ interface Stored {
     dev_outlook_allow?: boolean;
     cryptup_subscription_attempt?: SubscriptionAttempt;
     admin_codes?: Dict<StoredAdminCode>;
-    attest_log?: StoredAttestLog[];
-    
-    // per account
+}
+
+interface AccountStore extends BaseStore {
+    keys?: KeyInfo[];
     notification_setup_needed_dismissed?: boolean;
     email_provider?: EmailProvider;
     google_token_access?: string;
@@ -443,6 +443,7 @@ interface Stored {
     key_backup_prompt?: number|false;
     successfully_received_at_leat_one_message?: boolean;
     notification_setup_done_seen?: boolean;
+    attest_log?: StoredAttestLog[];
 }
 
 // interface Promise<T> { // this conflicts with @types/jquery

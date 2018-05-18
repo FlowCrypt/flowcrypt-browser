@@ -15,7 +15,7 @@ class Notifications {
   }
 
   show_initial = (account_email: string) => {
-    Store.get(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']).then((account_storage: Dict<boolean>) => {
+    Store.get_account(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']).then((account_storage: Dict<boolean>) => {
       if(!account_storage.notification_setup_done_seen) {
         Store.set(account_email, { notification_setup_done_seen: true }).then(() => {
           this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');

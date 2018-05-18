@@ -50,7 +50,7 @@ tool.catch.try(() => {
   }));
   
   tool.api.cryptup.account_check_sync(function() {
-    Store.get(url_params.account_email as string, ['google_token_scopes']).then(storage => {
+    Store.get_account(url_params.account_email as string, ['google_token_scopes']).then(storage => {
       (window as FcWindow).flowcrypt_account.config({
         render_status: render_status,
         CAN_READ_EMAIL: tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read'),

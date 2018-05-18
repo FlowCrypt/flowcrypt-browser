@@ -55,7 +55,7 @@ function render_password_strength(parent_selector: string, input_selector: strin
 }
 
 function save_attest_request(account_email: string, attester: string, callback: Callback) {
-  Store.get(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
+  Store.get_account(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if(!tool.value(attester).in(storage.attests_requested)) {
@@ -73,7 +73,7 @@ function save_attest_request(account_email: string, attester: string, callback: 
 }
 
 function mark_as_attested(account_email: string, attester: string, callback: Callback) {
-  Store.get(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
+  Store.get_account(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
     if(typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if(tool.value(attester).in(storage.attests_requested)) {

@@ -17,7 +17,7 @@ tool.catch.try(() => {
   }
   
   Store.account_emails_get().then((account_emails) => {
-    Store.get_by_account(account_emails, ['setup_done']).then(account_storages => {
+    Store.get_accounts(account_emails, ['setup_done']).then(account_storages => {
       let ul_emails = '';
       for(let email of Object.keys(account_storages)) {
         if(account_storages[email].setup_done === true) {

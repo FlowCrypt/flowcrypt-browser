@@ -59,7 +59,7 @@ tool.catch.try(() => {
       },
     }, tab_id);
   
-    Store.get(url_params.account_email as string, ['email_provider']).then(storage => {
+    Store.get_account(url_params.account_email as string, ['email_provider']).then(storage => {
       email_provider = storage.email_provider || 'gmail';
       S.cached('body').prepend(factory.meta_notification_container());
       if(email_provider !== 'gmail') {

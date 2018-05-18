@@ -34,8 +34,8 @@ tool.catch.try(() => {
       '',
       'account_email: ' + account_email,
     ];
-    Store.get(null, ['version']).then(function (global_storage) {
-      Store.get(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']).then(function (account_storage) {
+    Store.get_global(['version']).then(function (global_storage) {
+      Store.get_account(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']).then(function (account_storage) {
         text.push('global_storage: ' + JSON.stringify(global_storage));
         text.push('account_storage: ' + JSON.stringify(account_storage));
         text.push('');
@@ -55,7 +55,7 @@ tool.catch.try(() => {
   
   
   if(url_params.account_email) {
-    Store.get(null, ['dev_outlook_allow']).then(storage => {
+    Store.get_global(['dev_outlook_allow']).then(storage => {
       if(storage.dev_outlook_allow === true) {
         $('.action_allow_outlook').prop('checked', true);
       }

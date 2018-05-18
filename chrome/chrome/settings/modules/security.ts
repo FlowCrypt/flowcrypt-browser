@@ -91,7 +91,7 @@ tool.catch.try(() => {
       window.location.reload();
     });
 
-    Store.get(url_params.account_email as string, ['hide_message_password']).then(storage => {
+    Store.get_account(url_params.account_email as string, ['hide_message_password']).then(storage => {
       $('#hide_message_password').prop('checked', storage.hide_message_password === true);
       $('#hide_message_password').change(function () {
         Store.set(url_params.account_email as string, {hide_message_password: $(this).is(':checked')}).then(() => window.location.reload());

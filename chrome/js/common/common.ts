@@ -1211,7 +1211,7 @@ let tool = {
     passphrase_toggle: (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
       let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
       let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-      Store.get(null, ['hide_pass_phrases']).then(function (s) {
+      Store.get_global(['hide_pass_phrases']).then(function (s) {
         let show: boolean;
         if(force_initial_show_or_hide === 'hide') {
           show = false;
@@ -1500,7 +1500,7 @@ let tool = {
       auth: (auth_request: AuthRequest, respond: Callback) => {
         tool.browser.message.tab_id(function(tab_id) {
           auth_request.tab_id = tab_id;
-          Store.get(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes']).then(function (s: Dict<any>) {
+          Store.get_account(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes']).then(function (s: Dict<any>) {
             if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes || null, s.google_token_scopes, auth_request.omit_read_scope || false)) {
               if(!tool.env.is_background_script()) {
                 tool.api.google.auth_popup(auth_request, s.google_token_scopes, respond);
@@ -1931,7 +1931,7 @@ let tool = {
       },
       diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
         let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
-        Store.get(account_email, ['addresses']).then(function (s: Stored) {
+        Store.get_account(account_email, ['addresses']).then(s => {
           Store.keys_get(account_email).then(stored_keys => {
             let stored_keys_longids = stored_keys.map(ki => ki.longid);
             tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then((pubkey_search_results: {results: PubkeySearchResult[]}) => {
@@ -2771,7 +2771,7 @@ let tool = {
       });
     },
     google_auth_save_tokens: (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[], callback: Callback) => {
-      let to_save: Stored = {
+      let to_save: AccountStore = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
         google_token_scopes: scopes,
@@ -2871,7 +2871,7 @@ let tool = {
       }
     },
     api_google_call: (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth=false) => {
-      Store.get(account_email, ['google_token_access', 'google_token_expires']).then(function (auth) {
+      Store.get_account(account_email, ['google_token_access', 'google_token_expires']).then(function (auth) {
         let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
         if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
           $.ajax({
@@ -2924,7 +2924,7 @@ let tool = {
         throw new Error('missing account_email in api_gmail_call');
       }
       progress = progress || {};
-      Store.get(account_email, ['google_token_access', 'google_token_expires']).then(function (auth) {
+      Store.get_account(account_email, ['google_token_access', 'google_token_expires']).then(function (auth) {
         if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
           let data, url;
           if(typeof progress!.upload === 'function') { // substituted with {} above
@@ -3144,8 +3144,8 @@ let tool = {
         console.log('%cFlowCrypt ISSUE:' + user_log_message, 'font-weight: bold;');
       }
       try {
-        if(typeof Store.get === 'function' && typeof Store.set === 'function') {
-          Store.get(null, ['errors']).then(function (s: any) {
+        if(typeof Store.get_account === 'function' && typeof Store.set === 'function') {
+          Store.get_global(['errors']).then(function (s: any) {
             if(typeof s.errors === 'undefined') {
               s.errors = [] as Error[];
             }
@@ -3205,7 +3205,7 @@ let tool = {
         }
         e.stack = e.stack + '\n\n\ndetails: ' + details;
         try {
-          Store.get(null, ['errors']).then(function (s: any) {
+          Store.get_global(['errors']).then(function (s: any) {
             if(typeof s.errors === 'undefined') {
               s.errors = [];
             }

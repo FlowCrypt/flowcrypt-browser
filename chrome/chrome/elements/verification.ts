@@ -13,7 +13,7 @@ tool.catch.try(() => {
   if(!token) {
     render_status('This verification email seems to have wrong format. Please write me at human@flowcrypt.com to fix this.');
   } else {
-    Store.get(null, ['cryptup_subscription_attempt']).then(storage => {
+    Store.get_global(['cryptup_subscription_attempt']).then(storage => {
       let product_to_subscribe_to = storage.cryptup_subscription_attempt;
       (window as FcWindow).flowcrypt_account.verify(url_params.account_email, [token]).then((response: any) => {
         if(product_to_subscribe_to) {

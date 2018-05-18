@@ -10,7 +10,7 @@ tool.catch.try(async() => {
   
   let subscription = await Store.subscription();
   if(subscription.active) {
-    let storage = await Store.get(url_params.account_email as string, ['email_footer']);
+    let storage = await Store.get_account(url_params.account_email as string, ['email_footer']);
     $('.input_email_footer').val(storage.email_footer as string);
     $('.user_subscribed').css('display', 'block');
   } else {

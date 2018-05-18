@@ -9,7 +9,7 @@ tool.catch.try(async() => {
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
   let subscription = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-  let storage = await Store.get(url_params.account_email as string, storage_keys);
+  let storage = await Store.get_account(url_params.account_email as string, storage_keys);
   await recover_missing_url_params();
 
   tool.browser.message.tab_id(tab_id => {
@@ -24,7 +24,7 @@ tool.catch.try(async() => {
       can_read_email: () => can_read_email,
       does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
         their_email = tool.str.parse_email(their_email).email;
-        Store.get(url_params.account_email as string, ['pubkey_sent_to']).then(storage => {
+        Store.get_account(url_params.account_email as string, ['pubkey_sent_to']).then(storage => {
           if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
             callback(true);
           } else if (!can_read_email) {
@@ -72,7 +72,7 @@ tool.catch.try(async() => {
         });
       },
       storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => catcher.Promise((resolve, reject) => {
-        Store.get(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
+        Store.get_account(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
           if (thread_id) { // it's a reply
             let drafts = draft_storage.drafts_reply || {};
             if (store_if_true) {
@@ -105,7 +105,7 @@ tool.catch.try(async() => {
         });
       },
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[], callback: VoidCallback) => {
-        Store.get(null, ['admin_codes']).then(admin_code_storage => {
+        Store.get_global(['admin_codes']).then(admin_code_storage => {
           admin_code_storage.admin_codes = admin_code_storage.admin_codes || {};
           admin_code_storage.admin_codes[short_id] = {
             date: Date.now(),
