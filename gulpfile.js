@@ -51,6 +51,7 @@ let subTask = {
   }),
   buildTest: () => recipe.ts('test/test.ts', 'test/'),
   runTest: () => recipe.exec('node test/test.js'),
+  runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
 }
 
 let task = {
@@ -68,7 +69,9 @@ let task = {
     subTask.buildTest,
     subTask.runTest,
   ),
+  runFirefox: subTask.runFirefox,
 }
 
 gulp.task('default', task.build);
 gulp.task('test', gulp.series(task.build, task.test));
+gulp.task('runFirefox', gulp.series(task.build, task.runFirefox));

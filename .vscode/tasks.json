@@ -19,6 +19,12 @@
                 "kind": "test",
                 "isDefault": true
             }
+        },
+        {
+            "type": "gulp",
+            "task": "runFirefox",
+            "group": "none",
+            "problemMatcher": []
         }
     ]
 }
