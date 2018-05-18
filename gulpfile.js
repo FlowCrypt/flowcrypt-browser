@@ -12,7 +12,8 @@ let config = (path) => JSON.parse(fs.readFileSync(path));
 let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
 let version = config('package.json').version;
 
-let target = 'build/chrome';
+let chromeTo = 'build/chrome';
+let ffTo = 'build/firefox';
 
 let recipe = {
   crash: (reason='ending build process due to previous errors') => {
@@ -34,11 +35,18 @@ let recipe = {
 }
 
 let subTask = {
-  flush: () => del(target),
-  transpileProjectTs: () => recipe.ts(source('**/*.ts') ,target),
-  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), target),
-  copyEditManifest: () => recipe.copyEditJson(source('manifest.json'), target, (manifest) => {
+  flush: () => Promise.all([del(chromeTo), del(ffTo)]),
+  transpileProjectTs: () => recipe.ts(source('**/*.ts') ,chromeTo),
+  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
+  copyVersionedManifest: () => recipe.copyEditJson(source('manifest.json'), chromeTo, manifest => {
     manifest.version = version;
+    return manifest;
+  }),
+  copyChromeToFirefox: () => recipe.copy([`${chromeTo}/**`], ffTo),
+  copyChromeToFirefoxEditedManifest: () => recipe.copyEditJson(`${chromeTo}/manifest.json`, ffTo, manifest => {
+    manifest.applications = {gecko: {id: 'firefox@cryptup.io', update_url: 'https://flowcrypt.com/api/update/firefox'}};
+    manifest.permissions = manifest.permissions.filter(p => p !== 'unlimitedStorage');
+    delete manifest.minimum_chrome_version;
     return manifest;
   }),
   buildTest: () => recipe.ts('test/test.ts', 'test/'),
@@ -51,9 +59,10 @@ let task = {
     gulp.parallel(
       subTask.transpileProjectTs, 
       subTask.copySourceFiles,
-      subTask.copyEditManifest,
+      subTask.copyVersionedManifest,
     ),
-    // gulp.chromeToFirefox,
+    subTask.copyChromeToFirefox,
+    subTask.copyChromeToFirefoxEditedManifest,
   ),
   test: gulp.series(
     subTask.buildTest,
