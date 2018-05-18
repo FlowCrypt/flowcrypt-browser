@@ -23,6 +23,11 @@ let recipe = {
   },
   ts: (from, to) => gulp.src(from).pipe(sourcemaps.init()).pipe(typescript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(sourcemaps.write()).pipe(gulp.dest(to)),
   copy: (from, to) => gulp.src(from).pipe(gulp.dest(to)),
+  exec: (shell_command) => new Promise((resolve, reject) => {
+    let subprocess = exec(shell_command, (err, stdout, stderr) => err === null ? resolve() : reject(err));
+    subprocess.stdout.pipe(process.stdout);
+    subprocess.stderr.pipe(process.stderr);
+  }),
 }
 
 let subTask = {
@@ -30,11 +35,7 @@ let subTask = {
   transpileProjectTs: () => recipe.ts(source('**/*.ts') ,target),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id', 'manifest.json']), target),
   buildTest: () => recipe.ts('test/test.ts', 'test/'),
-  runTest: (done) => {
-    let test = exec('node test/test.js', (err, stdout, stderr) => done());
-    test.stdout.pipe(process.stdout);
-    test.stderr.pipe(process.stderr);
-  },
+  runTest: () => recipe.exec('node test/test.js'),
 }
 
 let task = {
