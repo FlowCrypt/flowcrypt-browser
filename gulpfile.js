@@ -14,6 +14,7 @@ let version = config('package.json').version;
 
 let chromeTo = 'build/chrome';
 let ffTo = 'build/firefox';
+let chromeReleaseZipTo = `release/flowcrypt-chrome-${version.replace(/\./g, '-')}.zip`;
 
 let recipe = {
   crash: (reason='ending build process due to previous errors') => {
@@ -52,6 +53,7 @@ let subTask = {
   buildTest: () => recipe.ts('test/test.ts', 'test/'),
   runTest: () => recipe.exec('node test/test.js'),
   runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
+  releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
 }
 
 let task = {
@@ -70,8 +72,13 @@ let task = {
     subTask.runTest,
   ),
   runFirefox: subTask.runFirefox,
+  release: gulp.series(
+    subTask.releaseChrome,
+    // subTask.releaseFirefox,
+  ),
 }
 
 gulp.task('default', task.build);
 gulp.task('test', gulp.series(task.build, task.test));
 gulp.task('runFirefox', gulp.series(task.build, task.runFirefox));
+gulp.task('release', gulp.series(task.build, task.release));

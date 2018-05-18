@@ -22,6 +22,12 @@
         },
         {
             "type": "gulp",
+            "task": "release",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "type": "gulp",
             "task": "runFirefox",
             "group": "none",
             "problemMatcher": []
