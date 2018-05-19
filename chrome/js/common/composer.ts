@@ -102,7 +102,7 @@ class Composer {
   private contact_search_in_progress = false;
   private added_pubkey_db_lookup_interval: number;
   private save_draft_interval: number;
-  private save_draft_in_process = false;
+  private draft_save_in_progress = false;
   private passphrase_interval: number;
   private include_pubkey_toggled_manually = false;
   private my_addresses_on_pks: string[] = [];
@@ -111,7 +111,7 @@ class Composer {
   private ks_lookups_by_email: {[key: string]: PubkeySearchResult|Contact} = {};
   private subscribe_result_listener: ((subscription_active: boolean) => void)|undefined;
   private additional_message_headers: {[key: string]: string} = {};
-  private button_update_timeout: number;
+  private button_update_timeout: number|null = null;
   private is_reply_box: boolean;
   private tab_id: string;
   private account_email: string;
@@ -352,7 +352,9 @@ class Composer {
 
   private reset_send_btn = (delay:number|null=null) => {
     const do_reset = () => this.S.cached('send_btn').html('<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
-    clearTimeout(this.button_update_timeout);
+    if(this.button_update_timeout !== null) {
+      clearTimeout(this.button_update_timeout);
+    }
     if (!delay) {
       do_reset();
     } else {
@@ -369,7 +371,7 @@ class Composer {
 
   private draft_save = async (force_save:boolean=false) => {
     if (this.should_save_draft(this.S.cached('input_text').text()) || force_save) {
-      this.save_draft_in_process = true;
+      this.draft_save_in_progress = true;
       this.S.cached('send_btn_note').text('Saving');
       let armored_pubkey = await this.app.storage_get_armored_public_key(this.account_email);
       if(armored_pubkey) {
@@ -382,7 +384,7 @@ class Composer {
         } else {
           body = encrypted.data;
         }
-        let subject = String(this.S.cached('input_subject').val()) || this.supplied_subject || 'FlowCrypt draft';
+        let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
         tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
           try {
             if (!this.draft_id) {
@@ -402,7 +404,7 @@ class Composer {
             console.log(error);
             this.S.cached('send_btn_note').text('Not saved');
           }
-          this.save_draft_in_process = false;
+          this.draft_save_in_progress = false;
         });
       }
     }
@@ -410,7 +412,7 @@ class Composer {
 
   private draft_delete = async () => {
     clearInterval(this.save_draft_interval);
-    await tool.time.wait(() => !this.save_draft_in_process ? true : undefined);
+    await tool.time.wait(() => !this.draft_save_in_progress ? true : undefined);
     if (this.draft_id) {
       await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
       await this.app.email_provider_draft_delete(this.draft_id);
