@@ -68,10 +68,10 @@ tool.catch.try(() => {
             $('.action_get_trial').css('display', 'none');
             $('.action_show_stripe').removeClass('gray').addClass('green');
           } else {
-            $('.status').text('After the trial period, your account will automatically switch back to Free Forever.');
+            $('.status').text('After the trial, your account will automatically switch to Free Forever.');
           }
         } else if(subscription.active && subscription.method === 'trial') {
-          $('.status').html('After the trial period, your account will automatically switch back to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
+          $('.status').html('After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
         } else {
           // todo - upgrade to business
         }
