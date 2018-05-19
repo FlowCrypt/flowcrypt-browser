@@ -3226,9 +3226,9 @@ let tool = {
       let env = 'unknown';
       if(url.indexOf('bnjglocicd') !== -1) {
         env = 'ex:prod';
-      } else if(url.indexOf('nmelpmhpel') !== -1 || url.indexOf('blfdgihad') !== -1) {
+      } else if(url.indexOf('gjdhkacdgd') !== -1) {
         env = 'ex:dev';
-      } else if(url.indexOf('himcfccebk') !== -1) {
+      } else if(url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
         env = 'ex:test';
       } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
         env = 'web:local';
