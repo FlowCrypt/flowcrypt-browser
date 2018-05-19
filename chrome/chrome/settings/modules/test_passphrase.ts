@@ -8,13 +8,11 @@ tool.catch.try(() => {
 
   tool.ui.passphrase_toggle(['password']);
 
-  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
 
-    if(primary_k === null) {
-      return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
-    }
+    abort_and_render_error_if_keyinfo_empty(primary_ki);
 
-    let key = openpgp.key.readArmored(primary_k.private).keys[0];
+    let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 
     $('.action_verify').click(function () {
       if(tool.crypto.key.decrypt(key, $('#password').val() as string).success) { // text input

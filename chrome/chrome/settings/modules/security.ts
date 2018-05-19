@@ -10,6 +10,8 @@ tool.catch.try(() => {
 
   Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
 
+    abort_and_render_error_if_keyinfo_empty(primary_ki);
+
     if(url_params.embedded) {
       $('.change_passhrase_container, .title_container').css('display', 'none');
       $('.line').css('padding', '7px 0');
@@ -43,17 +45,15 @@ tool.catch.try(() => {
       }
     });
 
-    if(primary_ki !== null) { // not set up yet
-      Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
-        if(stored_passphrase === null) {
-          $('#passphrase_to_open_email').prop('checked', true);
-        }
-        $('#passphrase_to_open_email').change(function () {
-          $('.passhprase_checkbox_container').css('display', 'none');
-          $('.passphrase_entry_container').css('display', 'block');
-        });
+    Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
+      if(stored_passphrase === null) {
+        $('#passphrase_to_open_email').prop('checked', true);
+      }
+      $('#passphrase_to_open_email').change(function () {
+        $('.passhprase_checkbox_container').css('display', 'none');
+        $('.passphrase_entry_container').css('display', 'block');
       });
-    }
+    });
 
     $('.action_change_passphrase').click(function () {
       show_settings_page('/chrome/settings/modules/change_passphrase.htm');

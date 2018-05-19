@@ -11,6 +11,8 @@ declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, Mime
 declare var require: any;
 declare var exports: any;
 
+class UnreportableError extends Error {};
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -3095,6 +3097,9 @@ let tool = {
         tool.catch._.original_on_error.apply(this, arguments); // Call any previously assigned handler
       }
       if(((error as Error).stack || '').indexOf('PRIVATE') !== -1) { // todo - remove cast & debug
+        return;
+      }
+      if(error instanceof UnreportableError) {
         return;
       }
       try {

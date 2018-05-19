@@ -8,9 +8,11 @@ tool.catch.try(() => {
 
   $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
-  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
+  Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
 
-    let primary_pubkey_armored = primary_k.public;
+    abort_and_render_error_if_keyinfo_empty(primary_ki);
+
+    let primary_pubkey_armored = primary_ki.public;
 
     let prv_headers = tool.crypto.armor.headers('private_key');
 

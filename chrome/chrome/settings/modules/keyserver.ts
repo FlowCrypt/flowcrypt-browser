@@ -113,13 +113,14 @@ tool.catch.try(() => {
   }
 
   function action_submit_or_request_attestation(email: string) {
-    Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
+    Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
+      abort_and_render_error_if_keyinfo_empty(primary_ki);
       if(email === url_params.account_email) { // request attestation
         save_attest_request(url_params.account_email, 'CRYPTUP', function () {
-          tool.api.attester.initial_legacy_submit(email, primary_k.public, true).resolved(() => window.location.reload());
+          tool.api.attester.initial_legacy_submit(email, primary_ki.public, true).resolved(() => window.location.reload());
         });
       } else { // submit only
-        tool.api.attester.initial_legacy_submit(email, primary_k.public, false).resolved(() => window.location.reload());
+        tool.api.attester.initial_legacy_submit(email, primary_ki.public, false).resolved(() => window.location.reload());
       }
     });
   }

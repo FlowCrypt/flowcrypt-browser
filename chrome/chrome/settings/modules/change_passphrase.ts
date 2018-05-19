@@ -17,9 +17,9 @@ tool.catch.try(() => {
   });
 
   Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
-    if(primary_ki === null) {
-      return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
-    }
+    
+    abort_and_render_error_if_keyinfo_empty(primary_ki);
+
     Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(original_passphrase => {
 
       if(original_passphrase === null) {

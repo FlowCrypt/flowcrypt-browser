@@ -9,15 +9,13 @@ tool.catch.try(() => {
   $('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm', url_params));
   $('.action_view_update').attr('href', tool.env.url_create('my_key_update.htm', url_params));
 
-  Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']).then(([keyinfo]) => {
+  Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']).then(([primary_ki]) => {
 
-    if(keyinfo === null) {
-      return $('body').text('Key not found. Is FlowCrypt well set up? Contact us at human@flowcrypt.com for help.');
-    }
+    abort_and_render_error_if_keyinfo_empty(primary_ki);
 
-    let key = openpgp.key.readArmored(keyinfo.private).keys[0];
+    let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 
-    tool.api.attester.lookup_email(url_params.account_email as string).validate((r: PubkeySearchResult) => r.pubkey && tool.crypto.key.longid(r.pubkey) === keyinfo.longid).then((response: PubkeySearchResult) => {
+    tool.api.attester.lookup_email(url_params.account_email as string).validate((r: PubkeySearchResult) => r.pubkey && tool.crypto.key.longid(r.pubkey) === primary_ki.longid).then((response: PubkeySearchResult) => {
       let url = tool.api.cryptup.url('pubkey', url_params.account_email as string);
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }, (error: StandardError) => {
@@ -26,12 +24,12 @@ tool.catch.try(() => {
 
     $('.email').text(url_params.account_email as string);
     $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced')!);
-    $('.key_words').text(keyinfo.keywords);
+    $('.key_words').text(primary_ki.keywords);
     $('.show_when_showing_public').css('display', '');
     $('.show_when_showing_private').css('display', 'none');
 
     $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-      let file = tool.file.keyinfo_as_pubkey_attachment(keyinfo);
+      let file = tool.file.keyinfo_as_pubkey_attachment(primary_ki);
       tool.file.save_to_downloads(file.name, file.type, file.content!, tool.env.browser().name === 'firefox' ? $('body') : undefined);
     }));
 

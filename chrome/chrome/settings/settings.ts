@@ -290,3 +290,11 @@ function render_prv_compatibility_fix_ui(container: string|JQuery<HTMLElement>, 
     }
   });
 }
+
+function abort_and_render_error_if_keyinfo_empty(ki: KeyInfo|undefined) {
+  if(!ki) { // not set up yet
+    let msg = `Cannot find primary key. Is FlowCrypt not set up yet?`;
+    $('#content').html(`${msg} <a href="${window.location.href}">Retry</a>`);
+    throw new UnreportableError(msg);
+  }
+}
