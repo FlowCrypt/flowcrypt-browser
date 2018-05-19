@@ -218,7 +218,7 @@ interface OpenpgpKey {
     primaryKey: any,
     getEncryptionKeyPacket: () => any|null,
     verifyPrimaryKey: () => number,
-    subKeys: any[],
+    subKeys: any[]|null,
     decrypt: (pp: string) => boolean,
     armor: () => string,
     isPrivate: () => boolean,

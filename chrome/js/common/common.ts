@@ -932,7 +932,7 @@ let tool = {
           return true;
         }
         let found_expired_subkey = false;
-        for(let sub_key of key.subKeys) {
+        for(let sub_key of key.subKeys || []) {
           if(sub_key.verify(key.primaryKey) === openpgp.enums.keyStatus.expired && sub_key.isValidEncryptionKey(key.primaryKey)) {
             found_expired_subkey = true;
             return false;
@@ -2589,12 +2589,12 @@ let tool = {
       }
       return options;
     },
-    crypto_key_patch_public_keys_to_ignore_expiration: (keys: OpenpgpKey[]) => {
+    crypto_key_patch_public_keys_to_ignore_expiration: (keys: OpenpgpKey[]) => { // may deprecate this
       let openpgpjs_original_isValidEncryptionKeyPacket = function(keyPacket: any, signature: any) {
         return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
       };
       for(let key of keys) {
-        for(let subKey of key.subKeys) {
+        for(let subKey of key.subKeys || []) {
           subKey.isValidEncryptionKey = function (primaryKey: any) {
             let verifyResult = this.verify(primaryKey);
             if (verifyResult !== openpgp.enums.keyStatus.valid && verifyResult !== openpgp.enums.keyStatus.expired) {
