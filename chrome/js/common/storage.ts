@@ -22,6 +22,10 @@ class Subscription implements SubscriptionInfo {
   }
 }
 
+class StoreDbCorruptedError extends Error {}
+
+class StoreDbDeniedError extends Error {}
+
 class Store {
   
   // static [f: string]: Function; // https://github.com/Microsoft/TypeScript/issues/6480
@@ -253,44 +257,40 @@ class Store {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  private static db_error_handle(exception: Error, error_stack: string, callback: ((r: false|null) => void)|null) {
+  private static db_error_categorize(exception: Error, error_stack: string): Error {
     exception.stack = error_stack.replace(/^Error/, String(exception));
     if(exception.message === 'Internal error opening backing store for indexedDB.open.') {
-      if(callback) {
-        callback(false);
-      }
+      return new StoreDbCorruptedError(exception.message);
+    } else if(exception.message === 'A mutation operation was attempted on a database that did not allow mutations.') {
+      return new StoreDbDeniedError(exception.message);
     } else {
       catcher.handle_exception(exception);
-      if(callback) {
-        callback(null);
-      }
+      return new StoreDbDeniedError(exception.message);
     }
   }
 
-  static db_open(callback: (db: IDBDatabase|null|false) => void) {
-    let open_db: IDBOpenDBRequest;
-    open_db = indexedDB.open('cryptup', 2);
-    open_db.onupgradeneeded = function (event) {
-      let contacts;
-      if(event.oldVersion < 1) {
-        contacts = open_db.result.createObjectStore('contacts', { keyPath: 'email', });
-        contacts.createIndex('search', 'searchable', { multiEntry: true, });
-        contacts.createIndex('index_has_pgp', 'has_pgp');
-        contacts.createIndex('index_pending_lookup', 'pending_lookup');
-      }
-      if(event.oldVersion < 2) {
-        contacts = open_db.transaction.objectStore('contacts');
-        contacts.createIndex('index_longid', 'longid');
-      }
-    };
-    let handled = 0; // the indexedDB docs don't say if onblocked and onerror can happen in the same request, or if the event/exception bubbles to both
-    open_db.onsuccess = catcher.try(() => {
-      handled++;
-      callback(open_db.result);
+  static db_open(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      let open_db: IDBOpenDBRequest;
+      open_db = indexedDB.open('cryptup', 2);
+      open_db.onupgradeneeded = function (event) {
+        let contacts;
+        if(event.oldVersion < 1) {
+          contacts = open_db.result.createObjectStore('contacts', { keyPath: 'email', });
+          contacts.createIndex('search', 'searchable', { multiEntry: true, });
+          contacts.createIndex('index_has_pgp', 'has_pgp');
+          contacts.createIndex('index_pending_lookup', 'pending_lookup');
+        }
+        if(event.oldVersion < 2) {
+          contacts = open_db.transaction.objectStore('contacts');
+          contacts.createIndex('index_longid', 'longid');
+        }
+      };
+      open_db.onsuccess = () => resolve(open_db.result);
+      let stack_fill = String((new Error()).stack);
+      open_db.onblocked = () => reject(Store.db_error_categorize(open_db.error, stack_fill));
+      open_db.onerror = () => reject(Store.db_error_categorize(open_db.error, stack_fill));
     });
-    let stack_fill = String((new Error()).stack);
-    open_db.onblocked = catcher.try(() => Store.db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
-    open_db.onerror = catcher.try(() => Store.db_error_handle(open_db.error, stack_fill, handled++ ? null : callback));
   }
 
   private static db_index(has_pgp: boolean, substring: string) {
@@ -357,7 +357,7 @@ class Store {
           contactsTable.put(contact);
           tx.oncomplete = () => resolve();
           let stack_fill = String((new Error()).stack);
-          tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, reject));
+          tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
         }
       }  
     });
@@ -387,7 +387,7 @@ class Store {
             contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
             tx.oncomplete = catcher.try(resolve);
             let stack_fill = String((new Error()).stack);
-            tx.onabort = catcher.try(() => Store.db_error_handle(tx.error, stack_fill, reject));  
+            tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
           }
         }
       }
@@ -400,15 +400,15 @@ class Store {
         tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, resolve);  // todo - currently will silently swallow errors
       } else {
         if(email_or_longid.length === 1) {
-          let get: IDBRequest;
+          let tx: IDBRequest;
           if(!(/^[A-F0-9]{16}$/g).test(email_or_longid[0])) { // email
-            get = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid[0]);
+            tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(email_or_longid[0]);
           } else { // longid
-            get = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid[0]);
+            tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid[0]);
           }
-          get.onsuccess = catcher.try(() => resolve([get.result !== undefined ? get.result : null]));
+          tx.onsuccess = catcher.try(() => resolve([tx.result !== undefined ? tx.result : null]));
           let stack_fill = String((new Error()).stack);
-          get.onerror = () => Store.db_error_handle(get.error, stack_fill, reject);
+          tx.onerror = () => reject(Store.db_error_categorize(tx.error, stack_fill));
         } else {
           let results: (Contact|null)[] = [];
           for(let single_email_or_longid of email_or_longid) {
@@ -465,7 +465,7 @@ class Store {
             }
           });
           let stack_fill = String((new Error()).stack);
-          search.onerror = catcher.try(() => Store.db_error_handle(search!.error, stack_fill, reject)); // checked it above
+          search.onerror = () => reject(Store.db_error_categorize(search!.error, stack_fill));
         }
       }
     });

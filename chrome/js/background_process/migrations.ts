@@ -14,37 +14,37 @@ function migrate_account(data: {account_email: string}, sender: chrome.runtime.M
   });
 }
 
-function migrate_global(callback: Callback) {
-  migrate_local_storage_to_extension_storage(() => {
-    callback();
-  });
+async function migrate_global() {
+  await migrate_local_storage_to_extension_storage();
 }
 
-function migrate_local_storage_to_extension_storage(callback: Callback) {
-  if(window.localStorage.length === 0) {
-    callback(); // nothing in localStorage
-  } else {
-    let values: Dict<FlatTypes> = {};
-    for(let legacy_storage_key of Object.keys(localStorage)) {
-      let value = legacy_local_storage_read(localStorage[legacy_storage_key]);
-      if(legacy_storage_key === 'settings_seen') {
-        values['cryptup_global_settings_seen'] = true;
-      } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
-        values[legacy_storage_key] = value;
-      } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
-        try {
-          let primary_longid = legacy_local_storage_read(localStorage[legacy_storage_key.replace('master_passphrase', 'keys')]).filter((ki: KeyInfo) => ki.primary)[0].longid;
-          values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
-        } catch (e) {}  // this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
-      } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
-        values[legacy_storage_key] = value;
+function migrate_local_storage_to_extension_storage() {
+  return new Promise(resolve => {
+    if(window.localStorage.length === 0) {
+      resolve(); // nothing in localStorage
+    } else {
+      let values: Dict<FlatTypes> = {};
+      for(let legacy_storage_key of Object.keys(localStorage)) {
+        let value = legacy_local_storage_read(localStorage[legacy_storage_key]);
+        if(legacy_storage_key === 'settings_seen') {
+          values['cryptup_global_settings_seen'] = true;
+        } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
+          values[legacy_storage_key] = value;
+        } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
+          try {
+            let primary_longid = legacy_local_storage_read(localStorage[legacy_storage_key.replace('master_passphrase', 'keys')]).filter((ki: KeyInfo) => ki.primary)[0].longid;
+            values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
+          } catch (e) {}  // this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
+        } else if(legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
+          values[legacy_storage_key] = value;
+        }
       }
-    }
-    chrome.storage.local.set(values, () => {
-      localStorage.clear();
-      callback();
-    });
-  }
+      chrome.storage.local.set(values, () => {
+        localStorage.clear();
+        resolve();
+      });
+    }  
+  });
 }
 
 function legacy_local_storage_read(value: string) {
@@ -117,7 +117,7 @@ function account_update_status_pks(account_email: string) { // checks if any new
 
 function schedule_cryptup_subscription_level_check() {
   setTimeout(function() {
-    if(get_background_process_start_reason() === 'update' || get_background_process_start_reason() === 'chrome_update') {
+    if(background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
       setTimeout(catcher.try(tool.api.cryptup.account_check_sync), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {

@@ -1,5 +1,4 @@
 
-
 interface BrowserWidnow extends Window {
     XMLHttpRequest: any,
     onunhandledrejection: (e: any) => void,
@@ -290,9 +289,14 @@ type FlatTypes = null|undefined|number|string|boolean;
 type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 type Callback = (r?: any) => void;
-type BrowserMessageHandler = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
 type Options = Dict<any>;
+
+type BrowserMessageRequestDb = {f: string, args: any[]};
+type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
+type BrowserMessageRequestSessionGet = {account_email: string, key: string};
+type BrowserMessageRequest = null|Dict<any>;
+type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 
 type LongidToMnemonic = (longid: string) => string;
 type FlowCryptApiAuthToken = {account: string, token: string};
