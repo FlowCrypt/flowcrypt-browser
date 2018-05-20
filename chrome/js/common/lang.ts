@@ -27,7 +27,7 @@ const Lang = {
     refresh_window: 'Please refresh your web mail window to read encrypted messages. ',
     update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
     not_properly_set_up: 'FlowCrypt is not properly set up to decrypt messages. ',
-    mdc_warning: 'This message was badly encrypted. Do not consider it private. The sender should update their encryption software.\n\nIt allows for a known vulnerability to be exploited (missing MDC in combination with modern cipher) that may allow unintended parties to read the contents.',
+    mdc_warning: 'This message has failed or missing integrity checks, and is not safe to render. The sender must be using a very old version of their software, and should update and send a new message.',
     message_expired_on: 'Message expired on ',
     messages_dont_expire: 'Messages don\'t expire if recipients also have encryption set up.',
     message_destroyed: 'Message was destroyed 30 days after expiration and cannot be renewed.',
