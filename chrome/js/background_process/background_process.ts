@@ -54,16 +54,18 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
     ping: (message, sender, respond) => respond(true),
     _tab_: (request, sender, respond) => {
       if(sender === 'background') {
-        respond(null); // background script
+        respond(null); // background script - direct
       } else if(sender === null || sender === undefined) {
         respond(undefined); // not sure when or why this happens - maybe orphaned frames during update
-      } else if(sender.tab) { 
+      } else if(sender.tab) {
         // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
         // fixed in FF55, but currently we still support v52: https://flowcrypt.com/api/update/firefox
         respond(sender.tab.id + ':' + (typeof sender.frameId !== 'undefined' ? sender.frameId : ''));
       } else {
-        tool.catch.report('sender.tab is undefined');
-        respond(undefined);
+        // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
+        // https://developers.chrome.com/extensions/runtime#type-MessageSender
+        // MDN says the same - thus this is most likely a background script, through browser message passing
+        respond(null);
       }
     },
   });
