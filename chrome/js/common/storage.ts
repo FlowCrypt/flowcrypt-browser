@@ -375,20 +375,24 @@ class Store {
           resolve();
         } else {
           let [contact] = await Store.db_contact_get(db, [email]);
-          if(contact === null) {
-            reject({message: 'contact not found', internal: 'missing_contact', code: null});
-          } else {
-            for(let k of Object.keys(update)) {
-              // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-              contact[k] = update[k];
+          if(contact === null) { // updating a non-existing contact, insert it first
+            await Store.db_contact_save(db, Store.db_contact_object(email, null, null, null, null, false, null));
+            [contact] = await Store.db_contact_get(db, [email]);
+            if(contact === null) { // todo - temporary. If no such errors show by end of June 2018, remove this.
+              reject({message: 'contact not found right after inserting it', internal: 'missing_contact', code: null});
+              return;
             }
-            let tx = db.transaction('contacts', 'readwrite');
-            let contactsTable = tx.objectStore('contacts');
-            contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
-            tx.oncomplete = catcher.try(resolve);
-            let stack_fill = String((new Error()).stack);
-            tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
           }
+          for(let k of Object.keys(update)) {
+            // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
+            contact[k] = update[k];
+          }
+          let tx = db.transaction('contacts', 'readwrite');
+          let contactsTable = tx.objectStore('contacts');
+          contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
+          tx.oncomplete = catcher.try(resolve);
+          let stack_fill = String((new Error()).stack);
+          tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
         }
       }
     });
