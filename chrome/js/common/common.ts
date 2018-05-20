@@ -347,14 +347,7 @@ let tool = {
     zeroes: (length: number): number[] => new Array(length).map(() => 0),
   },
   obj: {
-    map: (original_obj: any, f: (v: any) => any): any => {
-      let mapped: {[key: string]: any} = {};
-      for(let k of Object.keys(original_obj)) {
-        mapped[k] = f(original_obj[k]);
-      }
-      return mapped;
-    },
-    key_by_value: (obj: any, v: any): any => {
+    key_by_value: (obj: Dict<any>, v: any) => {
       for(let k in obj) {
         if(obj.hasOwnProperty(k) && obj[k] === v) {
           return k;
@@ -808,14 +801,13 @@ let tool = {
         }
         return null;
       },
-      headers: (block_type: MessageBlockType|'null', format='string') => {
-        return tool.obj.map(tool._.var.crypto_armor_headers_DICT[block_type], (header_value) => {
-          if(typeof header_value === 'string' && format === 're') {
-            return header_value.replace(/ /g, '\\\s'); // regexp match friendly
-          } else {
-            return header_value;
-          }
-        });
+      headers: (block_type: ReplaceableMessageBlockType|'null', format='string'): CryptoArmorHeaderDefinition => {
+        let h = tool._.var.crypto_armor_headers_DICT[block_type];
+        return {
+          begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
+          end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\\s') : h.end,
+          replace: h.replace,
+        };
       },
       detect_blocks: (original_text: string) => {
         let blocks: MessageBlock[] = [];
@@ -2335,16 +2327,16 @@ let tool = {
       ui_event_VERY_SLOW_SPREE_MS: 500,
       crypto_armor_header_MAX_LENGTH: 50,
       crypto_armor_headers_DICT: {
-        null: { begin: '-----BEGIN', end: '-----END' },
+        null: { begin: '-----BEGIN', end: '-----END', replace: false },
         public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
         private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
         attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----', replace: true },
         cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
         signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
-        signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----' },
+        signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
         message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
         password_message: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true},
-      } as Dict<{begin: string, end:string|RegExp, replace?:true}>,
+      } as CryptoArmorHeaderDefinitions,
       api_gmail_USELESS_CONTACTS_FILTER: '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org',
       api_gmail_SCOPE_DICT: {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'} as Dict<string>,
       browser_message_MAX_SIZE: 1024 * 1024, // 1MB
@@ -2431,7 +2423,7 @@ let tool = {
       if(begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, tool._.var.crypto_armor_header_MAX_LENGTH);
         for(let type of Object.keys(tool._.var.crypto_armor_headers_DICT)) {
-          let block_header_def = tool._.var.crypto_armor_headers_DICT[type];
+          let block_header_def = tool._.var.crypto_armor_headers_DICT[type as ReplaceableMessageBlockType];
           if(block_header_def.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
             if(index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
@@ -2454,7 +2446,7 @@ let tool = {
               }
               if(end !== -1) { // identified end of the same block
                 if(type !== 'password_message') {
-                  result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substring(begin, end + (block_header_def.end as string).length).trim())); // todo - ISSUE_A
+                  result.found.push(tool._.crypto_armor_block_object(type as ReplaceableMessageBlockType, original_text.substring(begin, end + (block_header_def.end as string).length).trim())); // todo - ISSUE_A
                 } else {
                   let pm_full_text = original_text.substring(begin, end + (block_header_def.end as string).length).trim(); // todo - ISSUE_A
                   let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
@@ -2466,7 +2458,7 @@ let tool = {
                 }
                 result.continue_at = end + (block_header_def.end as string).length; // todo - ISSUE_A
               } else { // corresponding end not found
-                result.found.push(tool._.crypto_armor_block_object(type as MessageBlockType, original_text.substr(begin), true));
+                result.found.push(tool._.crypto_armor_block_object(type as ReplaceableMessageBlockType, original_text.substr(begin), true));
               }
               break;
             }

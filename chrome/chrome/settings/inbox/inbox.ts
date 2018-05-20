@@ -5,7 +5,7 @@
 tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email']);
-  let message_headers = ['message', 'signed_message', 'public_key'].map(t => tool.crypto.armor.headers(t as MessageBlockType).begin);
+  let message_headers = ['message', 'signed_message', 'public_key'].map(t => tool.crypto.armor.headers(t as ReplaceableMessageBlockType).begin);
   let q_encrypted_messages = 'is:inbox (' + tool.api.gmail.query.or(message_headers, true) + ')';
   let email_provider;
   let factory: Factory;

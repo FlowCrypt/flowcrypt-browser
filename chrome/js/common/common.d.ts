@@ -194,7 +194,8 @@ interface MimeAsHeadersAndBlocks {
     blocks: MessageBlock[],
 }
 
-type MessageBlockType = 'text'|'public_key'|'private_key'|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
+type ReplaceableMessageBlockType = 'public_key'|'private_key'|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
+type MessageBlockType = 'text'|ReplaceableMessageBlockType;
 
 interface MessageBlock {
     type: MessageBlockType, 
@@ -451,4 +452,9 @@ interface AccountStore extends BaseStore {
 interface FcPromise<T> extends Promise<T> {
     validate: (validator: (r: T) => void) => Promise<T>;
     resolved: (next: (ok: boolean, r: T) => void) => void;
+}
+
+type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
+type CryptoArmorHeaderDefinitions = {
+    readonly [type in ReplaceableMessageBlockType|'null']: CryptoArmorHeaderDefinition;
 }

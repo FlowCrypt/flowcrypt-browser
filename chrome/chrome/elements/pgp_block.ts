@@ -491,7 +491,7 @@ tool.catch.try(() => {
           decrypt_and_render();
         }, function (error_type: string, url_formatted_data_block: string) {
           if(error_type === 'format') {
-            if(tool.value(tool.crypto.armor.headers('public_key').end).in(url_formatted_data_block)) {
+            if(tool.value(tool.crypto.armor.headers('public_key').end as string).in(url_formatted_data_block)) { // public key .end is always string
               window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: url_formatted_data_block, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email as string, parent_tab_id: url_params.parent_tab_id as string, frame_id: url_params.frame_id });
             } else {
               render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open, url_formatted_data_block);

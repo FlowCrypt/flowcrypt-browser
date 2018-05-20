@@ -46,8 +46,8 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account: migrate_account,
     settings: open_settings_page_handler,
-    attest_requested: attest_requested_handler,
-    attest_packet_received: attest_packet_received_handler,
+    attest_requested: BgAttests.attest_requested_handler,
+    attest_packet_received: BgAttests.attest_packet_received_handler,
     update_uninstall_url: update_uninstall_url,
     get_active_tab_info: get_active_tab_info,
     runtime: (message, sender, respond) => respond({ environment: catcher.environment(), version: catcher.version() }),
@@ -69,10 +69,9 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
   });
   
   update_uninstall_url(null, 'background', tool.noop);
-
   inject_cryptup_into_webmail_if_needed();
-  
   schedule_cryptup_subscription_level_check();
+  BgAttests.watch_for_attest_email_if_appropriate();
 
   if(storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100
     await Store.remove(null, ['errors']);
