@@ -2066,7 +2066,7 @@ let tool = {
       },
       account_check: (emails: string[]) => tool._.api_cryptup_call('account/check', {
         emails: emails,
-      }),
+      }) as Promise<ApirFcAccountCheck>,
       account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
         let emails = await Store.account_emails_get();
         if(emails.length) {
@@ -2091,7 +2091,7 @@ let tool = {
           if(response.subscription) {
             let rs = response.subscription;
             if(rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
-              local_storage_update['cryptup_account_subscription'] = response.subscription;
+              local_storage_update['cryptup_account_subscription'] = {active: !rs.expired, method: rs.method, level: rs.level};
             }
           } else {
             if(subscription.level || subscription.expire || subscription.active || subscription.method) {

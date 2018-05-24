@@ -339,6 +339,8 @@ type ApirFcAccountLogin = {registered: boolean, verified: boolean, subscription:
 type ApirFcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number};
 type ApirFcAccountUpdate = {result: ApirFcAccountUpdate$result, updated: boolean};
 type ApirFcAccountSubscribe = {subscription: SubscriptionInfo};
+type ApirFcAccountCheck = {email: string|null, subscription: {level: SubscriptionLevel, expire: string, expired: boolean, method: PaymentMethod|null}|null};
+
 type ApirFcMessagePresignFiles = {approvals: {base_url: string, fields: {key: string}}[]};
 type ApirFcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
 type ApirFcMessageToken = {token: string};
@@ -393,15 +395,12 @@ interface PromiseConstructor {
     sequence<T>(promise_factories: PromiseFactory<T>[]): Promise<T[]>;
 }
 
-// interface Promise<T> {
-//     done<T>(callback: (success: boolean, result: T) => void): void;
-//     validate<T>(validator: (result: T) => boolean): Promise<T>;
-// }
+type SubscriptionLevel = 'pro'|null;
 
 interface SubscriptionInfo {
     active: boolean|null;
     method: PaymentMethod|null;
-    level: 'pro'|null;
+    level: SubscriptionLevel;
 }
 
 interface SubscriptionAttempt extends Product {
