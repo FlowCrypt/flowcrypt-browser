@@ -67,7 +67,7 @@ class BgAttests {
       if(passphrase !== null) {
         if(storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
           for(let message of Object.values(await BgAttests.fetch_attest_emails(account_email))) {
-            if(message.payload.mimeType === 'text/plain' && message.payload.body.size > 0) {
+            if(message.payload.mimeType === 'text/plain' && message.payload.body && message.payload.body.size > 0 && message.payload.body.data) {
               BgAttests.process_attest_and_log_result(account_email, tool.str.base64url_decode(message.payload.body.data), passphrase);
             }
           }
@@ -128,31 +128,16 @@ class BgAttests {
     }
   };
   
-  private static fetch_attest_emails = (account_email: string): Promise<Dict<any>> => { // does not reject - instead logs and does not resolve
-    return new Promise((resolve, reject) => {
-      let q = [
-        '(from:"' + BgAttests.get_attester_emails().join('" OR from: "') + '")',
-        'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.
-        'in:anywhere',
-        '"' + BgAttests.packet_headers.begin + '"',
-        '"' + BgAttests.packet_headers.end + '"',
-      ];
-      tool.api.gmail.message_list(account_email, q.join(' '), true, async (success: boolean, response: Dict<Dict<FlatTypes>[]>) => {
-        if(success) {
-          if(response.messages) {
-            let message_ids: string[] = [];
-            for (let message of response.messages) {
-              message_ids.push(message.id as string);
-            }
-            tool.api.gmail.message_get(account_email, message_ids, 'full', resolve);
-          } else {
-            resolve({});
-          }
-        } else {
-          await BgAttests.add_attest_log(new AttestError('cannot fetch attest emails for ' + account_email, null, account_email));
-        }
-      });  
-    });
+  private static fetch_attest_emails = async (account_email: string): Promise<Dict<ApirGmailMessage>> => {
+    let q = [
+      '(from:"' + BgAttests.get_attester_emails().join('" OR from: "') + '")',
+      'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.
+      'in:anywhere',
+      '"' + BgAttests.packet_headers.begin + '"',
+      '"' + BgAttests.packet_headers.end + '"',
+    ];
+    let list_response = await tool.api.gmail.message_list(account_email, q.join(' '), true);
+    return tool.api.gmail.messages_get(account_email, (list_response.messages || []).map(m => m.id), 'full');
   };
   
   private static get_pending_attest_requests = async () => {

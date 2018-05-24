@@ -12,7 +12,6 @@ interface FcWindow extends BrowserWidnow {
     iso88592: any,
     is_bare_engine: boolean,
     openpgp: any,
-    flowcrypt_account: any,
     mnemonic: (hex: string) => string,
 }
 
@@ -322,12 +321,24 @@ type SelectorCache = {
 type StorageType = 'session'|'local';
 type EmailProvider = 'gmail';
 type ProviderContactsQuery = { substring: string };
+type ProviderContactsResult = {date: string, name: string|null, email: string, full: string};
+type ProviderContactsResults = {new: ProviderContactsResult[], all: ProviderContactsResult[]};
+
+type AccountEventHandlersOptional = {
+    render_status?: (text: string, show_spinner?: boolean) => void,
+    find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>,
+}
+type AccountEventHandlers = {
+    render_status: (text: string, show_spinner?: boolean) => void,
+    find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>,
+}
 
 // specific api results
 type ApirFcHelpFeedback = {sent: boolean};
 type ApirFcAccountLogin = {registered: boolean, verified: boolean, subscription: SubscriptionInfo};
 type ApirFcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number};
 type ApirFcAccountUpdate = {result: ApirFcAccountUpdate$result, updated: boolean};
+type ApirFcAccountSubscribe = {subscription: SubscriptionInfo};
 type ApirFcMessagePresignFiles = {approvals: {base_url: string, fields: {key: string}}[]};
 type ApirFcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
 type ApirFcMessageToken = {token: string};
@@ -340,6 +351,14 @@ type ApirAttReplaceRequest = {saved: boolean};
 type ApirAttReplaceConfirm = {attested: boolean};
 type ApirAttTestWelcome = {sent: boolean};
 type ApirAttInitialLegacySugmit = {attested: boolean, saved: boolean};
+
+type ApirGmailMessage$header = {name: string, value: string};
+type ApirGmailMessage$payload$body = {attachmentId: string, size: number, data?: string};
+type ApirGmailMessage$payload$part = {body?: ApirGmailMessage$payload$body, filename?: string, mimeType?: string, headers?: ApirGmailMessage$header[]};
+type ApirGmailMessage$payload = {parts?: ApirGmailMessage$payload$part[], headers?: ApirGmailMessage$header[], mimeType?: string, body?: ApirGmailMessage$payload$body};
+type ApirGmailMessage = {id: string, threadId?: string|null, payload: ApirGmailMessage$payload, raw?: string, internalDate?: number|string};
+type ApirGmailMessageList$message = {id: string, threadId: string};
+type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
@@ -386,7 +405,7 @@ interface SubscriptionInfo {
 }
 
 interface SubscriptionAttempt extends Product {
-    source: string;
+    source: string|null;
 }
 
 type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
@@ -411,9 +430,9 @@ interface GlobalStore extends BaseStore {
     errors?: string[];
     settings_seen?: boolean;
     hide_pass_phrases?: boolean;
-    cryptup_account_email?: string;
-    cryptup_account_uuid?: string;
-    cryptup_account_subscription?: SubscriptionInfo;
+    cryptup_account_email?: string|null;
+    cryptup_account_uuid?: string|null;
+    cryptup_account_subscription?: SubscriptionInfo|null;
     cryptup_account_verified?: boolean;
     dev_outlook_allow?: boolean;
     cryptup_subscription_attempt?: SubscriptionAttempt;

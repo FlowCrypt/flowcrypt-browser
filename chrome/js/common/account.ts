@@ -2,197 +2,148 @@
 
 'use strict';
 
-tool.catch.try(() => {
+class FlowCryptAccount {
 
-  const cryptup_verification_email_sender = 'verify@cryptup.org';
-
-  const _self = {
-    parse_token_email_text: parse_token_email_text,
-    save_subscription_attempt: save_subscription_attempt,
-    config: set_event_handlers,
-    register: register_and_attempt_to_verify,
-    verify: verify,
-    register_new_device: register_new_device,
-    subscribe: subscribe,
-    PRODUCTS: {
-      null: {id: null, method: null, name: null, level: null},
-      trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
-      advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
-    } as Dict<Product>,
-    CAN_READ_EMAIL: true,
+  PRODUCTS: Dict<Product> = {
+    null: {id: null, method: null, name: null, level: null},
+    trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
+    advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
   };
 
-  let callbacks: NamedFunctionsObject = {
-    render_status: function (text: string, show_spinner?:boolean) {},
-    find_matching_tokens_from_email: fetch_token_emails_on_gmail_and_find_matching_token,
+  private can_read_email: boolean;
+  private cryptup_verification_email_sender = 'verify@cryptup.org';
+  private event_handlers: AccountEventHandlers;
+
+  constructor(handlers: AccountEventHandlersOptional, can_read_email: boolean) {
+    this.event_handlers = {
+      render_status: handlers.render_status || ((text: string, show_spinner?:boolean) => undefined),
+      find_matching_tokens_from_email: handlers.find_matching_tokens_from_email || this.fetch_token_emails_on_gmail_and_find_matching_token,  
+    };
+    this.can_read_email = can_read_email;
+  }
+
+  subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
+    this.event_handlers.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
+    await tool.api.cryptup.account_check_sync();
+    let auth_info = await Store.auth_info();
+    if(auth_info.verified) {
+      try {
+        return await this.do_subscribe(chosen_product, source);
+      } catch(error) {
+        if(error.internal !== 'auth') { // auth error will get resolved by continuing below
+          throw error;
+        }
+      }
+    }
+    await this.save_subscription_attempt(chosen_product, source);
+    let response = await this.register(account_email);
+    return await this.do_subscribe(chosen_product, source);
+  };
+  
+  register = async (account_email: string) => { // register_and_attempt_to_verify
+    this.event_handlers.render_status('registering..', true);
+    let response = await tool.api.cryptup.account_login(account_email);
+    if(this.can_read_email) {
+      this.event_handlers.render_status('verifying..', true);
+      let tokens = await this.wait_for_token_email(30);
+      if(tokens && tokens.length) {
+        return await this.verify(account_email, tokens);
+      } else {
+        throw {code: null, internal: 'email', message: 'Please check your inbox for a verification email'};
+      }
+    } else {
+      throw {code: null, internal: 'email', message: 'Please check your inbox for a verification email'};
+    }
+  };
+  
+  verify = async (account_email: string, tokens: string[]) => {
+    this.event_handlers.render_status('verifying your email address..', true);
+    let last_token_error;
+    for(let token of tokens) {
+      try {
+        return await tool.api.cryptup.account_login(account_email, token);
+      } catch(error) {
+        if(error.internal === 'token') {
+          last_token_error = error;
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw last_token_error;
   };
 
-  function subscribe(account_email: string, chosen_product: Product, source: string) {
-    callbacks.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-    return catcher.Promise((resolve, reject) => {
-      tool.api.cryptup.account_check_sync(updated => {
-        Store.auth_info().then(auth_info => {
-          if(auth_info.verified) {
-            do_subscribe(chosen_product, source).then(resolve, error => {
-              if(error.internal === 'auth') {
-                save_subscription_attempt(chosen_product, source, () => {
-                  register_and_attempt_to_verify(account_email).then(response => {
-                    do_subscribe(chosen_product, source).then(resolve, reject);
-                  }, reject)
-                });
-              } else {
-                reject(error);
-              }
-            });
-          } else {
-            save_subscription_attempt(chosen_product, source, () => {
-              register_and_attempt_to_verify(account_email).then(response => {
-                do_subscribe(chosen_product, source).then(resolve, reject);
-              }, reject)
-            });
-          }
-        });
-      });
-    });
-  }
-
-  function do_subscribe(chosen_product: Product, source:string|null=null) {
-    return catcher.Promise((resolve, reject) => {
-      Store.remove(null, ['cryptup_subscription_attempt']).then(() => {
-        return tool.api.cryptup.account_subscribe(chosen_product.id!, chosen_product.method!, source).then(response => {
-          if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
-            resolve(response.subscription);
-          } else {
-            reject({code: null, message: 'Something went wrong when upgrading, please email me at human@flowcrypt.com to fix this.', internal: 'mismatch'});
-          }
-        }, reject); // todo - deal with auth error? would need to know account_email for new registration
-      });
-    });
-  }
-
-  function parse_token_email_text(verification_email_text: string, stored_uuid_to_cross_check: string) {
+  register_new_device = async (account_email: string) => {
+    await Store.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false });
+    this.event_handlers.render_status('checking..', true);
+    return await this.register(account_email);
+  };
+  
+  save_subscription_attempt = async (product: Product, source: string|null) => {
+    (product as SubscriptionAttempt).source = source;
+    await Store.set(null, { 'cryptup_subscription_attempt': product as SubscriptionAttempt });
+  };
+  
+  parse_token_email_text = (verification_email_text: string, stored_uuid_to_cross_check?: string): string|undefined => {
     let token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
     if(token_link_match !== null) {
       let token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
       if ((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
-        return token_link_params.token;
+        return token_link_params.token as string;
       }
     }
-  }
+  };
 
-  function fetch_token_emails_on_gmail_and_find_matching_token(account_email: string, uuid: string, callback: ApiCallback) {
-    let called_back = false;
-    function callback_once(v1: boolean, v2: any) {
-      if(!called_back) {
-        called_back = true;
-        callback(v1, v2);
-      }
+  private do_subscribe = async (chosen_product: Product, source:string|null=null) => {
+    await Store.remove(null, ['cryptup_subscription_attempt']);
+    // todo - deal with auth error? would need to know account_email for new registration
+    let response = await tool.api.cryptup.account_subscribe(chosen_product.id!, chosen_product.method!, source);
+    if(response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
+      return response.subscription;
     }
+    throw {code: null, message: 'Something went wrong when upgrading, please email me at human@flowcrypt.com to fix this.', internal: 'mismatch'};
+  };
+  
+  private fetch_token_emails_on_gmail_and_find_matching_token = async (account_email: string, uuid: string): Promise<string[]|null> => {
     let tokens: string[] = [];
-    tool.api.gmail.message_list(account_email, 'from:' + cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true, (list_success, response: any) => {
-      if(list_success) {
-        if(response.messages) {
-          tool.api.gmail.message_get(account_email, response.messages.map((m: any) => m.id), 'full', (get_success: boolean, messages: any) => {
-            if(get_success) {
-              for(let gmail_message_object of Object.values(messages)) {
-                if((gmail_message_object as any).payload.mimeType === 'text/plain' && (gmail_message_object as any).payload.body.size > 0) {
-                  let token = parse_token_email_text(tool.str.base64url_decode((gmail_message_object as any).payload.body.data), uuid);
-                  if(token && typeof token === 'string') {
-                    tokens.push(token);
-                  }
-                }
-              }
-              tokens.reverse();
-              callback_once(Boolean(tokens.length), tokens.length ? tokens : null);
-            } else {
-              callback_once(false, null);
-            }
-          });
-        } else {
-          callback_once(true, null);
-        }
-      } else {
-        callback_once(false, null);
-      }
-    });
-  }
-
-
-  function wait_for_token_email(timeout: number, callback: (tokens: string[]|null) => void) {
-    if(timeout < 20) {
-      callbacks.render_status('Still working..');
-    } else if(timeout < 10) {
-      callbacks.render_status('A little while more..');
+    let response = await tool.api.gmail.message_list(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
+    if(!response.messages) {
+      return null;
     }
+    let messages = await tool.api.gmail.messages_get(account_email, response.messages.map(m => m.id), 'full');
+    for(let gmail_message_object of Object.values(messages)) {
+      if((gmail_message_object as any).payload.mimeType === 'text/plain' && (gmail_message_object as any).payload.body.size > 0) {
+        let token = this.parse_token_email_text(tool.str.base64url_decode((gmail_message_object as any).payload.body.data), uuid);
+        if(token && typeof token === 'string') {
+          tokens.push(token);
+        }
+      }
+    }
+    tokens.reverse();
+    return tokens.length ? tokens : null;
+  };
+  
+  private sleep(seconds: number) {
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  }
+
+  private wait_for_token_email = async (timeout: number) => {
     let end = Date.now() + timeout * 1000;
-    Store.auth_info().then(auth_info => {
-      callbacks.find_matching_tokens_from_email(auth_info.account_email!, auth_info.uuid!, (success: string, tokens: string[]) => {
-        if(success && tokens) {
-          callback(tokens as string[]);
-        } else if(Date.now() < end) {
-          setTimeout(() => wait_for_token_email((end - Date.now()) / 1000, callback), 5000);
-        } else {
-          callback(null);
-        }
-      });
-    });
-  }
+    while (Date.now() < end) {
+      if((end - Date.now()) < 20000) { // 20s left
+        this.event_handlers.render_status('Still working..');
+      } else if((end - Date.now()) < 10000) { // 10s left
+        this.event_handlers.render_status('A little while more..');
+      }
+      let auth_info = await Store.auth_info();
+      let tokens = await this.event_handlers.find_matching_tokens_from_email(auth_info.account_email!, auth_info.uuid!);
+      if(tokens) {
+        return tokens;
+      } else {
+        await this.sleep(5);
+      }
+    }
+  };
 
-  function save_subscription_attempt(product: Product, source: string, callback: VoidCallback) {
-    (product as SubscriptionAttempt).source = source;
-    Store.set(null, { 'cryptup_subscription_attempt': product as SubscriptionAttempt }).then(callback);
-  }
+}
 
-  function verify(account_email: string, tokens: string[]) {
-    callbacks.render_status('verifying your email address..', true);
-    return catcher.Promise((resolve, reject) => {
-      tool.api.cryptup.account_login(account_email, tokens.pop()).then(resolve, error => {
-        if(error.internal === 'token' && tokens.length) {
-          verify(account_email, tokens).then(resolve, reject); // attempt at Promise recursion. Until nothing left to try in tokens array
-        } else {
-          reject(error);
-        }
-      });
-    });
-  }
-
-  function register_and_attempt_to_verify(account_email: string) {
-    callbacks.render_status('registering..', true);
-    return catcher.Promise((resolve, reject) => {
-      tool.api.cryptup.account_login(account_email).then(response => {
-        if(_self.CAN_READ_EMAIL) {
-          callbacks.render_status('verifying..', true);
-          wait_for_token_email(30, tokens => {
-            if(tokens && tokens.length) {
-              verify(account_email, tokens).then(resolve, reject);
-            } else {
-              reject({code: null, internal: 'email', message: 'Please check your inbox for a verification email'});
-            }
-          });
-        } else {
-          reject({code: null, internal: 'email', message: 'Please check your inbox for a verification email'});
-        }
-      }, reject);
-    });
-  }
-
-  function register_new_device(account_email: string) {
-    return catcher.Promise((resolve, reject) => {
-      Store.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false }).then(() => {
-        callbacks.render_status('checking..', true);
-        register_and_attempt_to_verify(account_email).then(resolve, reject);
-      });
-    });
-  }
-
-  function set_event_handlers(_callbacks: NamedFunctionsObject) {
-    $.each(_callbacks, (name, handler) => {
-      callbacks[name] = handler;
-    });
-  }
-
-  if(typeof window === 'object') {
-    (window as FcWindow).flowcrypt_account = _self;
-  }
-
-})();

@@ -2,38 +2,34 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
-  
-  let token = (window as FcWindow).flowcrypt_account.parse_token_email_text(url_params.verification_email_text);
+  let flowcrypt_account = new FlowCryptAccount({}, true);
+  let token = flowcrypt_account.parse_token_email_text(url_params.verification_email_text as string);
   
   if(!token) {
     render_status('This verification email seems to have wrong format. Please write me at human@flowcrypt.com to fix this.');
   } else {
-    Store.get_global(['cryptup_subscription_attempt']).then(storage => {
-      let product_to_subscribe_to = storage.cryptup_subscription_attempt;
-      (window as FcWindow).flowcrypt_account.verify(url_params.account_email, [token]).then((response: any) => {
-        if(product_to_subscribe_to) {
-          (window as FcWindow).flowcrypt_account.subscribe(url_params.account_email, product_to_subscribe_to, product_to_subscribe_to.source).then((subscription: SubscriptionInfo) => {
-            if(subscription && subscription.level === 'pro') {
-              render_status('Welcome to FlowCrypt Advanced.');
-            } else {
-              render_status('Email verified, but had trouble enabling FlowCrypt Advanced. Please write me at human@flowcrypt.com to fix this.');
-            }
-          }, handle_error_response);
+    try {
+      let {cryptup_subscription_attempt} = await Store.get_global(['cryptup_subscription_attempt']);
+      let response = await flowcrypt_account.verify(url_params.account_email as string, [token]);
+      if(cryptup_subscription_attempt) {
+        let subscription = await flowcrypt_account.subscribe(url_params.account_email as string, cryptup_subscription_attempt, cryptup_subscription_attempt.source);
+        if(subscription && subscription.level === 'pro') {
+          render_status('Welcome to FlowCrypt Advanced.');
         } else {
-          render_status('Email verified, no further action needed.');
+          render_status('Email verified, but had trouble enabling FlowCrypt Advanced. Please write me at human@flowcrypt.com to fix this.');
         }
-      }, handle_error_response);
-    });
-  }
-  
-  function handle_error_response(error: Error) {
-    render_status('Could not complete: ' + error.message);
-    catcher.log('problem in verification.js', error);
+      } else {
+        render_status('Email verified, no further action needed.');
+      }
+    } catch (error) {
+      render_status('Could not complete: ' + error.message);
+      catcher.log('problem in verification.js', error);
+    }
   }
   
   function render_status(content: string, spinner=false) {

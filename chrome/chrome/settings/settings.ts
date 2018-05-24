@@ -16,15 +16,17 @@ tool.browser.message.tab_id(function (tab_id) {
   settings_tab_id_global = tab_id;
 });
 
-function fetch_account_aliases_from_gmail(account_email: string, callback: Callback, query?: string, _from_emails:string[]=[]) {
-  query = query || 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
-  tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from'], function (headers) {
-    if(headers && headers.from) {
-      fetch_account_aliases_from_gmail(account_email, callback, query + ' -from:"' + tool.str.parse_email(headers.from).email + '"', _from_emails.concat(tool.str.parse_email(headers.from).email));
-    } else {
-      callback(_from_emails.filter(email => !tool.value(email).in(ignore_email_aliases)));
+async function fetch_account_aliases_from_gmail(account_email: string) {
+  let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
+  let results = [];
+  while(true) {
+    let headers = await tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
+    if(!headers.from) {
+      return results.filter(email => !tool.value(email).in(ignore_email_aliases));
     }
-  });
+    results.push(tool.str.parse_email(headers.from).email);
+    query += ' -from:"' + tool.str.parse_email(headers.from).email + '"';
+  }
 }
 
 function evaluate_password_strength(pass_phrase: string) {

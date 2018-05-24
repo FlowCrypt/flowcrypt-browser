@@ -167,8 +167,8 @@ tool.catch.try(() => {
   
   function recover_missing_attachment_id_if_needed(cb: Callback) {
     if(!url_params.url && !url_params.attachment_id && url_params.message_id) {
-      tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'full', (success: boolean, result: Dict<any>) => {
-        if(success && result && result.payload && result.payload.parts) {
+      tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'full').then(result => {
+        if(result && result.payload && result.payload.parts) {
           for(let attachment_meta of result.payload.parts) {
             if(attachment_meta.filename === url_params.name && attachment_meta.body && attachment_meta.body.size === url_params.size && attachment_meta.body.attachmentId) {
               url_params.attachment_id = attachment_meta.body.attachmentId;
@@ -179,7 +179,7 @@ tool.catch.try(() => {
         } else {
           window.location.reload();
         }
-      });
+      }, () => window.location.reload());
     } else {
       cb();
     }

@@ -32,13 +32,13 @@ tool.catch.try(async() => {
           } else {
             const q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
             const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
-            tool.api.gmail.message_list(url_params.account_email as string, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true, function (success, response: any) {
-              if (success && response.messages) {
+            tool.api.gmail.message_list(url_params.account_email as string, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true).then(response => {
+              if (response.messages) {
                 Store.set(url_params.account_email as string, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
               } else {
                 callback(false);
               }
-            });
+            }, () => callback(false));
           }
         });
       },
@@ -226,29 +226,29 @@ tool.catch.try(async() => {
         return;
       }
       $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
-      tool.api.gmail.message_get(url_params.account_email as string, url_params.thread_message_id as string, 'metadata', function (success: boolean, gmail_message_object: any) {
-        if (success) {
-          url_params.thread_id = gmail_message_object.threadId;
-          let reply = tool.api.common.reply_correspondents(url_params.account_email as string, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
-          if(!url_params.to) {
-            url_params.to = reply.to.join(',');
-          }
-          if(!url_params.from) {
-            url_params.from = reply.from;
-          }
-          if(!url_params.subject) {
-            url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
-          }
-        } else {
-          if(!url_params.from) {
-            url_params.from = url_params.account_email as string;
-          }
-          if(!url_params.subject) {
-            url_params.subject = '';
-          }
-          url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
-          console.log('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
+      tool.api.gmail.message_get(url_params.account_email as string, url_params.thread_message_id as string, 'metadata').then(gmail_message_object => {
+        url_params.thread_id = gmail_message_object.threadId;
+        let reply = tool.api.common.reply_correspondents(url_params.account_email as string, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+        if(!url_params.to) {
+          url_params.to = reply.to.join(',');
         }
+        if(!url_params.from) {
+          url_params.from = reply.from;
+        }
+        if(!url_params.subject) {
+          url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
+        }
+        $('#loader').remove();
+        resolve();
+      }, () => {
+        if(!url_params.from) {
+          url_params.from = url_params.account_email as string;
+        }
+        if(!url_params.subject) {
+          url_params.subject = '';
+        }
+        url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
+        console.log('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
         $('#loader').remove();
         resolve();
       });

@@ -143,33 +143,29 @@ catcher.try(() => {
     });
   }
   
-  function render_subscription_status_header() {
-    tool.api.cryptup.account_check_sync(updated_with_new_info => {
-      Store.subscription().then(subscription => {
-        if(subscription.active) {
-          $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(function () {
-            show_settings_page('/chrome/settings/modules/account.htm');
-          }).css('cursor', 'pointer');
-          if(subscription.method === 'trial') {
-            $('.logo-row .subscription .expire').text(subscription.expire ? ('trial until ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
-            $('.logo-row .subscription .upgrade').css('display', 'inline-block');
-          } else if (subscription.method === 'group') {
-            $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
-          }
-        } else {
-          $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
-          if(subscription.level && subscription.expire && subscription.method) {
-            if(subscription.method === 'trial') {
-              $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
-            } else if(subscription.method === 'group') {
-              $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
-            }
-            $('.logo-row .subscription .upgrade').text('renew');
-          }
-          $('.logo-row .subscription .upgrade').css('display', 'inline-block');
+  async function render_subscription_status_header() {
+    await tool.api.cryptup.account_check_sync();
+    let subscription = await Store.subscription();
+    if(subscription.active) {
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(() => show_settings_page('/chrome/settings/modules/account.htm')).css('cursor', 'pointer');
+      if(subscription.method === 'trial') {
+        $('.logo-row .subscription .expire').text(subscription.expire ? ('trial until ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+        $('.logo-row .subscription .upgrade').css('display', 'inline-block');
+      } else if (subscription.method === 'group') {
+        $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
+      }
+    } else {
+      $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
+      if(subscription.level && subscription.expire && subscription.method) {
+        if(subscription.method === 'trial') {
+          $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
+        } else if(subscription.method === 'group') {
+          $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
         }
-      });
-    });
+        $('.logo-row .subscription .upgrade').text('renew');
+      }
+      $('.logo-row .subscription .upgrade').css('display', 'inline-block');
+    }
   }
   
   function add_key_rows_html(private_keys: KeyInfo[]) {

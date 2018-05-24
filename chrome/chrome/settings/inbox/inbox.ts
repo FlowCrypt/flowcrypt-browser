@@ -66,31 +66,27 @@ tool.catch.try(() => {
         $('body').text('Not supported for ' + email_provider);
       } else {
         display_block('inbox', 'FlowCrypt Email Inbox');
-        tool.api.gmail.message_list(url_params.account_email as string, q_encrypted_messages, false, function(list_success, list_result: any) {
-          if(!list_success || typeof list_result.messages === 'undefined') {
-            $('body').text('Connection error trying to get list of messages');
-          } else {
-            let thread_ids = tool.arr.unique(list_result.messages.map((m: any) => m.threadId));
-            for(let thread_id of thread_ids) {
-              thread_element_add(thread_id);
-              tool.api.gmail.message_get(url_params.account_email as string, thread_id, 'metadata', function(item_success: boolean, item_result: any) {
-                let thread_item = $('.threads #' + thread_list_item_id(thread_id));
-                if(!item_success) {
-                  thread_item.find('.loading').text('Failed to load');
-                } else {
-                  thread_item.find('.subject').text(tool.api.gmail.find_header(item_result, 'subject'));
-                  let from = tool.str.parse_email(tool.api.gmail.find_header(item_result, 'from'));
-                  thread_item.find('.from').text(from.name || from.email);
-                  thread_item.find('.loading').text('');
-                  thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
-                  thread_item.addClass('loaded').click(function () {
-                    render_thread(thread_id);
-                  });
-                }
+        tool.api.gmail.message_list(url_params.account_email as string, q_encrypted_messages, false).then(list_result => {
+          let thread_ids = tool.arr.unique((list_result.messages || []).map((m: any) => m.threadId));
+          for(let thread_id of thread_ids) {
+            thread_element_add(thread_id);
+            tool.api.gmail.message_get(url_params.account_email as string, thread_id, 'metadata').then(item_result => {
+              let thread_item = $('.threads #' + thread_list_item_id(thread_id));
+              thread_item.find('.subject').text(tool.api.gmail.find_header(item_result, 'subject') || '(no subject)');
+              let from_header_value = tool.api.gmail.find_header(item_result, 'from');
+              if(from_header_value) {
+                let from = tool.str.parse_email(from_header_value);
+                thread_item.find('.from').text(from.name || from.email);  
+              }
+              thread_item.find('.loading').text('');
+              thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
+              thread_item.addClass('loaded').click(function () {
+                render_thread(thread_id);
               });
-            }
+
+            }, () => $('.threads #' + thread_list_item_id(thread_id)).find('.loading').text('Failed to load'));
           }
-        });
+        }, () => $('body').text('Connection error trying to get list of messages'));
   
       }
     });
@@ -117,7 +113,7 @@ tool.catch.try(() => {
       if(!success) {
         $('.thread').text('Failed to load thread');
       } else {
-        display_block('thread', tool.api.gmail.find_header(result.messages[0], 'subject'));
+        display_block('thread', tool.api.gmail.find_header(result.messages[0], 'subject') || '(no subject)');
         result.messages.map(render_message);
         render_reply_box(thread_id, result.messages[result.messages.length - 1].id);
       }

@@ -435,9 +435,11 @@ tool.catch.try(() => {
   function initialize(force_pull_message_from_api=false) {
     if(can_read_emails && url_params.message && url_params.signature === true) {
       render_text('Loading signature...');
-      tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'raw', function(success: boolean, result: any) {
-        message_fetched_from_api = 'raw';
-        if(success && result.raw) {
+      tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'raw').then(result => {
+        if(!result.raw) {
+          decrypt_and_render();
+        } else {
+          message_fetched_from_api = 'raw';
           let mime_message = tool.str.base64url_decode(result.raw);
           let parsed = tool.mime.signed(mime_message);
           if(parsed) {
@@ -452,11 +454,9 @@ tool.catch.try(() => {
               console.log('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
               decrypt_and_render();
             });
-          }
-        } else {
-          decrypt_and_render();
+          }  
         }
-      });
+      }, () => decrypt_and_render());  // todo: shouldn't we handle this error?
     } else if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
       render_text(url_params.signature ? 'Verifying..' : 'Decrypting...');
       decrypt_and_render();

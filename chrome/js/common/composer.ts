@@ -629,7 +629,7 @@ class Composer {
 
   private upload_attachments_to_cryptup = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: ApirFcMessagePresignFiles = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null).validate(r => r.approvals && r.approvals.length === attachments.length);
+      let pf_response: ApirFcMessagePresignFiles = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for(let i in pf_response.approvals) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
@@ -641,9 +641,7 @@ class Composer {
       }
       return admin_codes;
     } catch(error) {
-      if(error && typeof error === 'object' && error.internal === 'validate') {
-        throw new ComposerNetworkError('Could not verify that all files were uploaded properly, please try again.');
-      } else if (error && typeof error === 'object' && error.internal === 'auth') {
+      if (error && typeof error === 'object' && error.internal === 'auth') {
         throw error;
       } else {
         throw new ComposerNetworkError(error && typeof error === 'object' && error.message ? error.message : 'Some files failed to upload, please try again');

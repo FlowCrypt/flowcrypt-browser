@@ -77,8 +77,8 @@ tool.catch.try(() => {
   
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
       $(self).html(tool.ui.spinner('white'));
-      fetch_account_aliases_from_gmail(url_params.account_email as string, function(addresses) {
-        let all = tool.arr.unique(addresses.concat(url_params.account_email));
+      fetch_account_aliases_from_gmail(url_params.account_email as string).then(function(addresses) {
+        let all = tool.arr.unique(addresses.concat(url_params.account_email as string));
         Store.set(url_params.account_email as string, { addresses: all }).then(function () {
           alert('Updated to: ' + all.join(', '));
           window.location.reload();

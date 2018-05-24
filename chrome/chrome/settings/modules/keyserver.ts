@@ -106,8 +106,8 @@ tool.catch.try(() => {
     let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
     $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
       $(self).html(tool.ui.spinner('green'));
-      fetch_account_aliases_from_gmail(url_params.account_email as string, function(addresses) {
-        Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email)) }).then(() => window.location.reload());
+      fetch_account_aliases_from_gmail(url_params.account_email as string).then(function(addresses) {
+        Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email as string)) }).then(() => window.location.reload());
       });
     }));
   }

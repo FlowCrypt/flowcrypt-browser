@@ -150,13 +150,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
         if(message_id) {
           if(this.can_read_emails) {
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
-            tool.api.gmail.message_get(this.account_email, message_id, 'full', (success: boolean, message: Dict<any>) => {
-              if(success) {
-                this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
-              } else {
-                $(new_pgp_attachments).find('.attachment_loader').text('Failed to load');
-              }
-            });
+            tool.api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
+              this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
+            }, () => $(new_pgp_attachments).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(catcher.try(() => {

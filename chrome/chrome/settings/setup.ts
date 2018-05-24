@@ -45,7 +45,7 @@ tool.catch.try(() => {
       }
       if(typeof storage.addresses === 'undefined') {
         if(tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-          fetch_account_aliases_from_gmail(url_params.account_email as string, save_and_fill_submit_option);
+          fetch_account_aliases_from_gmail(url_params.account_email as string).then(save_and_fill_submit_option);
         } else { // cannot read emails, don't fetch alternative addresses
           save_and_fill_submit_option([url_params.account_email as string]);
         }
