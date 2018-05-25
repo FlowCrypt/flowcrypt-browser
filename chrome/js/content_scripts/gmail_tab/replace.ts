@@ -115,28 +115,27 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replace_cryptup_tags = () => {
-    let self = this;
-    $("div[contenteditable='true']:contains('[cryptup:link:')").not('.evaluated').each(function () {
-      $(this).addClass('evaluated');
-      let button = '';
+    let this_factory_embedded_compose = this.factory.embedded_compose;
+    $("div[contenteditable='true']").not('.evaluated').addClass('evaluated').each(function () {
+      let button;
       let button_href_id: string|undefined = undefined;
-      // todo - below should be replaced with search to make it less confusing
-      $(this).html().replace(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/g, function (full_link: string, name: string, id: string) {
+      let found_cryptup_link = $(this).html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
+      if(found_cryptup_link !== null) {
+        let [full_link, name, id] = found_cryptup_link;
         if(name === 'draft_compose') {
           button = '<a href="#" class="open_draft">Open draft</a>';
           button_href_id = id;
         } else if(name === 'draft_reply') {
-          button = '<a href="#inbox/' + id + '">Open draft</a>';
-        } else {
-          button = $(this).html(); // shows original pgp message
+          button = `<a href="#inbox/${id}">Open draft</a>`;
         }
-        return '';
-      });
+        }
+      if(button) {
       $(this).replaceWith(button);
       $('a.open_draft').click(tool.catch.try(() => {
         $('div.new_message').remove();
-        $('body').append(self.factory.embedded_compose(button_href_id));
+          $('body').append(this_factory_embedded_compose(button_href_id));
       }));
+      }
     });
   };
 
@@ -333,7 +332,6 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replace_standard_reply_box = (editable:boolean=false, force:boolean=false) => {
-    let self = this;
     $($('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_iframe_container, .reply_message_evaluated').filter(':visible').get().reverse()).each((i, reply_box) => {
       let root_element = this.get_conversation_root_element(reply_box);
       if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // element should be replaced
@@ -346,7 +344,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           $(reply_box).replaceWith(reply_box_container);
         }
         if(i === 0) { // last box
-          reply_box_container.html(self.factory.embedded_reply(self.get_conversation_params(root_element), editable)).children(':not(iframe)').hide();
+          reply_box_container.html(this.factory.embedded_reply(this.get_conversation_params(root_element), editable)).children(':not(iframe)').hide();
         } else {
           reply_box_container.append('<font>Draft skipped</font>').children(':not(font)').hide();
         }
