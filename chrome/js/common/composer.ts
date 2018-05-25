@@ -220,7 +220,7 @@ class Composer {
             $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
             $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
             clearInterval(this.added_pubkey_db_lookup_interval);
-            this.evaluate_receivers();
+            this.evaluate_rendered_recipients();
           }
         }
       }, 1000);
@@ -779,7 +779,7 @@ class Composer {
     }
   };
 
-  private evaluate_receivers = () => {
+  private evaluate_rendered_recipients = () => {
     let that = this;
     $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').each(function () {
       const email_element = this;
@@ -981,7 +981,7 @@ class Composer {
     this.resize_reply_box();
   };
 
-  private render_receivers = () => {
+  private parse_and_render_recipients = () => {
     const input_to = (this.S.cached('input_to').val() as string).toLowerCase();
     if (tool.value(',').in(input_to)) {
       const emails = input_to.split(',');
@@ -995,7 +995,7 @@ class Composer {
     }
     this.S.cached('input_to').val('');
     this.resize_input_to();
-    this.evaluate_receivers();
+    this.evaluate_rendered_recipients();
     this.set_input_text_height_manually_if_needed();
   };
 
@@ -1009,7 +1009,7 @@ class Composer {
     setTimeout(() => {
       if (!tool.value(email).in(this.get_recipients_from_dom())) {
         this.S.cached('input_to').val(tool.str.parse_email(email).email);
-        this.render_receivers();
+        this.parse_and_render_recipients();
         this.S.cached('input_to').focus();
       }
     }, tool.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
@@ -1304,7 +1304,7 @@ class Composer {
     $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message())).keypress(tool.ui.enter(() => extract_process_encrypt_and_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));
-    this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.render_receivers()));
+    this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.parse_and_render_recipients()));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(() => this.hide_contacts());
     $('#input_addresses_container > div').click(() => {
@@ -1319,7 +1319,9 @@ class Composer {
       if (this.supplied_to) {
         this.S.cached('input_text').focus();
         document.getElementById('input_text')!.focus(); // #input_text is in the template
-        this.evaluate_receivers();
+        // Firefox will not always respond to initial automatic $input_text.blur()
+        // Recipients may be left unrendered, as standard text, with a trailing comma
+        this.parse_and_render_recipients(); // this will force firefox to render them on load
       }
       setTimeout(() => { // delay automatic resizing until a second later
         $(window).resize(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.resize_reply_box()));
