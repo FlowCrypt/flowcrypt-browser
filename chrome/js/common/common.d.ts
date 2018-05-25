@@ -401,6 +401,7 @@ interface SubscriptionInfo {
     active: boolean|null;
     method: PaymentMethod|null;
     level: SubscriptionLevel;
+    expire: string|null;
 }
 
 interface SubscriptionAttempt extends Product {

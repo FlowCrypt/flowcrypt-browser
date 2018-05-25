@@ -2091,7 +2091,7 @@ let tool = {
           if(response.subscription) {
             let rs = response.subscription;
             if(rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
-              local_storage_update['cryptup_account_subscription'] = {active: !rs.expired, method: rs.method, level: rs.level};
+              local_storage_update['cryptup_account_subscription'] = {active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire};
             }
           } else {
             if(subscription.level || subscription.expire || subscription.active || subscription.method) {
