@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.5.3 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/213?closed=1" target="_blank">Memory leak fix</a></b>
+
 <b>version 5.5.2 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/212?closed=1" target="_blank">Subscription bugfixes</a></b>
 
 <b>version 5.5.1 on May 21, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/211?closed=1" target="_blank">Bugfixes</a></b>
