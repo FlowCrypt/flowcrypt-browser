@@ -8,7 +8,7 @@
 
 function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: Callback) {
   Store.get_account(data.account_email, ['version']).then(function(account_storage) {
-    Store.set(data.account_email, { version: catcher.version('int') as number|null }).then(respond_done);
+    Store.set(data.account_email, { version: tool.catch.version('int') as number|null }).then(respond_done);
     account_update_status_pks(data.account_email);
     account_update_status_keyserver(data.account_email);
   });
@@ -119,11 +119,11 @@ function schedule_cryptup_subscription_level_check() {
   setTimeout(function() {
     if(background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      setTimeout(catcher.try(tool.api.cryptup.account_check_sync), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(tool.catch.try(tool.api.cryptup.account_check_sync), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      catcher.try(tool.api.cryptup.account_check_sync)(); // now
+      tool.catch.try(tool.api.cryptup.account_check_sync)(); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  setInterval(catcher.try(tool.api.cryptup.account_check_sync), tool.time.hours(23 + Math.random())); // random 23-24 hours
+  setInterval(tool.catch.try(tool.api.cryptup.account_check_sync), tool.time.hours(23 + Math.random())); // random 23-24 hours
 }

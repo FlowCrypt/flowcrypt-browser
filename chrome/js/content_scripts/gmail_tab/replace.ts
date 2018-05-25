@@ -72,7 +72,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(on_click)));
+    container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(on_click)));
   };
 
   private replace_conversation_buttons = (force:boolean=false) => {
@@ -88,7 +88,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           if(i + 1 < conversation_reply_buttons_to_replace.length || has_visible_replacements) {
             $(reply_button).addClass('replaced').html(''); // hide all except last
           } else {
-            $(reply_button).html(this.factory.button_reply()).click(tool.ui.event.prevent(tool.ui.event.double(), catcher.try(this.set_reply_box_editable))); // replace last
+            $(reply_button).html(this.factory.button_reply()).click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(this.set_reply_box_editable))); // replace last
           }
         });
       }
@@ -133,7 +133,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         return '';
       });
       $(this).replaceWith(button);
-      $('a.open_draft').click(catcher.try(() => {
+      $('a.open_draft').click(tool.catch.try(() => {
         $('div.new_message').remove();
         $('body').append(self.factory.embedded_compose(button_href_id));
       }));
@@ -155,7 +155,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             }, () => $(new_pgp_attachments).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(catcher.try(() => {
+            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.catch.try(() => {
               tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }

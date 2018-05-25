@@ -28,8 +28,8 @@ class Attach {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (id: string, name: string) => catcher.try(() => this.process_new_attachment(id, name))(),
-          onCancel: (id: string) => catcher.try(() => this.cancel_attachment(id))(),
+          onSubmitted: (id: string, name: string) => tool.catch.try(() => this.process_new_attachment(id, name))(),
+          onCancel: (id: string) => tool.catch.try(() => this.cancel_attachment(id))(),
         },
       };
       this.uploader = new qq.FineUploader(config);

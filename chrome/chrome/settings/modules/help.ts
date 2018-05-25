@@ -11,7 +11,7 @@ tool.catch.try(() => {
     let button = this;
     $(this).html(tool.ui.spinner('white'));
     setTimeout(function () { // this is so that spinner starts spinning before a potential failed connection alert shows up
-      let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + tool.env.browser().name +  ' ' +  catcher.version();
+      let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + tool.env.browser().name +  ' ' +  tool.catch.version();
       tool.api.cryptup.help_feedback(url_params.account_email as string, msg).validate(r => r.sent).then(response => {
         $(button).text('sent!');
         alert('Message sent! You will find your response in ' + url_params.account_email + ', check your email later. Thanks!');

@@ -61,7 +61,7 @@ tool.catch.try(async() => {
           throw Error('FlowCrypt is not properly set up. No Public Key found in storage.');
         }
       },
-      storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => catcher.Promise((resolve, reject) => {
+      storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => tool.catch.Promise((resolve, reject) => {
         Store.get_account(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
           if (thread_id) { // it's a reply
             let drafts = draft_storage.drafts_reply || {};
@@ -84,7 +84,7 @@ tool.catch.try(async() => {
         });
       }),
       storage_passphrase_get: () => {
-        return catcher.Promise((resolve, reject) => {
+        return tool.catch.Promise((resolve, reject) => {
           Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
             if(primary_ki === null) {
               resolve(null); // flowcrypt just uninstalled or reset?
@@ -108,27 +108,27 @@ tool.catch.try(async() => {
       storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
       storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
       storage_contact_object: Store.db_contact_object,
-      email_provider_draft_get: (draft_id: string) => catcher.Promise((resolve, reject) => {
+      email_provider_draft_get: (draft_id: string) => tool.catch.Promise((resolve, reject) => {
         tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw', (success, response) => {
           (success ? resolve : reject)(response);
         });
       }),
-      email_provider_draft_create: (mime_message: string) => catcher.Promise((resolve, reject) => {
+      email_provider_draft_create: (mime_message: string) => tool.catch.Promise((resolve, reject) => {
         tool.api.gmail.draft_create(url_params.account_email as string, mime_message, url_params.thread_id as string, (success, response) => {
           (success ? resolve : reject)(response);
         });
       }),
-      email_provider_draft_update: (draft_id: string, mime_message: string) => catcher.Promise((resolve, reject) => {
+      email_provider_draft_update: (draft_id: string, mime_message: string) => tool.catch.Promise((resolve, reject) => {
         tool.api.gmail.draft_update(url_params.account_email as string, draft_id, mime_message, (success, response) => {
           (success ? resolve : reject)(response);
         });
       }),
-      email_provider_draft_delete: (draft_id: string) => catcher.Promise((resolve, reject) => {
+      email_provider_draft_delete: (draft_id: string) => tool.catch.Promise((resolve, reject) => {
         tool.api.gmail.draft_delete(url_params.account_email as string, draft_id, (success, response) => {
           (success ? resolve : reject)(response);
         });
       }),
-      email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => catcher.Promise((resolve, reject) => {
+      email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.catch.Promise((resolve, reject) => {
         tool.api.gmail.message_send(url_params.account_email as string, message, function (success, response: any) {
           if(success && response && response.id) {
             resolve(response);

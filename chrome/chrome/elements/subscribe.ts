@@ -103,7 +103,7 @@ tool.catch.try(async () => {
       button_restore();
     } else {
       alert('Could not complete action: ' + error.message);
-      catcher.report('problem during subscribe.js', error);
+      tool.catch.report('problem during subscribe.js', error);
       window.location.reload()
     }
   }

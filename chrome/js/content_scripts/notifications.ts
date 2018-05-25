@@ -36,21 +36,21 @@ class Notifications {
     $('.webmail_notifications').html(`<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if(typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;
-      callbacks.close = catcher.try(() => {
+      callbacks.close = tool.catch.try(() => {
         original_close_callback();
         this.clear();
       });
     } else {
-      callbacks.close = catcher.try(this.clear);
+      callbacks.close = tool.catch.try(this.clear);
     }
     if(typeof callbacks.reload === 'undefined') {
-      callbacks.reload = catcher.try(() => window.location.reload());
+      callbacks.reload = tool.catch.try(() => window.location.reload());
     }
     if(typeof callbacks.subscribe === 'undefined') {
-      callbacks.subscribe = catcher.try(() => tool.browser.message.send(this.tab_id, 'subscribe_dialog'));
+      callbacks.subscribe = tool.catch.try(() => tool.browser.message.send(this.tab_id, 'subscribe_dialog'));
     }
     for(let name of Object.keys(callbacks)) {
-      $(`.webmail_notifications a.${name}`).click(catcher.try(tool.ui.event.prevent(tool.ui.event.double(), callbacks[name])));
+      $(`.webmail_notifications a.${name}`).click(tool.catch.try(tool.ui.event.prevent(tool.ui.event.double(), callbacks[name])));
     }
   }
 

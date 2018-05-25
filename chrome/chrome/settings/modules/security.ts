@@ -36,7 +36,7 @@ tool.catch.try(() => {
             $('.select_loader_container').html('');
             $('.default_message_expire').replaceWith('(unknown)');
           }
-        }).catch(catcher.handle_exception);
+        }).catch(tool.catch.handle_exception);
       } else {
         $('.default_message_expire').val('3').css('display', 'inline-block');
         $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(function() {

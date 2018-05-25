@@ -3272,7 +3272,6 @@ let tool = {
 };
 
 tool.catch._.initialize();
-let catcher = tool.catch; // legacy code expects this
 
 (function ( /* EXTENSIONS AND CONFIG */ ) {
 

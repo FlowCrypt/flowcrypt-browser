@@ -56,7 +56,7 @@ tool.catch.try(() => {
                 alert('Error requesting Re-Attestation. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(error.message));
               });
             }, error => {
-              catcher.report('Error signing REQUEST_REPLACEMENT: ' + error.message);
+              tool.catch.report('Error signing REQUEST_REPLACEMENT: ' + error.message);
               alert('Error signing request. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(error.message));
             });
           }

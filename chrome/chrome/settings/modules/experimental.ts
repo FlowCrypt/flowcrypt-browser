@@ -87,7 +87,7 @@ tool.catch.try(() => {
     }));
   
     $('.action_exception').click(function() {
-      catcher.test();
+      tool.catch.test();
     });
   
     $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {

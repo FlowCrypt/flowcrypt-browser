@@ -162,7 +162,7 @@ tool.catch.try(() => {
   function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: Options, callback: Callback) {
     Store.get_account(account_email, ['addresses']).then((storage: {addresses: string[]|undefined}) => {
       if(options.submit_main) {
-        tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => catcher.report('tool.api.attester.test_welcome: failed', error));
+        tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => tool.catch.report('tool.api.attester.test_welcome: failed', error));
         let addresses;
         if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
           addresses = storage.addresses.concat(account_email);
@@ -255,7 +255,7 @@ tool.catch.try(() => {
         });
       });
     }).catch((error: Error) => {
-      catcher.handle_exception(error);
+      tool.catch.handle_exception(error);
       $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Please write me at human@flowcrypt.com so that I can fix it ASAP.');
     });
   }
@@ -432,13 +432,13 @@ tool.catch.try(() => {
     }).then(function (key: {privateKeyArmored: string}) {
       let armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
       tool.crypto.key.test(armored, 'stockholm', function (key_works, error_message) {
-        catcher.report(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
+        tool.catch.report(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
         setTimeout(function () {
           $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
         }, 5000);
       });
     }).catch(function (exception: Error) {
-      catcher.handle_exception(exception);
+      tool.catch.handle_exception(exception);
     });
   });
   

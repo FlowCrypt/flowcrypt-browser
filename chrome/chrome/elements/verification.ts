@@ -28,7 +28,7 @@ tool.catch.try(async () => {
       }
     } catch (error) {
       render_status('Could not complete: ' + error.message);
-      catcher.log('problem in verification.js', error);
+      tool.catch.log('problem in verification.js', error);
     }
   }
   

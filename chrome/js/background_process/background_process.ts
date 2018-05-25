@@ -20,7 +20,7 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
   let db: IDBDatabase;
 
   await migrate_global();
-  await Store.set(null, { version: catcher.version('int') as number|null });
+  await Store.set(null, { version: tool.catch.version('int') as number|null });
   let storage = await Store.get_global(['settings_seen', 'errors']);
   if(!storage.settings_seen) {
     open_settings_page('initial.htm'); // called after the very first installation of the plugin
@@ -50,7 +50,7 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
     attest_packet_received: BgAttests.attest_packet_received_handler,
     update_uninstall_url: update_uninstall_url,
     get_active_tab_info: get_active_tab_info,
-    runtime: (message, sender, respond) => respond({ environment: catcher.environment(), version: catcher.version() }),
+    runtime: (message, sender, respond) => respond({ environment: tool.catch.environment(), version: tool.catch.version() }),
     ping: (message, sender, respond) => respond(true),
     _tab_: (request, sender, respond) => {
       if(sender === 'background') {
@@ -116,7 +116,7 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
   function update_uninstall_url(request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
     Store.account_emails_get().then((account_emails) => {
       if(typeof chrome.runtime.setUninstallURL !== 'undefined') {
-        catcher.try(function () {
+        tool.catch.try(function () {
           chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
             email: (account_emails && account_emails.length) ? account_emails[0] : null,
             metrics: null,
@@ -144,12 +144,12 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
   }
     
   function db_operation(request: BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) {
-    catcher.try(() => {
+    tool.catch.try(() => {
       if(db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
         Store[request.f].apply(null, [db].concat(request.args)).then(respond);
       } else {
-        catcher.log('db corrupted, skipping: ' + request.f);
+        tool.catch.log('db corrupted, skipping: ' + request.f);
       }
     })();
   }
@@ -189,7 +189,7 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
       let returned = (f as Function).apply(null, resolved_args); // the actual operation
       if(!has_callback) {
         if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
-          returned.then(convert_large_data_to_object_urls_and_respond, catcher.handle_promise_error);
+          returned.then(convert_large_data_to_object_urls_and_respond, tool.catch.handle_promise_error);
         } else { // direct value
           convert_large_data_to_object_urls_and_respond(returned);
         }

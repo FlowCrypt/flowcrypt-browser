@@ -227,7 +227,7 @@ class Store {
 
   static async account_emails_add(account_email: string): Promise<void> { //todo: concurrency issues with another tab loaded at the same time
     if(!account_email) {
-      catcher.report('attempting to save empty account_email: ' + account_email);
+      tool.catch.report('attempting to save empty account_email: ' + account_email);
     }
     let account_emails = await Store.account_emails_get();
     if(!tool.value(account_email).in(account_emails) && account_email) {
@@ -264,7 +264,7 @@ class Store {
     } else if(exception.message === 'A mutation operation was attempted on a database that did not allow mutations.') {
       return new StoreDbDeniedError(exception.message);
     } else {
-      catcher.handle_exception(exception);
+      tool.catch.handle_exception(exception);
       return new StoreDbDeniedError(exception.message);
     }
   }
@@ -390,7 +390,7 @@ class Store {
           let tx = db.transaction('contacts', 'readwrite');
           let contactsTable = tx.objectStore('contacts');
           contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
-          tx.oncomplete = catcher.try(resolve);
+          tx.oncomplete = tool.catch.try(resolve);
           let stack_fill = String((new Error()).stack);
           tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
         }
@@ -410,7 +410,7 @@ class Store {
           } else { // longid
             tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid[0]);
           }
-          tx.onsuccess = catcher.try(() => resolve([tx.result !== undefined ? tx.result : null]));
+          tx.onsuccess = tool.catch.try(() => resolve([tx.result !== undefined ? tx.result : null]));
           let stack_fill = String((new Error()).stack);
           tx.onerror = () => reject(Store.db_error_categorize(tx.error, stack_fill));
         } else {
@@ -459,7 +459,7 @@ class Store {
         }
         if(typeof search !== 'undefined') {
           let found: Contact[] = [];
-          search.onsuccess = catcher.try(() => {
+          search.onsuccess = tool.catch.try(() => {
             let cursor = search!.result; // checked it above
             if(!cursor || found.length === query.limit) {
               resolve(found);

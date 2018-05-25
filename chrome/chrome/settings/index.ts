@@ -2,16 +2,14 @@
 
 'use strict';
 
-catcher.try(() => {
+tool.catch.try(() => {
 
   let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
   let tab_id_global: string;
   // let microsoft_auth_attempt = {};
   let google_token_scopes: string[];
   
-  tool.time.wait(function() { if(typeof catcher !== 'undefined') { return true; }}).then(function() {
-    $('.logo-row span#v').text(String(tool.catch.version()));
-  });
+  $('.logo-row span#v').text(String(tool.catch.version()));
   
   tool.env.webmails(function(webmails) {
     for(let webmail_name of webmails) {
@@ -86,7 +84,7 @@ catcher.try(() => {
   }
   
   function initialize() {
-    return catcher.Promise((resolve, reject) => {
+    return tool.catch.Promise((resolve, reject) => {
       if(url_params.account_email) {
         $('.email-address').text(url_params.account_email as string);
         $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
@@ -210,7 +208,7 @@ catcher.try(() => {
       } else if(response && response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
         show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
       } else {
-        catcher.log('failed to log into google', response);
+        tool.catch.log('failed to log into google', response);
         alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
         window.location.reload();
       }

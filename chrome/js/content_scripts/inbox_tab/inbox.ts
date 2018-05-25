@@ -2,7 +2,7 @@
 
 'use strict';
 
-catcher.try(() => {
+tool.catch.try(() => {
 
   const replace_pgp_elements_interval_ms = 1000;
   let replace_pgp_elements_interval: number;

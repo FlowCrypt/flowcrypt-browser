@@ -26,7 +26,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
     (window as ContentScriptWindow).destroyable_timeouts = [];
 
     (window as ContentScriptWindow).destroy = function () {
-      catcher.try(() => {
+      tool.catch.try(() => {
         console.log('Updating FlowCrypt');
         document.removeEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
         for(let id of (window as ContentScriptWindow).destroyable_intervals) {
@@ -47,13 +47,13 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
     };
 
     (window as ContentScriptWindow).TrySetDestroyableInterval = function (code, ms) {
-      let id = window.setInterval(catcher.try(code), ms);
+      let id = window.setInterval(tool.catch.try(code), ms);
       (window as ContentScriptWindow).destroyable_intervals.push(id);
       return id;
     };
 
     (window as ContentScriptWindow).TrySetDestroyableTimeout = function (code, ms) {
-      let id = window.setTimeout(catcher.try(code), ms);
+      let id = window.setTimeout(tool.catch.try(code), ms);
       (window as ContentScriptWindow).destroyable_timeouts.push(id);
       return id;
     };
@@ -76,8 +76,8 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
   function wait_for_account_email_then_setup() {
     let account_email = webmail_specific.get_user_account_email();
     if(!(window as ContentScriptWindow).account_email_global) {
-      if(typeof account_email !== 'undefined' && catcher.version()) {
-        console.log('Loading FlowCrypt ' + catcher.version() + ' for ' + account_email);
+      if(typeof account_email !== 'undefined' && tool.catch.version()) {
+        console.log('Loading FlowCrypt ' + tool.catch.version() + ' for ' + account_email);
         (window as ContentScriptWindow).account_email_global = account_email;
         tool.env.webmails(function (webmails) {
           if(tool.value(webmail_specific.name).in(webmails)) {
@@ -163,7 +163,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
       },
       notification_show: (data: NotificationWithCallbacks) => {
         notifications.show(data.notification, data.callbacks);
-        $('body').one('click', catcher.try(notifications.clear));
+        $('body').one('click', tool.catch.try(notifications.clear));
       },
     }, tab_id);
 

@@ -189,7 +189,7 @@ class Factory {
 
   button_recipients_use_encryption = (count: number, webmail_name: WebMailName) => {
     if(webmail_name !== 'gmail') {
-      catcher.report('switch_to_secure not implemented for ' + webmail_name);
+      tool.catch.report('switch_to_secure not implemented for ' + webmail_name);
       return '';
     } else {
       return '<div class="aoD az6 recipients_use_encryption">Your ' + (count > 1 ? 'recipients seem' : 'recipient seems') + ' to have encryption set up! <a href="#">Secure Compose</a></div>';

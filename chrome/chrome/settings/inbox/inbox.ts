@@ -52,7 +52,7 @@ tool.catch.try(() => {
       },
       notification_show: function (data: NotificationWithCallbacks) {
         notifications.show(data.notification, data.callbacks);
-        $('body').one('click', catcher.try(notifications.clear));
+        $('body').one('click', tool.catch.try(notifications.clear));
       },
       close_dialog: function (data) {
         $('#cryptup_dialog').remove();
