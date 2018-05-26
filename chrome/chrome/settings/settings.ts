@@ -133,8 +133,8 @@ function openpgp_key_encrypt(key: OpenpgpKey, passphrase: string) {
 
 function show_settings_page(page: string, add_url_text_or_params?: string|UrlParams|null) {
   let page_params: UrlParams = {
-    account_email: settings_url_params.account_email, 
-    placement: 'settings', 
+    account_email: settings_url_params.account_email,
+    placement: 'settings',
     parent_tab_id: settings_url_params.parent_tab_id || settings_tab_id_global,
   };
   if(typeof add_url_text_or_params === 'object' && add_url_text_or_params) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below

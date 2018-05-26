@@ -116,7 +116,7 @@ class Factory {
   dialog_subscribe = (verif_em_txt: string|null, source: string|null, sub_res_tab_id: string|null) => {
     return this.div_dialog(this.iframe(this.src_subscribe_dialog(verif_em_txt, 'dialog', source, sub_res_tab_id), ['mediumtall'], {scrolling: 'no'}));
   };
-  
+
   dialog_add_pubkey = (emails: string[]) => {
     return this.div_dialog(this.iframe(this.src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
   };
@@ -171,7 +171,7 @@ class Factory {
     } else if(webmail_name === 'outlook') {
       return `<div class="_fce_c ${this.destroyable_class} cryptup_compose_button_container" role="presentation"><div class="new_message_button" title="New Secure Email"><img src="${this.src_img('logo-19-19.png')}"></div></div>`;
     } else {
-      return `<div class="${this.destroyable_class} z0" style="height: 30px;"><div class="new_message_button" role="button" tabindex="0" data-test="action-secure-compose">SECURE COMPOSE</div></div>`;
+      return `<div class="${this.destroyable_class} z0"><div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div></div>`;
     }
   };
 

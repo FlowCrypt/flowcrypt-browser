@@ -63,6 +63,7 @@
   },
   "web_accessible_resources": [
     "/css/webmail.css",
+    "/img/logo/logo.svg",
     "/img/svgs/reply-icon.svg",
     "/img/svgs/spinner-white-small.svg",
     "/img/svgs/spinner-green-small.svg",
