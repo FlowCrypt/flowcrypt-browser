@@ -21,3 +21,4 @@
 /node_modules/
 /build/*
 *.code-workspace
+release/log.txt
