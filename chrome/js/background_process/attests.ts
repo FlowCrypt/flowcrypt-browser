@@ -62,7 +62,7 @@ class BgAttests {
   private static check_email_for_attests_and_respond = async (account_email: string) => {
     let storage = await Store.get_account(account_email, ['attests_requested']);
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
-    if(primary_ki !== null) {
+    if(primary_ki) {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if(passphrase !== null) {
         if(storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
@@ -86,6 +86,10 @@ class BgAttests {
   private static process_attest_packet_text = async (account_email: string, attest_packet_text: string, passphrase: string|null): Promise<AttestResult> => {
     let attest = tool.api.attester.packet.parse(attest_packet_text);
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    if(!primary_ki) {
+      BgAttests.stop_watching(account_email);
+      return {attest_packet_text, message: 'No primary_ki for ' + account_email, account_email};
+    }
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     let {attests_processed} = await Store.get_account(account_email, ['attests_processed']);
     if (!tool.value(attest.content.attester).in(attests_processed || [])) {
