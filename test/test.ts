@@ -401,7 +401,8 @@ const tests = {
     let all_ok = true;
     for(let i = 0; i < messages.length; i++) {
       let m = messages[i];
-      await pgp_block_page.goto(meta.extension_url('chrome/elements/pgp_block.htm') + m.params);
+      let test_url = meta.extension_url('chrome/elements/pgp_block.htm') + m.params;
+      await pgp_block_page.goto(test_url);
       await meta.wait_all(pgp_block_page, '@pgp-block-content');
       await meta.wait_all(pgp_block_page, meta._selector_test_state('ready'), {timeout: 30}); // wait for 30s until decryption done
       await meta.sleep(1);

@@ -228,8 +228,8 @@ interface OpenpgpKey {
 }
 
 interface OpenpgpMessage {
-    getEncryptionKeyIds: () => string[],
-    getSigningKeyIds: () => string[],
+    getEncryptionKeyIds?: () => string[],
+    getSigningKeyIds?: () => string[],
     text?: string,
 }
 

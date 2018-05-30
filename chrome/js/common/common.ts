@@ -714,7 +714,8 @@ let tool = {
         message = openpgp.message.readArmored(tool.str.from_uint8(message));
       }
       return tool.catch.Promise(function(resolve, reject) {
-        let message_key_ids = (message as OpenpgpMessage).getEncryptionKeyIds();
+        message = <OpenpgpMessage>message;
+        let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
         Store.keys_get(account_email).then(private_keys => {
           let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(tool._.crypto_key_ids));
           let diagnosis = { found_match: false, receivers: message_key_ids.length };
@@ -1382,7 +1383,7 @@ let tool = {
             callback();
           }
         } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
-          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', tool.noop); // calling from background script to background script: skip messaging completely
+          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback || tool.noop); // calling from background script to background script: skip messaging completely
         } else if(is_background_page) {
           chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, function(r) {
             tool.catch.try(function() {
@@ -2458,8 +2459,8 @@ let tool = {
         with_passphrases: [],
         without_passphrases: [],
       } as InternalSortedKeysForDecrypt;
-      keys.encrypted_for = (message.getEncryptionKeyIds() || []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
-      keys.signed_by = (message.getSigningKeyIds() || []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
+      keys.encrypted_for = (message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
+      keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       Store.keys_get(account_email).then(private_keys_all => {
         keys.potentially_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
         if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
@@ -2484,7 +2485,7 @@ let tool = {
               keys.verification_contacts = verification_contacts.filter(contact => contact !== null) as Contact[];
               keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey).keys));
               callback(keys);
-            });
+            });  
           } else {
             callback(keys);
           }
