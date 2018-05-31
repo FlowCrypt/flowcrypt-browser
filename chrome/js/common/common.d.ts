@@ -267,9 +267,10 @@ interface SendableMessage {
 }
 
 interface StandardError {
-    internal: string|null,
-    message: string,
     code: number|null,
+    message: string,
+    internal: string|null,
+    data?: string,
 }
 
 interface AuthRequest {

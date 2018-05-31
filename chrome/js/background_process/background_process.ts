@@ -189,7 +189,7 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
       let returned = (f as Function).apply(null, resolved_args); // the actual operation
       if(!has_callback) {
         if(typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
-          returned.then(convert_large_data_to_object_urls_and_respond, tool.catch.handle_promise_error);
+          returned.then(convert_large_data_to_object_urls_and_respond, (e: any) => tool.catch.handle_promise_error({code: null, internal: 'promise_rejection', message: 'error in execute_in_background_process_and_respond_when_done', data: String(e)}));
         } else { // direct value
           convert_large_data_to_object_urls_and_respond(returned);
         }

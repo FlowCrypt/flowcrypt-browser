@@ -3233,9 +3233,9 @@ let tool = {
         return e.stack.split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
       }
     },
-    handle_promise_error: (e: PromiseRejectionEvent) => {
-      if(e && typeof e === 'object' && typeof e.reason === 'object' && e.reason.message) {
-        tool.catch.handle_exception(e.reason); // actual exception that happened in Promise, unhandled
+    handle_promise_error: (e: PromiseRejectionEvent|StandardError|Error) => {
+      if(e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
+        tool.catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if(!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
         tool.catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
       }
