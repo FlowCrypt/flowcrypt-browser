@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.5.8 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/217?closed=1" target="_blank">New compose button</a></b>
+
 <b>version 5.5.7 on May 30, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/216?closed=1" target="_blank">Fix reading signed messages</a></b>
 
 <b>version 5.5.6 on May 29, 2018: Removed old logos</b>
