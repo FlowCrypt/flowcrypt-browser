@@ -4,7 +4,7 @@
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "sourceMap": true
+    "sourceMap": false
   },
   "include": [
     "chrome/**/*"

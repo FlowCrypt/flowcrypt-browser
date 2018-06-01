@@ -8,6 +8,7 @@ let fs = require('fs');
 let del = require('del');
 let exec = require('child_process').exec;
 let inquirer = require('inquirer');
+var replace = require('gulp-replace');
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
 let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
@@ -26,7 +27,8 @@ let recipe = {
       });
     }
   },
-  ts: (from, to) => gulp.src(from).pipe(sourcemaps.init()).pipe(typescript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(sourcemaps.write()).pipe(gulp.dest(to)),
+  // ts: (from, to) => gulp.src(from).pipe(sourcemaps.init()).pipe(typescript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(sourcemaps.write()).pipe(gulp.dest(to)),
+  ts: (from, to) => gulp.src(from).pipe(typescript(config('tsconfig.json').compilerOptions)).on('error', recipe.crash()).pipe(gulp.dest(to)),
   copy: (from, to) => gulp.src(from).pipe(gulp.dest(to)),
   exec: (shell_command) => new Promise((resolve, reject) => {
     let subprocess = exec(shell_command, (err, stdout, stderr) => err === null ? resolve() : reject(err));
@@ -35,12 +37,17 @@ let recipe = {
   }),
   copyEditJson: (from, to, json_processor) => gulp.src(from).pipe(jeditor(json_processor)).pipe(gulp.dest(to)),
   confirm: (keyword) => inquirer.prompt([{type: 'input', message: `Type "${keyword}" to confirm`, name: 'r'}]).then(q => q.r === keyword ? null : process.exit(1)),
+  spacesToTabs: (folder) => gulp.src(`${folder}/**/*.js`).pipe(replace(/^( {4})+/gm, (m) => '\t'.repeat(m.length/4))).pipe(gulp.dest(folder)),
 }
 
 let subTask = {
   flush: () => Promise.all([del(chromeTo), del(ffTo)]),
   transpileProjectTs: () => recipe.ts(source('**/*.ts') ,chromeTo),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
+  chromeBuildSpacesToTabs: () => Promise.all([
+    recipe.spacesToTabs(`${chromeTo}/js`),
+    recipe.spacesToTabs(`${chromeTo}/chrome`),
+  ]),
   copyVersionedManifest: () => recipe.copyEditJson(source('manifest.json'), chromeTo, manifest => {
     manifest.version = version;
     return manifest;
@@ -67,6 +74,7 @@ let task = {
       subTask.copySourceFiles,
       subTask.copyVersionedManifest,
     ),
+    subTask.chromeBuildSpacesToTabs,
     subTask.copyChromeToFirefox,
     subTask.copyChromeToFirefoxEditedManifest,
   ),

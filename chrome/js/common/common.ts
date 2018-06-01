@@ -11,7 +11,8 @@ declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, Mime
 declare var require: any;
 declare var exports: any;
 
-class UnreportableError extends Error {};
+class UnreportableError extends Error {
+};
 
 let tool = {
   str: {
