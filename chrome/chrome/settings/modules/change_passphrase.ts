@@ -80,8 +80,7 @@ tool.catch.try(() => {
           $('#password2').focus();
         } else {
           let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
-          // @ts-ignore - todo - check this
-          tool.crypto.key.decrypt(prv, original_passphrase);
+          tool.crypto.key.decrypt(prv, original_passphrase!); // !null because we checked for this above, and user entry cannot be null
           openpgp_key_encrypt(prv, new_passphrase);
           Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true).then(stored_passphrase => {
             Promise.all([

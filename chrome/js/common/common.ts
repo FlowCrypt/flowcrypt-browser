@@ -220,9 +220,8 @@ let tool = {
     },
     int_to_hex: (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
       let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
-      while(dec.length){
-        // @ts-ignore
-        s = 1 * dec.shift();
+      while(dec.length) {
+        s = 1 * Number(dec.shift());
         for(i = 0; s || i < sum.length; i++){
           s += (sum[i] || 0) * 10;
           sum[i] = s % 16;
@@ -439,7 +438,7 @@ let tool = {
             a.click();
           } else { // safari
             let e = document.createEvent('MouseEvents');
-            // @ts-ignore
+            // @ts-ignore - safari only. expected 15 arguments, but works well with 4
             e.initMouseEvent('click', true, true, window);
             a.dispatchEvent(e);
           }
@@ -531,9 +530,9 @@ let tool = {
       }
       if(parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
         for(let to of parsed_mime_message.headers.to) {
-          // @ts-ignore
+          // @ts-ignore - I should check this - does it really have .address?
           if(to.address) {
-            // @ts-ignore
+            // @ts-ignore - I should check this - does it really have .address?
             header_to.push(to.address);
           }
         }
@@ -1287,7 +1286,7 @@ let tool = {
     },
     event: {
       stop: () => {
-        return function(e: Event) {
+        return function(e: JQuery.Event) {
           e.preventDefault();
           e.stopPropagation();
           return false;
@@ -2846,7 +2845,7 @@ let tool = {
                 if(typeof error_obj.error !== 'undefined' && error_obj.error.message === 'Invalid Credentials') {
                   tool._.google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, tool._.api_google_call);
                 } else {
-                  // @ts-ignore
+                  // @ts-ignore - edditing native response object
                   response['_error'] = error_obj.error;
                   tool.catch.try(function () {
                     callback(false, response);
@@ -2854,12 +2853,12 @@ let tool = {
                 }
               } catch(err) {
                 tool.catch.try(function () {
-                  // @ts-ignore
+                  // @ts-ignore - edditing native response object
                   response['_error'] = {};
                   let re_title = /<title>([^<]+)<\/title>/mgi;
                   let title_match = re_title.exec(response.responseText);
                   if(title_match) {
-                    // @ts-ignore
+                    // @ts-ignore - edditing native response object
                     response['_error'].message = title_match[1];
                   }
                   callback(false, response);
@@ -2915,7 +2914,7 @@ let tool = {
                 if(typeof error_obj.error !== 'undefined' && error_obj.error.message === 'Invalid Credentials') {
                   tool._.google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, tool._.api_gmail_call, progress, content_type);
                 } else {
-                  // @ts-ignore
+                  // @ts-ignore - edditing native response object
                   response['_error'] = error_obj.error;
                   if(callback) {
                     tool.catch.try(function () {
@@ -2925,12 +2924,12 @@ let tool = {
                 }
               } catch(err) {
                 tool.catch.try(function () {
-                  // @ts-ignore
+                  // @ts-ignore - edditing native response object
                   response['_error'] = {};
                   let re_title = /<title>([^<]+)<\/title>/mgi;
                   let title_match = re_title.exec(response.responseText);
                   if(title_match) {
-                    // @ts-ignore
+                    // @ts-ignore - edditing native response object
                     response['_error'].message = title_match[1];
                   }
                   if(callback) {
@@ -3208,7 +3207,7 @@ let tool = {
       return browser_name + ':' + env;
     },
     test: () => {
-      // @ts-ignore
+      // @ts-ignore - intentional exception
       this_will_fail();
     },
     Promise: (f: (resolve: (result?: any) => void, reject: (error?: any) => void) => void): FcPromise<any> => {

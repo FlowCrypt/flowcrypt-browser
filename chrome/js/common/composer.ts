@@ -259,7 +259,6 @@ class Composer {
       await this.draft_delete();
       this.app.close_message();
     });
-    // @ts-ignore - $.bind unknown signature?
     S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
     S.cached('icon_sign').click(() => this.toggle_sign_icon());
   };
