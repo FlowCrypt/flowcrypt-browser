@@ -2780,7 +2780,7 @@ let tool = {
         contentType: 'application/json; charset=UTF-8',
         async: true,
         success: function (response) {
-          callback(response.emailAddress);
+          callback(response.emailAddress || expected_email);  // todo - emailAddress may be undefined. Handle better
         },
         error: function (response) {
           console.log('google_auth_check_email error');
