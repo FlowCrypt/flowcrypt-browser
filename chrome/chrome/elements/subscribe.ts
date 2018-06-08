@@ -83,7 +83,9 @@ tool.catch.try(async () => {
       } else {
         $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
         $('.action_close').click(() => {
-          tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+          if(url_params.subscribe_result_tab_id) {
+            tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+          }
           close_dialog();
         });
       }
