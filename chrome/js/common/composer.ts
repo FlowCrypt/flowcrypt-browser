@@ -495,10 +495,10 @@ class Composer {
   };
 
   private throw_if_form_not_ready = (recipients: string[]): void => {
-    if(tool.value(this.S.now('send_btn_span').text().toLowerCase().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
+    if(tool.value(this.S.now('send_btn_span').text().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
       return; // all good
     }
-    if(this.S.now('send_btn_span').text().toLowerCase().trim() === this.BTN_WRONG_ENTRY) {
+    if(this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
       throw new ComposerUserError('Please re-enter recipients marked in red color.');
     }
     if(!recipients || !recipients.length) {
@@ -1020,9 +1020,9 @@ class Composer {
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
   };
 
-  private remove_receiver = () => {
+  private remove_receiver = (element: HTMLElement) => {
     this.recipients_missing_my_key = tool.arr.without_value(this.recipients_missing_my_key, $(this).parent().text());
-    $(this).parent().remove();
+    $(element).parent().remove();
     this.resize_input_to();
     this.show_hide_password_or_pubkey_container_and_color_send_button();
     this.update_pubkey_icon();
@@ -1211,12 +1211,12 @@ class Composer {
       }
     }
     $(email_element).children('img, i').remove();
-    $(email_element).append('<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />').find('img.close-icon').click(() => this.remove_receiver());
+    $(email_element).append('<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />').find('img.close-icon').click((e) => this.remove_receiver(e.target));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
       $(email_element).children('img:visible').replaceWith('<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
-      $(email_element).find('.action_retry_pubkey_fetch').click(() => this.remove_receiver()); // todo - actual refresh
+      $(email_element).find('.action_retry_pubkey_fetch').click((e) => this.remove_receiver(e.target)); // todo - actual refresh
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");

@@ -968,7 +968,7 @@ Updated name and description
 composing: fixing compose window hangup for some users
 
 <b>version 2.4.2 on November 30, 2016: button texts fix</b>
-composing: all compose buttons to read "encrypt and send"
+composing: all compose buttons to read "Encrypt and Send"
 
 <b>version 2.4.1 on November 30, 2016: first compose fix</b>
 composing: first time users send button freeze fix
