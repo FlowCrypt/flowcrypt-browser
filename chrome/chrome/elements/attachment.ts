@@ -94,7 +94,7 @@ tool.catch.try(() => {
   }
   
   function decrypt_and_save_attachment_to_downloads(success: boolean, encrypted_data: string|undefined) {
-    if(success) {
+    if(success && encrypted_data) {
       tool.crypto.message.decrypt(url_params.account_email as string, encrypted_data as string, null, function (result) {
         $('#download').html(original_html_content).removeClass('visible');
         if(result.success) {
