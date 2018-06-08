@@ -70,6 +70,10 @@ tool.catch.try(() => {
     $('.action_open_decrypt').click(function () {
       show_settings_page('/chrome/settings/modules/decrypt.htm');
     });
+
+    $('.action_open_decrypt_ignore_mdc').click(function () {
+      show_settings_page('/chrome/settings/modules/decrypt_ignore_mdc.htm');
+    });
   
     $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
       collect_info_and_download_backup_file(url_params.account_email as string);
