@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.6.0 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/220?closed=1" target="_blank">Experimental missing MDC support</a></b>
+
 <b>version 5.5.9 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/218?closed=1" target="_blank">Fix inbox compose button</a></b>
 
 <b>version 5.5.8 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/217?closed=1" target="_blank">New compose button</a></b>
