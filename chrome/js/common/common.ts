@@ -1242,7 +1242,7 @@ let tool = {
       });
     },
     enter: (callback: () => void) => {
-      return function(e: KeyboardEvent) {
+      return function(e: JQuery.Event<HTMLElement, null>) {
         if (e.which == tool.env.key_codes().enter) {
           callback();
         }

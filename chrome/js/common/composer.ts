@@ -90,8 +90,8 @@ class Composer {
   private SAVE_DRAFT_FREQUENCY = 3000;
   private PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
   private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
-  private BTN_ENCRYPT_AND_SEND = 'encrypt and send';
-  private BTN_SIGN_AND_SEND = 'sign and send';
+  private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
+  private BTN_SIGN_AND_SEND = 'Sign and Send';
   private BTN_WRONG_ENTRY = 're-enter recipient..';
   private BTN_LOADING = 'loading..';
   private CRYPTUP_WEB_URL = 'https://flowcrypt.com'; // todo - should use tool.api.url()
@@ -1300,8 +1300,8 @@ class Composer {
     if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
-    // @ts-ignore - unknown $.keypress signature
-    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message())).keypress(tool.ui.enter(() => extract_process_encrypt_and_send_message()));
+    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message()))
+      .keypress(tool.ui.enter(() => this.extract_process_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));
     this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.parse_and_render_recipients()));
