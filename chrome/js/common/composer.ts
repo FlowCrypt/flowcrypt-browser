@@ -92,8 +92,9 @@ class Composer {
   private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
   private BTN_SIGN_AND_SEND = 'Sign and Send';
-  private BTN_WRONG_ENTRY = 're-enter recipient..';
-  private BTN_LOADING = 'loading..';
+  private BTN_WRONG_ENTRY = 'Re-enter recipient..';
+  private BTN_LOADING = 'Loading..';
+  private BTN_SENDING = 'Sending..';
   private CRYPTUP_WEB_URL = 'https://flowcrypt.com'; // todo - should use tool.api.url()
 
   private last_draft = '';
@@ -571,7 +572,7 @@ class Composer {
     plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
     if (attachments.length && challenge) { // these will be password encrypted attachments
-      this.button_update_timeout = window.setTimeout(() => this.S.now('send_btn_span').text('sending'), 500);
+      this.button_update_timeout = window.setTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       let attachment_admin_codes = await this.upload_attachments_to_cryptup(attachments, subscription);
       plaintext = this.add_uploaded_file_links_to_message_body(plaintext, attachments);
       await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
@@ -615,7 +616,7 @@ class Composer {
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
         // noinspection JSIgnoredPromiseFromCall
         this.app.storage_contact_update(recipients, {last_use: Date.now()});
-        this.S.now('send_btn_span').text('Sending');
+        this.S.now('send_btn_span').text(this.BTN_SENDING);
         signed_data = await this.with_attached_pubkey_if_needed(signed_data);
         const body = {'text/plain': signed_data};
         await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
@@ -651,7 +652,7 @@ class Composer {
   private render_upload_progress = (progress: number) => {
     if (this.attach.has_attachment()) {
       progress = Math.floor(progress);
-      this.S.now('send_btn_span').text(progress < 100 ? 'sending.. ' + progress + '%' : 'sending');
+      this.S.now('send_btn_span').text(`${this.BTN_SENDING} ${progress < 100 ?  `${progress}%` : ''}`);
     }
   };
 
@@ -707,7 +708,7 @@ class Composer {
     encrypted.data = await this.with_attached_pubkey_if_needed(encrypted.data as string);
     let body = {'text/plain': encrypted.data} as SendableMessageBody;
     await this.app.storage_contact_update(recipients, {last_use: Date.now()});
-    this.S.now('send_btn_span').text('sending');
+    this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (challenge) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
