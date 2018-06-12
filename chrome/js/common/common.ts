@@ -1,10 +1,10 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-'use strict';
-
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="common.d.ts" />
+/// // <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
+
+'use strict';
 
 declare let openpgp: any; // todo - how to make this understand openpgp types from above?
 declare let $_HOST_html_to_text: (html: string) => string, MimeParser: any, MimeBuilder: any;

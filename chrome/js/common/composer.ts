@@ -1,7 +1,5 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference path="common.d.ts" />
-
 'use strict';
 
 declare var require: any;
