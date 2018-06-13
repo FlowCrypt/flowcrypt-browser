@@ -147,7 +147,7 @@ tool.catch.try(() => {
     if(subscription.active) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(() => show_settings_page('/chrome/settings/modules/account.htm')).css('cursor', 'pointer');
       if(subscription.method === 'trial') {
-        $('.logo-row .subscription .expire').text(subscription.expire ? ('trial until ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
+        $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
       } else if (subscription.method === 'group') {
         $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
