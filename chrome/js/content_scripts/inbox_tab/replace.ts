@@ -106,19 +106,15 @@ class InboxElementReplacer implements WebmailElementReplacer {
           message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block');
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           // todo - make sure attachment_meta.id present
-          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!, (success, downloaded_attachment: Attachment) => {
-            if(success) {
-              let armored_key = tool.str.base64url_decode(downloaded_attachment.data!);
-              if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
-                message_element.append(this.factory.embedded_pubkey(armored_key, is_outgoing));
-              } else {
-                attachment_selector.css('display', 'block');
-                attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
-              }
+          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!).then(downloaded_attachment => {
+            let armored_key = tool.str.base64url_decode(downloaded_attachment.data!);
+            if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
+              message_element.append(this.factory.embedded_pubkey(armored_key, is_outgoing));
             } else {
-              (attachments_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page');
+              attachment_selector.css('display', 'block');
+              attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
             }
-          });
+          }).catch(e => (attachments_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
         } else if (attachment_meta.treat_as === 'signature') {
           let embedded_signed_message = this.factory.embedded_message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
           if(!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text())) {

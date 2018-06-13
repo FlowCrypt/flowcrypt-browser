@@ -46,11 +46,6 @@ i.small_spinner img { position: absolute; left: 0; right: 0; margin-left: auto; 
 i.large_spinner { display: block; width: 75px; height: 75px; text-align: center; position: relative; }
 i.large_spinner img { position: relative; width: 75px; height: 75px; }
 
-.lightboxed { width: 700px; }
-.lightboxed pre { padding-top: 0; margin-top: 0; }
-.featherlight .featherlight-close-icon { background: none !important; border: none !important; }
-.featherlight.new_message_featherlight .featherlight-content { background: none !important; }
-.featherlight .featherlight-content > .line { color: white; text-align: center; font-weight: 200; letter-spacing: 0.25px;}
 .good { color: #088447; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }
@@ -450,5 +445,13 @@ div#cryptup_dialog iframe.medium { height: 500px; margin-top: -300px; }
 div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 
 .featherlight { z-index: 8 !important; }
+.featherlight .featherlight-close-icon { background: none !important; border: none !important; }
+.featherlight.new_message_featherlight .featherlight-content { background: none !important; }
+.featherlight .featherlight-content > .line { color: white; text-align: center; font-weight: 200; letter-spacing: 0.25px;}
+.featherlight.white .featherlight-content > .line { color: black; }
+.featherlight.white:last-of-type { background: white; }
+.featherlight.retry_prompt .featherlight-content { margin-bottom: 20%; -webkit-animation: fadeIn 0.5s ease;  animation: fadeIn 0.5s ease; }
+.lightboxed { width: 700px; }
+.lightboxed pre { padding-top: 0; margin-top: 0; }
 
 .display_none { display: none; }

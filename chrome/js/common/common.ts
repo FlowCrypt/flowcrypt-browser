@@ -12,7 +12,7 @@ declare var require: any;
 declare var exports: any;
 
 class UnreportableError extends Error {
-};
+}
 
 let tool = {
   str: {
@@ -221,7 +221,7 @@ let tool = {
     int_to_hex: (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
       let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
       while(dec.length) {
-        s = 1 * Number(dec.shift());
+        s = Number(dec.shift());
         for(i = 0; s || i < sum.length; i++){
           s += (sum[i] || 0) * 10;
           sum[i] = s % 16;
@@ -815,7 +815,7 @@ let tool = {
         original_text = tool.str.normalize_spaces(original_text);
         let start_at = 0;
         while(true) {
-          var r = tool._.crypto_armor_detect_block_next(original_text, start_at);
+          let r = tool._.crypto_armor_detect_block_next(original_text, start_at);
           if(r.found) {
             blocks = blocks.concat(r.found);
           }
@@ -1697,9 +1697,10 @@ let tool = {
         }
         return results;
       },
-      attachment_get: (account_email: string, message_id: string, attachment_id: string, callback: ApiCallback, progress_callback:ApiCallProgressCallback|null=null) => {
-        tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, callback, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
-      },
+      attachment_get: (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => new Promise((resolve, reject) => {
+        let cb = (success: boolean, response: ApirGmailAttachment|null) => (success && response) ? resolve(response) : reject(response);
+        tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, cb, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
+      }),
       find_header: (api_gmail_message_object: ApirGmailMessage|ApirGmailMessage$payload, header_name: string) => {
         let node: ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as ApirGmailMessage).payload : api_gmail_message_object as ApirGmailMessage$payload;
         if(typeof node.headers !== 'undefined') {
@@ -1749,21 +1750,12 @@ let tool = {
         }
         return internal_results as SendableMessageBody;
       },
-      fetch_attachments: (account_email: string, attachments:Attachment[], callback: ApiCallback, results:Attachment[]=[]) => { //todo: parallelize with promises
-        let attachment = attachments[results.length];
-        tool.api.gmail.attachment_get(account_email, attachment.message_id!, attachment.id!, (success: boolean, response: Dict<any>) => { // if .message_id or .id not present, api will fail anyway
-          if(success) {
-            attachment.data = response.data;
-            results.push(attachment);
-            if(results.length === attachments.length) {
-              callback(true, results);
-            } else {
-              tool.api.gmail.fetch_attachments(account_email, attachments, callback, results);
-            }
-          } else {
-            callback(success, response);
-          }
-        });
+      fetch_attachments: async (account_email: string, attachments:Attachment[]) => {
+        let responses = await Promise.all(attachments.map(a => tool.api.gmail.attachment_get(account_email, a.message_id!, a.id!))); // if .message_id or .id not present, api will fail anyway  
+        for(let i of responses.keys()) {
+          attachments[i].data = responses[i].data;
+        }
+        return attachments;
       },
       search_contacts: (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
         let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
@@ -1777,7 +1769,7 @@ let tool = {
         for(let contact of known_contacts) {
           gmail_query.push('-to:"' + contact.email + '"');
         }
-        // ignore promise below - it's all about the callbacks
+        // noinspection JSIgnoredPromiseFromCall - we are only using the chunked callbacks
         tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
       },
       /*
@@ -1800,19 +1792,15 @@ let tool = {
               for(let attachment_meta of attachments) {
                 if(attachment_meta.treat_as === 'message') {
                   found = true;
-                  tool.api.gmail.fetch_attachments(account_email, [attachment_meta], function (fetch_attachments_success: boolean, attachments: Attachment[]) {
-                    if(fetch_attachments_success) {
-                      let armored_message_text = tool.str.base64url_decode(attachments[0].data!);
-                      let armored_message = tool.crypto.armor.clip(armored_message_text);
-                      if(armored_message) {
-                        success_callback(armored_message);
-                      } else {
-                        error_callback('format', armored_message_text);
-                      }
+                  tool.api.gmail.fetch_attachments(account_email, [attachment_meta]).then((attachments: Attachment[]) => {
+                    let armored_message_text = tool.str.base64url_decode(attachments[0].data!);
+                    let armored_message = tool.crypto.armor.clip(armored_message_text);
+                    if(armored_message) {
+                      success_callback(armored_message);
                     } else {
-                      error_callback('connection');
+                      error_callback('format', armored_message_text);
                     }
-                  });
+                  }, () => error_callback('connection'));
                   break;
                 }
               }
@@ -1842,40 +1830,37 @@ let tool = {
         let {messages} = await tool.api.gmail.message_list(account_email, q, false);
         return await tool._.api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages || [], header_names);
       },
-      fetch_key_backups: (account_email: string, callback: ApiCallback) => {
-        tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true).then(response => {
-          if(response.messages) {
-            let message_ids = response.messages.map(m => m.id);
-            tool.api.gmail.messages_get(account_email, message_ids, 'full').then(messages => {
-              let attachments:Attachment[] = [];
-              for(let id of Object.keys(messages)) {
-                attachments = attachments.concat(tool.api.gmail.find_attachments(messages[id]));
-              }
-              tool.api.gmail.fetch_attachments(account_email, attachments, function (success, downloaded_attachments: Attachment[]) {
-                let keys:OpenpgpKey[] = [];
-                for(let downloaded_attachment of downloaded_attachments) {
-                  try {
-                    let armored_key = tool.str.base64url_decode(downloaded_attachment.data!);
-                    let key = openpgp.key.readArmored(armored_key).keys[0];
-                    if(key.isPrivate()) {
-                      keys.push(key);
-                    }
-                  } catch(err) {}
-                }
-                callback(success, keys);
-              });
-            }, () => callback(false, 'Connection dropped while checking for backups. Please try again.'));
-          } else {
-            callback(true, null);
+      fetch_key_backups: async (account_email: string) => {
+        let response = await tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true);
+        if(!response.messages) {
+          return [];
+        }
+        let message_ids = response.messages.map(m => m.id);
+        let messages = await tool.api.gmail.messages_get(account_email, message_ids, 'full');
+        let attachments:Attachment[] = [];
+        for(let id of Object.keys(messages)) {
+          attachments = attachments.concat(tool.api.gmail.find_attachments(messages[id]));
+        }
+        attachments = await tool.api.gmail.fetch_attachments(account_email, attachments);
+        let keys:OpenpgpKey[] = [];
+        for(let attachment of attachments) {
+          try {
+            let armored_key = tool.str.base64url_decode(attachment.data!);
+            let key = openpgp.key.readArmored(armored_key).keys[0];
+            if(key.isPrivate()) {
+              keys.push(key);
+            }
+          } catch(err) {
           }
-        }, () => callback(false, 'Connection dropped while checking for backups. Please try again.'));
+        }
+        return keys;
       },
     },
     attester: {
       lookup_email: (email: string|string[]): FcPromise<PubkeySearchResult|{results: PubkeySearchResult[]}> => {
         return tool._.api_attester_call('lookup/email', {
           email: Array.isArray(email) ? email.map(a => tool.str.parse_email(a).email) : tool.str.parse_email(email).email,
-        });
+        }).validate(r => Boolean(r));
       },
       initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): FcPromise<ApirAttInitialLegacySugmit> => {
         return tool._.api_attester_call('initial/legacy_submit', {

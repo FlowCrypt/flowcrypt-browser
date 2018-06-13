@@ -77,11 +77,23 @@ interface Attachment {
     content?: string|Uint8Array|null,
     data?: string, // todo - deprecate this - only use content
     size: number,
-    url?: string|null,
     inline?: boolean,
-    message_id?: string,
     treat_as?: 'hidden'|'signature'|'message'|'encrypted'|'public_key'|'standard',
-    id?: string,
+    id?: string, // if data was not downloaded yet, from gmail
+    message_id?: string, // if data was not downloaded yet, from gmail
+    url?: string|null, // if data was not downloaded yet, from url
+}
+
+interface SetupOptions {
+    full_name: string,
+    passphrase: string,
+    passphrase_save: boolean,
+    submit_main: boolean,
+    submit_all: boolean,
+    setup_simple: boolean,
+    key_backup_prompt: number|boolean,
+    recovered?: boolean,
+    is_newly_created_key?: boolean,
 }
 
 interface FromToHeaders {
@@ -362,6 +374,7 @@ type ApirGmailMessage$payload = {parts?: ApirGmailMessage$payload$part[], header
 type ApirGmailMessage = {id: string, threadId?: string|null, payload: ApirGmailMessage$payload, raw?: string, internalDate?: number|string};
 type ApirGmailMessageList$message = {id: string, threadId: string};
 type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
+type ApirGmailAttachment = {attachmentId: string, size: number, data: string}
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
@@ -470,7 +483,7 @@ interface AccountStore extends BaseStore {
 
 // interface Promise<T> { // this conflicts with @types/jquery
 interface FcPromise<T> extends Promise<T> {
-    validate: (validator: (r: T) => void) => Promise<T>;
+    validate: (validator: (r: T) => void) => FcPromise<T>;
     resolved: (next: (ok: boolean, r: T) => void) => void;
 }
 

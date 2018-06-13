@@ -82,9 +82,9 @@ tool.catch.try(() => {
       }
       $('table#emails').append('<tr><td>' + email + remove + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
     }
-    $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
       $(self).html(tool.ui.spinner('white'));
-      action_submit_or_request_attestation($(self).attr('email')!);
+      await action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
       Store.get_account(url_params.account_email as string, ['addresses']).then(storage => {
@@ -112,17 +112,15 @@ tool.catch.try(() => {
     }));
   }
 
-  function action_submit_or_request_attestation(email: string) {
-    Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
-      abort_and_render_error_if_keyinfo_empty(primary_ki);
-      if(email === url_params.account_email) { // request attestation
-        save_attest_request(url_params.account_email, 'CRYPTUP', function () {
-          tool.api.attester.initial_legacy_submit(email, primary_ki.public, true).resolved(() => window.location.reload());
-        });
-      } else { // submit only
-        tool.api.attester.initial_legacy_submit(email, primary_ki.public, false).resolved(() => window.location.reload());
-      }
-    });
+  async function action_submit_or_request_attestation(email: string) {
+    let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+    abort_and_render_error_if_keyinfo_empty(primary_ki);
+    if(email === url_params.account_email) { // request attestation
+      await save_attest_request(url_params.account_email, 'CRYPTUP');
+      tool.api.attester.initial_legacy_submit(email, primary_ki.public, true).resolved(() => window.location.reload());
+    } else { // submit only
+      tool.api.attester.initial_legacy_submit(email, primary_ki.public, false).resolved(() => window.location.reload());
+    }
   }
 
 })();

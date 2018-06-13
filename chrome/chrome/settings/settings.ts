@@ -56,65 +56,50 @@ function render_password_strength(parent_selector: string, input_selector: strin
   }
 }
 
-function save_attest_request(account_email: string, attester: string, callback: Callback) {
-  Store.get_account(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
-    if(typeof storage.attests_requested === 'undefined') {
-      storage.attests_requested = [attester];
-    } else if(!tool.value(attester).in(storage.attests_requested)) {
-      storage.attests_requested.push(attester); // insert into requests if not already there
-    }
-    if(typeof storage.attests_processed === 'undefined') {
-      storage.attests_processed = [];
-    }
-    Store.set(account_email, storage).then(function () {
-      tool.browser.message.send(null, 'attest_requested', {
-        account_email: account_email,
-      }, callback);
-    });
-  });
+async function save_attest_request(account_email: string, attester: string) {
+  let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
+  if(typeof storage.attests_requested === 'undefined') {
+    storage.attests_requested = [attester];
+  } else if(!tool.value(attester).in(storage.attests_requested)) {
+    storage.attests_requested.push(attester); // insert into requests if not already there
+  }
+  if(typeof storage.attests_processed === 'undefined') {
+    storage.attests_processed = [];
+  }
+  await Store.set(account_email, storage);
+  return await new Promise(resolve => tool.browser.message.send(null, 'attest_requested', {account_email: account_email}, resolve));
 }
 
-function mark_as_attested(account_email: string, attester: string, callback: Callback) {
-  Store.get_account(account_email, ['attests_requested', 'attests_processed']).then((storage: Dict<string[]>) => {
-    if(typeof storage.attests_requested === 'undefined') {
-      storage.attests_requested = [];
-    } else if(tool.value(attester).in(storage.attests_requested)) {
-      storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
-    }
-    if(typeof storage.attests_processed === 'undefined') {
-      storage.attests_processed = [attester];
-    } else if(!tool.value(attester).in(storage.attests_processed)) {
-      storage.attests_processed.push(attester); //add attester as processed if not already there
-    }
-    Store.set(account_email, storage).then(() => callback());
-  });
+async function mark_as_attested(account_email: string, attester: string) {
+  let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
+  if(typeof storage.attests_requested === 'undefined') {
+    storage.attests_requested = [];
+  } else if(tool.value(attester).in(storage.attests_requested)) {
+    storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); //remove attester from requested
+  }
+  if(typeof storage.attests_processed === 'undefined') {
+    storage.attests_processed = [attester];
+  } else if(!tool.value(attester).in(storage.attests_processed)) {
+    storage.attests_processed.push(attester); //add attester as processed if not already there
+  }
+  await Store.set(account_email, storage);
 }
 
-function submit_pubkeys(addresses: string[], pubkey: string, callback: Callback, _success=true) {
-  if(typeof !settings_url_params.account_email === 'string') {
+async function submit_pubkeys(addresses: string[], pubkey: string) {
+  if(typeof settings_url_params.account_email !== 'string') {
     tool.catch.report('settings.js:submit_pubkeys:!settings_url_params.account_email');
     return;
   }
-  if(addresses.length) {
-    let address = addresses.pop()!; // just checked above
-    let attest = (address === settings_url_params.account_email); // only request attestation of main email
-    tool.api.attester.initial_legacy_submit(address, pubkey, attest).resolved((key_submitted, response) => {
-      if(attest && key_submitted) {
-        if(!response.attested) {
-          save_attest_request(settings_url_params.account_email as string, 'CRYPTUP', function () {
-            submit_pubkeys(addresses, pubkey, callback, _success && key_submitted && response.saved === true);
-          });
-        } else { //previously successfully attested, the attester claims
-          mark_as_attested(settings_url_params.account_email as string, 'CRYPTUP', function () {
-            submit_pubkeys(addresses, pubkey, callback, _success && key_submitted && response.saved === true);
-          });
-        }
-      } else {
-        submit_pubkeys(addresses, pubkey, callback, _success && key_submitted && response.saved === true);
-      }
-    });
-  } else {
-    callback(_success);
+  let main_email = settings_url_params.account_email as string;
+  let attest_response = await tool.api.attester.initial_legacy_submit(main_email, pubkey, true);
+  if(!attest_response.attested) {
+    await save_attest_request(settings_url_params.account_email as string, 'CRYPTUP');
+  } else { // Attester claims it was previously successfully attested
+    await mark_as_attested(settings_url_params.account_email as string, 'CRYPTUP');
+  }
+  let aliases = addresses.filter(a => a !== main_email);
+  if(aliases.length) {
+    await Promise.all(aliases.map(a => tool.api.attester.initial_legacy_submit(a, pubkey, false)));
   }
 }
 
@@ -238,65 +223,113 @@ function initialize_private_key_import_ui() {
   });
 }
 
-function render_prv_compatibility_fix_ui(container: string|JQuery<HTMLElement>, original_prv: OpenpgpKey, passphrase: string, back_url: string, key_fixed_callback: Callback) {
-  let user_ids = original_prv.users.map(u => u.userId.userid);
-  if (!user_ids.length) {
-    user_ids.push(settings_url_params.account_email);
-  }
-  container = $(container);
-  container.html([
-    '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
-    '<div class="line compatibility_fix_user_ids">' + user_ids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
-    '<div class="line">',
-    '  Choose expiration of updated key',
-    '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
-    '    <option  value="" disabled selected>please choose expiration</option>',
-    '    <option value="never">no expiration</option>',
-    '    <option value="1">1 year</option>',
-    '    <option value="2">2 years</option>',
-    '    <option value="3">3 years</option>',
-    '    <option value="5">5 years</option>',
-    '  </select>',
-    '</div>',
-    '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
-    '<div class="line">',
-    '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
-    '</div>',
-  ].join('\n'));
-  container.find('select.input_fix_expire_years').change(function () {
-    if($(this).val()) {
-      (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
-    } else {
-      (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
+function render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(container: string|JQuery<HTMLElement>, original_prv: OpenpgpKey, passphrase: string, back_url: string): Promise<OpenpgpKey> {
+  return new Promise((resolve, reject) => {
+    let user_ids = original_prv.users.map(u => u.userId.userid);
+    if (!user_ids.length) {
+      user_ids.push(settings_url_params.account_email);
     }
-  });
-  container.find('.action_fix_compatibility').click(function () {
-    // @ts-ignore - TS doesn't like $.parents($(blah)). jQuery doesn't seem to mind - investigate
-    let expire_years = $(this).parents(container).find('select.input_fix_expire_years').val();
-    if (!expire_years) {
-      alert('Please select key expiration');
-    } else {
-      $(this).off().html(tool.ui.spinner('white'));
-      let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
-      original_prv.decrypt(passphrase);
-      setTimeout(() => {
-        openpgp.reformatKey({privateKey: original_prv, passphrase: passphrase, userIds: user_ids, keyExpirationTime: expire_seconds}).then((fixed_prv_result: {key: OpenpgpKey}) => {
-          if (fixed_prv_result.key.getEncryptionKeyPacket() !== null) {
-            key_fixed_callback(fixed_prv_result.key);
-          } else {
-            alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            $(this).replaceWith(tool.e('a', {href: back_url, text: 'Go back and try something else'}));
-          }
-        });
-      }, 50);
-    }
+    container = $(container);
+    container.html([
+      '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
+      '<div class="line compatibility_fix_user_ids">' + user_ids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
+      '<div class="line">',
+      '  Choose expiration of updated key',
+      '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
+      '    <option  value="" disabled selected>please choose expiration</option>',
+      '    <option value="never">no expiration</option>',
+      '    <option value="1">1 year</option>',
+      '    <option value="2">2 years</option>',
+      '    <option value="3">3 years</option>',
+      '    <option value="5">5 years</option>',
+      '  </select>',
+      '</div>',
+      '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
+      '<div class="line">',
+      '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
+      '</div>',
+    ].join('\n'));
+    container.find('select.input_fix_expire_years').change(function () {
+      if($(this).val()) {
+        (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
+      } else {
+        (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
+      }
+    });
+    container.find('.action_fix_compatibility').click(async function () {
+      // @ts-ignore - TS doesn't like $.parents($(blah)). jQuery doesn't seem to mind - investigate
+      let expire_years = $(this).parents(container).find('select.input_fix_expire_years').val() as string;
+      if (!expire_years) {
+        alert('Please select key expiration');
+      } else {
+        $(this).off().html(tool.ui.spinner('white'));
+        let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
+        original_prv.decrypt(passphrase);
+        let reformatted;
+        try {
+          reformatted = await openpgp.reformatKey({privateKey: original_prv, passphrase: passphrase, userIds: user_ids, keyExpirationTime: expire_seconds}) as {key: OpenpgpKey};
+        } catch(e) {
+          reject(e);
+          return;
+        }
+        if (reformatted.key.getEncryptionKeyPacket() !== null) {
+          resolve(reformatted.key);
+        } else {
+          alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
+          $(this).replaceWith(tool.e('a', {href: back_url, text: 'Go back and try something else'}));
+        }
+      }
+    });  
   });
 }
 
 function abort_and_render_error_if_keyinfo_empty(ki: KeyInfo|undefined) {
-  if(!ki) { // not set up yet
-    let msg = `Cannot find primary key. Is FlowCrypt not set up yet?`;
+  if(!ki) {
+    let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
     $('#content').html(`${msg} <a href="${window.location.href}">Retry</a>`);
     throw new UnreportableError(msg);
   }
+}
+
+async function prompt_to_retry(type: 'REQUIRED'|'OPTIONAL', e: Error, user_message: string, retry_callback: (skip_error?: string) => Promise<void>): Promise<void> {
+  tool.catch.handle_exception(e);
+  while(await __render_retry_prompt_and_resolve_true_when_user_wants_to_retry(type, user_message)) {
+    try {
+      return await retry_callback();
+    } catch(e2) {
+      tool.catch.handle_exception(e2);
+    }
+  }
+  // pressing retry button causes to get stuck in while loop until success, at which point it returns, or until user closes tab
+  // if it got down here, user has chosen 'skip'. This option is only available on 'OPTIONAL' type
+  // if the error happens again, op will be skipped
+  return await retry_callback(String(e));
+}
+
+function __render_retry_prompt_and_resolve_true_when_user_wants_to_retry(type: 'REQUIRED'|'OPTIONAL', user_message: string): Promise<boolean> {
+  return new Promise(resolve => {
+    let skip_button = (type === 'OPTIONAL') ? ' &nbsp; &nbsp; <div class="button gray action_skip_retry">skip</div>' : '';
+    $('body').append(`
+      <div class="featherlight white retry_prompt" style="display: block;">
+        <div class="featherlight-content" data-test="dialog">
+          <div class="line">${user_message.replace(/\n/g, '<br>')}</div>
+          <div class="line">
+            <div class="button green action_do_retry">retry</div>
+            ${skip_button}
+          </div>
+          <div class="line">&nbsp;</div>
+          <div class="line">Please email human@flowcrypt.com if you need assistance.</div>
+        </div>
+      </div>
+    `);
+    let overlay = $('.retry_prompt');
+    overlay.find('.action_do_retry').one('click', () => {
+      overlay.remove();
+      resolve(true);
+    });
+    overlay.find('.action_skip_retry').one('click', () => {
+      overlay.remove();
+      resolve(false);
+    });  
+  });
 }

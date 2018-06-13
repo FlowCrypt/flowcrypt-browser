@@ -187,18 +187,16 @@ class GmailElementReplacer implements WebmailElementReplacer {
           }
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           // todo - verify that attachment_meta.id always present in this context
-          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!, (success, downloaded_attachment: {data: string}) => {
-            if(success) {
-              let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
-              if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
-                message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
-              } else {
-                attachment_selector.show().children('.attachment_loader').text('Unknown Public Key Format');
-                rendered_attachments_count++;
-              }
+          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!).then(downloaded_attachment => {
+            let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
+            if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
+              message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
             } else {
-              $(attachments_container_inner).find('.attachment_loader').text('Please reload page');
+              attachment_selector.show().children('.attachment_loader').text('Unknown Public Key Format');
+              rendered_attachments_count++;
             }
+          }).catch(e => {
+            $(attachments_container_inner).find('.attachment_loader').text('Please reload page');
           });
         } else if (attachment_meta.treat_as === 'signature') {
           let signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';

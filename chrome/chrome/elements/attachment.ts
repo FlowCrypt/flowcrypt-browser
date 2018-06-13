@@ -137,37 +137,36 @@ tool.catch.try(() => {
     }
   }
   
-  function download() {
+  async function save_to_downloads() {
     original_html_content = button.html();
     button.addClass('visible');
     button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
-    recover_missing_attachment_id_if_needed(() => {
-      progress_element = $('.download_progress');
-      if(url_params.decrypted) { // when content was downloaded and decrypted
-        tool.file.save_to_downloads(get_original_name(url_params.name as string), url_params.type as string, tool.str.to_uint8(url_params.decrypted as string), tool.env.browser().name === 'firefox' ? $('body') : null);
-      } else if(url_params.content) { // when encrypted content was already downloaded
-        decrypt_and_save_attachment_to_downloads(true, url_params.content as string);
-      } else if(url_params.attachment_id) { // gmail attachment_id
-        tool.api.gmail.attachment_get(url_params.account_email as string, url_params.message_id as string, url_params.attachment_id as string, function (success, attachment: Attachment) {
-          decrypt_and_save_attachment_to_downloads(success, success ? tool.str.base64url_decode(attachment.data as string) : undefined);
-        }, render_progress);
-      } else if(url_params.url) { // gneneral url to download attachment
-        tool.file.download_as_uint8(url_params.url as string, render_progress, function (success, data) {
-          if(success && data && data instanceof Uint8Array) {
-            decrypt_and_save_attachment_to_downloads(true, tool.str.from_uint8(data)); //todo - have to convert to str because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
-          } else {
-            decrypt_and_save_attachment_to_downloads(false, undefined);
-          }
-        });
-      } else {
-        throw Error('Missing both attachment_id and url');
-      }
-    });
+    await recover_missing_attachment_id_if_needed();
+    progress_element = $('.download_progress');
+    if(url_params.decrypted) { // when content was downloaded and decrypted
+      tool.file.save_to_downloads(get_original_name(url_params.name as string), url_params.type as string, tool.str.to_uint8(url_params.decrypted as string), tool.env.browser().name === 'firefox' ? $('body') : null);
+    } else if(url_params.content) { // when encrypted content was already downloaded
+      decrypt_and_save_attachment_to_downloads(true, url_params.content as string);
+    } else if(url_params.attachment_id) { // gmail attachment_id
+      let attachment = await tool.api.gmail.attachment_get(url_params.account_email as string, url_params.message_id as string, url_params.attachment_id as string, render_progress);
+      decrypt_and_save_attachment_to_downloads(true, tool.str.base64url_decode(attachment.data as string));
+    } else if(url_params.url) { // gneneral url to download attachment
+      tool.file.download_as_uint8(url_params.url as string, render_progress, function (success, data) {
+        if(success && data && data instanceof Uint8Array) {
+          decrypt_and_save_attachment_to_downloads(true, tool.str.from_uint8(data)); //todo - have to convert to str because tool.crypto.message.decrypt() cannot deal with uint8 directly yet
+        } else {
+          decrypt_and_save_attachment_to_downloads(false, undefined);
+        }
+      });
+    } else {
+      throw Error('Missing both attachment_id and url');
+    }
   }
   
-  function recover_missing_attachment_id_if_needed(cb: Callback) {
+  async function recover_missing_attachment_id_if_needed() {
     if(!url_params.url && !url_params.attachment_id && url_params.message_id) {
-      tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'full').then(result => {
+      try {
+        let result = await tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'full');
         if(result && result.payload && result.payload.parts) {
           for(let attachment_meta of result.payload.parts) {
             if(attachment_meta.filename === url_params.name && attachment_meta.body && attachment_meta.body.size === url_params.size && attachment_meta.body.attachmentId) {
@@ -175,16 +174,16 @@ tool.catch.try(() => {
               break;
             }
           }
-          cb();
+          return;
         } else {
           window.location.reload();
         }
-      }, () => window.location.reload());
-    } else {
-      cb();
+      } catch(e) {
+        window.location.reload();
+      }
     }
   }
   
-  $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), download));  
+  $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));  
 
 })();

@@ -2,19 +2,28 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
-
+  
   if(url_params.account_email) {
     tool.browser.message.send(null, 'update_uninstall_url');
+  } else {
+    window.location.href = 'index.htm';
+    return;
   }
-  
+
+  $('h1').text('Set Up FlowCrypt');
   $('.email-address').text(url_params.account_email as string);
   $('.back').css('visibility', 'hidden');
   tool.ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
   tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
   
+  let storage = await Store.get_account(url_params.account_email as string, [
+    'setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
+  ]);
+
+  storage.email_provider = storage.email_provider || 'gmail';
   let account_email_attested_fingerprint: string|null = null;
   let recovered_keys: OpenpgpKey[] = [];
   let recovered_key_matching_passphrases: string[] = [];
@@ -22,39 +31,36 @@ tool.catch.try(() => {
   let recovered_keys_successful_longids: string[] = [];
   let tab_id_global = undefined;
   let all_addresses: string[] = [url_params.account_email as string];
-  let email_provider: EmailProvider;
   
-  tool.browser.message.tab_id(function (tab_id) {
+  tool.browser.message.tab_id((tab_id) => {
     tab_id_global = tab_id;
-  
     tool.browser.message.listen({
-      close_page: function () {
+      close_page: () => {
         $('.featherlight-close').click();
       },
-      notification_show: function (data: {notification: string}) {
+      notification_show: (data: {notification: string}) => {
         alert(data.notification);
       },
     }, tab_id_global);
   });
   
   // show alternative account addresses in setup form + save them for later
-  Store.get_account(url_params.account_email as string, ['addresses', 'google_token_scopes', 'email_provider']).then(storage => {
-    if(storage.email_provider === 'gmail') {
-      if(!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-        $('.auth_denied_warning').css('display', 'block');
-      }
-      if(typeof storage.addresses === 'undefined') {
-        if(tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-          fetch_account_aliases_from_gmail(url_params.account_email as string).then(save_and_fill_submit_option);
-        } else { // cannot read emails, don't fetch alternative addresses
-          save_and_fill_submit_option([url_params.account_email as string]);
-        }
-      } else {
-        show_submit_all_addresses_option(storage.addresses as string[]);
-      }
+  if(storage.email_provider === 'gmail') {
+    if(!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      $('.auth_denied_warning').css('display', 'block');
     }
-  });
-  
+    if(typeof storage.addresses === 'undefined') {
+      if(tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+        fetch_account_aliases_from_gmail(url_params.account_email as string).then(save_and_fill_submit_option);
+      } else { // cannot read emails, don't fetch alternative addresses
+        // noinspection JSIgnoredPromiseFromCall - we do not care about the promise
+        save_and_fill_submit_option([url_params.account_email as string]);
+      }
+    } else {
+      show_submit_all_addresses_option(storage.addresses as string[]);
+    }
+  }
+
   function show_submit_all_addresses_option(addrs: string[]) {
     if(addrs && addrs.length > 1) {
       $('.addresses').text(tool.arr.without_value(addrs, url_params.account_email).join(', '));
@@ -62,11 +68,10 @@ tool.catch.try(() => {
     }
   }
   
-  function save_and_fill_submit_option(addresses: string[]) {
+  async function save_and_fill_submit_option(addresses: string[]) {
     all_addresses = tool.arr.unique(addresses.concat(url_params.account_email as string));
-    Store.set(url_params.account_email as string, { addresses: all_addresses }).then(function () {
-      show_submit_all_addresses_option(all_addresses);
-    });
+    await Store.set(url_params.account_email as string, { addresses: all_addresses });
+    show_submit_all_addresses_option(all_addresses);
   }
   
   function display_block(name: string) {
@@ -76,7 +81,6 @@ tool.catch.try(() => {
       'step_1_easy_or_manual',
       'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
       'step_3_compatibility_fix',
-      'step_3_test_failed',
       'step_4_more_to_recover',
       'step_4_done',
       'step_4_close',
@@ -92,200 +96,183 @@ tool.catch.try(() => {
       return $('#' + blocks.join(', #')).filter(':visible').first().attr('id') || null;
     }
   }
-  
-  function setup_dialog_init() {
-    $('h1').text('Set Up FlowCrypt');
-    if(!url_params.account_email) {
-      window.location.href = 'index.htm';
+
+  async function render_setup_dialog(): Promise<void> {
+    let keyserver_result, fetched_keys;
+    initialize_private_key_import_ui(); // for step_2b_manual_enter, if user chooses so
+
+    try {
+      keyserver_result = await tool.api.attester.lookup_email(url_params.account_email as string) as PubkeySearchResult;
+    } catch(e) {
+      return await prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog())
     }
-    Store.get_account(url_params.account_email as string, ['setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth']).then(storage => {
-      email_provider = storage.email_provider as EmailProvider || 'gmail';
-      if(storage.setup_done) {
-        if(url_params.action !== 'add_key') {
-          render_setup_done(url_params.account_email as string);
-        } else {
-          prepare_and_render_add_key_from_backup();
-        }
-      } else {
-        tool.api.attester.lookup_email(url_params.account_email as string).resolved((keyserver_success, keyserver_result: PubkeySearchResult) => {
-          initialize_private_key_import_ui(); // for step_2b_manual_enter
-          if(keyserver_success && keyserver_result && keyserver_result.pubkey) { // todo - handle network failure when fetching pubkey, show "retry"
-            if(keyserver_result.attested) {
-              account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
-            }
-            if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-              tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys: OpenpgpKey[]) {  // todo - handle network failure when fetching backup, show "retry"
-                if(success && keys) {
-                  recovered_keys = keys;
-                  recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-                  display_block('step_2_recovery');
-                } else {
-                  display_block('step_0_found_key');
-                }
-              });
-            } else { // cannot read gmail to find a backup, or this is outlook
-              if(keyserver_result.has_cryptup) {
-                display_block('step_2b_manual_enter');
-                $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
-              } else {
-                display_block('step_1_easy_or_manual');
-              }
-            }
-          } else {
-            display_block('step_1_easy_or_manual');
-          }
-        });
+  
+    if(keyserver_result.pubkey) {
+      if(keyserver_result.attested) {
+        account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
       }
-    });
+      if(storage.email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+        try {
+          fetched_keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string)
+        } catch(e) {
+          return await prompt_to_retry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => render_setup_dialog());
+        }
+        if(fetched_keys.length) {
+          recovered_keys = fetched_keys;
+          recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+          display_block('step_2_recovery');
+        } else {
+          display_block('step_0_found_key');
+        }
+      } else { // cannot read gmail to find a backup, or this is outlook
+        if(keyserver_result.has_cryptup) {
+          display_block('step_2b_manual_enter');
+          $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+        } else {
+          display_block('step_1_easy_or_manual');
+        }
+      }
+    } else {
+      display_block('step_1_easy_or_manual');
+    }
   }
   
-  function prepare_and_render_add_key_from_backup() { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+  async function render_add_key_from_backup() { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+    let fetched_keys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
     $('h1').parent().html('<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
-    tool.api.gmail.fetch_key_backups(url_params.account_email as string, function (success, keys: OpenpgpKey[]) {
-      if(success && keys) {
-        recovered_keys = keys;
-        recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-        Store.keys_get(url_params.account_email as string).then(stored_keys => {
-          recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
-          render_setup_done(url_params.account_email as string);
-          $('#step_4_more_to_recover .action_recover_remaining').click();
-        });
-      } else {
-        window.location.href = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
-      }
-    });
+    try {
+      fetched_keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string);
+    } catch(e) {
+      window.location.href = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
+      return;
+    }
+    if(fetched_keys.length) {
+      recovered_keys = fetched_keys;
+      recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+      let stored_keys = await Store.keys_get(url_params.account_email as string);
+      recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
+      await render_setup_done(url_params.account_email as string);
+      $('#step_4_more_to_recover .action_recover_remaining').click();
+    } else {
+      window.location.href = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
+    }
   }
   
-  // options: {submit_main, submit_all}
-  function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: Options, callback: Callback) {
-    Store.get_account(account_email, ['addresses']).then((storage: {addresses: string[]|undefined}) => {
-      if(options.submit_main) {
-        tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => tool.catch.report('tool.api.attester.test_welcome: failed', error));
-        let addresses;
-        if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
-          addresses = storage.addresses.concat(account_email);
-        } else {
-          addresses = [account_email];
-        }
-        if(account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(armored_pubkey)) {
-          // already submitted and ATTESTED another pubkey for this email
-          callback();
-        } else {
-          submit_pubkeys(addresses, armored_pubkey, () => callback());  // ignores submit errors
-        }
-      } else {
-        callback();
-      }
-    });
+  async function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: {submit_main: boolean, submit_all: boolean}) {
+    let storage = await Store.get_account(account_email, ['addresses']);
+    if(!options.submit_main) {
+      return;
+    }
+    tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => tool.catch.report('tool.api.attester.test_welcome: failed', error));
+    let addresses;
+    if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
+      addresses = storage.addresses.concat(account_email);
+    } else {
+      addresses = [account_email];
+    }
+    if(account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(armored_pubkey)) {
+      return; // already submitted and ATTESTED another pubkey for this email
+    }
+    await submit_pubkeys(addresses, armored_pubkey);
   }
   
-  function render_setup_done(account_email: string, key_backup_prompt=false) {
+  async function render_setup_done(account_email: string, key_backup_prompt=false) {
     if(key_backup_prompt) {
       window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
     } else {
-      Store.keys_get(account_email).then(stored_keys => {
-        if (recovered_keys_longid_count > stored_keys.length) { // recovery where not all keys were processed: some may have other pass phrase
-          display_block('step_4_more_to_recover');
-          $('h1').text('More keys to recover');
-          $('.email').text(account_email);
-          Store.keys_get(account_email).then(stored_keys => {
-            $('.private_key_count').text(stored_keys.length);
-            $('.backups_count').text(recovered_keys.length);
-          });
-        } else { // successful and complete setup
-          display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
-          $('h1').text(url_params.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
-          $('.email').text(account_email);
-        }
-      });
+      let stored_keys = await Store.keys_get(account_email);
+      if (recovered_keys_longid_count > stored_keys.length) { // recovery where not all keys were processed: some may have other pass phrase
+        display_block('step_4_more_to_recover');
+        $('h1').text('More keys to recover');
+        $('.email').text(account_email);
+        $('.private_key_count').text(stored_keys.length);
+        $('.backups_count').text(recovered_keys.length);
+    } else { // successful and complete setup
+        display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
+        $('h1').text(url_params.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
+        $('.email').text(account_email);
+      }
     }
   }
   
-  // options: {submit_main, submit_all, setup_simple, key_backup_prompt}
-  function finalize_setup(account_email: string, armored_pubkey: string, options: Options) {
-    submit_public_key_if_needed(account_email, armored_pubkey, options, function () {
-      let storage = {
-        setup_date: Date.now(),
-        setup_done: true,
-        cryptup_enabled: true,
-        setup_simple: options.setup_simple,
-        key_backup_prompt: options.key_backup_prompt,
-        is_newly_created_key: options.is_newly_created_key === true,
-      };
-      Store.set(account_email, storage).then(function () {
-        render_setup_done(account_email, options.key_backup_prompt);
-      });
+  async function finalize_setup(account_email: string, armored_pubkey: string, options: SetupOptions, skip_error?: string): Promise<void> {
+    try {
+      await submit_public_key_if_needed(account_email, armored_pubkey, options);
+    } catch(e) {
+      if(typeof skip_error === undefined || String(e) !== skip_error) { // user has chosen to skip problematic step
+        return await prompt_to_retry('OPTIONAL', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', (se) => finalize_setup(account_email, armored_pubkey, options, se));
+      }
+    }
+    await Store.set(account_email, {
+      setup_date: Date.now(),
+      setup_done: true,
+      cryptup_enabled: true,
+      setup_simple: options.setup_simple,
+      key_backup_prompt: options.key_backup_prompt,
+      is_newly_created_key: options.is_newly_created_key === true,
     });
+    await render_setup_done(account_email, Boolean(options.key_backup_prompt));
   }
   
-  function save_keys(account_email: string, prvs: OpenpgpKey[], options: Options, callback: Callback) {
-    let promise_factories: PromiseFactory<void>[] = [];
+  async function save_keys(account_email: string, prvs: OpenpgpKey[], options: SetupOptions) {
     for(let i = 0; i < prvs.length; i++) { // save all keys
       let longid = tool.crypto.key.longid(prvs[i]);
-      if(longid) {
-        promise_factories.push(() => Store.keys_add(account_email, prvs[i].armor()));
-        promise_factories.push(() => Store.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, longid!, options.passphrase));
-      } else {
-        tool.catch.report('longid was null when saving');
+      if(!longid) {
+        alert('Cannot save keys to storage because at least one of them is not valid.');
+        return;
       }
+      await Store.keys_add(account_email, prvs[i].armor());
+      await Store.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, longid, options.passphrase);
     }
-    Promise.sequence(promise_factories).then(() => { // sequential write because storage has race condition
-      let contacts: Contact[] = [];
-      for(let address of all_addresses) {
-        let attested = Boolean(address === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
-        contacts.push(Store.db_contact_object(address, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
-      }
-      Store.db_contact_save(null, contacts).then(callback);
+    let my_own_email_addresses_as_contacts = all_addresses.map(a => {
+      let attested = Boolean(a === url_params.account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
+      return Store.db_contact_object(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
     });
+    await Store.db_contact_save(null, my_own_email_addresses_as_contacts);
   }
   
-  function create_save_key_pair(account_email: string, options: Options) {
-    openpgp.generateKey({
-      numBits: 4096,
-      userIds: [{ name: options.full_name, email: account_email }], // todo - add all addresses?
-      passphrase: options.passphrase,
-    }).then((key: {privateKeyArmored: string, publicKeyArmored: string}) => {
+  async function create_save_key_pair(account_email: string, options: SetupOptions) {
+    try {
+      let key: {privateKeyArmored: string, publicKeyArmored: string} = await openpgp.generateKey({
+        numBits: 4096,
+        userIds: [{ name: options.full_name, email: account_email }], // todo - add all addresses?
+        passphrase: options.passphrase,
+      });
       options.is_newly_created_key = true;
       let prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
-      test_private_key_and_handle(url_params.account_email as string, prv, options, function () {
-        save_keys(account_email, [prv], options, function () {
-          finalize_setup(account_email, key.publicKeyArmored, options);
-        });
-      });
-    }).catch((error: Error) => {
-      tool.catch.handle_exception(error);
+      await save_keys(account_email, [prv], options);
+      await finalize_setup(account_email, key.publicKeyArmored, options);
+    } catch(e) {
+      tool.catch.handle_exception(e);
       $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Please write me at human@flowcrypt.com so that I can fix it ASAP.');
-    });
+    }
   }
   
-  function get_and_save_google_user_info(account_email: string, callback: Callback) {
-    let result: Dict<string> = { full_name: '' };
-    if(email_provider === 'gmail') {
-      tool.api.google.user_info(account_email, function (success, response: Dict<string>) {
-        if(success) {
-          result.full_name = response.name || '';
-          result.gender = response.gender;
-          result.locale = response.locale;
-          result.picture = response.picture;
-          Store.set(account_email, result).then(function () {
-            callback(result);
-          });
-        } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
-          callback(result);
-        }
-      });
-    } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
-      callback(result);
-    }
+  function get_and_save_google_user_info(account_email: string): Promise<{full_name: string, locale?: string, picture?: string}> {
+    return new Promise(resolve => {
+      if(storage.email_provider === 'gmail') {
+        tool.api.google.user_info(account_email, async (success, response: Dict<string>) => {
+          if(success) {
+            let result = {full_name: response.name || '', locale: response.locale, picture: response.picture};
+            await Store.set(account_email, result);
+            resolve(result);
+          } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
+            resolve({full_name: ''});
+          }
+        });
+      } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
+        resolve({full_name: ''});
+      }  
+    });
   }
   
   $('.action_show_help').click(function () {
     show_settings_page('/chrome/settings/modules/help.htm');
   });
   
-  $('.action_simple_setup').click(function () {
+  $('.action_simple_setup').click(async function () {
     if($(this).parents('.manual').length) {
       if(!confirm('This sets up your account automatically. Great choice for most users.')) {
         return;
@@ -293,26 +280,25 @@ tool.catch.try(() => {
     }
     display_block('step_2_easy_generating');
     $('h1').text('Please wait, setting up FlowCrypt');
-    get_and_save_google_user_info(url_params.account_email as string, function (userinfo: Dict<string>) {
-      create_save_key_pair(url_params.account_email as string, {
-        full_name: userinfo.full_name,
-        passphrase: '',
-        passphrase_save: true,
-        submit_main: true,
-        submit_all: true,
-        setup_simple: true,
-        key_backup_prompt: Date.now(),
-      });
+    let userinfo = await get_and_save_google_user_info(url_params.account_email as string);
+    await create_save_key_pair(url_params.account_email as string, {
+      full_name: userinfo.full_name,
+      passphrase: '',
+      passphrase_save: true,
+      submit_main: true,
+      submit_all: true,
+      setup_simple: true,
+      key_backup_prompt: Date.now(),
     });
   });
   
-  $('.back').off().click(function () {
+  $('.back').off().click(() => {
     $('h1').text('Set Up');
     display_block('step_1_easy_or_manual');
   });
   
-  $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-    let passphrase = $('#recovery_pasword').val() as string; // we know it's text input
+  $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+    let passphrase = $('#recovery_pasword').val() as string; // text input
     let matching_keys: OpenpgpKey[] = [];
     if(passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
       alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
@@ -327,28 +313,23 @@ tool.catch.try(() => {
       }
       if(matching_keys.length) {
         let options = {
-          submit_main: false, // todo - think about submitting when recovering
+          full_name: '',
+          submit_main: false, // todo - reevaluate submitting when recovering
           submit_all: false,
           passphrase: passphrase,
-          passphrase_save: true, //todo - think about saving passphrase when recovering
+          passphrase_save: true, //todo - reevaluate saving passphrase when recovering
           setup_simple: true,
           key_backup_prompt: false,
           recovered: true,
         };
         recovered_key_matching_passphrases.push(passphrase);
-        console.log('setup: saving keys');
-        save_keys(url_params.account_email as string, matching_keys, options, function () {
-          console.log('save_keys completely done');
-          Store.get_account(url_params.account_email as string, ['setup_done']).then(storage => {
-            console.log('got setup done');
-            console.log(storage);
-            if(!storage.setup_done) { // normal situation
-              finalize_setup(url_params.account_email as string, matching_keys[0].toPublic().armor(), options);
-            } else { // setup was finished before, just added more keys now
-              render_setup_done(url_params.account_email as string, options.key_backup_prompt);
-            }
-          });
-        });
+        await save_keys(url_params.account_email as string, matching_keys, options);
+        let storage = await Store.get_account(url_params.account_email as string, ['setup_done']);
+        if(!storage.setup_done) { // normal situation
+          await finalize_setup(url_params.account_email as string, matching_keys[0].toPublic().armor(), options);
+        } else { // setup was finished before, just added more keys now
+          await render_setup_done(url_params.account_email as string, options.key_backup_prompt);
+        }
       } else {
         if(recovered_keys.length > 1) {
           alert('This password did not match any of your ' + recovered_keys.length + ' backups. Please try again.');
@@ -362,27 +343,26 @@ tool.catch.try(() => {
     }
   }));
   
-  $('#step_4_more_to_recover .action_recover_remaining').click(function () {
+  $('#step_4_more_to_recover .action_recover_remaining').click(async () => {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
-    Store.keys_get(url_params.account_email as string).then(stored_keys => {
-      let got = stored_keys.length;
-      let bups = recovered_keys.length;
-      let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
-      if(url_params.action !== 'add_key') {
-        $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
-        $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
-        $('#step_2_recovery .skip_recover_remaining').click(function () {
-          window.location.href = tool.env.url_create('index.htm', { account_email: url_params.account_email });
-        });
-      } else {
-        $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try different pass phrases to unlock all backups.');
-        $('#step_2_recovery .line_skip_recovery').css('display', 'none');
-      }
-    });
+    let stored_keys = await Store.keys_get(url_params.account_email as string);
+    let got = stored_keys.length;
+    let bups = recovered_keys.length;
+    let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
+    if(url_params.action !== 'add_key') {
+      $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
+      $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+      $('#step_2_recovery .skip_recover_remaining').click(() => {
+        window.location.href = tool.env.url_create('index.htm', { account_email: url_params.account_email });
+      });
+    } else {
+      $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try different pass phrases to unlock all backups.');
+      $('#step_2_recovery .line_skip_recovery').css('display', 'none');
+    }
   });
   
-  $('.action_skip_recovery').click(function () {
+  $('.action_skip_recovery').click(() => {
     if(confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
       recovered_keys = [];
       recovered_key_matching_passphrases = [];
@@ -392,15 +372,15 @@ tool.catch.try(() => {
     }
   });
   
-  $('.action_send').click(function () {
+  $('.action_send').click(() => {
     window.location.href = tool.env.url_create('index.htm', { account_email: url_params.account_email, page: '/chrome/elements/compose.htm' });
   });
   
-  $('.action_account_settings').click(function () {
+  $('.action_account_settings').click(() => {
     window.location.href = tool.env.url_create('index.htm', { account_email: url_params.account_email });
   });
   
-  $('.action_go_auth_denied').click(function () {
+  $('.action_go_auth_denied').click(() => {
     window.location.href = tool.env.url_create('index.htm', { account_email: url_params.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
   });
   
@@ -415,46 +395,15 @@ tool.catch.try(() => {
     }
   });
   
-  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(function () {
+  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(() => {
     display_block('step_2a_manual_create');
   });
   
-  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(function () {
+  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(() => {
     display_block('step_2b_manual_enter');
   });
-  
-  $('#step_3_test_failed .action_diagnose_browser').one('click', function () {
-    $(this).html('Disagnosing.. ' + tool.ui.spinner('white'));
-    openpgp.generateKey({ // create a bogus key for testing and diagnosis
-      numBits: 4096,
-      userIds: [{ name: 'pass phrase is stockholm', email: 'bad@key.com', }],
-      passphrase: 'stockholm',
-    }).then(function (key: {privateKeyArmored: string}) {
-      let armored = openpgp.key.readArmored(key.privateKeyArmored).keys[0].armor();
-      tool.crypto.key.test(armored, 'stockholm', function (key_works, error_message) {
-        tool.catch.report(key_works ? 'Test passed' : 'Test failed with error: ' + error_message, tool.str.base64url_encode(url_params.account_email + ', ' + (error_message || 'pass') + '\n\n' + armored));
-        setTimeout(function () {
-          $('#step_3_test_failed .action_diagnose_browser').replaceWith('<div class="line"><b>Thank you! I will let you know when this has been resolved.</b></div>');
-        }, 5000);
-      });
-    }).catch(function (exception: Error) {
-      tool.catch.handle_exception(exception);
-    });
-  });
-  
-  function test_private_key_and_handle(account_email: string, key: OpenpgpKey, options: Options, success_callback: Callback) {
-    tool.crypto.key.test(key.armor(), options.passphrase, function (key_works, error) {
-      if(key_works) {
-        success_callback();
-      } else {
-        console.log(error);
-        $('h1').text('Browser incompatibility discovered');
-        display_block('step_3_test_failed');
-      }
-    });
-  }
-  
-  $('#step_2b_manual_enter .action_save_private').click(function () {
+    
+  $('#step_2b_manual_enter .action_save_private').click(async () => {
     let normalized_armored_key = tool.crypto.key.normalize($('#step_2b_manual_enter .input_private_key').val() as string); // we know it's a text input
     let prv = openpgp.key.readArmored(normalized_armored_key).keys[0];
     let passphrase = $('#step_2b_manual_enter .input_passphrase').val() as string; // we know it's a text input
@@ -469,6 +418,7 @@ tool.catch.try(() => {
         alert('FlowCrypt doesn\'t support this type of key yet. Please write me at human@flowcrypt.com, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(' + decrypt_result.error + ')');
       } else if (decrypt_result.success) {
         let options = {
+          full_name: '',
           passphrase: passphrase,
           setup_simple: false,
           key_backup_prompt: false,
@@ -479,12 +429,11 @@ tool.catch.try(() => {
         };
         if(prv.getEncryptionKeyPacket() !== null) {
           $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
-          save_keys(url_params.account_email as string, [prv], options, function () {
-            finalize_setup(url_params.account_email as string, prv.toPublic().armor(), options);
-          });
+          await save_keys(url_params.account_email as string, [prv], options);
+          await finalize_setup(url_params.account_email as string, prv.toPublic().armor(), options);
         } else { // cannot get a valid encryption key packet
           if(prv.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || tool.crypto.key.expired_for_encryption(prv)) { // known issues - key can be fixed
-            render_compatibility_fix_block(prv, options);
+            await render_compatibility_fix_block_and_finalize_setup(prv, options);
           } else {
             alert('This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
           }
@@ -497,20 +446,25 @@ tool.catch.try(() => {
     }
   });
   
-  function render_compatibility_fix_block(original_prv: OpenpgpKey, options: Options) {
+  async function render_compatibility_fix_block_and_finalize_setup(original_prv: OpenpgpKey, options: SetupOptions) {
     display_block('step_3_compatibility_fix');
-    render_prv_compatibility_fix_ui('#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''), (updated_prv) => {
-      save_keys(url_params.account_email as string, [updated_prv], options, () => {
-        finalize_setup(url_params.account_email as string, updated_prv.toPublic().armor(), options);
-      });
-    });
+    let updated_prv;
+    try {
+      updated_prv = await render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user('#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
+    } catch(e) {
+      tool.catch.handle_exception(e);
+      alert(`Failed to fix key: ${String(e)}`);
+      return;
+    }
+    await save_keys(url_params.account_email as string, [updated_prv], options);
+    await finalize_setup(url_params.account_email as string, updated_prv.toPublic().armor(), options);
   }
   
-  $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
+  $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => {
     render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
   
-  $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+  $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if(!$('#step_2a_manual_create .input_password').val()) {
       alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       $('#step_2a_manual_create .input_password').focus();
@@ -525,25 +479,32 @@ tool.catch.try(() => {
       $('h1').text('Please wait, setting up FlowCrypt');
       $('#step_2a_manual_create input').prop('disabled', true);
       $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner('white') + 'just a minute');
-      get_and_save_google_user_info(url_params.account_email as string, function (userinfo: Dict<string>) {
-        create_save_key_pair(url_params.account_email as string, {
-          full_name: userinfo.full_name,
-          passphrase: $('#step_2a_manual_create .input_password').val(),
-          passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
-          submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
-          submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
-          setup_simple: false,
-          key_backup_prompt: Date.now(),
-          recovered: false,
-        });
+      let userinfo = await get_and_save_google_user_info(url_params.account_email as string);
+      await create_save_key_pair(url_params.account_email as string, {
+        full_name: userinfo.full_name,
+        passphrase: $('#step_2a_manual_create .input_password').val() as string,
+        passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
+        submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
+        submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
+        setup_simple: false,
+        key_backup_prompt: Date.now(),
+        recovered: false,
       });
     }
   }));
   
-  $('#step_4_close .action_close').click(function () {
+  $('#step_4_close .action_close').click(() => {
     tool.browser.message.send(url_params.parent_tab_id as string, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});
   });
   
-  setup_dialog_init();
-  
+  if(storage.setup_done) {
+    if(url_params.action !== 'add_key') {
+      await render_setup_done(url_params.account_email as string);
+    } else {
+      await render_add_key_from_backup();
+    }
+  } else {
+    await render_setup_dialog();
+  }
+
 })();
