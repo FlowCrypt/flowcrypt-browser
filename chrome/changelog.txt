@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.6.2 on June 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/221?closed=1" target="_blank">Setup retries</a></b>
+
 <b>version 5.6.1 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/219?closed=1" target="_blank">TypeScript Stable</a></b>
 
 <b>version 5.6.0 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/220?closed=1" target="_blank">Experimental missing MDC support</a></b>
