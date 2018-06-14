@@ -31,7 +31,14 @@ tool.catch.try(async () => {
   let recovered_keys_successful_longids: string[] = [];
   let tab_id_global = undefined;
   let all_addresses: string[] = [url_params.account_email as string];
-  
+
+  let rules = new Rules(url_params.account_email as string);
+  if(!rules.can_create_keys()) {
+    let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${window.location.href}">Back</a>`;
+    $('#step_2a_manual_create, #step_2_easy_generating').html(`<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
+    $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
+  }
+
   tool.browser.message.tab_id((tab_id) => {
     tab_id_global = tab_id;
     tool.browser.message.listen({
@@ -100,18 +107,21 @@ tool.catch.try(async () => {
   async function render_setup_dialog(): Promise<void> {
     let keyserver_result, fetched_keys;
     initialize_private_key_import_ui(); // for step_2b_manual_enter, if user chooses so
-
+    
     try {
       keyserver_result = await tool.api.attester.lookup_email(url_params.account_email as string) as PubkeySearchResult;
     } catch(e) {
       return await prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog())
     }
-  
+
     if(keyserver_result.pubkey) {
       if(keyserver_result.attested) {
         account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
       }
-      if(storage.email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      if(!rules.can_backup_keys()) {
+        // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
+        display_block('step_2b_manual_enter');
+      } else if(storage.email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         try {
           fetched_keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string)
         } catch(e) {
@@ -126,14 +136,23 @@ tool.catch.try(async () => {
         }
       } else { // cannot read gmail to find a backup, or this is outlook
         if(keyserver_result.has_cryptup) {
+          // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           display_block('step_2b_manual_enter');
           $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
-        } else {
+        } else if(rules.can_create_keys()) {
+          // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           display_block('step_1_easy_or_manual');
+        } else {
+          // has a key registered, no key creating allowed on the domain
+          display_block('step_2b_manual_enter');
         }
       }
-    } else {
-      display_block('step_1_easy_or_manual');
+    } else { // no indication that the person used pgp before
+      if(rules.can_create_keys()) {
+        display_block('step_1_easy_or_manual');
+      } else {
+        display_block('step_2b_manual_enter');
+      }
     }
   }
   
@@ -179,7 +198,7 @@ tool.catch.try(async () => {
   }
   
   async function render_setup_done(account_email: string, key_backup_prompt=false) {
-    if(key_backup_prompt) {
+    if(key_backup_prompt && rules.can_backup_keys()) {
       window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email: account_email });
     } else {
       let stored_keys = await Store.keys_get(account_email);
@@ -189,7 +208,7 @@ tool.catch.try(async () => {
         $('.email').text(account_email);
         $('.private_key_count').text(stored_keys.length);
         $('.backups_count').text(recovered_keys.length);
-    } else { // successful and complete setup
+      } else { // successful and complete setup
         display_block(url_params.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
         $('h1').text(url_params.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
         $('.email').text(account_email);
@@ -234,6 +253,7 @@ tool.catch.try(async () => {
   }
   
   async function create_save_key_pair(account_email: string, options: SetupOptions) {
+    forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     try {
       let key: {privateKeyArmored: string, publicKeyArmored: string} = await openpgp.generateKey({
         numBits: 4096,
@@ -274,10 +294,16 @@ tool.catch.try(async () => {
   
   $('.action_simple_setup').click(async function () {
     if($(this).parents('.manual').length) {
-      if(!confirm('This sets up your account automatically. Great choice for most users.')) {
+      if(rules.can_create_keys()) {
+        if(!confirm('This sets up your account automatically. Great choice for most users.')) {
+          return;
+        }  
+      } else {
+        alert(Lang.setup.creating_keys_not_allowed_please_import);
         return;
       }
     }
+    forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     display_block('step_2_easy_generating');
     $('h1').text('Please wait, setting up FlowCrypt');
     let userinfo = await get_and_save_google_user_info(url_params.account_email as string);
@@ -288,7 +314,7 @@ tool.catch.try(async () => {
       submit_main: true,
       submit_all: true,
       setup_simple: true,
-      key_backup_prompt: Date.now(),
+      key_backup_prompt: rules.can_backup_keys() ? Date.now() : false,
     });
   });
   
@@ -459,12 +485,13 @@ tool.catch.try(async () => {
     await save_keys(url_params.account_email as string, [updated_prv], options);
     await finalize_setup(url_params.account_email as string, updated_prv.toPublic().armor(), options);
   }
-  
+
   $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => {
     render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
   
   $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
+    forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     if(!$('#step_2a_manual_create .input_password').val()) {
       alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       $('#step_2a_manual_create .input_password').focus();
@@ -487,7 +514,7 @@ tool.catch.try(async () => {
         submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
         submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
         setup_simple: false,
-        key_backup_prompt: Date.now(),
+        key_backup_prompt: rules.can_backup_keys() ? Date.now() : false,
         recovered: false,
       });
     }

@@ -55,7 +55,8 @@ div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif; font-size: 16px; }
-body#settings > div#content {  margin-top: 70px; margin-bottom: 150px; position: relative;}
+body#settings > div#content { margin-top: 70px; margin-bottom: 150px; position: relative; }
+body#settings > div#content.setup { margin-top: 0px; }
 body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
 body#settings > div#content.page img.screen { border: 1px dotted #cacaca; }

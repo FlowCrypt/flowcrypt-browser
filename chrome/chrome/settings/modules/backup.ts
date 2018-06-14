@@ -11,6 +11,12 @@ tool.catch.try(async () => {
   
   let storage = await Store.get_account(url_params.account_email as string, ['setup_simple', 'email_provider']);
   email_provider = storage.email_provider || 'gmail';
+  
+  let rules = new Rules(url_params.account_email as string);
+  if(!rules.can_backup_keys()) {
+    $('body').html(`<div class="line" style="margin-top: 100px;">${Lang.setup.key_backups_not_allowed}</div>`);
+    return;
+  }
 
   if(url_params.action === 'setup') {
     $('.back').css('display', 'none');

@@ -333,3 +333,15 @@ function __render_retry_prompt_and_resolve_true_when_user_wants_to_retry(type: '
     });  
   });
 }
+
+function forbid_and_refresh_page_if_cannot(action: 'CREATE_KEYS'|'BACKUP_KEYS', rules: Rules) {
+  if(action === 'CREATE_KEYS' && !rules.can_create_keys()) {
+    alert(Lang.setup.creating_keys_not_allowed_please_import);
+    window.location.reload();
+    throw Error('creating_keys_not_allowed_please_import');
+  } else if (action === 'BACKUP_KEYS' && !rules.can_backup_keys()) {
+    alert(Lang.setup.key_backups_not_allowed);
+    window.location.reload();
+    throw Error('key_backups_not_allowed');
+  }
+}

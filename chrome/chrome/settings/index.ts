@@ -8,9 +8,15 @@ tool.catch.try(() => {
   let tab_id_global: string;
   // let microsoft_auth_attempt = {};
   let google_token_scopes: string[];
-  
+
   $('.logo-row span#v').text(String(tool.catch.version()));
-  
+
+  let rules = new Rules(url_params.account_email as string|undefined)
+  if(!rules.can_backup_keys()) {
+    $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
+    $('.settings-icons-rows').css({position: 'relative', left: '64px'}); // lost a button - center it again
+  }
+
   tool.env.webmails(function(webmails) {
     for(let webmail_name of webmails) {
       $('.signin_button.' + webmail_name).css('display', 'inline-block');

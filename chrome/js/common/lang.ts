@@ -3,6 +3,10 @@
 'use strict';
 
 const Lang = {
+  setup: {
+    creating_keys_not_allowed_please_import: 'Creating keys is not allowed on your domain. Please import your keys.',
+    key_backups_not_allowed: 'Key backups are not allowed on this domain.',
+  },
   account: {
     credit_or_debit: 'Enter credit or debit card to use. You can cancel anytime.',
   },
