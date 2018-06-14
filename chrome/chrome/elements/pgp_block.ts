@@ -18,6 +18,7 @@ tool.catch.try(() => {
   let can_read_emails: undefined|boolean = undefined;
   let password_message_link_result: ApirFcMessageLink;
   let admin_codes: string[];
+  let user_entered_message_password: string|undefined = undefined;
   
   function render_text(text: string) {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
@@ -138,7 +139,7 @@ tool.catch.try(() => {
   
   function decrypt_and_save_attachment_to_downloads(success: boolean, encrypted_data: Uint8Array|ErrorEvent, name: string, type: string, render_in: JQuery<HTMLElement>) {
     if(success && encrypted_data instanceof Uint8Array) {
-      tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, encrypted_data, undefined, tool.browser.message.cb], function (result) {
+      tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, encrypted_data, user_entered_message_password, tool.browser.message.cb], function (result) {
         if(result.success) {
           tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data, render_in);
           send_resize_message();
@@ -317,6 +318,9 @@ tool.catch.try(() => {
         if(typeof result === 'undefined') {
           render_error(Lang.general.restart_browser_and_try_again);
         } else if(result.success) {
+          if(url_params.has_password && optional_password) {
+            user_entered_message_password = optional_password;
+          }
           if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
             console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
             initialize(true);
