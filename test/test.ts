@@ -3,6 +3,7 @@
 import {Dialog, ElementHandle, Frame, Page, Browser} from "puppeteer";
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const ordered_stringify = require('json-stable-stringify');
 
 interface Results { success: string[], error: string[], start: number}
 interface ConfigInterface {
@@ -10,6 +11,7 @@ interface ConfigInterface {
   auth: { google: {email: string, password: string, backup: string}[],},
   keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[],
   messages: {name: string, content: string[], params: string}[],
+  unit_tests: {name: string, f: string, args: any[], result: any}[],
 }
 
 let browser: Browser;
@@ -770,6 +772,30 @@ const tests = {
     await dialog.accept();
     meta.log('tests:test_feedback_form:settings');
   },
+  unit_tests: async () => {
+    let unit_test_page = await meta.new_page();
+    let unit_tests = meta.config.unit_tests;
+    let all_ok = true;
+    for(let ut of unit_tests) {
+      let test_url = meta.extension_url('chrome/dev/unit_test.htm') + `?f=${ut.f}&args=${encodeURIComponent(JSON.stringify(ut.args))}`;
+      await unit_test_page.goto(test_url);
+      await meta.wait_all(unit_test_page, meta._selector_test_state('ready'), {timeout: 60}); // wait for 60s until unit test done
+      let content = await meta.read(unit_test_page, '@unit-test-result');
+      let r = JSON.parse(content);
+      if(r.error === null && ordered_stringify(r.result) === ordered_stringify(ut.result)) {
+        meta.log(`tests:unit_test:${ut.name}`);
+      } else {
+        all_ok = false;
+      }
+    }
+    await unit_test_page.close();
+    if(all_ok) {
+      meta.log(`tests:unit_test`);
+    } else {
+      meta.log(`tests:unit_test`, `some unit tests had failures`);
+    }
+
+  },
 };
 
 (async() => {
@@ -791,6 +817,7 @@ const tests = {
   // await tests.gmail_tests();
 
   await tests.initial_page_shows();
+  await tests.unit_tests();
   await tests.login_and_setup_tests();
   await tests.settings_tests();
   await tests.pgp_block_tests();
