@@ -822,6 +822,10 @@ let tool = {
           if(r.continue_at === null) {
             return blocks;
           } else {
+            if(r.continue_at <= start_at) {
+              tool.catch.report(`tool.crypto.armor.detect_blocks likely infinite loop: r.continue_at(${r.continue_at}) <= start_at(${start_at})`);
+              return blocks; // prevent infinite loop
+            }
             start_at = r.continue_at;
           }
         }
@@ -2377,8 +2381,9 @@ let tool = {
       let begin = original_text.indexOf(tool.crypto.armor.headers('null').begin, start_at);
       if(begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, tool._.var.crypto_armor_header_MAX_LENGTH);
-        for(let type of Object.keys(tool._.var.crypto_armor_headers_DICT)) {
-          let block_header_def = tool._.var.crypto_armor_headers_DICT[type as ReplaceableMessageBlockType];
+        for(let _type of Object.keys(tool._.var.crypto_armor_headers_DICT)) {
+          let type = _type as ReplaceableMessageBlockType;
+          let block_header_def = tool._.var.crypto_armor_headers_DICT[type];
           if(block_header_def.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
             if(index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
@@ -2388,22 +2393,24 @@ let tool = {
                   result.found.push(tool._.crypto_armor_block_object('text', potential_text_before_block_begun));
                 }
               }
-              let end: number = -1;
+              let end_index: number = -1;
+              let found_block_end_header_length = 0;
               if(typeof block_header_def.end === 'string') {
-                end = original_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
+                end_index = original_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
+                found_block_end_header_length = block_header_def.end.length;
               } else { // regexp
-                let regexp_end = original_text.match(block_header_def.end);
+                let original_text_after_begin_index = original_text.substring(begin);
+                let regexp_end = original_text_after_begin_index.match(block_header_def.end);
                 if(regexp_end !== null) {
-                  // @ts-ignore - ISSUE_A is this editting the block_header DICT values?!
-                  (block_header_def.end as string).length = regexp_end[0].length;
-                  end = regexp_end.index || -1;
+                  end_index = regexp_end.index ? begin + regexp_end.index : -1;
+                  found_block_end_header_length = regexp_end[0].length;
                 }
               }
-              if(end !== -1) { // identified end of the same block
+              if(end_index !== -1) { // identified end of the same block
                 if(type !== 'password_message') {
-                  result.found.push(tool._.crypto_armor_block_object(type as ReplaceableMessageBlockType, original_text.substring(begin, end + (block_header_def.end as string).length).trim())); // todo - ISSUE_A
+                  result.found.push(tool._.crypto_armor_block_object(type, original_text.substring(begin, end_index + found_block_end_header_length).trim()));
                 } else {
-                  let pm_full_text = original_text.substring(begin, end + (block_header_def.end as string).length).trim(); // todo - ISSUE_A
+                  let pm_full_text = original_text.substring(begin, end_index + found_block_end_header_length).trim();
                   let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
                   if(pm_short_id_match) {
                     result.found.push(tool._.crypto_armor_block_object(type, pm_short_id_match[0]));
@@ -2411,9 +2418,9 @@ let tool = {
                     result.found.push(tool._.crypto_armor_block_object('text', pm_full_text));
                   }
                 }
-                result.continue_at = end + (block_header_def.end as string).length; // todo - ISSUE_A
+                result.continue_at = end_index + found_block_end_header_length;
               } else { // corresponding end not found
-                result.found.push(tool._.crypto_armor_block_object(type as ReplaceableMessageBlockType, original_text.substr(begin), true));
+                result.found.push(tool._.crypto_armor_block_object(type, original_text.substr(begin), true));
               }
               break;
             }
