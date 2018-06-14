@@ -2386,7 +2386,7 @@ let tool = {
           let block_header_def = tool._.var.crypto_armor_headers_DICT[type];
           if(block_header_def.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
-            if(index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
+            if(index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin >= 0 && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
               if(begin > start_at) {
                 let potential_text_before_block_begun = original_text.substring(start_at, begin).trim();
                 if(potential_text_before_block_begun) {
@@ -2426,7 +2426,8 @@ let tool = {
             }
           }
         }
-      } else {
+      }
+      if(original_text && !result.found.length) { // didn't find any blocks, but input is non-empty
         let potential_text = original_text.substr(start_at).trim();
         if(potential_text) {
           result.found.push(tool._.crypto_armor_block_object('text', potential_text));
