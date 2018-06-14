@@ -12,7 +12,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private injector: Injector;
   private gmail_variant: WebmailVariantString;
 
-  private selector = { // gmail_variant=standard
+  private selector = { // gmail_variant=standard|new
     conversation_root: 'div.if',
     subject: 'h2.hP',
     message_outer: 'div.adn',
@@ -336,7 +336,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let reply_box_container = $('<div class="remove_borders reply_message_iframe_container"></div>');
         if($(reply_box).hasClass('I5')) { // activated standard reply box
           // activated reply box - cannot remove because would cause issues / gmail freezing
-          $(reply_box).append(reply_box_container).addClass('reply_message_evaluated').children(':not(.reply_message_iframe_container)').hide();
+          let original_reply_container = $(reply_box).append(reply_box_container).addClass('reply_message_evaluated').children(':not(.reply_message_iframe_container)');
+          if(this.gmail_variant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
+            original_reply_container.css({opacity: 0, height: '1px !important'});
+          } else { // in old gmail, we can safely hide it without causing freezes navigating away
+            original_reply_container.hide();
+          }
         } else {
           // original element replaced so that originally bound events would go with it (prevents inbox freezing)
           $(reply_box).replaceWith(reply_box_container);
