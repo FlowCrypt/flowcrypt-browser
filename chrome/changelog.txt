@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.6.4 on June 15, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/223?closed=1" target="_blank">Message Parsing</a></b>
+
 <b>version 5.6.3 on June 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/222?closed=1" target="_blank">Domain rules</a></b>
 
 <b>version 5.6.2 on June 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/221?closed=1" target="_blank">Setup retries</a></b>
