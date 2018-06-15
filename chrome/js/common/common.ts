@@ -1029,7 +1029,7 @@ let tool = {
       },
     },
     message: {
-      resembles_beginning: (data: string|Uint8Array) => {
+      is_openpgp: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => {
         if(!data || !data.length) {
           return null;
         }
@@ -1050,12 +1050,14 @@ let tool = {
             // Indeed a valid OpenPGP packet tag number
             // This does not 100% mean it's OpenPGP message
             // But it's a good indication that it may
-            return {armored: false};
+            let t = openpgp.enums;
+            let m_types = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
+            return {armored: false, type: tool.value(tag_number).in(m_types) ? 'message' : 'public_key'};
           }
         }
         let blocks = tool.crypto.armor.detect_blocks(d.trim());
         if(blocks.length === 1 && blocks[0].complete === false && tool.value(blocks[0].type).in(['message', 'private_key', 'public_key', 'signed_message'])) {
-          return {armored: true};
+          return {armored: true, type: blocks[0].type};
         }
         return null;
       },  
@@ -1741,7 +1743,7 @@ let tool = {
         let process_chunk_and_resolve = (chunk: string) => {
           if(!processed++) {
             // make json end guessing easier
-            chunk = chunk.replace(/\n\s/g, '');
+            chunk = chunk.replace(/[\n\s\r]/g, '');
             // the response is a chunk of json that may not have ended. One of:
             // {"length":12345,"data":"kksdwei
             // {"length":12345,"data":"kksdweiooiowei

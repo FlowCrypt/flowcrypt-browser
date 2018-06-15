@@ -183,11 +183,23 @@ class GmailElementReplacer implements WebmailElementReplacer {
           rendered_attachments_count++;
         } else if(attachment_meta.treat_as === 'message') {
           if(!(attachment_meta.name === 'encrypted.asc' && !tool.value(attachment_meta.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
+            if(attachment_meta.name.substr(-4) === '.asc' && !tool.value(attachment_meta.name).in(['message.asc', 'encrypted.asc'])) { // .asc files can be ambiguous. Inspect a chunk
+              let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
+              let openpgp_type = tool.crypto.message.is_openpgp(file_chunk);
+              if(openpgp_type && openpgp_type.type === 'public_key') { // if it looks like OpenPGP public key
+                rendered_attachments_count = await this.render_public_key_from_file(attachment_meta, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
+              } else if(openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
+                message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
+              } else {
+                attachment_selector.show().children('.attachment_loader').text('Unknown OpenPGP format');
+                rendered_attachments_count++;
+              }
+            }
             if(attachment_meta.name && attachment_meta.name !== 'noname') {
               message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
             } else { // attachments without name are ambiguous. They may or may not be OpenPGP related. Inspect a chunk of the message to see if it looks like OpenPGP format
               let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
-              if(tool.crypto.message.resembles_beginning(file_chunk)) { // if it looks like OpenPGP, render it as a message
+              if(tool.crypto.message.is_openpgp(file_chunk)) { // if it looks like OpenPGP, render it as a message
                 message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
               } else {
                 attachment_selector.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -196,21 +208,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             }
           }
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          let downloaded_attachment;
-          try {
-            downloaded_attachment = await tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
-          } catch(e) {
-            console.log(e);
-            $(attachments_container_inner).show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
-            return;
-          }
-          let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
-          if(tool.crypto.message.resembles_beginning(armored_key)) {
-            message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
-          } else {
-            attachment_selector.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
-            rendered_attachments_count++;
-          }
+          rendered_attachments_count = await this.render_public_key_from_file(attachment_meta, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
         } else if (attachment_meta.treat_as === 'signature') {
           let signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';
           let embedded_signed_message = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
@@ -240,6 +238,27 @@ class GmailElementReplacer implements WebmailElementReplacer {
       await this.process_attachments(message_id, google_drive_attachments, attachments_container_inner, true);
     }
   };
+
+  private render_public_key_from_file = async (attachment_meta: Attachment, attachments_container_inner: JQuery<HTMLElement>, message_element: JQuery<HTMLElement>, is_outgoing: boolean, attachment_selector: JQuery<HTMLElement>, rendered_attachments_count: number) => {
+    let downloaded_attachment;
+    try {
+      downloaded_attachment = await tool.api.gmail.attachment_get(this.account_email, attachment_meta.message_id!, attachment_meta.id!); // .id is present when fetched from api
+    } catch(e) {
+      console.log(e);
+      attachments_container_inner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
+      rendered_attachments_count++;
+      return rendered_attachments_count;
+    }
+    let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
+    let openpgp_type = tool.crypto.message.is_openpgp(armored_key);
+    if(openpgp_type && openpgp_type.type === 'public_key') {
+      message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
+    } else {
+      attachment_selector.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
+      rendered_attachments_count++;
+    }
+    return rendered_attachments_count;
+  }
 
   private filter_attachments = (potential_matches: JQuery<HTMLElement>|HTMLElement, patterns: string[]) => {
     return $(potential_matches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function() {

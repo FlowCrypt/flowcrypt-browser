@@ -188,7 +188,7 @@ tool.catch.try(async () => {
     let attachment = await tool.api.gmail.attachment_get(url_params.account_email as string, url_params.message_id as string, url_params.attachment_id as string);
     let encrypted_data = tool.str.base64url_decode(attachment.data as string);
     tool.crypto.message.decrypt(url_params.account_email as string, encrypted_data, null, result => {
-      if(result.success && result.content.data && tool.crypto.message.resembles_beginning(result.content.data)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
+      if(result.success && result.content.data && tool.crypto.message.is_openpgp(result.content.data)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
         // render pubkey
         tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.data]});
         // hide attachment
