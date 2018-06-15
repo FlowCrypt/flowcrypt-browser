@@ -374,7 +374,7 @@ type ApirGmailMessage$payload = {parts?: ApirGmailMessage$payload$part[], header
 type ApirGmailMessage = {id: string, threadId?: string|null, payload: ApirGmailMessage$payload, raw?: string, internalDate?: number|string};
 type ApirGmailMessageList$message = {id: string, threadId: string};
 type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
-type ApirGmailAttachment = {attachmentId: string, size: number, data: string}
+type ApirGmailAttachment = {attachmentId: string, size: number, data: string};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';

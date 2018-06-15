@@ -23,7 +23,7 @@
       "matches": ["*://mail.google.com/*"],
       "css": ["/css/webmail.css"],
       "js": [
-        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/lib/jquery.min.js", "/lib/openpgp.js", "/js/common/storage.js", "/js/common/common.js",
         "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
         "/js/content_scripts/gmail_tab/replace.js", "/js/content_scripts/gmail_tab/gmail.js"
       ]
@@ -32,7 +32,7 @@
       "matches": ["*://inbox.google.com/*"],
       "css": ["/css/webmail.css"],
       "js": [
-        "/lib/jquery.min.js", "/js/common/storage.js", "/js/common/common.js",
+        "/lib/jquery.min.js", "/lib/openpgp.js", "/js/common/storage.js", "/js/common/common.js",
         "/js/content_scripts/factory.js", "/js/content_scripts/inject.js", "/js/content_scripts/notifications.js", "/js/content_scripts/setup.js",
         "/js/content_scripts/inbox_tab/replace.js", "/js/content_scripts/inbox_tab/inbox.js"
       ]

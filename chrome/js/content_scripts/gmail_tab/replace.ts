@@ -150,7 +150,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           if(this.can_read_emails) {
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
             tool.api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
-              this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
+              this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names).catch(tool.catch.handle_exception);
             }, () => $(new_pgp_attachments).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
@@ -165,7 +165,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     });
   };
 
-  private process_attachments = (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
+  private process_attachments = async (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
     let message_element = this.get_message_body_element(message_id);
     let sender_email = this.get_sender_email(message_element);
     let is_outgoing = tool.value(sender_email).in(this.addresses);
@@ -183,21 +183,34 @@ class GmailElementReplacer implements WebmailElementReplacer {
           rendered_attachments_count++;
         } else if(attachment_meta.treat_as === 'message') {
           if(!(attachment_meta.name === 'encrypted.asc' && !tool.value(attachment_meta.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
-            message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
+            if(attachment_meta.name && attachment_meta.name !== 'noname') {
+              message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
+            } else { // attachments without name are ambiguous. They may or may not be OpenPGP related. Inspect a chunk of the message to see if it looks like OpenPGP format
+              let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
+              if(tool.crypto.message.resembles_beginning(file_chunk)) { // if it looks like OpenPGP, render it as a message
+                message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
+              } else {
+                attachment_selector.show().children('.attachment_loader').text('Unknown OpenPGP format');
+                rendered_attachments_count++;
+              }
+            }
           }
         } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          // todo - verify that attachment_meta.id always present in this context
-          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!).then(downloaded_attachment => {
-            let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
-            if(tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
-              message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
-            } else {
-              attachment_selector.show().children('.attachment_loader').text('Unknown Public Key Format');
-              rendered_attachments_count++;
-            }
-          }).catch(e => {
+          let downloaded_attachment;
+          try {
+            downloaded_attachment = await tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
+          } catch(e) {
+            console.log(e);
             $(attachments_container_inner).find('.attachment_loader').text('Please reload page');
-          });
+            return;
+          }
+          let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
+          if(tool.crypto.message.resembles_beginning(armored_key)) {
+            message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
+          } else {
+            attachment_selector.show().children('.attachment_loader').text('Unknown Public Key Format');
+            rendered_attachments_count++;
+          }
         } else if (attachment_meta.treat_as === 'signature') {
           let signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';
           let embedded_signed_message = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
@@ -222,7 +235,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           console.log('Missing Google Drive attachments download_url');
         }
       });
-      this.process_attachments(message_id, google_drive_attachments, attachments_container_inner, true);
+      await this.process_attachments(message_id, google_drive_attachments, attachments_container_inner, true);
     }
   };
 

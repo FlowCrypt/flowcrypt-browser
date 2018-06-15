@@ -1029,6 +1029,36 @@ let tool = {
       },
     },
     message: {
+      resembles_beginning: (data: string|Uint8Array) => {
+        if(!data || !data.length) {
+          return null;
+        }
+        let d = data.slice(0, 50); // only interested in first 50 bytes
+        // noinspection SuspiciousInstanceOfGuard
+        if(d instanceof Uint8Array) {
+          d = tool.str.from_uint8(d);
+        }
+        let first_byte = d[0].charCodeAt(0); // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
+        if((first_byte & 0b10000000) === 0b10000000) { // 1XXX XXXX - potential pgp packet tag
+          let tag_number = 0; // zero is a forbidden tag number
+          if((first_byte & 0b11000000) === 0b11000000) { // 11XX XXXX - potential new pgp packet tag
+            tag_number = first_byte & 0b00111111;  // 11TTTTTT where T is tag number bit
+          } else { // 10XX XXXX - potential old pgp packet tag
+            tag_number = (first_byte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
+          }
+          if(tool.value(tag_number).in(Object.values(openpgp.enums.packet))) {
+            // Indeed a valid OpenPGP packet tag number
+            // This does not 100% mean it's OpenPGP message
+            // But it's a good indication that it may
+            return {armored: false};
+          }
+        }
+        let blocks = tool.crypto.armor.detect_blocks(d.trim());
+        if(blocks.length === 1 && blocks[0].complete === false && tool.value(blocks[0].type).in(['message', 'private_key', 'public_key', 'signed_message'])) {
+          return {armored: true};
+        }
+        return null;
+      },  
       sign: async (signing_prv: any, data: string|Uint8Array, armor: boolean): Promise<string|Uint8Array> => {
         let options = { data: data, armor: armor, privateKeys: signing_prv, };
         let sign_result = await openpgp.sign(options);
@@ -1703,7 +1733,82 @@ let tool = {
       },
       attachment_get: (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => new Promise((resolve, reject) => {
         let cb = (success: boolean, response: ApirGmailAttachment|null) => (success && response) ? resolve(response) : reject(response);
-        tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id + '/attachments/' + attachment_id, {}, cb, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
+        tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, cb, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
+      }),
+      attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
+        let min_bytes = 1000;
+        let processed = 0;
+        let process_chunk_and_resolve = (chunk: string) => {
+          if(!processed++) {
+            // make json end guessing easier
+            chunk = chunk.replace(/\n\s/g, '');
+            // the response is a chunk of json that may not have ended. One of:
+            // {"length":12345,"data":"kksdwei
+            // {"length":12345,"data":"kksdweiooiowei
+            // {"length":12345,"data":"kksdweiooiowei"
+            // {"length":12345,"data":"kksdweiooiowei"}
+            if(chunk[chunk.length-1] !== '"' && chunk[chunk.length-2] !== '"') {
+              chunk += '"}'; // json end 
+            } else if(chunk[chunk.length-1] !== '}') {
+              chunk += '}'; // json end
+            }
+            let parsed_json_data_field;
+            try {
+              parsed_json_data_field = JSON.parse(chunk).data;
+            } catch(e) {
+              console.log(e);
+              reject({code: null, message: "Chunk response could not be parsed"});
+              return;
+            }
+            for(let i = 0; parsed_json_data_field && i < 50; i++) {
+              try {
+                resolve(tool.str.base64url_decode(parsed_json_data_field));
+                return;
+              } catch(e) {
+                 // the chunk of data may have been cut at an inconvenient index
+                 // shave off up to 50 trailing characters until it can be decoded
+                parsed_json_data_field = parsed_json_data_field.slice(0, -1);
+              }
+            }
+            reject({code: null, message: "Chunk response could not be decoded"});
+          }
+        };
+        tool._.google_api_authorization_header(account_email).then(auth_token => {
+          let r = new XMLHttpRequest();
+          r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${attachment_id}`, true);
+          r.setRequestHeader('Authorization', auth_token);
+          r.send(null);
+          let status: number;
+          let response_poll_interval = window.setInterval(() => {
+            if(status >= 200 && status <= 299 && r.responseText.length >= min_bytes) {
+              window.clearInterval(response_poll_interval);
+              process_chunk_and_resolve(r.responseText);
+              r.abort();
+            }
+          }, 10);
+          r.onreadystatechange = function () {
+            if(r.readyState === 2 || r.readyState === 3) { // headers, loading
+              status = r.status;
+              if(status >= 300) {
+                reject({code: status, message: `Fail status ${status} received when downloading a chunk`});
+                window.clearInterval(response_poll_interval);
+                r.abort();
+              }
+            }
+            if(r.readyState === 3 || r.readyState === 4) { // loading, done
+              if(status >= 200 && status <= 299 && r.responseText.length >= min_bytes) { // done as a success - resolve in case response_poll didn't catch this yet
+                process_chunk_and_resolve(r.responseText);
+                window.clearInterval(response_poll_interval);
+                if(r.readyState === 3) {
+                  r.abort();
+                }
+              } else {  // done as a fail - reject
+                reject({code: null, message: "Network connection error when downloading a chunk", internal: "network"});
+                window.clearInterval(response_poll_interval);
+              }
+            }
+          };
+        }).catch(reject);
       }),
       find_header: (api_gmail_message_object: ApirGmailMessage|ApirGmailMessage$payload, header_name: string) => {
         let node: ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as ApirGmailMessage).payload : api_gmail_message_object as ApirGmailMessage$payload;
@@ -2887,8 +2992,8 @@ let tool = {
             xhr: function () {
               return tool._.get_ajax_progress_xhr(progress);
             },
-            url: url,
-            method: method,
+            url,
+            method,
             data: data || undefined,
             headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
             crossDomain: true,
@@ -2937,6 +3042,29 @@ let tool = {
         }
       });
     },
+    google_api_authorization_header: (account_email: string): Promise<string> => new Promise(async (resolve, reject) => {
+      if(!account_email) {
+        throw new Error('missing account_email in api_gmail_call');
+      }
+      let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
+      if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
+        resolve('Bearer ' + auth.google_token_access);
+      } else { // no valid gmail_api oauth token
+        tool.api.google.auth({account_email}, async (response) => {
+          if(response && response.success === false && response.error === tool.api.error.network) {
+            reject(tool.api.error.network);
+          } else {
+            let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
+            if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
+              resolve('Bearer ' + auth.google_token_access);
+            } else {
+              reject({code: 401, message: 'Could not refresh google auth token', internal: 'auth'});
+            }
+          }
+        });
+      }
+
+    }),
     google_api_handle_auth_error: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, callback: ApiCallback, fail_on_auth: boolean, error_response: any, base_api_function: any, progress:ApiCallProgressCallbacks|null=null, content_type:string|null=null) => {
       if(fail_on_auth !== true) {
         tool.api.google.auth({account_email: account_email}, function (response) {
