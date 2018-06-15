@@ -173,9 +173,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
     attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let rendered_attachments_count = attachment_metas.length;
     for(let attachment_meta of attachment_metas) {
+      let attachment_selector = this.filter_attachments(attachments_container_inner.children(), [attachment_meta.name]).first();
       if(attachment_meta.treat_as !== 'standard') {
-        attachments_container_inner = $(attachments_container_inner);
-        let attachment_selector = this.filter_attachments(attachments_container_inner.children(), [attachment_meta.name]).first();
         this.hide_attachment(attachment_selector, attachments_container_inner);
         rendered_attachments_count--;
         if(attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
@@ -217,6 +216,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
           let replace = !message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text());
           message_element = this.update_message_body_element(message_element, replace ? 'set': 'append', embedded_signed_message);
         }
+      } else {
+        attachment_selector.children('.attachment_loader').remove();
       }
     }
     if(rendered_attachments_count === 0) {
