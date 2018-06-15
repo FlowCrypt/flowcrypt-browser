@@ -173,7 +173,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
     attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let rendered_attachments_count = attachment_metas.length;
     for(let attachment_meta of attachment_metas) {
-      let attachment_selector = this.filter_attachments(attachments_container_inner.children(), [attachment_meta.name]).first();
+      // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
+      let attachment_selector = this.filter_attachments(attachments_container_inner.children().not('.attachment_processed'), [attachment_meta.name]).first();
       if(attachment_meta.treat_as !== 'standard') {
         this.hide_attachment(attachment_selector, attachments_container_inner);
         rendered_attachments_count--;
@@ -200,14 +201,14 @@ class GmailElementReplacer implements WebmailElementReplacer {
             downloaded_attachment = await tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
           } catch(e) {
             console.log(e);
-            $(attachments_container_inner).find('.attachment_loader').text('Please reload page');
+            $(attachments_container_inner).show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
             return;
           }
           let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
           if(tool.crypto.message.resembles_beginning(armored_key)) {
             message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
           } else {
-            attachment_selector.show().children('.attachment_loader').text('Unknown Public Key Format');
+            attachment_selector.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
             rendered_attachments_count++;
           }
         } else if (attachment_meta.treat_as === 'signature') {
@@ -217,7 +218,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           message_element = this.update_message_body_element(message_element, replace ? 'set': 'append', embedded_signed_message);
         }
       } else {
-        attachment_selector.children('.attachment_loader').remove();
+        attachment_selector.addClass('attachment_processed').children('.attachment_loader').remove();
       }
     }
     if(rendered_attachments_count === 0) {
