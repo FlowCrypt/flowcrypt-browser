@@ -2405,7 +2405,14 @@ let tool = {
       api_gmail_SCOPE_DICT: {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'} as Dict<string>,
       browser_message_MAX_SIZE: 1024 * 1024, // 1MB
       browser_message_STANDARD_HANDLERS: {
-        set_css: (data: {css: Dict<string|number>, selector: string}) => $(data.selector).css(data.css),
+        set_css: (data: {css: Dict<string|number>, selector: string, traverse_up?: number}) => {
+          let element = $(data.selector);
+          let traverse_up_levels = data.traverse_up as number || 0;
+          for(let i = 0; i < traverse_up_levels; i++) {
+            element = element.parent();
+          }
+          element.css(data.css);
+        },
       } as Dict<BrowserMessageHandler>,
       crypto_password_SENTENCE_PRESENT_TEST: /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/,
       crypto_password_SENTECES: [

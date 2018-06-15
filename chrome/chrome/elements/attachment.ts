@@ -2,14 +2,13 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
-  let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted']);
-  if(url_params.size) {
-    url_params.size = parseInt(url_params.size as string);
-  }
+  let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
+  url_params.size = url_params.size ? parseInt(url_params.size as string) : undefined;
+  let original_name = url_params.name ? (url_params.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
   
   let original_html_content: string;
   let button = $('#download');
@@ -19,10 +18,10 @@ tool.catch.try(() => {
   
   $('#type').text(url_params.type as string);
   $('#name').text(url_params.name as string);
-  
+
   $('img#file-format').attr('src', (() => {
     let icon = (name: string) => `/img/fileformat/${name}.png`;
-    let name_split = (url_params.name as string).replace(/\.(pgp|gpg)$/ig, '').split('.');
+    let name_split = original_name.split('.');
     let extension = name_split[name_split.length - 1].toLowerCase();
     switch(extension) {
       case 'jpg':
@@ -184,6 +183,25 @@ tool.catch.try(() => {
     }
   }
   
-  $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));  
+  if(url_params.message_id && url_params.attachment_id && tool.file.treat_as(tool.file.attachment(original_name, url_params.type as string, url_params.content as string)) === 'public_key') {
+    // this is encrypted public key - download && decrypt & parse & render
+    let attachment = await tool.api.gmail.attachment_get(url_params.account_email as string, url_params.message_id as string, url_params.attachment_id as string);
+    let encrypted_data = tool.str.base64url_decode(attachment.data as string);
+    tool.crypto.message.decrypt(url_params.account_email as string, encrypted_data, null, result => {
+      if(result.success && result.content.data && tool.crypto.message.resembles_beginning(result.content.data)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
+        // render pubkey
+        tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.data]});
+        // hide attachment
+        tool.browser.message.send(url_params.parent_tab_id as string, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
+        $('body').text('');
+      } else {
+        // could not process as a pubkey - let user download it as they see fit
+        $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
+      }
+    }, 'utf8');
+  } else {
+    // standard encrypted attachment - let user download it as they see fit
+    $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
+  }
 
 })();
