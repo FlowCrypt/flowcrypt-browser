@@ -11,10 +11,10 @@ interface ComposerAppFunctionsInterface {
     storage_get_addresses_pks: () => string[],
     storage_get_addresses_keyserver: () => string[],
     storage_get_email_footer: () => string|null,
-    storage_set_email_footer: (footer: string|null) => void,
+    storage_set_email_footer: (footer: string|null) => Promise<void>,
     storage_get_hide_message_password: () => boolean,
     storage_get_subscription: () => Promise<Subscription>,
-    storage_get_armored_public_key: (sender_email: string) => Promise<null|string>,
+    storage_get_key: (sender_email: string) => Promise<KeyInfo>,
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>,
     storage_passphrase_get: () => Promise<string|null>,
     storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise<void>,
@@ -142,7 +142,7 @@ class Composer {
     if (subscription.active) {
       this.update_footer_icon();
     } else if (this.app.storage_get_email_footer()) { // footer set but subscription not active - subscription expired
-      this.app.storage_set_email_footer(null);
+      this.app.storage_set_email_footer(null).catch(tool.catch.handle_exception);
       this.app.send_message_to_main_window('notification_show', {
         notification: 'Your FlowCrypt ' + (subscription.method === 'trial' ? 'trial' : 'subscription') + ' has ended. Custom email signature (email footer) will no longer be used. <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>',
       });
@@ -371,40 +371,38 @@ class Composer {
     if (this.should_save_draft(this.S.cached('input_text').text()) || force_save) {
       this.draft_save_in_progress = true;
       this.S.cached('send_btn_note').text('Saving');
-      let armored_pubkey = await this.app.storage_get_armored_public_key(this.account_email);
-      if(armored_pubkey) {
-        let encrypted = await tool.crypto.message.encrypt([armored_pubkey], null, null, this.S.cached('input_text')[0].innerText, null, true);
-        let body;
-        if (this.thread_id) { // replied message
-          body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
-        } else if (this.draft_id) {
-          body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
-        } else {
-          body = encrypted.data;
-        }
-        let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
-        tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
-          try {
-            if (!this.draft_id) {
-              let new_draft = await this.app.email_provider_draft_create(mime_message);
-              this.S.cached('send_btn_note').text('Saved');
-              this.draft_id = new_draft.id;
-              await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
-                // recursing one more time, because we need the draft_id we get from this reply in the message itself
-                // essentially everytime we save draft for the first time, we have to save it twice
-                // save_draft_in_process will remain true because well.. it's still in process
-              await this.draft_save(true); // force_save = true  
-            } else {
-              await this.app.email_provider_draft_update(this.draft_id, mime_message);
-              this.S.cached('send_btn_note').text('Saved');
-            }
-          } catch(error) {
-            console.log(error);
-            this.S.cached('send_btn_note').text('Not saved');
-          }
-          this.draft_save_in_progress = false;
-        });
+      let primary_ki = await this.app.storage_get_key(this.account_email);
+      let encrypted = await tool.crypto.message.encrypt([primary_ki.public], null, null, this.S.cached('input_text')[0].innerText, null, true);
+      let body;
+      if (this.thread_id) { // replied message
+        body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
+      } else if (this.draft_id) {
+        body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
+      } else {
+        body = encrypted.data;
       }
+      let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
+      tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
+        try {
+          if (!this.draft_id) {
+            let new_draft = await this.app.email_provider_draft_create(mime_message);
+            this.S.cached('send_btn_note').text('Saved');
+            this.draft_id = new_draft.id;
+            await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
+              // recursing one more time, because we need the draft_id we get from this reply in the message itself
+              // essentially everytime we save draft for the first time, we have to save it twice
+              // save_draft_in_process will remain true because well.. it's still in process
+            await this.draft_save(true); // force_save = true  
+          } else {
+            await this.app.email_provider_draft_update(this.draft_id, mime_message);
+            this.S.cached('send_btn_note').text('Saved');
+          }
+        } catch(error) {
+          console.log(error);
+          this.S.cached('send_btn_note').text('Not saved');
+        }
+        this.draft_save_in_progress = false;
+      });
     }
   };
 
@@ -470,13 +468,9 @@ class Composer {
     });
   };
 
-  private collect_all_available_public_keys = async(account_email: string, recipients: string[]) => {
+  private collect_all_available_public_keys = async(account_email: string, recipients: string[]): Promise<{armored_pubkeys: string[], emails_without_pubkeys: string[]}> => {
     let contacts = await this.app.storage_contact_get(recipients);
-    let armored_public_key = await this.app.storage_get_armored_public_key(account_email);
-    if(armored_public_key === null) {
-      let [ki] = await Store.keys_get(account_email, ['primary']);
-      armored_public_key = ki.public;
-    }
+    let {public: armored_public_key} = await this.app.storage_get_key(account_email);
     const armored_pubkeys = [armored_public_key];
     const emails_without_pubkeys = [];
     for(let i in contacts) {
@@ -615,7 +609,6 @@ class Composer {
         // noinspection JSIgnoredPromiseFromCall
         this.app.storage_contact_update(recipients, {last_use: Date.now()});
         this.S.now('send_btn_span').text(this.BTN_SENDING);
-        signed_data = await this.with_attached_pubkey_if_needed(signed_data);
         const body = {'text/plain': signed_data};
         await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
       }
@@ -693,17 +686,8 @@ class Composer {
     })});
   };
 
-  private with_attached_pubkey_if_needed = async (encrypted: string) => {
-    if (this.S.cached('icon_pubkey').is('.active')) {
-    let armored_public_key = await this.app.storage_get_armored_public_key(this.account_email);
-      encrypted += '\n\n' + armored_public_key;
-    }
-    return encrypted
-  };
-
   private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
     let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true);
-    encrypted.data = await this.with_attached_pubkey_if_needed(encrypted.data as string);
     let body = {'text/plain': encrypted.data} as SendableMessageBody;
     await this.app.storage_contact_update(recipients, {last_use: Date.now()});
     this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -727,6 +711,9 @@ class Composer {
     }
     for(let a of message.attachments) {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+    }
+    if (this.S.cached('icon_pubkey').is('.active')) {
+      message.attachments.push(tool.file.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
     }
     let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
     const is_signed = this.S.cached('icon_sign').is('.active');
@@ -1393,11 +1380,11 @@ class Composer {
       storage_get_addresses_pks: () => [],
       storage_get_addresses_keyserver: () => [],
       storage_get_email_footer: () => null,
-      storage_set_email_footer: () => null,
+      storage_set_email_footer: () => Promise.resolve(),
       storage_get_hide_message_password: () => false,
       storage_get_subscription: () => Promise.resolve(new Subscription(null)),
-      storage_get_armored_public_key: (sender_email: string) => Promise.resolve(null),
       storage_set_draft_meta: () => Promise.resolve(),
+      storage_get_key: () => { throw new Error('storage_get_key not implemented'); },
       storage_passphrase_get: () => Promise.resolve(null),
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),

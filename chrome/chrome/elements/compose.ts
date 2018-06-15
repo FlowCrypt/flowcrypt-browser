@@ -46,19 +46,18 @@ tool.catch.try(async() => {
       storage_get_addresses_pks: () => storage.addresses_pks || [],
       storage_get_addresses_keyserver: () => storage.addresses_keyserver || [],
       storage_get_email_footer: () => storage.email_footer || null,
-      storage_set_email_footer: (footer: string|null) => {
+      storage_set_email_footer: async (footer: string|null) => {
         storage.email_footer = footer;
-        // noinspection JSIgnoredPromiseFromCall
-        Store.set(url_params.account_email as string, {email_footer: footer}); // async
+        await Store.set(url_params.account_email as string, {email_footer: footer});
       },
       storage_get_hide_message_password: () => !!storage.hide_message_password,
       storage_get_subscription: () => Store.subscription(),
-      storage_get_armored_public_key: async (sender_email: string) => {
+      storage_get_key: async (sender_email: string): Promise<KeyInfo> => {
         let [primary_k] = await Store.keys_get(url_params.account_email as string, ['primary']);
         if(primary_k) {
-          return primary_k.public;
+          return primary_k;
         } else {
-          throw Error('FlowCrypt is not properly set up. No Public Key found in storage.');
+          throw new ComposerUserError('FlowCrypt is not properly set up. No Public Key found in storage.');
         }
       },
       storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => tool.catch.Promise((resolve, reject) => {
