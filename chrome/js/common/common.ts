@@ -568,9 +568,19 @@ let tool = {
         return text;
       }
       text = (text || '').replace(/\r?\n/g, '<br>\n');
+
       if(text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
-        return (window as FcWindow).iso88592.decode(text);
+        return (window as FcWindow).iso88592.decode(text);  // todo - use iso88592.labels for detection
       }
+
+      let chunk = text.substring(0, 1000).split('');
+      let c_cross_d = chunk.filter(c => c === 'Ð').length;
+      let c_confirm = chunk.filter(c => 'Ñ²¸»'.indexOf(c) !== -1).length;
+      if(chunk && c_cross_d > 1 && c_cross_d / chunk.length > 0.02 && c_confirm / chunk.length > 0.01) {
+        // guessed based on the test above that the text needs to be explicitly decoded as utf8 to become utf string
+        return tool.str.uint8_as_utf(tool.str.to_uint8(text));
+      }
+
       return text;
     },
     decode: (mime_message: string, callback: (success: boolean, decoded: MimeContent) => void) => {

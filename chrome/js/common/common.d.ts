@@ -6,10 +6,14 @@ interface BrowserWidnow extends Window {
 
 type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number }
 
+type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};
+
 interface FcWindow extends BrowserWidnow {
     jQuery: JQuery,
     $: JQuery,
-    iso88592: any,
+    iso88592: Codec,
+    // windows1252: Codec,
+    // koi8r: Codec,
     is_bare_engine: boolean,
     openpgp: any,
     mnemonic: (hex: string) => string,
