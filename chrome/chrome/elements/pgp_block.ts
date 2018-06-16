@@ -124,7 +124,7 @@ tool.catch.try(() => {
   }
   
   function handle_private_key_mismatch(account_email: string, message: string) { //todo - make it work for multiple stored keys
-    tool.browser.message.bg_exec('tool.diagnose.message_pubkeys', [account_email, message], function (msg_diagnosis) {
+    tool.browser.message.bg_exec('tool.diagnose.message_pubkeys', [account_email, message], function (msg_diagnosis: DiagnoseMessagePubkeysResult) {
       if(msg_diagnosis.found_match) {
         render_error(Lang.pgp_block.cant_open + Lang.pgp_block.encrypted_correctly_file_bug);
       } else {
@@ -139,7 +139,7 @@ tool.catch.try(() => {
   
   function decrypt_and_save_attachment_to_downloads(success: boolean, encrypted_data: Uint8Array|ErrorEvent, name: string, type: string, render_in: JQuery<HTMLElement>) {
     if(success && encrypted_data instanceof Uint8Array) {
-      tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, encrypted_data, user_entered_message_password, tool.browser.message.cb], function (result) {
+      tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, encrypted_data, user_entered_message_password, tool.browser.message.cb], (result: DecryptResult) => {
         if(result.success) {
           tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data, render_in);
           send_resize_message();
@@ -193,7 +193,7 @@ tool.catch.try(() => {
     }));
   }
   
-  function render_pgp_signature_check_result(signature: MessageVerifyResult) {
+  function render_pgp_signature_check_result(signature: MessageVerifyResult|null) {
     if(signature) {
       let signer_email = signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email;
       $('#pgp_signature > .cursive > span').text(String(signer_email) || 'Unknown Signer');
@@ -266,7 +266,7 @@ tool.catch.try(() => {
     });
   }
   
-  function decide_decrypted_content_formatting_and_render(decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult) {
+  function decide_decrypted_content_formatting_and_render(decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult|null) {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];
@@ -314,7 +314,7 @@ tool.catch.try(() => {
   
   function decrypt_and_render(optional_password:string|null=null) {
     if(typeof url_params.signature !== 'string') {
-      tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, url_params.message, optional_password, tool.browser.message.cb], function (result) {
+      tool.browser.message.bg_exec('tool.crypto.message.decrypt', [url_params.account_email as string, url_params.message, optional_password, tool.browser.message.cb], async (result: DecryptResult) => {
         if(typeof result === 'undefined') {
           render_error(Lang.general.restart_browser_and_try_again);
         } else if(result.success) {
@@ -325,7 +325,7 @@ tool.catch.try(() => {
             console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
             initialize(true);
           } else {
-            decide_decrypted_content_formatting_and_render(result.content.data, result.encrypted, result.signature);
+            decide_decrypted_content_formatting_and_render(result.content.data, Boolean(result.encrypted), result.signature);
           }
         } else if(result.format_error) {
           if(can_read_emails && message_fetched_from_api !== 'raw') {
@@ -334,32 +334,31 @@ tool.catch.try(() => {
           } else {
             render_error(Lang.pgp_block.bad_format + '\n\n' + result.format_error);
           }
-        } else if(result.missing_passphrases.length) {
+        } else if(result.missing_passphrases && result.missing_passphrases.length) {
           render_passphrase_prompt(result.missing_passphrases);
         } else {
-          Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_k]) => {
-            if(!result.counts.potentially_matching_keys && !primary_k) {
-              render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
-            } else if(result.counts.potentially_matching_keys === result.counts.attempts && result.counts.key_mismatch === result.counts.attempts) {
-              if(url_params.has_password && !optional_password) {
-                render_password_prompt();
-              } else {
-                handle_private_key_mismatch(url_params.account_email as string, url_params.message as string);
-              }
-            } else if(result.counts.wrong_password) {
-              alert('Incorrect answer, please try again');
+          let [primary_k] = await Store.keys_get(url_params.account_email as string, ['primary']);
+          if(!result.counts.chosen_keys && !primary_k) {
+            render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
+          } else if(result.counts.chosen_keys === result.counts.attempts_done && result.counts.key_mismatch === result.counts.attempts_done) {
+            if(url_params.has_password && !optional_password) {
               render_password_prompt();
-            } else if(result.counts.errors) {
-              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
             } else {
-              delete result.message;
-              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+              handle_private_key_mismatch(url_params.account_email as string, url_params.message as string);
             }
-          });
+          } else if(result.counts.wrong_password) {
+            alert('Incorrect answer, please try again');
+            render_password_prompt();
+          } else if(result.errors && result.errors.length) {
+            render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
+          } else {
+            delete result.message;
+            render_error(Lang.pgp_block.cant_open + Lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+          }
         }
       });
     } else {
-      tool.browser.message.bg_exec('tool.crypto.message.verify_detached', [url_params.account_email as string, url_params.message, url_params.signature, tool.browser.message.cb], function (signature_result) {
+      tool.browser.message.bg_exec('tool.crypto.message.verify_detached', [url_params.account_email as string, url_params.message, url_params.signature, tool.browser.message.cb], function (signature_result: MessageVerifyResult) {
         decide_decrypted_content_formatting_and_render(url_params.message as string, false, signature_result);
       });
     }

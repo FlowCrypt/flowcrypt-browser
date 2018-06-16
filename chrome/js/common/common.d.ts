@@ -140,25 +140,24 @@ interface OpenpgpDecryptResult {
 interface DecryptedErrorCounts {
     decrypted: number,
     potentially_matching_keys: number,
-    rounds: number,
-    attempts: number,
+    chosen_keys: number,
+    attempts_planned: number,
+    attempts_done: number,
     key_mismatch: number,
     wrong_password: number,
     unsecure_mdc: number,
     format_errors: number,
 }
 
-interface Decrypted {
-}
 
-interface DecryptSuccess extends Decrypted {
+interface DecryptSuccess {
     success: true,
     content: OpenpgpDecryptResult,
     signature: MessageVerifyResult|null,
     encrypted: boolean|null,
 }
 
-interface DecryptError extends Decrypted {
+interface DecryptError {
     success: false,
     counts: DecryptedErrorCounts, 
     unsecure_mdc?: boolean,
@@ -170,6 +169,10 @@ interface DecryptError extends Decrypted {
     signature: null,
     message?: OpenpgpMessage,
 }
+
+type DecryptResult = DecryptSuccess|DecryptError;
+type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
+type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult;
 
 interface OpenpgpEncryptResult {
     data: string|Uint8Array,
@@ -261,9 +264,10 @@ interface InternalSortedKeysForDecrypt {
     for_verification: OpenpgpKey[],
     encrypted_for: string[],
     signed_by: string[],
-    potentially_matching: KeyInfo[],
-    with_passphrases: KeyInfo[],
-    without_passphrases: KeyInfo[],
+    prv_matching: KeyInfo[],
+    prv_for_decrypt: KeyInfo[],
+    prv_for_decrypt_with_passphrases: KeyInfo[],
+    prv_for_decrypt_without_passphrases: KeyInfo[],
 }
 
 interface SendableMessageBody {

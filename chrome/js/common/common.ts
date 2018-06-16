@@ -717,7 +717,7 @@ let tool = {
     },
   },
   diagnose: {
-    message_pubkeys: (account_email: string, message: string|Uint8Array|OpenpgpMessage) => {
+    message_pubkeys: (account_email: string, message: string|Uint8Array|OpenpgpMessage): Promise<DiagnoseMessagePubkeysResult> => {
       if(typeof message === 'string') {
         message = openpgp.message.readArmored(message);
       } else if(message instanceof Uint8Array) {
@@ -1144,11 +1144,11 @@ let tool = {
             }
             callback({success: true, content: { data: message.text }, encrypted: false, signature: tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0])});
           } else {
-            let missing_passphrases = keys.without_passphrases.map(function (ki) { return ki.longid; });
-            if(!keys.with_passphrases.length && !message_password) {
+            let missing_passphrases = keys.prv_for_decrypt_without_passphrases.map(function (ki) { return ki.longid; });
+            if(!keys.prv_for_decrypt_with_passphrases.length && !message_password) {
               callback({success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors, encrypted: true});
             } else {
-              let keyinfos_for_looper = keys.with_passphrases.slice(); // copy keyinfo array
+              let keyinfos_for_looper = keys.prv_for_decrypt_with_passphrases.slice(); // copy keyinfo array
               let keep_trying_until_decrypted_or_all_failed = function () {
                 tool.catch.try(function () {
                   if(!counts.decrypted && keyinfos_for_looper.length) {
@@ -1173,7 +1173,7 @@ let tool = {
                       });
                     } catch(decrypt_exception) {
                       other_errors.push(String(decrypt_exception));
-                      counts.attempts++;
+                      counts.attempts_done++;
                       if(tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message: message, counts: counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases: missing_passphrases, errors: other_errors, encrypted: true})) {
                         keep_trying_until_decrypted_or_all_failed();
                       }
@@ -1397,7 +1397,7 @@ let tool = {
   browser: {
     message: {
       cb: '[***|callback_placeholder|***]',
-      bg_exec: (path: string, args: any[], callback: (result: any) => void) => {
+      bg_exec: (path: string, args: any[], callback: (result: PossibleBgExecResults) => void) => {
         args = args.map((arg) => {
           if((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
             return tool.file.object_url_create(arg);
@@ -1405,11 +1405,11 @@ let tool = {
             return arg;
           }
         });
-        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, (result: DecryptSuccess|DecryptError) => {
+        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, (result: PossibleBgExecResults) => {
           if(path === 'tool.crypto.message.decrypt') {
-            if(result && result.success && result.content && result.content.data && typeof result.content.data === 'string' && result.content.data.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-              tool.file.object_url_consume(result.content.data).then(function (result_content_data) {
-                result.content!.data = result_content_data;
+            if(result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.data && typeof (result as DecryptSuccess).content.data === 'string' && ((result as DecryptSuccess).content.data as string).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
+              tool.file.object_url_consume((result as DecryptSuccess).content.data as string).then(function (result_content_data) {
+                (result as DecryptSuccess).content.data = result_content_data;
                 callback(result);
               });
             } else {
@@ -2572,29 +2572,32 @@ let tool = {
         for_verification: [],
         encrypted_for: [],
         signed_by: [],
-        potentially_matching: [],
-        with_passphrases: [],
-        without_passphrases: [],
+        prv_matching: [],
+        prv_for_decrypt: [],
+        prv_for_decrypt_with_passphrases: [],
+        prv_for_decrypt_without_passphrases: [],
       } as InternalSortedKeysForDecrypt;
       keys.encrypted_for = (message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       Store.keys_get(account_email).then(private_keys_all => {
-        keys.potentially_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
-        if(keys.potentially_matching.length === 0) { // not found any matching keys, or list of encrypted_for was not supplied in the message. Just try all keys.
-          keys.potentially_matching = private_keys_all;
+        keys.prv_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
+        if(keys.prv_matching.length) {
+          keys.prv_for_decrypt = keys.prv_matching;
+        } else {
+          keys.prv_for_decrypt = private_keys_all;
         }
-        Promise.all(keys.potentially_matching.map(ki => Store.passphrase_get(account_email, ki.longid))).then((passphrases) => {
-          for(let i in keys.potentially_matching) {
+        Promise.all(keys.prv_for_decrypt.map(ki => Store.passphrase_get(account_email, ki.longid))).then((passphrases) => {
+          for(let i in keys.prv_for_decrypt) {
             if(passphrases[i] !== null) {
-              let key = openpgp.key.readArmored(keys.potentially_matching[i].private).keys[0];
+              let key = openpgp.key.readArmored(keys.prv_for_decrypt[i].private).keys[0];
               if(tool.crypto.key.decrypt(key, passphrases[i]!).success) {
-                keys.potentially_matching[i].decrypted = key;
-                keys.with_passphrases.push(keys.potentially_matching[i]);
+                keys.prv_for_decrypt[i].decrypted = key;
+                keys.prv_for_decrypt_with_passphrases.push(keys.prv_for_decrypt[i]);
               } else {
-                keys.without_passphrases.push(keys.potentially_matching[i]);
+                keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
               }
             } else {
-              keys.without_passphrases.push(keys.potentially_matching[i]);
+              keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
             }
           }
           if(keys.signed_by.length && typeof Store.db_contact_get === 'function') {
@@ -2612,9 +2615,10 @@ let tool = {
     crypto_message_zeroed_decrypt_error_counts: (keys:InternalSortedKeysForDecrypt|null=null) => {
       return {
         decrypted: 0,
-        potentially_matching_keys: keys ? keys.potentially_matching.length : 0,
-        rounds: keys ? keys.with_passphrases.length : 0,
-        attempts: 0,
+        potentially_matching_keys: keys ? keys.prv_matching.length : 0,
+        chosen_keys: keys ? keys.prv_for_decrypt.length : 0,
+        attempts_planned: keys ? keys.prv_for_decrypt_with_passphrases.length : 0,
+        attempts_done: 0,
         key_mismatch: 0,
         wrong_password: 0,
         unsecure_mdc: 0,
@@ -2635,7 +2639,7 @@ let tool = {
       } else {
         other_errors.push(String(decrypt_error));
       }
-      counts.attempts++;
+      counts.attempts_done++;
     },
     /**
      *
@@ -2648,7 +2652,7 @@ let tool = {
         callback(result); // callback the moment there is successful decrypt
         return false; // do not try again
       } else if (result.success === false) {
-        if(result.counts.attempts === result.counts.rounds && !result.counts.decrypted) {
+        if(result.counts.attempts_done === result.counts.attempts_planned && !result.counts.decrypted) {
           if(result.counts.format_errors > 0) {
             result.format_error = 'This message seems to be badly formatted.';
           }
