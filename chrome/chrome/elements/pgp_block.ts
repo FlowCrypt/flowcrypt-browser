@@ -358,7 +358,7 @@ tool.catch.try(() => {
         }
       });
     } else {
-      tool.browser.message.bg_exec('tool.crypto.message.verify_detached', [url_params.account_email as string, url_params.message, url_params.signature, tool.browser.message.cb], function (signature_result: MessageVerifyResult) {
+      tool.browser.message.bg_exec('tool.crypto.message.verify_detached', [url_params.account_email as string, url_params.message, url_params.signature], function (signature_result: MessageVerifyResult) {
         decide_decrypted_content_formatting_and_render(url_params.message as string, false, signature_result);
       });
     }

@@ -717,29 +717,26 @@ let tool = {
     },
   },
   diagnose: {
-    message_pubkeys: (account_email: string, message: string|Uint8Array|OpenpgpMessage): Promise<DiagnoseMessagePubkeysResult> => {
+    message_pubkeys: async (account_email: string, message: string|Uint8Array|OpenpgpMessage): Promise<DiagnoseMessagePubkeysResult> => {
       if(typeof message === 'string') {
         message = openpgp.message.readArmored(message);
       } else if(message instanceof Uint8Array) {
         message = openpgp.message.readArmored(tool.str.from_uint8(message));
       }
-      return tool.catch.Promise(function(resolve, reject) {
-        message = <OpenpgpMessage>message;
-        let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
-        Store.keys_get(account_email).then(private_keys => {
-          let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(tool._.crypto_key_ids));
-          let diagnosis = { found_match: false, receivers: message_key_ids.length };
-          for(let msg_k_id of message_key_ids) {
-            for(let local_k_id of local_key_ids) {
-              if(msg_k_id === local_k_id) {
-                diagnosis.found_match = true;
-                return false;
-              }
-            }
+      message = <OpenpgpMessage>message;
+      let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
+      let private_keys = await Store.keys_get(account_email);
+      let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(tool._.crypto_key_ids));
+      let diagnosis = { found_match: false, receivers: message_key_ids.length };
+      for(let msg_k_id of message_key_ids) {
+        for(let local_k_id of local_key_ids) {
+          if(msg_k_id === local_k_id) {
+            diagnosis.found_match = true;
+            return diagnosis;
           }
-          resolve(diagnosis);
-        });
-      });
+        }
+      }
+      return diagnosis;
     },
   },
   crypto: {
@@ -1096,7 +1093,7 @@ let tool = {
         }
         return signature;
       },
-      verify_detached: (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array, callback: (vr: MessageVerifyResult) => void) => {
+      verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<MessageVerifyResult> => {
         if(plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
           plaintext = tool.str.from_uint8(plaintext);
         }
@@ -1104,9 +1101,8 @@ let tool = {
           signature_text = tool.str.from_uint8(signature_text);
         }
         let message = openpgp.message.readSignedContent(plaintext, signature_text);
-        tool._.crypto_message_get_sorted_keys_for_message(account_email, message, (keys: InternalSortedKeysForDecrypt) => {
-          callback(tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]));
-        });
+        let keys = await tool._.crypto_message_get_sorted_keys_for_message(account_email, message);
+        return tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]);
       },
       decrypt: (account_email: string, encrypted_data: string|Uint8Array, message_password: string|null, callback: (decrypted: DecryptSuccess|DecryptError) => void, output_format:"utf8"|"binary"|null=null): void => {
         let first_100_bytes = encrypted_data.slice(0, 100);
@@ -1134,7 +1130,7 @@ let tool = {
           callback({success: false, counts: tool._.crypto_message_zeroed_decrypt_error_counts(), format_error: format_error.message, errors: other_errors, encrypted: null, signature: null});
           return;
         }
-        tool._.crypto_message_get_sorted_keys_for_message(account_email, message, function (keys) {
+        tool._.crypto_message_get_sorted_keys_for_message(account_email, message).then(keys => {
           let counts = tool._.crypto_message_zeroed_decrypt_error_counts(keys);
           if(armored_signed_only) {
             if(!message.text) {
@@ -2153,23 +2149,17 @@ let tool = {
         client: client,
         metrics: null,
       }),
-      account_login: (account_email: string, token:string|null=null): FcPromise<{verified: boolean, subscription: SubscriptionInfo}> => {
-        return tool.catch.Promise(function(resolve, reject) {
-          Store.auth_info().then(auth_info => {
-            let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
-            let email = auth_info.account_email || account_email;
-            tool._.api_cryptup_call('account/login', {
-              account: email,
-              uuid: uuid,
-              token: token,
-            }).validate((r: ApirFcAccountLogin) => r.registered === true).then((response: ApirFcAccountLogin) => {
-              let to_save = {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription};
-              Store.set(null, to_save).then(function () {
-                resolve({verified: response.verified === true, subscription: response.subscription});
-              });
-            }, reject);
-          });
-        })
+      account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
+        let auth_info = await Store.auth_info();
+        let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
+        let email = auth_info.account_email || account_email;
+        let response: ApirFcAccountLogin = await tool._.api_cryptup_call('account/login', {
+          account: email,
+          uuid: uuid,
+          token: token,
+        }).validate((r: ApirFcAccountLogin) => r.registered === true);
+        await Store.set(null, {cryptup_account_email: email, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription});
+        return {verified: response.verified === true, subscription: response.subscription};
       },
       account_check: (emails: string[]) => tool._.api_cryptup_call('account/check', {
         emails: emails,
@@ -2214,22 +2204,18 @@ let tool = {
           }
         }
       },
-      account_update: (update_values?: Dict<Serializable>): FcPromise<ApirFcAccountUpdate> => {
-        return tool.catch.Promise(function(resolve, reject) {
-          Store.auth_info().then(function (auth_info) {
-            if(auth_info.verified) {
-              let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
-              if(update_values) {
-                for(let k of Object.keys(update_values)) {
-                  request[k] = update_values[k];
-                }
-              }
-              tool._.api_cryptup_call('account/update', request).validate((r: ApirFcAccountUpdate) => typeof r.result === 'object').then(resolve, reject);
-            } else {
-              reject(tool.api.cryptup.auth_error);
-            }
-          });
-        });
+      account_update: async (update_values?: Dict<Serializable>): Promise<ApirFcAccountUpdate> => {
+        let auth_info = await Store.auth_info();
+        if(!auth_info.verified) {
+          throw tool.api.cryptup.auth_error;
+        }
+        let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
+        if(update_values) {
+          for(let k of Object.keys(update_values)) {
+            request[k] = update_values[k];
+          }
+        }
+        return await tool._.api_cryptup_call('account/update', request).validate((r: ApirFcAccountUpdate) => typeof r.result === 'object');
       },
       account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
         let auth_info = await Store.auth_info();
@@ -2566,8 +2552,8 @@ let tool = {
       return string;
     },
     crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
-    crypto_message_get_sorted_keys_for_message: (account_email: string, message: OpenpgpMessage, callback: (keys: InternalSortedKeysForDecrypt) => void) => {
-      let keys = {
+    crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenpgpMessage): Promise<InternalSortedKeysForDecrypt> => {
+      let keys: InternalSortedKeysForDecrypt = {
         verification_contacts: [],
         for_verification: [],
         encrypted_for: [],
@@ -2576,41 +2562,36 @@ let tool = {
         prv_for_decrypt: [],
         prv_for_decrypt_with_passphrases: [],
         prv_for_decrypt_without_passphrases: [],
-      } as InternalSortedKeysForDecrypt;
+      };
       keys.encrypted_for = (message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : []).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
       keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => tool.crypto.key.longid((id as any).bytes)).filter(Boolean) as string[];
-      Store.keys_get(account_email).then(private_keys_all => {
-        keys.prv_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
-        if(keys.prv_matching.length) {
-          keys.prv_for_decrypt = keys.prv_matching;
-        } else {
-          keys.prv_for_decrypt = private_keys_all;
-        }
-        Promise.all(keys.prv_for_decrypt.map(ki => Store.passphrase_get(account_email, ki.longid))).then((passphrases) => {
-          for(let i in keys.prv_for_decrypt) {
-            if(passphrases[i] !== null) {
-              let key = openpgp.key.readArmored(keys.prv_for_decrypt[i].private).keys[0];
-              if(tool.crypto.key.decrypt(key, passphrases[i]!).success) {
-                keys.prv_for_decrypt[i].decrypted = key;
-                keys.prv_for_decrypt_with_passphrases.push(keys.prv_for_decrypt[i]);
-              } else {
-                keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
-              }
-            } else {
-              keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
-            }
-          }
-          if(keys.signed_by.length && typeof Store.db_contact_get === 'function') {
-            Store.db_contact_get(null, keys.signed_by).then(function (verification_contacts) {
-              keys.verification_contacts = verification_contacts.filter(contact => contact !== null) as Contact[];
-              keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey).keys));
-              callback(keys);
-            });  
+      let private_keys_all = await Store.keys_get(account_email);
+      keys.prv_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
+      if(keys.prv_matching.length) {
+        keys.prv_for_decrypt = keys.prv_matching;
+      } else {
+        keys.prv_for_decrypt = private_keys_all;
+      }
+      let passphrases = await Promise.all(keys.prv_for_decrypt.map(ki => Store.passphrase_get(account_email, ki.longid)));
+      for(let i in keys.prv_for_decrypt) {
+        if(passphrases[i] !== null) {
+          let key = openpgp.key.readArmored(keys.prv_for_decrypt[i].private).keys[0];
+          if(tool.crypto.key.decrypt(key, passphrases[i]!).success) {
+            keys.prv_for_decrypt[i].decrypted = key;
+            keys.prv_for_decrypt_with_passphrases.push(keys.prv_for_decrypt[i]);
           } else {
-            callback(keys);
+            keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
           }
-        });
-      });
+        } else {
+          keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
+        }
+      }
+      if(keys.signed_by.length && typeof Store.db_contact_get === 'function') {
+        let verification_contacts = await Store.db_contact_get(null, keys.signed_by);
+        keys.verification_contacts = verification_contacts.filter(contact => contact !== null) as Contact[];
+        keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey).keys));
+      }
+      return keys;
     },
     crypto_message_zeroed_decrypt_error_counts: (keys:InternalSortedKeysForDecrypt|null=null) => {
       return {

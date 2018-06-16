@@ -98,7 +98,7 @@ tool.catch.try(() => {
           google_token_scopes = storage.google_token_scopes as string[];
           if(storage.setup_done) {
             render_subscription_status_header();
-            render_encrypted_contact_page_status();
+            render_encrypted_contact_page_status().catch(tool.catch.handle_exception);
             if(!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
               $('.auth_denied_warning').css('display', 'block');
             }
@@ -134,17 +134,16 @@ tool.catch.try(() => {
     });
   }
   
-  function render_encrypted_contact_page_status() {
-    tool.api.cryptup.account_update().resolved((success, response) => {
-      let status_container = $('.public_profile_indicator_container');
-      if(success && response && response.result && response.result.alias) {
-        status_container.find('.status-indicator-text').css('display', 'none');
-        status_container.find('.status-indicator').addClass('active');
-      } else {
-        status_container.find('.status-indicator').addClass('inactive');
-      }
-      status_container.css('visibility', 'visible');
-    });
+  async function render_encrypted_contact_page_status() {
+    let response = await tool.api.cryptup.account_update();
+    let status_container = $('.public_profile_indicator_container');
+    if(response && response.result && response.result.alias) {
+      status_container.find('.status-indicator-text').css('display', 'none');
+      status_container.find('.status-indicator').addClass('active');
+    } else {
+      status_container.find('.status-indicator').addClass('inactive');
+    }
+    status_container.css('visibility', 'visible');
   }
   
   async function render_subscription_status_header() {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
   let attach_js = new Attach(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
@@ -26,16 +26,19 @@ tool.catch.try(() => {
   
   S.cached('status').html('Loading..' + tool.ui.spinner('green'));
   
-  tool.api.cryptup.account_update().then(response => render_fields(response.result), error => {
-    if(error.internal === 'auth') {
+  try {
+    let response = await tool.api.cryptup.account_update();
+    render_fields(response.result)
+  } catch(e) {
+    if(e.internal === 'auth') {
       S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(function () {
         show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
       });
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
-    }
-  });
+    }    
+  }
   
   function render_fields(result: ApirFcAccountUpdate$result) {
     if(result.alias) {
@@ -58,24 +61,30 @@ tool.catch.try(() => {
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
       S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
-      S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-        S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
-        Store.auth_info().then(function(auth_info: StoredAuthInfo) { // todo - @ts-doublecheck - is it really always a string?
-          Store.get_account(auth_info.account_email!, ['full_name']).then(storage => { // double check 
-            find_available_alias(auth_info.account_email!, function(alias) { // double check
-              let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
-              tool.api.cryptup.account_update(initial).validate(r => r.updated).then(response => window.location.reload(), error => {
-                alert('Failed to enable your Contact Page. Please try again.\n\n' + error.message);
-                window.location.reload();
-              });
-            });
-          });
-        });
-      }));
+      S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), enable_contact_page));
     }
   }
   
-  S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
+  async function enable_contact_page () {
+    S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
+    let auth_info = await Store.auth_info();
+    let storage = await Store.get_account(auth_info.account_email!, ['full_name']);
+    try {
+      let alias = await find_available_alias(auth_info.account_email!)
+      let initial = {alias: alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
+      let response = await tool.api.cryptup.account_update(initial);
+      if(!response.updated) {
+        alert('Failed to enable your Contact Page. Please try again');
+      }
+      window.location.reload();
+    } catch(e) {
+      tool.catch.handle_exception(e);
+      alert('Failed to create account, possibly a network issue. Please try again.\n\n' + e.message);
+      window.location.reload();
+    }
+  }
+
+  S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if(!S.cached('input_name').val()) {
       alert('Please add your name');
     } else if (!S.cached('input_intro').val()) {
@@ -87,7 +96,8 @@ tool.catch.try(() => {
       if(new_photo_file) {
         update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content as Uint8Array));
       }
-      tool.api.cryptup.account_update(update).resolved(() => window.location.reload());
+      await tool.api.cryptup.account_update(update);
+      window.location.reload();
     }
   }));
   
@@ -95,22 +105,20 @@ tool.catch.try(() => {
     tool.browser.message.send(url_params.parent_tab_id as string, 'close_page');
   });
   
-  function find_available_alias(email: string, callback: (alias: string) => void, _internal_i=0) {
+  async function find_available_alias(email: string): Promise<string> {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
     while(alias.length < 3) {
       alias += tool.str.random(1).toLowerCase();
     }
-    alias += (_internal_i || '');
-    tool.api.cryptup.link_me(alias).then(response => {
+    let i = 0;
+    while(true) {
+      alias += (i || '');
+      let response = await tool.api.cryptup.link_me(alias);
       if(!response.profile) {
-        callback(alias);
-      } else {
-        find_available_alias(email, callback, _internal_i + tool.int.random(1, 9));
+        return alias;
       }
-    }, error => {
-      alert('Failed to create account, possibly a network issue. Please try again.');
-      window.location.reload();
-    });
+      i += tool.int.random(1, 9);
+    }
   }
 
 })();
