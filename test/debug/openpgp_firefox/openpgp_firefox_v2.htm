@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  </head>
+  <body>
+    <pre id="pre"></pre>
+    <script src="../../../chrome/lib/openpgp.js"></script>
+    <script type="text/javascript">
+
+(async() => {
+  let {privateKeyArmored} = await openpgp.generateKey({userIds: [{name: 'Tester', email: 'firefox-chrome-mismatch@openpgp.js'}]})
+  let otherPublicKeyArmored = await new openpgp.HKP('https://attester.flowcrypt.com').lookup({query: 'flowcrypt.compatibility@gmail.com'});
+  let {data} = await openpgp.encrypt({publicKeys: openpgp.key.readArmored(otherPublicKeyArmored).keys[0], data: 'some text'});
+  try {
+    let decrypted = await openpgp.decrypt({
+      message: openpgp.message.readArmored(data), 
+      privateKey: openpgp.key.readArmored(privateKeyArmored).keys[0],
+    });
+  } catch(e) {
+    let ff = 'privateKeyPacket is null';
+    let ch = 'Cannot read property \'isDecrypted\' of null';
+    alert(`[firefox error]: ${ff}\n[chrome error]: ${ch}\n\n[your error]: ${e.message.replace('Error decrypting message: ', '')}`);
+  }
+
+})();
+
+    </script>
+  </body>
+</html>
