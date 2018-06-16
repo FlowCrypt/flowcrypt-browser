@@ -2607,18 +2607,19 @@ let tool = {
       };
     },
     crypto_message_increment_decrypt_error_counts: (counts: DecryptedErrorCounts, other_errors: string[], message_password: string|null, decrypt_error: Error) => {
-      if(String(decrypt_error) === 'Error: Error decrypting message: Cannot read property \'isDecrypted\' of null' && !message_password) {
+      let e = String(decrypt_error).replace('Error: Error decrypting message: ', '');
+      if(tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'Session key decryption failed.']) && !message_password) {
         counts.key_mismatch++; // wrong private key
-      } else if(String(decrypt_error) === 'Error: Error decrypting message: Invalid session key for decryption.' && !message_password) {
+      } else if(e === 'Invalid session key for decryption.' && !message_password) {
         counts.key_mismatch++; // attempted opening password only message with key
-      } else if(message_password && tool.value(String(decrypt_error)).in(['Error: Error decrypting message: Invalid enum value.', 'Error: Error decrypting message: CFB decrypt: invalid key'])) {
+      } else if(message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key'])) {
         counts.wrong_password++; // wrong password
-      } else if(String(decrypt_error) === 'Error: Error decrypting message: Decryption failed due to missing MDC in combination with modern cipher.') {
+      } else if(e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
         counts.unsecure_mdc++;
-      } else if (String(decrypt_error) === 'Error: Error decrypting message: Decryption error') {
+      } else if (e === 'Decryption error') {
         counts.format_errors++; // typically
       } else {
-        other_errors.push(String(decrypt_error));
+        other_errors.push(e);
       }
       counts.attempts_done++;
     },
