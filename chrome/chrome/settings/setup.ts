@@ -267,22 +267,20 @@ tool.catch.try(async () => {
     }
   }
   
-  function get_and_save_google_user_info(account_email: string): Promise<{full_name: string, locale?: string, picture?: string}> {
-    return new Promise(resolve => {
-      if(storage.email_provider === 'gmail') {
-        tool.api.google.user_info(account_email, async (success, response: Dict<string>) => {
-          if(success) {
-            let result = {full_name: response.name || '', locale: response.locale, picture: response.picture};
-            await Store.set(account_email, result);
-            resolve(result);
-          } else { // todo - will result in missing name in pubkey, and should have better handling (already happens at times)
-            resolve({full_name: ''});
-          }
-        });
-      } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
-        resolve({full_name: ''});
-      }  
-    });
+  async function get_and_save_google_user_info(account_email: string): Promise<{full_name: string, locale?: string, picture?: string}> {
+    if(storage.email_provider === 'gmail') {
+      let user_info;
+      try {
+        user_info = await tool.api.google.user_info(account_email);
+      } catch(e) {
+        return {full_name: ''};
+      }
+      let result = {full_name: user_info.name || '', locale: user_info.locale, picture: user_info.picture};
+      await Store.set(account_email, result);
+      return result;
+    } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
+      return {full_name: ''};
+    }  
   }
   
   $('.action_show_help').click(function () {

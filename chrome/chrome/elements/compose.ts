@@ -107,48 +107,21 @@ tool.catch.try(async() => {
     storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
-    email_provider_draft_get: (draft_id: string) => tool.catch.Promise((resolve, reject) => {
-      tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw', (success, response) => {
-        (success ? resolve : reject)(response);
-      });
-    }),
-    email_provider_draft_create: (mime_message: string) => tool.catch.Promise((resolve, reject) => {
-      tool.api.gmail.draft_create(url_params.account_email as string, mime_message, url_params.thread_id as string, (success, response) => {
-        (success ? resolve : reject)(response);
-      });
-    }),
-    email_provider_draft_update: (draft_id: string, mime_message: string) => tool.catch.Promise((resolve, reject) => {
-      tool.api.gmail.draft_update(url_params.account_email as string, draft_id, mime_message, (success, response) => {
-        (success ? resolve : reject)(response);
-      });
-    }),
-    email_provider_draft_delete: (draft_id: string) => tool.catch.Promise((resolve, reject) => {
-      tool.api.gmail.draft_delete(url_params.account_email as string, draft_id, (success, response) => {
-        (success ? resolve : reject)(response);
-      });
-    }),
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.catch.Promise((resolve, reject) => {
-      tool.api.gmail.message_send(url_params.account_email as string, message, function (success, response: any) {
-        if(success && response && response.id) {
-          resolve(response);
-        } else if(response && response.status === 0) {
-          reject({code: null, message: 'Internet unavailable, please try again', internal: 'network'});
-        } else {
-          reject({code: null, message: 'Message not sent - unknown error', data: response});
-        }
-      }, render_upload_progress);
-    }),
+    email_provider_draft_get: (draft_id: string) => tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw'),
+    email_provider_draft_create: (mime_message: string) => tool.api.gmail.draft_create(url_params.account_email as string, mime_message, url_params.thread_id as string),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => tool.api.gmail.draft_update(url_params.account_email as string, draft_id, mime_message),
+    email_provider_draft_delete: (draft_id: string) => tool.api.gmail.draft_delete(url_params.account_email as string, draft_id),
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.api.gmail.message_send(url_params.account_email as string, message, render_upload_progress),
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => tool.api.gmail.search_contacts(url_params.account_email as string, query, known_contacts, multi_cb),
-    email_provider_determine_reply_message_header_variables: (callback: Function) => {
-      tool.api.gmail.thread_get(url_params.account_email as string, url_params.thread_id as string, 'full', function (success, thread: any) {
-        if (success && thread.messages && thread.messages.length > 0) {
-          let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-          callback(thread.messages[thread.messages.length - 1].id, { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last });
-        } else {
-          callback();
-        }
-      });
+    email_provider_determine_reply_message_header_variables: async () => {
+      let thread = await tool.api.gmail.thread_get(url_params.account_email as string, url_params.thread_id as string, 'full');
+      if (thread.messages && thread.messages.length > 0) {
+        let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+        let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+        return {last_message_id: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last }};
+      } else {
+        return;
+      }
     },
     email_provider_extract_armored_block: (message_id: string, success: Callback, error: (error_type: any, url_formatted_data_block: string) => void) => tool.api.gmail.extract_armored_block(url_params.account_email as string, message_id, 'full', success, error),
     send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(url_params.parent_tab_id as string, channel, data),

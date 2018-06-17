@@ -23,13 +23,13 @@ interface ComposerAppFunctionsInterface {
     storage_contact_save:  (contact: Contact) =>  Promise<void>,
     storage_contact_search: (query: ProviderContactsQuery) => Promise<Contact[]>,
     storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => Contact,
-    email_provider_draft_get: (draft_id: string) => Promise<any>,
-    email_provider_draft_create: (mime_message: string) => Promise<{id: string}>,
-    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<void>,
-    email_provider_draft_delete: (draft_id: string) => Promise<void>,
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise<{id: string}>,
+    email_provider_draft_get: (draft_id: string) => Promise<ApirGmailDraftGet>,
+    email_provider_draft_create: (mime_message: string) => Promise<ApirGmailDraftCreate>,
+    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<ApirGmailDraftUpdate>,
+    email_provider_draft_delete: (draft_id: string) => Promise<ApirGmailDraftDelete>,
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise<ApirGmailMessageSend>,
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void) => void,
-    email_provider_determine_reply_message_header_variables: (cb: (last_message_id: string, headers: FlatHeaders) => void) => void,
+    email_provider_determine_reply_message_header_variables: () => Promise<undefined|{last_message_id: string, headers: {'In-Reply-To': string, 'References': string}}>,
     email_provider_extract_armored_block: (message_id: string, success_cb: (armored_msg: string) => void, error_cb: (error_type: any, url_formatted_data_block: string) => void) => void,
     send_message_to_main_window: (channel: string, data?: Object) => void,
     send_message_to_background_script: (channel: string, data?: Object) => void,
@@ -274,15 +274,15 @@ class Composer {
     } else {
       if(this.is_reply_box) {
         if(variables.skip_click_prompt) {
-          this.render_reply_message_compose_table();
+          await this.render_reply_message_compose_table();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(function () {
+          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(async function () {
             if ($(this).attr('id') === 'a_reply') {
               that.supplied_to = that.supplied_to.split(',')[0];
             } else if ($(this).attr('id') === 'a_forward') {
               that.supplied_to = '';
             }
-            that.render_reply_message_compose_table((($(this).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward');
+            that.render_reply_message_compose_table((($(this).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward').catch(tool.catch.handle_exception);
           });
         }
       }
@@ -940,23 +940,21 @@ class Composer {
     });
   };
 
-  private render_reply_message_compose_table = (method:"forward"|"reply"="reply") => {
+  private render_reply_message_compose_table = async  (method:"forward"|"reply"="reply") => {
     this.S.cached('reply_message_prompt').css('display', 'none');
     this.S.cached('compose_table').css('display', 'table');
     this.S.cached('input_to').val(this.supplied_to + (this.supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
     this.render_compose_table();
     if (this.can_read_emails) {
-      this.app.email_provider_determine_reply_message_header_variables((last_message_id: string, headers: FlatHeaders) => {
-        if(last_message_id && headers) {
-          for(let name of Object.keys(headers)) {
-            this.additional_message_headers[name] = headers[name];
-          }
-          if(method === 'forward') {
-            this.supplied_subject = 'Fwd: ' + this.supplied_subject;
-            this.retrieve_decrypt_and_add_forwarded_message(last_message_id);
-          }
+      let determined = await this.app.email_provider_determine_reply_message_header_variables();
+      if(determined && determined.last_message_id && determined.headers) {
+        this.additional_message_headers['In-Reply-To'] = determined.headers['In-Reply-To'];
+        this.additional_message_headers['References'] = determined.headers['References'];
+        if(method === 'forward') {
+          this.supplied_subject = 'Fwd: ' + this.supplied_subject;
+          this.retrieve_decrypt_and_add_forwarded_message(determined.last_message_id);
         }
-      });
+      }
     } else {
       this.S.cached('reply_message_prompt').html('FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       this.S.cached('reply_message_prompt').attr('style', 'border:none !important');
@@ -1390,13 +1388,13 @@ class Composer {
       storage_contact_save: (contact: Contact) => Promise.resolve(),
       storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
-      email_provider_draft_get: (draft_id: string) => Promise.resolve(),
+      email_provider_draft_get: (draft_id: string) => Promise.resolve({}),
       email_provider_draft_create: (mime_message: string) => Promise.reject(null),
-      email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve(),
-      email_provider_draft_delete: (draft_id: string) => Promise.resolve(),
+      email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
+      email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
       email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise.reject({message: 'not implemented'}),
       email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => multi_cb({new: [], all: []}),
-      email_provider_determine_reply_message_header_variables: (callback: Function) => callback(),
+      email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id: string, success: Callback, error: (error_type: any, url_formatted_data_block: string) => void) => success(),
       send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
       render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),

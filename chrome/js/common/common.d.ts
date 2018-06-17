@@ -329,7 +329,7 @@ type ProductLevel = 'pro'|null;
 type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
 type ApiCallFormat = 'JSON'|'FORM';
 type ApiCallProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
-type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback, download?: ApiCallProgressCallback};
+type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback|null, download?: ApiCallProgressCallback|null};
 type ApiCallMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ApiResponseFormat = 'json';
 type GmailApiResponseFormat = 'raw'|'full'|'metadata';
@@ -383,6 +383,15 @@ type ApirGmailMessage = {id: string, threadId?: string|null, payload: ApirGmailM
 type ApirGmailMessageList$message = {id: string, threadId: string};
 type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
 type ApirGmailAttachment = {attachmentId: string, size: number, data: string};
+type ApirGmailMessageSend = {id: string};
+type ApirGmailThreadGet = {id: string, messages: ApirGmailMessage[]};
+type ApirGmailDraftCreate = {id: string};
+type ApirGmailDraftDelete = {};
+type ApirGmailDraftUpdate = {};
+type ApirGmailDraftGet = {};
+type ApirGmailDraftSend = {};
+
+type ApirGoogleUserInfo = {name: string, locale: string, picture: string};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
 type WebmailVariantString = null|'html'|'standard'|'new';
@@ -430,6 +439,7 @@ interface SubscriptionAttempt extends Product {
     source: string|null;
 }
 
+type GoogleAuthTokenInfo = {issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline'};
 type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
 type GoogleAuthWindowResult$state = {auth_responder_id: string, account_email: string, message_id: string, scopes: string[]};
 type GoogleAuthWindowResult$result = 'Success'|'Denied'|'Error'|'Closed';

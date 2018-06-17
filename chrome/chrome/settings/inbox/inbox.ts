@@ -81,7 +81,7 @@ tool.catch.try(async () => {
             thread_item.find('.loading').text('');
             thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
             thread_item.addClass('loaded').click(function () {
-              render_thread(thread_id);
+              render_thread(thread_id).catch(tool.catch.handle_exception);
             });
 
           }, () => $('.threads #' + thread_list_item_id(thread_id)).find('.loading').text('Failed to load'));
@@ -105,17 +105,17 @@ tool.catch.try(async () => {
     }
   }
   
-  function render_thread(thread_id: string) {
+  async function render_thread(thread_id: string) {
     display_block('thread', 'Loading..');
-    tool.api.gmail.thread_get(url_params.account_email as string, thread_id, 'full', function (success, result: any) {
-      if(!success) {
-        $('.thread').text('Failed to load thread');
-      } else {
-        display_block('thread', tool.api.gmail.find_header(result.messages[0], 'subject') || '(no subject)');
-        result.messages.map(render_message);
-        render_reply_box(thread_id, result.messages[result.messages.length - 1].id);
-      }
-    });
+    try {
+      let thread = await tool.api.gmail.thread_get(url_params.account_email as string, thread_id, 'full')
+      display_block('thread', tool.api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)');
+      thread.messages.map(render_message);
+      render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id);
+    } catch(e) {
+      $('.thread').text('Failed to load thread');
+    }
+    ;
   }
   
   function render_message(message: any) {

@@ -1538,7 +1538,7 @@ let tool = {
     },
     error: {
       is_network_error: (e: any) => {
-        if(e === 'API_ERROR_NETWORK') { // todo - deprecate this
+        if(e === 'API_ERROR_NETWORK' || e === 'network') { // todo - deprecate this
           return true;
         }
         if(typeof e === 'object') {
@@ -1549,11 +1549,26 @@ let tool = {
             return true;
           }
         }
+        return false;
+      },
+      is_auth_error: (e: any) => {
+        if(e === 'auth') { // todo - deprecate this
+          return true;
+        }
+        if(typeof e === 'object') {
+          if(e.internal === 'auth') { // StandardError
+            return true;
+          }
+          if(e.status === 401) { // $.ajax auth error
+            return true;
+          }
+        }
+        return false;
       },
       network: 'API_ERROR_NETWORK',
     },
     google: {
-      user_info: (account_email: string, callback: ApiCallback) => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}, callback),
+      user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
       auth: async (auth_request: AuthRequest) => {
         let tab_id = await tool.browser.message.tab_id();
         auth_request.tab_id = tab_id;
@@ -1565,8 +1580,9 @@ let tool = {
             throw {code: null, message: 'Cannot produce auth window from background script'};
           }
         } else {
-          let result = await tool._.google_auth_refresh_token(s.google_token_refresh);
-          await tool._.google_auth_save_tokens(auth_request.account_email, result, s.google_token_scopes || []);
+          let refresh_token_response = await tool._.google_auth_refresh_token(s.google_token_refresh);
+          let _ = await tool._.google_auth_check_access_token(refresh_token_response.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+          await tool._.google_auth_save_tokens(auth_request.account_email, refresh_token_response, s.google_token_scopes || []);
         }
       },
       auth_popup: (auth_request: AuthRequest, current_google_token_scopes:string[]=[]): Promise<AuthResult> => {
@@ -1664,63 +1680,45 @@ let tool = {
       },
       scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
       has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
-      thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null, get_thread_callback: ApiCallback) => {
-        tool._.api_gmail_call(account_email, 'GET', 'threads/' + thread_id, {
+      thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => tool._.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
           format: format
-        }, get_thread_callback);
-      },
-      draft_create: (account_email: string, mime_message: string, thread_id: string, callback: ApiCallback) => {
-        tool._.api_gmail_call(account_email, 'POST', 'drafts', {
+      }),
+      draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => tool._.api_gmail_call(account_email, 'POST', 'drafts', {
           message: {
             raw: tool.str.base64url_encode(mime_message),
             threadId: thread_id || null,
           },
-        }, callback);
-      },
-      draft_delete: (account_email: string, id: string, callback: ApiCallback) => {
-        tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null, callback);
-      },
-      draft_update: (account_email: string, id: string, mime_message: string, callback: ApiCallback) => {
-        tool._.api_gmail_call(account_email, 'PUT', 'drafts/' + id, {
+      }),
+      draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
+      draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => tool._.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
           message: {
             raw: tool.str.base64url_encode(mime_message),
           },
-        }, callback);
-      },
-      draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full', callback: ApiCallback) => {
-        tool._.api_gmail_call(account_email, 'GET', 'drafts/' + id, {
+      }),
+      draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => tool._.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
           format: format
-        }, callback);
-      },
-      draft_send: (account_email: string, id: string, callback: ApiCallback) => {  // todo - not used yet, and should be
-        tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
+      }),
+      draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', { // todo - not used yet, and should be
           id: id,
-        }, callback);
-      },
-      message_send: (account_email: string, message: SendableMessage, callback: ApiCallback, progress_callback?: ApiCallProgressCallback) => {
+      }),
+      message_send: (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
+        return new Promise((resolve, reject) => {
         message.headers.From = message.from;
         message.headers.To = message.to.join(',');
         message.headers.Subject = message.subject;
         tool.mime.encode(message.body, message.headers, message.attachments, (mime_message) => {
           let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
-          tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, callback, undefined, {upload: progress_callback || tool.noop}, request.content_type);
+            tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type).then(resolve, reject);
+        });
         });
       },
-      message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => {
-        return new Promise((resolve, reject) => {
-          tool._.api_gmail_call(account_email, 'GET', 'messages', {
+      message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => tool._.api_gmail_call(account_email, 'GET', 'messages', {
             q: q,
             includeSpamTrash: include_deleted,
-          }, (success, response) => (success && response) ? resolve(response as ApirGmailMessageList) : reject(response));  
-        });
-      },
-      message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => {
-        return new Promise((resolve, reject) => {
-          tool._.api_gmail_call(account_email, 'GET', 'messages/' + message_id, {
+      }),
+      message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
             format: format || 'full',
-          }, (success, response) => (success && response) ? resolve(response as ApirGmailMessage) : reject(response));
-        });
-      },
+      }),
       messages_get: async (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<Dict<ApirGmailMessage>> => {
         let results: Dict<ApirGmailMessage> = {};
         for(let message_id of message_ids) { // todo: serialized requests are slow. parallel processing would be better
@@ -1728,10 +1726,9 @@ let tool = {
         }
         return results;
       },
-      attachment_get: (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => new Promise((resolve, reject) => {
-        let cb = (success: boolean, response: ApirGmailAttachment|null) => (success && response) ? resolve(response) : reject(response);
-        tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, cb, undefined, {download: progress_callback} as ApiCallProgressCallbacks);
-      }),
+      attachment_get: (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
+        return tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+      },
       attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
         let min_bytes = 1000;
         let processed = 0;
@@ -2803,17 +2800,15 @@ let tool = {
       return false; // no new scope found
     },
     api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
-    api_google_auth_code_url: (auth_request: AuthRequest) => {
-      return tool.env.url_create(tool._.var.google_oauth2!.url_code, {
-        client_id: tool._.var.google_oauth2!.client_id,
-        response_type: 'code',
-        access_type: 'offline',
-        state: tool._.api_google_auth_state_pack(auth_request),
-        redirect_uri: tool._.var.google_oauth2!.url_redirect,
-        scope: (auth_request.scopes || []).join(' '),
-        login_hint: auth_request.account_email,
-      });
-    },
+    api_google_auth_code_url: (auth_request: AuthRequest) => tool.env.url_create(tool._.var.google_oauth2!.url_code, {
+      client_id: tool._.var.google_oauth2!.client_id,
+      response_type: 'code',
+      access_type: 'offline',
+      state: tool._.api_google_auth_state_pack(auth_request),
+      redirect_uri: tool._.var.google_oauth2!.url_redirect,
+      scope: (auth_request.scopes || []).join(' '),
+      login_hint: auth_request.account_email,
+    }),
     google_auth_save_tokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
       let to_save: AccountStore = {
         google_token_access: tokens_object.access_token,
@@ -2825,22 +2820,23 @@ let tool = {
       }
       await Store.set(account_email, to_save);
     },
-    google_auth_get_tokens: async (code: string): Promise<GoogleAuthTokensResponse> => {
-      return await $.ajax({
-        url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code: code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
-        method: 'POST',
-        crossDomain: true,
-        async: true,
-      });
-    },
-    google_auth_refresh_token: async (refresh_token: string): Promise<GoogleAuthTokensResponse> => {
-      return $.ajax({
-        url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
-        method: 'POST',
-        crossDomain: true,
-        async: true,
-      });
-    },
+    google_auth_get_tokens: (code: string): Promise<GoogleAuthTokensResponse> => $.ajax({
+      url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code: code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }),
+    google_auth_refresh_token: (refresh_token: string): Promise<GoogleAuthTokensResponse> => $.ajax({
+      url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }),
+    google_auth_check_access_token: (access_token: string): Promise<GoogleAuthTokenInfo> => $.ajax({
+      url: tool.env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
+      crossDomain: true,
+      async: true,
+    }),
     google_auth_check_email: async (expected_email: string, access_token: string) => {
       try {
         let r = await $.ajax({
@@ -2860,8 +2856,9 @@ let tool = {
     google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
       if(result.result === 'Success') {
         let tokens_object = await tool._.google_auth_get_tokens(result.params.code)
-        let account_email = await tool._.google_auth_check_email(result.state.account_email, (tokens_object as GoogleAuthTokensResponse).access_token);
-        await tool._.google_auth_save_tokens(account_email, tokens_object as GoogleAuthTokensResponse, result.state.scopes);
+        let _ = await tool._.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        let account_email = await tool._.google_auth_check_email(result.state.account_email, tokens_object.access_token);
+        await tool._.google_auth_save_tokens(account_email, tokens_object, result.state.scopes);
         return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
       } else if (result.result === 'Denied') {
         return { success: false, result: 'Denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
@@ -2871,140 +2868,60 @@ let tool = {
         throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
       }
     },
-    api_google_call: (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth=false) => {
-      Store.get_account(account_email, ['google_token_access', 'google_token_expires']).then(function (auth) {
-        let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
-        if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
-          $.ajax({
-            url: url,
-            method: method,
-            data: data,
-            headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
-            crossDomain: true,
-            contentType: 'application/json; charset=UTF-8',
-            async: true,
-            success: function (response) {
-              tool.catch.try(function () {
-                callback(true, response);
-              })();
-            },
-            error: function (response) {
+    api_google_call_retry_auth_error_one_time: async (account_email: string, request: JQuery.AjaxSettings) => {
               try {
-                let error_obj = JSON.parse(response.responseText);
-                if(typeof error_obj.error !== 'undefined' && error_obj.error.message === 'Invalid Credentials') {
-                  tool._.google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, response, tool._.api_google_call);
-                } else {
-                  // @ts-ignore - edditing native response object
-                  response['_error'] = error_obj.error;
-                  tool.catch.try(function () {
-                    callback(false, response);
-                  })();
-                }
-              } catch(err) {
-                tool.catch.try(function () {
-                  // @ts-ignore - edditing native response object
-                  response['_error'] = {};
-                  let re_title = /<title>([^<]+)<\/title>/mgi;
-                  let title_match = re_title.exec(response.responseText);
-                  if(title_match) {
-                    // @ts-ignore - edditing native response object
-                    response['_error'].message = title_match[1];
+        return await $.ajax(request);
+      } catch(e) {
+        if(tool.api.error.is_auth_error(e)) { // force refresh token
+          request.headers!.Authorization = await tool._.google_api_authorization_header(account_email, true);
+          return await $.ajax(request);
                   }
-                  callback(false, response);
-                })();
               }
             },
-          });
-        } else { // no valid gmail_api oauth token
-          tool._.google_api_handle_auth_error(account_email, method, url, parameters, callback, fail_on_auth, null, tool._.api_google_call);
-        }
-      });
+    api_google_call: async (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string) => {
+      let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
+      let headers = { Authorization: await tool._.google_api_authorization_header(account_email) };
+      let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
+      return await tool._.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    api_gmail_call: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, callback: ApiCallback, fail_on_auth=false, progress:ApiCallProgressCallbacks|null=null, content_type:string|null=null) => {
-      if(!account_email) {
-        throw new Error('missing account_email in api_gmail_call');
-      }
+    // todo - asyncified
+    api_gmail_call: async (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, progress:ApiCallProgressCallbacks|null=null, contentType:string|null=null) => {
       progress = progress || {};
-      Store.get_account(account_email, ['google_token_access', 'google_token_expires']).then((auth) => {
-        if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
-          let data, url;
+      let data = undefined;
+      let url;
           if(typeof progress!.upload === 'function') { // substituted with {} above
             url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
-            data = parameters;
+        data = parameters || undefined;
           } else {
             url = 'https://www.googleapis.com/gmail/v1/users/me/' + resource;
             if(method === 'GET' || method === 'DELETE') {
-              data = parameters;
-            } else {
-              data = JSON.stringify(parameters);
-            }
-          }
-          $.ajax({
-            xhr: function () {
-              return tool._.get_ajax_progress_xhr(progress);
-            },
-            url,
-            method,
-            data: data || undefined,
-            headers: { 'Authorization': 'Bearer ' + auth.google_token_access },
-            crossDomain: true,
-            contentType: content_type || 'application/json; charset=UTF-8',
-            async: true,
-            success: function (response) {
-              tool.catch.try(function () {
-                if(callback) {
-                  callback(true, response);
-                }
-              })();
-            },
-            error: function (response) {
-              try {
-                let error_obj = JSON.parse(response.responseText);
-                if(typeof error_obj.error !== 'undefined' && error_obj.error.message === 'Invalid Credentials') {
-                  tool._.google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, response, tool._.api_gmail_call, progress, content_type);
+          data = parameters || undefined;
                 } else {
-                  // @ts-ignore - edditing native response object
-                  response['_error'] = error_obj.error;
-                  if(callback) {
-                    tool.catch.try(function () {
-                      callback(false, response);
-                    })();
-                  }
-                }
-              } catch(err) {
-                tool.catch.try(function () {
-                  // @ts-ignore - edditing native response object
-                  response['_error'] = {};
-                  let re_title = /<title>([^<]+)<\/title>/mgi;
-                  let title_match = re_title.exec(response.responseText);
-                  if(title_match) {
-                    // @ts-ignore - edditing native response object
-                    response['_error'].message = title_match[1];
-                  }
-                  if(callback) {
-                    callback(false, response);
-                  }
-                })();
+          data = JSON.stringify(parameters) || undefined;
               }
-            },
-          });
-        } else { // no valid gmail_api oauth token
-          tool._.google_api_handle_auth_error(account_email, method, resource, parameters, callback, fail_on_auth, null, tool._.api_gmail_call, progress, content_type);
         }
-      });
+      contentType = contentType || 'application/json; charset=UTF-8';
+      let headers = { 'Authorization': await tool._.google_api_authorization_header(account_email) };
+      let xhr = () => tool._.get_ajax_progress_xhr(progress);
+      let request = {xhr, url, method, data, headers, crossDomain: true, contentType, async: true};
+      console.log(request);
+      return await tool._.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    google_api_authorization_header: async (account_email: string): Promise<string> => {
+    google_api_is_auth_token_valid: (auth: AccountStore) => !auth.google_token_expires || auth.google_token_expires > new Date().getTime() + (120 * 1000), // oauth token will be valid for another 2 min
+    google_api_authorization_header: async (account_email: string, force_refresh=false): Promise<string> => {
       if(!account_email) {
         throw new Error('missing account_email in api_gmail_call');
       }
       let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
-      if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
-        return 'Bearer ' + auth.google_token_access;
-      } else { // no valid gmail_api oauth token
+      if(typeof auth.google_token_access === 'undefined') {
+        throw new Error('Account not connected to FlowCrypt Browser Extension');
+      } else if(tool._.google_api_is_auth_token_valid(auth) && !force_refresh) {
+        return `Bearer ${auth.google_token_access}`;
+      } else { // refresh token
         await tool.api.google.auth({account_email, auth_responder_id: tool.str.random(20)});
         let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
-        if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
-          return 'Bearer ' + auth.google_token_access;
+        if(tool._.google_api_is_auth_token_valid(auth)) { // have a valid gmail_api oauth token
+          return `Bearer ${auth.google_token_access}`;
         } else {
           throw {code: 401, message: 'Could not refresh google auth token', internal: 'auth'};
         }
@@ -3025,19 +2942,6 @@ let tool = {
         }
       }
       return auth_request;
-    },
-    google_api_handle_auth_error: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, callback: ApiCallback, fail_on_auth: boolean, error_response: any, base_api_function: any, progress:ApiCallProgressCallbacks|null=null, content_type:string|null=null) => {
-      if(fail_on_auth !== true) {
-        tool.api.google.auth({account_email: account_email, auth_responder_id: tool.str.random(20)}).then(response => {
-          if(response && response.success === false && response.error === tool.api.error.network) {
-            callback(false, tool.api.error.network);
-          } else { //todo: error handling for other bad situations
-            base_api_function(account_email, method, resource, parameters, callback, true, progress, content_type);
-          }
-        });
-      } else {
-        callback(false, error_response);
-      }
     },
     encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
       let boundary = 'this_sucks_' + tool.str.random(10);
