@@ -1565,28 +1565,25 @@ let tool = {
         }
         return false;
       },
+      is_auth_popup_needed: (e: any) => {
+        if(typeof e === 'object') {
+          if(e.status === 400 && typeof e.responseJSON === 'object') {
+            if(e.responseJSON.error === 'invalid_grant' && e.responseJSON.error_description === 'Bad Request') {
+              return true;
+            }
+          }
+        }
+        return false;
+      },
       network: 'API_ERROR_NETWORK',
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
-      auth: async (auth_request: AuthRequest) => {
-        let tab_id = await tool.browser.message.tab_id();
-        auth_request.tab_id = tab_id;
-        let s = await Store.get_account(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes']);
-        if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes || null, s.google_token_scopes || [], auth_request.omit_read_scope || false)) {
-          if(!tool.env.is_background_script()) {
-            return await tool.api.google.auth_popup(auth_request, s.google_token_scopes);
-          } else {
-            throw {code: null, message: 'Cannot produce auth window from background script'};
-          }
-        } else {
-          let refresh_token_response = await tool._.google_auth_refresh_token(s.google_token_refresh);
-          let _ = await tool._.google_auth_check_access_token(refresh_token_response.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-          await tool._.google_auth_save_tokens(auth_request.account_email, refresh_token_response, s.google_token_scopes || []);
-        }
-      },
       auth_popup: (auth_request: AuthRequest, current_google_token_scopes:string[]=[]): Promise<AuthResult> => {
         return new Promise((resolve, reject) => {
+          if(tool.env.is_background_script()) {
+            throw {code: null, message: 'Cannot produce auth window from background script'};
+          }
           let response_handled = false;
           auth_request = tool._.api_google_auth_popup_prepare_auth_request_scopes(auth_request, current_google_token_scopes);
           let result_listener = {
@@ -2903,26 +2900,27 @@ let tool = {
       let headers = { 'Authorization': await tool._.google_api_authorization_header(account_email) };
       let xhr = () => tool._.get_ajax_progress_xhr(progress);
       let request = {xhr, url, method, data, headers, crossDomain: true, contentType, async: true};
-      console.log(request);
       return await tool._.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    google_api_is_auth_token_valid: (auth: AccountStore) => !auth.google_token_expires || auth.google_token_expires > new Date().getTime() + (120 * 1000), // oauth token will be valid for another 2 min
+    google_api_is_auth_token_valid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
     google_api_authorization_header: async (account_email: string, force_refresh=false): Promise<string> => {
       if(!account_email) {
         throw new Error('missing account_email in api_gmail_call');
       }
-      let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
-      if(typeof auth.google_token_access === 'undefined') {
+      let storage = await Store.get_account(account_email, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+      if(!storage.google_token_access || !storage.google_token_refresh) {
         throw new Error('Account not connected to FlowCrypt Browser Extension');
-      } else if(tool._.google_api_is_auth_token_valid(auth) && !force_refresh) {
-        return `Bearer ${auth.google_token_access}`;
+      } else if(tool._.google_api_is_auth_token_valid(storage) && !force_refresh) {
+        return `Bearer ${storage.google_token_access}`;
       } else { // refresh token
-        await tool.api.google.auth({account_email, auth_responder_id: tool.str.random(20)});
+        let refresh_token_response = await tool._.google_auth_refresh_token(storage.google_token_refresh);
+        let _ = await tool._.google_auth_check_access_token(refresh_token_response.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        await tool._.google_auth_save_tokens(account_email, refresh_token_response, storage.google_token_scopes || []);
         let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
         if(tool._.google_api_is_auth_token_valid(auth)) { // have a valid gmail_api oauth token
           return `Bearer ${auth.google_token_access}`;
         } else {
-          throw {code: 401, message: 'Could not refresh google auth token', internal: 'auth'};
+          throw {code: 401, message: 'Could not refresh google auth token - did not become valid', internal: 'auth'};
         }
       }
     },

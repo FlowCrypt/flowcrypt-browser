@@ -153,12 +153,10 @@ class GmailElementReplacer implements WebmailElementReplacer {
         if(message_id) {
           if(this.can_read_emails) {
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
-            console.log('soon');
             try {
               let message = await tool.api.gmail.message_get(this.account_email, message_id, 'full');
               await this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
             } catch(e) {
-              console.error(e);
               tool.catch.handle_exception(e);
               $(new_pgp_attachments).find('.attachment_loader').text('Failed to load')
             }            
@@ -176,16 +174,13 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private process_attachments = async (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
-    console.error('1');
     let message_element = this.get_message_body_element(message_id);
     let sender_email = this.get_sender_email(message_element);
     let is_outgoing = tool.value(sender_email).in(this.addresses);
     attachments_container_inner = $(attachments_container_inner);
     attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let rendered_attachments_count = attachment_metas.length;
-    console.error('2');
     for(let attachment_meta of attachment_metas) {
-      console.error(attachment_meta);
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       let attachment_selector = this.filter_attachments(attachments_container_inner.children().not('.attachment_processed'), [attachment_meta.name]).first();
       if(attachment_meta.treat_as !== 'standard') {
@@ -257,7 +252,6 @@ class GmailElementReplacer implements WebmailElementReplacer {
     try {
       downloaded_attachment = await tool.api.gmail.attachment_get(this.account_email, attachment_meta.message_id!, attachment_meta.id!); // .id is present when fetched from api
     } catch(e) {
-      console.error(e);
       attachments_container_inner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       rendered_attachments_count++;
       return rendered_attachments_count;

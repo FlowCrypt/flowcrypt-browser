@@ -294,7 +294,7 @@ interface StandardError {
 }
 
 interface AuthRequest {
-    tab_id?: string|null,
+    tab_id: string|null,
     account_email: string,
     scopes?: string[],
     message_id?: string,
