@@ -56,7 +56,7 @@ tool.catch.try(async () => {
   }
   
   function get_url_file_size(original_url: string, callback: Callback) {
-    console.log('trying to figure out file size');
+    console.info('trying to figure out file size');
     // will only call callback on success
     let url;
     if(tool.value('docs.googleusercontent.com/docs/securesc').in(url_params.url as string)) {
@@ -81,7 +81,7 @@ tool.catch.try(async () => {
         if(size !== null) {
           callback(parseInt(size));
         } else {
-          console.log('was not able to find out file size');
+          console.info('was not able to find out file size');
         }
       }
     };
@@ -109,7 +109,7 @@ tool.catch.try(async () => {
           passphrase_interval = window.setInterval(check_passphrase_entered, 1000);
         } else {
           delete result.message;
-          console.log(result);
+          console.info(result);
           $('body.attachment').html('Error opening file<br>Downloading original..');
           tool.file.save_to_downloads(url_params.name as string, url_params.type as string, encrypted_data as string);
         }

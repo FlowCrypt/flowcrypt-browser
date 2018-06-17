@@ -726,7 +726,7 @@
               bytes_left_in_char = 5;
               binary_char = a[i].toString(2).substr(7);
             } else {
-              console.log('str_uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
+              console.info('str_uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
             }
           } else { // continuation of a multi-byte character
             binary_char += a[i].toString(2).substr(2);

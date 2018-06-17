@@ -317,7 +317,7 @@ class Composer {
           this.S.cached('input_subject').val(parsed_message.headers.subject || '');
           await this.decrypt_and_render_draft(armored, this.is_reply_box ? this.render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
         } else {
-          console.log('tool.api.gmail.draft_get tool.mime.decode else {}');
+          console.info('tool.api.gmail.draft_get tool.mime.decode else {}');
           if(this.is_reply_box) {
             this.render_reply_message_compose_table();
           }
@@ -328,12 +328,12 @@ class Composer {
         tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         setTimeout(async() => {
           await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
-          console.log('Above red message means that there used to be a draft, but was since deleted. (not an error)');
+          console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
           window.location.reload();
         }, 500);
       } else {
-        console.log('tool.api.gmail.draft_get success===false');
-        console.log(error);
+        console.info('tool.api.gmail.draft_get success===false');
+        console.info(error);
         if(this.is_reply_box) {
           this.render_reply_message_compose_table();
         }
@@ -1024,7 +1024,6 @@ class Composer {
       } else if (google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
         alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
       } else {
-        console.log(google_auth_response);
         alert(Lang.general.something_went_wrong_try_again);
       }
     });

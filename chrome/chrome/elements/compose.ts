@@ -247,7 +247,7 @@ tool.catch.try(async() => {
           url_params.subject = '';
         }
         url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
-        console.log('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
+        console.info('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
         $('#loader').remove();
         resolve();
       });

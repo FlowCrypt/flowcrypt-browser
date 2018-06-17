@@ -240,7 +240,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           let meta = download_url.split(':');
           google_drive_attachments.push({ message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted', size: 0});
         } else {
-          console.log('Missing Google Drive attachments download_url');
+          console.info('Missing Google Drive attachments download_url');
         }
       });
       await this.process_attachments(message_id, google_drive_attachments, attachments_container_inner, true);

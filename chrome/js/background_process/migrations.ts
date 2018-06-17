@@ -98,16 +98,16 @@ function account_update_status_pks(account_email: string) { // checks if any new
               if(typeof pubkey !== 'undefined') {
                 if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
                   addresses_pks.push(email);
-                  console.log(email + ' newly found matching pubkey on PKS');
+                  console.info(email + ' newly found matching pubkey on PKS');
                   // noinspection JSIgnoredPromiseFromCall
                   Store.set(account_email, { addresses_pks: addresses_pks, });
                 }
               }
             }).catch((error: Error) => {
-              console.log('Error fetching keys from PKS: ' + error.message);
+              console.info('Error fetching keys from PKS: ' + error.message);
             });
           } catch(error) {
-            console.log('Error2 fetching keys from PKS: ' + error.message);
+            console.info('Error2 fetching keys from PKS: ' + error.message);
           }
         }
       }

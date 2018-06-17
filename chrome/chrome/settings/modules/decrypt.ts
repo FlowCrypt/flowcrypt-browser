@@ -50,7 +50,7 @@ tool.catch.try(() => {
           $('.passphrase_dialog').html(factory.embedded_passphrase(missing_passprase_longids));
         } else {
           delete result.message;
-          console.log(result);
+          console.info(result);
           alert('These was a problem decrypting this file, details are in the console.');
         }
         $('.action_decrypt_and_download').html(original_content);

@@ -8,7 +8,7 @@
 
 const MAX_MESSAGE_SIZE = 1024 * 1024;
 
-console.log('background_process.js starting');
+console.info('background_process.js starting');
 
 openpgp.initWorker({path: 'lib/openpgp.worker.js'});
 

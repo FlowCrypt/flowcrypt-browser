@@ -17,7 +17,7 @@ tool.catch.try(() => {
       if(credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && tool.str.is_email_valid(credentials[1].innerText)) {
         let account_email = credentials[1].innerText.toLowerCase();
         full_name =  credentials[0].innerText;
-        console.log('Loading for ' + account_email + ' (' + full_name + ')');
+        console.info('Loading for ' + account_email + ' (' + full_name + ')');
         return account_email;
       }
     },

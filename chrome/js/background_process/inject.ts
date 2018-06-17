@@ -14,7 +14,7 @@ function inject_cryptup_into_webmail_if_needed() {
       for(let tab_id of tab_ids) {
         is_content_script_injection_needed(tab_id, (already_injected: boolean) => {
           if(!already_injected) {
-            console.log("Injecting FlowCrypt into tab " + tab_id);
+            console.info("Injecting FlowCrypt into tab " + tab_id);
             inject_content_scripts(tab_id, group.js || []);
           }
         });

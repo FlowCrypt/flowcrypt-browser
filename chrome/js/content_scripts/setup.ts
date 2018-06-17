@@ -27,7 +27,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
 
     (window as ContentScriptWindow).destroy = function () {
       tool.catch.try(() => {
-        console.log('Updating FlowCrypt');
+        console.info('Updating FlowCrypt');
         document.removeEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
         for(let id of (window as ContentScriptWindow).destroyable_intervals) {
           clearInterval(id);
@@ -77,7 +77,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
     let account_email = webmail_specific.get_user_account_email();
     if(!(window as ContentScriptWindow).account_email_global) {
       if(typeof account_email !== 'undefined' && tool.catch.version()) {
-        console.log('Loading FlowCrypt ' + tool.catch.version() + ' for ' + account_email);
+        console.info('Loading FlowCrypt ' + tool.catch.version() + ' for ' + account_email);
         (window as ContentScriptWindow).account_email_global = account_email;
         tool.env.webmails(function (webmails) {
           if(tool.value(webmail_specific.name).in(webmails)) {
@@ -88,7 +88,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
         });
       } else {
         if(account_email_interval > 6000) {
-          console.log('Cannot load FlowCrypt yet. Page: ' + window.location + ' (' + document.title + ')');
+          console.info('Cannot load FlowCrypt yet. Page: ' + window.location + ' (' + document.title + ')');
         }
         account_email_interval += 1000;
         (window as ContentScriptWindow).TrySetDestroyableTimeout(wait_for_account_email_then_setup, account_email_interval);

@@ -145,7 +145,7 @@ tool.catch.try(() => {
           send_resize_message();
         } else {
           delete result.message;
-          console.log(result);
+          console.info(result);
           alert('There was a problem decrypting this file. Downloading encrypted original. Write me at human@flowcrypt.com if this happens repeatedly.');
           tool.file.save_to_downloads(name, type, encrypted_data, render_in);
           send_resize_message();
@@ -322,14 +322,14 @@ tool.catch.try(() => {
             user_entered_message_password = optional_password;
           }
           if(result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
-            console.log('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
+            console.info('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
             initialize(true);
           } else {
             decide_decrypted_content_formatting_and_render(result.content.data, Boolean(result.encrypted), result.signature);
           }
         } else if(result.format_error) {
           if(can_read_emails && message_fetched_from_api !== 'raw') {
-            console.log('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
+            console.info('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
             initialize(true);
           } else {
             render_error(Lang.pgp_block.bad_format + '\n\n' + result.format_error);
@@ -452,9 +452,9 @@ tool.catch.try(() => {
           } else {
             tool.mime.decode(mime_message, function (success, result) {
               url_params.signature = result.signature;
-              console.log('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-              console.log(mime_message);
-              console.log('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
+              console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
+              console.info(mime_message);
+              console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
               decrypt_and_render();
             });
           }  
