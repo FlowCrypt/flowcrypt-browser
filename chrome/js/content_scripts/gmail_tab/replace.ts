@@ -35,7 +35,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   everything = () => {
     this.replace_armored_blocks();
-    this.replace_attachments();
+    this.replace_attachments().catch(tool.catch.handle_exception);
     this.replace_cryptup_tags();
     this.replace_conversation_buttons();
     this.replace_standard_reply_box();
@@ -58,17 +58,17 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replace_armored_blocks = () => {
-    let self = this;
-    $(this.selector.message_outer).find(this.selector.message_inner_containing_pgp).not('.evaluated').each(function () { // for each email that contains PGP block
-      $(this).addClass('evaluated');
-      let sender_email = self.get_sender_email(this);
-      let is_outgoing = tool.value(sender_email).in(self.addresses);
-      let replacement = tool.crypto.armor.replace_blocks(self.factory, this.innerText, self.determine_message_id(this), sender_email, is_outgoing);
+    let emails_containing_pgp_block = $(this.selector.message_outer).find(this.selector.message_inner_containing_pgp).not('.evaluated');
+    for(let email_container of emails_containing_pgp_block.get()) {
+      $(email_container).addClass('evaluated');
+      let sender_email = this.get_sender_email(email_container);
+      let is_outgoing = tool.value(sender_email).in(this.addresses);
+      let replacement = tool.crypto.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
       if(typeof replacement !== 'undefined') {
-        $(self.selector.translate_prompt).hide();
-        let new_selector = self.update_message_body_element(this, 'set', replacement.replace(/\n/g, '<br>'));
+        $(this.selector.translate_prompt).hide();
+        let new_selector = this.update_message_body_element(email_container, 'set', replacement.replace(/\n/g, '<br>'));
       }
-    });
+    }
   };
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
@@ -116,33 +116,36 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replace_cryptup_tags = () => {
-    let this_factory_embedded_compose = this.factory.embedded_compose;
-    $("div[contenteditable='true']").not('.evaluated').addClass('evaluated').each(function () {
-      let button;
+    let all_contenteditable_elements = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
+    for(let contenteditable_element of all_contenteditable_elements.get()) {
+      let contenteditable = $(contenteditable_element);
       let button_href_id: string|undefined = undefined;
-      let found_cryptup_link = $(this).html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
+      let found_cryptup_link = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if(found_cryptup_link !== null) {
+        let button;
         let [full_link, name, id] = found_cryptup_link;
         if(name === 'draft_compose') {
-          button = '<a href="#" class="open_draft">Open draft</a>';
+          button = `<a href="#" class="open_draft_${button_href_id}">Open draft</a>`;
           button_href_id = id;
         } else if(name === 'draft_reply') {
           button = `<a href="#inbox/${id}">Open draft</a>`;
         }
+        if(button) {
+          contenteditable.replaceWith(button);
+          if(button_href_id) {
+            $(`a.open_draft_${button_href_id}`).click(tool.catch.try(() => {
+              $('div.new_message').remove();
+              $('body').append(this.factory.embedded_compose(button_href_id));
+            }));  
+          }
         }
-      if(button) {
-      $(this).replaceWith(button);
-      $('a.open_draft').click(tool.catch.try(() => {
-        $('div.new_message').remove();
-          $('body').append(this_factory_embedded_compose(button_href_id));
-      }));
       }
-    });
+    }
   };
 
-  private replace_attachments = () => {
-    $(this.selector.attachments_container_inner).each((i, attachments_container: HTMLElement|JQuery<HTMLElement>) => {
-      attachments_container = $(attachments_container);
+  private replace_attachments = async () => {
+    for(let attachments_container_element of $(this.selector.attachments_container_inner).get()) {
+      let attachments_container = $(attachments_container_element);
       let new_pgp_attachments = this.filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
       let new_pgp_attachments_names = tool.arr.from_dom_node_list(new_pgp_attachments.find('.aV3')).map(x => $.trim($(x).text()));
       if(new_pgp_attachments.length) {
@@ -150,9 +153,13 @@ class GmailElementReplacer implements WebmailElementReplacer {
         if(message_id) {
           if(this.can_read_emails) {
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
-            tool.api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
-              this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names).catch(tool.catch.handle_exception);
-            }, () => $(new_pgp_attachments).find('.attachment_loader').text('Failed to load'));
+            try {
+              let message = await tool.api.gmail.message_get(this.account_email, message_id, 'full');
+              await this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
+            } catch(e) {
+              tool.catch.handle_exception(e);
+              $(new_pgp_attachments).find('.attachment_loader').text('Failed to load')
+            }            
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.catch.try(() => {
@@ -163,7 +170,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Unknown message id'));
         }
       }
-    });
+    }
   };
 
   private process_attachments = async (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
