@@ -11,6 +11,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private can_read_emails: boolean;
   private injector: Injector;
   private gmail_variant: WebmailVariantString;
+  private css_hidden = 'opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important; max-width: 1px !important; position: absolute !important; z-index: -1000 !important';
 
   private selector = { // gmail_variant=standard|new
     conversation_root: 'div.if',
@@ -364,29 +365,36 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replace_standard_reply_box = (editable:boolean=false, force:boolean=false) => {
-    $($('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_iframe_container, .reply_message_evaluated').filter(':visible').get().reverse()).each((i, reply_box) => {
-      let root_element = this.get_conversation_root_element(reply_box);
-      if(root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force)) { // element should be replaced
-        let reply_box_container = $('<div class="remove_borders reply_message_iframe_container"></div>');
-        if($(reply_box).hasClass('I5')) { // activated standard reply box
-          // activated reply box - cannot remove because would cause issues / gmail freezing
-          let original_reply_container = $(reply_box).append(reply_box_container).addClass('reply_message_evaluated').children(':not(.reply_message_iframe_container)');
-          if(this.gmail_variant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
-            original_reply_container.css({opacity: 0, height: '1px !important'});
-          } else { // in old gmail, we can safely hide it without causing freezes navigating away
-            original_reply_container.hide();
+    let new_reply_boxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
+    if(new_reply_boxes.length) {
+      // cache for subseqent loop runs
+      let convo_root_el = this.get_conversation_root_element(new_reply_boxes[0]);
+      let do_replace = Boolean(convo_root_el.find('iframe.pgp_block').filter(':visible').length || (convo_root_el.is(':visible') && force));
+      let already_has_encrypted_reply_box = Boolean(convo_root_el.find('div.reply_message_iframe_container').filter(':visible').length);
+      let mid_convo_draft = false;
+      if(do_replace) {
+        for(let reply_box_element of new_reply_boxes.reverse()) { // looping in reverse
+          let reply_box = $(reply_box_element);
+          if(mid_convo_draft || already_has_encrypted_reply_box) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
+            reply_box.attr('class', 'reply_message_evaluated').append('<font>&nbsp;&nbsp;Draft skipped</font>').children(':not(font)').hide();
+          } else {
+            let secure_reply_box = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;
+            if(reply_box.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
+              let original_children = reply_box.children();
+              reply_box.addClass('reply_message_evaluated').append(secure_reply_box);
+              if(this.gmail_variant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
+                original_children.attr('style', this.css_hidden);
+              } else { // in old gmail, we can safely hide it without causing freezes navigating away
+                original_children.hide();
+              }
+            } else { // non-activated reply box: replaced so that originally bound events would go with it (prevents inbox freezing)
+              reply_box.replaceWith(secure_reply_box);
+            }
           }
-        } else {
-          // original element replaced so that originally bound events would go with it (prevents inbox freezing)
-          $(reply_box).replaceWith(reply_box_container);
-        }
-        if(i === 0) { // last box
-          reply_box_container.html(this.factory.embedded_reply(this.get_conversation_params(root_element), editable)).children(':not(iframe)').hide();
-        } else {
-          reply_box_container.append('<font>Draft skipped</font>').children(':not(font)').hide();
+          mid_convo_draft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
         }
       }
-    });
+    }
   };
 
   private evaluate_standard_compose_receivers = () => {
