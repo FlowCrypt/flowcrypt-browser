@@ -2366,7 +2366,6 @@ let tool = {
       ui_event_fired: {} as Dict<number>,
       browser_message_background_script_registered_handlers: null as Dict<BrowserMessageHandler>|null,
       browser_message_frame_registered_handlers: {} as Dict<BrowserMessageHandler>,
-      // api_google_auth_window_promises: {} as Dict<Promise<GoogleAuthWindowResult>|string>,
       // internal constants
       env_url_param_DICT: {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null as null} as Dict<boolean|null>,
       ui_event_DOUBLE_MS: 1000,
@@ -3327,28 +3326,5 @@ tool.catch._.initialize();
       }, reject);
     });
   };
-
-  (Promise as any).prototype.resolved = (Promise as any).prototype.resolved || function(next: (ok: boolean, v: any) => void) {
-    return this.then(function(x: any) {
-      next(true, x);
-    }, function(x: any) {
-      next(false, x);
-    });
-  };
-
-  Promise.sequence = Promise.sequence || function (promise_factories: (() => void)[]) {
-    return tool.catch.Promise(function (resolve, reject) {
-      let all_results: any[] = [];
-      return promise_factories.reduce((chained_promises: Promise<any>, create_promise) => {
-        return chained_promises.then(function(promise_result) {
-          all_results.push(promise_result);
-          return create_promise();
-        });
-      }, Promise.resolve('remove+me')).then(function(last_promise_result) {
-        all_results.push(last_promise_result);
-        resolve(all_results.splice(1)); // remove first bogus promise result
-      });
-    });
-  }
 
 })();

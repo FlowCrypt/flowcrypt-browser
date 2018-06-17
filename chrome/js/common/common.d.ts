@@ -506,10 +506,8 @@ interface AccountStore extends BaseStore {
     attest_log?: StoredAttestLog[];
 }
 
-// interface Promise<T> { // this conflicts with @types/jquery
 interface FcPromise<T> extends Promise<T> {
     validate: (validator: (r: T) => void) => FcPromise<T>;
-    resolved: (next: (ok: boolean, r: T) => void) => void;
 }
 
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};

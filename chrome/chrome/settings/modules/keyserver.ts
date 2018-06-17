@@ -115,11 +115,17 @@ tool.catch.try(() => {
   async function action_submit_or_request_attestation(email: string) {
     let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
     abort_and_render_error_if_keyinfo_empty(primary_ki);
-    if(email === url_params.account_email) { // request attestation
-      await save_attest_request(url_params.account_email, 'CRYPTUP');
-      tool.api.attester.initial_legacy_submit(email, primary_ki.public, true).resolved(() => window.location.reload());
-    } else { // submit only
-      tool.api.attester.initial_legacy_submit(email, primary_ki.public, false).resolved(() => window.location.reload());
+    try {
+      if(email === url_params.account_email) { // request attestation
+        await save_attest_request(url_params.account_email, 'CRYPTUP');
+        await tool.api.attester.initial_legacy_submit(email, primary_ki.public, true);
+      } else { // submit only
+        await tool.api.attester.initial_legacy_submit(email, primary_ki.public, false);
+      }  
+    } catch(e) {
+      tool.catch.handle_exception(e);
+    } finally {
+      window.location.reload();
     }
   }
 
