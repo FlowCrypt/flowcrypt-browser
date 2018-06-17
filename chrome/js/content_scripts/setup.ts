@@ -98,7 +98,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
 
   // called by wait_for_account_email_then_setup
   function setup(account_email: string) {
-    tool.browser.message.tab_id(function (tab_id) {
+    tool.browser.message.required_tab_id().then(function (tab_id) {
       notifications = new Notifications(tab_id);
       factory = new Factory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
       inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);

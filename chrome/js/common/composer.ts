@@ -1013,20 +1013,19 @@ class Composer {
     this.update_pubkey_icon();
   };
 
-  private auth_contacts = (account_email: string) => {
+  private auth_contacts = async (account_email: string) => {
     let last_recipient = $('.recipients span').last();
     this.S.cached('input_to').val(last_recipient.text());
     last_recipient.last().remove();
-    tool.api.google.auth({account_email: account_email, scopes: tool.api.gmail.scope(['read'])} as AuthRequest, async (google_auth_response: any) => {
-      if (google_auth_response.success === true) {
-        this.can_read_emails = true;
-        await this.search_contacts();
-      } else if (google_auth_response.success === false && google_auth_response.result === 'denied' && google_auth_response.error === 'access_denied') {
-        alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
-      } else {
-        alert(Lang.general.something_went_wrong_try_again);
-      }
-    });
+    let auth_result = await tool.api.google.auth({account_email, scopes: tool.api.gmail.scope(['read']), auth_responder_id: tool.str.random(20)});
+    if (auth_result && auth_result.success === true) {
+      this.can_read_emails = true;
+      await this.search_contacts();
+    } else if (auth_result && auth_result.success === false && auth_result.result === 'Denied' && auth_result.error === 'access_denied') {
+      alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
+    } else {
+      alert(Lang.general.something_went_wrong_try_again);
+    }
   };
 
   private render_search_results_loading_done = () => {

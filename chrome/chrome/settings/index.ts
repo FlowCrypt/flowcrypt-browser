@@ -2,10 +2,9 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
-  let tab_id_global: string;
   // let microsoft_auth_attempt = {};
   let google_token_scopes: string[];
 
@@ -23,63 +22,59 @@ tool.catch.try(() => {
     }
   });
   
-  tool.browser.message.tab_id(function (tab_id) {
-    tab_id_global = tab_id;
-  
-    let factory = new Factory(url_params.account_email as string, tab_id);
-  
-    tool.browser.message.listen({
-      open_page: function (data: {page: string, add_url_text: string}, sender, respond) {
-        show_settings_page(data.page, data.add_url_text);
-      },
-      redirect: function (data: {location: string}) {
-        window.location.href = data.location;
-      },
-      close_page: function () {
-        $('.featherlight-close').click();
-      },
-      reload: function (data) {
-        $('.featherlight-close').click();
-        reload(data && data.advanced);
-      },
-      add_pubkey_dialog: function (data: {emails: string[]}, sender, respond) {
-        // todo: use #cryptup_dialog just like passphrase_dialog does
-        window.open(factory.src_add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
-      },
-      subscribe_dialog: function (data) {
-        // todo: use #cryptup_dialog just like passphrase_dialog does
-        window.open(factory.src_subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
-      },
-      notification_show: function (data: {notification: string}) {
-        alert(data.notification);
-      },
-      open_google_auth_dialog: function (data) {
-        $('.featherlight-close').click();
-        new_google_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope);
-      },
-      passphrase_dialog: function (data: {longids: string[], type: PassphraseDialogType}) {
-        if(!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialog_passphrase(data.longids, data.type));
-        }
-      },
-      close_dialog: function (data) {
-        $('#cryptup_dialog').remove();
-      },
-    }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
-  
-    initialize().then(() => {
-      if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
-        if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
-          show_settings_page(url_params.page, '&use_account_email=1');
-        } else {
-           // todo - investigate. JSON parse the params? why?
-          show_settings_page(url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
-        }
+  let tab_id = await tool.browser.message.required_tab_id();
+  let factory = new Factory(url_params.account_email as string, tab_id);
+
+  tool.browser.message.listen({
+    open_page: function (data: {page: string, add_url_text: string}, sender, respond) {
+      show_settings_page(data.page, data.add_url_text);
+    },
+    redirect: function (data: {location: string}) {
+      window.location.href = data.location;
+    },
+    close_page: function () {
+      $('.featherlight-close').click();
+    },
+    reload: function (data) {
+      $('.featherlight-close').click();
+      reload(data && data.advanced);
+    },
+    add_pubkey_dialog: function (data: {emails: string[]}, sender, respond) {
+      // todo: use #cryptup_dialog just like passphrase_dialog does
+      window.open(factory.src_add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+    },
+    subscribe_dialog: function (data) {
+      // todo: use #cryptup_dialog just like passphrase_dialog does
+      window.open(factory.src_subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+    },
+    notification_show: function (data: {notification: string}) {
+      alert(data.notification);
+    },
+    open_google_auth_dialog: function (data) {
+      $('.featherlight-close').click();
+      new_google_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope).catch(tool.catch.handle_exception);
+    },
+    passphrase_dialog: function (data: {longids: string[], type: PassphraseDialogType}) {
+      if(!$('#cryptup_dialog').length) {
+        $('body').append(factory.dialog_passphrase(data.longids, data.type));
       }
-    });
-  
+    },
+    close_dialog: function (data) {
+      $('#cryptup_dialog').remove();
+    },
+  }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+
+  initialize().then(() => {
+    if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
+      if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
+        show_settings_page(url_params.page, '&use_account_email=1');
+      } else {
+          // todo - investigate. JSON parse the params? why?
+        show_settings_page(url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
+      }
+    }
   });
-  
+    
   function display_original(selector: string) {
     let filterable = $(selector);
     filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
@@ -93,7 +88,7 @@ tool.catch.try(() => {
     return tool.catch.Promise((resolve, reject) => {
       if(url_params.account_email) {
         $('.email-address').text(url_params.account_email as string);
-        $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id_global, embedded: true }));
+        $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email: url_params.account_email, parent_tab_id: tab_id, embedded: true }));
         Store.get_account(url_params.account_email as string, ['setup_done', 'google_token_scopes', 'email_provider']).then(storage => {
           google_token_scopes = storage.google_token_scopes as string[];
           if(storage.setup_done) {
@@ -195,29 +190,28 @@ tool.catch.try(() => {
     });
   }
   
-  function new_google_account_authentication_prompt(account_email?: string, omit_read_scope=false) {
-    tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope: omit_read_scope, tab_id: tab_id_global }, google_token_scopes, function (response) {
-      if(response && response.success === true && response.account_email) {
-        Store.account_emails_add(response.account_email).then(function () {
-          Store.get_account(response.account_email, ['setup_done']).then(storage => {
-            if(storage.setup_done) { // this was just an additional permission
-              alert('You\'re all set.');
-              window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
-            } else {
-              Store.set(response.account_email, {email_provider: 'gmail'}).then(function () {
-                window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
-              });
-            }
-          });
-        });
-      } else if(response && response.success === false && ((response.result === 'denied' && response.error === 'access_denied') || response.result === 'closed')) {
-        show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
+  async function new_google_account_authentication_prompt(account_email?: string, omit_read_scope=false) {
+    console.log('new_google_account_authentication_prompt');
+    let response = await tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope, tab_id, auth_responder_id: tool.str.random(20) }, google_token_scopes);
+    console.log('bombastic');
+    console.log(response);
+    if(response && response.success === true && response.account_email) {
+      await Store.account_emails_add(response.account_email);
+      let storage = await Store.get_account(response.account_email, ['setup_done']);
+      if(storage.setup_done) { // this was just an additional permission
+        alert('You\'re all set.');
+        window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
       } else {
-        tool.catch.log('failed to log into google', response);
-        alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
-        window.location.reload();
+        await Store.set(response.account_email, {email_provider: 'gmail'});
+        window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
       }
-    });
+    } else if(response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+      show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
+    } else {
+      tool.catch.log('failed to log into google', response);
+      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
+      window.location.reload();
+    }
   }
   
   // function new_microsoft_account_authentication_prompt(account_email) {
@@ -246,11 +240,12 @@ tool.catch.try(() => {
   
   $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     // todo - should let them choose google or microsoft
-    new_google_account_authentication_prompt();
+    new_google_account_authentication_prompt().catch(tool.catch.handle_exception);
   }));
   
   $('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-    new_google_account_authentication_prompt(url_params.account_email as string);
+    console.log("$('.action_google_auth').click");
+    new_google_account_authentication_prompt(url_params.account_email as string).catch(tool.catch.handle_exception);
   }));
   
   // $('.action_microsoft_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function () {

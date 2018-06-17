@@ -12,8 +12,8 @@ let settings_url_params = tool.env.url_params(['account_email', 'parent_tab_id',
 let settings_tab_id_global:string|undefined = undefined;
 let ignore_email_aliases = ['nobody@google.com'];
 
-tool.browser.message.tab_id(function (tab_id) {
-  settings_tab_id_global = tab_id;
+tool.browser.message.tab_id().then(function (tab_id) {
+  settings_tab_id_global = tab_id || undefined;
 });
 
 async function fetch_account_aliases_from_gmail(account_email: string) {

@@ -294,11 +294,11 @@ interface StandardError {
 }
 
 interface AuthRequest {
-    tab_id?: string,
+    tab_id?: string|null,
     account_email: string,
     scopes?: string[],
     message_id?: string,
-    auth_responder_id?: string,
+    auth_responder_id: string,
     omit_read_scope?: boolean,
 }
 
@@ -431,6 +431,12 @@ interface SubscriptionAttempt extends Product {
 }
 
 type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
+type GoogleAuthWindowResult$state = {auth_responder_id: string, account_email: string, message_id: string, scopes: string[]};
+type GoogleAuthWindowResult$result = 'Success'|'Denied'|'Error'|'Closed';
+type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: GoogleAuthWindowResult$state, params: {code: string, error: string}};
+type AuthResultSuccess = {success: true, result: 'Success', account_email: string, message_id?: string};
+type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email?: string, message_id?: string, error?: string};
+type AuthResult = AuthResultSuccess|AuthResultError;
 type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
 
 type StoredReplyDraftMeta = string; // draft_id
@@ -468,6 +474,7 @@ interface AccountStore extends BaseStore {
     google_token_access?: string;
     google_token_expires?: number;
     google_token_scopes?: string[];
+    google_token_refresh?: string;
     hide_message_password?: boolean; // is global?
     addresses?: string[];
     addresses_pks?: string[];

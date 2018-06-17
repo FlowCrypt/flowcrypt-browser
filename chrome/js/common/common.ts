@@ -747,8 +747,8 @@ let tool = {
         }
         let debug = false;
         if(debug) {
-          console.log('pgp_block_1');
-          console.log(pgp_block_text);
+          console.info('pgp_block_1');
+          console.info(pgp_block_text);
         }
         let newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
         let spaces = [/&nbsp;/g];
@@ -757,48 +757,48 @@ let tool = {
           pgp_block_text = pgp_block_text.replace(newline, '\n');
         }
         if(debug) {
-          console.log('pgp_block_2');
-          console.log(pgp_block_text);
+          console.info('pgp_block_2');
+          console.info(pgp_block_text);
         }
         for(let remove of removes) {
           pgp_block_text = pgp_block_text.replace(remove, '');
         }
         if(debug) {
-          console.log('pgp_block_3');
-          console.log(pgp_block_text);
+          console.info('pgp_block_3');
+          console.info(pgp_block_text);
         }
         for(let space of spaces) {
           pgp_block_text = pgp_block_text.replace(space, ' ');
         }
         if(debug) {
-          console.log('pgp_block_4');
-          console.log(pgp_block_text);
+          console.info('pgp_block_4');
+          console.info(pgp_block_text);
         }
         pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
         if(debug) {
-          console.log('pgp_block_5');
-          console.log(pgp_block_text);
+          console.info('pgp_block_5');
+          console.info(pgp_block_text);
         }
         pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
         if(debug) {
-          console.log('pgp_block_6');
-          console.log(pgp_block_text);
+          console.info('pgp_block_6');
+          console.info(pgp_block_text);
         }
         let double_newlines = pgp_block_text.match(/\n\n/g);
         if(double_newlines !== null && double_newlines.length > 2) { //a lot of newlines are doubled
           pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
           if(debug) {
-            console.log('pgp_block_removed_doubles');
+            console.info('pgp_block_removed_doubles');
           }
         }
         if(debug) {
-          console.log('pgp_block_7');
-          console.log(pgp_block_text);
+          console.info('pgp_block_7');
+          console.info(pgp_block_text);
         }
         pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
         if(debug) {
-          console.log('pgp_block_final');
-          console.log(pgp_block_text);
+          console.info('pgp_block_final');
+          console.info(pgp_block_text);
         }
         return pgp_block_text;
       },
@@ -1444,7 +1444,15 @@ let tool = {
           });
         }
       },
-      tab_id: (callback: Callback) => tool.browser.message.send(null, '_tab_', null, callback),
+      tab_id: (): Promise<string|null|undefined> => new Promise(resolve => tool.browser.message.send(null, '_tab_', null, resolve)),
+      required_tab_id: async (): Promise<string> => {
+        let tab_id = await tool.browser.message.tab_id();
+        if(tab_id) {
+          return tab_id;
+        } else {
+          throw new Error(`Tab id is required, but received '${String(tab_id)}'`);
+        }
+      },
       listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
         for(let name of Object.keys(handlers)) {
           // newly registered handlers with the same name will overwrite the old ones if tool.browser.message.listen is declared twice for the same frame
@@ -1529,92 +1537,73 @@ let tool = {
       parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
     },
     error: {
+      is_network_error: (e: any) => {
+        if(e === 'API_ERROR_NETWORK') { // todo - deprecate this
+          return true;
+        }
+        if(typeof e === 'object') {
+          if(e.internal === 'network') { // StandardError
+            return true;
+          }
+          if(e.status === 0 && e.statusText === 'error') { // $.ajax network error
+            return true;
+          }
+        }
+      },
       network: 'API_ERROR_NETWORK',
     },
     google: {
       user_info: (account_email: string, callback: ApiCallback) => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}, callback),
-      auth: (auth_request: AuthRequest, respond: Callback) => {
-        tool.browser.message.tab_id(function(tab_id) {
-          auth_request.tab_id = tab_id;
-          Store.get_account(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes']).then(function (s: Dict<any>) {
-            if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes || null, s.google_token_scopes, auth_request.omit_read_scope || false)) {
-              if(!tool.env.is_background_script()) {
-                tool.api.google.auth_popup(auth_request, s.google_token_scopes, respond);
-              } else {
-                respond({success: false, error: 'Cannot produce auth window from background script'});
-              }
-            } else {
-              tool._.google_auth_refresh_token(s.google_token_refresh, (success, result) => {
-                if (!success && result === tool.api.error.network) {
-                  respond({success: false, error: tool.api.error.network});
-                } else if (typeof (result as GoogleAuthTokensResponse).access_token !== 'undefined') {
-                  tool._.google_auth_save_tokens(auth_request.account_email, result as GoogleAuthTokensResponse, s.google_token_scopes, function () {
-                    respond({ success: true, message_id: auth_request.message_id, account_email: auth_request.account_email }); //todo: email should be tested first with google_auth_check_email?
-                  });
-                } else if(!tool.env.is_background_script()) {
-                  tool.api.google.auth_popup(auth_request, s.google_token_scopes, respond);
-                } else {
-                  respond({success: false, error: 'Cannot show auth window from background script'});
-                }
-              });
-            }
-          });
-        });
-      },
-      auth_popup: (auth_request: AuthRequest, current_google_token_scopes:string[]=[], respond: Callback) => {
-        auth_request.auth_responder_id = tool.str.random(20);
-        tool._.var.api_google_auth_responders[auth_request.auth_responder_id] = respond;
-        auth_request.scopes = auth_request.scopes || [];
-        for(let scope of tool._.var.google_oauth2!.scopes) {
-          if(!tool.value(scope).in(auth_request.scopes)) {
-            if(scope !== tool.api.gmail.scope('read') || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
-              auth_request.scopes.push(scope);
-            }
+      auth: async (auth_request: AuthRequest) => {
+        let tab_id = await tool.browser.message.tab_id();
+        auth_request.tab_id = tab_id;
+        let s = await Store.get_account(auth_request.account_email, ['google_token_access', 'google_token_expires', 'google_token_refresh', 'google_token_scopes']);
+        if (typeof s.google_token_access === 'undefined' || typeof s.google_token_refresh === 'undefined' || tool._.api_google_has_new_scope(auth_request.scopes || null, s.google_token_scopes || [], auth_request.omit_read_scope || false)) {
+          if(!tool.env.is_background_script()) {
+            return await tool.api.google.auth_popup(auth_request, s.google_token_scopes);
+          } else {
+            throw {code: null, message: 'Cannot produce auth window from background script'};
           }
-        }
-        for(let scope of current_google_token_scopes) {
-          if(!tool.value(scope).in(auth_request.scopes)) {
-            auth_request.scopes.push(scope);
-          }
-        }
-        let result_listener = {
-          google_auth_window_result: function(result: Dict<any>, sender: chrome.runtime.MessageSender, respond: Callback) { 
-            if(auth_request.auth_responder_id) {
-              tool._.google_auth_window_result_handler(auth_request.auth_responder_id, result, respond); 
-            } else {
-              tool.catch.report(`result_listener.google_auth_window_result:auth_request.auth_responder_id:${auth_request.auth_responder_id}`);
-            }
-          },
-        };
-        if(auth_request.tab_id !== null && auth_request.tab_id !== undefined) {
-          tool.browser.message.listen(result_listener, auth_request.tab_id);
         } else {
-          tool.browser.message.listen_background(result_listener);
+          let result = await tool._.google_auth_refresh_token(s.google_token_refresh);
+          await tool._.google_auth_save_tokens(auth_request.account_email, result, s.google_token_scopes || []);
         }
-        let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-        // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-        // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-        let window_closed_timer: number;
-        if(tool.env.browser().name !== 'firefox') {
-          window_closed_timer = window.setInterval(api_google_auth_window_closed_watcher, 250);
-        }
-        function api_google_auth_window_closed_watcher() {
-          if(auth_code_window !== null && typeof auth_code_window !== 'undefined' && auth_code_window.closed) { // on firefox it seems to be sometimes returning a null, due to popup blocking
-            clearInterval(window_closed_timer);
-            if(!auth_request.auth_responder_id) {
-              tool.catch.report(`api_google_auth_window_closed_watcher:auth_request.auth_responder_id:${auth_request.auth_responder_id}`);
-            } else {
-              let auth_responder = tool._.var.api_google_auth_responders[auth_request.auth_responder_id];
-              if(auth_responder !== tool._.var.api_google_AUTH_RESPONDED && typeof auth_responder === 'function') {
-                // if user did clock Allow/Deny on auth, race condition is prevented, because auth_responders[] are always marked as RESPONDED before closing window.
-                // thus it's impossible for another process to try to respond before the next line
-                // that also means, if window got closed and it's not marked as RESPONDED, it was the user closing the window manually, which is what we're watching for.
-                auth_responder({success: false, result: 'closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
-                tool._.var.api_google_auth_responders[auth_request.auth_responder_id] = tool._.var.api_google_AUTH_RESPONDED;
-              }  
-            }
+      },
+      auth_popup: (auth_request: AuthRequest, current_google_token_scopes:string[]=[]): Promise<AuthResult> => {
+        return new Promise((resolve, reject) => {
+          let response_handled = false;
+          auth_request = tool._.api_google_auth_popup_prepare_auth_request_scopes(auth_request, current_google_token_scopes);
+          let result_listener = {
+            google_auth_window_result: function(result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) { 
+              if(result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
+                response_handled = true;
+                tool._.google_auth_window_result_handler(result).then(resolve, reject);
+                close_auth_window();
+              }
+            },
+          };
+          if(auth_request.tab_id !== null && auth_request.tab_id !== undefined) {
+            tool.browser.message.listen(result_listener, auth_request.tab_id);
+          } else {
+            tool.browser.message.listen_background(result_listener);
           }
-        }
+          let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+          // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+          // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
+          if(tool.env.browser().name !== 'firefox') {
+            let window_closed_timer = window.setInterval(() => {
+              if(auth_code_window === null || typeof auth_code_window === 'undefined') {
+                clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
+              } else if(auth_code_window.closed) {
+                clearInterval(window_closed_timer);
+                if(!response_handled) {
+                  resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+                  response_handled = true;
+                }
+              }
+            }, 250);
+          }
+        });        
       },
     },
     common: {
@@ -1673,7 +1662,7 @@ let tool = {
           ].join(' ');
         },
       },
-      scope: (scope: string|string[]): string|string[] => (typeof scope === 'string') ? tool._.var.api_gmail_SCOPE_DICT[scope] as string : scope.map(tool.api.gmail.scope) as string[],
+      scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
       has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
       thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null, get_thread_callback: ApiCallback) => {
         tool._.api_gmail_call(account_email, 'GET', 'threads/' + thread_id, {
@@ -2380,7 +2369,7 @@ let tool = {
       ui_event_fired: {} as Dict<number>,
       browser_message_background_script_registered_handlers: null as Dict<BrowserMessageHandler>|null,
       browser_message_frame_registered_handlers: {} as Dict<BrowserMessageHandler>,
-      api_google_auth_responders: {} as Dict<Callback|string>,
+      // api_google_auth_window_promises: {} as Dict<Promise<GoogleAuthWindowResult>|string>,
       // internal constants
       env_url_param_DICT: {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null as null} as Dict<boolean|null>,
       ui_event_DOUBLE_MS: 1000,
@@ -2825,7 +2814,7 @@ let tool = {
         login_hint: auth_request.account_email,
       });
     },
-    google_auth_save_tokens: (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[], callback: Callback) => {
+    google_auth_save_tokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
       let to_save: AccountStore = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
@@ -2834,95 +2823,52 @@ let tool = {
       if(typeof tokens_object.refresh_token !== 'undefined') {
         to_save['google_token_refresh'] = tokens_object.refresh_token;
       }
-      Store.set(account_email, to_save).then(callback);
+      await Store.set(account_email, to_save);
     },
-    google_auth_get_tokens: (code: string, callback: (r: GoogleAuthTokensResponse|AjaxError) => void, retries_left: number) => {
-      $.ajax({
+    google_auth_get_tokens: async (code: string): Promise<GoogleAuthTokensResponse> => {
+      return await $.ajax({
         url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code: code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
         method: 'POST',
         crossDomain: true,
         async: true,
-        success: function (response) {
-          callback(response);
-        },
-        error: function (XMLHttpRequest, status, error) {
-          if(!retries_left) {
-            callback({ request: XMLHttpRequest, status: status, error: error });
-          } else {
-            setTimeout(function () { // retry again
-              tool._.google_auth_get_tokens(code, callback, retries_left - 1);
-            }, 2000);
-          }
-        },
       });
     },
-    google_auth_refresh_token: (refresh_token: string, callback: (ok: boolean, r: GoogleAuthTokensResponse|string|AjaxError) => void) => {
-      $.ajax({
+    google_auth_refresh_token: async (refresh_token: string): Promise<GoogleAuthTokensResponse> => {
+      return $.ajax({
         url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token: refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
         method: 'POST',
         crossDomain: true,
         async: true,
-        success: function (response) {
-          callback(true, response as GoogleAuthTokensResponse);
-        },
-        error: function (XMLHttpRequest, status, error) {
-          if(XMLHttpRequest.status === 0 && status === 'error') { // connection error
-            callback(false, tool.api.error.network);
-          } else {
-            callback(false, { request: XMLHttpRequest, status: status, error: error });
-          }
-        },
       });
     },
-    google_auth_check_email: (expected_email: string, access_token: string, callback: Callback) => {
-      $.ajax({
-        url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + access_token },
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        success: function (response) {
-          callback(response.emailAddress || expected_email);  // todo - emailAddress may be undefined. Handle better
-        },
-        error: function (response) {
-          console.log('google_auth_check_email error');
-          console.log(expected_email);
-          console.log(response);
-          callback(expected_email); //todo - handle better. On a network error, this could result in saving this wrongly. Should re-try two times with some delay, then call back.
-        },
-      });
+    google_auth_check_email: async (expected_email: string, access_token: string) => {
+      try {
+        let r = await $.ajax({
+          url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + access_token },
+          crossDomain: true,
+          contentType: 'application/json; charset=UTF-8',
+          async: true,
+        });  
+        return r.emailAddress || expected_email;  // todo - emailAddress may be undefined. Handle better
+      } catch(e) {
+        console.log(['google_auth_check_email error', expected_email, e]);
+        return expected_email; //todo - handle better. On a network error, this could result in saving this wrongly. Should re-try two times with some delay, then call back.
+      }
     },
-    google_auth_window_result_handler: (expected_responder_id: string, result: any, close_auth_window: Callback) => {
-      if(result.state.auth_responder_id === expected_responder_id) {
-        let auth_responder = tool._.var.api_google_auth_responders[result.state.auth_responder_id];
-        if(auth_responder !== tool._.var.api_google_AUTH_RESPONDED && typeof auth_responder === 'function') {
-          tool._.var.api_google_auth_responders[result.state.auth_responder_id] = tool._.var.api_google_AUTH_RESPONDED;
-          close_auth_window();
-          switch(result.result) {
-            case 'Success':
-            tool._.google_auth_get_tokens(result.params.code, function (tokens_object) {
-                if(typeof (tokens_object as GoogleAuthTokensResponse).access_token !== 'undefined') {
-                  tool._.google_auth_check_email(result.state.account_email, (tokens_object as GoogleAuthTokensResponse).access_token, function (account_email) {
-                    tool._.google_auth_save_tokens(account_email, tokens_object as GoogleAuthTokensResponse, result.state.scopes, function () {
-                      (auth_responder as Callback)({account_email: account_email, success: true, result: 'success', message_id: result.state.message_id});
-                    });
-                  });
-                } else { // got code but failed to use the code to fetch tokens
-                  (auth_responder as Callback)({success: false, result: 'success', account_email: result.state.account_email, message_id: result.state.message_id});
-                }
-              }, 2);
-              break;
-            case 'Denied':
-              auth_responder({success: false, result: 'denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
-              break;
-            case 'Error':
-              auth_responder({success: false, result: 'error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id});
-              break;
-          }
-        } else {
-          console.log('Ignoring expected_responder_id ' + expected_responder_id + ': API_GOOGLE_AUTH_RESPONDED previously');
-        }
+    google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
+      if(result.result === 'Success') {
+        let tokens_object = await tool._.google_auth_get_tokens(result.params.code)
+        let account_email = await tool._.google_auth_check_email(result.state.account_email, (tokens_object as GoogleAuthTokensResponse).access_token);
+        await tool._.google_auth_save_tokens(account_email, tokens_object as GoogleAuthTokensResponse, result.state.scopes);
+        return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
+      } else if (result.result === 'Denied') {
+        return { success: false, result: 'Denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
+      } else if (result.result === 'Error') {
+        return { success: false, result: 'Error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
+      } else {
+        throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
       }
     },
     api_google_call: (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string, callback: ApiCallback, fail_on_auth=false) => {
@@ -3047,32 +2993,42 @@ let tool = {
         }
       });
     },
-    google_api_authorization_header: (account_email: string): Promise<string> => new Promise(async (resolve, reject) => {
+    google_api_authorization_header: async (account_email: string): Promise<string> => {
       if(!account_email) {
         throw new Error('missing account_email in api_gmail_call');
       }
       let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
       if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
-        resolve('Bearer ' + auth.google_token_access);
+        return 'Bearer ' + auth.google_token_access;
       } else { // no valid gmail_api oauth token
-        tool.api.google.auth({account_email}, async (response) => {
-          if(response && response.success === false && response.error === tool.api.error.network) {
-            reject(tool.api.error.network);
-          } else {
-            let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
-            if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
-              resolve('Bearer ' + auth.google_token_access);
-            } else {
-              reject({code: 401, message: 'Could not refresh google auth token', internal: 'auth'});
-            }
-          }
-        });
+        await tool.api.google.auth({account_email, auth_responder_id: tool.str.random(20)});
+        let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
+        if(typeof auth.google_token_access !== 'undefined' && (!auth.google_token_expires || auth.google_token_expires > new Date().getTime())) { // have a valid gmail_api oauth token
+          return 'Bearer ' + auth.google_token_access;
+        } else {
+          throw {code: 401, message: 'Could not refresh google auth token', internal: 'auth'};
+        }
       }
-
-    }),
+    },
+    api_google_auth_popup_prepare_auth_request_scopes: (auth_request: AuthRequest, current_google_token_scopes: string[]) => {
+      auth_request.scopes = auth_request.scopes || [];
+      for(let scope of tool._.var.google_oauth2!.scopes) {
+        if(!tool.value(scope).in(auth_request.scopes)) {
+          if(scope !== tool.api.gmail.scope(['read'])[0] || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
+            auth_request.scopes.push(scope);
+          }
+        }
+      }
+      for(let scope of current_google_token_scopes) {
+        if(!tool.value(scope).in(auth_request.scopes)) {
+          auth_request.scopes.push(scope);
+        }
+      }
+      return auth_request;
+    },
     google_api_handle_auth_error: (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, callback: ApiCallback, fail_on_auth: boolean, error_response: any, base_api_function: any, progress:ApiCallProgressCallbacks|null=null, content_type:string|null=null) => {
       if(fail_on_auth !== true) {
-        tool.api.google.auth({account_email: account_email}, function (response) {
+        tool.api.google.auth({account_email: account_email, auth_responder_id: tool.str.random(20)}).then(response => {
           if(response && response.success === false && response.error === tool.api.error.network) {
             callback(false, tool.api.error.network);
           } else { //todo: error handling for other bad situations
@@ -3352,12 +3308,13 @@ let tool = {
         alert(note);
       };
     },
-    stack_trace: () => {
+    stack_trace: (): string => {
       try {
         tool.catch.test();
       } catch(e) {
         return e.stack.split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
       }
+      return ''; // make ts happy - this will never happen
     },
     handle_promise_error: (e: PromiseRejectionEvent|StandardError|Error) => {
       if(e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {

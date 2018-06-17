@@ -110,13 +110,12 @@ tool.catch.try(async () => {
     }
   }
   
-  tool.browser.message.tab_id(function (tab_id) {
-    tool.browser.message.listen({
-      stripe_result: stripe_credit_card_entered_handler,
-    }, tab_id);
-    let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(url_params.account_email as string, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
-    $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
-  });
+  let tab_id = await tool.browser.message.required_tab_id();
+  tool.browser.message.listen({
+    stripe_result: stripe_credit_card_entered_handler,
+  }, tab_id || undefined);
+  let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(url_params.account_email as string, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
+  $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
   
   function stripe_credit_card_entered_handler(data: {token: string}, sender: any, respond: Callback) {
     $('.stripe_checkout').html('').css('display', 'none');

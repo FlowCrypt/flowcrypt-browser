@@ -29,7 +29,6 @@ tool.catch.try(async () => {
   let recovered_key_matching_passphrases: string[] = [];
   let recovered_keys_longid_count = 0;
   let recovered_keys_successful_longids: string[] = [];
-  let tab_id_global = undefined;
   let all_addresses: string[] = [url_params.account_email as string];
 
   let rules = new Rules(url_params.account_email as string);
@@ -39,17 +38,15 @@ tool.catch.try(async () => {
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
-  tool.browser.message.tab_id((tab_id) => {
-    tab_id_global = tab_id;
-    tool.browser.message.listen({
-      close_page: () => {
-        $('.featherlight-close').click();
-      },
-      notification_show: (data: {notification: string}) => {
-        alert(data.notification);
-      },
-    }, tab_id_global);
-  });
+  let tab_id = await tool.browser.message.required_tab_id();
+  tool.browser.message.listen({
+    close_page: () => {
+      $('.featherlight-close').click();
+    },
+    notification_show: (data: {notification: string}) => {
+      alert(data.notification);
+    },
+  }, tab_id);
   
   // show alternative account addresses in setup form + save them for later
   if(storage.email_provider === 'gmail') {
