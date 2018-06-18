@@ -30,7 +30,7 @@ interface ComposerAppFunctionsInterface {
     email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise<ApirGmailMessageSend>,
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void) => void,
     email_provider_determine_reply_message_header_variables: () => Promise<undefined|{last_message_id: string, headers: {'In-Reply-To': string, 'References': string}}>,
-    email_provider_extract_armored_block: (message_id: string, success_cb: (armored_msg: string) => void, error_cb: (error_type: any, url_formatted_data_block: string) => void) => void,
+    email_provider_extract_armored_block: (message_id: string) => Promise<string>,
     send_message_to_main_window: (channel: string, data?: Object) => void,
     send_message_to_background_script: (channel: string, data?: Object) => void,
     render_footer_dialog: () => void,
@@ -311,20 +311,19 @@ class Composer {
     }
     try {
       let draft_get_response: any = await this.app.email_provider_draft_get(this.draft_id);
-      tool.mime.decode(tool.str.base64url_decode(draft_get_response.message.raw), async (mime_success, parsed_message) => {
-        let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
-        if(armored) {
-          this.S.cached('input_subject').val(parsed_message.headers.subject || '');
-          await this.decrypt_and_render_draft(armored, this.is_reply_box ? this.render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
-        } else {
-          console.info('tool.api.gmail.draft_get tool.mime.decode else {}');
-          if(this.is_reply_box) {
-            this.render_reply_message_compose_table();
-          }
+      let parsed_message = await tool.mime.decode(tool.str.base64url_decode(draft_get_response.message.raw));
+      let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
+      if(armored) {
+        this.S.cached('input_subject').val(parsed_message.headers.subject || '');
+        await this.decrypt_and_render_draft(armored, this.is_reply_box ? this.render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
+      } else {
+        console.info('tool.api.gmail.draft_get tool.mime.decode else {}');
+        if(this.is_reply_box) {
+          this.render_reply_message_compose_table();
         }
-      });
-    } catch(error) {
-      if (this.is_reply_box && error.status === 404) {
+      }
+    } catch(e) {
+      if (this.is_reply_box && e.status === 404) {
         tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         setTimeout(async() => {
           await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
@@ -333,7 +332,7 @@ class Composer {
         }, 500);
       } else {
         console.info('tool.api.gmail.draft_get success===false');
-        console.info(error);
+        console.info(e);
         if(this.is_reply_box) {
           this.render_reply_message_compose_table();
         }
@@ -514,7 +513,9 @@ class Composer {
   };
 
   private handle_send_error(error: Error|StandardError) {
-    if(typeof error === 'object' && error.hasOwnProperty('internal')) {
+    if(tool.api.error.is_network_error(error)) {
+      alert('Could not send message due to network error. Please check your internet connection.');
+    } else if(typeof error === 'object' && error.hasOwnProperty('internal')) {
       if((error as StandardError).internal === 'auth') {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
           this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
@@ -715,7 +716,7 @@ class Composer {
     if (this.S.cached('icon_pubkey').is('.active')) {
       message.attachments.push(tool.file.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
     }
-    let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
+    let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress)
     const is_signed = this.S.cached('icon_sign').is('.active');
     this.app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
     await this.draft_delete();
@@ -918,29 +919,32 @@ class Composer {
     this.resize_reply_box();
   };
 
-  private retrieve_decrypt_and_add_forwarded_message = (message_id: string) => {
-    this.app.email_provider_extract_armored_block(message_id, (armored_message: string) => {
-      tool.crypto.message.decrypt(this.account_email, armored_message, null, (result) => {
-        if (result.success) {
-          if (!tool.mime.resembles_message(result.content.data)) {
-            this.append_forwarded_message(tool.mime.format_content_to_display(result.content.data as string, armored_message));
-          } else {
-            tool.mime.decode(result.content.data as string, (success, mime_parse_result) => {
-              this.append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data as string, armored_message));
-            });
-          }
+  private retrieve_decrypt_and_add_forwarded_message = async (message_id: string) => {
+    let armored_message: string;
+    try {
+      armored_message = await this.app.email_provider_extract_armored_block(message_id);
+    } catch(e) {
+      if (e.data) {
+        this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + e.data);
+      }
+      return;
+    }
+    tool.crypto.message.decrypt(this.account_email, armored_message, null, (result) => {
+      if (result.success) {
+        if (!tool.mime.resembles_message(result.content.data)) {
+          this.append_forwarded_message(tool.mime.format_content_to_display(result.content.data as string, armored_message));
         } else {
-          this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
+          tool.mime.decode(result.content.data as string).then(mime_parse_result => {
+            this.append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data as string, armored_message));
+          }).catch(tool.catch.handle_exception);
         }
-      });
-    }, (error_type: any, url_formatted_data_block: string) => {
-      if (url_formatted_data_block) {
-        this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + url_formatted_data_block);
+      } else {
+        this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
       }
     });
   };
 
-  private render_reply_message_compose_table = async  (method:"forward"|"reply"="reply") => {
+  private render_reply_message_compose_table = async (method:"forward"|"reply"="reply") => {
     this.S.cached('reply_message_prompt').css('display', 'none');
     this.S.cached('compose_table').css('display', 'table');
     this.S.cached('input_to').val(this.supplied_to + (this.supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
@@ -952,7 +956,7 @@ class Composer {
         this.additional_message_headers['References'] = determined.headers['References'];
         if(method === 'forward') {
           this.supplied_subject = 'Fwd: ' + this.supplied_subject;
-          this.retrieve_decrypt_and_add_forwarded_message(determined.last_message_id);
+          await this.retrieve_decrypt_and_add_forwarded_message(determined.last_message_id);
         }
       }
     } else {
@@ -1395,7 +1399,7 @@ class Composer {
       email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise.reject({message: 'not implemented'}),
       email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
-      email_provider_extract_armored_block: (message_id: string, success: Callback, error: (error_type: any, url_formatted_data_block: string) => void) => success(),
+      email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
       send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
       render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),
       render_footer_dialog: () => null,

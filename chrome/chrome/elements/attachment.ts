@@ -183,25 +183,29 @@ tool.catch.try(async () => {
     }
   }
   
-  if(url_params.message_id && url_params.attachment_id && tool.file.treat_as(tool.file.attachment(original_name, url_params.type as string, url_params.content as string)) === 'public_key') {
-    // this is encrypted public key - download && decrypt & parse & render
-    let attachment = await tool.api.gmail.attachment_get(url_params.account_email as string, url_params.message_id as string, url_params.attachment_id as string);
-    let encrypted_data = tool.str.base64url_decode(attachment.data as string);
-    tool.crypto.message.decrypt(url_params.account_email as string, encrypted_data, null, result => {
-      if(result.success && result.content.data && tool.crypto.message.is_openpgp(result.content.data)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
-        // render pubkey
-        tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.data]});
-        // hide attachment
-        tool.browser.message.send(url_params.parent_tab_id as string, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
-        $('body').text('');
-      } else {
-        // could not process as a pubkey - let user download it as they see fit
-        $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
-      }
-    }, 'utf8');
-  } else {
-    // standard encrypted attachment - let user download it as they see fit
-    $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
+  try {
+    if(url_params.message_id && url_params.attachment_id && tool.file.treat_as(tool.file.attachment(original_name, url_params.type as string, url_params.content as string)) === 'public_key') {
+      // this is encrypted public key - download && decrypt & parse & render
+      let attachment = await tool.api.gmail.attachment_get(url_params.account_email as string, url_params.message_id as string, url_params.attachment_id as string);
+      let encrypted_data = tool.str.base64url_decode(attachment.data as string);
+      tool.crypto.message.decrypt(url_params.account_email as string, encrypted_data, null, result => {
+        if(result.success && result.content.data && tool.crypto.message.is_openpgp(result.content.data)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
+          // render pubkey
+          tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.data]});
+          // hide attachment
+          tool.browser.message.send(url_params.parent_tab_id as string, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
+          $('body').text('');
+        } else {
+          // could not process as a pubkey - let user download it as they see fit
+          $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
+        }
+      }, 'utf8');
+    } else {
+      // standard encrypted attachment - let user download it as they see fit
+      $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
+    }  
+  } catch(e) {
+    tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e);
   }
 
 })();

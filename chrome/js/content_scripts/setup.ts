@@ -170,6 +170,9 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
         notifications.show(data.notification, data.callbacks);
         $('body').one('click', tool.catch.try(notifications.clear));
       },
+      notification_show_auth_popup_needed: (data: {account_email: string}) => {
+        notifications.show_auth_popup_needed(data.account_email);
+      },
     }, tab_id);
 
     tool.browser.message.send(null, 'migrate_account', { account_email: account_email }, () => {

@@ -11,9 +11,9 @@ tool.catch.try(async() => {
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
   let storage = await Store.get_account(url_params.account_email as string, storage_keys);
   await recover_missing_url_params();
-
+  
   let tab_id = await tool.browser.message.required_tab_id();
-
+  
   const can_read_email = tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
   const factory = new Factory(url_params.account_email as string, tab_id);
   if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
@@ -38,7 +38,10 @@ tool.catch.try(async() => {
             } else {
               callback(false);
             }
-          }, () => callback(false));
+          }, (e) => {
+            tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e, false);
+            callback(false);
+          });  
         }
       });
     },
@@ -107,23 +110,28 @@ tool.catch.try(async() => {
     storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
-    email_provider_draft_get: (draft_id: string) => tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw'),
-    email_provider_draft_create: (mime_message: string) => tool.api.gmail.draft_create(url_params.account_email as string, mime_message, url_params.thread_id as string),
-    email_provider_draft_update: (draft_id: string, mime_message: string) => tool.api.gmail.draft_update(url_params.account_email as string, draft_id, mime_message),
-    email_provider_draft_delete: (draft_id: string) => tool.api.gmail.draft_delete(url_params.account_email as string, draft_id),
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.api.gmail.message_send(url_params.account_email as string, message, render_upload_progress),
+    email_provider_draft_get: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw')),
+    email_provider_draft_create: (mime_message: string) => catch_auth_error(tool.api.gmail.draft_create(url_params.account_email as string, mime_message, url_params.thread_id as string)),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => catch_auth_error(tool.api.gmail.draft_update(url_params.account_email as string, draft_id, mime_message)),
+    email_provider_draft_delete: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_delete(url_params.account_email as string, draft_id)),
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => catch_auth_error(tool.api.gmail.message_send(url_params.account_email as string, message, render_upload_progress)),
+    // todo tool.api.gmail.search_contacts auth popup needed error should be handled
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => tool.api.gmail.search_contacts(url_params.account_email as string, query, known_contacts, multi_cb),
     email_provider_determine_reply_message_header_variables: async () => {
-      let thread = await tool.api.gmail.thread_get(url_params.account_email as string, url_params.thread_id as string, 'full');
-      if (thread.messages && thread.messages.length > 0) {
-        let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-        let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-        return {last_message_id: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last }};
-      } else {
-        return;
+      try {
+        let thread = await tool.api.gmail.thread_get(url_params.account_email as string, url_params.thread_id as string, 'full');
+        if (thread.messages && thread.messages.length > 0) {
+          let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+          let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          return {last_message_id: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last }};
+        } else {
+          return;
+        }  
+      } catch(e) {
+        tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e);
       }
     },
-    email_provider_extract_armored_block: (message_id: string, success: Callback, error: (error_type: any, url_formatted_data_block: string) => void) => tool.api.gmail.extract_armored_block(url_params.account_email as string, message_id, 'full', success, error),
+    email_provider_extract_armored_block: (message_id: string) => catch_auth_error(tool.api.gmail.extract_armored_block(url_params.account_email as string, message_id, 'full')),
     send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(url_params.parent_tab_id as string, channel, data),
     send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
@@ -210,7 +218,8 @@ tool.catch.try(async() => {
         }
         $('#loader').remove();
         resolve();
-      }, () => {
+      }, (e) => {
+        tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e, false);
         if(!url_params.from) {
           url_params.from = url_params.account_email as string;
         }
@@ -234,6 +243,11 @@ tool.catch.try(async() => {
     } else {
       tool.browser.message.send(url_params.parent_tab_id as string, 'close_new_message');
     }
+  }
+
+  function catch_auth_error <RETURM_TYPE_OF_F>(p: Promise<RETURM_TYPE_OF_F>): Promise<RETURM_TYPE_OF_F> {
+    p.catch(e => tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e));
+    return p;
   }
 
 })();

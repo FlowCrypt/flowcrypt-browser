@@ -197,7 +197,7 @@ tool.catch.try(async () => {
     let email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
     let message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
     if(email_provider === 'gmail') {
-      return await new Promise((resolve, reject) => tool.api.gmail.message_send(account_email, message, (ok, res) => ok && res ? resolve() : reject()));
+      return await tool.api.gmail.message_send(account_email, message);
     } else {
       throw Error(`Backup method not implemented for ${email_provider}`);
     }

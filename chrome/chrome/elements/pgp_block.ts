@@ -291,7 +291,7 @@ tool.catch.try(() => {
       });
     } else {
       render_text('Formatting...');
-      tool.mime.decode(decrypted_content, function (success, result) {
+      tool.mime.decode(decrypted_content).then(result => {
         render_content(tool.mime.format_content_to_display(result.text || result.html || decrypted_content as string, url_params.message as string), false, function () {
           let renderable_attachments: Attachment[] = [];
           for(let attachment of result.attachments) {
@@ -450,7 +450,7 @@ tool.catch.try(() => {
             url_params.message = parsed.signed;
             decrypt_and_render();
           } else {
-            tool.mime.decode(mime_message, function (success, result) {
+            tool.mime.decode(mime_message).then(result => {
               url_params.signature = result.signature;
               console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
               console.info(mime_message);
@@ -459,7 +459,10 @@ tool.catch.try(() => {
             });
           }  
         }
-      }, () => decrypt_and_render());  // todo: shouldn't we handle this error?
+      }, (e) => {
+        tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e, false);
+        tool.catch.handle_exception(e); // // todo: shouldn't we handle this error better?
+      });
     } else if(url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
       render_text(url_params.signature ? 'Verifying..' : 'Decrypting...');
       decrypt_and_render();
@@ -487,22 +490,22 @@ tool.catch.try(() => {
       if(can_read_emails) {
         render_text('Retrieving message...');
         let format: GmailApiResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
-        tool.api.gmail.extract_armored_block(url_params.account_email as string, url_params.message_id as string, format, function (message_raw: string) {
+        tool.api.gmail.extract_armored_block(url_params.account_email as string, url_params.message_id as string, format).then(function (message_raw: string) {
           render_text('Decrypting...');
           url_params.message = message_raw;
           message_fetched_from_api = format;
           decrypt_and_render();
-        }, function (error_type: string, url_formatted_data_block: string) {
-          if(error_type === 'format') {
-            if(tool.value(tool.crypto.armor.headers('public_key').end as string).in(url_formatted_data_block)) { // public key .end is always string
-              window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: url_formatted_data_block, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email as string, parent_tab_id: url_params.parent_tab_id as string, frame_id: url_params.frame_id });
+        }).catch(function (e) {
+          if(tool.api.error.is_network_error(e)) {
+            render_error(Lang.pgp_block.connection_error, e.data);
+          } else if(e.internal === 'format') {
+            if(tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
+              window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email as string, parent_tab_id: url_params.parent_tab_id as string, frame_id: url_params.frame_id });
             } else {
-              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open, url_formatted_data_block);
+              render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open, e.data);
             }
-          } else if(error_type === 'connection') {
-            render_error(Lang.pgp_block.connection_error, url_formatted_data_block);
           } else {
-            alert('Unknown error type: ' + error_type);
+            alert('Unknown error type: ' + e.internal);
           }
         });
       } else { // gmail message read auth not allowed

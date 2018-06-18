@@ -487,7 +487,7 @@ let tool = {
   },
   mime: {
     process: (mime_message: string, callback: (processed: MimeAsHeadersAndBlocks) => void) => {
-      tool.mime.decode(mime_message, function (success, decoded) {
+      tool.mime.decode(mime_message).then(decoded => {
         if(typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
           decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
         }
@@ -583,46 +583,48 @@ let tool = {
 
       return text;
     },
-    decode: (mime_message: string, callback: (success: boolean, decoded: MimeContent) => void) => {
-      let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
-      tool._.mime_require('parser', function (emailjs_mime_parser: any) {
-        try {
-          let parser = new emailjs_mime_parser();
-          let parsed: {[key: string]: MimeParserNode} = {};
-          parser.onheader = function (node: MimeParserNode) {
-            if(!String(node.path.join('.'))) { // root node headers
-              for(let name of Object.keys(node.headers)) {
-                mime_content.headers[name] = node.headers[name][0].value;
+    decode: (mime_message: string): Promise<MimeContent> => {
+      return new Promise(resolve => {
+        let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
+        tool._.mime_require('parser', function (emailjs_mime_parser: any) {
+          try {
+            let parser = new emailjs_mime_parser();
+            let parsed: {[key: string]: MimeParserNode} = {};
+            parser.onheader = function (node: MimeParserNode) {
+              if(!String(node.path.join('.'))) { // root node headers
+                for(let name of Object.keys(node.headers)) {
+                  mime_content.headers[name] = node.headers[name][0].value;
+                }
               }
-            }
-          };
-          parser.onbody = function (node: MimeParserNode) {
-            let path = String(node.path.join('.'));
-            if(typeof parsed[path] === 'undefined') {
-              parsed[path] = node;
-            }
-          };
-          parser.onend = function () {
-            for(let node of Object.values(parsed)) {
-              if(tool._.mime_node_type(node) === 'application/pgp-signature') {
-                mime_content.signature = node.rawContent;
-              } else if(tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
-                mime_content.html = node.rawContent;
-              } else if(tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
-                mime_content.text = node.rawContent;
-              } else {
-                let node_content = tool.str.from_uint8(node.content);
-                mime_content.attachments.push(tool.file.attachment(tool._.mime_node_filename(node), tool._.mime_node_type(node), node_content));
+            };
+            parser.onbody = function (node: MimeParserNode) {
+              let path = String(node.path.join('.'));
+              if(typeof parsed[path] === 'undefined') {
+                parsed[path] = node;
               }
-            }
-            tool.catch.try(() => callback(true, mime_content))();
-          };
-          parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
-          parser.end();
-        } catch(e) {
-          tool.catch.handle_exception(e);
-          tool.catch.try(() => callback(false, mime_content))();
-        }
+            };
+            parser.onend = function () {
+              for(let node of Object.values(parsed)) {
+                if(tool._.mime_node_type(node) === 'application/pgp-signature') {
+                  mime_content.signature = node.rawContent;
+                } else if(tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
+                  mime_content.html = node.rawContent;
+                } else if(tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
+                  mime_content.text = node.rawContent;
+                } else {
+                  let node_content = tool.str.from_uint8(node.content);
+                  mime_content.attachments.push(tool.file.attachment(tool._.mime_node_filename(node), tool._.mime_node_type(node), node_content));
+                }
+              }
+              resolve(mime_content);
+            };
+            parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
+            parser.end();
+          } catch(e) {
+            tool.catch.handle_exception(e);
+            resolve(mime_content); // maybe could reject? this will return partial info
+          }
+        });  
       });
     },
     encode: (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[], mime_message_callback: (mime_message: string) => void) => {
@@ -1575,6 +1577,14 @@ let tool = {
         }
         return false;
       },
+      notify_parent_if_auth_popup_needed: (account_email: string, parent_tab_id: string, e: any, rethrow_other_errors=true) => {
+        if(tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          throw new UnreportableError('Cannot proceed due to missing auth');
+        } else if(rethrow_other_errors) {
+          throw e;
+        }
+      },
       network: 'API_ERROR_NETWORK',
     },
     google: {
@@ -1876,52 +1886,44 @@ let tool = {
       *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
       *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
       */
-      extract_armored_block: (account_email: string, message_id: string, format:GmailApiResponseFormat, success_callback: Callback, error_callback: any) => {
-        tool.api.gmail.message_get(account_email, message_id, format).then(gmail_message_object => {
-          if(format === 'full') {
-            let bodies = tool.api.gmail.find_bodies(gmail_message_object);
-            let attachments = tool.api.gmail.find_attachments(gmail_message_object);
-            let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'] || '')));
-            if(armored_message_from_bodies) {
-              success_callback(armored_message_from_bodies);
-            } else if(attachments.length) {
-              let found = false;
-              for(let attachment_meta of attachments) {
-                if(attachment_meta.treat_as === 'message') {
-                  found = true;
-                  tool.api.gmail.fetch_attachments(account_email, [attachment_meta]).then((attachments: Attachment[]) => {
-                    let armored_message_text = tool.str.base64url_decode(attachments[0].data!);
-                    let armored_message = tool.crypto.armor.clip(armored_message_text);
-                    if(armored_message) {
-                      success_callback(armored_message);
-                    } else {
-                      error_callback('format', armored_message_text);
-                    }
-                  }, () => error_callback('connection'));
-                  break;
+      extract_armored_block: async (account_email: string, message_id: string, format:GmailApiResponseFormat): Promise<string> => {
+        let gmail_message_object = await tool.api.gmail.message_get(account_email, message_id, format);
+        if(format === 'full') {
+          let bodies = tool.api.gmail.find_bodies(gmail_message_object);
+          let attachments = tool.api.gmail.find_attachments(gmail_message_object);
+          let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'] || '')));
+          if(armored_message_from_bodies) {
+            return armored_message_from_bodies;
+          } else if(attachments.length) {
+            for(let attachment_meta of attachments) {
+              if(attachment_meta.treat_as === 'message') {
+                let attachments = await tool.api.gmail.fetch_attachments(account_email, [attachment_meta]);
+                let armored_message_text = tool.str.base64url_decode(attachments[0].data!);
+                let armored_message = tool.crypto.armor.clip(armored_message_text);
+                if(armored_message) {
+                  return armored_message;
+                } else {
+                  throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: armored_message_text};
                 }
               }
-              if(!found) {
-                error_callback('format', tool.str.pretty_print(gmail_message_object.payload));
-              }
-            } else {
-              error_callback('format', tool.str.pretty_print(gmail_message_object.payload));
             }
-          } else { // format === raw
-            tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw!), function (success, mime_message) {
-              if(success && mime_message.text !== undefined) {
-                let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
-                if(armored_message) {
-                  success_callback(armored_message);
-                } else {
-                  error_callback('format');
-                }  
-              } else {
-                error_callback('format');
-              }
-            });
+            throw {code: null, internal: 'format', message: 'Armored message not found', data: tool.str.pretty_print(gmail_message_object.payload)};
+          } else {
+            throw {code: null, internal: 'format', message: 'No attachments', data: tool.str.pretty_print(gmail_message_object.payload)};
           }
-        }, () => error_callback('connection'));
+        } else { // format === raw
+          let mime_message = await tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw!));
+          if(mime_message.text !== undefined) {
+            let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
+            if(armored_message) {
+              return armored_message;
+            } else {
+              throw {code: null, internal: 'format', message: 'Could not find armored message in parsed raw mime', data: mime_message};
+            }  
+          } else {
+            throw {code: null, internal: 'format', message: 'No text in parsed raw mime', data: mime_message};
+          }
+        }
       },
       fetch_messages_based_on_query_and_extract_first_available_header: async (account_email: string, q: string, header_names: string[]) => {
         let {messages} = await tool.api.gmail.message_list(account_email, q, false);
