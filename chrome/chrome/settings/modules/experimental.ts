@@ -11,50 +11,8 @@ tool.catch.try(() => {
     $('.storage_link_container').append(' - <a href="' + tool.env.url_create('/chrome/dev/storage.htm', {controls: true, }) + '">Storage</a>');
   }
   
-  function collect_info_and_download_backup_file(account_email: string, callback?: VoidCallback) {
-    let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
-    collect_info_for_account_backup(account_email, function (backup_text: string) {
-      tool.file.save_to_downloads(name, 'text/plain', backup_text);
-      if(callback) {
-        setTimeout(callback, 1000);
-      }
-    });
-  }
-  
-  function collect_info_for_account_backup(account_email: string, callback: (backup_text: string) => void) {
-    let text = [
-      'This file contains sensitive information, please put it in a safe place.',
-      '',
-      'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
-      '',
-      'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
-      '',
-      'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
-      'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
-      '',
-      'account_email: ' + account_email,
-    ];
-    Store.get_global(['version']).then(function (global_storage) {
-      Store.get_account(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']).then(function (account_storage) {
-        text.push('global_storage: ' + JSON.stringify(global_storage));
-        text.push('account_storage: ' + JSON.stringify(account_storage));
-        text.push('');
-        Store.keys_get(account_email).then(keyinfos => {
-          for(let keyinfo of keyinfos) {
-            text.push('');
-            text.push('key_longid: ' + keyinfo.longid);
-            text.push('key_primary: ' + keyinfo.primary);
-            text.push(keyinfo.private);
-          }
-          text.push('');
-          callback(text.join('\n'));
-        });
-      });
-    });
-  }
-  
-  
   if(url_params.account_email) {
+
     Store.get_global(['dev_outlook_allow']).then(storage => {
       if(storage.dev_outlook_allow === true) {
         $('.action_allow_outlook').prop('checked', true);
@@ -127,6 +85,60 @@ tool.catch.try(() => {
       });
     });
   
+    $('.action_make_google_auth_token_unusable').click(() => {
+      Store.set(url_params.account_email as string, {google_token_access: 'flowcrypt_test_bad_access_token'}).then(() => {
+        tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
+      });
+    });
+
+    $('.action_make_google_refresh_token_unusable').click(() => {
+      Store.set(url_params.account_email as string, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'}).then(() => {
+        tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
+      });
+    });
+
+    function collect_info_and_download_backup_file(account_email: string, callback?: VoidCallback) {
+      let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
+      collect_info_for_account_backup(account_email, function (backup_text: string) {
+        tool.file.save_to_downloads(name, 'text/plain', backup_text);
+        if(callback) {
+          setTimeout(callback, 1000);
+        }
+      });
+    }
+    
+    function collect_info_for_account_backup(account_email: string, callback: (backup_text: string) => void) {
+      let text = [
+        'This file contains sensitive information, please put it in a safe place.',
+        '',
+        'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
+        '',
+        'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
+        '',
+        'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
+        'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
+        '',
+        'account_email: ' + account_email,
+      ];
+      Store.get_global(['version']).then(function (global_storage) {
+        Store.get_account(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']).then(function (account_storage) {
+          text.push('global_storage: ' + JSON.stringify(global_storage));
+          text.push('account_storage: ' + JSON.stringify(account_storage));
+          text.push('');
+          Store.keys_get(account_email).then(keyinfos => {
+            for(let keyinfo of keyinfos) {
+              text.push('');
+              text.push('key_longid: ' + keyinfo.longid);
+              text.push('key_primary: ' + keyinfo.primary);
+              text.push(keyinfo.private);
+            }
+            text.push('');
+            callback(text.join('\n'));
+          });
+        });
+      });
+    }
+
   }
 
 })();
