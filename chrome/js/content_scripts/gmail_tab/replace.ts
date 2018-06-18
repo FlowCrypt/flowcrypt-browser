@@ -10,6 +10,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private account_email: string;
   private can_read_emails: boolean;
   private injector: Injector;
+  private notifications: Notifications;
   private gmail_variant: WebmailVariantString;
   private css_hidden = 'opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important; max-width: 1px !important; position: absolute !important; z-index: -1000 !important';
 
@@ -24,13 +25,14 @@ class GmailElementReplacer implements WebmailElementReplacer {
     translate_prompt: '.adI',
   };
 
-  constructor(factory: Factory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: WebmailVariantString) {
+  constructor(factory: Factory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, notifications: Notifications, gmail_variant: WebmailVariantString) {
     this.factory = factory;
     this.account_email = account_email;
     this.addresses = addresses;
     this.can_read_emails = can_read_emails;
     this.injector = injector;
     this.gmail_variant = gmail_variant;
+    this.notifications = notifications;
   }
 
   everything = () => {
@@ -157,7 +159,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
               let message = await tool.api.gmail.message_get(this.account_email, message_id, 'full');
               await this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
             } catch(e) {
-              tool.catch.handle_exception(e);
+              if(tool.api.error.is_auth_popup_needed(e)) {
+                this.notifications.show_auth_popup_needed(this.account_email);
+              }
               $(new_pgp_attachments).find('.attachment_loader').text('Failed to load')
             }            
           } else {

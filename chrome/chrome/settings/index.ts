@@ -191,10 +191,7 @@ tool.catch.try(async () => {
   }
   
   async function new_google_account_authentication_prompt(account_email?: string, omit_read_scope=false) {
-    console.log('new_google_account_authentication_prompt');
-    let response = await tool.api.google.auth_popup({ account_email: account_email || '', omit_read_scope, tab_id, auth_responder_id: tool.str.random(20) }, google_token_scopes);
-    console.log('bombastic');
-    console.log(response);
+    let response = await tool.api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
     if(response && response.success === true && response.account_email) {
       await Store.account_emails_add(response.account_email);
       let storage = await Store.get_account(response.account_email, ['setup_done']);

@@ -2,10 +2,6 @@
 
 'use strict';
 
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
-/// <reference path="../common/common.d.ts" />
-
 const MAX_MESSAGE_SIZE = 1024 * 1024;
 
 console.info('background_process.js starting');
@@ -78,7 +74,7 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
   if(storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100
     await Store.remove(null, ['errors']);
   }
-  
+
   function open_settings_page_handler(message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>}, sender: chrome.runtime.MessageSender|'background', respond: Callback) {
     open_settings_page(message.path, message.account_email, message.page, message.page_url_params);
     respond();

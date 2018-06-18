@@ -1015,7 +1015,7 @@ class Composer {
     let last_recipient = $('.recipients span').last();
     this.S.cached('input_to').val(last_recipient.text());
     last_recipient.last().remove();
-    let auth_result = await tool.api.google.auth_popup({account_email, scopes: tool.api.gmail.scope(['read']), auth_responder_id: tool.str.random(20), tab_id: this.tab_id});
+    let auth_result = await tool.api.google.auth_popup(account_email, this.tab_id, false, tool.api.gmail.scope(['read']));
     if (auth_result && auth_result.success === true) {
       this.can_read_emails = true;
       await this.search_contacts();

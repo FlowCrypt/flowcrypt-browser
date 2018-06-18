@@ -293,14 +293,6 @@ interface StandardError {
     data?: string,
 }
 
-interface AuthRequest {
-    tab_id: string|null,
-    account_email: string,
-    scopes?: string[],
-    message_id?: string,
-    auth_responder_id: string,
-    omit_read_scope?: boolean,
-}
 
 type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
@@ -441,11 +433,11 @@ interface SubscriptionAttempt extends Product {
 
 type GoogleAuthTokenInfo = {issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline'};
 type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
-type GoogleAuthWindowResult$state = {auth_responder_id: string, account_email: string, message_id: string, scopes: string[]};
+type AuthRequest = {tab_id: string, account_email: string|null, scopes: string[], message_id?: string, auth_responder_id: string, omit_read_scope?: boolean};
 type GoogleAuthWindowResult$result = 'Success'|'Denied'|'Error'|'Closed';
-type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: GoogleAuthWindowResult$state, params: {code: string, error: string}};
+type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: AuthRequest, params: {code: string, error: string}};
 type AuthResultSuccess = {success: true, result: 'Success', account_email: string, message_id?: string};
-type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email?: string, message_id?: string, error?: string};
+type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email: string|null, message_id?: string, error?: string};
 type AuthResult = AuthResultSuccess|AuthResultError;
 type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
 

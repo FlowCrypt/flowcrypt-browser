@@ -1579,43 +1579,40 @@ let tool = {
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
-      auth_popup: (auth_request: AuthRequest, current_google_token_scopes:string[]=[]): Promise<AuthResult> => {
+      auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => {
         return new Promise((resolve, reject) => {
           if(tool.env.is_background_script()) {
             throw {code: null, message: 'Cannot produce auth window from background script'};
           }
           let response_handled = false;
-          auth_request = tool._.api_google_auth_popup_prepare_auth_request_scopes(auth_request, current_google_token_scopes);
-          let result_listener = {
-            google_auth_window_result: function(result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) { 
-              if(result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
-                response_handled = true;
-                tool._.google_auth_window_result_handler(result).then(resolve, reject);
-                close_auth_window();
-              }
-            },
-          };
-          if(auth_request.tab_id !== null && auth_request.tab_id !== undefined) {
-            tool.browser.message.listen(result_listener, auth_request.tab_id);
-          } else {
-            tool.browser.message.listen_background(result_listener);
-          }
-          let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-          // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-          // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-          if(tool.env.browser().name !== 'firefox') {
-            let window_closed_timer = window.setInterval(() => {
-              if(auth_code_window === null || typeof auth_code_window === 'undefined') {
-                clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
-              } else if(auth_code_window.closed) {
-                clearInterval(window_closed_timer);
-                if(!response_handled) {
-                  resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+          tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
+            let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes}
+            tool.browser.message.listen({
+              google_auth_window_result: function(result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) { 
+                if(result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
                   response_handled = true;
+                  tool._.google_auth_window_result_handler(result).then(resolve, reject);
+                  close_auth_window();
                 }
-              }
-            }, 250);
-          }
+              },
+            }, auth_request.tab_id);
+            let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+            // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+            // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
+            if(tool.env.browser().name !== 'firefox') {
+              let window_closed_timer = window.setInterval(() => {
+                if(auth_code_window === null || typeof auth_code_window === 'undefined') {
+                  clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
+                } else if(auth_code_window.closed) {
+                  clearInterval(window_closed_timer);
+                  if(!response_handled) {
+                    resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+                    response_handled = true;
+                  }
+                }
+              }, 250);
+            }              
+          }, reject);
         });        
       },
     },
@@ -2779,22 +2776,6 @@ let tool = {
         });
       });
     },
-    api_google_has_new_scope: (new_scopes: string[]|null, original_scopes: string[], omit_read_scope: boolean) => {
-      new_scopes = new_scopes || [];
-      original_scopes = original_scopes || [];
-      if(!original_scopes.length) {
-        return true; // no original scopes
-      }
-      if(!new_scopes.length) { // no new scopes specified
-        return(original_scopes.length === 2 && !omit_read_scope); // however, previously there were only two of three scopes, and third was not omitted this time
-      }
-      for(let i = 0; i < new_scopes.length; i++) {
-        if(!tool.value(new_scopes[i]).in(original_scopes)) {
-          return true; // found a new scope
-        }
-      }
-      return false; // no new scope found
-    },
     api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
     api_google_auth_code_url: (auth_request: AuthRequest) => tool.env.url_create(tool._.var.google_oauth2!.url_code, {
       client_id: tool._.var.google_oauth2!.client_id,
@@ -2833,7 +2814,7 @@ let tool = {
       crossDomain: true,
       async: true,
     }),
-    google_auth_check_email: async (expected_email: string, access_token: string) => {
+    google_auth_check_email: async (expected_email: string|null, access_token: string) => {
       try {
         let r = await $.ajax({
           url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
@@ -2854,7 +2835,7 @@ let tool = {
         let tokens_object = await tool._.google_auth_get_tokens(result.params.code)
         let _ = await tool._.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
         let account_email = await tool._.google_auth_check_email(result.state.account_email, tokens_object.access_token);
-        await tool._.google_auth_save_tokens(account_email, tokens_object, result.state.scopes);
+        await tool._.google_auth_save_tokens(account_email, tokens_object, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
         return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
       } else if (result.result === 'Denied') {
         return { success: false, result: 'Denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
@@ -2924,21 +2905,26 @@ let tool = {
         }
       }
     },
-    api_google_auth_popup_prepare_auth_request_scopes: (auth_request: AuthRequest, current_google_token_scopes: string[]) => {
-      auth_request.scopes = auth_request.scopes || [];
+    api_google_auth_popup_prepare_auth_request_scopes: async (account_email: string|null, requested_scopes: string[], omit_read_scope: boolean): Promise<string[]> => {
+      let current_tokens_scopes: string[] = [];
+      if(account_email) {
+        let storage = await Store.get_account(account_email, ['google_token_scopes']);
+        current_tokens_scopes = storage.google_token_scopes || [];
+      }
+      let auth_request_scopes = requested_scopes || [];
       for(let scope of tool._.var.google_oauth2!.scopes) {
-        if(!tool.value(scope).in(auth_request.scopes)) {
-          if(scope !== tool.api.gmail.scope(['read'])[0] || !auth_request.omit_read_scope) { // leave out read messages permission if user chose so
-            auth_request.scopes.push(scope);
+        if(!tool.value(scope).in(requested_scopes)) {
+          if(scope !== tool.api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
+            auth_request_scopes.push(scope);
           }
         }
       }
-      for(let scope of current_google_token_scopes) {
-        if(!tool.value(scope).in(auth_request.scopes)) {
-          auth_request.scopes.push(scope);
+      for(let scope of current_tokens_scopes) {
+        if(!tool.value(scope).in(requested_scopes)) {
+          auth_request_scopes.push(scope);
         }
       }
-      return auth_request;
+      return auth_request_scopes;
     },
     encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
       let boundary = 'this_sucks_' + tool.str.random(10);
