@@ -2589,7 +2589,7 @@ let tool = {
     },
     crypto_message_increment_decrypt_error_counts: (counts: DecryptedErrorCounts, other_errors: string[], message_password: string|null, decrypt_error: Error) => {
       let e = String(decrypt_error).replace('Error: Error decrypting message: ', '');
-      if(tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'Session key decryption failed.']) && !message_password) {
+      if(tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.']) && !message_password) {
         counts.key_mismatch++; // wrong private key
       } else if(e === 'Invalid session key for decryption.' && !message_password) {
         counts.key_mismatch++; // attempted opening password only message with key
