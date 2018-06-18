@@ -121,25 +121,21 @@ class GmailElementReplacer implements WebmailElementReplacer {
     let all_contenteditable_elements = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for(let contenteditable_element of all_contenteditable_elements.get()) {
       let contenteditable = $(contenteditable_element);
-      let button_href_id: string|undefined = undefined;
       let found_cryptup_link = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if(found_cryptup_link !== null) {
         let button;
-        let [full_link, name, id] = found_cryptup_link;
+        let [full_link, name, button_href_id] = found_cryptup_link;
         if(name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${button_href_id}">Open draft</a>`;
-          button_href_id = id;
         } else if(name === 'draft_reply') {
-          button = `<a href="#inbox/${id}">Open draft</a>`;
+          button = `<a href="#inbox/${button_href_id}">Open draft</a>`;
         }
         if(button) {
           contenteditable.replaceWith(button);
-          if(button_href_id) {
-            $(`a.open_draft_${button_href_id}`).click(tool.catch.try(() => {
-              $('div.new_message').remove();
-              $('body').append(this.factory.embedded_compose(button_href_id));
-            }));  
-          }
+          $(`a.open_draft_${button_href_id}`).click(tool.catch.try(() => {
+            $('div.new_message').remove();
+            $('body').append(this.factory.embedded_compose(button_href_id));
+          }));
         }
       }
     }
