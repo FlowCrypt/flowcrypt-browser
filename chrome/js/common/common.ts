@@ -476,39 +476,38 @@ let tool = {
     },
   },
   mime: {
-    process: (mime_message: string, callback: (processed: MimeAsHeadersAndBlocks) => void) => {
-      tool.mime.decode(mime_message).then(decoded => {
-        if(typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
-          decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
+    process: async (mime_message: string) => {
+      let decoded = await tool.mime.decode(mime_message);
+      if(typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
+        decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
+      }
+      let blocks: MessageBlock[] = [];
+      if(decoded.text) {  // may be undefined or empty
+        blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text));
+      }
+      for(let file of decoded.attachments) {
+        let treat_as = tool.file.treat_as(file);
+        if(treat_as === 'message') {
+          let armored = tool.crypto.armor.clip(file.content as string); // todo - what if file.content is uint8?
+          if(armored) {
+            blocks.push(tool._.crypto_armor_block_object('message', armored));
+          }
+        } else if(treat_as === 'signature') {
+          decoded.signature = decoded.signature || file.content as string; // todo - what if file.content is uint8?
+        } else if(treat_as === 'public_key') {
+          blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.content as string)); // todo - what if file.content is uint8?
         }
-        let blocks: MessageBlock[] = [];
-        if(decoded.text) {  // may be undefined or empty
-          blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text));
-        }
-        for(let file of decoded.attachments) {
-          let treat_as = tool.file.treat_as(file);
-          if(treat_as === 'message') {
-            let armored = tool.crypto.armor.clip(file.content as string); // todo - what if file.content is uint8?
-            if(armored) {
-              blocks.push(tool._.crypto_armor_block_object('message', armored));
-            }
-          } else if(treat_as === 'signature') {
-            decoded.signature = decoded.signature || file.content as string; // todo - what if file.content is uint8?
-          } else if(treat_as === 'public_key') {
-            blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.content as string)); // todo - what if file.content is uint8?
+      }
+      if(decoded.signature) {
+        for(let block of blocks) {
+          if(block.type === 'text') {
+            block.type = 'signed_message';
+            block.signature = decoded.signature;
+            return false;
           }
         }
-        if(decoded.signature) {
-          for(let block of blocks) {
-            if(block.type === 'text') {
-              block.type = 'signed_message';
-              block.signature = decoded.signature;
-              return false;
-            }
-          }
-        }
-        callback({headers: decoded.headers, blocks: blocks});
-      });
+      }
+      return {headers: decoded.headers, blocks: blocks};
     },
     headers_to_from: (parsed_mime_message: MimeContent): FromToHeaders => {
       let header_to: string[] = [];
@@ -574,77 +573,73 @@ let tool = {
       return text;
     },
     decode: (mime_message: string): Promise<MimeContent> => {
-      return new Promise(resolve => {
+      return new Promise(async resolve => {
         let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
-        tool._.mime_require('parser', function (emailjs_mime_parser: any) {
-          try {
-            let parser = new emailjs_mime_parser();
-            let parsed: {[key: string]: MimeParserNode} = {};
-            parser.onheader = function (node: MimeParserNode) {
-              if(!String(node.path.join('.'))) { // root node headers
-                for(let name of Object.keys(node.headers)) {
-                  mime_content.headers[name] = node.headers[name][0].value;
-                }
+        let emailjs_mime_parser: any = await tool._.mime_require('parser');
+        try {
+          let parser = new emailjs_mime_parser();
+          let parsed: {[key: string]: MimeParserNode} = {};
+          parser.onheader = function (node: MimeParserNode) {
+            if(!String(node.path.join('.'))) { // root node headers
+              for(let name of Object.keys(node.headers)) {
+                mime_content.headers[name] = node.headers[name][0].value;
               }
-            };
-            parser.onbody = function (node: MimeParserNode) {
-              let path = String(node.path.join('.'));
-              if(typeof parsed[path] === 'undefined') {
-                parsed[path] = node;
+            }
+          };
+          parser.onbody = function (node: MimeParserNode) {
+            let path = String(node.path.join('.'));
+            if(typeof parsed[path] === 'undefined') {
+              parsed[path] = node;
+            }
+          };
+          parser.onend = function () {
+            for(let node of Object.values(parsed)) {
+              if(tool._.mime_node_type(node) === 'application/pgp-signature') {
+                mime_content.signature = node.rawContent;
+              } else if(tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
+                mime_content.html = node.rawContent;
+              } else if(tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
+                mime_content.text = node.rawContent;
+              } else {
+                let node_content = tool.str.from_uint8(node.content);
+                mime_content.attachments.push(tool.file.attachment(tool._.mime_node_filename(node), tool._.mime_node_type(node), node_content));
               }
-            };
-            parser.onend = function () {
-              for(let node of Object.values(parsed)) {
-                if(tool._.mime_node_type(node) === 'application/pgp-signature') {
-                  mime_content.signature = node.rawContent;
-                } else if(tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
-                  mime_content.html = node.rawContent;
-                } else if(tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
-                  mime_content.text = node.rawContent;
-                } else {
-                  let node_content = tool.str.from_uint8(node.content);
-                  mime_content.attachments.push(tool.file.attachment(tool._.mime_node_filename(node), tool._.mime_node_type(node), node_content));
-                }
-              }
-              resolve(mime_content);
-            };
-            parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
-            parser.end();
-          } catch(e) {
-            tool.catch.handle_exception(e);
-            resolve(mime_content); // maybe could reject? this will return partial info
-          }
-        });  
+            }
+            resolve(mime_content);
+          };
+          parser.write(mime_message); //todo - better chunk it for very big messages containing attachments? research
+          parser.end();
+        } catch(e) {
+          tool.catch.handle_exception(e);
+          resolve(mime_content); // maybe could reject? this will return partial info
+        }
       });
     },
-    encode: (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[], mime_message_callback: (mime_message: string) => void) => {
-      tool._.mime_require('builder', function (MimeBuilder: any) {
-        let root_node = new MimeBuilder('multipart/mixed');
-        for(let key of Object.keys(headers)) {
-          root_node.addHeader(key, headers[key]);
+    encode: async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
+      let MimeBuilder: any = await tool._.mime_require('builder');
+      let root_node = new MimeBuilder('multipart/mixed');
+      for(let key of Object.keys(headers)) {
+        root_node.addHeader(key, headers[key]);
+      }
+      if(typeof body === 'string') {
+        body = {'text/plain': body};
+      }
+      let content_node: MimeParserNode;
+      if(Object.keys(body).length === 1) {
+        content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
+      } else {
+        content_node = new MimeBuilder('multipart/alternative');
+        for(let type of Object.keys(body)) {
+          content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
         }
-        if(typeof body === 'string') {
-          body = {'text/plain': body};
-        }
-        let content_node: MimeParserNode;
-        if(Object.keys(body).length === 1) {
-          content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
-        } else {
-          content_node = new MimeBuilder('multipart/alternative');
-          for(let type of Object.keys(body)) {
-            content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
-          }
-        }
-        root_node.appendChild(content_node);
-        for(let attachment of attachments) {
-          root_node.appendChild(new MimeBuilder(attachment.type + '; name="' + attachment.name + '"', { filename: attachment.name }).setHeader({
-            'Content-Disposition': 'attachment',
-            'X-Attachment-Id': 'f_' + tool.str.random(10),
-            'Content-Transfer-Encoding': 'base64',
-          }).setContent(attachment.content));
-        }
-        mime_message_callback(root_node.build());
-      });
+      }
+      root_node.appendChild(content_node);
+      for(let attachment of attachments) {
+        let type = `${attachment.type}; name="${attachment.name}"`;
+        let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${tool.str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
+        root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.content));
+      }
+      return root_node.build();
     },
     signed: (mime_message: string) => {
       /*
@@ -884,16 +879,9 @@ let tool = {
       challenge_answer: (answer: string) => tool._.crypto_hash_sha256_loop(answer),
     },
     key: {
-      create: (user_ids_as_pgp_contacts: Contact[], num_bits: 4096, pass_phrase: string, callback: (pk: string) => void) => {
-        openpgp.generateKey({
-          numBits: num_bits,
-          userIds: user_ids_as_pgp_contacts,
-          passphrase: pass_phrase,
-        }).then(function(key: any) {
-          callback(key.privateKeyArmored);
-        }).catch(function(error: Error) {
-          tool.catch.handle_exception(error);
-        });
+      create: async (userIds: {name: string, email: string}[], numBits: 4096, passphrase: string): Promise<{private: string, public: string}> => {
+        let k = await openpgp.generateKey({numBits, userIds, passphrase});
+        return {public: k.publicKeyArmored, private: k.privateKeyArmored};
       },
       read: (armored_key: string) => openpgp.key.readArmored(armored_key).keys[0],
       decrypt: (prv: OpenpgpKey, passphrase: string): {success: boolean, error?: string} => {
@@ -996,23 +984,6 @@ let tool = {
           return key_or_fingerprint_or_bytes.replace(/ /g, '').substr(-16);
         } else {
           return tool.crypto.key.longid(tool.crypto.key.fingerprint(key_or_fingerprint_or_bytes));
-        }
-      },
-      test: (armored: string, passphrase: string, callback: (ok: boolean, error?: string) => void) => {
-        try {
-          openpgp.encrypt({ data: 'this is a test', armor: true, publicKeys: [openpgp.key.readArmored(armored).keys[0].toPublic()] }).then(function (result: OpenpgpEncryptResult) {
-            let prv = openpgp.key.readArmored(armored).keys[0];
-            tool.crypto.key.decrypt(prv, passphrase);
-            openpgp.decrypt({ message: openpgp.message.readArmored(result.data), format: 'utf8', privateKey: prv }).then(function () {
-              callback(true);
-            }).catch(function (error: Error) {
-              callback(false, error.message);
-            });
-          }).catch(function (error: Error) {
-            callback(false, error.message);
-          });
-        } catch(error) {
-          callback(false, error.message);
         }
       },
       usable: (armored: string) => { // is pubkey usable for encrytion?
@@ -1237,50 +1208,47 @@ let tool = {
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
-    passphrase_toggle: (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
+    passphrase_toggle: async (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
       let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
       let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-      Store.get_global(['hide_pass_phrases']).then(function (s) {
-        let show: boolean;
-        if(force_initial_show_or_hide === 'hide') {
-          show = false;
-        } else if(force_initial_show_or_hide === 'show') {
-          show = true;
+      let {hide_pass_phrases} = await Store.get_global(['hide_pass_phrases']);
+      let show: boolean;
+      if(force_initial_show_or_hide === 'hide') {
+        show = false;
+      } else if(force_initial_show_or_hide === 'show') {
+        show = true;
+      } else {
+        show = !hide_pass_phrases;
+      }
+      for(let id of pass_phrase_input_ids) {
+        let passphrase_input = $('#' + id);
+        passphrase_input.addClass('toggled_passphrase');
+        if(show) {
+          passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
+          passphrase_input.attr('type', 'text');
         } else {
-          show = !s.hide_pass_phrases;
+          passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
+          passphrase_input.attr('type', 'password');
         }
-        for(let id of pass_phrase_input_ids) {
-          let passphrase_input = $('#' + id);
-          passphrase_input.addClass('toggled_passphrase');
-          if(show) {
-            passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
-            passphrase_input.attr('type', 'text');
+        $('#toggle_' + id).click(function () {
+          if(passphrase_input.attr('type') === 'password') {
+            $('#' + id).attr('type', 'text');
+            $(this).html(button_hide);
+            // noinspection JSIgnoredPromiseFromCall
+            Store.set(null, { hide_pass_phrases: false });
           } else {
-            passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
-            passphrase_input.attr('type', 'password');
+            $('#' + id).attr('type', 'password');
+            $(this).html(button_show);
+            // noinspection JSIgnoredPromiseFromCall
+            Store.set(null, { hide_pass_phrases: true });
           }
-          $('#toggle_' + id).click(function () {
-            if(passphrase_input.attr('type') === 'password') {
-              $('#' + id).attr('type', 'text');
-              $(this).html(button_hide);
-              // noinspection JSIgnoredPromiseFromCall
-              Store.set(null, { hide_pass_phrases: false });
-            } else {
-              $('#' + id).attr('type', 'password');
-              $(this).html(button_show);
-              // noinspection JSIgnoredPromiseFromCall
-              Store.set(null, { hide_pass_phrases: true });
-            }
-          });
-        }
-      });
+        });
+      }
     },
-    enter: (callback: () => void) => {
-      return function(e: JQuery.Event<HTMLElement, null>) {
-        if (e.which == tool.env.key_codes().enter) {
-          callback();
-        }
-      };
+    enter: (callback: () => void) => function(e: JQuery.Event<HTMLElement, null>) {
+      if (e.which == tool.env.key_codes().enter) {
+        callback();
+      }
     },
     build_jquery_selectors: (selectors: Dict<string>): SelectorCache => {
       let cache: NamedSelectors = {};
@@ -1313,9 +1281,7 @@ let tool = {
       if(el) {
         el.scrollIntoView();
         for(let delay of repeat) { // useful if mobile keyboard is about to show up
-          setTimeout(function() {
-            el.scrollIntoView();
-          }, delay);
+          setTimeout(() => el.scrollIntoView(), delay);
         }
       }
     },
@@ -1714,16 +1680,13 @@ let tool = {
       draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', { // todo - not used yet, and should be
           id: id,
       }),
-      message_send: (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
-        return new Promise((resolve, reject) => {
+      message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
         message.headers.From = message.from;
         message.headers.To = message.to.join(',');
         message.headers.Subject = message.subject;
-        tool.mime.encode(message.body, message.headers, message.attachments, (mime_message) => {
-          let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
-            tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type).then(resolve, reject);
-        });
-        });
+        let mime_message = await tool.mime.encode(message.body, message.headers, message.attachments);
+        let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
+        return tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
       },
       message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => tool._.api_gmail_call(account_email, 'GET', 'messages', {
             q: q,
@@ -2240,63 +2203,36 @@ let tool = {
           identifiers: identifiers,
         });
       },
-      message_upload: (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): FcPromise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
-        return tool.catch.Promise(function (resolve, reject) {
-          if(encrypted_data_armored.length > 100000) {
-            reject({code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'});
-          } else {
-            let content = tool.file.attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
-            if(!auth_method) {
-              tool._.api_cryptup_call('message/upload', {
-                content: content,
-              }, 'FORM').then(resolve, reject);
-            } else {
-              Store.auth_info().then(auth_info => {
-                if(auth_info.verified) {
-                  tool._.api_cryptup_call('message/upload', {
-                    account: auth_info.account_email,
-                    uuid: auth_info.uuid,
-                    content: content,
-                  }, 'FORM').then(resolve, reject);
-                } else {
-                  reject(tool.api.cryptup.auth_error);
-                }
-              });
-            }
+      message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
+        if(encrypted_data_armored.length > 100000) {
+          throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
+        }
+        let content = tool.file.attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
+        if(!auth_method) {
+          return await tool._.api_cryptup_call('message/upload', {content}, 'FORM');
+        } else {
+          let auth_info = await Store.auth_info();
+          if(!auth_info.verified) {
+            throw tool.api.cryptup.auth_error;
           }
-        });
+          return await tool._.api_cryptup_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
+        }
       },
-      message_token: (): FcPromise<ApirFcMessageToken> => {
-        return tool.catch.Promise(function (resolve, reject) {
-          Store.auth_info().then(auth_info => {
-            if(auth_info.verified) {
-              tool._.api_cryptup_call('message/token', {
-                account: auth_info.account_email,
-                uuid: auth_info.uuid,
-              }).then(resolve, reject);
-            } else {
-              reject(tool.api.cryptup.auth_error);
-            }
-          });
-        });
+      message_token: async (): Promise<ApirFcMessageToken> => {
+        let auth_info = await Store.auth_info();
+        if(!auth_info.verified) {
+          throw tool.api.cryptup.auth_error;
+        }
+        return await tool._.api_cryptup_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
       },
-      message_expiration: (admin_codes: string[], add_days:null|number=null): FcPromise<ApirFcMessageExpiration> => {
-        return tool.catch.Promise(function (resolve, reject) {
-          Store.auth_info().then(auth_info => {
-            if(auth_info.verified) {
-              tool._.api_cryptup_call('message/expiration', {
-                account: auth_info.account_email,
-                uuid: auth_info.uuid,
-                admin_codes: admin_codes,
-                add_days: add_days,
-              }).then(resolve, reject);
-            } else {
-              reject(tool.api.cryptup.auth_error);
-            }
-          });
-        });
+      message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
+        let auth_info = await Store.auth_info();
+        if(!auth_info.verified) {
+          throw tool.api.cryptup.auth_error;
+        }
+        return await tool._.api_cryptup_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
       },
-      message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string)=> tool._.api_cryptup_call('message/reply', {
+      message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_cryptup_call('message/reply', {
         short: short,
         token: token,
         from: from,
@@ -2437,27 +2373,27 @@ let tool = {
       }
       return node;
     },
-    mime_require: (group: 'parser'|'builder', callback: (m: any) => void) => {
+    mime_require: (group: 'parser'|'builder') => new Promise(resolve => {
       if(group === 'parser') {
         if(typeof MimeParser !== 'undefined') { // browser
-          callback(MimeParser);
+          resolve(MimeParser);
         } else if (typeof exports === 'object') { // electron
-          callback(require('emailjs-mime-parser'));
+          resolve(require('emailjs-mime-parser'));
         } else { // RequireJS
           tool.env.set_up_require();
-          require(['emailjs-mime-parser'], callback);
+          require(['emailjs-mime-parser'], resolve);
         }
       } else {
         if(typeof MimeBuilder !== 'undefined') { // browser
-          callback(MimeBuilder);
+          resolve(MimeBuilder);
         } else if (typeof exports === 'object') { // electron
-          callback(require('emailjs-mime-builder'));
+          resolve(require('emailjs-mime-builder'));
         } else { // RequireJS
           tool.env.set_up_require();
-          require(['emailjs-mime-builder'], callback);
+          require(['emailjs-mime-builder'], resolve);
         }
       }
-    },
+    }),
     crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type: type, content: content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
       let result = {found: [] as MessageBlock[], continue_at: null as number|null};

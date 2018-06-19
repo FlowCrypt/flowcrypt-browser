@@ -253,15 +253,11 @@ tool.catch.try(async () => {
   async function create_save_key_pair(account_email: string, options: SetupOptions) {
     forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     try {
-      let key: {privateKeyArmored: string, publicKeyArmored: string} = await openpgp.generateKey({
-        numBits: 4096,
-        userIds: [{ name: options.full_name, email: account_email }], // todo - add all addresses?
-        passphrase: options.passphrase,
-      });
+      let key = await tool.crypto.key.create([{ name: options.full_name, email: account_email }], 4096, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
-      let prv = openpgp.key.readArmored(key.privateKeyArmored).keys[0];
+      let prv = openpgp.key.readArmored(key.private).keys[0];
       await save_keys(account_email, [prv], options);
-      await finalize_setup(account_email, key.publicKeyArmored, options);
+      await finalize_setup(account_email, key.public, options);
     } catch(e) {
       tool.catch.handle_exception(e);
       $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Please write me at human@flowcrypt.com so that I can fix it ASAP.');

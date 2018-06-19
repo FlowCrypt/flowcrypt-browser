@@ -380,27 +380,26 @@ class Composer {
         body = encrypted.data;
       }
       let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
-      tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, [], async (mime_message) => {
-        try {
-          if (!this.draft_id) {
-            let new_draft = await this.app.email_provider_draft_create(mime_message);
-            this.S.cached('send_btn_note').text('Saved');
-            this.draft_id = new_draft.id;
-            await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
-              // recursing one more time, because we need the draft_id we get from this reply in the message itself
-              // essentially everytime we save draft for the first time, we have to save it twice
-              // save_draft_in_process will remain true because well.. it's still in process
-            await this.draft_save(true); // force_save = true  
-          } else {
-            await this.app.email_provider_draft_update(this.draft_id, mime_message);
-            this.S.cached('send_btn_note').text('Saved');
-          }
-        } catch(error) {
-          console.log(error);
-          this.S.cached('send_btn_note').text('Not saved');
+      let mime_message = await tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
+      try {
+        if (!this.draft_id) {
+          let new_draft = await this.app.email_provider_draft_create(mime_message);
+          this.S.cached('send_btn_note').text('Saved');
+          this.draft_id = new_draft.id;
+          await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
+          // recursing one more time, because we need the draft_id we get from this reply in the message itself
+          // essentially everytime we save draft for the first time, we have to save it twice
+          // save_draft_in_process will remain true because well.. it's still in process
+          await this.draft_save(true); // force_save = true  
+        } else {
+          await this.app.email_provider_draft_update(this.draft_id, mime_message);
+          this.S.cached('send_btn_note').text('Saved');
         }
-        this.draft_save_in_progress = false;
-      });
+      } catch(error) {
+        console.log(error);
+        this.S.cached('send_btn_note').text('Not saved');
+      }
+      this.draft_save_in_progress = false;
     }
   };
 
@@ -664,7 +663,7 @@ class Composer {
     }
     let response;
     try {
-      response = await tool.api.cryptup.message_token().validate(r => r.token);
+      response = await tool.api.cryptup.message_token();
     } catch (message_token_error) {
       if (message_token_error.internal === 'auth') {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
@@ -693,7 +692,7 @@ class Composer {
     if (challenge) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      let {short, admin_code} = await tool.api.cryptup.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null).validate(r => r.short && r.admin_code); // just set it above
+      let {short, admin_code} = await tool.api.cryptup.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null);
       body = this.format_password_protected_email(short, body, armored_pubkeys);
       body = this.format_email_text_footer(body);
       await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
