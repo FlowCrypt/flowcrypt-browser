@@ -63,7 +63,7 @@ tool.catch.try(async () => {
         return alert('Error signing request. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
       }      
       try { // todo - avoid "as string" below
-        await tool.api.attester.replace_request(url_params.account_email as string, signed_packet as string, primary_pubkey_armored).validate(r => r.saved);
+        await tool.api.attester.replace_request(url_params.account_email as string, signed_packet as string, primary_pubkey_armored);
       } catch(e) {
         return alert('Error requesting Re-Attestation. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
       }

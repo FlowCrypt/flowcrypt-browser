@@ -1936,7 +1936,7 @@ let tool = {
         pubkey: pubkey.trim(),
         attest: attest,
       }),
-      initial_confirm: (signed_attest_packet: string): FcPromise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
+      initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
         signed_message: signed_attest_packet,
       }),
       replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): FcPromise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
@@ -1944,7 +1944,7 @@ let tool = {
         new_pubkey: new_pubkey,
         email: email,
       }),
-      replace_confirm: (signed_attest_packet: string): FcPromise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
+      replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
         signed_message: signed_attest_packet,
       }),
       test_welcome: (email: string, pubkey: string): FcPromise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {

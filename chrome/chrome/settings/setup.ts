@@ -182,7 +182,7 @@ tool.catch.try(async () => {
     if(!options.submit_main) {
       return;
     }
-    tool.api.attester.test_welcome(account_email, armored_pubkey).validate(r => r.sent).catch(error => tool.catch.report('tool.api.attester.test_welcome: failed', error));
+    tool.api.attester.test_welcome(account_email, armored_pubkey).catch(error => tool.catch.report('tool.api.attester.test_welcome: failed', error));
     let addresses;
     if(typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
       addresses = storage.addresses.concat(account_email);

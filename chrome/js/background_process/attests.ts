@@ -98,17 +98,24 @@ class BgAttests {
         let expected_fingerprint = key.primaryKey.fingerprint.toUpperCase();
         let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
         if (attest && attest.success && attest.text && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
-          let signed, api_response;
+          let signed;
           try {
             signed = await tool.crypto.message.sign(key, attest.text, true) as string; // todo - avoid "as string"
           } catch(e) {
             throw new AttestError('Error signing the attest. Write me at human@flowcrypt.com to find out why:' + e.message, attest_packet_text, account_email);
           }
           try {
-            let keyserver_api_response = (attest.content.action !== 'CONFIRM_REPLACEMENT') ? tool.api.attester.initial_confirm(signed) : tool.api.attester.replace_confirm(signed as string);  
-            api_response = await keyserver_api_response.validate((r: ApirAttInitialConfirm|ApirAttReplaceConfirm) => r.attested);
+            let api_r;
+            if(attest.content.action !== 'CONFIRM_REPLACEMENT') {
+              api_r = await tool.api.attester.initial_confirm(signed);
+            } else {
+              api_r = await tool.api.attester.replace_confirm(signed);
+            }
+            if(!api_r.attested) {
+              throw new AttestError('Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
+            }
           } catch(e) {
-            throw new AttestError('Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
+            throw new AttestError('Error while calling Attester API. Write me at human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
           }
           await BgAttests.account_storage_mark_as_attested(account_email, attest.content.attester);
           return {attest_packet_text, message: 'Successfully attested ' + account_email, account_email};
