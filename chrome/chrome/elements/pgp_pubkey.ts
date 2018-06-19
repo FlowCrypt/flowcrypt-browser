@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   tool.ui.event.protect();
 

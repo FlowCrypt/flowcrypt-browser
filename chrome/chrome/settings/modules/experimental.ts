@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
@@ -13,11 +13,10 @@ tool.catch.try(() => {
   
   if(url_params.account_email) {
 
-    Store.get_global(['dev_outlook_allow']).then(storage => {
-      if(storage.dev_outlook_allow === true) {
-        $('.action_allow_outlook').prop('checked', true);
-      }
-    });
+    let {dev_outlook_allow} = await Store.get_global(['dev_outlook_allow']);
+    if(dev_outlook_allow === true) {
+      $('.action_allow_outlook').prop('checked', true);
+    }
   
     $('.email').text(url_params.account_email as string);
   
@@ -37,30 +36,23 @@ tool.catch.try(() => {
       collect_info_and_download_backup_file(url_params.account_email as string);
     }));
   
-    $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
+    $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('white'));
-      fetch_account_aliases_from_gmail(url_params.account_email as string).then(function(addresses) {
-        let all = tool.arr.unique(addresses.concat(url_params.account_email as string));
-        Store.set(url_params.account_email as string, { addresses: all }).then(function () {
-          alert('Updated to: ' + all.join(', '));
-          window.location.reload();
-        });
-      });
+      let addresses = await fetch_account_aliases_from_gmail(url_params.account_email as string);
+      let all = tool.arr.unique(addresses.concat(url_params.account_email as string));
+      await Store.set(url_params.account_email as string, { addresses: all })
+      alert('Updated to: ' + all.join(', '));
+      window.location.reload();
     }));
   
-    $('.action_exception').click(function() {
-      tool.catch.test();
-    });
+    $('.action_exception').click(() => tool.catch.test());
   
-    $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+    $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
       if(confirm('This will remove all your FlowCrypt settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
-        collect_info_and_download_backup_file(url_params.account_email as string, function () {
-          if(confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-            reset_cryptup_account_storages(url_params.account_email as string, function () {
-              window.parent.location.reload();
-            });
-          }
-        });
+        await collect_info_and_download_backup_file(url_params.account_email as string);
+        if(confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
+          reset_cryptup_account_storages(url_params.account_email as string, () => window.parent.location.reload());
+        }
       }
     }));
   
@@ -72,42 +64,35 @@ tool.catch.try(() => {
       tool.browser.message.send(url_params.parent_tab_id as string, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email: url_params.account_email})});
     });
   
-    $('.action_flush_attest_info').click(function () {
-      Store.remove(url_params.account_email as string, ['attests_requested', 'attests_processed', 'attest_log']).then(function () {
-        alert('Internal attest info flushed');
-        window.location.reload();
-      });
+    $('.action_flush_attest_info').click(async () => {
+      await Store.remove(url_params.account_email as string, ['attests_requested', 'attests_processed', 'attest_log']);
+      alert('Internal attest info flushed');
+      window.location.reload();
     });
   
-    $('.action_reset_managing_auth').click(() => {
-      Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified']).then(() => {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
-      });
+    $('.action_reset_managing_auth').click(async () => {
+      await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified']);
+      tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
     });
   
-    $('.action_make_google_auth_token_unusable').click(() => {
-      Store.set(url_params.account_email as string, {google_token_access: 'flowcrypt_test_bad_access_token'}).then(() => {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
-      });
+    $('.action_make_google_auth_token_unusable').click(async () => {
+      await Store.set(url_params.account_email as string, {google_token_access: 'flowcrypt_test_bad_access_token'});
+      tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
     });
 
-    $('.action_make_google_refresh_token_unusable').click(() => {
-      Store.set(url_params.account_email as string, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'}).then(() => {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
-      });
+    $('.action_make_google_refresh_token_unusable').click(async () => {
+      await Store.set(url_params.account_email as string, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'})
+      tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
     });
 
-    function collect_info_and_download_backup_file(account_email: string, callback?: VoidCallback) {
+    async function collect_info_and_download_backup_file(account_email: string) {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
-      collect_info_for_account_backup(account_email, function (backup_text: string) {
-        tool.file.save_to_downloads(name, 'text/plain', backup_text);
-        if(callback) {
-          setTimeout(callback, 1000);
-        }
-      });
+      let backup_text = await collect_info_for_account_backup(account_email);
+      tool.file.save_to_downloads(name, 'text/plain', backup_text);
+      await tool.ui.delay(1000);
     }
     
-    function collect_info_for_account_backup(account_email: string, callback: (backup_text: string) => void) {
+    async function collect_info_for_account_backup(account_email: string) {
       let text = [
         'This file contains sensitive information, please put it in a safe place.',
         '',
@@ -120,23 +105,20 @@ tool.catch.try(() => {
         '',
         'account_email: ' + account_email,
       ];
-      Store.get_global(['version']).then(function (global_storage) {
-        Store.get_account(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']).then(function (account_storage) {
-          text.push('global_storage: ' + JSON.stringify(global_storage));
-          text.push('account_storage: ' + JSON.stringify(account_storage));
-          text.push('');
-          Store.keys_get(account_email).then(keyinfos => {
-            for(let keyinfo of keyinfos) {
-              text.push('');
-              text.push('key_longid: ' + keyinfo.longid);
-              text.push('key_primary: ' + keyinfo.primary);
-              text.push(keyinfo.private);
-            }
-            text.push('');
-            callback(text.join('\n'));
-          });
-        });
-      });
+      let global_storage = await Store.get_global(['version']);
+      let account_storage = await Store.get_account(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
+      text.push('global_storage: ' + JSON.stringify(global_storage));
+      text.push('account_storage: ' + JSON.stringify(account_storage));
+      text.push('');
+      let keyinfos = await Store.keys_get(account_email);
+      for(let keyinfo of keyinfos) {
+        text.push('');
+        text.push('key_longid: ' + keyinfo.longid);
+        text.push('key_primary: ' + keyinfo.primary);
+        text.push(keyinfo.private);
+      }
+      text.push('');
+      return text.join('\n');
     }
 
   }

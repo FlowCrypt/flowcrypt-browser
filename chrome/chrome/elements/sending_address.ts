@@ -2,20 +2,20 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'placement']);
   let hash = tool.crypto.hash.sha1;
   let container = $('.emails');
   
-  Store.get_account(url_params.account_email as string, ['addresses']).then((storage: {addresses: string[]}) => {
-    container.html(storage.addresses.map(address_to_html_radio).join(''));
-    container.find('input').first().prop('checked', true);
-    container.find('input').click(function() {
-      if($(this).val() !== storage.addresses[0]) {
-        Store.set(url_params.account_email as string, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}).then(() => window.location.reload());
-      }
-    });
+  let storage = await Store.get_account(url_params.account_email as string, ['addresses']);
+  let addresses = storage.addresses || [url_params.account_email];
+  container.html(addresses.map(address_to_html_radio).join(''));
+  container.find('input').first().prop('checked', true);
+  container.find('input').click(function() {
+    if($(this).val() !== addresses[0]) {
+      Store.set(url_params.account_email as string, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}).then(() => window.location.reload());
+    }
   });
   
   function address_to_html_radio(a: string) {

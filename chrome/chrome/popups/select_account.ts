@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['action']);
 
@@ -16,19 +16,15 @@ tool.catch.try(() => {
     throw new Error('unknown action: ' + url_params.action);
   }
   
-  Store.account_emails_get().then((account_emails) => {
-    Store.get_accounts(account_emails, ['setup_done']).then(account_storages => {
-      let ul_emails = '';
-      for(let email of Object.keys(account_storages)) {
-        if(account_storages[email].setup_done === true) {
-          ul_emails += `<li><a class="button gray2 long" href="#" email="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</a></li>`;
-        }
-      }
-      $('ul.emails').html(ul_emails).find('a').click(function () {
-        tool.browser.message.send(null, 'settings', { account_email: $(this).attr('email'), page: page }, () => window.close());
-      });
-      $('html, body').css('height', $('.content').height()! + (tool.env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
-    });
-  });  
-
+  let account_storages = await Store.get_accounts(await Store.account_emails_get(), ['setup_done']);
+  let ul_emails = '';
+  for(let email of Object.keys(account_storages)) {
+    if(account_storages[email].setup_done === true) {
+      ul_emails += `<li><a class="button gray2 long" href="#" email="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</a></li>`;
+    }
+  }
+  $('ul.emails').html(ul_emails).find('a').click(function () {
+    tool.browser.message.send(null, 'settings', { account_email: $(this).attr('email'), page: page }, () => window.close());
+  });
+  $('html, body').css('height', $('.content').height()! + (tool.env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
 })();

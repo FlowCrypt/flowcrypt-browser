@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['parent_tab_id']);
 

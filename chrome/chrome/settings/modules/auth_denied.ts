@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'use_account_email', 'parent_tab_id', 'email_provider']);
   if(!url_params.use_account_email) {
@@ -15,9 +15,8 @@ tool.catch.try(() => {
   if(!url_params.account_email) {
     render_setup_done(false);
   } else {
-    Store.get_account(url_params.account_email as string, ['setup_done']).then(storage => {
-      render_setup_done(storage.setup_done || false);
-    });
+    let {setup_done} = await Store.get_account(url_params.account_email as string, ['setup_done']);
+    render_setup_done(setup_done || false);
   }
 
   $('.hidable').not('.' + url_params.email_provider).css('display', 'none');
