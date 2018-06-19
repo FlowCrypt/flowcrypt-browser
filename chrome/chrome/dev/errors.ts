@@ -2,14 +2,13 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
-  Store.get_global(['errors']).then(storage => {
-    if(storage.errors && storage.errors.length) {
-      let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
-      $('.pre').html(errors);
-    }
-  });
+  let storage = await Store.get_global(['errors']);
+  if(storage.errors && storage.errors.length) {
+    let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
+    $('.pre').html(errors);
+  }
 
   $('.clear').click(() => Store.remove(null, ['errors']).then(() => window.location.reload()));
 

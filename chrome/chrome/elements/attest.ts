@@ -34,10 +34,9 @@ tool.catch.try(async () => {
         account_email: url_params.account_email,
         packet: url_params.attest_packet,
         passphrase: passphrase,
-      }, function (attestation) {
-        tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'), function (text) {
-          $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
-        });
+      }, async attestation => {
+        let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
+        $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
       });
     }
   }  

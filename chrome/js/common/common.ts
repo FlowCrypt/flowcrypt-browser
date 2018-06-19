@@ -31,7 +31,7 @@ let tool = {
       };
     },
     pretty_print: (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj),
-    html_as_text: (html_text: string, callback: (t: string) => void) => {
+    html_as_text: (html_text: string): Promise<string> => new Promise((resolve, reject) => {
       // extracts innerText from a html text in a safe way without executing any contained js
       // firefox does not preserve line breaks of iframe.contentDocument.body.innerText due to a bug - have to guess the newlines with regexes
       // this is still safe because Firefox does strip all other tags
@@ -60,11 +60,11 @@ let tool = {
           text = text.split(br).join('\n').split(block_start).filter(function(v){return !!v}).join('\n').split(block_end).filter(function(v){return !!v}).join('\n');
           text = text.replace(/\n{2,}/g, '\n\n');
         }
-        callback(text.trim());
+        resolve(text.trim());
         document.body.removeChild(e);
       };
       document.body.appendChild(e);
-    },
+    }),
     normalize_spaces: (str: string) =>  str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n'),
     number_format: (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
       let nStr: string = number + '';
@@ -91,11 +91,10 @@ let tool = {
     html_attribute_decode: (encoded: string): object => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'), // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
     html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
-    as_safe_html: (text_or_html: string, callback: (t: string) => void) => {
+    as_safe_html: async (text_or_html: string): Promise<string> => {
       let nl = '_cryptup_newline_placeholder_' + tool.str.random(3) + '_';
-      tool.str.html_as_text(text_or_html.replace(/<br ?\/?> ?\r?\n/gm, nl).replace(/\r?\n/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'), (plain) => {
-        callback(plain.trim().replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, (spaces) => '&nbsp;'.repeat(spaces.length)));
-      });
+      let plain = await tool.str.html_as_text(text_or_html.replace(/<br ?\/?> ?\r?\n/gm, nl).replace(/\r?\n/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'));
+      return plain.trim().replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, (spaces) => '&nbsp;'.repeat(spaces.length));
     },
     base64url_encode: (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
     base64url_decode: (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
@@ -384,19 +383,12 @@ let tool = {
   },
   file: {
     object_url_create: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
-    object_url_consume: (url: string) => {
-      return tool.catch.Promise(function(resolve, reject) {
-        tool.file.download_as_uint8(url, null, function (success, uint8) {
-          window.URL.revokeObjectURL(url);
-          if(success) {
-            resolve(uint8);
-          } else {
-            reject({error: 'could not consume object url', detail: url});
-          }
-        });
-      });
+    object_url_consume: async (url: string) => {
+      let uint8 = await tool.file.download_as_uint8(url, null);
+      window.URL.revokeObjectURL(url);
+      return uint8;
     },
-    download_as_uint8: (url: string, progress:ApiCallProgressCallback|null=null, callback: (success: boolean, uint8: Uint8Array|ErrorEvent) => void) => {
+    download_as_uint8: (url: string, progress:ApiCallProgressCallback|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
@@ -405,14 +397,12 @@ let tool = {
           progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
         };
       }
-      request.onerror = function (e) {
-        callback(false, e);
-      };
+      request.onerror = reject;
       request.onload = function (e) {
-        callback(true, new Uint8Array(request.response));
+        resolve(new Uint8Array(request.response));
       };
       request.send();
-    },
+    }),
     save_to_downloads: (name: string, type: string, content: Uint8Array|string|Blob, render_in:JQuery<HTMLElement>|null=null) => {
       let blob = new Blob([content], { type: type });
       if(window.navigator && window.navigator.msSaveOrOpenBlob) {
@@ -1241,6 +1231,7 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
   ui: {
+    delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
       let path = `/img/svgs/spinner-${color}-small.svg`;
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
@@ -1329,6 +1320,7 @@ let tool = {
       }
     },
     event: {
+      clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function() { resolve(this); })),
       stop: () => {
         return function(e: JQuery.Event) {
           e.preventDefault();
@@ -1395,28 +1387,45 @@ let tool = {
   browser: {
     message: {
       cb: '[***|callback_placeholder|***]',
-      bg_exec: (path: string, args: any[], callback: (result: PossibleBgExecResults) => void) => {
-        args = args.map((arg) => {
-          if((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
-            return tool.file.object_url_create(arg);
-          } else {
-            return arg;
-          }
-        });
-        tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, (result: PossibleBgExecResults) => {
-          if(path === 'tool.crypto.message.decrypt') {
-            if(result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.data && typeof (result as DecryptSuccess).content.data === 'string' && ((result as DecryptSuccess).content.data as string).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-              tool.file.object_url_consume((result as DecryptSuccess).content.data as string).then(function (result_content_data) {
-                (result as DecryptSuccess).content.data = result_content_data;
-                callback(result);
-              });
+      bg: {
+        diagnose_message_pubkeys: (account_email: string, message: string) => tool.browser.message.bg.exec('tool.diagnose.message_pubkeys', [
+          account_email, 
+          message,
+        ]) as Promise<DiagnoseMessagePubkeysResult>,
+        crypto_message_decrypt: (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null) => tool.browser.message.bg.exec('tool.crypto.message.decrypt', [
+          account_email, 
+          encrypted_data, 
+          user_entered_message_password, 
+          tool.browser.message.cb,
+        ]) as Promise<DecryptResult>,
+        crypto_message_verify_detached: (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => tool.browser.message.bg.exec('tool.crypto.message.verify_detached', [
+          account_email,
+          message,
+          signature,
+        ]) as Promise<MessageVerifyResult>,
+        exec: (path: string, args: any[]): Promise<PossibleBgExecResults> => new Promise(resolve => {
+          args = args.map((arg) => {
+            if((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
+              return tool.file.object_url_create(arg);
             } else {
-              callback(result);
+              return arg;
             }
-          } else {
-            callback(result);
-          }
-        });
+          });
+          tool.browser.message.send(null, 'bg_exec', {path: path, args: args}, (result: PossibleBgExecResults) => {
+            if(path === 'tool.crypto.message.decrypt') {
+              if(result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.data && typeof (result as DecryptSuccess).content.data === 'string' && ((result as DecryptSuccess).content.data as string).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
+                tool.file.object_url_consume((result as DecryptSuccess).content.data as string).then(function (result_content_data) {
+                  (result as DecryptSuccess).content.data = result_content_data;
+                  resolve(result);
+                });
+              } else {
+                resolve(result);
+              }
+            } else {
+              resolve(result);
+            }
+          });
+        }),
       },
       send: (destination_string: string|null, name: string, data: Dict<any>|null=null, callback?: Callback) => {
         let msg = { name: name, data: data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };

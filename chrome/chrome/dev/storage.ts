@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   type RenderableStorage = Dict<{key: string, value: Storable}>;
 
@@ -16,16 +16,15 @@ tool.catch.try(() => {
   }
   
   if(controls) {
-    Store.account_emails_get().then((account_emails) => {
-      let emails_selector = $('.emails');
-      emails_selector.append('<a href="' + tool.env.url_create('storage.htm', {controls: url_params.controls || ''}) + '">all</a>');
-      emails_selector.append('<a href="' + tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}) + '">global</a>');
-      $('.namespace').append('<option value="global">global</option>');
-      for(let account_email of account_emails) {
-        $('.emails').append('<a href="' + tool.env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}) + '">' + account_email + '</a>');
-        $('.namespace').append('<option value="' + encodeURIComponent(account_email) + '">' + account_email + '</option>');
-      }
-    });
+    let account_emails = await Store.account_emails_get();
+    let emails_selector = $('.emails');
+    emails_selector.append('<a href="' + tool.env.url_create('storage.htm', {controls: url_params.controls || ''}) + '">all</a>');
+    emails_selector.append('<a href="' + tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}) + '">global</a>');
+    $('.namespace').append('<option value="global">global</option>');
+    for(let account_email of account_emails) {
+      $('.emails').append('<a href="' + tool.env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}) + '">' + account_email + '</a>');
+      $('.namespace').append('<option value="' + encodeURIComponent(account_email) + '">' + account_email + '</option>');
+    }
   }
   
   function render(obj: RenderableStorage) {

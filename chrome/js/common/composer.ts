@@ -235,11 +235,10 @@ class Composer {
       // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
       // because they might not have a pubkey for the alternative address, and might get confused
     });
-    S.cached('input_text').get(0).onpaste = function (e) {
+    S.cached('input_text').get(0).onpaste = async e => {
       if(e.clipboardData.getData('text/html')) {
-        tool.str.html_as_text(e.clipboardData.getData('text/html'), (text: string) => {
-          that.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
-        });
+        let text = await tool.str.html_as_text(e.clipboardData.getData('text/html'));
+        that.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
         return false;
       }
     };
@@ -417,23 +416,22 @@ class Composer {
   private decrypt_and_render_draft = async (encrypted_draft: string, render_function: (() => void)|null, headers: FromToHeaders) => {
     let passphrase = this.app.storage_passphrase_get();
     if (passphrase !== null) {
-      tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, (result) => {
+      tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, async result => {
         if(result.success) {
-          tool.str.as_safe_html((result.content.data as string).replace(/\n/g, '<br>\n'), (safe_html_draft: string) => {
-            this.S.cached('input_text').html(safe_html_draft);
-            if (headers && headers.to && headers.to.length) {
-              this.S.cached('input_to').focus();
-              this.S.cached('input_to').val(headers.to.join(','));
-              this.S.cached('input_text').focus();
-            }
-            if (headers && headers.from) {
-              this.S.now('input_from').val(headers.from);
-            }
-            this.set_input_text_height_manually_if_needed();
-            if (render_function) {
-              render_function();
-            }
-          });
+          let safe_html_draft = await tool.str.as_safe_html((result.content.data as string).replace(/\n/g, '<br>\n'));
+          this.S.cached('input_text').html(safe_html_draft);
+          if (headers && headers.to && headers.to.length) {
+            this.S.cached('input_to').focus();
+            this.S.cached('input_to').val(headers.to.join(','));
+            this.S.cached('input_text').focus();
+          }
+          if (headers && headers.from) {
+            this.S.now('input_from').val(headers.from);
+          }
+          this.set_input_text_height_manually_if_needed();
+          if (render_function) {
+            render_function();
+          }
         } else {
           this.set_input_text_height_manually_if_needed();
           if (render_function) {
