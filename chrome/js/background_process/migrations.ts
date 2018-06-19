@@ -6,12 +6,10 @@
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
-function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: Callback) {
-  Store.get_account(data.account_email, ['version']).then(function(account_storage) {
-    Store.set(data.account_email, { version: tool.catch.version('int') as number|null }).then(respond_done);
-    account_update_status_pks(data.account_email);
-    account_update_status_keyserver(data.account_email);
-  });
+function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: VoidCallback) {
+  Store.set(data.account_email, { version: tool.catch.version('int') as number|null }).then(respond_done);
+  account_update_status_pks(data.account_email).catch(tool.catch.handle_exception);
+  account_update_status_keyserver(data.account_email).catch(tool.catch.handle_exception);
 }
 
 async function migrate_global() {
@@ -65,54 +63,44 @@ function legacy_local_storage_read(value: string) {
   }
 }
 
-function account_update_status_keyserver(account_email: string) { // checks which emails were registered on Attester
-  Store.keys_get(account_email).then(keyinfos => {
-    let my_longids = keyinfos.map(ki => ki.longid);
-    Store.get_account(account_email, ['addresses', 'addresses_keyserver']).then(function(storage: Dict<string[]>) {
-      if(storage.addresses && storage.addresses.length) {
-        tool.api.attester.lookup_email(storage.addresses).then((results: {results: PubkeySearchResult[]}) => {
-          let addresses_keyserver = [];
-          for(let result of results.results) {
-            if(result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
-              addresses_keyserver.push(result.email);
-            }
-          }
-          // noinspection JSIgnoredPromiseFromCall
-          Store.set(account_email, { addresses_keyserver: addresses_keyserver, });
-        }, function(error) {});
+async function account_update_status_keyserver(account_email: string) { // checks which emails were registered on Attester
+  let keyinfos = await Store.keys_get(account_email);
+  let my_longids = keyinfos.map(ki => ki.longid);
+  let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
+  if(storage.addresses && storage.addresses.length) {
+    let {results} = await tool.api.attester.lookup_email(storage.addresses);
+    let addresses_keyserver = [];
+    for(let result of results) {
+      if(result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
+        addresses_keyserver.push(result.email);
       }
-    });
-  });
+    }
+    await Store.set(account_email, { addresses_keyserver });
+  }
 }
 
-function account_update_status_pks(account_email: string) { // checks if any new emails were registered on pks lately
-  Store.keys_get(account_email).then(keyinfos => {
-    let my_longids = keyinfos.map(ki => ki.longid);
-    let hkp = new openpgp.HKP('https://pgp.key-server.io');
-    Store.get_account(account_email, ['addresses', 'addresses_pks']).then(function(storage: Dict<string[]>) {
-      let addresses_pks = storage.addresses_pks || [];
-      for (let email of storage.addresses || [account_email]) {
-        if(!tool.value(email).in(addresses_pks)) {
-          try {
-            hkp.lookup({ query: email }).then((pubkey: string) => {
-              if(typeof pubkey !== 'undefined') {
-                if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
-                  addresses_pks.push(email);
-                  console.info(email + ' newly found matching pubkey on PKS');
-                  // noinspection JSIgnoredPromiseFromCall
-                  Store.set(account_email, { addresses_pks: addresses_pks, });
-                }
-              }
-            }).catch((error: Error) => {
-              console.info('Error fetching keys from PKS: ' + error.message);
-            });
-          } catch(error) {
-            console.info('Error2 fetching keys from PKS: ' + error.message);
+async function account_update_status_pks(account_email: string) { // checks if any new emails were registered on pks lately
+  let keyinfos = await Store.keys_get(account_email);
+  let my_longids = keyinfos.map(ki => ki.longid);
+  let hkp = new openpgp.HKP('https://pgp.key-server.io');
+  let storage = await Store.get_account(account_email, ['addresses', 'addresses_pks']);
+  let addresses_pks = storage.addresses_pks || [];
+  for (let email of storage.addresses || [account_email]) {
+    if(!tool.value(email).in(addresses_pks)) {
+      try {
+        let pubkey = await hkp.lookup({ query: email });
+        if(typeof pubkey !== 'undefined') {
+          if(tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
+            addresses_pks.push(email);
+            console.info(email + ' newly found matching pubkey on PKS');
           }
         }
+      } catch(error) {
+        console.info('Error fetching keys from PKS: ' + String(error));
       }
-    });
-  });
+    }
+  }
+  await Store.set(account_email, { addresses_pks });
 }
 
 function schedule_cryptup_subscription_level_check() {

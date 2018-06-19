@@ -1956,66 +1956,49 @@ let tool = {
       },
     },
     attester: {
-      lookup_email: (email: string|string[]): FcPromise<PubkeySearchResult|{results: PubkeySearchResult[]}> => {
-        return tool._.api_attester_call('lookup/email', {
-          email: Array.isArray(email) ? email.map(a => tool.str.parse_email(a).email) : tool.str.parse_email(email).email,
-        }).validate(r => Boolean(r));
-      },
-      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): FcPromise<ApirAttInitialLegacySugmit> => {
-        return tool._.api_attester_call('initial/legacy_submit', {
-          email: tool.str.parse_email(email).email,
-          pubkey: pubkey.trim(),
-          attest: attest,
-        }); 
-      },
-      initial_confirm: (signed_attest_packet: string): FcPromise<ApirAttInitialConfirm> => {
-        return tool._.api_attester_call('initial/confirm', {
-          signed_message: signed_attest_packet,
-        });
-      },
-      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): FcPromise<ApirAttReplaceRequest> => {
-        return tool._.api_attester_call('replace/request', {
-          signed_message: signed_attest_packet,
-          new_pubkey: new_pubkey,
-          email: email,
-        });
-      },
-      replace_confirm: (signed_attest_packet: string): FcPromise<ApirAttReplaceConfirm> => {
-        return tool._.api_attester_call('replace/confirm', {
-          signed_message: signed_attest_packet,
-        });
-      },
-      test_welcome: (email: string, pubkey: string): FcPromise<ApirAttTestWelcome> => {
-        return tool._.api_attester_call('test/welcome', {
-          email: email,
-          pubkey: pubkey,
-        });
-      },
-      diagnose_keyserver_pubkeys: (account_email: string, callback: Callback) => {
+      lookup_email: (emails: string[]): FcPromise<{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
+        email: emails.map(e => tool.str.parse_email(e).email),
+      }),
+      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): FcPromise<ApirAttInitialLegacySugmit> => tool._.api_attester_call('initial/legacy_submit', {
+        email: tool.str.parse_email(email).email,
+        pubkey: pubkey.trim(),
+        attest: attest,
+      }),
+      initial_confirm: (signed_attest_packet: string): FcPromise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
+        signed_message: signed_attest_packet,
+      }),
+      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): FcPromise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
+        signed_message: signed_attest_packet,
+        new_pubkey: new_pubkey,
+        email: email,
+      }),
+      replace_confirm: (signed_attest_packet: string): FcPromise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
+        signed_message: signed_attest_packet,
+      }),
+      test_welcome: (email: string, pubkey: string): FcPromise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {
+        email: email,
+        pubkey: pubkey,
+      }),
+      diagnose_keyserver_pubkeys: async (account_email: string) => {
         let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
-        Store.get_account(account_email, ['addresses']).then(s => {
-          Store.keys_get(account_email).then(stored_keys => {
-            let stored_keys_longids = stored_keys.map(ki => ki.longid);
-            tool.api.attester.lookup_email(tool.arr.unique([account_email].concat((s.addresses || []) as string[]))).then((pubkey_search_results: {results: PubkeySearchResult[]}) => {
-              for(let pubkey_search_result of pubkey_search_results.results) {
-                if (!pubkey_search_result.pubkey) {
-                  diagnosis.has_pubkey_missing = true;
-                  diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
-                } else {
-                  let match = true;
-                  if (!tool.value(tool.crypto.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
-                    diagnosis.has_pubkey_mismatch = true;
-                    match = false;
-                  }
-                  diagnosis.results[pubkey_search_result.email] = {pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested || false, match: match};
-                }
-              }
-              callback(diagnosis);
-            }, function(error) {
-              callback();
-            });
-          });
-        });
+        let {addresses} = await Store.get_account(account_email, ['addresses']);
+        let stored_keys = await Store.keys_get(account_email);
+        let stored_keys_longids = stored_keys.map(ki => ki.longid);
+        let {results} = await tool.api.attester.lookup_email(tool.arr.unique([account_email].concat(addresses || [])));
+        for(let pubkey_search_result of results) {
+          if (!pubkey_search_result.pubkey) {
+            diagnosis.has_pubkey_missing = true;
+            diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
+          } else {
+            let match = true;
+            if (!tool.value(tool.crypto.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
+              diagnosis.has_pubkey_mismatch = true;
+              match = false;
+            }
+            diagnosis.results[pubkey_search_result.email] = {pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested || false, match: match};
+          }
+        }
+        return diagnosis;
       },  
       packet: {
         create_sign: async (values: Dict<string>, decrypted_prv: OpenpgpKey) => {

@@ -733,26 +733,20 @@ class Composer {
       return db_contact;
     } else {
       try {
-        let response = await tool.api.attester.lookup_email(email) as PubkeySearchResult;
-        if (response && response.email) {
-          if (response.pubkey) {
-            const parsed = openpgp.key.readArmored(response.pubkey);
+        let {results: [lookup_result]} = await tool.api.attester.lookup_email([email]);
+        if (lookup_result && lookup_result.email) {
+          if (lookup_result.pubkey) {
+            const parsed = openpgp.key.readArmored(lookup_result.pubkey);
             if (!parsed.keys[0]) {
-              tool.catch.log('Dropping found but incompatible public key', {
-                for: response.email,
-                err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null
-              });
-              response.pubkey = null;
+              tool.catch.log('Dropping found but incompatible public key', {for: lookup_result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null});
+              lookup_result.pubkey = null;
             } else if (parsed.keys[0].getEncryptionKeyPacket() === null) {
-              tool.catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {
-                for: response.email,
-                fingerprint: tool.crypto.key.fingerprint(parsed.keys[0])
-              });
-              response.pubkey = null;
+              tool.catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookup_result.email, fingerprint: tool.crypto.key.fingerprint(parsed.keys[0])});
+              lookup_result.pubkey = null;
             }
           }
-          let ks_contact = this.app.storage_contact_object(response.email, db_contact && db_contact.name ? db_contact.name : null, response.has_cryptup ? 'cryptup' : 'pgp', response.pubkey, response.attested, false, Date.now());
-          this.ks_lookups_by_email[response.email] = ks_contact;
+          let ks_contact = this.app.storage_contact_object(lookup_result.email, db_contact && db_contact.name ? db_contact.name : null, lookup_result.has_cryptup ? 'cryptup' : 'pgp', lookup_result.pubkey, lookup_result.attested, false, Date.now());
+          this.ks_lookups_by_email[lookup_result.email] = ks_contact;
           await this.app.storage_contact_save(ks_contact);
           return ks_contact;
         } else  {

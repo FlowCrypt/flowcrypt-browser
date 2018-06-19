@@ -2,57 +2,58 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'longid']);
 
   $('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm', url_params));
   $('.action_view_update').attr('href', tool.env.url_create('my_key_update.htm', url_params));
 
-  Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']).then(([primary_ki]) => {
+  let [primary_ki] = await Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']);
+  abort_and_render_error_if_keyinfo_empty(primary_ki);
 
-    abort_and_render_error_if_keyinfo_empty(primary_ki);
+  let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 
-    let key = openpgp.key.readArmored(primary_ki.private).keys[0];
-
-    tool.api.attester.lookup_email(url_params.account_email as string).validate((r: PubkeySearchResult) => r.pubkey && tool.crypto.key.longid(r.pubkey) === primary_ki.longid).then((response: PubkeySearchResult) => {
-      let url = tool.api.cryptup.url('pubkey', url_params.account_email as string);
+  try {
+    let {results: [result]} = await tool.api.attester.lookup_email([url_params.account_email as string]);
+    let url = tool.api.cryptup.url('pubkey', url_params.account_email as string);
+    if(result.pubkey && tool.crypto.key.longid(result.pubkey) === primary_ki.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
-    }, (error: StandardError) => {
-      $('.pubkey_link_container').remove();
-    });
+    }
+  } catch (e) {
+    tool.catch.handle_exception(e);
+    $('.pubkey_link_container').remove();
+  }
+  
+  $('.email').text(url_params.account_email as string);
+  $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced')!);
+  $('.key_words').text(primary_ki.keywords);
+  $('.show_when_showing_public').css('display', '');
+  $('.show_when_showing_private').css('display', 'none');
 
-    $('.email').text(url_params.account_email as string);
-    $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced')!);
-    $('.key_words').text(primary_ki.keywords);
-    $('.show_when_showing_public').css('display', '');
-    $('.show_when_showing_private').css('display', 'none');
+  $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+    let file = tool.file.keyinfo_as_pubkey_attachment(primary_ki);
+    tool.file.save_to_downloads(file.name, file.type, file.content!, tool.env.browser().name === 'firefox' ? $('body') : undefined);
+  }));
 
-    $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-      let file = tool.file.keyinfo_as_pubkey_attachment(primary_ki);
-      tool.file.save_to_downloads(file.name, file.type, file.content!, tool.env.browser().name === 'firefox' ? $('body') : undefined);
-    }));
+  $('.action_view_pubkey').click(function () {
+    $('.key_dump').text(key.toPublic().armor());
+  });
 
-    $('.action_view_pubkey').click(function () {
-      $('.key_dump').text(key.toPublic().armor());
-    });
-
-    $('.action_show_other_type').click(function () {
-      if($('.action_show_other_type').text().toLowerCase() === 'show private key') {
-        $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
-        $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
-        $('.key_type').text('Private Key');
-        $('.show_when_showing_public').css('display', 'none');
-        $('.show_when_showing_private').css('display', '');
-      } else {
-        $('.key_dump').text('').removeClass('bad').addClass('good');
-        $('.action_show_other_type').text('show private key').removeClass('good').addClass('bad');
-        $('.key_type').text('Public Key Info');
-        $('.show_when_showing_public').css('display', '');
-        $('.show_when_showing_private').css('display', 'none');
-      }
-    });
-
+  $('.action_show_other_type').click(function () {
+    if($('.action_show_other_type').text().toLowerCase() === 'show private key') {
+      $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
+      $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
+      $('.key_type').text('Private Key');
+      $('.show_when_showing_public').css('display', 'none');
+      $('.show_when_showing_private').css('display', '');
+    } else {
+      $('.key_dump').text('').removeClass('bad').addClass('good');
+      $('.action_show_other_type').text('show private key').removeClass('good').addClass('bad');
+      $('.key_type').text('Public Key Info');
+      $('.show_when_showing_public').css('display', '');
+      $('.show_when_showing_private').css('display', 'none');
+    }
   });
 
 })();

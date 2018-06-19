@@ -23,6 +23,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     attachments_container_outer: 'div.hq.gt',
     attachments_container_inner: 'div.aQH',
     translate_prompt: '.adI',
+    standard_compose_window: '.aaZ:visible',
   };
 
   constructor(factory: Factory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, notifications: Notifications, gmail_variant: WebmailVariantString) {
@@ -41,7 +42,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     this.replace_cryptup_tags();
     this.replace_conversation_buttons();
     this.replace_standard_reply_box();
-    this.evaluate_standard_compose_receivers();
+    this.evaluate_standard_compose_receivers().catch(tool.catch.handle_exception);
   };
 
   set_reply_box_editable = () => {
@@ -403,48 +404,46 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private evaluate_standard_compose_receivers = () => {
-    let standard_compose_selector = $('.aaZ:visible');
-    if(standard_compose_selector.length) { // compose message is open
-      standard_compose_selector.each((i, standard_compose_window: JQuery<HTMLElement>|HTMLElement) => {
-        standard_compose_window = $(standard_compose_window);
-        let recipients = standard_compose_window.find('div.az9 span[email]');
-        if(!recipients) {
-          standard_compose_window.find('.recipients_use_encryption').remove();
-        } else {
-          let results = {has_pgp: [] as string[], no_pgp: [] as string[], loading: [] as string[], unknown: [] as string[], wrong: [] as string[]};
-          for(let recipient of recipients) {
-            let email = $(recipient).attr('email');
-            if(email) {
-              let status = this.recipient_has_pgp[email];
-              if(!tool.str.is_email_valid(email)) {
-                results.wrong.push(email);
-              } if(typeof status === 'undefined') {
-                results.unknown.push(email);
-                this.recipient_has_pgp[email] = null; // loading
-                tool.api.attester.lookup_email(email).validate((r: PubkeySearchResult) => r.email).then((response: PubkeySearchResult) => {
-                  this.recipient_has_pgp[email!] = !!response.pubkey; // true or false
-                }, (error: StandardError) => {
-                  this.recipient_has_pgp[email!] = undefined; // unknown
-                });
-              } else if (status === null) {
-                results.loading.push(email);
-              } else if (status === true) {
-                results.has_pgp.push(email);
-              } else {
-                results.no_pgp.push(email);
-              }  
-            }
-          }
-          if(results.has_pgp.length > 0 && results.no_pgp.length + results.loading.length + results.unknown.length + results.wrong.length === 0) {
-            if(!standard_compose_window.find('.recipients_use_encryption').length) {
-              recipients.first().parents('form').first().prepend(this.factory.button_recipients_use_encryption(results.has_pgp.length, 'gmail')).find('a').click(this.injector.open_compose_window);
-            }
-          } else { // all loaded
-            standard_compose_window.find('.recipients_use_encryption').remove();
+  private evaluate_standard_compose_receivers = async () => {
+    for(let standard_compose_window_element of $(this.selector.standard_compose_window).get()) {
+      let standard_compose_window = $(standard_compose_window_element);
+      let recipients = standard_compose_window.find('div.az9 span[email]');
+      if(!recipients) {
+        standard_compose_window.find('.recipients_use_encryption').remove();
+      } else {
+        let results = {has_pgp: [] as string[], no_pgp: [] as string[], loading: [] as string[], unknown: [] as string[], wrong: [] as string[]};
+        for(let recipient of recipients) {
+          let email = $(recipient).attr('email');
+          if(email) {
+            let status = this.recipient_has_pgp[email];
+            if(!tool.str.is_email_valid(email)) {
+              results.wrong.push(email);
+            } if(typeof status === 'undefined') {
+              results.unknown.push(email);
+              this.recipient_has_pgp[email] = null; // loading
+              try {
+                let {results: [result]} = await tool.api.attester.lookup_email([email]);
+                this.recipient_has_pgp[email] = result.has_pgp; // true or false
+              } catch(e) {
+                this.recipient_has_pgp[email] = undefined; // unknown
+              }
+            } else if (status === null) {
+              results.loading.push(email);
+            } else if (status === true) {
+              results.has_pgp.push(email);
+            } else {
+              results.no_pgp.push(email);
+            }  
           }
         }
-      });
+        if(results.has_pgp.length > 0 && results.no_pgp.length + results.loading.length + results.unknown.length + results.wrong.length === 0) {
+          if(!standard_compose_window.find('.recipients_use_encryption').length) {
+            recipients.first().parents('form').first().prepend(this.factory.button_recipients_use_encryption(results.has_pgp.length, 'gmail')).find('a').click(this.injector.open_compose_window);
+          }
+        } else {
+          standard_compose_window.find('.recipients_use_encryption').remove();
+        }
+      }
     }
   };
 

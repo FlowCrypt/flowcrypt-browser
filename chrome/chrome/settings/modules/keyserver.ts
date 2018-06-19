@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email']);
 
@@ -10,19 +10,16 @@ tool.catch.try(() => {
 
   $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
-  Store.get_account(url_params.account_email as string, ['attests_processed', 'attests_requested', 'addresses']).then(storage => {
-    tool.api.attester.diagnose_keyserver_pubkeys(url_params.account_email as string, function (diagnosis) {
-      if(diagnosis) {
-        $('.summary').html('');
-        render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
-      } else {
-        $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
-        $('a.reload').click(function () {
-          window.location.reload();
-        });
-      }
-    });
-  });
+  let storage = await Store.get_account(url_params.account_email as string, ['attests_processed', 'attests_requested', 'addresses']);
+  try {
+    let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(url_params.account_email as string);
+    $('.summary').html('');
+    render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
+  } catch(e) {
+    tool.catch.handle_exception(e);
+    $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
+    $('a.reload').click(() =>  window.location.reload());
+  }
 
   function render_diagnosis(diagnosis: any, attests_requested: string[], attests_processed: string[]) {
     for(let email of Object.keys(diagnosis.results)) {
@@ -82,33 +79,29 @@ tool.catch.try(() => {
       }
       $('table#emails').append('<tr><td>' + email + remove + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
     }
-    $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+    $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
       $(self).html(tool.ui.spinner('white'));
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
-    $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
-      Store.get_account(url_params.account_email as string, ['addresses']).then(storage => {
-        Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(storage.addresses || [], $(self).attr('email'))}).then(() => window.location.reload());
-      });
+    $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+      let {addresses} = await Store.get_account(url_params.account_email as string, ['addresses']);
+      await Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email'))});
+      window.location.reload();
     }));
-    $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $(self).html(tool.ui.spinner('white'));
       show_settings_page('/chrome/settings/modules/request_replacement.htm');
     }));
-    $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $(self).html('Updating.. ' + tool.ui.spinner('white'));
-      tool.browser.message.send(null, 'attest_requested', { account_email: url_params.account_email, }, function () {
-        setTimeout(function () {
-          window.location.reload();
-        }, 30000);
-      });
+      tool.browser.message.send(null, 'attest_requested', { account_email: url_params.account_email, }, () => setTimeout(() => window.location.reload(), 30000));
     }));
     let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
-    $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
+    $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('green'));
-      fetch_account_aliases_from_gmail(url_params.account_email as string).then(function(addresses) {
-        Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email as string)) }).then(() => window.location.reload());
-      });
+      let addresses = await fetch_account_aliases_from_gmail(url_params.account_email as string);
+      await Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email as string)) });
+      window.location.reload();
     }));
   }
 

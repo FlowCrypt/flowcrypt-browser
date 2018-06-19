@@ -19,7 +19,8 @@ tool.catch.try(async () => {
   let keyserver_result: PubkeySearchResult;
 
   try {
-    keyserver_result = await tool.api.attester.lookup_email(url_params.account_email as string) as PubkeySearchResult;
+    let r = await tool.api.attester.lookup_email([url_params.account_email as string]);
+    keyserver_result = r.results[0];
   } catch (e) {
     $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>');
     $('.reload').click(() => window.location.reload());

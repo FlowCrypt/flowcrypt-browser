@@ -106,7 +106,8 @@ tool.catch.try(async () => {
     initialize_private_key_import_ui(); // for step_2b_manual_enter, if user chooses so
     
     try {
-      keyserver_result = await tool.api.attester.lookup_email(url_params.account_email as string) as PubkeySearchResult;
+      let r = await tool.api.attester.lookup_email([url_params.account_email as string]);
+      keyserver_result = r.results[0];
     } catch(e) {
       return await prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog())
     }
