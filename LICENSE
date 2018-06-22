@@ -14,7 +14,7 @@ Use Limitation: This software is free to use with the following limitations:
  - Cannot request attestation of secondary send-from email addresses (email aliases).
  - Limit one re-attestation (change of associated pubkey) per email address.
  - Cannot set up a custom email footer to be included in sent messages (encrypted or not).
- - Maximum 100 email addresses per domain (gmail.com, outlook.com and other public email service provider domains).
+ - Maximum 100 email addresses per domain (except gmail.com, outlook.com and other public email service provider domains).
 _____________________________________________
 
 You are granted limited license to the Software under this FlowCrypt License.  Please read this FlowCrypt License carefully, particularly the Use Limitation set forth above.
