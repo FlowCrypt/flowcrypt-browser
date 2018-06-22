@@ -29,7 +29,7 @@ tool.catch.try(async () => {
   if(all_private_keys.length > 1) {
     let html: string;
     if(selected_private_keys.length === 1) {
-      html = 'For the following key: <span class="good">' + (window as FcWindow).mnemonic(selected_private_keys[0].longid) + '</span> (KeyWords)';
+      html = 'For key: <span class="good">' + (window as FcWindow).mnemonic(selected_private_keys[0].longid) + '</span> (KeyWords)';
     } else {
       html = 'Pass phrase needed for any of the following keys:';
       for(let i in selected_private_keys) {
