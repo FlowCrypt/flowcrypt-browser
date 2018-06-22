@@ -3,13 +3,13 @@
 
 ## Users
 
-Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/downloads
+Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
 
 
 
 ## Developers
 
-This project is written in TypepScript. Chrome only understands JavaScript, so the project needs to be transpiled. That means you need to build the project the first time you download it, and build it after each change you make to see the result in the browser. To set this up:
+This project is written in TypeScript. Browsers only understand JavaScript, so the project needs to be transpiled. You need to build the project the first time you download it, and build it after each change you make to see the result in the browser. First, install tooling:
 
 ```bash
 $ cd some/folder/flowcrypt-browser
@@ -17,7 +17,7 @@ $ npm install --only=dev
 $ sudo npm install -g gulp
 ```
 
-Now, to build your project:
+To build your project:
 ```bash
 $ gulp
 ```
@@ -41,4 +41,4 @@ You will see something like:
 [13:09:11] Finished 'default' after 7.24 s
 ```
 
-That means you can find your built project in `build/chrome` and `build/firefox`
+Now you can find your built project in `build/chrome` and `build/firefox`
