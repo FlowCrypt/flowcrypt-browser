@@ -9,7 +9,7 @@ Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.
 
 ## Developers
 
-This project is written in TypeScript. Chrome only understands JavaScript, so the project needs to be transpiled. That means you need to build the project the first time you download it, and build it after each change you make to see the result in the browser. To set this up:
+This project is written in TypeScript. Browsers only understands JavaScript, so the project needs to be transpiled. That means you need to build the project the first time you download it, and build it after each change you make to see the result in the browser. To set this up:
 
 ```bash
 $ cd some/folder/flowcrypt-browser
