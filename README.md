@@ -3,7 +3,7 @@
 
 ## Users
 
-Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/downloads
+Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
 
 
 
