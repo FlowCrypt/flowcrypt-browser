@@ -4,15 +4,14 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 .new_message_featherlight .featherlight-content, .new_message_featherlight .featherlight-content iframe { overflow: hidden !important;}
 .new_message_featherlight .featherlight-content .featherlight-close-icon { display: none; }
 
-#header-row .logo-row img.cryptup-logo { height: auto; margin-right: 5px; text-align: left; margin-top: -2px; }
+#header-row .logo-row img.cryptup-logo { height: auto; width: 170px; margin-right: 5px; text-align: left; margin-top: -2px; }
 #header-row .logo-row { margin-top: 10px; }
-#header-row .logo-row #v { display: inline-block; margin-right: 15px; }
 #header-row .logo-row .subscription > span { display: inline-block; margin-left: 4px; }
 #header-row .logo-row .subscription .level, #header-row .logo-row .subscription .upgrade, #header-row .logo-row .subscription .expire { display: none; }
 #header-row .logo-row .subscription .upgrade { opacity: 0.7; cursor: pointer; }
 #header-row .logo-row .subscription .upgrade:hover { opacity: 1; }
 #header-row .logo-row a.cryptup-logo-row { text-decoration: none; }
-#header-row .logo-row .cryptup-logo-row span { opacity: .7; transition: .3s; top: 5px;}
+#header-row .logo-row .cryptup-logo-row span { opacity: .7; transition: .3s; top: 5px; font-size: 12px; display: inline-block;}
 #header-row .logo-row .cryptup-logo-row:hover span { opacity: 1;}
 a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-left: 20px; }
 
