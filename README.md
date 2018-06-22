@@ -41,4 +41,4 @@ You will see something like:
 [13:09:11] Finished 'default' after 7.24 s
 ```
 
-That means you can find your built project in `build/chrome` and `build/firefox`
+Now you can find your built project in `build/chrome` and `build/firefox`
