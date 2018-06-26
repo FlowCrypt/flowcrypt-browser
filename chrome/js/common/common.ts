@@ -2776,15 +2776,15 @@ let tool = {
       }
     },
     api_google_call_retry_auth_error_one_time: async (account_email: string, request: JQuery.AjaxSettings) => {
-              try {
+      try {
         return await $.ajax(request);
       } catch(e) {
         if(tool.api.error.is_auth_error(e)) { // force refresh token
           request.headers!.Authorization = await tool._.google_api_authorization_header(account_email, true);
           return await $.ajax(request);
-                  }
-              }
-            },
+        }
+      }
+    },
     api_google_call: async (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string) => {
       let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
       let headers = { Authorization: await tool._.google_api_authorization_header(account_email) };
@@ -2796,17 +2796,17 @@ let tool = {
       progress = progress || {};
       let data = undefined;
       let url;
-          if(typeof progress!.upload === 'function') { // substituted with {} above
-            url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
+      if(typeof progress!.upload === 'function') { // substituted with {} above
+        url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
         data = parameters || undefined;
-          } else {
-            url = 'https://www.googleapis.com/gmail/v1/users/me/' + resource;
-            if(method === 'GET' || method === 'DELETE') {
+      } else {
+        url = 'https://www.googleapis.com/gmail/v1/users/me/' + resource;
+        if(method === 'GET' || method === 'DELETE') {
           data = parameters || undefined;
-                } else {
+        } else {
           data = JSON.stringify(parameters) || undefined;
-              }
         }
+      }
       contentType = contentType || 'application/json; charset=UTF-8';
       let headers = { 'Authorization': await tool._.google_api_authorization_header(account_email) };
       let xhr = () => tool._.get_ajax_progress_xhr(progress);
