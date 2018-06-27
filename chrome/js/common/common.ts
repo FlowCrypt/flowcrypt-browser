@@ -1545,7 +1545,7 @@ let tool = {
       is_auth_popup_needed: (e: any) => {
         if(typeof e === 'object') {
           if(e.status === 400 && typeof e.responseJSON === 'object') {
-            if(e.responseJSON.error === 'invalid_grant' && e.responseJSON.error_description === 'Bad Request') {
+            if(e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
               return true;
             }
           }
