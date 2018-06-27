@@ -179,12 +179,12 @@ class Factory {
     return `<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ${this.destroyable_class}" data-tooltip="Use Secure Reply"><span>secure reply</span></span>`;
   };
 
-  button_recipients_use_encryption = (count: number, webmail_name: WebMailName) => {
+  button_recipients_use_encryption = (webmail_name: WebMailName) => {
     if(webmail_name !== 'gmail') {
       tool.catch.report('switch_to_secure not implemented for ' + webmail_name);
       return '';
     } else {
-      return '<div class="aoD az6 recipients_use_encryption">Your ' + (count > 1 ? 'recipients seem' : 'recipient seems') + ' to have encryption set up! <a href="#">Secure Compose</a></div>';
+      return '<div class="aoD az6 recipients_use_encryption">Your recipients seem to have encryption set up! <a href="#">Secure Compose</a></div>';
     }
   };
 

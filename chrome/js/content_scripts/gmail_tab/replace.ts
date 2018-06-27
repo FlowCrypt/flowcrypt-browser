@@ -4,7 +4,7 @@
 
 class GmailElementReplacer implements WebmailElementReplacer {
 
-  private recipient_has_pgp: Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
+  private recipient_has_pgp_cache: Dict<boolean> = {};
   private addresses: string[];
   private factory: Factory;
   private account_email: string;
@@ -13,6 +13,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private notifications: Notifications;
   private gmail_variant: WebmailVariantString;
   private css_hidden = 'opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important; max-width: 1px !important; position: absolute !important; z-index: -1000 !important';
+  private currently_evaluating_standard_compose_box_recipients = false;
 
   private selector = { // gmail_variant=standard|new
     conversation_root: 'div.if',
@@ -405,45 +406,55 @@ class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private evaluate_standard_compose_receivers = async () => {
-    for(let standard_compose_window_element of $(this.selector.standard_compose_window).get()) {
-      let standard_compose_window = $(standard_compose_window_element);
-      let recipients = standard_compose_window.find('div.az9 span[email]');
-      if(!recipients) {
-        standard_compose_window.find('.recipients_use_encryption').remove();
-      } else {
-        let results = {has_pgp: [] as string[], no_pgp: [] as string[], loading: [] as string[], unknown: [] as string[], wrong: [] as string[]};
-        for(let recipient of recipients) {
-          let email = $(recipient).attr('email');
-          if(email) {
-            let status = this.recipient_has_pgp[email];
-            if(!tool.str.is_email_valid(email)) {
-              results.wrong.push(email);
-            } if(typeof status === 'undefined') {
-              results.unknown.push(email);
-              this.recipient_has_pgp[email] = null; // loading
-              try {
-                let {results: [result]} = await tool.api.attester.lookup_email([email]);
-                this.recipient_has_pgp[email] = result.has_pgp; // true or false
-              } catch(e) {
-                this.recipient_has_pgp[email] = undefined; // unknown
-              }
-            } else if (status === null) {
-              results.loading.push(email);
-            } else if (status === true) {
-              results.has_pgp.push(email);
-            } else {
-              results.no_pgp.push(email);
-            }  
-          }
-        }
-        if(results.has_pgp.length > 0 && results.no_pgp.length + results.loading.length + results.unknown.length + results.wrong.length === 0) {
-          if(!standard_compose_window.find('.recipients_use_encryption').length) {
-            recipients.first().parents('form').first().prepend(this.factory.button_recipients_use_encryption(results.has_pgp.length, 'gmail')).find('a').click(this.injector.open_compose_window);
-          }
-        } else {
+    if(!this.currently_evaluating_standard_compose_box_recipients) {
+      this.currently_evaluating_standard_compose_box_recipients = true;
+      for(let standard_compose_window_element of $(this.selector.standard_compose_window).get()) {
+        let standard_compose_window = $(standard_compose_window_element);
+        let recipients = standard_compose_window.find('div.az9 span[email]').get().map(e => $(e).attr('email')!).filter(e => !!e);
+        if(!recipients.length) {
           standard_compose_window.find('.recipients_use_encryption').remove();
+        } else {
+          let everyone_uses_encryption = true;
+          for(let email of recipients) {
+            if(email) {
+              let cache = this.recipient_has_pgp_cache[email];
+              if(!tool.str.is_email_valid(email)) {
+                everyone_uses_encryption = false;
+                break;
+              } if(typeof cache === 'undefined') {
+                try {
+                  let {results: [result]} = await tool.api.attester.lookup_email([email]);
+                  this.recipient_has_pgp_cache[email] = Boolean(result.pubkey); // true or false
+                  if(!this.recipient_has_pgp_cache[email]) {
+                    everyone_uses_encryption = false;
+                    break;
+                  }
+                } catch(e) {
+                  // this is a low-importance request, so evaluate has_pgp as false on errors
+                  // this way faulty requests wouldn't unnecessarily repeat and overwhelm Attester
+                  this.recipient_has_pgp_cache[email] = false;
+                  everyone_uses_encryption = false;
+                  break;
+                }
+              } else if (cache === false) {
+                everyone_uses_encryption = false;
+                break;
+              }  
+            } else {
+              everyone_uses_encryption = false;
+              break;
+            }
+          }
+          if(everyone_uses_encryption) {
+            if(!standard_compose_window.find('.recipients_use_encryption').length) {
+              standard_compose_window.find('div.az9 span[email]').first().parents('form').first().prepend(this.factory.button_recipients_use_encryption('gmail')).find('a').click(this.injector.open_compose_window);
+            }
+          } else {
+            standard_compose_window.find('.recipients_use_encryption').remove();
+          }
         }
       }
+      this.currently_evaluating_standard_compose_box_recipients = false;
     }
   };
 

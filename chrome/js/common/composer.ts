@@ -473,7 +473,7 @@ class Composer {
       let contact = contacts[i];
       if (contact && contact.has_pgp && contact.pubkey) {
         armored_pubkeys.push(contact.pubkey);
-      } else if (contact && this.ks_lookups_by_email[contact.email] && this.ks_lookups_by_email[contact.email].has_pgp && this.ks_lookups_by_email[contact.email].pubkey) {
+      } else if (contact && this.ks_lookups_by_email[contact.email] && this.ks_lookups_by_email[contact.email].pubkey) {
         armored_pubkeys.push(this.ks_lookups_by_email[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
       } else {
         emails_without_pubkeys.push(recipients[i]);

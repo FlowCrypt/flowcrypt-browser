@@ -108,10 +108,9 @@ interface FromToHeaders {
 interface PubkeySearchResult {
     email: string,
     pubkey: string|null,
-    has_pgp: boolean|null,
-    client: string|null, // todo - really?
     attested: boolean|null,
     has_cryptup: boolean|null,
+    longid: string|null,
 }
 
 interface Challenge {
