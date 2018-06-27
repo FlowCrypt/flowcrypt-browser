@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.7.0 on June 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/231?closed=1" target="_blank">Change Gmail Password</a></b>
+
 <b>version 5.6.9 on June 23, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/230?closed=1" target="_blank">Refactoring</a></b>
 
 <b>version 5.6.8 on June 18, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/229?closed=1" target="_blank">Fix Opening Drafts</a></b>
