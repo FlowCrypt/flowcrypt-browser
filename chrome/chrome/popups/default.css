@@ -55,9 +55,10 @@ html, body {
   transition: .3s;
 }
 .profile-row {
-  position: relative;
-  height: 50px;
   cursor: pointer;
+  height: 50px;
+  position: relative;
+  right: 50px;
   transition: .5s;
   animation: fadeInUp .4s;
 }

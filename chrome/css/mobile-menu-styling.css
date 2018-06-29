@@ -1,0 +1,118 @@
+.profile-row {
+  position: relative;
+}
+
+
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+  }
+  .featherlight .featherlight-content {
+    width: 95%;
+    margin: 0 auto;
+  }
+
+  .profile-img {
+    top: -10px;
+    left: -5px;
+  }
+  #settings-row {
+    padding: 20px 0 30px;
+  }
+  #footer-row {
+    text-align: center;
+    margin: 0 auto;
+  }
+  .settings-icons-rows {
+    width: 60%;
+    margin: 0 auto;
+  }
+  .box + p {
+    padding-bottom: 15px;
+  }
+  .show_settings_page {
+    display: block;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .toggle-settings,
+  .advanced.toggle-settings {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+  }
+  #toggle-accounts-profile-img {
+    top: -5px;
+    left: 10px;
+  }
+  .profile-img {
+    margin-top: 0;
+  }
+  .subscription {
+    font-size: 13px;
+  }
+  a.gray_link {
+    line-height: 2.5;
+  }
+}
+
+@media (max-width: 450px) {
+  .logo-row {
+    margin-top: 0;
+  }
+  .settings-icons-rows {
+    width: 95%;
+    margin: 0 auto;
+  }
+  .subscription,
+  .cryptup-logo-row {
+    display: block;
+    margin: 0 auto;
+    position: relative;
+    text-align: center;
+  }
+  .subscription {
+    display: block;
+    margin: 0 auto;
+    font-size: 11px;
+  }
+  .cryptup-logo-row {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .profile-row {
+    text-align: center;
+    margin-top: -30px;
+  }
+  .add-account {
+    margin: 0 auto!important;
+    text-align: center!important;
+    display: block !important;
+    position: relative !important;
+    right: 0!important;
+    top: 0!important;
+    font-size: 14px !important;
+    transition: 0.25s;
+  }
+  .public-profile-container {
+    position: relative;
+  }
+  #alt-accounts.accounts-row {
+    left: 0 !important;
+    margin: 0 auto;
+    right: 0 !important;
+    width: 90%;
+  }
+  .advanced_link {
+    margin-bottom: 0;
+  }
+  .featherlight-inner {
+    width: 100%;
+  }
+  #compose {
+    width: 100%;
+  }
+  #content > .line {
+    width: 100%;
+  }
+}
