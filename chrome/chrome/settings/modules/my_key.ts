@@ -36,10 +36,6 @@ tool.catch.try(async () => {
     tool.file.save_to_downloads(file.name, file.type, file.content!, tool.env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
-  $('.action_view_pubkey').click(function () {
-    $('.key_dump').text(key.toPublic().armor());
-  });
-
   $('.action_show_other_type').click(function () {
     if($('.action_show_other_type').text().toLowerCase() === 'show private key') {
       $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
@@ -55,5 +51,9 @@ tool.catch.try(async () => {
       $('.show_when_showing_private').css('display', 'none');
     }
   });
+
+  let clipboard_options = {text: () => key.toPublic().armor()};
+  // @ts-ignore
+  new window.ClipboardJS('.action_copy_pubkey', clipboard_options);
 
 })();
