@@ -65,7 +65,9 @@ let tool = {
       };
       document.body.appendChild(e);
     }),
-    normalize_spaces: (str: string) =>  str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n'),
+    normalize_spaces: (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n'),
+    normalize_dashes: (str: string) => str.replace(/^—–|—–$/gm, '-----'),
+    normalize: (str: string) => tool.str.normalize_spaces(tool.str.normalize_dashes(str)),
     number_format: (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
       let nStr: string = number + '';
       let x = nStr.split('.');
@@ -208,14 +210,14 @@ let tool = {
     },
     strip_cryptup_reply_token: (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, ''),
     strip_public_keys: (decrypted_content: string, found_public_keys: string[]) => {
-      decrypted_content = tool.str.normalize_spaces(decrypted_content);
-      for(let block of tool.crypto.armor.detect_blocks(decrypted_content)) {
+      let {blocks, normalized} = tool.crypto.armor.detect_blocks(decrypted_content);
+      for(let block of blocks) {
         if(block.type === 'public_key') {
           found_public_keys.push(block.content);
-          decrypted_content = decrypted_content.replace(block.content, '');
+          normalized = normalized.replace(block.content, '');
         }
       }
-      return decrypted_content;
+      return normalized;
     },
     int_to_hex: (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
       let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
@@ -483,7 +485,7 @@ let tool = {
       }
       let blocks: MessageBlock[] = [];
       if(decoded.text) {  // may be undefined or empty
-        blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text));
+        blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text).blocks);
       }
       for(let file of decoded.attachments) {
         let treat_as = tool.file.treat_as(file);
@@ -495,7 +497,7 @@ let tool = {
         } else if(treat_as === 'signature') {
           decoded.signature = decoded.signature || file.content as string; // todo - what if file.content is uint8?
         } else if(treat_as === 'public_key') {
-          blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.content as string)); // todo - what if file.content is uint8?
+          blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.content as string).blocks); // todo - what if file.content is uint8?
         }
       }
       if(decoded.signature) {
@@ -806,26 +808,26 @@ let tool = {
       },
       detect_blocks: (original_text: string) => {
         let blocks: MessageBlock[] = [];
-        original_text = tool.str.normalize_spaces(original_text);
+        let normalized = tool.str.normalize(original_text);
         let start_at = 0;
         while(true) {
-          let r = tool._.crypto_armor_detect_block_next(original_text, start_at);
+          let r = tool._.crypto_armor_detect_block_next(normalized, start_at);
           if(r.found) {
             blocks = blocks.concat(r.found);
           }
           if(r.continue_at === null) {
-            return blocks;
+            return {blocks, normalized};
           } else {
             if(r.continue_at <= start_at) {
               tool.catch.report(`tool.crypto.armor.detect_blocks likely infinite loop: r.continue_at(${r.continue_at}) <= start_at(${start_at})`);
-              return blocks; // prevent infinite loop
+              return {blocks, normalized}; // prevent infinite loop
             }
             start_at = r.continue_at;
           }
         }
       },
       replace_blocks: (factory: Factory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
-        let blocks = tool.crypto.armor.detect_blocks(original_text);
+        let blocks = tool.crypto.armor.detect_blocks(original_text).blocks;
         if(blocks.length === 1 && blocks[0].type === 'text') {
           return;
         }
@@ -838,13 +840,10 @@ let tool = {
           } else if (blocks[i].type === 'signed_message') {
             r += factory.embedded_message(blocks[i].content, message_id, is_outgoing, sender_email, false);
           } else if (blocks[i].type === 'public_key') {
-            // noinspection TypeScriptValidateJSTypes
             r += factory.embedded_pubkey(tool.crypto.armor.normalize(blocks[i].content, 'public_key'), is_outgoing);
           } else if (blocks[i].type === 'password_message') {
             r += factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, blocks[i].content); // here blocks[i].content is message short id
           } else if (blocks[i].type === 'attest_packet') {
-            // todo - find out why
-            // noinspection TypeScriptValidateJSTypes
             r += factory.embedded_attest(blocks[i].content);
           } else if (blocks[i].type === 'cryptup_verification') {
             r += factory.embedded_verification(blocks[i].content);
@@ -855,6 +854,7 @@ let tool = {
         return r;
       },
       normalize: (armored: string, type:string) => {
+        armored = tool.str.normalize(armored);
         if(tool.value(type).in(['message', 'public_key', 'private_key', 'key'])) {
           armored = armored.replace(/\r?\n/g, '\n').trim();
           let nl_2 = armored.match(/\n\n/g);
@@ -1025,7 +1025,7 @@ let tool = {
             return {armored: false, type: tool.value(tag_number).in(m_types) ? 'message' : 'public_key'};
           }
         }
-        let blocks = tool.crypto.armor.detect_blocks(d.trim());
+        let {blocks} = tool.crypto.armor.detect_blocks(d.trim());
         if(blocks.length === 1 && blocks[0].complete === false && tool.value(blocks[0].type).in(['message', 'private_key', 'public_key', 'signed_message'])) {
           return {armored: true, type: blocks[0].type};
         }

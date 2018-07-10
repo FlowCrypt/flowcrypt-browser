@@ -194,7 +194,7 @@ function initialize_private_key_import_ui() {
     let content = tool.str.from_uint8(file.content as Uint8Array);
     let k;
     if(tool.value(tool.crypto.armor.headers('private_key').begin).in(content)) {
-      let first_prv = tool.crypto.armor.detect_blocks(content).filter(b => b.type === 'private_key')[0];
+      let first_prv = tool.crypto.armor.detect_blocks(content).blocks.filter(b => b.type === 'private_key')[0];
       if(first_prv) {
         k = openpgp.key.readArmored(first_prv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
       }
