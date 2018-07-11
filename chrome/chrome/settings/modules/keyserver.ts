@@ -18,8 +18,12 @@ tool.catch.try(async () => {
     $('.summary').html('');
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
   } catch(e) {
-    tool.catch.handle_exception(e);
-    $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
+    if(tool.api.error.is_network_error(e)) {
+      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
+    } else {
+      $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>');
+      tool.catch.handle_exception(e);
+    }
     $('a.reload').click(() =>  window.location.reload());
   }
 

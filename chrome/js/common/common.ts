@@ -1527,10 +1527,10 @@ let tool = {
       parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
     },
     error: {
+      new_network_error: (text?: string) => {
+        return {status: null, internal: 'network', message: text || 'No internet connection, please try again', stack: tool.catch.stack_trace()};
+      },
       is_network_error: (e: any) => {
-        if(e === 'API_ERROR_NETWORK' || e === 'network') { // todo - deprecate this
-          return true;
-        }
         if(typeof e === 'object') {
           if(e.internal === 'network') { // StandardError
             return true;
@@ -1573,7 +1573,6 @@ let tool = {
           throw e;
         }
       },
-      network: 'API_ERROR_NETWORK',
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
@@ -2209,7 +2208,7 @@ let tool = {
         if(response.approvals && response.approvals.length === attachments.length) {
           return response;
         }
-        throw {'code': null, 'internal': 'network', message: 'Could not verify that all files were uploaded properly, please try again.'}
+        throw tool.api.error.new_network_error('Could not verify that all files were uploaded properly, please try again.');
       },
       message_confirm_files: (identifiers: string[]): FcPromise<ApirFcMessageConfirmFiles> => {
         return tool._.api_cryptup_call('message/confirm_files', {
@@ -2710,7 +2709,7 @@ let tool = {
           error: function (XMLHttpRequest, status, error) {
             tool.catch.try(function () {
               if(XMLHttpRequest.status === 0) {
-                reject({code: null, message: 'Internet connection not available', internal: 'network'});
+                reject(tool.api.error.new_network_error());
               } else {
                 reject({code: XMLHttpRequest.status, message: String(error)});
               }
@@ -3088,7 +3087,10 @@ let tool = {
     try: (code: Function) => {
       return function () {
         try {
-          return code();
+          let r = code();
+          if(r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
+            r.catch(tool.catch.handle_promise_error);
+          }
         } catch(code_err) {
           tool.catch.handle_exception(code_err);
         }
@@ -3150,7 +3152,13 @@ let tool = {
       if(e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         tool.catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if(!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
-        tool.catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+        if(typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
+          let stack = (e as StandardError).stack;
+          delete (e as StandardError).stack;
+          tool.catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
+        } else {
+          tool.catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+        }
       }
     },
     _: {

@@ -22,12 +22,12 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'close_page');
       } else {
         $(button).text(original_button_text);
-        alert('There was an error sending message. My direct email is human@flowcrypt.com');
+        alert('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch(e) {
       tool.catch.handle_exception(e);
       $(button).text(original_button_text);
-      alert('There was an error sending message. My direct email is human@flowcrypt.com');
+      alert('There was an error sending message. Our direct email is human@flowcrypt.com');
     }
   });
 

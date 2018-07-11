@@ -75,10 +75,12 @@ tool.catch.try(async () => {
       try {
         keys = await tool.api.gmail.fetch_key_backups(account_email);
       } catch(e) {
-        tool.catch.handle_exception(e);
-        $('.status_summary').text('Could not start searching for backups, possibly due to a network failure. Refresh to try again.');
-        $('#step_0_status .container').html('<div class="button long green action_refresh">REFRESH</div>');
-        $('.action_refresh').click(tool.ui.event.prevent(tool.ui.event.double(), show_status));
+        if(tool.api.error.is_network_error(e)) {
+          $('#content').html('Could not check for backups: no internet. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+        } else {
+          tool.catch.handle_exception(e);
+          $('#content').html('Could not check for backups: unknown error. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+        }
         return;
       }
       display_block('step_0_status');

@@ -290,6 +290,7 @@ interface StandardError {
     message: string,
     internal: string|null,
     data?: string,
+    stack?: string,
 }
 
 

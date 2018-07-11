@@ -12,9 +12,8 @@ tool.catch.try( async () => {
 
   let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki, false);
-  // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   if(!primary_ki) {
-    return;
+    return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }
 
   if(url_params.embedded) {
@@ -83,12 +82,13 @@ tool.catch.try( async () => {
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(on_default_expire_user_change);
     } catch(e) {
-      if(e.internal === 'auth' && !url_params.embedded) {
-        alert('Your account information is outdated. Please add this device to your account.');
-        Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error');
+      if(tool.api.error.is_auth_error(e)) {
+        $('.expiration_container').html('(unknown: <a href="#">verify your device</a>)').find('a').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+      } else if(tool.api.error.is_network_error(e)) {
+        $('.expiration_container').html('(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload());
       } else {
-        $('.select_loader_container').html('');
-        $('.default_message_expire').replaceWith('(unknown)');
+        tool.catch.handle_exception(e);
+        $('.expiration_container').html('(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload());
       }
     }
   } else {

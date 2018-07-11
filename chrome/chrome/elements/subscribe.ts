@@ -12,8 +12,21 @@ tool.catch.try(async () => {
   
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
-
-  await tool.api.cryptup.account_check_sync();
+  
+  try {
+    await tool.api.cryptup.account_check_sync();
+  } catch(e) {
+    if(tool.api.error.is_auth_error(e)) {
+      // todo - handle auth error - add device
+      $('#content').html('Failed to load - unknown device. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+    } else if(tool.api.error.is_network_error(e)) {
+      $('#content').html('Failed to load due to internet connection. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+    } else {
+      tool.catch.handle_exception(e);
+      $('#content').html('Unknown error happened when fetching account info. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+    }
+  }
+  
   let subscription = await Store.subscription();
   let {google_token_scopes} = await Store.get_account(account_email, ['google_token_scopes']);
   let can_read_email = tool.api.gmail.has_scope(google_token_scopes || [] , 'read');
