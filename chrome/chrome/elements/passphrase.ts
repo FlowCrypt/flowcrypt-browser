@@ -19,6 +19,7 @@ tool.catch.try(async () => {
     $('h1').text('Enter your pass phrase to confirm attestation');
   }
   tool.ui.passphrase_toggle(['passphrase']);
+  $('#passphrase').focus();
 
   let all_private_keys = await Store.keys_get(url_params.account_email as string);
   let selected_private_keys = all_private_keys;
