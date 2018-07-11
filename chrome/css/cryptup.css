@@ -7,9 +7,9 @@
   border: 1px solid transparent; color: #fff; border-radius: 2px; font-size: 14px; text-align: center; white-space: nowrap; min-height: 25px;
   min-width: 56px; line-height: 25px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 5px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
-.button:focus { 
-  border: rgba(0,0,0,0) solid 1px !important; 
-  outline: rgba(0,0,0,0) 0 !important; 
+.button:focus {
+  border: rgba(0,0,0,0) solid 1px !important;
+  outline: rgba(0,0,0,0) 0 !important;
   box-shadow: inset 0 0 0 1px #fff !important;
 }
 
@@ -454,5 +454,6 @@ div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 .featherlight.retry_prompt .featherlight-content { margin-bottom: 20%; -webkit-animation: fadeIn 0.5s ease;  animation: fadeIn 0.5s ease; }
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
+.mt-40 { margin-top: 40px; }
 
 .display_none { display: none; }
