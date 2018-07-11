@@ -236,10 +236,12 @@ class Composer {
       // because they might not have a pubkey for the alternative address, and might get confused
     });
     S.cached('input_text').get(0).onpaste = async e => {
-      if(e.clipboardData.getData('text/html')) {
-        let text = await tool.str.html_as_text(e.clipboardData.getData('text/html'));
+      let clipboard_html_data = e.clipboardData.getData('text/html');
+      if(clipboard_html_data) {
+        e.preventDefault();
+        e.stopPropagation();
+        let text = await tool.str.html_as_text(clipboard_html_data);
         that.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
-        return false;
       }
     };
     S.cached('icon_pubkey').click(function () {
