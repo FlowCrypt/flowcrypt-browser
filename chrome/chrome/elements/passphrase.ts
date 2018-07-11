@@ -7,6 +7,8 @@ tool.catch.try(async () => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   if(url_params.type === 'embedded') {
     $('h1').parent().css('display', 'none');
@@ -21,7 +23,7 @@ tool.catch.try(async () => {
   tool.ui.passphrase_toggle(['passphrase']);
   $('#passphrase').focus();
 
-  let all_private_keys = await Store.keys_get(url_params.account_email as string);
+  let all_private_keys = await Store.keys_get(account_email);
   let selected_private_keys = all_private_keys;
   if(url_params.longids) {
     let longids = (url_params.longids as string).split(',');
@@ -56,7 +58,7 @@ tool.catch.try(async () => {
 
   $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
     tool.browser.message.send('broadcast', 'passphrase_entry', {entered: false});
-    tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
+    tool.browser.message.send(parent_tab_id, 'close_dialog');
   }));
 
   $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
@@ -67,9 +69,9 @@ tool.catch.try(async () => {
       if(tool.crypto.key.decrypt(prv, pass).success) {
         is_correct = true;
         let storage: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
-        await Store.passphrase_save(storage, url_params.account_email as string, keyinfo.longid, pass);
+        await Store.passphrase_save(storage, account_email, keyinfo.longid, pass);
         tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
-        tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
+        tool.browser.message.send(parent_tab_id, 'close_dialog');
         break;
       }
     }

@@ -5,16 +5,18 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'placement']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   let hash = tool.crypto.hash.sha1;
   let container = $('.emails');
   
-  let storage = await Store.get_account(url_params.account_email as string, ['addresses']);
+  let storage = await Store.get_account(account_email, ['addresses']);
   let addresses = storage.addresses || [url_params.account_email];
   container.html(addresses.map(address_to_html_radio).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(function() {
     if($(this).val() !== addresses[0]) {
-      Store.set(url_params.account_email as string, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}).then(() => window.location.reload());
+      Store.set(account_email, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}).then(() => window.location.reload());
     }
   });
   
@@ -24,13 +26,13 @@ tool.catch.try(async () => {
 
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), function(self, id) {
     $(self).html(tool.ui.spinner('green'));
-    Settings.fetch_account_aliases_from_gmail(url_params.account_email as string).then(function(addresses) {
-      Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email as string)) }).then(() => window.location.reload());
+    Settings.fetch_account_aliases_from_gmail(account_email).then(function(addresses) {
+      Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) }).then(() => window.location.reload());
     });
   }));
   
   $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
+    tool.browser.message.send(parent_tab_id, 'close_dialog');
   }));
 
 })();

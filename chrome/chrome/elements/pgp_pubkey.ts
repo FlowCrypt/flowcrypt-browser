@@ -7,6 +7,8 @@ tool.catch.try(async () => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   // minimized means I have to click to see details. Compact means the details take up very little space.
   
   let pubkeys: OpenpgpKey[] = openpgp.key.readArmored(url_params.armored_pubkey).keys;
@@ -14,7 +16,7 @@ tool.catch.try(async () => {
   render();
   
   function send_resize_message() {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'set_css', {
+    tool.browser.message.send(parent_tab_id, 'set_css', {
       selector: 'iframe#' + url_params.frame_id,
       css: { height: $('#pgp_block').height()! + (url_params.compact ? 10 : 30) }, // #pgp_block is defined in template
     });

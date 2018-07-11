@@ -5,20 +5,22 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   tool.ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
-  let private_keys = await Store.keys_get(url_params.account_email as string);
+  let private_keys = await Store.keys_get(account_email);
   if(private_keys.length > 1) {
     $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
     $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');
     $('#step_1_password #password').attr('placeholder', 'Enter a new primary key pass phrase');
   }
 
-  let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+  let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
-  let original_passphrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid);
+  let original_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
 
   if(original_passphrase === null) {
     display_block('step_0_enter');
@@ -80,16 +82,16 @@ tool.catch.try(async () => {
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
       tool.crypto.key.decrypt(prv, original_passphrase!); // !null because we checked for this above, and user entry cannot be null
       Settings.openpgp_key_encrypt(prv, new_passphrase);
-      let stored_passphrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true);
-      await Store.keys_add(url_params.account_email as string, prv.armor());
-      await Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined);
-      await Store.passphrase_save('session', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase);
-      let {setup_simple} = await Store.get_account(url_params.account_email as string, ['setup_simple']);
+      let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);
+      await Store.keys_add(account_email, prv.armor());
+      await Store.passphrase_save('local', account_email, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined);
+      await Store.passphrase_save('session', account_email, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase);
+      let {setup_simple} = await Store.get_account(account_email, ['setup_simple']);
       if(setup_simple) {
-        Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
+        Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
       } else {
         alert('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
-        Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/backup.htm', '&action=options');
+        Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/backup.htm', '&action=options');
       }
     }
   }));

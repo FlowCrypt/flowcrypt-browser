@@ -5,6 +5,9 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  
   let attach_js = new Attach(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let new_photo_file: Attachment;
   
@@ -33,7 +36,7 @@ tool.catch.try(async () => {
     if(e.internal === 'auth') {
       S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(function () {
-        Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm', '&source=auth_error');
+        Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error');
       });
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
@@ -102,7 +105,7 @@ tool.catch.try(async () => {
   }));
   
   S.cached('action_close').click(function () {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'close_page');
+    tool.browser.message.send(parent_tab_id, 'close_page');
   });
   
   async function find_available_alias(email: string): Promise<string> {

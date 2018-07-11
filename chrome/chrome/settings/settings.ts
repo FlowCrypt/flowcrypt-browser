@@ -10,7 +10,7 @@ declare let zxcvbn: Function;
 
 class Settings {
   
-  private static is_embedded = Boolean(tool.env.url_params(['account_email', 'parent_tab_id', 'embedded']).embedded);
+  private static is_embedded = Boolean(tool.env.url_params(['embedded']).embedded);
   private static ignore_email_aliases = ['nobody@google.com'];
   
   static fetch_account_aliases_from_gmail = async (account_email: string) => {
@@ -108,8 +108,11 @@ class Settings {
     }
   }
 
-  private static prepare_new_settings_location_url = (account_email: string, parent_tab_id: string, page: string, add_url_text_or_params: string|UrlParams|null=null): string => {
-    let page_params: UrlParams = {account_email, placement: 'settings', parent_tab_id};
+  private static prepare_new_settings_location_url = (account_email: string|null, parent_tab_id: string, page: string, add_url_text_or_params: string|UrlParams|null=null): string => {
+    let page_params: UrlParams = {placement: 'settings', parent_tab_id};
+    if(account_email) {
+      page_params['account_email'] = account_email;
+    }
     if(typeof add_url_text_or_params === 'object' && add_url_text_or_params) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
       for(let k of Object.keys(add_url_text_or_params)) {
         page_params[k] = add_url_text_or_params[k];
@@ -119,7 +122,7 @@ class Settings {
     return tool.env.url_create(page, page_params) + (add_url_text_or_params || '');
   }
 
-  static render_sub_page = (account_email: string, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
+  static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, tab_id, page, add_url_text_or_params);
     let width, height, variant, close_on_click;
     if(page !== '/chrome/elements/compose.htm') {

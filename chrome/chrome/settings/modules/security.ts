@@ -5,10 +5,12 @@
 tool.catch.try( async () => {
 
   let url_params = tool.env.url_params(['account_email', 'embedded', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   tool.ui.passphrase_toggle(['passphrase_entry']);
 
-  let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+  let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki, false);
   // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   if(!primary_ki) {
@@ -27,7 +29,7 @@ tool.catch.try( async () => {
     window.location.reload();
   }
 
-  let stored_passphrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true);
+  let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);
   if(stored_passphrase === null) {
     $('#passphrase_to_open_email').prop('checked', true);
   }
@@ -36,16 +38,16 @@ tool.catch.try( async () => {
     $('.passphrase_entry_container').css('display', 'block');
   });
 
-  $('.action_change_passphrase').click(() => Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/change_passphrase.htm'));
+  $('.action_change_passphrase').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/change_passphrase.htm'));
 
-  $('.action_test_passphrase').click(() => Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/test_passphrase.htm'));
+  $('.action_test_passphrase').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/test_passphrase.htm'));
 
   $('.confirm_passphrase_requirement_change').click(async () => {
     if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
-      let stored_passphrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid);
+      let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if($('input#passphrase_entry').val() === stored_passphrase) {
-        await Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, undefined);
-        await Store.passphrase_save('session', url_params.account_email as string, primary_ki.longid, undefined);
+        await Store.passphrase_save('local', account_email, primary_ki.longid, undefined);
+        await Store.passphrase_save('session', account_email, primary_ki.longid, undefined);
         window.location.reload();
       } else {
         alert('Pass phrase did not match, please try again.');
@@ -54,7 +56,7 @@ tool.catch.try( async () => {
     } else { // save pass phrase
       var key = openpgp.key.readArmored(primary_ki.private).keys[0];
       if(tool.crypto.key.decrypt(key, $('input#passphrase_entry').val() as string).success) { // text input
-        await Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, $('input#passphrase_entry').val() as string);
+        await Store.passphrase_save('local', account_email, primary_ki.longid, $('input#passphrase_entry').val() as string);
         window.location.reload();
       } else {
         alert('Pass phrase did not match, please try again.');
@@ -65,10 +67,10 @@ tool.catch.try( async () => {
 
   $('.cancel_passphrase_requirement_change').click(() =>  window.location.reload());
 
-  let storage = await Store.get_account(url_params.account_email as string, ['hide_message_password']);
+  let storage = await Store.get_account(account_email, ['hide_message_password']);
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
   $('#hide_message_password').change(async function () {
-    await Store.set(url_params.account_email as string, {hide_message_password: $(this).is(':checked')});
+    await Store.set(account_email, {hide_message_password: $(this).is(':checked')});
     window.location.reload();
   });
 
@@ -83,7 +85,7 @@ tool.catch.try( async () => {
     } catch(e) {
       if(e.internal === 'auth' && !url_params.embedded) {
         alert('Your account information is outdated. Please add this device to your account.');
-        Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm', '&source=auth_error');
+        Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error');
       } else {
         $('.select_loader_container').html('');
         $('.default_message_expire').replaceWith('(unknown)');
@@ -92,7 +94,7 @@ tool.catch.try( async () => {
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
     $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(function() {
-      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm');
+      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm');
     });
   }
 

@@ -5,6 +5,8 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local frame
 
@@ -13,12 +15,12 @@ tool.catch.try(async () => {
   let original_content: string;
   let missing_passprase_longids: string[] = [];
 
-  let factory = new Factory(url_params.account_email as string, tab_id);
+  let factory = new Factory(account_email, tab_id);
 
   tool.browser.message.listen({
     close_dialog: function () {
       $('.passphrase_dialog').html('');
-      Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(url_params.account_email as string, longid))).then(passphrases => {
+      Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid))).then(passphrases => {
         if(passphrases.filter(passphrase => passphrase !== null).length) {
           // todo - copy/pasted - unify
           // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
@@ -38,7 +40,7 @@ tool.catch.try(async () => {
     }
     original_content = $(self).html();
     $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
-    tool.crypto.message.decrypt(url_params.account_email as string, encrypted, null, function (result) {
+    tool.crypto.message.decrypt(account_email, encrypted, null, function (result) {
       if(result.success) {
         alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.data}`);
       } else if((result.missing_passphrases || []).length) {

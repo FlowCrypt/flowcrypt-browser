@@ -5,9 +5,9 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'use_account_email', 'parent_tab_id', 'email_provider']);
-  if(!url_params.use_account_email) {
-    url_params.account_email = undefined;
-  }
+  let account_email = url_params.account_email as string|undefined;
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  
   if(!url_params.email_provider) {
     url_params.email_provider = 'gmail';
   }
@@ -15,7 +15,7 @@ tool.catch.try(async () => {
   if(!url_params.account_email) {
     render_setup_done(false);
   } else {
-    let {setup_done} = await Store.get_account(url_params.account_email as string, ['setup_done']);
+    let {setup_done} = await Store.get_account(account_email!, ['setup_done']);
     render_setup_done(setup_done || false);
   }
 
@@ -30,15 +30,15 @@ tool.catch.try(async () => {
   }
 
   $('.action_auth_proceed').click(function () {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'open_google_auth_dialog', { account_email: url_params.account_email });
+    tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', { account_email: url_params.account_email });
   });
 
   $('.auth_action_limited').click(function () {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'open_google_auth_dialog', { omit_read_scope: true, account_email: url_params.account_email });
+    tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', { omit_read_scope: true, account_email: url_params.account_email });
   });
 
   $('.close_page').click(function () {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'close_page');
+    tool.browser.message.send(parent_tab_id, 'close_page');
   });
 
   function render_setup_done(setup_done: boolean) {

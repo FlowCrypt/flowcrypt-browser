@@ -5,14 +5,16 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
-  $('.email-address').text(url_params.account_email as string);
+  $('.email-address').text(account_email);
 
   $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
-  let storage = await Store.get_account(url_params.account_email as string, ['attests_processed', 'attests_requested', 'addresses']);
+  let storage = await Store.get_account(account_email, ['attests_processed', 'attests_requested', 'addresses']);
   try {
-    let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(url_params.account_email as string);
+    let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(account_email);
     $('.summary').html('');
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
   } catch(e) {
@@ -84,13 +86,13 @@ tool.catch.try(async () => {
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      let {addresses} = await Store.get_account(url_params.account_email as string, ['addresses']);
-      await Store.set(url_params.account_email as string, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email'))});
+      let {addresses} = await Store.get_account(account_email, ['addresses']);
+      await Store.set(account_email, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email'))});
       window.location.reload();
     }));
     $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $(self).html(tool.ui.spinner('white'));
-      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/request_replacement.htm');
+      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
     $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $(self).html('Updating.. ' + tool.ui.spinner('white'));
@@ -99,14 +101,14 @@ tool.catch.try(async () => {
     let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
     $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('green'));
-      let addresses = await Settings.fetch_account_aliases_from_gmail(url_params.account_email as string);
-      await Store.set(url_params.account_email as string, { addresses: tool.arr.unique(addresses.concat(url_params.account_email as string)) });
+      let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
+      await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
       window.location.reload();
     }));
   }
 
   async function action_submit_or_request_attestation(email: string) {
-    let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     try {
       if(email === url_params.account_email) { // request attestation

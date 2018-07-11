@@ -269,6 +269,9 @@ let tool = {
     },
     is_background_script: () => Boolean(window.location && tool.value('_generated_background_page.html').in(window.location.href)),
     is_extension: () => tool.env.runtime_id() !== null,
+    url_param_require: {
+      string: (values: UrlParams, name: string): string => tool.ui.abort_and_render_error_on_url_param_mismatch(values, name, 'string') as string,
+    },
     url_params: (expected_keys: string[], string:string|null=null) => {
       let url = (string || window.location.search.replace('?', ''));
       let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
@@ -1209,6 +1212,15 @@ let tool = {
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
+    abort_and_render_error_on_url_param_mismatch: (values: UrlParams, name: string, expected_type: string): UrlParam => {
+      let actual_type = typeof values[name];
+      if(actual_type !== expected_type) {
+        let msg = `Cannot render page (expected ${name} to be of type ${expected_type} but got ${actual_type})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+        throw new UnreportableError(msg);
+      }
+      return values[name];
+    },
     passphrase_toggle: async (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
       let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
       let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
@@ -2066,7 +2078,7 @@ let tool = {
       },
     },
     cryptup: {
-      auth_error: {code: 401, message: 'Could not log in', internal: 'auth'},
+      auth_error: () => ({code: 401, message: 'Could not log in', internal: 'auth', stack: tool.catch.stack_trace()}),
       url: (type: string, variable='') => {
         return ({
           'api': 'https://flowcrypt.com/api/',
@@ -2145,7 +2157,7 @@ let tool = {
       account_update: async (update_values?: Dict<Serializable>): Promise<ApirFcAccountUpdate> => {
         let auth_info = await Store.auth_info();
         if(!auth_info.verified) {
-          throw tool.api.cryptup.auth_error;
+          throw tool.api.cryptup.auth_error();
         }
         let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
         if(update_values) {
@@ -2158,7 +2170,7 @@ let tool = {
       account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
         let auth_info = await Store.auth_info();
         if(!auth_info.verified) {
-          throw tool.api.cryptup.auth_error;
+          throw tool.api.cryptup.auth_error();
         }
         let response: ApirFcAccountSubscribe = await tool._.api_cryptup_call('account/subscribe', {
           account: auth_info.account_email,
@@ -2180,7 +2192,7 @@ let tool = {
         } else if(auth_method === 'uuid') {
           let auth_info = await Store.auth_info();
           if(!auth_info.verified) {
-            throw tool.api.cryptup.auth_error;
+            throw tool.api.cryptup.auth_error();
           }
           response = await tool._.api_cryptup_call('message/presign_files', {
             account: auth_info.account_email,
@@ -2214,7 +2226,7 @@ let tool = {
         } else {
           let auth_info = await Store.auth_info();
           if(!auth_info.verified) {
-            throw tool.api.cryptup.auth_error;
+            throw tool.api.cryptup.auth_error();
           }
           return await tool._.api_cryptup_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
         }
@@ -2222,14 +2234,14 @@ let tool = {
       message_token: async (): Promise<ApirFcMessageToken> => {
         let auth_info = await Store.auth_info();
         if(!auth_info.verified) {
-          throw tool.api.cryptup.auth_error;
+          throw tool.api.cryptup.auth_error();
         }
         return await tool._.api_cryptup_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
       },
       message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
         let auth_info = await Store.auth_info();
         if(!auth_info.verified) {
-          throw tool.api.cryptup.auth_error;
+          throw tool.api.cryptup.auth_error();
         }
         return await tool._.api_cryptup_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
       },

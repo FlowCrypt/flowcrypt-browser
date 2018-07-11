@@ -5,6 +5,8 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   
   if(url_params.account_email) {
     tool.browser.message.send(null, 'update_uninstall_url');
@@ -14,12 +16,12 @@ tool.catch.try(async () => {
   }
 
   $('h1').text('Set Up FlowCrypt');
-  $('.email-address').text(url_params.account_email as string);
+  $('.email-address').text(account_email);
   $('.back').css('visibility', 'hidden');
   tool.ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
   tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
   
-  let storage = await Store.get_account(url_params.account_email as string, [
+  let storage = await Store.get_account(account_email, [
     'setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
   ]);
 
@@ -29,9 +31,9 @@ tool.catch.try(async () => {
   let recovered_key_matching_passphrases: string[] = [];
   let recovered_keys_longid_count = 0;
   let recovered_keys_successful_longids: string[] = [];
-  let all_addresses: string[] = [url_params.account_email as string];
+  let all_addresses: string[] = [account_email];
 
-  let rules = new Rules(url_params.account_email as string);
+  let rules = new Rules(account_email);
   if(!rules.can_create_keys()) {
     let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${window.location.href}">Back</a>`;
     $('#step_2a_manual_create, #step_2_easy_generating').html(`<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
@@ -55,10 +57,10 @@ tool.catch.try(async () => {
     }
     if(typeof storage.addresses === 'undefined') {
       if(tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-        Settings.fetch_account_aliases_from_gmail(url_params.account_email as string).then(save_and_fill_submit_option);
+        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option);
       } else { // cannot read emails, don't fetch alternative addresses
         // noinspection JSIgnoredPromiseFromCall - we do not care about the promise
-        save_and_fill_submit_option([url_params.account_email as string]);
+        save_and_fill_submit_option([account_email]);
       }
     } else {
       show_submit_all_addresses_option(storage.addresses as string[]);
@@ -73,8 +75,8 @@ tool.catch.try(async () => {
   }
   
   async function save_and_fill_submit_option(addresses: string[]) {
-    all_addresses = tool.arr.unique(addresses.concat(url_params.account_email as string));
-    await Store.set(url_params.account_email as string, { addresses: all_addresses });
+    all_addresses = tool.arr.unique(addresses.concat(account_email));
+    await Store.set(account_email, { addresses: all_addresses });
     show_submit_all_addresses_option(all_addresses);
   }
   
@@ -103,10 +105,10 @@ tool.catch.try(async () => {
 
   async function render_setup_dialog(): Promise<void> {
     let keyserver_result, fetched_keys;
-    Settings.initialize_private_key_import_ui(url_params.account_email as string, url_params.parent_tab_id as string); // for step_2b_manual_enter, if user chooses so
+    Settings.initialize_private_key_import_ui(account_email, parent_tab_id); // for step_2b_manual_enter, if user chooses so
     
     try {
-      let r = await tool.api.attester.lookup_email([url_params.account_email as string]);
+      let r = await tool.api.attester.lookup_email([account_email]);
       keyserver_result = r.results[0];
     } catch(e) {
       return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog())
@@ -121,7 +123,7 @@ tool.catch.try(async () => {
         display_block('step_2b_manual_enter');
       } else if(storage.email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         try {
-          fetched_keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string)
+          fetched_keys = await tool.api.gmail.fetch_key_backups(account_email)
         } catch(e) {
           return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => render_setup_dialog());
         }
@@ -160,7 +162,7 @@ tool.catch.try(async () => {
     $('h1').parent().html('<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      fetched_keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string);
+      fetched_keys = await tool.api.gmail.fetch_key_backups(account_email);
     } catch(e) {
       window.location.href = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
       return;
@@ -168,9 +170,9 @@ tool.catch.try(async () => {
     if(fetched_keys.length) {
       recovered_keys = fetched_keys;
       recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
-      let stored_keys = await Store.keys_get(url_params.account_email as string);
+      let stored_keys = await Store.keys_get(account_email);
       recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
-      await render_setup_done(url_params.account_email as string);
+      await render_setup_done(account_email);
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
       window.location.href = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
@@ -281,7 +283,7 @@ tool.catch.try(async () => {
   }
   
   $('.action_show_help').click(function () {
-    Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/help.htm');
+    Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/help.htm');
   });
   
   $('.action_simple_setup').click(async function () {
@@ -298,8 +300,8 @@ tool.catch.try(async () => {
     Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     display_block('step_2_easy_generating');
     $('h1').text('Please wait, setting up FlowCrypt');
-    let userinfo = await get_and_save_google_user_info(url_params.account_email as string);
-    await create_save_key_pair(url_params.account_email as string, {
+    let userinfo = await get_and_save_google_user_info(account_email);
+    await create_save_key_pair(account_email, {
       full_name: userinfo.full_name,
       passphrase: '',
       passphrase_save: true,
@@ -341,12 +343,12 @@ tool.catch.try(async () => {
           recovered: true,
         };
         recovered_key_matching_passphrases.push(passphrase);
-        await save_keys(url_params.account_email as string, matching_keys, options);
-        let storage = await Store.get_account(url_params.account_email as string, ['setup_done']);
+        await save_keys(account_email, matching_keys, options);
+        let storage = await Store.get_account(account_email, ['setup_done']);
         if(!storage.setup_done) { // normal situation
-          await finalize_setup(url_params.account_email as string, matching_keys[0].toPublic().armor(), options);
+          await finalize_setup(account_email, matching_keys[0].toPublic().armor(), options);
         } else { // setup was finished before, just added more keys now
-          await render_setup_done(url_params.account_email as string, options.key_backup_prompt);
+          await render_setup_done(account_email, options.key_backup_prompt);
         }
       } else {
         if(recovered_keys.length > 1) {
@@ -364,7 +366,7 @@ tool.catch.try(async () => {
   $('#step_4_more_to_recover .action_recover_remaining').click(async () => {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
-    let stored_keys = await Store.keys_get(url_params.account_email as string);
+    let stored_keys = await Store.keys_get(account_email);
     let got = stored_keys.length;
     let bups = recovered_keys.length;
     let left = (bups - got > 1) ? 'are ' + (bups - got) + ' backups' : 'is one backup';
@@ -447,8 +449,8 @@ tool.catch.try(async () => {
         };
         if(prv.getEncryptionKeyPacket() !== null) {
           $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
-          await save_keys(url_params.account_email as string, [prv], options);
-          await finalize_setup(url_params.account_email as string, prv.toPublic().armor(), options);
+          await save_keys(account_email, [prv], options);
+          await finalize_setup(account_email, prv.toPublic().armor(), options);
         } else { // cannot get a valid encryption key packet
           if(prv.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || tool.crypto.key.expired_for_encryption(prv)) { // known issues - key can be fixed
             await render_compatibility_fix_block_and_finalize_setup(prv, options);
@@ -468,14 +470,14 @@ tool.catch.try(async () => {
     display_block('step_3_compatibility_fix');
     let updated_prv;
     try {
-      updated_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(url_params.account_email as string, '#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
+      updated_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(account_email, '#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch(e) {
       tool.catch.handle_exception(e);
       alert(`Failed to fix key: ${String(e)}`);
       return;
     }
-    await save_keys(url_params.account_email as string, [updated_prv], options);
-    await finalize_setup(url_params.account_email as string, updated_prv.toPublic().armor(), options);
+    await save_keys(account_email, [updated_prv], options);
+    await finalize_setup(account_email, updated_prv.toPublic().armor(), options);
   }
 
   $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => {
@@ -498,8 +500,8 @@ tool.catch.try(async () => {
       $('h1').text('Please wait, setting up FlowCrypt');
       $('#step_2a_manual_create input').prop('disabled', true);
       $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner('white') + 'just a minute');
-      let userinfo = await get_and_save_google_user_info(url_params.account_email as string);
-      await create_save_key_pair(url_params.account_email as string, {
+      let userinfo = await get_and_save_google_user_info(account_email);
+      await create_save_key_pair(account_email, {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val() as string,
         passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
@@ -513,12 +515,12 @@ tool.catch.try(async () => {
   }));
   
   $('#step_4_close .action_close').click(() => {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});
+    tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});
   });
   
   if(storage.setup_done) {
     if(url_params.action !== 'add_key') {
-      await render_setup_done(url_params.account_email as string);
+      await render_setup_done(account_email);
     } else {
       await render_add_key_from_backup();
     }

@@ -5,6 +5,8 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+
   let message_headers = ['message', 'signed_message', 'public_key'].map(t => tool.crypto.armor.headers(t as ReplaceableMessageBlockType).begin);
   let q_encrypted_messages = 'is:inbox (' + tool.api.gmail.query.or(message_headers, true) + ')';
   let email_provider;
@@ -20,7 +22,7 @@ tool.catch.try(async () => {
   
   let tab_id = await tool.browser.message.required_tab_id();
   notifications = new Notifications(tab_id);
-  factory = new Factory(url_params.account_email as string, tab_id);
+  factory = new Factory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
   tool.browser.message.listen({
     open_new_message: function (data) {
@@ -59,18 +61,18 @@ tool.catch.try(async () => {
     },
   }, tab_id);
 
-  Store.get_account(url_params.account_email as string, ['email_provider']).then(storage => {
+  Store.get_account(account_email, ['email_provider']).then(storage => {
     email_provider = storage.email_provider || 'gmail';
     S.cached('body').prepend(factory.meta_notification_container());
     if(email_provider !== 'gmail') {
       $('body').text('Not supported for ' + email_provider);
     } else {
       display_block('inbox', 'FlowCrypt Email Inbox');
-      tool.api.gmail.message_list(url_params.account_email as string, q_encrypted_messages, false).then(list_result => {
+      tool.api.gmail.message_list(account_email, q_encrypted_messages, false).then(list_result => {
         let thread_ids = tool.arr.unique((list_result.messages || []).map((m: any) => m.threadId));
         for(let thread_id of thread_ids) {
           thread_element_add(thread_id);
-          tool.api.gmail.message_get(url_params.account_email as string, thread_id, 'metadata').then(item_result => {
+          tool.api.gmail.message_get(account_email, thread_id, 'metadata').then(item_result => {
             let thread_item = $('.threads #' + thread_list_item_id(thread_id));
             thread_item.find('.subject').text(tool.api.gmail.find_header(item_result, 'subject') || '(no subject)');
             let from_header_value = tool.api.gmail.find_header(item_result, 'from');
@@ -108,7 +110,7 @@ tool.catch.try(async () => {
   async function render_thread(thread_id: string) {
     display_block('thread', 'Loading..');
     try {
-      let thread = await tool.api.gmail.thread_get(url_params.account_email as string, thread_id, 'full')
+      let thread = await tool.api.gmail.thread_get(account_email, thread_id, 'full')
       display_block('thread', tool.api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)');
       thread.messages.map(render_message);
       render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id);

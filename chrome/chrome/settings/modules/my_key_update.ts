@@ -5,17 +5,19 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'longid']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   let url_my_key_page = tool.env.url_create('my_key.htm', url_params);
   $('.action_show_public_key').attr('href', url_my_key_page);
   let input_private_key = $('.input_private_key');
   let prv_headers = tool.crypto.armor.headers('private_key');
   
-  let [primary_ki] = await Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']);
+  let [primary_ki] = await Store.keys_get(account_email, [url_params.longid as string || 'primary']);
 
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
-  $('.email').text(url_params.account_email as string);
+  $('.email').text(account_email);
   $('.key_words').text(primary_ki.keywords).attr('title', primary_ki.longid);
   input_private_key.attr('placeholder', input_private_key.attr('placeholder') + ' (' + primary_ki.longid + ')');
 
@@ -36,7 +38,7 @@ tool.catch.try(async () => {
         await store_updated_key_and_passphrase(updated_key_encrypted, updated_key_passphrase);
       } else { // cannot get a valid encryption key packet
         if((updated_key.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || tool.crypto.key.expired_for_encryption(updated_key)) { // known issues - key can be fixed
-          let fixed_encrypted_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(url_params.account_email as string, '.compatibility_fix_container', updated_key_encrypted, updated_key_passphrase, url_my_key_page);
+          let fixed_encrypted_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(account_email, '.compatibility_fix_container', updated_key_encrypted, updated_key_passphrase, url_my_key_page);
           await store_updated_key_and_passphrase(fixed_encrypted_prv, updated_key_passphrase);
         } else {
           alert('Key update: This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
@@ -47,10 +49,10 @@ tool.catch.try(async () => {
   }));
 
   async function store_updated_key_and_passphrase(updated_prv: OpenpgpKey, updated_prv_passphrase: string) {
-    let stored_passphrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid, true);
-    await Store.keys_add(url_params.account_email as string, updated_prv.armor());
-    await Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? updated_prv_passphrase : undefined);
-    await Store.passphrase_save('session', url_params.account_email as string, primary_ki.longid, stored_passphrase !== null ? undefined : updated_prv_passphrase);
+    let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);
+    await Store.keys_add(account_email, updated_prv.armor());
+    await Store.passphrase_save('local', account_email, primary_ki.longid, stored_passphrase !== null ? updated_prv_passphrase : undefined);
+    await Store.passphrase_save('session', account_email, primary_ki.longid, stored_passphrase !== null ? undefined : updated_prv_passphrase);
     alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
     window.location.href = url_my_key_page;
   }

@@ -7,7 +7,9 @@ tool.catch.try(async () => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
-  
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+
   for(let email of (url_params.emails as string).split(',')) {
     $('select.email').append('<option value="' + email + '">' + email + '</option>');
   }
@@ -51,7 +53,7 @@ tool.catch.try(async () => {
       tool.browser.message.send(null, 'settings', {
         path: 'index.htm',
         page: '/chrome/settings/modules/contacts.htm',
-        account_email: url_params.account_email,
+        account_email,
       });
     }));
   } else {
@@ -61,12 +63,7 @@ tool.catch.try(async () => {
   $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), close_dialog));
   
   function close_dialog() {
-    if(url_params.parent_tab_id) {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
-    } else {
-      window.close();
-    }
-  
+    tool.browser.message.send(parent_tab_id, 'close_dialog');  
   }
 
 })();

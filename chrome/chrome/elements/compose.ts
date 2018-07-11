@@ -7,15 +7,18 @@ tool.catch.try(async() => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+
   let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-  let storage = await Store.get_account(url_params.account_email as string, storage_keys);
+  let storage = await Store.get_account(account_email, storage_keys);
   await recover_missing_url_params();
   
   let tab_id = await tool.browser.message.required_tab_id();
   
   const can_read_email = tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
-  const factory = new Factory(url_params.account_email as string, tab_id);
+  const factory = new Factory(account_email, tab_id);
   if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
     url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
   }
@@ -24,7 +27,7 @@ tool.catch.try(async() => {
     can_read_email: () => can_read_email,
     does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
       their_email = tool.str.parse_email(their_email).email;
-      Store.get_account(url_params.account_email as string, ['pubkey_sent_to']).then(storage => {
+      Store.get_account(account_email, ['pubkey_sent_to']).then(storage => {
         if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
           callback(true);
         } else if (!can_read_email) {
@@ -32,31 +35,31 @@ tool.catch.try(async() => {
         } else {
           const q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
           const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
-          tool.api.gmail.message_list(url_params.account_email as string, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true).then(response => {
+          tool.api.gmail.message_list(account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true).then(response => {
             if (response.messages) {
-              Store.set(url_params.account_email as string, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
+              Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
             } else {
               callback(false);
             }
           }, (e) => {
-            tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e, false);
+            tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
             callback(false);
           });  
         }
       });
     },
-    storage_get_addresses: () => storage.addresses || [url_params.account_email as string],
+    storage_get_addresses: () => storage.addresses || [account_email],
     storage_get_addresses_pks: () => storage.addresses_pks || [],
     storage_get_addresses_keyserver: () => storage.addresses_keyserver || [],
     storage_get_email_footer: () => storage.email_footer || null,
     storage_set_email_footer: async (footer: string|null) => {
       storage.email_footer = footer;
-      await Store.set(url_params.account_email as string, {email_footer: footer});
+      await Store.set(account_email, {email_footer: footer});
     },
     storage_get_hide_message_password: () => !!storage.hide_message_password,
     storage_get_subscription: () => Store.subscription(),
     storage_get_key: async (sender_email: string): Promise<KeyInfo> => {
-      let [primary_k] = await Store.keys_get(url_params.account_email as string, ['primary']);
+      let [primary_k] = await Store.keys_get(account_email, ['primary']);
       if(primary_k) {
         return primary_k;
       } else {
@@ -64,7 +67,7 @@ tool.catch.try(async() => {
       }
     },
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => tool.catch.Promise((resolve, reject) => {
-      Store.get_account(url_params.account_email as string, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
+      Store.get_account(account_email, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
         if (thread_id) { // it's a reply
           let drafts = draft_storage.drafts_reply || {};
           if (store_if_true) {
@@ -72,7 +75,7 @@ tool.catch.try(async() => {
           } else {
             delete drafts[thread_id];
           }
-          Store.set(url_params.account_email as string, {drafts_reply: drafts}).then(resolve);
+          Store.set(account_email, {drafts_reply: drafts}).then(resolve);
         } else { // it's a new message
           let drafts = draft_storage.drafts_compose || {};
           drafts = draft_storage.drafts_compose || {};
@@ -81,17 +84,17 @@ tool.catch.try(async() => {
           } else {
             delete drafts[draft_id];
           }
-          Store.set(url_params.account_email as string, {drafts_compose: drafts}).then(resolve);
+          Store.set(account_email, {drafts_compose: drafts}).then(resolve);
         }
       });
     }),
     storage_passphrase_get: () => {
       return tool.catch.Promise((resolve, reject) => {
-        Store.keys_get(url_params.account_email as string, ['primary']).then(([primary_ki]) => {
+        Store.keys_get(account_email, ['primary']).then(([primary_ki]) => {
           if(primary_ki === null) {
             resolve(null); // flowcrypt just uninstalled or reset?
           } else {
-            Store.passphrase_get(url_params.account_email as string, primary_ki.longid).then(resolve, reject);
+            Store.passphrase_get(account_email, primary_ki.longid).then(resolve, reject);
           }
         });
       });
@@ -110,16 +113,16 @@ tool.catch.try(async() => {
     storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
-    email_provider_draft_get: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_get(url_params.account_email as string, draft_id, 'raw')),
-    email_provider_draft_create: (mime_message: string) => catch_auth_error(tool.api.gmail.draft_create(url_params.account_email as string, mime_message, url_params.thread_id as string)),
-    email_provider_draft_update: (draft_id: string, mime_message: string) => catch_auth_error(tool.api.gmail.draft_update(url_params.account_email as string, draft_id, mime_message)),
-    email_provider_draft_delete: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_delete(url_params.account_email as string, draft_id)),
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => catch_auth_error(tool.api.gmail.message_send(url_params.account_email as string, message, render_upload_progress)),
+    email_provider_draft_get: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_get(account_email, draft_id, 'raw')),
+    email_provider_draft_create: (mime_message: string) => catch_auth_error(tool.api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string)),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => catch_auth_error(tool.api.gmail.draft_update(account_email, draft_id, mime_message)),
+    email_provider_draft_delete: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_delete(account_email, draft_id)),
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => catch_auth_error(tool.api.gmail.message_send(account_email, message, render_upload_progress)),
     // todo tool.api.gmail.search_contacts auth popup needed error should be handled
-    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => tool.api.gmail.search_contacts(url_params.account_email as string, query, known_contacts, multi_cb),
+    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => tool.api.gmail.search_contacts(account_email, query, known_contacts, multi_cb),
     email_provider_determine_reply_message_header_variables: async () => {
       try {
-        let thread = await tool.api.gmail.thread_get(url_params.account_email as string, url_params.thread_id as string, 'full');
+        let thread = await tool.api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
         if (thread.messages && thread.messages.length > 0) {
           let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
           let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
@@ -128,15 +131,15 @@ tool.catch.try(async() => {
           return;
         }  
       } catch(e) {
-        tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e);
+        tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e);
       }
     },
-    email_provider_extract_armored_block: (message_id: string) => catch_auth_error(tool.api.gmail.extract_armored_block(url_params.account_email as string, message_id, 'full')),
-    send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(url_params.parent_tab_id as string, channel, data),
+    email_provider_extract_armored_block: (message_id: string) => catch_auth_error(tool.api.gmail.extract_armored_block(account_email, message_id, 'full')),
+    send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(parent_tab_id, channel, data),
     send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'reinsert_reply_box', {
-        account_email: url_params.account_email as string,
+      tool.browser.message.send(parent_tab_id, 'reinsert_reply_box', {
+        account_email: account_email,
         my_email: url_params.from,
         subject: url_params.subject,
         their_email: recipients.join(','),
@@ -149,17 +152,17 @@ tool.catch.try(async() => {
     }}),
     render_add_pubkey_dialog: (emails: string[]) => {
       if (url_params.placement !== 'settings') {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'add_pubkey_dialog', {emails: emails});
+        tool.browser.message.send(parent_tab_id, 'add_pubkey_dialog', {emails: emails});
       } else {
         $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: composer.S.cached('body').height()! - 50}); // body element is present
       }
     },
-    render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: url_params.account_email as string, page: '/chrome/settings/modules/help.htm' }),
+    render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/help.htm' }),
     render_sending_address_dialog: () => $.featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
     close_message: close_message,
     factory_attachment: (attachment: Attachment) => factory.embedded_attachment(attachment),
   }, {
-    account_email: url_params.account_email as string,
+    account_email: account_email,
     draft_id: url_params.draft_id,
     thread_id: url_params.thread_id,
     subject: url_params.subject,
@@ -204,9 +207,9 @@ tool.catch.try(async() => {
         return;
       }
       $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
-      tool.api.gmail.message_get(url_params.account_email as string, url_params.thread_message_id as string, 'metadata').then(gmail_message_object => {
+      tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata').then(gmail_message_object => {
         url_params.thread_id = gmail_message_object.threadId;
-        let reply = tool.api.common.reply_correspondents(url_params.account_email as string, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+        let reply = tool.api.common.reply_correspondents(account_email, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
         if(!url_params.to) {
           url_params.to = reply.to.join(',');
         }
@@ -219,9 +222,9 @@ tool.catch.try(async() => {
         $('#loader').remove();
         resolve();
       }, (e) => {
-        tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e, false);
+        tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
         if(!url_params.from) {
-          url_params.from = url_params.account_email as string;
+          url_params.from = account_email;
         }
         if(!url_params.subject) {
           url_params.subject = '';
@@ -237,16 +240,16 @@ tool.catch.try(async() => {
   function close_message() {
     $('body').attr('data-test-state', 'closed');  // used by automated tests
     if(url_params.is_reply_box) {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
+      tool.browser.message.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
     } else if(url_params.placement === 'settings') {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'close_page');
+        tool.browser.message.send(parent_tab_id, 'close_page');
     } else {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'close_new_message');
+      tool.browser.message.send(parent_tab_id, 'close_new_message');
     }
   }
 
   function catch_auth_error <RETURM_TYPE_OF_F>(p: Promise<RETURM_TYPE_OF_F>): Promise<RETURM_TYPE_OF_F> {
-    p.catch(e => tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e));
+    p.catch(e => tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e));
     return p;
   }
 

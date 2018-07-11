@@ -4,19 +4,21 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'longid']);
+  let url_params = tool.env.url_params(['account_email', 'longid', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   $('.action_view_user_ids').attr('href', tool.env.url_create('my_key_user_ids.htm', url_params));
   $('.action_view_update').attr('href', tool.env.url_create('my_key_update.htm', url_params));
 
-  let [primary_ki] = await Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']);
+  let [primary_ki] = await Store.keys_get(account_email, [url_params.longid as string || 'primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 
   try {
-    let {results: [result]} = await tool.api.attester.lookup_email([url_params.account_email as string]);
-    let url = tool.api.cryptup.url('pubkey', url_params.account_email as string);
+    let {results: [result]} = await tool.api.attester.lookup_email([account_email]);
+    let url = tool.api.cryptup.url('pubkey', account_email);
     if(result.pubkey && tool.crypto.key.longid(result.pubkey) === primary_ki.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
@@ -25,7 +27,7 @@ tool.catch.try(async () => {
     $('.pubkey_link_container').remove();
   }
   
-  $('.email').text(url_params.account_email as string);
+  $('.email').text(account_email);
   $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced')!);
   $('.key_words').text(primary_ki.keywords);
   $('.show_when_showing_public').css('display', '');

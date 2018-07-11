@@ -7,12 +7,15 @@ tool.catch.try(async () => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
 
   await tool.api.cryptup.account_check_sync();
   let subscription = await Store.subscription();
-  let {google_token_scopes} = await Store.get_account(url_params.account_email as string, ['google_token_scopes']);
+  let {google_token_scopes} = await Store.get_account(account_email, ['google_token_scopes']);
   let can_read_email = tool.api.gmail.has_scope(google_token_scopes || [] , 'read');
   let flowcrypt_account = new FlowCryptAccount({render_status: render_status}, can_read_email);
 
@@ -44,7 +47,7 @@ tool.catch.try(async () => {
   $('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
     button_spin(self);
     flowcrypt_account.subscribe(
-      url_params.account_email as string,
+      account_email,
       flowcrypt_account.PRODUCTS.trial,
       null,
     ).then(handle_successful_upgrade, handle_error_response);
@@ -52,7 +55,7 @@ tool.catch.try(async () => {
   
   $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), function (self) {
     button_spin(self);
-    flowcrypt_account.register_new_device(url_params.account_email as string).then(close_dialog, handle_error_response);
+    flowcrypt_account.register_new_device(account_email).then(close_dialog, handle_error_response);
   }));
   
   if(!subscription.active) {
@@ -114,13 +117,13 @@ tool.catch.try(async () => {
   tool.browser.message.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
-  let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(url_params.account_email as string, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
+  let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(account_email, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
   $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
   
   function stripe_credit_card_entered_handler(data: {token: string}, sender: any, respond: Callback) {
     $('.stripe_checkout').html('').css('display', 'none');
     flowcrypt_account.subscribe(
-      url_params.account_email as string, flowcrypt_account.PRODUCTS.advanced_monthly, data.token,
+      account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token,
     ).then(handle_successful_upgrade, handle_error_response);
   }
   
@@ -139,7 +142,7 @@ tool.catch.try(async () => {
   }
   
   function handle_successful_upgrade() {
-    tool.browser.message.send(url_params.parent_tab_id as string, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
+    tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
     if(url_params.subscribe_result_tab_id) {
       tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
     }
@@ -150,9 +153,9 @@ tool.catch.try(async () => {
     if(url_params.placement === 'settings_compose') {
       window.close();
     } else if (url_params.placement === 'settings'){
-      tool.browser.message.send(url_params.parent_tab_id as string, 'reload');
+      tool.browser.message.send(parent_tab_id, 'reload');
     } else {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'close_dialog');
+      tool.browser.message.send(parent_tab_id, 'close_dialog');
     }
   }  
 

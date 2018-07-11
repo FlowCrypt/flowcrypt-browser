@@ -5,14 +5,17 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  
   let email_provider: EmailProvider;
   
   tool.ui.passphrase_toggle(['password', 'password2']);
   
-  let storage = await Store.get_account(url_params.account_email as string, ['setup_simple', 'email_provider']);
+  let storage = await Store.get_account(account_email, ['setup_simple', 'email_provider']);
   email_provider = storage.email_provider || 'gmail';
   
-  let rules = new Rules(url_params.account_email as string);
+  let rules = new Rules(account_email);
   if(!rules.can_backup_keys()) {
     $('body').html(`<div class="line" style="margin-top: 100px;">${Lang.setup.key_backups_not_allowed}</div>`);
     return;
@@ -30,10 +33,10 @@ tool.catch.try(async () => {
   } else if(url_params.action === 'passphrase_change_gmail_backup') {
     if(storage.setup_simple) {
       display_block('loading');
-      let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       try {
-        await do_backup_on_email_provider(url_params.account_email as string, primary_ki.private);
+        await do_backup_on_email_provider(account_email, primary_ki.private);
         $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
       } catch(e) {
         $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
@@ -66,11 +69,11 @@ tool.catch.try(async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     display_block('loading');
-    let storage = await Store.get_account(url_params.account_email as string, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
+    let storage = await Store.get_account(account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
     if(email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
-        keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string);
+        keys = await tool.api.gmail.fetch_key_backups(account_email);
       } catch(e) {
         tool.catch.handle_exception(e);
         $('.status_summary').text('Could not start searching for backups, possibly due to a network failure. Refresh to try again.');
@@ -140,7 +143,7 @@ tool.catch.try(async () => {
         $('h1').text('Back up your private key');
       });
       $('.action_go_auth_denied').click(function () {
-        tool.browser.message.send(null, 'settings', { account_email: url_params.account_email as string, page: '/chrome/settings/modules/auth_denied.htm' });
+        tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/auth_denied.htm' });
       });
     }
   }
@@ -170,14 +173,14 @@ tool.catch.try(async () => {
     } else {
       let btn_text = $(self).text();
       $(self).html(tool.ui.spinner('white'));
-      let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
       Settings.openpgp_key_encrypt(prv, new_passphrase);
-      await Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, new_passphrase);
-      await Store.keys_add(url_params.account_email as string, prv.armor());
+      await Store.passphrase_save('local', account_email, primary_ki.longid, new_passphrase);
+      await Store.keys_add(account_email, prv.armor());
       try {
-        await do_backup_on_email_provider(url_params.account_email as string, prv.armor());
+        await do_backup_on_email_provider(account_email, prv.armor());
       } catch(e) {
         $(self).text(btn_text);
         alert('Need internet connection to finish. Please click the button again to retry.');
@@ -204,7 +207,7 @@ tool.catch.try(async () => {
   }
 
   async function backup_on_email_provider_and_update_ui(primary_ki: KeyInfo) {
-    let pass_phrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid);
+    let pass_phrase = await Store.passphrase_get(account_email, primary_ki.longid);
     if(!pass_phrase || !is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
       return;
     }
@@ -212,7 +215,7 @@ tool.catch.try(async () => {
     let original_btn_text = btn.text();
     btn.html(tool.ui.spinner('white'));
     try {
-      await do_backup_on_email_provider(url_params.account_email as string, primary_ki.private);
+      await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
       return alert('Need internet connection to finish. Please click the button again to retry.');
     } finally {
@@ -224,10 +227,10 @@ tool.catch.try(async () => {
   async function backup_as_file(primary_ki: KeyInfo) { //todo - add a non-encrypted download option
     $(self).html(tool.ui.spinner('white'));
     if(tool.env.browser().name !== 'firefox') {
-      tool.file.save_to_downloads('cryptup-' + (url_params.account_email as string).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private);
+      tool.file.save_to_downloads('cryptup-' + (account_email).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private);
       await write_backup_done_and_render(false, 'file');
     } else {
-      tool.file.save_to_downloads('cryptup-' + (url_params.account_email as string).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private, $('.backup_action_buttons_container'));
+      tool.file.save_to_downloads('cryptup-' + (account_email).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private, $('.backup_action_buttons_container'));
     }
   }
   
@@ -240,7 +243,7 @@ tool.catch.try(async () => {
   }
   
   async function write_backup_done_and_render(prompt: number|false, method: KeyBackupMethod) {
-    await Store.set(url_params.account_email as string, { key_backup_prompt: prompt, key_backup_method: method });
+    await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
     if(url_params.action === 'setup') {
       window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
@@ -250,7 +253,7 @@ tool.catch.try(async () => {
   
   $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     if(!is_master_private_key_encrypted(primary_ki)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
@@ -289,10 +292,10 @@ tool.catch.try(async () => {
   
   $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if(url_params.action === 'setup') {
-      await Store.set(url_params.account_email as string, { key_backup_prompt: false });
+      await Store.set(account_email, { key_backup_prompt: false });
       window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'close_page');
+      tool.browser.message.send(parent_tab_id, 'close_page');
     }
   }));
   

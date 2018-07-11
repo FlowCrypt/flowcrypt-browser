@@ -5,17 +5,19 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   tool.ui.passphrase_toggle(['input_passphrase']);
   
   $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
   
-  let keyinfos = await Store.keys_get(url_params.account_email as string);
+  let keyinfos = await Store.keys_get(account_email);
   let private_keys_long_ids = keyinfos.map(ki => ki.longid);
   let key_backups;
 
   try {
-    key_backups = await tool.api.gmail.fetch_key_backups(url_params.account_email as string);
+    key_backups = await tool.api.gmail.fetch_key_backups(account_email);
     if(key_backups.length) {
       let not_imported_backup_longids: string[] = [];
       for(let longid of tool.arr.unique(key_backups.map(tool.crypto.key.longid))) {
@@ -61,9 +63,9 @@ tool.catch.try(async () => {
         if(decrypt_result.error) {
           alert('This key type may not be supported by FlowCrypt. Please write me at human@flowcrypt.com to let me know which software created this key, so that I can add support soon. (subkey decrypt error: ' + decrypt_result.error + ')');
         } else if(decrypt_result.success) {
-          await Store.keys_add(url_params.account_email as string, normalized_armored_key!); // resulting new_key checked above
-          await Store.passphrase_save($('.input_passphrase_save').prop('checked') ? 'local' : 'session', url_params.account_email as string, new_key_longid, passphrase);
-          tool.browser.message.send(url_params.parent_tab_id as string, 'reload', { advanced: true });
+          await Store.keys_add(account_email, normalized_armored_key!); // resulting new_key checked above
+          await Store.passphrase_save($('.input_passphrase_save').prop('checked') ? 'local' : 'session', account_email, new_key_longid, passphrase);
+          tool.browser.message.send(parent_tab_id, 'reload', { advanced: true });
         } else {
           alert('The pass phrase does not match. Please try a different pass phrase.');
         }
@@ -71,6 +73,6 @@ tool.catch.try(async () => {
     }
   }));
 
-  Settings.initialize_private_key_import_ui(url_params.account_email as string, url_params.parent_tab_id as string);
+  Settings.initialize_private_key_import_ui(account_email, parent_tab_id);
   
 })();

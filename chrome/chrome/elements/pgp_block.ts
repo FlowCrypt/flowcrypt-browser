@@ -9,6 +9,8 @@ tool.catch.try(async () => {
   tool.ui.event.protect();
 
   let url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   
   let included_attachments: Attachment[] = [];
   let height_history: number[] = [];
@@ -44,7 +46,7 @@ tool.catch.try(async () => {
     }
   
     if(!is_infinite_resize_loop()) {
-      tool.browser.message.send(url_params.parent_tab_id as string, 'set_css', {
+      tool.browser.message.send(parent_tab_id, 'set_css', {
         selector: 'iframe#' + url_params.frame_id,
         css: { height: new_height },
       });
@@ -53,7 +55,7 @@ tool.catch.try(async () => {
   
   async function render_content(content: string, is_error: boolean) {
     if(!is_error && !url_params.is_outgoing) { // successfully opened incoming message
-      await Store.set(url_params.account_email as string, { successfully_received_at_leat_one_message: true });
+      await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
     let safe_html = await tool.str.as_safe_html(content);
     render_html_dangerously(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
@@ -98,9 +100,9 @@ tool.catch.try(async () => {
   async function render_error(error_box_content: string, raw_message_substitute:string|null=null) {
     set_frame_color('red');
     await render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true);
-    $('.button.settings_keyserver').click(() => tool.browser.message.send(null, 'settings', {account_email: url_params.account_email as string, page: '/chrome/settings/modules/keyserver.htm'}));
-    $('.button.settings').click(() => tool.browser.message.send(null, 'settings', {account_email: url_params.account_email as string}));
-    $('.button.settings_add_key').click(() => tool.browser.message.send(null, 'settings', {account_email: url_params.account_email as string, page: '/chrome/settings/modules/add_key.htm'}));
+    $('.button.settings_keyserver').click(() => tool.browser.message.send(null, 'settings', {account_email: account_email, page: '/chrome/settings/modules/keyserver.htm'}));
+    $('.button.settings').click(() => tool.browser.message.send(null, 'settings', {account_email: account_email}));
+    $('.button.settings_add_key').click(() => tool.browser.message.send(null, 'settings', {account_email: account_email, page: '/chrome/settings/modules/add_key.htm'}));
     $('.button.reply_pubkey_mismatch').click(() => {
       alert('You should tell the sender to update their settings and send a new message.');
       tool.browser.message.send('broadcast', 'reply_pubkey_mismatch');
@@ -119,7 +121,7 @@ tool.catch.try(async () => {
   }
   
   async function decrypt_and_save_attachment_to_downloads(encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) {
-    let result = await tool.browser.message.bg.crypto_message_decrypt(url_params.account_email as string, encrypted_data, user_entered_message_password);
+    let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, encrypted_data, user_entered_message_password);
     if(result.success) {
       tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data, render_in);
       send_resize_message();
@@ -194,7 +196,7 @@ tool.catch.try(async () => {
     }
     $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + '. ' + btns}));
     $('.expire_settings').click(function() {
-      tool.browser.message.send(null, 'settings', {account_email: url_params.account_email as string, page: '/chrome/settings/modules/security.htm'});
+      tool.browser.message.send(null, 'settings', {account_email: account_email, page: '/chrome/settings/modules/security.htm'});
     });
     $('.extend_expiration').click(render_message_expiration_renew_options);
   }
@@ -219,7 +221,7 @@ tool.catch.try(async () => {
       } else {
         alert('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
       }
-      tool.browser.message.send(url_params.parent_tab_id as string, 'subscribe_dialog');
+      tool.browser.message.send(parent_tab_id, 'subscribe_dialog');
     }
   }
   
@@ -236,7 +238,7 @@ tool.catch.try(async () => {
     } catch(e) {
       if(tool.api.error.is_auth_error(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
-        tool.browser.message.send(url_params.parent_tab_id as string, 'subscribe_dialog', { source: 'auth_error' });
+        tool.browser.message.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       }
       tool.catch.report('error when extending message expiration', e);
       $(self).parent().html('Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
@@ -258,7 +260,7 @@ tool.catch.try(async () => {
       decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content);
       decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
       if(public_keys.length) {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys: public_keys});
+        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys: public_keys});
       }
       await render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message as string), false);
       if(cryptup_attachments.length) {
@@ -283,14 +285,14 @@ tool.catch.try(async () => {
         render_inner_attachments(decoded.attachments);
       }
       if(public_keys.length) {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys: public_keys});
+        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys: public_keys});
       }
     }
   }
   
   async function decrypt_and_render(optional_password:string|null=null) {
     if(typeof url_params.signature !== 'string') {
-      let result = await tool.browser.message.bg.crypto_message_decrypt(url_params.account_email as string, url_params.message as string|Uint8Array, optional_password);
+      let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, optional_password);
       if(typeof result === 'undefined') {
         await render_error(Lang.general.restart_browser_and_try_again);
       } else if(result.success) {
@@ -313,14 +315,14 @@ tool.catch.try(async () => {
       } else if(result.missing_passphrases && result.missing_passphrases.length) {
         await render_passphrase_prompt(result.missing_passphrases);
       } else {
-        let [primary_k] = await Store.keys_get(url_params.account_email as string, ['primary']);
+        let [primary_k] = await Store.keys_get(account_email, ['primary']);
         if(!result.counts.chosen_keys && !primary_k) {
           await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
         } else if(result.counts.chosen_keys === result.counts.attempts_done && result.counts.key_mismatch === result.counts.attempts_done) {
           if(url_params.has_password && !optional_password) {
             await render_password_prompt();
           } else {
-            await handle_private_key_mismatch(url_params.account_email as string, url_params.message as string);
+            await handle_private_key_mismatch(account_email, url_params.message as string);
           }
         } else if(result.counts.wrong_password) {
           alert('Incorrect answer, please try again');
@@ -333,21 +335,21 @@ tool.catch.try(async () => {
         }
       }
     } else {
-      let signature_result = await tool.browser.message.bg.crypto_message_verify_detached(url_params.account_email as string, url_params.message as string|Uint8Array, url_params.signature);
+      let signature_result = await tool.browser.message.bg.crypto_message_verify_detached(account_email, url_params.message as string|Uint8Array, url_params.signature);
       await decide_decrypted_content_formatting_and_render(url_params.message as string, false, signature_result);
     }
   }
   
   async function render_passphrase_prompt(missing_or_wrong_pp_k_longids: string[]) {
     missing_or_wrong_passprases = {};
-    let passphrases = await Promise.all(missing_or_wrong_pp_k_longids.map(longid => Store.passphrase_get(url_params.account_email as string, longid)));
+    let passphrases = await Promise.all(missing_or_wrong_pp_k_longids.map(longid => Store.passphrase_get(account_email, longid)));
     for(let i in missing_or_wrong_pp_k_longids) {
       missing_or_wrong_passprases[missing_or_wrong_pp_k_longids[i]] = passphrases[i];
       await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_message, undefined);
       clearInterval(passphrase_interval);
       passphrase_interval = window.setInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(tool.ui.event.prevent(tool.ui.event.double(), () => {
-        tool.browser.message.send(url_params.parent_tab_id as string, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_pp_k_longids });
+        tool.browser.message.send(parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_pp_k_longids });
         clearInterval(passphrase_interval);
         passphrase_interval = window.setInterval(check_passphrase_changed, 250);
       }));
@@ -367,7 +369,7 @@ tool.catch.try(async () => {
   
   async function check_passphrase_changed() {
     let longids = Object.keys(missing_or_wrong_passprases);
-    let updated_passphrases = await Promise.all(longids.map(longid => Store.passphrase_get(url_params.account_email as string, longid)));
+    let updated_passphrases = await Promise.all(longids.map(longid => Store.passphrase_get(account_email, longid)));
     for(let longid of longids) {
       if((missing_or_wrong_passprases[longid] || null) !== updated_passphrases[longids.indexOf(longid)]) {
         missing_or_wrong_passprases = {};
@@ -404,7 +406,7 @@ tool.catch.try(async () => {
     try {
       if(can_read_emails && url_params.message && url_params.signature === true) {
         render_text('Loading signature...');
-        let result = await tool.api.gmail.message_get(url_params.account_email as string, url_params.message_id as string, 'raw');
+        let result = await tool.api.gmail.message_get(account_email, url_params.message_id as string, 'raw');
         if(!result.raw) {
           await decrypt_and_render();
         } else {
@@ -443,32 +445,32 @@ tool.catch.try(async () => {
         if(can_read_emails) {
           render_text('Retrieving message...');
           let format: GmailApiResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
-          let message_raw = await tool.api.gmail.extract_armored_block(url_params.account_email as string, url_params.message_id as string, format);
+          let message_raw = await tool.api.gmail.extract_armored_block(account_email, url_params.message_id as string, format);
           url_params.message = message_raw;
           render_text('Decrypting...');
           message_fetched_from_api = format;
           await decrypt_and_render();
         } else { // gmail message read auth not allowed
           render_html_dangerously('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
-          $('.auth_settings').click(() => tool.browser.message.send(null, 'settings', { account_email: url_params.account_email as string, page: '/chrome/settings/modules/auth_denied.htm' }));
+          $('.auth_settings').click(() => tool.browser.message.send(null, 'settings', { account_email: account_email, page: '/chrome/settings/modules/auth_denied.htm' }));
         }
       }  
     } catch(e) {
       if(tool.api.error.is_network_error(e)) {
         await render_error(Lang.pgp_block.connection_error, e.data);
       } else if(tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
-        window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(url_params.is_outgoing), account_email: url_params.account_email as string, parent_tab_id: url_params.parent_tab_id as string, frame_id: url_params.frame_id });
+        window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(url_params.is_outgoing), account_email: account_email, parent_tab_id: parent_tab_id, frame_id: url_params.frame_id });
       } else if(typeof e === 'object' && e.internal === 'format') {
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open + '\n\n' + String(e), e.data);
       } else {
-        tool.api.error.notify_parent_if_auth_popup_needed(url_params.account_email as string, url_params.parent_tab_id as string, e, false);
+        tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
         tool.catch.handle_exception(e);
         await render_error(String(e));  
       }
     }
   }
   
-  let storage = await Store.get_account(url_params.account_email as string, ['setup_done', 'google_token_scopes']);
+  let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes']);
   can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
   if(storage.setup_done) {
     await initialize();

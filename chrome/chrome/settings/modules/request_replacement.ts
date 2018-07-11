@@ -5,10 +5,12 @@
 tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
-  let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
+  let [primary_ki] = await Store.keys_get(account_email, ['primary']);
 
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
@@ -19,7 +21,7 @@ tool.catch.try(async () => {
   let keyserver_result: PubkeySearchResult;
 
   try {
-    let r = await tool.api.attester.lookup_email([url_params.account_email as string]);
+    let r = await tool.api.attester.lookup_email([account_email]);
     keyserver_result = r.results[0];
   } catch (e) {
     $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>');
@@ -28,7 +30,7 @@ tool.catch.try(async () => {
   }
 
   if(!keyserver_result.pubkey || !keyserver_result.attested || tool.crypto.key.fingerprint(primary_pubkey_armored) === tool.crypto.key.fingerprint(keyserver_result.pubkey)) {
-    Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/keyserver.htm');
+    Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
     $('#status').html('Original key KeyWords:<br/><span class="good">' + (window as FcWindow).mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!) + '<br/>' + tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced') + '</span>'); // all pubkeys on keyserver should have computable longid
     $('#step_2b_manual_enter').css('display', 'block');
@@ -51,7 +53,7 @@ tool.catch.try(async () => {
       let request_replacement: Dict<string> = {
         'ATT': 'CRYPTUP', //todo - should be the original attester
         'ACT': 'REQUEST_REPLACEMENT',
-        'ADD': tool.crypto.hash.double_sha1_upper(url_params.account_email as string),
+        'ADD': tool.crypto.hash.double_sha1_upper(account_email),
         'OLD': tool.crypto.key.fingerprint(old_key) as string,
         'PUB': tool.crypto.key.fingerprint(primary_pubkey_armored) as string,
       };
@@ -63,13 +65,13 @@ tool.catch.try(async () => {
         return alert('Error signing request. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
       }      
       try { // todo - avoid "as string" below
-        await tool.api.attester.replace_request(url_params.account_email as string, signed_packet as string, primary_pubkey_armored);
+        await tool.api.attester.replace_request(account_email, signed_packet as string, primary_pubkey_armored);
       } catch(e) {
         return alert('Error requesting Re-Attestation. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
       }
-      await Settings.save_attest_request(url_params.account_email as string, 'CRYPTUP'); //todo - should be the original attester
+      await Settings.save_attest_request(account_email, 'CRYPTUP'); //todo - should be the original attester
       alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
-      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/keyserver.htm');
+      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/keyserver.htm');
     }
   }
 

@@ -4,11 +4,13 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email']);
+  let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   let tab_id = await tool.browser.message.required_tab_id();
 
-  let factory = new Factory(url_params.account_email as string, tab_id, undefined, undefined, {compact: true});
+  let factory = new Factory(account_email, tab_id, undefined, undefined, {compact: true});
 
   tool.browser.message.listen({}, tab_id); // set_css
 
