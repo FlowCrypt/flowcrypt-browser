@@ -13,7 +13,7 @@ tool.catch.try(async () => {
   
   let [primary_ki] = await Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']);
 
-  abort_and_render_error_if_keyinfo_empty(primary_ki);
+  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   $('.email').text(url_params.account_email as string);
   $('.key_words').text(primary_ki.keywords).attr('title', primary_ki.longid);
@@ -36,7 +36,7 @@ tool.catch.try(async () => {
         await store_updated_key_and_passphrase(updated_key_encrypted, updated_key_passphrase);
       } else { // cannot get a valid encryption key packet
         if((updated_key.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || tool.crypto.key.expired_for_encryption(updated_key)) { // known issues - key can be fixed
-          let fixed_encrypted_prv = await render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user('.compatibility_fix_container', updated_key_encrypted, updated_key_passphrase, url_my_key_page);
+          let fixed_encrypted_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(url_params.account_email as string, '.compatibility_fix_container', updated_key_encrypted, updated_key_passphrase, url_my_key_page);
           await store_updated_key_and_passphrase(fixed_encrypted_prv, updated_key_passphrase);
         } else {
           alert('Key update: This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');

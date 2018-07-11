@@ -55,7 +55,7 @@ tool.catch.try(async () => {
     }
     if(typeof storage.addresses === 'undefined') {
       if(tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-        fetch_account_aliases_from_gmail(url_params.account_email as string).then(save_and_fill_submit_option);
+        Settings.fetch_account_aliases_from_gmail(url_params.account_email as string).then(save_and_fill_submit_option);
       } else { // cannot read emails, don't fetch alternative addresses
         // noinspection JSIgnoredPromiseFromCall - we do not care about the promise
         save_and_fill_submit_option([url_params.account_email as string]);
@@ -103,13 +103,13 @@ tool.catch.try(async () => {
 
   async function render_setup_dialog(): Promise<void> {
     let keyserver_result, fetched_keys;
-    initialize_private_key_import_ui(); // for step_2b_manual_enter, if user chooses so
+    Settings.initialize_private_key_import_ui(url_params.account_email as string, url_params.parent_tab_id as string); // for step_2b_manual_enter, if user chooses so
     
     try {
       let r = await tool.api.attester.lookup_email([url_params.account_email as string]);
       keyserver_result = r.results[0];
     } catch(e) {
-      return await prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog())
+      return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog())
     }
 
     if(keyserver_result.pubkey) {
@@ -123,7 +123,7 @@ tool.catch.try(async () => {
         try {
           fetched_keys = await tool.api.gmail.fetch_key_backups(url_params.account_email as string)
         } catch(e) {
-          return await prompt_to_retry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => render_setup_dialog());
+          return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => render_setup_dialog());
         }
         if(fetched_keys.length) {
           recovered_keys = fetched_keys;
@@ -192,7 +192,7 @@ tool.catch.try(async () => {
     if(account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(armored_pubkey)) {
       return; // already submitted and ATTESTED another pubkey for this email
     }
-    await submit_pubkeys(addresses, armored_pubkey);
+    await Settings.submit_pubkeys(account_email, addresses, armored_pubkey);
   }
   
   async function render_setup_done(account_email: string, key_backup_prompt=false) {
@@ -219,7 +219,7 @@ tool.catch.try(async () => {
       await submit_public_key_if_needed(account_email, armored_pubkey, options);
     } catch(e) {
       if(typeof skip_error === undefined || String(e) !== skip_error) { // user has chosen to skip problematic step
-        return await prompt_to_retry('OPTIONAL', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', (se) => finalize_setup(account_email, armored_pubkey, options, se));
+        return await Settings.prompt_to_retry('OPTIONAL', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', (se) => finalize_setup(account_email, armored_pubkey, options, se));
       }
     }
     await Store.set(account_email, {
@@ -251,7 +251,7 @@ tool.catch.try(async () => {
   }
   
   async function create_save_key_pair(account_email: string, options: SetupOptions) {
-    forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
+    Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     try {
       let key = await tool.crypto.key.create([{ name: options.full_name, email: account_email }], 4096, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
@@ -281,7 +281,7 @@ tool.catch.try(async () => {
   }
   
   $('.action_show_help').click(function () {
-    show_settings_page('/chrome/settings/modules/help.htm');
+    Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/help.htm');
   });
   
   $('.action_simple_setup').click(async function () {
@@ -295,7 +295,7 @@ tool.catch.try(async () => {
         return;
       }
     }
-    forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
+    Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     display_block('step_2_easy_generating');
     $('h1').text('Please wait, setting up FlowCrypt');
     let userinfo = await get_and_save_google_user_info(url_params.account_email as string);
@@ -468,7 +468,7 @@ tool.catch.try(async () => {
     display_block('step_3_compatibility_fix');
     let updated_prv;
     try {
-      updated_prv = await render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user('#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
+      updated_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(url_params.account_email as string, '#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch(e) {
       tool.catch.handle_exception(e);
       alert(`Failed to fix key: ${String(e)}`);
@@ -479,11 +479,11 @@ tool.catch.try(async () => {
   }
 
   $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => {
-    render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
+    Settings.render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
   
   $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
-    forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
+    Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     if(!$('#step_2a_manual_create .input_password').val()) {
       alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       $('#step_2a_manual_create .input_password').focus();

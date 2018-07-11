@@ -31,7 +31,7 @@ tool.catch.try(async () => {
     if(storage.setup_simple) {
       display_block('loading');
       let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
-      abort_and_render_error_if_keyinfo_empty(primary_ki);
+      Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       try {
         await do_backup_on_email_provider(url_params.account_email as string, primary_ki.private);
         $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
@@ -59,7 +59,7 @@ tool.catch.try(async () => {
   }
   
   $('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), function () {
-    render_password_strength('#step_1_password', '#password', '.action_password');
+    Settings.render_password_strength('#step_1_password', '#password', '.action_password');
   }));
   
   async function show_status() {
@@ -157,7 +157,7 @@ tool.catch.try(async () => {
     $('#password').val('');
     $('#password2').val('');
     display_block('step_1_password');
-    render_password_strength('#step_1_password', '#password', '.action_password');
+    Settings.render_password_strength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   });
   
@@ -171,9 +171,9 @@ tool.catch.try(async () => {
       let btn_text = $(self).text();
       $(self).html(tool.ui.spinner('white'));
       let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
-      abort_and_render_error_if_keyinfo_empty(primary_ki);
+      Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
-      openpgp_key_encrypt(prv, new_passphrase);
+      Settings.openpgp_key_encrypt(prv, new_passphrase);
       await Store.passphrase_save('local', url_params.account_email as string, primary_ki.longid, new_passphrase);
       await Store.keys_add(url_params.account_email as string, prv.armor());
       try {
@@ -251,7 +251,7 @@ tool.catch.try(async () => {
   $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
-    abort_and_render_error_if_keyinfo_empty(primary_ki);
+    Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     if(!is_master_private_key_encrypted(primary_ki)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
@@ -280,7 +280,7 @@ tool.catch.try(async () => {
       }
       pass_phrase = pp;
     }
-    if(evaluate_password_strength(pass_phrase).pass === true) {
+    if(Settings.evaluate_password_strength(pass_phrase).pass === true) {
       return true;
     }
     alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');

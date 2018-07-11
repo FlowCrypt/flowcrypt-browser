@@ -9,7 +9,11 @@ tool.catch.try( async () => {
   tool.ui.passphrase_toggle(['passphrase_entry']);
 
   let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
-  abort_and_render_error_if_keyinfo_empty(primary_ki);
+  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki, false);
+  // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
+  if(!primary_ki) {
+    return;
+  }
 
   if(url_params.embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
@@ -32,9 +36,9 @@ tool.catch.try( async () => {
     $('.passphrase_entry_container').css('display', 'block');
   });
 
-  $('.action_change_passphrase').click(() => show_settings_page('/chrome/settings/modules/change_passphrase.htm'));
+  $('.action_change_passphrase').click(() => Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/change_passphrase.htm'));
 
-  $('.action_test_passphrase').click(() => show_settings_page('/chrome/settings/modules/test_passphrase.htm'));
+  $('.action_test_passphrase').click(() => Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/test_passphrase.htm'));
 
   $('.confirm_passphrase_requirement_change').click(async () => {
     if($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
@@ -79,7 +83,7 @@ tool.catch.try( async () => {
     } catch(e) {
       if(e.internal === 'auth' && !url_params.embedded) {
         alert('Your account information is outdated. Please add this device to your account.');
-        show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
+        Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm', '&source=auth_error');
       } else {
         $('.select_loader_container').html('');
         $('.default_message_expire').replaceWith('(unknown)');
@@ -88,7 +92,7 @@ tool.catch.try( async () => {
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
     $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(function() {
-      show_settings_page('/chrome/elements/subscribe.htm');
+      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm');
     });
   }
 

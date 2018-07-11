@@ -71,6 +71,6 @@ tool.catch.try(async () => {
     }
   }));
 
-  initialize_private_key_import_ui();
+  Settings.initialize_private_key_import_ui(url_params.account_email as string, url_params.parent_tab_id as string);
   
 })();

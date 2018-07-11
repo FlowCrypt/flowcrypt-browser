@@ -4,13 +4,13 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email']);
+  let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
 
   $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
   let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
 
-  abort_and_render_error_if_keyinfo_empty(primary_ki);
+  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let primary_pubkey_armored = primary_ki.public;
 
@@ -28,7 +28,7 @@ tool.catch.try(async () => {
   }
 
   if(!keyserver_result.pubkey || !keyserver_result.attested || tool.crypto.key.fingerprint(primary_pubkey_armored) === tool.crypto.key.fingerprint(keyserver_result.pubkey)) {
-    show_settings_page('/chrome/settings/modules/keyserver.htm');
+    Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
     $('#status').html('Original key KeyWords:<br/><span class="good">' + (window as FcWindow).mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!) + '<br/>' + tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced') + '</span>'); // all pubkeys on keyserver should have computable longid
     $('#step_2b_manual_enter').css('display', 'block');
@@ -67,9 +67,9 @@ tool.catch.try(async () => {
       } catch(e) {
         return alert('Error requesting Re-Attestation. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
       }
-      await save_attest_request(url_params.account_email as string, 'CRYPTUP'); //todo - should be the original attester
+      await Settings.save_attest_request(url_params.account_email as string, 'CRYPTUP'); //todo - should be the original attester
       alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
-      show_settings_page('/chrome/settings/modules/keyserver.htm');
+      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/keyserver.htm');
     }
   }
 

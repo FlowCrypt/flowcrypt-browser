@@ -25,11 +25,11 @@ tool.catch.try(async () => {
     });
   
     $('.action_open_decrypt').click(function () {
-      show_settings_page('/chrome/settings/modules/decrypt.htm');
+      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/decrypt.htm');
     });
 
     $('.action_open_decrypt_ignore_mdc').click(function () {
-      show_settings_page('/chrome/settings/modules/decrypt_ignore_mdc.htm');
+      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/settings/modules/decrypt_ignore_mdc.htm');
     });
   
     $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
@@ -38,7 +38,7 @@ tool.catch.try(async () => {
   
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('white'));
-      let addresses = await fetch_account_aliases_from_gmail(url_params.account_email as string);
+      let addresses = await Settings.fetch_account_aliases_from_gmail(url_params.account_email as string);
       let all = tool.arr.unique(addresses.concat(url_params.account_email as string));
       await Store.set(url_params.account_email as string, { addresses: all })
       alert('Updated to: ' + all.join(', '));
@@ -51,13 +51,13 @@ tool.catch.try(async () => {
       if(confirm('This will remove all your FlowCrypt settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collect_info_and_download_backup_file(url_params.account_email as string);
         if(confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-          reset_cryptup_account_storages(url_params.account_email as string, () => window.parent.location.reload());
+          Settings.reset_cryptup_account_storages(url_params.account_email as string, () => window.parent.location.reload());
         }
       }
     }));
   
     $('.action_attest_log').click(function () {
-      show_settings_page('/chrome/dev/storage.htm', tool.env.url_create('', {filter: url_params.account_email, keys: 'attest_log', title: 'Attest Log - ' + url_params.account_email}).replace('?', '&'));
+      Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: url_params.account_email, keys: 'attest_log', title: 'Attest Log - ' + url_params.account_email}).replace('?', '&'));
     });
   
     $('.action_email_client').click(function () {

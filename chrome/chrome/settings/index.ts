@@ -27,7 +27,7 @@ tool.catch.try(async () => {
 
   tool.browser.message.listen({
     open_page: function (data: {page: string, add_url_text: string}, sender, respond) {
-      show_settings_page(data.page, data.add_url_text);
+      Settings.render_sub_page(url_params.account_email as string, tab_id, data.page, data.add_url_text);
     },
     redirect: function (data: {location: string}) {
       window.location.href = data.location;
@@ -65,12 +65,12 @@ tool.catch.try(async () => {
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
   initialize().then(() => {
-    if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because show_settings_page needs tab_id_global for the page to work properly
+    if(url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because render_settings_sub_page needs tab_id_global for the page to work properly
       if(url_params.page === '/chrome/settings/modules/auth_denied.htm') {
-        show_settings_page(url_params.page, '&use_account_email=1');
+        Settings.render_sub_page(url_params.account_email as string, tab_id, url_params.page, '&use_account_email=1');
       } else {
-          // todo - investigate. JSON parse the params? why?
-        show_settings_page(url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
+        // todo - investigate. JSON parse the params? why?
+        Settings.render_sub_page(url_params.account_email as string, tab_id, url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
       }
     }
   });
@@ -145,7 +145,7 @@ tool.catch.try(async () => {
     await tool.api.cryptup.account_check_sync();
     let subscription = await Store.subscription();
     if(subscription.active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(() => show_settings_page('/chrome/settings/modules/account.htm')).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(() => Settings.render_sub_page(url_params.account_email as string, tab_id, '/chrome/settings/modules/account.htm')).css('cursor', 'pointer');
       if(subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -179,7 +179,7 @@ tool.catch.try(async () => {
     }
     $('.key_list').append(html);
     $('.action_show_key').click(function () {
-      show_settings_page($(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
+      Settings.render_sub_page(url_params.account_email as string, tab_id, $(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
     });
     $('.action_remove_key').click(function () {
       Promise.all([
@@ -203,7 +203,7 @@ tool.catch.try(async () => {
         window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
       }
     } else if(response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
-      show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
+      Settings.render_sub_page(url_params.account_email as string, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
     } else {
       tool.catch.log('failed to log into google', response);
       alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
@@ -214,7 +214,7 @@ tool.catch.try(async () => {
   // function new_microsoft_account_authentication_prompt(account_email) {
   //   let window_id = 'popup_' + tool.str.random(20);
   //   let close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function () {
-  //     show_settings_page('/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=outlook' : '');
+  //     render_settings_sub_page(url_params.account_email as string, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=outlook' : '');
   //   });
   //   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
   // }
@@ -228,11 +228,11 @@ tool.catch.try(async () => {
   });
   
   $('.show_settings_page').click(function () {
-    show_settings_page($(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
+    Settings.render_sub_page(url_params.account_email as string, tab_id, $(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
   });
   
   $('.action_go_auth_denied').click(function () {
-    show_settings_page('/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
+    Settings.render_sub_page(url_params.account_email as string, tab_id, '/chrome/settings/modules/auth_denied.htm', '&use_account_email=1');
   });
   
   $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), function () {

@@ -27,7 +27,7 @@ tool.catch.try(async () => {
     $('.expire_label').text('Until');
     $('.price').text('free');
     $('.method').html('trial <a href="#" class="action_go_subscription">upgrade</a>');
-    $('.action_go_subscription').click(() => show_settings_page('/chrome/elements/subscribe.htm', '&placement=settings'));
+    $('.action_go_subscription').click(() => Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm', '&placement=settings'));
   }
   if(subscription.method !== 'group') {
     $('.get_group_billing').css('display', 'block');

@@ -33,7 +33,7 @@ tool.catch.try(async () => {
     if(e.internal === 'auth') {
       S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(function () {
-        show_settings_page('/chrome/elements/subscribe.htm', '&source=auth_error');
+        Settings.redirect_sub_page(url_params.account_email as string, url_params.parent_tab_id as string, '/chrome/elements/subscribe.htm', '&source=auth_error');
       });
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');

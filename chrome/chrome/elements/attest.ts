@@ -9,7 +9,7 @@ tool.catch.try(async () => {
   let url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
   
   let [primary_ki] = await Store.keys_get(url_params.account_email as string, ['primary']);
-  abort_and_render_error_if_keyinfo_empty(primary_ki);
+  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let passphrase = await Store.passphrase_get(url_params.account_email as string, primary_ki.longid);
   if(passphrase !== null) {

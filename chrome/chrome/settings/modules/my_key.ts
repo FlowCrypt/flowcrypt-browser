@@ -10,7 +10,7 @@ tool.catch.try(async () => {
   $('.action_view_update').attr('href', tool.env.url_create('my_key_update.htm', url_params));
 
   let [primary_ki] = await Store.keys_get(url_params.account_email as string, [url_params.longid as string || 'primary']);
-  abort_and_render_error_if_keyinfo_empty(primary_ki);
+  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 

@@ -12,6 +12,7 @@ declare var require: any;
 declare var exports: any;
 
 class UnreportableError extends Error {
+  public log = true;
 }
 
 let tool = {
