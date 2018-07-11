@@ -134,11 +134,11 @@ tool.catch.try(async () => {
       }
     } catch(e) {
       if(tool.api.error.is_auth_error(e)) {
-        // todo - prompt to connect device
-        status_container.html('<span class="bad">Auth Error</span>');
+        status_container.html('<a class="bad" href="#">Auth Error</a>').find('a').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
       } else if(tool.api.error.is_network_error(e)) {
         status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', render_encrypted_contact_page_status);
       } else {
+        status_container.text('ecp error')
         tool.catch.handle_exception(e);
       }
     }
