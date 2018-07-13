@@ -186,7 +186,7 @@ class Settings {
     });
   }
   
-  static initialize_private_key_import_ui = (account_email: string, parent_tab_id: string) => {
+  static initialize_private_key_import_ui = (account_email: string, parent_tab_id: string|null) => {
     let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
     attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     attach.set_attachment_added_callback((file: Attachment) => {

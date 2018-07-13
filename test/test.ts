@@ -248,7 +248,7 @@ const meta = {
   compose: {
     open_compose_page_standalone: async function(): Promise<Page> {
       let compose_page = await meta.new_page();
-      await compose_page.goto(meta.extension_url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com'));
+      await compose_page.goto(meta.extension_url('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0'));
       await meta.wait_all(compose_page, ['@input-body', '@input-to', '@input-subject', '@action-send']);
       await meta.wait_all(compose_page, meta._selector_test_state('ready')); // wait until page ready
       return compose_page;
@@ -699,13 +699,9 @@ const tests = {
     let k = meta._k(expected_key_name);
     await meta.wait_all(my_key_frame, ['@content-key-words', '@content-armored-key']);
     assert(await meta.read(my_key_frame, '@content-key-words'), k.keywords, 'my_key page keywords');
-    await meta.wait_and_click(my_key_frame, '@action-view-armored-key');
-    assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1, true, 'armored pubkey visible');
     await meta.wait_and_click(my_key_frame, '@action-toggle-key-type(show private key)');
     assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PRIVATE KEY BLOCK-----') !== -1, true, 'armored prv visible');
     await meta.wait_and_click(my_key_frame, '@action-toggle-key-type(show public key)');
-    await meta.wait_and_click(my_key_frame, '@action-view-armored-key');
-    assert((await meta.read(my_key_frame, '@content-armored-key')).indexOf('-----BEGIN PGP PUBLIC KEY BLOCK-----') !== -1, true, 'armored pubkey visible');
     await tests._close_settings_page_dialog(settings_page);
     await tests._toggle_settings_screen(settings_page, 'basic');
     meta.log(`tests:settings_my_key_tests:${trigger}`);

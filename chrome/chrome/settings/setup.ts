@@ -6,7 +6,10 @@ tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let parent_tab_id: string|null = null;
+  if(url_params.action === 'add_key' || url_params.parent_tab_id) {
+    parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  }
   
   if(url_params.account_email) {
     tool.browser.message.send(null, 'update_uninstall_url');
@@ -279,12 +282,10 @@ tool.catch.try(async () => {
       return result;
     } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
       return {full_name: ''};
-    }  
+    }
   }
   
-  $('.action_show_help').click(function () {
-    Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/help.htm');
-  });
+  $('.action_show_help').click(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm'));
   
   $('.action_simple_setup').click(async function () {
     if($(this).parents('.manual').length) {
@@ -514,7 +515,7 @@ tool.catch.try(async () => {
     }
   }));
   
-  $('#step_4_close .action_close').click(() => {
+  $('#step_4_close .action_close').click(() => { // only rendered if action=add_key which means parent_tab_id was used
     tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});
   });
   

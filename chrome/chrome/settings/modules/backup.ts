@@ -6,7 +6,10 @@ tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let parent_tab_id: string|null = null;
+  if(url_params.action !== 'setup') {
+    parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  }
   
   let email_provider: EmailProvider;
   
