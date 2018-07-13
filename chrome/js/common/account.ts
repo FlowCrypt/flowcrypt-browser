@@ -43,16 +43,19 @@ class FlowCryptAccount {
   register = async (account_email: string) => { // register_and_attempt_to_verify
     this.event_handlers.render_status('registering..', true);
     let response = await tool.api.cryptup.account_login(account_email);
+    if(response.verified) {
+      return response;
+    }
     if(this.can_read_email) {
       this.event_handlers.render_status('verifying..', true);
       let tokens = await this.wait_for_token_email(30);
       if(tokens && tokens.length) {
         return await this.verify(account_email, tokens);
       } else {
-        throw {code: null, internal: 'email', message: 'Please check your inbox for a verification email'};
+        throw {code: null, internal: 'email', message: `Please check your inbox (${account_email}) for a verification email`};
       }
     } else {
-      throw {code: null, internal: 'email', message: 'Please check your inbox for a verification email'};
+      throw {code: null, internal: 'email', message: `Please check your inbox (${account_email}) for a verification email`};
     }
   };
   

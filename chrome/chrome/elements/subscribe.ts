@@ -10,6 +10,10 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   
+  let auth_info = await Store.auth_info();
+  if(auth_info.account_email) {
+    account_email = auth_info.account_email; // todo - allow user to select and confirm email address
+  }
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
   
@@ -30,7 +34,7 @@ tool.catch.try(async () => {
   let subscription = await Store.subscription();
   let {google_token_scopes} = await Store.get_account(account_email, ['google_token_scopes']);
   let can_read_email = tool.api.gmail.has_scope(google_token_scopes || [] , 'read');
-  let flowcrypt_account = new FlowCryptAccount({render_status: render_status}, can_read_email);
+  let flowcrypt_account = new FlowCryptAccount({render_status}, can_read_email);
 
   if(url_params.placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -108,14 +112,14 @@ tool.catch.try(async () => {
     } else {
       $('h1').text('New Device');
       $('.action_show_stripe, .action_show_group').css('display', 'none');
-      $('.status').text('This browser or device is not registered on your FlowCrypt Account.');
+      $('.status').text(`This browser or device is not registered on your FlowCrypt Account (${account_email}).`);
       $('.action_get_trial, .action_close').addClass('long');
     }
   }
   
   function handle_error_response(error: StandardError) {
     if(error.internal === 'email') {
-      $('.action_get_trial').css('display', 'none');
+      $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
       render_status(error.message);
       button_restore();

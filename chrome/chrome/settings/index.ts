@@ -124,23 +124,28 @@ tool.catch.try(async () => {
   
   async function render_encrypted_contact_page_status() {
     let status_container = $('.public_profile_indicator_container');
-    try {
-      let response = await tool.api.cryptup.account_update();
-      if(response && response.result && response.result.alias) {
-        status_container.find('.status-indicator-text').css('display', 'none');
-        status_container.find('.status-indicator').addClass('active');
-      } else {
-        status_container.find('.status-indicator').addClass('inactive');
-      }
-    } catch(e) {
-      if(tool.api.error.is_auth_error(e)) {
-        status_container.html('<a class="bad" href="#">Auth Error</a>').find('a').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
-      } else if(tool.api.error.is_network_error(e)) {
-        status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', render_encrypted_contact_page_status);
-      } else {
-        status_container.text('ecp error')
-        tool.catch.handle_exception(e);
-      }
+    let auth_info = await Store.auth_info();
+    if(auth_info.account_email) { // have auth email set
+      try {
+        let response = await tool.api.cryptup.account_update();
+        if(response && response.result && response.result.alias) {
+          status_container.find('.status-indicator-text').css('display', 'none');
+          status_container.find('.status-indicator').addClass('active');
+        } else {
+          status_container.find('.status-indicator').addClass('inactive');
+        }
+      } catch(e) {
+        if(tool.api.error.is_auth_error(e)) {
+          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+        } else if(tool.api.error.is_network_error(e)) {
+          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', render_encrypted_contact_page_status);
+        } else {
+          status_container.text('ecp error')
+          tool.catch.handle_exception(e);
+        }
+      }            
+    } else { // never set up
+      status_container.find('.status-indicator').addClass('inactive');
     }
     status_container.css('visibility', 'visible');
   }
