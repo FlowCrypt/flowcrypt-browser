@@ -26,6 +26,8 @@ class StoreDbCorruptedError extends Error {}
 
 class StoreDbDeniedError extends Error {}
 
+class StoreDbFailedError extends Error {}
+
 class Store {
   
   // static [f: string]: Function; // https://github.com/Microsoft/TypeScript/issues/6480
@@ -263,6 +265,8 @@ class Store {
       return new StoreDbCorruptedError(exception.message);
     } else if(exception.message === 'A mutation operation was attempted on a database that did not allow mutations.') {
       return new StoreDbDeniedError(exception.message);
+    } else if(exception.message === 'The operation failed for reasons unrelated to the database itself and not covered by any other error code.') {
+      return new StoreDbFailedError(exception.message);
     } else {
       tool.catch.handle_exception(exception);
       return new StoreDbDeniedError(exception.message);

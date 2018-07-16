@@ -30,6 +30,8 @@ chrome.runtime.onInstalled.addListener(event => { background_process_start_reaso
       open_settings_page('fatal.htm?reason=db_corrupted');
     } else if (e instanceof StoreDbDeniedError) {
       open_settings_page('fatal.htm?reason=db_denied');
+    } else if (e instanceof StoreDbFailedError) {
+      open_settings_page('fatal.htm?reason=db_failed');
     }
     return;
   }

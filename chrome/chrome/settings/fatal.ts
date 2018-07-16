@@ -23,9 +23,12 @@
         `);
     } else if (url_params.reason === 'db_denied') {
         title.text('FlowCrypt cannot function because browser IndexedDB is disabled');
-        details.html(`<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.`);
+        details.html(`<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
+    } else if (url_params.reason === 'db_failed') {
+        title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
+        details.html(`<p>If you are on Firefox, please report your browser version to human@flowcrypt.com</p>.`);
     } else {
-        details.html('Unknown reason. Write human@flowcrypt.com if you need help.')
+        details.text('Unknown reason. Write human@flowcrypt.com if you need help.')
     }
 
 })();
