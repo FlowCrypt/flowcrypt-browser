@@ -123,7 +123,7 @@ tool.catch.try(async () => {
   async function decrypt_and_save_attachment_to_downloads(encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) {
     let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, encrypted_data, user_entered_message_password);
     if (result.success) {
-      tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.data, render_in);
+      tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.text!, render_in); // text!: did not request uint8
       send_resize_message();
     } else {
       delete result.message;
@@ -301,33 +301,38 @@ tool.catch.try(async () => {
           console.info('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
           await initialize(true);
         } else {
-          await decide_decrypted_content_formatting_and_render(result.content.data, Boolean(result.encrypted), result.signature);
+          await decide_decrypted_content_formatting_and_render(result.content.text!, Boolean(result.is_encrypted), result.signature); // text!: did not request uint8
         }
-      } else if (result.format_error) {
+      } else if (result.error.type === DecryptErrorTypes.format) {
         if (can_read_emails && message_fetched_from_api !== 'raw') {
           console.info('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
           await initialize(true);
         } else {
-          await render_error(Lang.pgp_block.bad_format + '\n\n' + result.format_error);
+          await render_error(Lang.pgp_block.bad_format + '\n\n' + result.error.error);
         }
-      } else if (result.missing_passphrases && result.missing_passphrases.length) {
-        await render_passphrase_prompt(result.missing_passphrases);
+      } else if (result.longids.need_passphrase.length) {
+        await render_passphrase_prompt(result.longids.need_passphrase);
       } else {
         let [primary_k] = await Store.keys_get(account_email, ['primary']);
-        if (!result.counts.chosen_keys && !primary_k) {
+        if (!result.longids.chosen && !primary_k) {
           await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
-        } else if (result.counts.chosen_keys === result.counts.attempts_done && result.counts.key_mismatch === result.counts.attempts_done) {
+        } else if (result.error.type === DecryptErrorTypes.key_mismatch) {
           if (url_params.has_password && !optional_password) {
             await render_password_prompt();
           } else {
             await handle_private_key_mismatch(account_email, url_params.message as string);
           }
-        } else if (result.counts.wrong_password) {
+        } else if (result.error.type === DecryptErrorTypes.wrong_password) {
           alert('Incorrect answer, please try again');
           await render_password_prompt();
-        } else if (result.errors && result.errors.length) {
-          await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + '\n\n' + '<em>' + result.errors.join('<br>') + '</em>');
-        } else {
+        } else if (result.error.type === DecryptErrorTypes.use_password) {
+          await render_error('Symmetrically encrypted messages not supported yet');
+          // await render_password_prompt();
+        } else if (result.error.type === DecryptErrorTypes.no_mdc) {
+          await render_error('This message may not be safe to open: missing MDC. To open this message, please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
+        } else if (result.error) {
+          await render_error(`${Lang.pgp_block.cant_open}\n\n<em>${result.error.type}: ${result.error.error}</em>`);
+        } else { // should generally not happen
           delete result.message;
           await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
         }

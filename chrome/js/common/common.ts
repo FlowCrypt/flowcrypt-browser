@@ -18,6 +18,16 @@ class UnreportableError extends Error {
   public log = true;
 }
 
+enum DecryptErrorTypes {
+  key_mismatch = 'key_mismatch',
+  use_password = 'use_password',
+  wrong_password = 'wrong_password',
+  no_mdc = 'no_mdc',
+  need_passphrase = 'need_passphrase',
+  format = 'format',
+  other = 'other',
+}
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -107,7 +117,10 @@ let tool = {
     },
     base64url_encode: (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
     base64url_decode: (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
-    from_uint8: (u8a: Uint8Array): string => {
+    from_uint8: (u8a: Uint8Array|string): string => {
+      if(typeof u8a === 'string') {
+        return u8a;
+      }
       let CHUNK_SZ = 0x8000;
       let c = [];
       for (let i = 0; i < u8a.length; i += CHUNK_SZ) {
@@ -115,7 +128,10 @@ let tool = {
       }
       return c.join('');
     },
-    to_uint8: (raw: string): Uint8Array => {
+    to_uint8: (raw: string|Uint8Array): Uint8Array => {
+      if(raw instanceof Uint8Array) {
+        return raw;
+      }
       let rawLength = raw.length;
       let uint8 = new Uint8Array(new ArrayBuffer(rawLength));
       for (let i = 0; i < rawLength; i++) {
@@ -1039,10 +1055,10 @@ let tool = {
         let sign_result = await openpgp.sign(options);
         return (sign_result as OpenPGP.SignArmorResult).data;
       },
-      verify: (message: any, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
-        let signature = { signer: null, contact: optional_contact,  match: null, error: null } as MessageVerifyResult;
+      verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
+        let signature: MessageVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
         try {
-          for (let verify_result of message.verify(keys_for_verification)) {
+          for (let verify_result of await message.verify(keys_for_verification)) {
             signature.match = tool.value(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
             if (!signature.signer) {
               signature.signer = tool.crypto.key.longid(verify_result.keyid.bytes);
@@ -1053,7 +1069,7 @@ let tool = {
           if (verify_error.message === 'Can only verify message with one literal data packet.') {
             signature.error = 'FlowCrypt is not equipped to verify this message (err 101)';
           } else {
-            signature.error = 'FlowCrypt had trouble verifying this message (' + verify_error.message + ')';
+            signature.error = `FlowCrypt had trouble verifying this message (${verify_error.message})`;
             tool.catch.handle_exception(verify_error);
           }
         }
@@ -1069,110 +1085,41 @@ let tool = {
         let message = openpgp.message.fromText(plaintext);
         message.appendSignature(signature_text);
         let keys = await tool._.crypto_message_get_sorted_keys_for_message(account_email, message);
-        return tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]);
+        return await tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]);
       },
-      decrypt: (account_email: string, encrypted_data: string|Uint8Array, message_password: string|null, callback: (decrypted: DecryptSuccess|DecryptError) => void, output_format:"utf8"|"binary"|null=null): void => {
-
-        // TODO !!!
-        // THIS FINALLY DOES NOT NEED TO INVOLVE AN UGLY LOOP
-        // OPENPGP.JS CAN NOW ACCEPT AN ARRAY OF KEYS AND PASSWORDS
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // WOOHOO
-        // TODO
-
-        let first_100_bytes = encrypted_data.slice(0, 100);
-        // noinspection SuspiciousInstanceOfGuard - Uint8Array.slice of course returns Uint8Array
-        if (first_100_bytes instanceof Uint8Array) {
-          first_100_bytes = tool.str.from_uint8(first_100_bytes);
-        }
-        let armored_encrypted = tool.value(tool.crypto.armor.headers('message').begin).in(first_100_bytes);
-        let armored_signed_only = tool.value(tool.crypto.armor.headers('signed_message').begin).in(first_100_bytes);
-        let is_armored = armored_encrypted || armored_signed_only;
-        let encrypted_data_string: string;
-        if (is_armored && encrypted_data instanceof Uint8Array) {
-          encrypted_data_string = tool.str.from_uint8(encrypted_data);
-        } else {
-          encrypted_data_string = encrypted_data as string;
-        }
-        let other_errors: string[] = [];
-        let message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage;
+      decrypt: async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd: string|null=null, get_uint8=false): Promise<DecryptSuccess|DecryptError> => {
+        let prepared;
+        let longids = {message: [] as string[], matching: [] as string[], chosen: [] as string[], need_passphrase: [] as string[]};
         try {
-          if (armored_encrypted) {
-            message = openpgp.message.readArmored(encrypted_data_string);
-          } else if (armored_signed_only) {
-            message = openpgp.cleartext.readArmored(encrypted_data_string);
-          } else {
-            message = openpgp.message.read(typeof encrypted_data === 'string' ? tool.str.to_uint8(encrypted_data) : encrypted_data);
-          }
+          prepared = tool._.crypto_message_prepare_for_decrypt(encrypted_data);
         } catch (format_error) {
-          callback({success: false, counts: tool._.crypto_message_zeroed_decrypt_error_counts(), format_error: format_error.message, errors: other_errors, encrypted: null, signature: null});
-          return;
+          return {success: false, error: {type: DecryptErrorTypes.format, error: format_error.message}, longids, is_encrypted: null, signature: null};
         }
-        tool._.crypto_message_get_sorted_keys_for_message(account_email, message).then(keys => {
-          let counts = tool._.crypto_message_zeroed_decrypt_error_counts(keys);
-          if (armored_signed_only) {
-            callback({success: true, content: {data: message.getText(), filename: null}, encrypted: false, signature: tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0])});
+        let keys = await tool._.crypto_message_get_sorted_keys_for_message(account_email, prepared.message);
+        longids.message = keys.encrypted_for;
+        longids.matching = keys.prv_for_decrypt.map(ki => ki.longid);
+        longids.chosen = keys.prv_for_decrypt_with_passphrases.map(ki => ki.longid);
+        longids.need_passphrase = keys.prv_for_decrypt_without_passphrases.map(ki => ki.longid);
+        let is_encrypted = !prepared.is_cleartext;
+        if (!is_encrypted) {
+          return {success: true, content: {text: prepared.message.getText(), filename: null}, is_encrypted, signature: await tool.crypto.message.verify(prepared.message, keys.for_verification, keys.verification_contacts[0])};
+        }
+        if (!keys.prv_for_decrypt_with_passphrases.length && !msg_pwd) {
+          return {success: false, error: {type: DecryptErrorTypes.need_passphrase}, signature: null, message: prepared.message, longids, is_encrypted};
+        }
+        try {
+          let msg_passwords = msg_pwd ? [tool.crypto.hash.challenge_answer(msg_pwd!)] : null;
+          let decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prv_for_decrypt_with_passphrases.map(ki => ki.decrypted!), msg_passwords);
+          // let signature_result = keys.signed_by.length ? tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
+          let signature_result = null;
+          if(get_uint8) {
+            return {success: true, content: {uint8: decrypted.getLiteralData(), filename: decrypted.getFilename()}, is_encrypted, signature: signature_result};
           } else {
-            let missing_passphrases = keys.prv_for_decrypt_without_passphrases.map(function(ki) { return ki.longid; });
-            if (!keys.prv_for_decrypt_with_passphrases.length && !message_password) {
-              callback({success: false, signature: null, message, counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases, errors: other_errors, encrypted: true});
-            } else {
-              let keyinfos_for_looper = keys.prv_for_decrypt_with_passphrases.slice(); // copy keyinfo array
-              let keep_trying_until_decrypted_or_all_failed = function() {
-                tool.catch.try(function() {
-                  if (!counts.decrypted && keyinfos_for_looper.length) {
-                    try {
-                      let _keys = [keyinfos_for_looper.shift()!.decrypted!];
-                      let _passwords = message_password ? [tool.crypto.hash.challenge_answer(message_password!)] : null;
-                      (message as OpenPGP.message.Message).decrypt(_keys, _passwords).then(decrypted => {
-                        tool.catch.try(function() {
-                          if (!counts.decrypted++) { // don't call back twice if encrypted for two of my keys
-                            // let signature_result = keys.signed_by.length ? tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
-                            let signature_result = null;
-                            if (tool._.crypto_message_chained_decryption_result_collector(callback, {success: true, content: {data: decrypted.getText(), filename: decrypted.getFilename()}, encrypted: true, signature: signature_result})) {
-                              keep_trying_until_decrypted_or_all_failed();
-                            }
-                          }
-                        })();
-                      }).catch(function(decrypt_error: Error) {
-                        tool.catch.try(function() {
-                          tool._.crypto_message_increment_decrypt_error_counts(counts, other_errors, message_password, decrypt_error);
-                          if (tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message, counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases, errors: other_errors, encrypted: true})) {
-                            keep_trying_until_decrypted_or_all_failed();
-                          }
-                        })();
-                      });
-                    } catch (decrypt_exception) {
-                      other_errors.push(String(decrypt_exception));
-                      counts.attempts_done++;
-                      if (tool._.crypto_message_chained_decryption_result_collector(callback, {success: false, signature: null, message, counts, unsecure_mdc: !!counts.unsecure_mdc, encrypted_for: keys.encrypted_for, missing_passphrases, errors: other_errors, encrypted: true})) {
-                        keep_trying_until_decrypted_or_all_failed();
-                      }
-                    }
-                  }
-                })();
-              };
-              keep_trying_until_decrypted_or_all_failed(); // first attempt
-            }
+            return {success: true, content: {text: decrypted.getText(), filename: decrypted.getFilename()}, is_encrypted, signature: signature_result};
           }
-        });
+        } catch (e) {
+          return {success: false, error: tool._.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
+        }
       },
       encrypt: (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean): Promise<OpenPGP.EncryptResult> => {
         let options: OpenPGP.EncryptOptions = { data, armor };
@@ -1400,7 +1347,6 @@ let tool = {
           account_email,
           encrypted_data,
           user_entered_message_password,
-          tool.browser.message.cb,
         ]) as Promise<DecryptResult>,
         crypto_message_verify_detached: (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => tool.browser.message.bg.exec('tool.crypto.message.verify_detached', [
           account_email,
@@ -1417,9 +1363,9 @@ let tool = {
           });
           tool.browser.message.send(null, 'bg_exec', {path, args}, (result: PossibleBgExecResults) => {
             if (path === 'tool.crypto.message.decrypt') {
-              if (result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.data && typeof (result as DecryptSuccess).content.data === 'string' && ((result as DecryptSuccess).content.data).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-                tool.file.object_url_consume((result as DecryptSuccess).content.data).then(function(result_content_data) {
-                  (result as DecryptSuccess).content.data = tool.str.from_uint8(result_content_data);
+              if (result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.text && typeof (result as DecryptSuccess).content.text === 'string' && ((result as DecryptSuccess).content.text!).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
+                tool.file.object_url_consume((result as DecryptSuccess).content.text!).then(function(result_content_data) {
+                  (result as DecryptSuccess).content.text = tool.str.from_uint8(result_content_data);
                   resolve(result);
                 });
               } else {
@@ -2497,6 +2443,19 @@ let tool = {
       return string;
     },
     crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
+    crypto_message_prepare_for_decrypt: (data: string|Uint8Array): {is_armored: boolean, is_cleartext: false, message: OpenPGP.message.Message}|{is_armored: boolean, is_cleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
+      let first_100_bytes = tool.str.from_uint8(data.slice(0, 100));
+      let is_armored_encrypted = tool.value(tool.crypto.armor.headers('message').begin).in(first_100_bytes);
+      let is_armored_signed_only = tool.value(tool.crypto.armor.headers('signed_message').begin).in(first_100_bytes);
+      let is_armored = is_armored_encrypted || is_armored_signed_only;
+      if (is_armored_encrypted) {
+        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(tool.str.from_uint8(data))};
+      } else if (is_armored_signed_only) {
+        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(tool.str.from_uint8(data))};
+      } else {
+        return {is_armored, is_cleartext: false, message: openpgp.message.read(tool.str.to_uint8(data))};
+      }
+    },
     crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {
       let keys: InternalSortedKeysForDecrypt = {
         verification_contacts: [],
@@ -2535,55 +2494,20 @@ let tool = {
       }
       return keys;
     },
-    crypto_message_zeroed_decrypt_error_counts: (keys:InternalSortedKeysForDecrypt|null=null) => {
-      return {
-        decrypted: 0,
-        potentially_matching_keys: keys ? keys.prv_matching.length : 0,
-        chosen_keys: keys ? keys.prv_for_decrypt.length : 0,
-        attempts_planned: keys ? keys.prv_for_decrypt_with_passphrases.length : 0,
-        attempts_done: 0,
-        key_mismatch: 0,
-        wrong_password: 0,
-        unsecure_mdc: 0,
-        format_errors: 0,
-      };
-    },
-    crypto_message_increment_decrypt_error_counts: (counts: DecryptedErrorCounts, other_errors: string[], message_password: string|null, decrypt_error: Error) => {
+    crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
       let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
       if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.']) && !message_password) {
-        counts.key_mismatch++; // wrong private key
+        return {type: DecryptErrorTypes.key_mismatch, error: e};
       } else if (e === 'Invalid session key for decryption.' && !message_password) {
-        counts.key_mismatch++; // attempted opening password only message with key
+        return {type: DecryptErrorTypes.use_password, error: e};  // attempted opening password only message with key
       } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key'])) {
-        counts.wrong_password++; // wrong password
+        return {type: DecryptErrorTypes.wrong_password, error: e};
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
-        counts.unsecure_mdc++;
+        return {type: DecryptErrorTypes.no_mdc, error: e};
       } else if (e === 'Decryption error') {
-        counts.format_errors++; // typically
+        return {type: DecryptErrorTypes.format, error: e};
       } else {
-        other_errors.push(e);
-      }
-      counts.attempts_done++;
-    },
-    /**
-     *
-     * @param callback: callback function / listener
-     * @param result: result to be called back
-     * @returns {boolean}: continue to next attempt
-     */
-    crypto_message_chained_decryption_result_collector: (callback: Callback, result: DecryptSuccess|DecryptError) => {
-      if (result.success === true) {
-        callback(result); // callback the moment there is successful decrypt
-        return false; // do not try again
-      } else if (result.success === false) {
-        if (result.counts.attempts_done === result.counts.attempts_planned && !result.counts.decrypted) {
-          if (result.counts.format_errors > 0) {
-            result.format_error = 'This message seems to be badly formatted.';
-          }
-          callback(result); // or callback if no success and this was the last attempt
-          return false; // do not try again
-        }
-        return true; // next attempt
+        return {type: DecryptErrorTypes.other, error: e};
       }
     },
     crypto_key_patch_public_keys_to_ignore_expiration: (keys: OpenPGP.key.Key[]) => { // may deprecate this

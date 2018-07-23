@@ -417,29 +417,28 @@ class Composer {
   private decrypt_and_render_draft = async (encrypted_draft: string, render_function: (() => void)|null, headers: FromToHeaders) => {
     let passphrase = this.app.storage_passphrase_get();
     if (passphrase !== null) {
-      tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, async result => {
-        if (result.success) {
-          let safe_html_draft = await tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'));
-          this.S.cached('input_text').html(safe_html_draft);
-          if (headers && headers.to && headers.to.length) {
-            this.S.cached('input_to').focus();
-            this.S.cached('input_to').val(headers.to.join(','));
-            this.S.cached('input_text').focus();
-          }
-          if (headers && headers.from) {
-            this.S.now('input_from').val(headers.from);
-          }
-          this.set_input_text_height_manually_if_needed();
-          if (render_function) {
-            render_function();
-          }
-        } else {
-          this.set_input_text_height_manually_if_needed();
-          if (render_function) {
-            render_function();
-          }
+      let result = await tool.crypto.message.decrypt(this.account_email, encrypted_draft);
+      if (result.success) {
+        let safe_html_draft = await tool.str.as_safe_html(result.content.text!.replace(/\n/g, '<br>\n'));
+        this.S.cached('input_text').html(safe_html_draft);
+        if (headers && headers.to && headers.to.length) {
+          this.S.cached('input_to').focus();
+          this.S.cached('input_to').val(headers.to.join(','));
+          this.S.cached('input_text').focus();
         }
-      }, 'utf8');
+        if (headers && headers.from) {
+          this.S.now('input_from').val(headers.from);
+        }
+        this.set_input_text_height_manually_if_needed();
+        if (render_function) {
+          render_function();
+        }
+      } else {
+        this.set_input_text_height_manually_if_needed();
+        if (render_function) {
+          render_function();
+        }
+      }
     } else {
       if (this.is_reply_box) {
         this.S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
@@ -896,10 +895,7 @@ class Composer {
       }
       if (current_height !== this.last_reply_box_table_height && Math.abs(current_height - this.last_reply_box_table_height) > 2) { // more then two pixel difference compared to last time
         this.last_reply_box_table_height = current_height;
-        this.app.send_message_to_main_window('set_css', {
-          selector: 'iframe#' + this.frame_id,
-          css: {height: (Math.max(min_height, current_height) + add_extra) + 'px'}
-        });
+        this.app.send_message_to_main_window('set_css', {selector: `iframe#${this.frame_id}`, css: {height: `${(Math.max(min_height, current_height) + add_extra)}px`}});
       }
     }
   }
@@ -919,19 +915,17 @@ class Composer {
       }
       return;
     }
-    tool.crypto.message.decrypt(this.account_email, armored_message, null, (result) => {
-      if (result.success) {
-        if (!tool.mime.resembles_message(result.content.data)) {
-          this.append_forwarded_message(tool.mime.format_content_to_display(result.content.data as string, armored_message));
-        } else {
-          tool.mime.decode(result.content.data as string).then(mime_parse_result => {
-            this.append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.data as string, armored_message));
-          }).catch(tool.catch.handle_exception);
-        }
+    let result = await tool.crypto.message.decrypt(this.account_email, armored_message);
+    if (result.success) {
+      if (!tool.mime.resembles_message(result.content.text!)) {
+        this.append_forwarded_message(tool.mime.format_content_to_display(result.content.text!, armored_message));
       } else {
-        this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
+        let mime_parse_result = await tool.mime.decode(result.content.text!);
+        this.append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.text!, armored_message));
       }
-    });
+    } else {
+      this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + armored_message.replace(/\n/g, '<br/>\n'));
+    }
   }
 
   private render_reply_message_compose_table = async (method:"forward"|"reply"="reply") => {

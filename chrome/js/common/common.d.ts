@@ -129,37 +129,34 @@ interface PreventableEvent {
     id: string;
 }
 
-interface DecryptedErrorCounts {
-    decrypted: number;
-    potentially_matching_keys: number;
-    chosen_keys: number;
-    attempts_planned: number;
-    attempts_done: number;
-    key_mismatch: number;
-    wrong_password: number;
-    unsecure_mdc: number;
-    format_errors: number;
-}
-
 interface DecryptSuccess {
     success: true;
     content: {
-      data: string;
+      text?: string;
+      uint8?: Uint8Array;
       filename: string|null;
     };
     signature: MessageVerifyResult|null;
-    encrypted: boolean|null;
+    is_encrypted: boolean|null;
 }
+
+type DecryptError$error = {
+  type: DecryptErrorTypes;
+  error?: string;
+};
+
+type DecryptError$longids = {
+  message: string[];
+  matching: string[];
+  chosen: string[];
+  need_passphrase: string[];
+};
 
 interface DecryptError {
     success: false;
-    counts: DecryptedErrorCounts;
-    unsecure_mdc?: boolean;
-    errors: string[];
-    missing_passphrases?: string[];
-    format_error?: string;
-    encrypted: null|boolean;
-    encrypted_for?: string[];
+    error: DecryptError$error;
+    longids: DecryptError$longids;
+    is_encrypted: null|boolean;
     signature: null;
     message?: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage;
 }

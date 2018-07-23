@@ -13,26 +13,16 @@ tool.catch.try(async () => {
   let tab_id = await tool.browser.message.required_tab_id();
 
   let original_content: string;
-  let missing_passprase_longids: string[] = [];
 
   let factory = new Factory(account_email, tab_id);
 
   tool.browser.message.listen({
     close_dialog: () => {
       $('.passphrase_dialog').html('');
-      Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid))).then(passphrases => {
-        if (passphrases.filter(passphrase => passphrase !== null).length) {
-          // todo - copy/pasted - unify
-          // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
-          // see pgp_block.js for proper common implmenetation
-          missing_passprase_longids = [];
-          $('.action_decrypt').click();
-        }
-      });
     },
   }, tab_id);
 
-  $('.action_decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
+  $('.action_decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
     let encrypted = $('.input_message').val() as string;
     if (!encrypted) {
       alert('Please paste an encrypted message');
@@ -40,19 +30,17 @@ tool.catch.try(async () => {
     }
     original_content = $(self).html();
     $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
-    tool.crypto.message.decrypt(account_email, encrypted, null, function(result) {
-      if (result.success) {
-        alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.data}`);
-      } else if ((result.missing_passphrases || []).length) {
-        missing_passprase_longids = result.missing_passphrases as string[];
-        $('.passphrase_dialog').html(factory.embedded_passphrase(missing_passprase_longids));
-      } else {
-        delete result.message;
-        console.info(result);
-        alert('These was a problem decrypting this file, details are in the console.');
-      }
-      $(self).html(original_content);
-    }, 'utf8');
+    let result = await tool.crypto.message.decrypt(account_email, encrypted);
+    if (result.success) {
+      alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
+    } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
+      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase));
+    } else {
+      delete result.message;
+      console.info(result);
+      alert('These was a problem decrypting this file, details are in the console.');
+    }
+    $(self).html(original_content);
   }));
 
 })();

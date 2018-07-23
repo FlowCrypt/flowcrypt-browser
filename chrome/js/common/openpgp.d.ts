@@ -30,7 +30,7 @@ declare namespace OpenPGP {
     compression?: enums.compression;
     armor?: boolean;
     detached?: boolean;
-    signature?: Signature;
+    signature?: signature.Signature;
     returnSessionKey?: boolean;
     wildcard?: boolean;
     date?: Date;
@@ -176,7 +176,7 @@ declare namespace OpenPGP {
 
   export interface EncryptBinaryResult {
     message: message.Message;
-    signature?: Signature;
+    signature?: signature.Signature;
   }
 
   export type EncryptResult = EncryptArmorResult | EncryptBinaryResult;
@@ -187,8 +187,8 @@ declare namespace OpenPGP {
   }
 
   export interface SignBinaryResult {
-    message: message.Message; // |CleartextMessage
-    signature: Signature;
+    message: message.Message|cleartext.CleartextMessage;
+    signature: signature.Signature;
   }
 
   export type SignResult = SignArmorResult | SignBinaryResult;
@@ -200,7 +200,7 @@ declare namespace OpenPGP {
     sessionKeys?: SessionKey | SessionKey[];
     publicKeys?: key.Key | key.Key[];
     format?: string;
-    signature?: Signature;
+    signature?: signature.Signature;
     date?: Date;
   }
 
@@ -251,14 +251,9 @@ declare namespace OpenPGP {
     bytes: string;
   }
 
-  export interface Signature { // todo - we are mixing up Signature of keys and messages as one type. Should bee split into key.Signature and message.Signature
-    keyid: Keyid;
-    valid: boolean;
-  }
-
-  export interface DecryptVerifyMessageResult {
+  export interface DecryptMessageResult {
     data: Uint8Array | string;
-    signatures: Array<Signature>;
+    signatures: signature.Signature[];
     filename: string;
   }
 
@@ -366,7 +361,7 @@ declare namespace OpenPGP {
    * @async
    * @static
    */
-  export function decrypt(options: DecryptOptions): Promise<DecryptVerifyMessageResult>;
+  export function decrypt(options: DecryptOptions): Promise<DecryptMessageResult>;
 
   /**
    * Generates a new OpenPGP key pair. Supports RSA and ECC keys. Primary and subkey will be of same type.
@@ -463,7 +458,7 @@ declare namespace OpenPGP {
       /** Verify signatures of cleartext signed message
        *  @param keys array of keys to verify signatures
        */
-      verify(keys: Array<key.Key>): Array<DecryptVerifyMessageResult>;
+      verify(keys: key.Key[]): Promise<message.VerifiedSignature[]>;
     }
 
     function readArmored(armoredText: string): CleartextMessage;
@@ -727,7 +722,7 @@ declare namespace OpenPGP {
       primaryKey: packet.PublicKey|packet.SecretKey;
       subKeys: SubKey[];
       users: User[];
-      revocationSignatures: Signature[];
+      revocationSignatures: packet.Signature[];
     }
 
     class SubKey {
@@ -779,6 +774,15 @@ declare namespace OpenPGP {
     function read(data: string | Uint8Array): KeyResult;
   }
 
+  export namespace signature {
+    class Signature {
+      constructor(packetlist: packet.List<packet.Signature>);
+      armor(): string;
+    }
+    function readArmored(armoredText: string): Signature;
+    function read(input: Uint8Array): Signature;
+  }
+
   export namespace message {
     /** Class that represents an OpenPGP message. Can be an encrypted message, signed message, compressed message or literal message
      */
@@ -827,7 +831,7 @@ declare namespace OpenPGP {
       /** Verify message signatures
           @param keys array of keys to verify signatures
       */
-      verify(keys: key.Key[]): object[]; // todo
+      verify(keys: key.Key[]): Promise<VerifiedSignature[]>;
 
       /**
        * Append signature to unencrypted message object
@@ -840,6 +844,12 @@ declare namespace OpenPGP {
 
     class SessionKey { // todo
 
+    }
+
+    export interface VerifiedSignature {
+      keyid: Keyid;
+      valid: boolean;
+      signature: signature.Signature;
     }
 
     /** creates new message object from binary data
