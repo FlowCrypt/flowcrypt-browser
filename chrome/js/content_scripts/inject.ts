@@ -30,25 +30,25 @@ class Injector {
 
   meta = () => {
     this.S.cached('body').addClass(`cryptup_${this.webmail_name} cryptup_${this.webmail_name}_${this.webmail_variant}`).append(this.factory.meta_stylesheet('webmail') + this.factory.meta_notification_container());
-  };
+  }
 
   open_compose_window = () => {
-    if(this.S.now('compose_window').length === 0) {
+    if (this.S.now('compose_window').length === 0) {
       this.S.cached('body').append(this.factory.embedded_compose());
     }
-  };
+  }
 
   buttons = () => {
-    if(this.S.now('compose_button_container').length === 0) { // don't inject too early
+    if (this.S.now('compose_button_container').length === 0) { // don't inject too early
       (window as ContentScriptWindow).TrySetDestroyableTimeout(this.buttons, 300);
     } else {
-      if(this.S.now('compose_button').length === 0) {
+      if (this.S.now('compose_button').length === 0) {
         let container;
-        if(this.webmail_name === 'inbox') {
+        if (this.webmail_name === 'inbox') {
           container = this.S.now('compose_button_container').append(this.factory.button_compose(this.webmail_name));
           container.find(this.S.selector('compose_button')).hover(tool.catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)), tool.catch.try(() => this.S.cached('compose_button_label').css('opacity', '')));
         } else {
-          container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name))
+          container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name));
         }
         container.find(this.S.selector('compose_button')).click(tool.catch.try(() => this.open_compose_window()));
       }

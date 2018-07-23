@@ -17,8 +17,8 @@ tool.catch.try(async () => {
     let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(account_email);
     $('.summary').html('');
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
-  } catch(e) {
-    if(tool.api.error.is_network_error(e)) {
+  } catch (e) {
+    if (tool.api.error.is_network_error(e)) {
       $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
     } else {
       $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>');
@@ -28,17 +28,17 @@ tool.catch.try(async () => {
   }
 
   function render_diagnosis(diagnosis: any, attests_requested: string[], attests_processed: string[]) {
-    for(let email of Object.keys(diagnosis.results)) {
+    for (let email of Object.keys(diagnosis.results)) {
       let result = diagnosis.results[email];
       let note, action, remove, color;
-      if(result.pubkey === null) {
+      if (result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
         action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';
         remove = '&nbsp; <b class="bad action_remove_alias" email="' + email + '" title="Remove address from list of send-from addresses.">[x]</b>';
         color = 'orange';
-      } else if(result.match) {
-        if(email === url_params.account_email && !result.attested) {
-          if(attests_requested && attests_requested.length) {
+      } else if (result.match) {
+        if (email === url_params.account_email && !result.attested) {
+          if (attests_requested && attests_requested.length) {
             note = 'Submitted. Attestation was requested from ' + attests_requested.join(', ') + ' and should process shortly.';
             action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
             remove = '';
@@ -49,7 +49,7 @@ tool.catch.try(async () => {
             remove = '';
             color = 'orange';
           }
-        } else if(email === url_params.account_email && result.attested) {
+        } else if (email === url_params.account_email && result.attested) {
           note = 'Submitted, can receive encrypted email. Attested by CRYPTUP.';
           action = '';
           remove = '';
@@ -61,17 +61,17 @@ tool.catch.try(async () => {
           color = 'green';
         }
       } else {
-        if(email === url_params.account_email && !result.attested) {
+        if (email === url_params.account_email && !result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
           action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
           remove = '';
           color = 'red';
-        } else if(email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
+        } else if (email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
           note = 'Re-Attestation requested. This should process shortly.';
           action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
           remove = '';
           color = 'orange';
-        } else if(email === url_params.account_email && result.attested) {
+        } else if (email === url_params.account_email && result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
           action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
           remove = '';
@@ -115,13 +115,13 @@ tool.catch.try(async () => {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     try {
-      if(email === url_params.account_email) { // request attestation
+      if (email === url_params.account_email) { // request attestation
         await Settings.save_attest_request(url_params.account_email, 'CRYPTUP');
         await tool.api.attester.initial_legacy_submit(email, primary_ki.public, true);
       } else { // submit only
         await tool.api.attester.initial_legacy_submit(email, primary_ki.public, false);
-      }  
-    } catch(e) {
+      }
+    } catch (e) {
       tool.catch.handle_exception(e);
     } finally {
       window.location.reload();

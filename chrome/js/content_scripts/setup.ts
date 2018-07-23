@@ -13,7 +13,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
    - murdered: what Firefox does to detached scripts. Will NOT cause tab to be vacant.
    */
 
-  if(!(window as ContentScriptWindow).injected) {
+  if (!(window as ContentScriptWindow).injected) {
 
     (window as ContentScriptWindow).injected = true; // background script will use this to test if scripts were already injected, and inject if not
     (window as ContentScriptWindow).account_email_global = null; // used by background script
@@ -25,34 +25,34 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
     (window as ContentScriptWindow).destroyable_intervals = [];
     (window as ContentScriptWindow).destroyable_timeouts = [];
 
-    (window as ContentScriptWindow).destroy = function () {
+    (window as ContentScriptWindow).destroy = function() {
       tool.catch.try(() => {
         console.info('Updating FlowCrypt');
         document.removeEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
-        for(let id of (window as ContentScriptWindow).destroyable_intervals) {
+        for (let id of (window as ContentScriptWindow).destroyable_intervals) {
           clearInterval(id);
         }
-        for(let id of (window as ContentScriptWindow).destroyable_timeouts) {
+        for (let id of (window as ContentScriptWindow).destroyable_timeouts) {
           clearTimeout(id);
         }
         $('.' + (window as ContentScriptWindow).destroyable_class).remove();
-        $('.' + (window as ContentScriptWindow).reloadable_class).each(function (i, reloadable_element) {
+        $('.' + (window as ContentScriptWindow).reloadable_class).each(function(i, reloadable_element) {
           $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
         });
       })();
     };
 
-    (window as ContentScriptWindow).vacant = function () {
+    (window as ContentScriptWindow).vacant = function() {
       return !$('.' + (window as ContentScriptWindow).destroyable_class).length;
     };
 
-    (window as ContentScriptWindow).TrySetDestroyableInterval = function (code, ms) {
+    (window as ContentScriptWindow).TrySetDestroyableInterval = function(code, ms) {
       let id = window.setInterval(tool.catch.try(code), ms);
       (window as ContentScriptWindow).destroyable_intervals.push(id);
       return id;
     };
 
-    (window as ContentScriptWindow).TrySetDestroyableTimeout = function (code, ms) {
+    (window as ContentScriptWindow).TrySetDestroyableTimeout = function(code, ms) {
       let id = window.setTimeout(tool.catch.try(code), ms);
       (window as ContentScriptWindow).destroyable_timeouts.push(id);
       return id;
@@ -61,9 +61,9 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
     document.dispatchEvent(new CustomEvent((window as ContentScriptWindow).destruction_event));
     document.addEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
 
-    if((window as ContentScriptWindow).vacant()) {
+    if ((window as ContentScriptWindow).vacant()) {
       wait_for_account_email_then_setup();
-    } else if(tool.env.browser().name === 'firefox') {
+    } else if (tool.env.browser().name === 'firefox') {
       notify_murdered();
     }
 
@@ -75,19 +75,19 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
 
   function wait_for_account_email_then_setup() {
     let account_email = webmail_specific.get_user_account_email();
-    if(!(window as ContentScriptWindow).account_email_global) {
-      if(typeof account_email !== 'undefined' && tool.catch.version()) {
+    if (!(window as ContentScriptWindow).account_email_global) {
+      if (typeof account_email !== 'undefined' && tool.catch.version()) {
         console.info('Loading FlowCrypt ' + tool.catch.version() + ' for ' + account_email);
         (window as ContentScriptWindow).account_email_global = account_email;
-        tool.env.webmails(function (webmails) {
-          if(tool.value(webmail_specific.name).in(webmails)) {
+        tool.env.webmails(function(webmails) {
+          if (tool.value(webmail_specific.name).in(webmails)) {
             setup(account_email!); // checked above
           } else {
             console.log('FlowCrypt disabled: ' + webmail_specific.name + ' integration currently for development only');
           }
         });
       } else {
-        if(account_email_interval > 6000) {
+        if (account_email_interval > 6000) {
           console.info('Cannot load FlowCrypt yet. Page: ' + window.location + ' (' + document.title + ')');
         }
         account_email_interval += 1000;
@@ -98,7 +98,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
 
   // called by wait_for_account_email_then_setup
   function setup(account_email: string) {
-    tool.browser.message.required_tab_id().then(function (tab_id) {
+    tool.browser.message.required_tab_id().then(function(tab_id) {
       notifications = new Notifications(tab_id);
       factory = new Factory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
       inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
@@ -107,22 +107,22 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
       Store.account_emails_add(account_email);
       save_account_email_full_name_if_needed(account_email);
       let show_setup_needed_notification_if_setup_not_done = true;
-      let wait_for_setup_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(function () {
+      let wait_for_setup_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(function() {
         Store.get_account(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']).then(storage => {
-          if(storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
+          if (storage.setup_done === true && storage.cryptup_enabled !== false) { //"not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
             notifications.clear();
             initialize(account_email, tab_id);
             clearInterval(wait_for_setup_interval);
-          } else if(!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
+          } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
             let set_up_notification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
             notifications.show(set_up_notification, {
-              notification_setup_needed_dismiss: function () {
+              notification_setup_needed_dismiss: function() {
                 Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear());
               },
-              action_open_settings: function () {
+              action_open_settings: function() {
                 tool.browser.message.send(null, 'settings', { account_email: account_email });
               },
-              close: function () {
+              close: function() {
                 show_setup_needed_notification_if_setup_not_done = false;
               }
             });
@@ -142,27 +142,27 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
       render_public_keys: (data: {public_keys: string[], after_frame_id: string, traverse_up?: number}) => {
         let traverse_up_levels = data.traverse_up as number || 0;
         let append_after = $('iframe#' + data.after_frame_id);
-        for(let i = 0; i < traverse_up_levels; i++) {
+        for (let i = 0; i < traverse_up_levels; i++) {
           append_after = append_after.parent();
         }
-        for(let armored_pubkey of data.public_keys) {
+        for (let armored_pubkey of data.public_keys) {
           append_after.after(factory.embedded_pubkey(armored_pubkey, false));
         }
       },
       close_dialog: (data) => $('#cryptup_dialog').remove(),
       scroll: (data: {selector: string, repeat: number[]}) => tool.ui.scroll(data.selector, data.repeat),
       passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
-        if(!$('#cryptup_dialog').length) {
+        if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog_passphrase(data.longids, data.type));
         }
       },
       subscribe_dialog: (data: {source: string, subscribe_result_tab_id: string}) => {
-        if(!$('#cryptup_dialog').length) {
+        if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
         }
       },
       add_pubkey_dialog: (data: {emails: string[]}) => {
-        if(!$('#cryptup_dialog').length) {
+        if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog_add_pubkey(data.emails));
         }
       },
@@ -182,7 +182,7 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
 
   function save_account_email_full_name_if_needed(account_email: string) {
     Store.get_account(account_email, ['full_name']).then(storage => {
-      if(typeof storage.full_name === 'undefined') {
+      if (typeof storage.full_name === 'undefined') {
         save_account_email_full_name(account_email);
       }
     });
@@ -191,9 +191,9 @@ function content_script_setup_if_vacant(webmail_specific: WebmailSpecificInfo) {
   function save_account_email_full_name(account_email: string) {
     // will cycle until page loads and name is accessible
     // todo - create general event on_webmail_finished_loading for similar actions
-    (window as ContentScriptWindow).TrySetDestroyableTimeout(function () {
+    (window as ContentScriptWindow).TrySetDestroyableTimeout(function() {
       let full_name = webmail_specific.get_user_full_name();
-      if(full_name) {
+      if (full_name) {
         // noinspection JSIgnoredPromiseFromCall
         Store.set(account_email, {full_name});
       } else {

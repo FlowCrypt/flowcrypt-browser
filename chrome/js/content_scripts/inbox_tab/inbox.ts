@@ -12,22 +12,18 @@ tool.catch.try(() => {
   content_script_setup_if_vacant({
     name: 'inbox',
     variant: 'standard',
-    get_user_account_email:  function () {
+    get_user_account_email: () => {
       let credentials = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
-      if(credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && tool.str.is_email_valid(credentials[1].innerText)) {
+      if (credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && tool.str.is_email_valid(credentials[1].innerText)) {
         let account_email = credentials[1].innerText.toLowerCase();
         full_name =  credentials[0].innerText;
         console.info('Loading for ' + account_email + ' (' + full_name + ')');
         return account_email;
       }
     },
-    get_user_full_name: function () {
-      return full_name;
-    },
-    get_replacer: function () {
-      return replacer;
-    },
-    start: start,
+    get_user_full_name: () => full_name,
+    get_replacer: () => replacer,
+    start,
   });
 
   function start(account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) {
@@ -37,8 +33,8 @@ tool.catch.try(() => {
       replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
       notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(function () {
-        if(typeof (window as FcWindow).$ === 'function') {
+      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+        if (typeof (window as FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replace_pgp_elements_interval);

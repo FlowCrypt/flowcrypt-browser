@@ -18,10 +18,10 @@ tool.catch.try(async () => {
   let factory = new Factory(account_email, tab_id);
 
   tool.browser.message.listen({
-    close_dialog: function () {
+    close_dialog: () => {
       $('.passphrase_dialog').html('');
       Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid))).then(passphrases => {
-        if(passphrases.filter(passphrase => passphrase !== null).length) {
+        if (passphrases.filter(passphrase => passphrase !== null).length) {
           // todo - copy/pasted - unify
           // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
           // see pgp_block.js for proper common implmenetation
@@ -32,18 +32,18 @@ tool.catch.try(async () => {
     },
   }, tab_id);
 
-  $('.action_decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+  $('.action_decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
     let encrypted = $('.input_message').val() as string;
-    if(!encrypted) {
+    if (!encrypted) {
       alert('Please paste an encrypted message');
       return;
     }
     original_content = $(self).html();
     $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
-    tool.crypto.message.decrypt(account_email, encrypted, null, function (result) {
-      if(result.success) {
+    tool.crypto.message.decrypt(account_email, encrypted, null, function(result) {
+      if (result.success) {
         alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.data}`);
-      } else if((result.missing_passphrases || []).length) {
+      } else if ((result.missing_passphrases || []).length) {
         missing_passprase_longids = result.missing_passphrases as string[];
         $('.passphrase_dialog').html(factory.embedded_passphrase(missing_passprase_longids));
       } else {
@@ -53,6 +53,6 @@ tool.catch.try(async () => {
       }
       $(self).html(original_content);
     }, 'utf8');
-  }));  
+  }));
 
 })();

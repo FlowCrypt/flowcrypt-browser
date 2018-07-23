@@ -1,17 +1,24 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
+/* tslint:disable */
+
 import {Dialog, ElementHandle, Frame, Page, Browser} from "puppeteer";
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const ordered_stringify = require('json-stable-stringify');
 
-interface Results { success: string[], error: string[], start: number}
+interface Results {
+  success: string[];
+  error: string[];
+  start: number;
+}
+
 interface ConfigInterface {
-  extension_id: string,
-  auth: { google: {email: string, password: string, backup: string}[],},
-  keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[],
-  messages: {name: string, content: string[], params: string}[],
-  unit_tests: {name: string, f: string, args: any[], result: any}[],
+  extension_id: string;
+  auth: { google: {email: string, password: string, backup: string}[],};
+  keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[];
+  messages: {name: string, content: string[], params: string}[];
+  unit_tests: {name: string, f: string, args: any[], result: any}[];
 }
 
 let browser: Browser;
@@ -337,7 +344,7 @@ const tests = {
     } else {
       await meta.wait_and_click(oauth_page, '#submit_approve_access', {delay: 1});
     }
-    meta.log(`tests:handle_gmail_oauth:${account_email}:${action}`)
+    meta.log(`tests:handle_gmail_oauth:${account_email}:${action}`);
   },
   setup_recover: async function(settings_page: Page, key_title: string, {wrong_passphrase=false, more_to_recover=false}: {wrong_passphrase?: boolean, more_to_recover?: boolean}={}) {
     let k = meta._k(key_title);
@@ -347,6 +354,7 @@ const tests = {
       await dialog.accept();
     } else {
       await meta.wait_and_click(settings_page, '@action-recover-account');
+      await meta.wait_any(settings_page, ['@action-step4more-account-settings', '@action-step4done-account-settings'], {timeout: 40});
       await meta.wait_and_click(settings_page, more_to_recover ? '@action-step4more-account-settings' : '@action-step4done-account-settings');
     }
     meta.log(`tests:setup_recover:${key_title}`);

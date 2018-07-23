@@ -5,7 +5,7 @@
 tool.catch.try(async () => {
 
   let storage = await Store.get_global(['errors']);
-  if(storage.errors && storage.errors.length) {
+  if (storage.errors && storage.errors.length > 0) {
     let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
     $('.pre').html(errors);
   }

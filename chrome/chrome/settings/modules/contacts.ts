@@ -17,12 +17,12 @@ tool.catch.try(async () => {
   async function render_contact_list() {
     let contacts = await Store.db_contact_search(null, { has_pgp: true });
 
-    $('.line.actions').html('&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.line.actions').html('&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {
       let all_armored_public_keys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       tool.file.save_to_downloads('public-keys-export.asc', 'application/pgp-keys', all_armored_public_keys, tool.env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
-    $('.line.actions').append('&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.line.actions').append('&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;Bulk Public Key Import&nbsp;&nbsp;&nbsp;&nbsp;');
       $('#bulk_import').css('display', 'block');
@@ -38,7 +38,7 @@ tool.catch.try(async () => {
     $('h1').text('Contacts and their Public Keys');
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
 
-    for(let c of contacts) {
+    for (let c of contacts) {
       $('table#emails').append('<tr email="' + c.email + '"><td>' + c.email + '</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>');
     }
 
@@ -46,7 +46,7 @@ tool.catch.try(async () => {
       let [contact] = await Store.db_contact_get(null, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + contact!.email); // should exist - from list of contacts
-      if(contact!.client === 'cryptup') {
+      if (contact!.client === 'cryptup') {
         $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
       } else {
         $('h1').append('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -58,7 +58,7 @@ tool.catch.try(async () => {
       $('#page_back_button').click(render_contact_list);
     }));
 
-    $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
       $('.hide_when_rendering_subpage').css('display', 'none');
       let email = $(self).closest('tr').attr('email')!;
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + email + '&nbsp;&nbsp;&nbsp;&nbsp;(edit)');
@@ -70,9 +70,9 @@ tool.catch.try(async () => {
     $('#edit_contact .action_save_edited_pubkey').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
       let armored_pubkey = $('#edit_contact .input_pubkey').val() as string; // textarea
       let email = $('#edit_contact .input_pubkey').attr('email');
-      if(!armored_pubkey || !email) {
+      if (!armored_pubkey || !email) {
         alert('No public key entered');
-      } else if(tool.crypto.key.fingerprint(armored_pubkey) !== null) {
+      } else if (tool.crypto.key.fingerprint(armored_pubkey) !== null) {
         await Store.db_contact_save(null, Store.db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()));
         await render_contact_list();
       } else {
@@ -81,7 +81,7 @@ tool.catch.try(async () => {
       }
     }));
 
-    $('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
       $('.hide_when_rendering_subpage').css('display', 'none');
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;Bulk Public Key Import&nbsp;&nbsp;&nbsp;&nbsp;');
       $('#bulk_import').css('display', 'block');
@@ -91,9 +91,9 @@ tool.catch.try(async () => {
       $('#page_back_button').click(() => render_contact_list());
     }));
 
-    $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+    $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
       let replaced = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
-      if(!replaced || replaced === $('#bulk_import .input_pubkey').val()) {
+      if (!replaced || replaced === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {
         $('#bulk_import #processed').html(replaced).css('display', 'block');

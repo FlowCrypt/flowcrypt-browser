@@ -18,10 +18,10 @@ tool.catch.try(async () => {
   let factory = new Factory(account_email, tab_id);
 
   tool.browser.message.listen({
-    close_dialog: function () {
+    close_dialog: () => {
       $('.passphrase_dialog').html('');
       Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid))).then(passphrases => {
-        if(passphrases.filter(passphrase => passphrase !== null).length) {
+        if (passphrases.filter(passphrase => passphrase !== null).length) {
           // todo - copy/pasted - unify
           // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
           // see pgp_block.js for proper common implmenetation
@@ -32,9 +32,9 @@ tool.catch.try(async () => {
     },
   }, tab_id);
 
-  $('.action_decrypt_and_download').click(tool.ui.event.prevent(tool.ui.event.double(), function (self) {
+  $('.action_decrypt_and_download').click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
     let ids = attach_js.get_attachment_ids();
-    if(ids.length === 1) {
+    if (ids.length === 1) {
       original_content = $(self).html();
       $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
       attach_js.collect_attachment(ids[0]).then(decrypt_and_download);
@@ -44,10 +44,10 @@ tool.catch.try(async () => {
   }));
 
   function decrypt_and_download(attachment: Attachment) { // todo - this is more or less copy-pasted from attachment.js, should use common function
-    tool.crypto.message.decrypt(account_email, tool.str.from_uint8(attachment.content as Uint8Array), null, function (result) { // todo - don't convert to str once decrypt() can handle uint8
-      if(result.success) {
+    tool.crypto.message.decrypt(account_email, tool.str.from_uint8(attachment.content as Uint8Array), null, function(result) { // todo - don't convert to str once decrypt() can handle uint8
+      if (result.success) {
         tool.file.save_to_downloads(attachment.name.replace(/\.(pgp|gpg|asc)$/i, ''), attachment.type, result.content.data);
-      } else if((result.missing_passphrases || []).length) {
+      } else if ((result.missing_passphrases || []).length) {
         missing_passprase_longids = result.missing_passphrases as string[];
         $('.passphrase_dialog').html(factory.embedded_passphrase(missing_passprase_longids));
       } else {
@@ -57,6 +57,6 @@ tool.catch.try(async () => {
       }
       $('.action_decrypt_and_download').html(original_content);
     }, 'binary');
-  }  
+  }
 
 })();

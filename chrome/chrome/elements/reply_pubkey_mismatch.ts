@@ -19,7 +19,7 @@ tool.catch.try(async () => {
   app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => tool.browser.message.send(parent_tab_id, channel, data);
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
 
-  for(let to of (url_params.to as string).split(',')) {
+  for (let to of (url_params.to as string).split(',')) {
     $('.recipients').append(tool.e('span', {text: to}));
   }
 
@@ -37,7 +37,7 @@ tool.catch.try(async () => {
       let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
       additional_message_headers = { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last };
     }
-  } catch(e) {
+  } catch (e) {
     tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
     tool.catch.handle_exception(e);
   }
@@ -46,14 +46,14 @@ tool.catch.try(async () => {
   $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
     $('#send_btn').text('sending..');
     let message = tool.api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
-    for(let k of Object.keys(additional_message_headers)) {
+    for (let k of Object.keys(additional_message_headers)) {
       message.headers[k] = additional_message_headers[k];
     }
     try {
       await tool.api.gmail.message_send(account_email, message);
       tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
-      $('#compose').replaceWith('Message sent. The other person should use this information to send a new message.');  
-    } catch(e) {
+      $('#compose').replaceWith('Message sent. The other person should use this information to send a new message.');
+    } catch (e) {
       tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
       $('#send_btn').text('send response');
       alert('There was an error sending message, please try again');
@@ -61,5 +61,5 @@ tool.catch.try(async () => {
     }
 
   }));
-  
+
 })();

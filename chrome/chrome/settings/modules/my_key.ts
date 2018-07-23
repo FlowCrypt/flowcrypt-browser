@@ -19,27 +19,27 @@ tool.catch.try(async () => {
   try {
     let {results: [result]} = await tool.api.attester.lookup_email([account_email]);
     let url = tool.api.cryptup.url('pubkey', account_email);
-    if(result.pubkey && tool.crypto.key.longid(result.pubkey) === primary_ki.longid) {
+    if (result.pubkey && tool.crypto.key.longid(result.pubkey) === primary_ki.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
     tool.catch.handle_exception(e);
     $('.pubkey_link_container').remove();
   }
-  
+
   $('.email').text(account_email);
   $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced')!);
   $('.key_words').text(primary_ki.keywords);
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
 
-  $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
+  $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
     let file = tool.file.keyinfo_as_pubkey_attachment(primary_ki);
     tool.file.save_to_downloads(file.name, file.type, file.content!, tool.env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
-  $('.action_show_other_type').click(function () {
-    if($('.action_show_other_type').text().toLowerCase() === 'show private key') {
+  $('.action_show_other_type').click(function() {
+    if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
       $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
       $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
       $('.key_type').text('Private Key');
@@ -56,6 +56,6 @@ tool.catch.try(async () => {
 
   let clipboard_options = {text: () => key.toPublic().armor()};
   // @ts-ignore
-  new window.ClipboardJS('.action_copy_pubkey', clipboard_options);
+  let cbjs = new window.ClipboardJS('.action_copy_pubkey', clipboard_options);
 
 })();

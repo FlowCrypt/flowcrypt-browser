@@ -4,7 +4,6 @@
 
 declare let qq: any;
 
-
 class Attach {
 
   private template_path = '/chrome/elements/shared/attach.template.htm';
@@ -55,7 +54,7 @@ class Attach {
 
   collect_attachments = async () => {
     let attachments: Attachment[] = [];
-    for(let id of Object.keys(this.attached_files)) {
+    for (let id of Object.keys(this.attached_files)) {
       attachments.push(await this.collect_attachment(id));
     }
     return attachments;
@@ -63,10 +62,10 @@ class Attach {
 
   collect_and_encrypt_attachments = async (armored_pubkeys: string[], challenge: Challenge|null): Promise<Attachment[]> => {
     let attachments: Attachment[] = [];
-    for(let id of Object.keys(this.attached_files)) {
+    for (let id of Object.keys(this.attached_files)) {
       let file = this.attached_files[id];
       let file_data = await this.read_attachment_data_as_uint8(id);
-      let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false);
+      let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
       attachments.push(tool.file.attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted.message.packets.write()));
     }
     return attachments;
@@ -78,14 +77,14 @@ class Attach {
 
   private process_new_attachment = (id: string, name: string) => {
     let limits = this.get_limits();
-    if(limits.count && Object.keys(this.attached_files).length >= limits.count) {
+    if (limits.count && Object.keys(this.attached_files).length >= limits.count) {
       alert('Amount of attached files is limited to ' + limits.count);
       this.uploader.cancel(id);
     } else {
       let new_file = this.uploader.getFile(id);
-      if(limits.size && this.get_file_size_sum() + new_file.size > limits.size) {
+      if (limits.size && this.get_file_size_sum() + new_file.size > limits.size) {
         this.uploader.cancel(id);
-        if(typeof limits.oversize === 'function') {
+        if (typeof limits.oversize === 'function') {
           limits.oversize(this.get_file_size_sum() + new_file.size);
         } else {
           alert('Combined file size is limited to ' + limits.size_mb + 'MB');
@@ -93,7 +92,7 @@ class Attach {
         return;
       }
       this.attached_files[id] = new_file;
-      if(typeof this.attachment_added_callback === 'function') {
+      if (typeof this.attachment_added_callback === 'function') {
         this.collect_attachment(id).then((a) => this.attachment_added_callback(a));
       }
     }
@@ -101,7 +100,7 @@ class Attach {
 
   private get_file_size_sum = () => {
     let sum = 0;
-    for(let file of Object.values(this.attached_files)) {
+    for (let file of Object.values(this.attached_files)) {
       sum += file.size;
     }
     return sum;
@@ -111,7 +110,7 @@ class Attach {
     return new Promise(resolve => {
       let reader = new FileReader();
       reader.onload = () => resolve(new Uint8Array(reader.result));
-      reader.readAsArrayBuffer(this.attached_files[id]);  
+      reader.readAsArrayBuffer(this.attached_files[id]);
     });
   }
 
