@@ -456,7 +456,7 @@ tool.catch.try(async () => {
           await save_keys(account_email, [prv], options);
           await finalize_setup(account_email, prv.toPublic().armor(), options);
         } else { // cannot get a valid encryption key packet
-          if (await prv.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await tool.crypto.key.expired_for_encryption(prv)) { // known issues - key can be fixed
+          if (await prv.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await tool.crypto.key.usable_but_expired(prv)) { // known issues - key can be fixed
             await render_compatibility_fix_block_and_finalize_setup(prv, options);
           } else {
             alert('This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');

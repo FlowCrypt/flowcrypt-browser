@@ -924,27 +924,6 @@ let tool = {
           throw e;
         }
       },
-      expired_for_encryption: async (key: OpenPGP.key.Key) => {
-        return false;
-
-        // TODO
-
-        // if (await key.getEncryptionKeyPacket()) {
-        //   return false;
-        // }
-        // if (await key.verifyPrimaryKey() === openpgp.enums.keyStatus.expired) {
-        //   return true;
-        // }
-        // let found_expired_subkey = false;
-        // for (let sub_key of key.subKeys || []) {
-        //   // todo - the function seems to be dated - redo this whole section
-        //   if (await sub_key.verify(key.primaryKey) === openpgp.enums.keyStatus.expired && sub_key.isValidEncryptionKey(key.primaryKey)) {
-        //     found_expired_subkey = true;
-        //     return false;
-        //   }
-        // }
-        // return found_expired_subkey; // todo - shouldn't we be checking that ALL subkeys are either invalid or expired to declare a key expired?
-      },
       normalize: (armored: string) => {
         try {
           armored = tool.crypto.armor.normalize(armored, 'key');
@@ -1013,9 +992,30 @@ let tool = {
         if (!pubkey) {
           return false;
         }
-        tool._.crypto_key_patch_public_keys_to_ignore_expiration([pubkey]);
-        return await pubkey.getEncryptionKey() !== null;
+        if(await pubkey.getEncryptionKey() !== null) {
+          return true; // good key - cannot be expired
+        }
+        return await tool.crypto.key.usable_but_expired(pubkey);
       },
+      usable_but_expired: async (key: OpenPGP.key.Key): Promise<boolean> => {
+        if(await key.getEncryptionKey() !== null) {
+          return false; // good key - cannot be expired
+        }
+        let one_second_before_expiration = await tool.crypto.key.date_before_expiration(key);
+        if(one_second_before_expiration === null) {
+          return false; // key does not expire
+        }
+        // try to see if the key was usable just before expiration
+        return await key.getEncryptionKey(null, one_second_before_expiration) !== null;
+      },
+      date_before_expiration: async (key: OpenPGP.key.Key): Promise<Date|null> => {
+        let expires = await key.getExpirationTime();
+        if(expires instanceof Date && expires.getTime() < Date.now()) { // expired
+          return new Date(expires.getTime() - 1000);
+        }
+        return null;
+      },
+
     },
     message: {
       is_openpgp: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => {
@@ -1121,18 +1121,14 @@ let tool = {
           return {success: false, error: tool._.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
         }
       },
-      encrypt: (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean): Promise<OpenPGP.EncryptResult> => {
-        let options: OpenPGP.EncryptOptions = { data, armor };
-        if (filename) {
-          options.filename = filename;
-        }
+      encrypt: async (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
+        let options: OpenPGP.EncryptOptions = { data, armor, date: date || undefined, filename: filename || undefined };
         let used_challange = false;
         if (armored_pubkeys) {
           options.publicKeys = [];
           for (let armored_pubkey of armored_pubkeys) {
             options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armored_pubkey).keys);
           }
-          tool._.crypto_key_patch_public_keys_to_ignore_expiration(options.publicKeys);
         }
         if (challenge && challenge.answer) {
           options.passwords = [tool.crypto.hash.challenge_answer(challenge.answer)];
@@ -1145,7 +1141,7 @@ let tool = {
         if (signing_prv && typeof signing_prv.isPrivate !== 'undefined' && signing_prv.isPrivate()) {
           options.privateKeys = [signing_prv];
         }
-        return openpgp.encrypt(options); // returns a promise
+        return await openpgp.encrypt(options);
       },
     },
     password: {
@@ -1586,6 +1582,7 @@ let tool = {
     },
     common: {
       message: (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): SendableMessage => {
+        // TODO
         // let [primary_pubkey] = await Store.keys_get(account_email, ['primary']); // todo - changing to async - add back later
         // headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
         //   OpenPGP: 'id=' + primary_pubkey.fingerprint,
@@ -2509,29 +2506,6 @@ let tool = {
       } else {
         return {type: DecryptErrorTypes.other, error: e};
       }
-    },
-    crypto_key_patch_public_keys_to_ignore_expiration: (keys: OpenPGP.key.Key[]) => { // may deprecate this
-      // TODO
-
-      // let openpgpjs_original_isValidEncryptionKeyPacket = function(keyPacket: any, signature: any) {
-      //   return keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.dsa) && keyPacket.algorithm !== openpgp.enums.read(openpgp.enums.publicKey, openpgp.enums.publicKey.rsa_sign) && (!signature.keyFlags || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & openpgp.enums.keyFlags.encrypt_storage) !== 0);
-      // };
-      // for (let key of keys) {
-      //   for (let subKey of key.subKeys || []) {
-      //     subKey.isValidEncryptionKey = function(primaryKey: any) {
-      //       let verifyResult = this.verify(primaryKey);
-      //       if (verifyResult !== openpgp.enums.keyStatus.valid && verifyResult !== openpgp.enums.keyStatus.expired) {
-      //         return false;
-      //       }
-      //       for (let i = 0; i < this.bindingSignatures.length; i++) {
-      //         if (openpgpjs_original_isValidEncryptionKeyPacket(this.subKey, this.bindingSignatures[i])) {
-      //           return true;
-      //         }
-      //       }
-      //       return false;
-      //     };
-      //   }
-      // }
     },
     readable_crack_time: (total_seconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
       function numberEnding(number: number) {

@@ -277,6 +277,7 @@ table#compose td#input_addresses_container > div .recipients { height: auto; pos
 table#compose td#input_addresses_container > div .recipients span { padding: 5px 15px 6px 15px; }
 table#compose td#input_addresses_container > div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
 table#compose td#input_addresses_container > div .recipients span > img.repeat-icon { right: -6px; top: 1px;}
+table#compose td#input_addresses_container > div .recipients span > img.expired-time { opacity: 1; };
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
 table#compose td#input_addresses_container > div .recipients span .close-icon { right: -7px; height: 9px; width: 9px; top:0; cursor: pointer; }
@@ -288,7 +289,6 @@ table#compose td#input_addresses_container > div .recipients span.has_pgp { back
 table#compose td#input_addresses_container > div .recipients span.attested { background: #31A217; color: white;}
 table#compose td#input_addresses_container > div .recipients span.attested img { opacity: 1; }
 table#compose td#input_addresses_container > div .recipients span.expired { background: #31A217; color: black;}
-table#compose td#input_addresses_container > div .recipients span img .expired-time {width: 12px; height: 12px; top: 1px; left: -6px;}
 table#compose td#input_addresses_container > div .recipients span.no_pgp { background: #989898; color: white;}
 table#compose td#input_addresses_container > div .recipients span.failed { border: 1px dashed #A44; }
 table#compose td#input_addresses_container > div .recipients span.failed .close-icon { opacity: 1; }

@@ -685,8 +685,38 @@ class Composer {
     })});
   }
 
+  private encrypt_message_as_of_date_if_some_are_expired = async (armored_pubkeys: string[]): Promise<Date|null> => {
+    let usable_until: number[] = [];
+    let usable_from: number[] = [];
+    for(let armored_pubkey of armored_pubkeys) {
+      let k = openpgp.key.readArmored(armored_pubkey).keys[0];
+      let one_second_before_expiration = await tool.crypto.key.date_before_expiration(k);
+      usable_from.push(k.getCreationTime().getTime());
+      if(one_second_before_expiration !== null) { // key does expire
+        usable_until.push(one_second_before_expiration.getTime());
+      }
+    }
+    if(!usable_until.length) { // none of the keys expire
+      return null;
+    }
+    if(Math.max(...usable_until) > Date.now()) { // all keys either don't expire or expire in the future
+      return null;
+    }
+    let usable_time_from = Math.max(...usable_from);
+    let usable_time_until = Math.min(...usable_until);
+    if(usable_time_from > usable_time_until) { // used public keys have no intersection of usable dates
+      alert('The public key of one of your recipients has been expired for too long.\n\nPlease ask the recipient to send you an updated Public Key.');
+      throw new ComposerResetBtnTrigger();
+    }
+    if(!confirm('The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)')) {
+      throw new ComposerResetBtnTrigger();
+    }
+    return new Date(usable_time_until); // latest date none of the keys were expired
+  }
+
   private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
-    let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true) as OpenPGP.EncryptArmorResult;
+    let encrypt_as_of_date = await this.encrypt_message_as_of_date_if_some_are_expired(armored_pubkeys);
+    let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
     let body = {'text/plain': encrypted.data} as SendableMessageBody;
     await this.app.storage_contact_update(recipients, {last_use: Date.now()});
     this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -1189,7 +1219,7 @@ class Composer {
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
-    } else if (contact.pubkey && await tool.crypto.key.expired_for_encryption(openpgp.key.readArmored(contact.pubkey).keys[0])) {
+    } else if (contact.pubkey && await tool.crypto.key.usable_but_expired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
       $(email_element).prepend('<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipient_key_id_text(contact));
