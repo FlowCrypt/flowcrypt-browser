@@ -780,6 +780,7 @@ declare namespace OpenPGP {
       constructor(packetlist: packet.List<packet.AnyPacket>);
       armor(): string;
       decrypt(passphrase: string|string[]): Promise<boolean>;
+      encrypt(passphrase: string|string[]): Promise<void>;
       getExpirationTime(): Date|typeof Infinity;
       getKeyIds(): Keyid[];
       getPrimaryUser(): any;

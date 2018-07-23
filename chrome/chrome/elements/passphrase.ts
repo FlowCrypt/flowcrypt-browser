@@ -63,19 +63,19 @@ tool.catch.try(async () => {
 
   $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     let pass = $('#passphrase').val() as string; // it's a text input
-    let is_correct = false;
+    let storage_type: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
+    let at_least_one_matched = false;
     for (let keyinfo of selected_private_keys) { // if passphrase matches more keys, it will save them all
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
-      if (await tool.crypto.key.decrypt(prv, [pass]) !== true) {
-        is_correct = true;
-        let storage: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
-        await Store.passphrase_save(storage, account_email, keyinfo.longid, pass);
-        tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
-        tool.browser.message.send(parent_tab_id, 'close_dialog');
-        break;
+      if (await tool.crypto.key.decrypt(prv, [pass]) === true) {
+        await Store.passphrase_save(storage_type, account_email, keyinfo.longid, pass);
+        at_least_one_matched = true;
       }
     }
-    if (is_correct === false) {
+    if (at_least_one_matched) {
+      tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
+      tool.browser.message.send(parent_tab_id, 'close_dialog');
+    } else {
       render_error();
       setTimeout(render_normal, 1500);
     }

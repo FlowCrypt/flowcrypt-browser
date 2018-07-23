@@ -96,16 +96,10 @@ class Settings {
   }
 
   static openpgp_key_encrypt = async (key: OpenPGP.key.Key, passphrase: string) => {
-    if (key.isPrivate() && passphrase) {
-      let keys = key.getKeys() as OpenPGP.packet.List<OpenPGP.packet.AnySecretPacket>;
-      for (let i = 0; i < keys.length; i++) {
-        await keys[i].encrypt(passphrase);
-      }
-    } else if (!passphrase) {
+    if (!passphrase) {
       throw new Error("Encryption passphrase should not be empty");
-    } else {
-      throw new Error("Nothing to encrypt in a public key");
     }
+    await key.encrypt(passphrase);
   }
 
   private static prepare_new_settings_location_url = (account_email: string|null, parent_tab_id: string, page: string, add_url_text_or_params: string|UrlParams|null=null): string => {
