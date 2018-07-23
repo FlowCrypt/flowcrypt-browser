@@ -419,7 +419,7 @@ class Composer {
     if (passphrase !== null) {
       tool.crypto.message.decrypt(this.account_email, encrypted_draft, null, async result => {
         if (result.success) {
-          let safe_html_draft = await tool.str.as_safe_html((result.content.data as string).replace(/\n/g, '<br>\n'));
+          let safe_html_draft = await tool.str.as_safe_html(result.content.data.replace(/\n/g, '<br>\n'));
           this.S.cached('input_text').html(safe_html_draft);
           if (headers && headers.to && headers.to.length) {
             this.S.cached('input_to').focus();

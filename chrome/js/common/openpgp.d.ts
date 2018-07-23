@@ -782,7 +782,7 @@ declare namespace OpenPGP {
   export namespace message {
     /** Class that represents an OpenPGP message. Can be an encrypted message, signed message, compressed message or literal message
      */
-    interface Message {
+    class Message {
       /** Returns ASCII armored text of message
        */
       armor(): string;
@@ -790,12 +790,12 @@ declare namespace OpenPGP {
       /** Decrypt the message
           @param privateKey private key with decrypted secret data
       */
-      decrypt(privateKey: key.Key): Message[];
+      decrypt(privateKeys?: key.Key[]|null, passwords?: string[]|null, sessionKeys?: SessionKey[]|null): Promise<Message>;
 
       /** Encrypt the message
           @param keys array of keys, used to encrypt the message
       */
-      encrypt(keys: key.Key[]): Message[];
+      encrypt(keys: key.Key[]): Promise<Message>;
 
       /** Returns the key IDs of the keys to which the session key is encrypted
        */
@@ -803,20 +803,22 @@ declare namespace OpenPGP {
 
       /** Get literal data that is the body of the message
        */
-      getLiteralData(): string;
+      getLiteralData(): Uint8Array;
 
       /** Returns the key IDs of the keys that signed the message
        */
-      getSigningKeyIds(): Array<Keyid>;
+      getSigningKeyIds(): Keyid[];
 
       /** Get literal data as text
        */
       getText(): string;
 
+      getFilename(): string|null;
+
       /** Sign the message (the literal data packet of the message)
           @param privateKey private keys with decrypted secret key data for signing
       */
-      sign(privateKey: Array<key.Key>): Message;
+      sign(privateKey: key.Key[]): Message;
 
       /** Unwrap compressed message
        */
@@ -825,7 +827,7 @@ declare namespace OpenPGP {
       /** Verify message signatures
           @param keys array of keys to verify signatures
       */
-      verify(keys: Array<key.Key>): Array<object>;
+      verify(keys: key.Key[]): object[]; // todo
 
       /**
        * Append signature to unencrypted message object
@@ -834,6 +836,10 @@ declare namespace OpenPGP {
       appendSignature(detachedSignature: string|Uint8Array): void;
 
       packets: packet.List<packet.AnyPacket>;
+    }
+
+    class SessionKey { // todo
+
     }
 
     /** creates new message object from binary data

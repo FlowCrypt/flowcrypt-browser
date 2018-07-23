@@ -144,8 +144,8 @@ interface DecryptedErrorCounts {
 interface DecryptSuccess {
     success: true;
     content: {
-      data: string|Uint8Array;
-      filename?: string;
+      data: string;
+      filename: string|null;
     };
     signature: MessageVerifyResult|null;
     encrypted: boolean|null;
