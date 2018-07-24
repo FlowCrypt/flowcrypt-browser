@@ -11,13 +11,7 @@
 !/config/.gitignore
 /test/puppeteer.json
 /test/node_modules/
-/test/test.js
-/chrome/js/common/composer.js
-/chrome/js/common/common.js
-/chrome/js/background_process/attests.js
-/chrome/js/background_process/background_process.js
-/chrome/js/background_process/migrations.js
-/chrome/js/background_process/inject.js
+/test/build/*
 /node_modules/
 /build/*
 *.code-workspace
