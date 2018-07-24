@@ -31,6 +31,7 @@ rules:
     no-unused-expression: true
     no-floating-promises: true
     ordered-imports: false
+    align: false
     # todo - allow stuff below
     only-arrow-functions: false
     object-literal-shorthand: true
