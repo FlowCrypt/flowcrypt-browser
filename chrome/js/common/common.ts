@@ -335,9 +335,7 @@ let tool = {
         }
       });
     },
-    webmails: (cb: (wm: string[]) => void): void => {
-      cb(['gmail', 'inbox']);
-    },
+    webmails: async (): Promise<WebMailName[]> => ['gmail', 'inbox'], // async because storage may be involved in the future
   },
   arr: {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
@@ -400,6 +398,7 @@ let tool = {
         }
       }, 50);
     }),
+    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = setTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
     get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
     hours: (h: number) =>  h * 1000 * 60 * 60, // hours in miliseconds
     expiration_format: (date: string) => tool.str.html_escape(date.substr(0, 10)),

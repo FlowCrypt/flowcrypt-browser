@@ -17,11 +17,9 @@ tool.catch.try(async () => {
     $('.settings-icons-rows').css({position: 'relative', left: '64px'}); // lost a button - center it again
   }
 
-  tool.env.webmails((webmails) => {
-    for (let webmail_name of webmails) {
-      $('.signin_button.' + webmail_name).css('display', 'inline-block');
-    }
-  });
+  for (let webmail_name of await tool.env.webmails()) {
+    $('.signin_button.' + webmail_name).css('display', 'inline-block');
+  }
 
   let tab_id = await tool.browser.message.required_tab_id();
 

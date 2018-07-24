@@ -2,74 +2,71 @@
 
 'use strict';
 
-let content_script_setup_if_vacant = (webmail_specific: WebmailSpecificInfo) => {
+let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInfo) => {
 
-  let account_email_interval = 1000;
-  let factory: Factory;
-  let inject: Injector;
-  let notifications: Notifications;
+  let set_up_notification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
+  let was_destroyed = false;
+  class DestroyTrigger extends Error {}
 
-  let wait_for_account_email_then_setup = () => {
-    let account_email = webmail_specific.get_user_account_email();
-    if (!(window as ContentScriptWindow).account_email_global) {
+  let wait_for_account_email = async (): Promise<string> => {
+    let account_email_interval = 1000;
+    let webmails = await tool.env.webmails();
+    while(true) {
+      let account_email = webmail_specific.get_user_account_email();
       if (typeof account_email !== 'undefined' && tool.catch.version()) {
-        console.info('Loading FlowCrypt ' + tool.catch.version() + ' for ' + account_email);
         (window as ContentScriptWindow).account_email_global = account_email;
-        tool.env.webmails(webmails => {
-          if (tool.value(webmail_specific.name).in(webmails)) {
-            setup(account_email!); // checked above
-          } else {
-            console.log('FlowCrypt disabled: ' + webmail_specific.name + ' integration currently for development only');
-          }
-        });
-      } else {
-        if (account_email_interval > 6000) {
-          console.info('Cannot load FlowCrypt yet. Page: ' + window.location + ' (' + document.title + ')');
+        if (tool.value(webmail_specific.name).in(webmails)) {
+          console.info(`Loading FlowCrypt ${tool.catch.version()} for ${account_email}`);
+          return account_email;
+        } else {
+          console.info('FlowCrypt disabled: ' + webmail_specific.name + ' integration currently for development only');
+          throw new DestroyTrigger();
         }
-        account_email_interval += 1000;
-        (window as ContentScriptWindow).TrySetDestroyableTimeout(wait_for_account_email_then_setup, account_email_interval);
+      }
+      if (account_email_interval > 6000) {
+        console.info(`Cannot load FlowCrypt yet. Page: ${window.location} (${document.title})`);
+      }
+      await tool.time.sleep(account_email_interval, (window as ContentScriptWindow).TrySetDestroyableTimeout);
+      account_email_interval += 1000;
+      if(was_destroyed) {
+        throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
       }
     }
   };
 
-  // called by wait_for_account_email_then_setup
-  let setup = (account_email: string) => {
-    tool.browser.message.required_tab_id().then(tab_id => {
-      notifications = new Notifications(tab_id);
-      factory = new Factory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
-      inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
-      inject.meta();
-      // noinspection JSIgnoredPromiseFromCall
-      Store.account_emails_add(account_email);
-      save_account_email_full_name_if_needed(account_email);
-      let show_setup_needed_notification_if_setup_not_done = true;
-      let wait_for_setup_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        Store.get_account(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']).then(storage => {
-          if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
-            notifications.clear();
-            initialize(account_email, tab_id);
-            clearInterval(wait_for_setup_interval);
-          } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
-            let set_up_notification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
-            notifications.show(set_up_notification, {
-              notification_setup_needed_dismiss: () => {
-                Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear());
-              },
-              action_open_settings: () => {
-                tool.browser.message.send(null, 'settings', {account_email});
-              },
-              close: () => {
-                show_setup_needed_notification_if_setup_not_done = false;
-              },
-            });
-          }
-        });
-      }, 1000);
-    });
+  let initialize_internal_variables = async (account_email: string) => {
+    let tab_id = await tool.browser.message.required_tab_id();
+    let notifications = new Notifications(tab_id);
+    let factory = new Factory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
+    let inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
+    inject.meta();
+    await Store.account_emails_add(account_email);
+    save_account_email_full_name_if_needed(account_email).catch(tool.catch.handle_promise_error); // may take a long time, thus async
+    return {tab_id, notifications, factory, inject};
   };
 
-  // called by setup
-  let initialize = (account_email: string, tab_id: string) => {
+  let show_notifications_and_wait_until_account_set_up = async (account_email: string, notifications: Notifications) => {
+    let show_setup_needed_notification_if_setup_not_done = true;
+    while(true) {
+      let storage = await Store.get_account(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
+      if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
+        notifications.clear();
+        return;
+      } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
+        notifications.show(set_up_notification, {
+          notification_setup_needed_dismiss: () => Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(tool.catch.handle_promise_error),
+          action_open_settings: () => tool.browser.message.send(null, 'settings', {account_email}),
+          close: () => { show_setup_needed_notification_if_setup_not_done = false; },
+        });
+      }
+      await tool.time.sleep(3000, (window as ContentScriptWindow).TrySetDestroyableTimeout);
+      if(was_destroyed) {
+        throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
+      }
+    }
+  };
+
+  let browser_message_listen = (account_email: string, tab_id: string, inject: Injector, factory: Factory, notifications: Notifications) => {
     tool.browser.message.listen({
       open_new_message: data => inject.open_compose_window(),
       close_new_message: data => $('div.new_message').remove(),
@@ -110,36 +107,45 @@ let content_script_setup_if_vacant = (webmail_specific: WebmailSpecificInfo) => 
         notifications.show_auth_popup_needed(data.account_email);
       },
     }, tab_id);
-
-    tool.browser.message.send(null, 'migrate_account', {account_email}, () => {
-      webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
-    });
   };
 
-  let save_account_email_full_name_if_needed = (account_email: string) => {
-    Store.get_account(account_email, ['full_name']).then(storage => {
-      if (typeof storage.full_name === 'undefined') {
-        save_account_email_full_name(account_email);
+  let save_account_email_full_name_if_needed = async (account_email: string) => {
+    let storage = await Store.get_account(account_email, ['full_name']);
+    let timeout = 1000;
+    if (typeof storage.full_name === 'undefined') {
+      while(true) {
+        let full_name = webmail_specific.get_user_full_name();
+        if(full_name) {
+          await Store.set(account_email, {full_name});
+          return;
+        }
+        await tool.time.sleep(timeout, (window as ContentScriptWindow).TrySetDestroyableTimeout);
+        timeout += 1000;
+        if(was_destroyed) {
+          return;
+        }
       }
-    });
-  };
-
-  let save_account_email_full_name = (account_email: string) => {
-    // will cycle until page loads and name is accessible
-    // todo - create general event on_webmail_finished_loading for similar actions
-    (window as ContentScriptWindow).TrySetDestroyableTimeout(() => {
-      let full_name = webmail_specific.get_user_full_name();
-      if (full_name) {
-        // noinspection JSIgnoredPromiseFromCall
-        Store.set(account_email, {full_name});
-      } else {
-        save_account_email_full_name(account_email);
-      }
-    }, 1000);
+    }
   };
 
   let notify_murdered = () => {
     document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>';
+  };
+
+  let entrypoint = async () => {
+    try {
+      let account_email = await wait_for_account_email();
+      let {tab_id, notifications, factory, inject} = await initialize_internal_variables(account_email);
+      await show_notifications_and_wait_until_account_set_up(account_email, notifications);
+      browser_message_listen(account_email, tab_id, inject, factory, notifications);
+      tool.browser.message.send(null, 'migrate_account', {account_email}, () => {
+        webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
+      });
+    } catch(e) {
+      if(!(e instanceof DestroyTrigger)) {
+        tool.catch.handle_exception(e);
+      }
+    }
   };
 
   if (!(window as ContentScriptWindow).injected) {
@@ -175,6 +181,7 @@ let content_script_setup_if_vacant = (webmail_specific: WebmailSpecificInfo) => 
         $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadable_element) => {
           $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
         });
+        was_destroyed = true;
       })();
     };
 
@@ -198,7 +205,7 @@ let content_script_setup_if_vacant = (webmail_specific: WebmailSpecificInfo) => 
     document.addEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
 
     if ((window as ContentScriptWindow).vacant()) {
-      wait_for_account_email_then_setup();
+      await entrypoint();
     } else if (tool.env.browser().name === 'firefox') {
       notify_murdered();
     }

@@ -4,7 +4,7 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-tool.catch.try(() => {
+tool.catch.try(async () => {
 
   const replace_pgp_elements_interval_ms = 1000;
   let replace_pgp_elements_interval: number;
@@ -95,7 +95,7 @@ tool.catch.try(() => {
   };
 
   host_page_info = get_insights_from_host_variables();
-  content_script_setup_if_vacant({
+  await content_script_setup_if_vacant({
     name: 'gmail',
     variant: host_page_info.gmail_variant,
     get_user_account_email,
