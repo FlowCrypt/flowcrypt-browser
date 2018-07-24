@@ -33,12 +33,12 @@ tool.catch.try(async () => {
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
 
-  $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
+  $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), () => {
     let file = tool.file.keyinfo_as_pubkey_attachment(primary_ki);
     tool.file.save_to_downloads(file.name, file.type, file.content!, tool.env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
-  $('.action_show_other_type').click(function() {
+  $('.action_show_other_type').click(() => {
     if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
       $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
       $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');

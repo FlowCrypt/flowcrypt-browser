@@ -27,16 +27,16 @@ class InboxElementReplacer implements WebmailElementReplacer {
     this.replace_armored_blocks();
     this.replace_standard_reply_box();
     this.replace_attachments();
-  };
+  }
 
   set_reply_box_editable = () => {
     throw Error('not implemented');
-  };
+  }
 
   reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
-    let params = { subject: subject, reply_to: reply_to, addresses: this.addresses, my_email: my_email, thread_id: thread_id, thread_message_id: thread_id };
+    let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
     $('.reply_message_iframe_container').append(this.factory.embedded_reply(params, false, true));
-  };
+  }
 
   private replace_armored_blocks = () => {
     let self = this;
@@ -50,7 +50,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
         $(message_element).html(replacement.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>'));
       }
     });
-  };
+  }
 
   private replace_standard_reply_box = (editable=false, force_replace_even_if_pgp_block_is_not_present=false) => {
     let self = this;
@@ -58,10 +58,10 @@ class InboxElementReplacer implements WebmailElementReplacer {
       let root_element = self.dom_get_conversation_root_element(reply_box);
       if (root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force_replace_even_if_pgp_block_is_not_present)) {
         let iframe = self.factory.embedded_reply(self.get_conversation_params(root_element), editable);
-        $(reply_box).addClass('reply_message_iframe_container').html(iframe).children(':not(iframe)').css('display', 'none'); //.addClass('remove_borders')
+        $(reply_box).addClass('reply_message_iframe_container').html(iframe).children(':not(iframe)').css('display', 'none'); // .addClass('remove_borders')
       }
     });
-  };
+  }
 
   private replace_attachments = () => {
     let self = this;
@@ -89,7 +89,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
         }
       }
     });
-  };
+  }
 
   // todo - mostly the same as gmail/replace.ts
   private process_attachments = (message_id: string, message_element: JQuery<HTMLElement>, attachment_metas: Attachment[], attachments_container: JQuery<HTMLElement>|HTMLElement, skip_google_drive=false) => {
@@ -133,14 +133,14 @@ class InboxElementReplacer implements WebmailElementReplacer {
       not_processed_attachments_loaders.each((i, loader_element) => {
         try {
           let meta = $(loader_element).parent().attr('download_url')!.split(':');
-          google_drive_attachments.push({ message_id: message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted', size: 0});
+          google_drive_attachments.push({ message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted', size: 0});
         } catch (e) {
           tool.catch.report(e);
         }
       });
       this.process_attachments(message_id, message_element, google_drive_attachments, attachments_container, true);
     }
-  };
+  }
 
   private get_attachment_selector = (file_name_filter: string) => {
     if (file_name_filter.indexOf('*.') === 0) { // ends with
@@ -148,18 +148,18 @@ class InboxElementReplacer implements WebmailElementReplacer {
     } else { // exact name
       return 'div[title="' + file_name_filter.replace(/@/g, '%40') + '"]';
     }
-  };
+  }
 
   private hide_attachment = (atachment_element: JQuery<HTMLElement>|HTMLElement, attachments_container_selector: JQuery<HTMLElement>|HTMLElement) => {
     $(atachment_element).css('display', 'none');
     if (!$(atachment_element).length) {
       $(attachments_container_selector).children('.attachment_loader').text('Missing file info');
     }
-  };
+  }
 
   private dom_get_conversation_root_element = (base_element: HTMLElement) => {
     return $(base_element).parents('.top-level-item').first();
-  };
+  }
 
   private dom_extract_sender_email = (base_element: HTMLElement|JQuery<HTMLElement>) => {
     if ($(base_element).is('.top-level-item')) {
@@ -167,7 +167,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
     } else {
       return $(base_element).parents('.ap').find('.fX').attr('email');
     }
-  };
+  }
 
   private dom_extract_recipients = (base_element: HTMLElement|JQuery<HTMLElement>) => {
     let m;
@@ -184,25 +184,25 @@ class InboxElementReplacer implements WebmailElementReplacer {
       }
     });
     return recipients;
-  };
+  }
 
   private dom_extract_message_id = (base_element: HTMLElement|JQuery<HTMLElement>) => {
     let inbox_msg_id_match = ($(base_element).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
     if (inbox_msg_id_match) {
       return tool.str.int_to_hex(inbox_msg_id_match[0]);
     }
-  };
+  }
 
   private dom_extract_subject = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
     return $(conversation_root_element).find('.eo').first().text();
-  };
+  }
 
   private dom_extract_thread_id = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
     let inbox_thread_id_match = ($(conversation_root_element).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
     if (inbox_thread_id_match) {
       return tool.str.int_to_hex(inbox_thread_id_match[0]);
     }
-  };
+  }
 
   private get_conversation_params = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
     let thread_id = this.dom_extract_thread_id(conversation_root_element);
@@ -212,10 +212,9 @@ class InboxElementReplacer implements WebmailElementReplacer {
       reply_to: headers.to,
       addresses: this.addresses,
       my_email: headers.from,
-      thread_id: thread_id,
+      thread_id,
       thread_message_id: thread_id ? thread_id : this.dom_extract_message_id($(conversation_root_element).find('.ap').last().children().first()), // backup
     };
-  };
+  }
 
 }
-

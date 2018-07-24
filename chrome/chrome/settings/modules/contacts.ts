@@ -14,7 +14,7 @@ tool.catch.try(async () => {
 
   tool.browser.message.listen({}, tab_id); // set_css
 
-  async function render_contact_list() {
+  let render_contact_list = async () => {
     let contacts = await Store.db_contact_search(null, { has_pgp: true });
 
     $('.line.actions').html('&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {
@@ -58,7 +58,7 @@ tool.catch.try(async () => {
       $('#page_back_button').click(render_contact_list);
     }));
 
-    $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
+    $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       let email = $(self).closest('tr').attr('email')!;
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + email + '&nbsp;&nbsp;&nbsp;&nbsp;(edit)');
@@ -81,7 +81,7 @@ tool.catch.try(async () => {
       }
     }));
 
-    $('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
+    $('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;Bulk Public Key Import&nbsp;&nbsp;&nbsp;&nbsp;');
       $('#bulk_import').css('display', 'block');
@@ -91,7 +91,7 @@ tool.catch.try(async () => {
       $('#page_back_button').click(() => render_contact_list());
     }));
 
-    $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), function(self) {
+    $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       let replaced = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
       if (!replaced || replaced === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
@@ -106,7 +106,7 @@ tool.catch.try(async () => {
       await render_contact_list();
     }));
 
-  }
+  };
 
   // noinspection JSIgnoredPromiseFromCall
   render_contact_list();

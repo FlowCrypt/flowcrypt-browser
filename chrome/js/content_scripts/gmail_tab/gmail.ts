@@ -9,18 +9,9 @@ tool.catch.try(() => {
   const replace_pgp_elements_interval_ms = 1000;
   let replace_pgp_elements_interval: number;
   let replacer: GmailElementReplacer;
-  let host_page_info = get_insights_from_host_variables();
+  let host_page_info: WebmailVariantObject;
 
-  content_script_setup_if_vacant({
-    name: 'gmail',
-    variant: host_page_info.gmail_variant,
-    get_user_account_email,
-    get_user_full_name: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
-    get_replacer: () => replacer,
-    start,
-  });
-
-  function get_user_account_email(): undefined|string {
+  let get_user_account_email = (): undefined|string => {
     if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
       if (host_page_info.email) {
         return host_page_info.email;
@@ -34,9 +25,9 @@ tool.catch.try(() => {
         return email_from_account_dropdown;
       }
     }
-  }
+  };
 
-  function get_insights_from_host_variables() {
+  let get_insights_from_host_variables = () => {
     let insights: WebmailVariantObject = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
     $('body').append(['<script>', '(function() {',
       'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
@@ -68,9 +59,9 @@ tool.catch.try(() => {
       }
     } catch (e) {} // tslint:disable-line:no-empty
     return insights;
-  }
+  };
 
-  function start(account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) {
+  let start = (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => {
     hijack_gmail_hotkeys();
     Store.get_account(account_email, ['addresses', 'google_token_scopes']).then((storage: Dict<string[]>) => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
@@ -87,9 +78,9 @@ tool.catch.try(() => {
         }
       }, replace_pgp_elements_interval_ms);
     });
-  }
+  };
 
-  function hijack_gmail_hotkeys() {
+  let hijack_gmail_hotkeys = () => {
     let keys = tool.env.key_codes();
     let unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
     $(document).keypress(e => {
@@ -101,6 +92,16 @@ tool.catch.try(() => {
         }
       })();
     });
-  }
+  };
+
+  host_page_info = get_insights_from_host_variables();
+  content_script_setup_if_vacant({
+    name: 'gmail',
+    variant: host_page_info.gmail_variant,
+    get_user_account_email,
+    get_user_full_name: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
+    get_replacer: () => replacer,
+    start,
+  });
 
 })();

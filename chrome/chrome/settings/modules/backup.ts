@@ -24,49 +24,17 @@ tool.catch.try(async () => {
     return;
   }
 
-  if (url_params.action === 'setup') {
-    $('.back').css('display', 'none');
-    if (storage.setup_simple) {
-      display_block('step_1_password');
-      $('h1').text('Choose a pass phrase');
-    } else {
-      display_block('step_3_manual');
-      $('h1').text('Back up your private key');
-    }
-  } else if (url_params.action === 'passphrase_change_gmail_backup') {
-    if (storage.setup_simple) {
-      display_block('loading');
-      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
-      Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
-      try {
-        await do_backup_on_email_provider(account_email, primary_ki.private);
-        $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
-      } catch (e) {
-        $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
-        $('.reload').click(() => window.location.reload());
-      }
-    } else { // should never happen on this action. Just in case.
-      display_block('step_3_manual');
-      $('h1').text('Back up your private key');
-    }
-  } else if (url_params.action === 'options') {
-    display_block('step_3_manual');
-    $('h1').text('Back up your private key');
-  } else {
-    await show_status();
-  }
-
-  function display_block(name: string) {
+  let display_block = (name: string) => {
     let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
     for (let block of blocks) {
       $('#' + block).css('display', 'none');
     }
     $('#' + name).css('display', 'block');
-  }
+  };
 
   $('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
 
-  async function show_status() {
+  let show_status = async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     display_block('loading');
@@ -149,7 +117,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
       });
     }
-  }
+  };
 
   $('.action_password').click(function() {
     if ($(this).hasClass('green')) {
@@ -193,7 +161,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  async function is_master_private_key_encrypted(ki: KeyInfo) {
+  let is_master_private_key_encrypted = async (ki: KeyInfo) => {
     let k = openpgp.key.readArmored(ki.private).keys[0];
     if (k.primaryKey.isDecrypted()) {
       return false;
@@ -207,9 +175,9 @@ tool.catch.try(async () => {
       return false;
     }
     return true;
-  }
+  };
 
-  async function do_backup_on_email_provider(account_email: string, armored_key: string) {
+  let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
     let email_message = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
     let email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
     let message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
@@ -218,9 +186,9 @@ tool.catch.try(async () => {
     } else {
       throw Error(`Backup method not implemented for ${email_provider}`);
     }
-  }
+  };
 
-  async function backup_on_email_provider_and_update_ui(primary_ki: KeyInfo) {
+  let backup_on_email_provider_and_update_ui = async (primary_ki: KeyInfo) => {
     let pass_phrase = await Store.passphrase_get(account_email, primary_ki.longid);
     if (!pass_phrase || !await is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
       return;
@@ -236,9 +204,9 @@ tool.catch.try(async () => {
       btn.text(original_btn_text);
     }
     await write_backup_done_and_render(false, 'inbox');
-  }
+  };
 
-  async function backup_as_file(primary_ki: KeyInfo) { // todo - add a non-encrypted download option
+  let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     $(self).html(tool.ui.spinner('white'));
     if (tool.env.browser().name !== 'firefox') {
       tool.file.save_to_downloads('cryptup-' + (account_email).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private);
@@ -246,24 +214,24 @@ tool.catch.try(async () => {
     } else {
       tool.file.save_to_downloads('cryptup-' + (account_email).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private, $('.backup_action_buttons_container'));
     }
-  }
+  };
 
-  async function backup_by_print(primary_ki: KeyInfo) { // todo - implement + add a non-encrypted print option
+  let backup_by_print = async (primary_ki: KeyInfo) => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
-  }
+  };
 
-  async function backup_refused(ki: KeyInfo) {
+  let backup_refused = async (ki: KeyInfo) => {
     await write_backup_done_and_render(tool.time.get_future_timestamp_in_months(3), 'none');
-  }
+  };
 
-  async function write_backup_done_and_render(prompt: number|false, method: KeyBackupMethod) {
+  let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
     await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
     if (url_params.action === 'setup') {
       window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
       await show_status();
     }
-  }
+  };
 
   $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
@@ -284,7 +252,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  async function is_pass_phrase_strong_enough(ki: KeyInfo, pass_phrase: string) {
+  let is_pass_phrase_strong_enough = async (ki: KeyInfo, pass_phrase: string) => {
     if (!pass_phrase) {
       let pp = prompt('Please enter your pass phrase:');
       if (!pp) {
@@ -302,7 +270,7 @@ tool.catch.try(async () => {
     }
     alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
     return false;
-  }
+  };
 
   $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if (url_params.action === 'setup') {
@@ -328,5 +296,37 @@ tool.catch.try(async () => {
       $('.action_manual_backup').removeClass('green').addClass('red');
     }
   });
+
+  if (url_params.action === 'setup') {
+    $('.back').css('display', 'none');
+    if (storage.setup_simple) {
+      display_block('step_1_password');
+      $('h1').text('Choose a pass phrase');
+    } else {
+      display_block('step_3_manual');
+      $('h1').text('Back up your private key');
+    }
+  } else if (url_params.action === 'passphrase_change_gmail_backup') {
+    if (storage.setup_simple) {
+      display_block('loading');
+      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+      try {
+        await do_backup_on_email_provider(account_email, primary_ki.private);
+        $('#content').html('Pass phrase changed. You will find a new backup in your inbox.');
+      } catch (e) {
+        $('#content').html('Connection failed, please <a href="#" class="reload">try again</a>.');
+        $('.reload').click(() => window.location.reload());
+      }
+    } else { // should never happen on this action. Just in case.
+      display_block('step_3_manual');
+      $('h1').text('Back up your private key');
+    }
+  } else if (url_params.action === 'options') {
+    display_block('step_3_manual');
+    $('h1').text('Back up your private key');
+  } else {
+    await show_status();
+  }
 
 })();

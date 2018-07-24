@@ -32,9 +32,8 @@ rules:
     no-floating-promises: true
     ordered-imports: false
     align: false
-    # todo - allow stuff below
-    only-arrow-functions: true
     object-literal-shorthand: true
+    only-arrow-functions: true
     no-bitwise: false  # may enable in the future
     no-namespace: false  # can consider later
     jsdoc-format: false  # add back later

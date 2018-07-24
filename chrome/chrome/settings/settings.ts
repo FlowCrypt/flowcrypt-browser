@@ -163,7 +163,7 @@ class Settings {
             keys_to_remove.push(key.replace(filter, ''));
           }
         }
-        Store.remove(account_email, keys_to_remove).then(function() {
+        Store.remove(account_email, keys_to_remove).then(() => {
           for (let key of Object.keys(localStorage)) {
             if (key.indexOf(filter) === 0) {
               localStorage.removeItem(key);

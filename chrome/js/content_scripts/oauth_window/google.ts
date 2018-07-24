@@ -4,9 +4,9 @@
 
 const google_oauth2 = (chrome.runtime.getManifest() as any as FlowCryptManifest).oauth2;
 
-function api_google_auth_state_unpack(status_string: string): AuthRequest {
+let api_google_auth_state_unpack = (status_string: string): AuthRequest => {
   return JSON.parse(status_string.replace(google_oauth2.state_header, ''));
-}
+};
 
 let interval = setInterval(() => {
   if (!document.title) {

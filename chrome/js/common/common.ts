@@ -8,10 +8,10 @@
 'use strict';
 
 declare let $_HOST_html_to_text: (html: string) => string;
-declare let MimeParser: any;
-declare let MimeBuilder: any;
-declare var require: any;
-declare var exports: any;
+declare let MimeParser: AnyThirdPartyLibrary;
+declare let MimeBuilder: AnyThirdPartyLibrary;
+declare var require: AnyThirdPartyLibrary;
+declare var exports: AnyPlatformDependentCode;
 declare let openpgp: typeof OpenPGP;
 
 class UnreportableError extends Error {
@@ -212,7 +212,7 @@ let tool = {
     },
     extract_cryptup_attachments: (decrypted_content: string, cryptup_attachments: Attachment[]) => {
       if (tool.value('cryptup_file').in(decrypted_content)) {
-        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, function(found_link) {
+        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, found_link => {
           let element = $(found_link);
           let cryptup_data = element.attr('cryptup-data');
           if (cryptup_data) {
@@ -259,11 +259,7 @@ let tool = {
       }
       return hex.join('');
     },
-    capitalize: (string: string): string => {
-      return string.trim().split(' ').map(function(s) {
-        return s.charAt(0).toUpperCase() + s.slice(1);
-      }).join(' ');
-    },
+    capitalize: (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
   },
   env: {
     browser: () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
@@ -344,8 +340,8 @@ let tool = {
     },
   },
   arr: {
-    unique: (array: any[]) => {
-      let unique:any[] = [];
+    unique: <T extends FlatTypes>(array: T[]): T[] => {
+      let unique: T[] = [];
       for (let v of array) {
         if (!tool.value(v).in(unique)) {
           unique.push(v);
@@ -360,9 +356,9 @@ let tool = {
       }
       return array;
     },
-    without_key: (array: any[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
-    without_value: (array: any[], without_value: any) => {
-      let result: any[] = [];
+    without_key: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
+    without_value: <T>(array: T[], without_value: T) => {
+      let result: T[] = [];
       for (let value of array) {
         if (value !== without_value) {
           result.push(value);
@@ -370,15 +366,15 @@ let tool = {
       }
       return result;
     },
-    contains: (arr: any[]|string, value: any): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
+    contains: <T>(arr: T[]|string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => tool.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0),
   },
   obj: {
-    key_by_value: (obj: Dict<any>, v: any) => {
-      for (let k in obj) {
-        if (obj.hasOwnProperty(k) && obj[k] === v) {
+    key_by_value: <T>(obj: Dict<T>, v: T) => {
+      for (let k of Object.keys(obj)) {
+        if (obj[k] === v) {
           return k;
         }
       }
@@ -388,24 +384,22 @@ let tool = {
     random: (min_value: number, max_value: number) => min_value + Math.round(Math.random() * (max_value - min_value)),
   },
   time: {
-    wait: (until_this_function_evaluates_true: () => boolean|undefined): FcPromise<void> => {
-      return tool.catch.Promise(function(success, error) {
-        let interval = setInterval(function() {
-          let result = until_this_function_evaluates_true();
-          if (result === true) {
-            clearInterval(interval);
-            if (success) {
-              success();
-            }
-          } else if (result === false) {
-            clearInterval(interval);
-            if (error) {
-              error();
-            }
+    wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
+      let interval = setInterval(() => {
+        let result = until_this_function_evaluates_true();
+        if (result === true) {
+          clearInterval(interval);
+          if (success) {
+            success();
           }
-        }, 50);
-      });
-    },
+        } else if (result === false) {
+          clearInterval(interval);
+          if (error) {
+            error();
+          }
+        }
+      }, 50);
+    }),
     get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
     hours: (h: number) =>  h * 1000 * 60 * 60, // hours in miliseconds
     expiration_format: (date: string) => tool.str.html_escape(date.substr(0, 10)),
@@ -423,14 +417,10 @@ let tool = {
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
       if (typeof progress === 'function') {
-        request.onprogress = function(evt) {
-          progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
-        };
+        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
       }
       request.onerror = reject;
-      request.onload = function(e) {
-        resolve(new Uint8Array(request.response));
-      };
+      request.onload = e => resolve(new Uint8Array(request.response));
       request.send();
     }),
     save_to_downloads: (name: string, type: string, content: Uint8Array|string|Blob, render_in:JQuery<HTMLElement>|null=null) => {
@@ -447,7 +437,7 @@ let tool = {
           render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
           render_in.append(a);
           render_in.css('height', 'auto');
-          render_in.find('a').click(function(e) {
+          render_in.find('a').click(e => {
             alert('Please use right-click and select Save Link As');
             e.preventDefault();
             e.stopPropagation();
@@ -471,9 +461,7 @@ let tool = {
               }
             }
           }
-          setTimeout(function() {
-            window.URL.revokeObjectURL(a.href);
-          }, 0);
+          setTimeout(() => window.URL.revokeObjectURL(a.href), 0);
         }
       }
     },
@@ -605,24 +593,24 @@ let tool = {
     decode: (mime_message: string): Promise<MimeContent> => {
       return new Promise(async resolve => {
         let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
-        let emailjs_mime_parser: any = await tool._.mime_require('parser');
+        let emailjs_mime_parser: AnyThirdPartyLibrary = await tool._.mime_require('parser');
         try {
           let parser = new emailjs_mime_parser();
           let parsed: {[key: string]: MimeParserNode} = {};
-          parser.onheader = function(node: MimeParserNode) {
+          parser.onheader = (node: MimeParserNode) => {
             if (!String(node.path.join('.'))) { // root node headers
               for (let name of Object.keys(node.headers)) {
                 mime_content.headers[name] = node.headers[name][0].value;
               }
             }
           };
-          parser.onbody = function(node: MimeParserNode) {
+          parser.onbody = (node: MimeParserNode) => {
             let path = String(node.path.join('.'));
             if (typeof parsed[path] === 'undefined') {
               parsed[path] = node;
             }
           };
-          parser.onend = function() {
+          parser.onend = () => {
             for (let node of Object.values(parsed)) {
               if (tool._.mime_node_type(node) === 'application/pgp-signature') {
                 mime_content.signature = node.rawContent;
@@ -646,7 +634,7 @@ let tool = {
       });
     },
     encode: async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
-      let MimeBuilder: any = await tool._.mime_require('builder');
+      let MimeBuilder: AnyThirdPartyLibrary = await tool._.mime_require('builder');
       let root_node = new MimeBuilder('multipart/mixed');
       for (let key of Object.keys(headers)) {
         root_node.addHeader(key, headers[key]);
@@ -1050,9 +1038,8 @@ let tool = {
         }
         return null;
       },
-      sign: async (signing_prv: any, data: string): Promise<string> => {
-        let options = { data, armor: true, privateKeys: signing_prv, };
-        let sign_result = await openpgp.sign(options);
+      sign: async (signing_prv: OpenPGP.key.Key, data: string): Promise<string> => {
+        let sign_result = await openpgp.sign({data, armor: true, privateKeys: [signing_prv]});
         return (sign_result as OpenPGP.SignArmorResult).data;
       },
       verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
@@ -1121,7 +1108,7 @@ let tool = {
           return {success: false, error: tool._.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
         }
       },
-      encrypt: async (armored_pubkeys: string[], signing_prv: any, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
+      encrypt: async (armored_pubkeys: string[], signing_prv: OpenPGP.key.Key|null, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
         let options: OpenPGP.EncryptOptions = { data, armor, date: date || undefined, filename: filename || undefined };
         let used_challange = false;
         if (armored_pubkeys) {
@@ -1226,7 +1213,7 @@ let tool = {
         });
       }
     },
-    enter: (callback: () => void) => function(e: JQuery.Event<HTMLElement, null>) {
+    enter: (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
       if (e.which === tool.env.key_codes().enter) {
         callback();
       }
@@ -1268,16 +1255,14 @@ let tool = {
     },
     event: {
       clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function() { resolve(this); })),
-      stop: () => {
-        return function(e: JQuery.Event) {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        };
+      stop: () => (e: JQuery.Event) => { // returns a function
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
       },
       protect: () => {
         // prevent events that could potentially leak information about sensitive info from bubbling above the frame
-        $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', function(e) {
+        $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', e => {
           // don't ask me how come Chrome allows it to bubble cross-domain
           // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
           // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
@@ -1317,13 +1302,11 @@ let tool = {
           }
         };
       },
-      release: (id: string) => { // todo - I may have forgot to use this somewhere, used only parallel() - if that's how it works
+      release: (id: string) => { // todo - I may have forgot to use this somewhere, used only with parallel() - if that's how it works
         if (id in tool._.var.ui_event_fired) {
           let ms_to_release = tool._.var.ui_event_DOUBLE_MS + tool._.var.ui_event_fired[id] - Date.now();
           if (ms_to_release > 0) {
-            setTimeout(function() {
-              delete tool._.var.ui_event_fired[id];
-            }, ms_to_release);
+            setTimeout(() => { delete tool._.var.ui_event_fired[id]; }, ms_to_release);
           } else {
             delete tool._.var.ui_event_fired[id];
           }
@@ -1360,7 +1343,7 @@ let tool = {
           tool.browser.message.send(null, 'bg_exec', {path, args}, (result: PossibleBgExecResults) => {
             if (path === 'tool.crypto.message.decrypt') {
               if (result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.text && typeof (result as DecryptSuccess).content.text === 'string' && ((result as DecryptSuccess).content.text!).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-                tool.file.object_url_consume((result as DecryptSuccess).content.text!).then(function(result_content_data) {
+                tool.file.object_url_consume((result as DecryptSuccess).content.text!).then(result_content_data => {
                   (result as DecryptSuccess).content.text = tool.str.from_uint8(result_content_data);
                   resolve(result);
                 });
@@ -1384,16 +1367,16 @@ let tool = {
         } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
           tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback || tool.noop); // calling from background script to background script: skip messaging completely
         } else if (is_background_page) {
-          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, function(r) {
-            tool.catch.try(function() {
+          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, r => {
+            tool.catch.try(() => {
               if (typeof callback !== 'undefined') {
                 callback(r);
               }
             })();
           });
         } else {
-          chrome.runtime.sendMessage(msg, function(r) {
-            tool.catch.try(function() {
+          chrome.runtime.sendMessage(msg, r => {
+            tool.catch.try(() => {
               if (typeof callback !== 'undefined') {
                 callback(r);
               }
@@ -1422,8 +1405,8 @@ let tool = {
           }
         }
         let processed:string[] = [];
-        chrome.runtime.onMessage.addListener(function(msg, sender, respond) {
-          return tool.catch.try(function() {
+        chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+          return tool.catch.try(() => {
             if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
               if (!tool.value(msg.uid).in(processed)) {
                 processed.push(msg.uid);
@@ -1450,8 +1433,8 @@ let tool = {
             tool._.var.browser_message_background_script_registered_handlers[name] = handlers[name];
           }
         }
-        chrome.runtime.onMessage.addListener(function(msg, sender, respond) {
-          let safe_respond = function(response: any) {
+        chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+          let safe_respond = (response: any) => {
             try { // avoiding unnecessary errors when target tab gets closed
               respond(response);
             } catch (e) {
@@ -1478,13 +1461,13 @@ let tool = {
     auth: {
       window: (auth_url: string, window_closed_by_user: Callback) => {
         let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-        let window_closed_timer = setInterval(function() {
+        let window_closed_timer = setInterval(() => {
           if (auth_code_window !== null && auth_code_window.closed) {
             clearInterval(window_closed_timer);
             window_closed_by_user();
           }
         }, 500);
-        return function() {
+        return () => {
           clearInterval(window_closed_timer);
           if (auth_code_window !== null) {
             auth_code_window.close();
@@ -1497,7 +1480,7 @@ let tool = {
       new_network_error: (text?: string) => {
         return {status: null, internal: 'network', message: text || 'No internet connection, please try again', stack: tool.catch.stack_trace()};
       },
-      is_network_error: (e: any) => {
+      is_network_error: (e: Thrown) => {
         if (typeof e === 'object') {
           if (e.internal === 'network') { // StandardError
             return true;
@@ -1508,7 +1491,7 @@ let tool = {
         }
         return false;
       },
-      is_auth_error: (e: any) => {
+      is_auth_error: (e: Thrown) => {
         if (e === 'auth') { // todo - deprecate this
           return true;
         }
@@ -1522,7 +1505,7 @@ let tool = {
         }
         return false;
       },
-      is_auth_popup_needed: (e: any) => {
+      is_auth_popup_needed: (e: Thrown) => {
         if (typeof e === 'object') {
           if (e.status === 400 && typeof e.responseJSON === 'object') {
             if (e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
@@ -1532,7 +1515,7 @@ let tool = {
         }
         return false;
       },
-      notify_parent_if_auth_popup_needed: (account_email: string, parent_tab_id: string, e: any, rethrow_other_errors=true) => {
+      notify_parent_if_auth_popup_needed: (account_email: string, parent_tab_id: string, e: Thrown, rethrow_other_errors=true) => {
         if (tool.api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           throw new UnreportableError('Cannot proceed due to missing auth');
@@ -1736,7 +1719,7 @@ let tool = {
               r.abort();
             }
           }, 10);
-          r.onreadystatechange = function() {
+          r.onreadystatechange = () => {
             if (r.readyState === 2 || r.readyState === 3) { // headers, loading
               status = r.status;
               if (status >= 300) {
@@ -2246,7 +2229,7 @@ let tool = {
           values.file = tool.file.attachment('encrpted_attachment', 'application/octet-stream', items[i].attachment.content!);
           promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
             progress[i] = single_file_progress;
-            tool.ui.event.prevent(tool.ui.event.spree(), function() {
+            tool.ui.event.prevent(tool.ui.event.spree(), () => {
               // this should of course be weighted average. How many years until someone notices?
               progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
             })();
@@ -2259,7 +2242,7 @@ let tool = {
   /* [BARE_ENGINE_OMIT_END] */
   value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
   e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML,
-  noop: (): any => null,
+  noop: (): void => undefined,
   enums: {
     recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
   },
@@ -2319,14 +2302,10 @@ let tool = {
     },
     // meant to be used privately within this file like so: tool._.???
     str_base64url_utf_encode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-      return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-        return String.fromCharCode(parseInt(p1, 16));
-      })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     },
     str_base64url_utf_decode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-      return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), function(c: string) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
+      return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
     },
     mime_node_type: (node: MimeParserNode) => {
       if (node.headers['content-type'] && node.headers['content-type'][0]) {
@@ -2345,7 +2324,7 @@ let tool = {
         return node.headers['content-type'][0].params.name;
       }
     },
-    mime_content_node: (MimeBuilder: any, type: string, content: string): MimeParserNode => {
+    mime_content_node: (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
       let node = new MimeBuilder(type).setContent(content);
       if (type === 'text/plain') {
         node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
@@ -2508,9 +2487,7 @@ let tool = {
       }
     },
     readable_crack_time: (total_seconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
-      function numberEnding(number: number) {
-        return(number > 1) ? 's' : '';
-      }
+      let number_word_ending = (n: number) => (n > 1) ? 's' : '';
       total_seconds = Math.round(total_seconds);
       let millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
       if (millennia) {
@@ -2522,27 +2499,27 @@ let tool = {
       }
       let years = Math.round(total_seconds / (86400 * 30 * 12));
       if (years) {
-        return years + ' year' + numberEnding(years);
+        return years + ' year' + number_word_ending(years);
       }
       let months = Math.round(total_seconds / (86400 * 30));
       if (months) {
-        return months + ' month' + numberEnding(months);
+        return months + ' month' + number_word_ending(months);
       }
       let days = Math.round(total_seconds / 86400);
       if (days) {
-        return days + ' day' + numberEnding(days);
+        return days + ' day' + number_word_ending(days);
       }
       let hours = Math.round(total_seconds / 3600);
       if (hours) {
-        return hours + ' hour' + numberEnding(hours);
+        return hours + ' hour' + number_word_ending(hours);
       }
       let minutes = Math.round(total_seconds / 60);
       if (minutes) {
-        return minutes + ' minute' + numberEnding(minutes);
+        return minutes + ' minute' + number_word_ending(minutes);
       }
       let seconds = total_seconds % 60;
       if (seconds) {
-        return seconds + ' second' + numberEnding(seconds);
+        return seconds + ' second' + number_word_ending(seconds);
       }
       return 'less than a second';
     },
@@ -2559,12 +2536,12 @@ let tool = {
     get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks|null) => {
       let progress_reporting_xhr = new (window as FcWindow).XMLHttpRequest();
       if (progress_callbacks && typeof progress_callbacks.upload === 'function') {
-        progress_reporting_xhr.upload.addEventListener('progress', function(evt: ProgressEvent) {
+        progress_reporting_xhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
           progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
         }, false);
       }
       if (progress_callbacks && typeof progress_callbacks.download === 'function') {
-        progress_reporting_xhr.onprogress = function(evt: ProgressEvent) {
+        progress_reporting_xhr.onprogress = (evt: ProgressEvent) => {
           progress_callbacks.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total); // checked ===function above
         };
       }
@@ -2591,7 +2568,7 @@ let tool = {
       } else {
         throw Error('unknown format:' + String(format));
       }
-      return tool.catch.Promise(function(resolve, reject) {
+      return tool.catch.Promise((resolve, reject) => {
         $.ajax({
           xhr: () => tool._.get_ajax_progress_xhr(progress),
           url: base_url + path,
@@ -2605,7 +2582,7 @@ let tool = {
           async: true,
           timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
           success: (response) => {
-            tool.catch.try(function() {
+            tool.catch.try(() => {
               if (response && typeof response === 'object' && typeof response.error === 'object') {
                 reject(response.error);
               } else {
@@ -2614,7 +2591,7 @@ let tool = {
             })();
           },
           error: (XMLHttpRequest, status, error) => {
-            tool.catch.try(function() {
+            tool.catch.try(() => {
               if (XMLHttpRequest.status === 0) {
                 reject(tool.api.error.new_network_error());
               } else {
@@ -2911,13 +2888,16 @@ let tool = {
       }
       try {
         if (typeof Store.get_account === 'function' && typeof Store.set === 'function') {
-          Store.get_global(['errors']).then(function(s: any) {
+          Store.get_global(['errors']).then(s => {
             if (typeof s.errors === 'undefined') {
-              s.errors = [] as Error[];
+              s.errors = [];
             }
-            s.errors.unshift((error as Error).stack || error_message); // todo - remove cast & debug
-            // noinspection JSIgnoredPromiseFromCall
-            Store.set(null, s);
+            if(error instanceof Error) {
+              s.errors.unshift(error.stack || error_message || String(error));
+            } else {
+              s.errors.unshift(error_message || String(error));
+            }
+            Store.set(null, s).catch(console.error);
           });
         }
       } catch (storage_err) {
@@ -2961,7 +2941,8 @@ let tool = {
       try {
         // noinspection ExceptionCaughtLocallyJS
         throw new Error(name);
-      } catch (e) {
+      } catch (e_local) {
+        let e = e_local as Error;
         if (typeof details !== 'string') {
           try {
             details = JSON.stringify(details);
@@ -2971,13 +2952,12 @@ let tool = {
         }
         e.stack = e.stack + '\n\n\ndetails: ' + details;
         try {
-          Store.get_global(['errors']).then(function(s: any) {
+          Store.get_global(['errors']).then(s => {
             if (typeof s.errors === 'undefined') {
               s.errors = [];
             }
             s.errors.unshift(e.stack || name);
-            // noinspection JSIgnoredPromiseFromCall
-            Store.set(null, s);
+            Store.set(null, s).catch(console.error);
           });
         } catch (storage_err) {
           console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
@@ -2991,17 +2971,15 @@ let tool = {
         return tool.catch._.runtime.version || null;
       }
     },
-    try: (code: Function) => { // tslint:disable-line:ban-types
-      return function() {
-        try {
-          let r = code();
-          if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
-            r.catch(tool.catch.handle_promise_error);
-          }
-        } catch (code_err) {
-          tool.catch.handle_exception(code_err);
+    try: (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
+      try {
+        let r = code();
+        if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
+          r.catch(tool.catch.handle_promise_error);
         }
-      };
+      } catch (code_err) {
+        tool.catch.handle_exception(code_err);
+      }
     },
     environment: (url=window.location.href): string => {
       let browser_name = tool.env.browser().name;
@@ -3032,7 +3010,7 @@ let tool = {
       this_will_fail();
     },
     Promise: (f: (resolve: (result?: any) => void, reject: (error?: any) => void) => void): FcPromise<any> => {
-      return new Promise(function(resolve, reject) {
+      return new Promise((resolve, reject) => {
         try {
           f(resolve, reject);
         } catch (e) {
@@ -3041,11 +3019,9 @@ let tool = {
         }
       }) as FcPromise<any>;
     },
-    promise_error_alert: (note: string) => {
-      return function(error: Error) {
-        console.log(error);
-        alert(note);
-      };
+    promise_error_alert: (note: string) => (error: Error) => { // returns a function
+      console.log(error);
+      alert(note);
     },
     stack_trace: (): string => {
       try {
@@ -3072,19 +3048,14 @@ let tool = {
       runtime: {} as Dict<string>,
       original_on_error: window.onerror,
       initialize: () => {
-        figure_out_flowcrypt_runtime();
-
-        (window as FcWindow).onerror = (tool.catch.handle_error as ErrorEventHandler);
-        (window as FcWindow).onunhandledrejection = tool.catch.handle_promise_error;
-
-        function figure_out_flowcrypt_runtime() {
+        let figure_out_flowcrypt_runtime = () => {
           if ((window as FcWindow).is_bare_engine !== true) {
             try {
               tool.catch._.runtime.version = chrome.runtime.getManifest().version;
             } catch (err) {} // tslint:disable-line:no-empty
             tool.catch._.runtime.environment = tool.catch.environment();
             if (!tool.env.is_background_script() && tool.env.is_extension()) {
-              tool.browser.message.send(null, 'runtime', null, function(extension_runtime) {
+              tool.browser.message.send(null, 'runtime', null, extension_runtime => {
                 if (typeof extension_runtime !== 'undefined') {
                   tool.catch._.runtime = extension_runtime;
                 } else {
@@ -3093,7 +3064,10 @@ let tool = {
               });
             }
           }
-        }
+        };
+        figure_out_flowcrypt_runtime();
+        (window as FcWindow).onerror = (tool.catch.handle_error as ErrorEventHandler);
+        (window as FcWindow).onunhandledrejection = tool.catch.handle_promise_error;
       },
     }
   },
@@ -3101,7 +3075,7 @@ let tool = {
 
 tool.catch._.initialize();
 
-(function( /* EXTENSIONS AND CONFIG */ ) {
+(( /* EXTENSIONS AND CONFIG */ ) => {
 
   if (typeof openpgp === 'object' && typeof openpgp.config === 'object') {
     openpgp.config.versionstring = 'FlowCrypt ' + (tool.catch.version() || '') + ' Gmail Encryption flowcrypt.com';
@@ -3153,8 +3127,8 @@ tool.catch._.initialize();
 
   (Promise as any).prototype.validate = (Promise as any).prototype.validate || function(validity_checker: (r: any) => boolean) {
     let original_promise = this;
-    return tool.catch.Promise(function(resolve, reject) {
-      original_promise.then(function(response: any) {
+    return tool.catch.Promise((resolve, reject) => {
+      original_promise.then((response: any) => {
         if (typeof response === 'object') {
           if (validity_checker(response)) {
             resolve(response);

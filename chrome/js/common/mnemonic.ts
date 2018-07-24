@@ -2055,19 +2055,19 @@
     "zoo",
   ];
 
-  function leading_zeroes(num: string, size: number) {
+  let leading_zeroes = (num: string, size: number) => {
     let s = num + '';
     while (s.length < size) {
       s = '0' + s;
     }
     return s;
-  }
+  };
 
-  function string_chunks(str: string, length: number) {
+  let string_chunks = (str: string, length: number) => {
     return str.match(new RegExp('.{1,' + length + '}', 'g'));
-  }
+  };
 
-  function mnemonic(hex: string) { // 4E1F799AA4FF2279
+  let mnemonic = (hex: string) => { // 4E1F799AA4FF2279
     if (hex === null) {
       return null;
     }
@@ -2075,7 +2075,7 @@
     let binary_chunks = string_chunks(binary, 11); // ["01001110000", "11111011110", "01100110101", "01001001111", "11110010001", "001111001"]
     let integers = binary_chunks!.map(b =>  parseInt(b, 2)); // [624, 2014, 821, 591, 1937, 121]
     return integers.map(i => words[i].toUpperCase()).join(' '); // "EVOKE WINK GRIT ENEMY VENDOR AUGUST"
-  }
+  };
 
   if (typeof window === 'object') {
     (window as any).mnemonic = mnemonic;

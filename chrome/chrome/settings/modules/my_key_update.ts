@@ -48,13 +48,13 @@ tool.catch.try(async () => {
     }
   }));
 
-  async function store_updated_key_and_passphrase(updated_prv: OpenPGP.key.Key, updated_prv_passphrase: string) {
+  let store_updated_key_and_passphrase = async (updated_prv: OpenPGP.key.Key, updated_prv_passphrase: string) => {
     let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);
     await Store.keys_add(account_email, updated_prv.armor());
     await Store.passphrase_save('local', account_email, primary_ki.longid, stored_passphrase !== null ? updated_prv_passphrase : undefined);
     await Store.passphrase_save('session', account_email, primary_ki.longid, stored_passphrase !== null ? undefined : updated_prv_passphrase);
     alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
     window.location.href = url_my_key_page;
-  }
+  };
 
 })();

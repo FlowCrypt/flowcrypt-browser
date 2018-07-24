@@ -277,7 +277,7 @@ class Store {
     return new Promise((resolve, reject) => {
       let open_db: IDBOpenDBRequest;
       open_db = indexedDB.open('cryptup', 2);
-      open_db.onupgradeneeded = function(event) {
+      open_db.onupgradeneeded = (event) => {
         let contacts;
         if (event.oldVersion < 1) {
           contacts = open_db.result.createObjectStore('contacts', { keyPath: 'email', });

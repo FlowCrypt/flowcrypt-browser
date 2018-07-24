@@ -34,7 +34,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  async function decrypt_and_download(attachment: Attachment) { // todo - this is more or less copy-pasted from attachment.js, should use common function
+  let decrypt_and_download = async (attachment: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
     let result = await tool.crypto.message.decrypt(account_email, attachment.content as Uint8Array, null, true); // todo - I don't like these casts
     if (result.success) {
       tool.file.save_to_downloads(attachment.name.replace(/\.(pgp|gpg|asc)$/i, ''), attachment.type, result.content.uint8!); // uint8!: requested uint8 above
@@ -46,6 +46,6 @@ tool.catch.try(async () => {
       alert('These was a problem decrypting this file, details are in the console.');
     }
     $('.action_decrypt_and_download').html(original_content);
-  }
+  };
 
 })();

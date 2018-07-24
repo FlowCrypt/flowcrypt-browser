@@ -14,6 +14,7 @@ tool.catch.try(async () => {
 
   let original_html_content: string;
   let button = $('#download');
+  let progress_element: JQuery<HTMLElement>;
 
   let passphrase_interval: number|undefined;
   let missing_passprase_longids: string[] = [];
@@ -42,7 +43,7 @@ tool.catch.try(async () => {
     }
   })());
 
-  function check_passphrase_entered() { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
+  let check_passphrase_entered = () => { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
     if (missing_passprase_longids) {
       Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid))).then(passphrases => {
         // todo - copy/pasted - unify
@@ -55,9 +56,9 @@ tool.catch.try(async () => {
         }
       });
     }
-  }
+  };
 
-  function get_url_file_size(original_url: string, callback: Callback) {
+  let get_url_file_size = (original_url: string, callback: (size: number) => void) => {
     console.info('trying to figure out file size');
     // will only call callback on success
     let url;
@@ -88,13 +89,13 @@ tool.catch.try(async () => {
       }
     };
     xhr.send();
-  }
+  };
 
-  function get_original_name(name: string) {
+  let get_original_name = (name: string) => {
     return name.replace(/(\.pgp)|(\.gpg)$/, '');
-  }
+  };
 
-  async function decrypt_and_save_attachment_to_downloads(encrypted_data: Uint8Array) {
+  let decrypt_and_save_attachment_to_downloads = async (encrypted_data: Uint8Array) => {
     let result = await tool.crypto.message.decrypt(account_email, encrypted_data, null, true);
     $('#download').html(original_html_content).removeClass('visible');
     if (result.success) {
@@ -113,7 +114,7 @@ tool.catch.try(async () => {
       $('body.attachment').html('Error opening file<br>Downloading original..');
       tool.file.save_to_downloads(url_params.name as string, url_params.type as string, encrypted_data);
     }
-  }
+  };
 
   if (!url_params.size && url_params.url) { // download url of an unknown size
     get_url_file_size(url_params.url as string, size => {
@@ -121,18 +122,16 @@ tool.catch.try(async () => {
     });
   }
 
-  let progress_element: JQuery<HTMLElement>;
-
-  function render_progress(percent: number, received: number, size: number) {
+  let render_progress = (percent: number, received: number, size: number) => {
     size = size || url_params.size as number;
     if (percent) {
       progress_element.text(percent + '%');
     } else if (size) {
       progress_element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
     }
-  }
+  };
 
-  async function save_to_downloads() {
+  let save_to_downloads = async () => {
     original_html_content = button.html();
     button.addClass('visible');
     button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
@@ -151,9 +150,9 @@ tool.catch.try(async () => {
     } else {
       throw Error('Missing both attachment_id and url');
     }
-  }
+  };
 
-  async function recover_missing_attachment_id_if_needed() {
+  let recover_missing_attachment_id_if_needed = async () => {
     if (!url_params.url && !url_params.attachment_id && url_params.message_id) {
       try {
         let result = await tool.api.gmail.message_get(account_email, url_params.message_id as string, 'full');
@@ -172,7 +171,7 @@ tool.catch.try(async () => {
         window.location.reload();
       }
     }
-  }
+  };
 
   try {
     if (url_params.message_id && url_params.attachment_id && tool.file.treat_as(tool.file.attachment(original_name, url_params.type as string, url_params.content as string)) === 'public_key') {

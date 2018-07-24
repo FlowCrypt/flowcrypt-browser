@@ -17,6 +17,58 @@ tool.catch.try(async () => {
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
 
+  let handle_error_response = (error: StandardError) => {
+    if (error.internal === 'email') {
+      $('.action_get_trial, .action_add_device').css('display', 'none');
+      $('.action_close').text('ok');
+      render_status(error.message);
+      button_restore();
+    } else {
+      alert('Could not complete action: ' + error.message);
+      tool.catch.report('problem during subscribe.js', error);
+      window.location.reload();
+    }
+  };
+
+  let stripe_credit_card_entered_handler = (data: {token: string}, sender: any, respond: Callback) => {
+    $('.stripe_checkout').html('').css('display', 'none');
+    flowcrypt_account.subscribe(
+      account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token,
+    ).then(handle_successful_upgrade, handle_error_response);
+  };
+
+  let render_status = (content: string) => {
+    $('.status').html(content);
+  };
+
+  let button_spin = (element: HTMLElement) => {
+    original_button_content = $(element).html();
+    original_button_selector = $(element);
+    $(element).html(tool.ui.spinner('white'));
+  };
+
+  let button_restore = () => {
+    original_button_selector.html(original_button_content);
+  };
+
+  let handle_successful_upgrade = () => {
+    tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
+    if (url_params.subscribe_result_tab_id) {
+      tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+    }
+    close_dialog();
+  };
+
+  let close_dialog = () => {
+    if (url_params.placement === 'settings_compose') {
+      window.close();
+    } else if (url_params.placement === 'settings') {
+      tool.browser.message.send(parent_tab_id, 'reload');
+    } else {
+      tool.browser.message.send(parent_tab_id, 'close_dialog');
+    }
+  };
+
   try {
     await tool.api.cryptup.account_check_sync();
   } catch (e) {
@@ -117,63 +169,11 @@ tool.catch.try(async () => {
     }
   }
 
-  function handle_error_response(error: StandardError) {
-    if (error.internal === 'email') {
-      $('.action_get_trial, .action_add_device').css('display', 'none');
-      $('.action_close').text('ok');
-      render_status(error.message);
-      button_restore();
-    } else {
-      alert('Could not complete action: ' + error.message);
-      tool.catch.report('problem during subscribe.js', error);
-      window.location.reload();
-    }
-  }
-
   let tab_id = await tool.browser.message.required_tab_id();
   tool.browser.message.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
   let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(account_email, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
   $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
-
-  function stripe_credit_card_entered_handler(data: {token: string}, sender: any, respond: Callback) {
-    $('.stripe_checkout').html('').css('display', 'none');
-    flowcrypt_account.subscribe(
-      account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token,
-    ).then(handle_successful_upgrade, handle_error_response);
-  }
-
-  function render_status(content: string) {
-    $('.status').html(content);
-  }
-
-  function button_spin(element: HTMLElement) {
-    original_button_content = $(element).html();
-    original_button_selector = $(element);
-    $(element).html(tool.ui.spinner('white'));
-  }
-
-  function button_restore() {
-    original_button_selector.html(original_button_content);
-  }
-
-  function handle_successful_upgrade() {
-    tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
-    if (url_params.subscribe_result_tab_id) {
-      tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
-    }
-    close_dialog();
-  }
-
-  function close_dialog() {
-    if (url_params.placement === 'settings_compose') {
-      window.close();
-    } else if (url_params.placement === 'settings') {
-      tool.browser.message.send(parent_tab_id, 'reload');
-    } else {
-      tool.browser.message.send(parent_tab_id, 'close_dialog');
-    }
-  }
 
 })();

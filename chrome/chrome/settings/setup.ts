@@ -53,37 +53,20 @@ tool.catch.try(async () => {
     },
   }, tab_id);
 
-  // show alternative account addresses in setup form + save them for later
-  if (storage.email_provider === 'gmail') {
-    if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-      $('.auth_denied_warning').css('display', 'block');
-    }
-    if (typeof storage.addresses === 'undefined') {
-      if (tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option);
-      } else { // cannot read emails, don't fetch alternative addresses
-        // noinspection JSIgnoredPromiseFromCall - we do not care about the promise
-        save_and_fill_submit_option([account_email]);
-      }
-    } else {
-      show_submit_all_addresses_option(storage.addresses as string[]);
-    }
-  }
-
-  function show_submit_all_addresses_option(addrs: string[]) {
+  let show_submit_all_addresses_option = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
       $('.addresses').text(tool.arr.without_value(addrs, url_params.account_email).join(', '));
       $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('visibility', 'visible');
     }
-  }
+  };
 
-  async function save_and_fill_submit_option(addresses: string[]) {
+  let save_and_fill_submit_option = async (addresses: string[]) => {
     all_addresses = tool.arr.unique(addresses.concat(account_email));
     await Store.set(account_email, { addresses: all_addresses });
     show_submit_all_addresses_option(all_addresses);
-  }
+  };
 
-  function display_block(name: string) {
+  let display_block = (name: string) => {
     let blocks = [
       'loading',
       'step_0_found_key',
@@ -104,9 +87,9 @@ tool.catch.try(async () => {
     } else { // get
       return $('#' + blocks.join(', #')).filter(':visible').first().attr('id') || null;
     }
-  }
+  };
 
-  async function render_setup_dialog(): Promise<void> {
+  let render_setup_dialog = async (): Promise<void> => {
     let keyserver_result, fetched_keys;
     Settings.initialize_private_key_import_ui(account_email, parent_tab_id); // for step_2b_manual_enter, if user chooses so
 
@@ -157,9 +140,9 @@ tool.catch.try(async () => {
         display_block('step_2b_manual_enter');
       }
     }
-  }
+  };
 
-  async function render_add_key_from_backup() { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+  let render_add_key_from_backup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     let fetched_keys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
     $('h1').parent().html('<h1>Recover key from backup</h1>');
@@ -180,9 +163,9 @@ tool.catch.try(async () => {
     } else {
       window.location.href = tool.env.url_create('modules/add_key.htm', {account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id});
     }
-  }
+  };
 
-  async function submit_public_key_if_needed(account_email: string, armored_pubkey: string, options: {submit_main: boolean, submit_all: boolean}) {
+  let submit_public_key_if_needed = async (account_email: string, armored_pubkey: string, options: {submit_main: boolean, submit_all: boolean}) => {
     let storage = await Store.get_account(account_email, ['addresses']);
     if (!options.submit_main) {
       return;
@@ -198,9 +181,9 @@ tool.catch.try(async () => {
       return; // already submitted and ATTESTED another pubkey for this email
     }
     await Settings.submit_pubkeys(account_email, addresses, armored_pubkey);
-  }
+  };
 
-  async function render_setup_done(account_email: string, key_backup_prompt=false) {
+  let render_setup_done = async (account_email: string, key_backup_prompt=false) => {
     if (key_backup_prompt && rules.can_backup_keys()) {
       window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email });
     } else {
@@ -217,9 +200,9 @@ tool.catch.try(async () => {
         $('.email').text(account_email);
       }
     }
-  }
+  };
 
-  async function finalize_setup(account_email: string, armored_pubkey: string, options: SetupOptions, skip_error?: string): Promise<void> {
+  let finalize_setup = async (account_email: string, armored_pubkey: string, options: SetupOptions, skip_error?: string): Promise<void> => {
     try {
       await submit_public_key_if_needed(account_email, armored_pubkey, options);
     } catch (e) {
@@ -236,9 +219,9 @@ tool.catch.try(async () => {
       is_newly_created_key: options.is_newly_created_key === true,
     });
     await render_setup_done(account_email, Boolean(options.key_backup_prompt));
-  }
+  };
 
-  async function save_keys(account_email: string, prvs: OpenPGP.key.Key[], options: SetupOptions) {
+  let save_keys = async (account_email: string, prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (let i = 0; i < prvs.length; i++) { // save all keys
       let longid = tool.crypto.key.longid(prvs[i]);
       if (!longid) {
@@ -253,9 +236,9 @@ tool.catch.try(async () => {
       return Store.db_contact_object(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
     });
     await Store.db_contact_save(null, my_own_email_addresses_as_contacts);
-  }
+  };
 
-  async function create_save_key_pair(account_email: string, options: SetupOptions) {
+  let create_save_key_pair = async (account_email: string, options: SetupOptions) => {
     Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     try {
       let key = await tool.crypto.key.create([{ name: options.full_name, email: account_email }], 4096, options.passphrase); // todo - add all addresses?
@@ -267,9 +250,9 @@ tool.catch.try(async () => {
       tool.catch.handle_exception(e);
       $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Please write me at human@flowcrypt.com so that I can fix it ASAP.');
     }
-  }
+  };
 
-  async function get_and_save_google_user_info(account_email: string): Promise<{full_name: string, locale?: string, picture?: string}> {
+  let get_and_save_google_user_info = async (account_email: string): Promise<{full_name: string, locale?: string, picture?: string}> => {
     if (storage.email_provider === 'gmail') {
       let user_info;
       try {
@@ -283,7 +266,7 @@ tool.catch.try(async () => {
     } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
       return {full_name: ''};
     }
-  }
+  };
 
   $('.action_show_help').click(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm'));
 
@@ -470,7 +453,7 @@ tool.catch.try(async () => {
     }
   });
 
-  async function render_compatibility_fix_block_and_finalize_setup(original_prv: OpenPGP.key.Key, options: SetupOptions) {
+  let render_compatibility_fix_block_and_finalize_setup = async (original_prv: OpenPGP.key.Key, options: SetupOptions) => {
     display_block('step_3_compatibility_fix');
     let updated_prv;
     try {
@@ -482,7 +465,7 @@ tool.catch.try(async () => {
     }
     await save_keys(account_email, [updated_prv], options);
     await finalize_setup(account_email, updated_prv.toPublic().armor(), options);
-  }
+  };
 
   $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => {
     Settings.render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
@@ -521,6 +504,23 @@ tool.catch.try(async () => {
   $('#step_4_close .action_close').click(() => { // only rendered if action=add_key which means parent_tab_id was used
     tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});
   });
+
+  // show alternative account addresses in setup form + save them for later
+  if (storage.email_provider === 'gmail') {
+    if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      $('.auth_denied_warning').css('display', 'block');
+    }
+    if (typeof storage.addresses === 'undefined') {
+      if (tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option);
+      } else { // cannot read emails, don't fetch alternative addresses
+        // noinspection JSIgnoredPromiseFromCall - we do not care about the promise
+        save_and_fill_submit_option([account_email]);
+      }
+    } else {
+      show_submit_all_addresses_option(storage.addresses as string[]);
+    }
+  }
 
   if (storage.setup_done) {
     if (url_params.action !== 'add_key') {

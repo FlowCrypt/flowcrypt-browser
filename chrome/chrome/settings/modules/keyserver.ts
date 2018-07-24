@@ -12,22 +12,7 @@ tool.catch.try(async () => {
 
   $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
-  let storage = await Store.get_account(account_email, ['attests_processed', 'attests_requested', 'addresses']);
-  try {
-    let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(account_email);
-    $('.summary').html('');
-    render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
-  } catch (e) {
-    if (tool.api.error.is_network_error(e)) {
-      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
-    } else {
-      $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>');
-      tool.catch.handle_exception(e);
-    }
-    $('a.reload').click(() =>  window.location.reload());
-  }
-
-  function render_diagnosis(diagnosis: any, attests_requested: string[], attests_processed: string[]) {
+  let render_diagnosis = (diagnosis: any, attests_requested: string[], attests_processed: string[]) => {
     for (let email of Object.keys(diagnosis.results)) {
       let result = diagnosis.results[email];
       let note, action, remove, color;
@@ -91,7 +76,7 @@ tool.catch.try(async () => {
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
       let {addresses} = await Store.get_account(account_email, ['addresses']);
-      await Store.set(account_email, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email'))});
+      await Store.set(account_email, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email')!)});
       window.location.reload();
     }));
     $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
@@ -109,9 +94,9 @@ tool.catch.try(async () => {
       await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
       window.location.reload();
     }));
-  }
+  };
 
-  async function action_submit_or_request_attestation(email: string) {
+  let action_submit_or_request_attestation = async (email: string) => {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     try {
@@ -126,6 +111,21 @@ tool.catch.try(async () => {
     } finally {
       window.location.reload();
     }
+  };
+
+  let storage = await Store.get_account(account_email, ['attests_processed', 'attests_requested', 'addresses']);
+  try {
+    let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(account_email);
+    $('.summary').html('');
+    render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
+  } catch (e) {
+    if (tool.api.error.is_network_error(e)) {
+      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
+    } else {
+      $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>');
+      tool.catch.handle_exception(e);
+    }
+    $('a.reload').click(() =>  window.location.reload());
   }
 
 })();

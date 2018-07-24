@@ -12,17 +12,20 @@ tool.catch.try(async () => {
 
   let storage = await Store.get_account(account_email, ['addresses']);
   let addresses = storage.addresses || [url_params.account_email];
+
+  let address_to_html_radio = (a: string) => {
+    return `<input type="radio" name="a" value="${tool.str.html_escape(a)}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
+  };
+
   container.html(addresses.map(address_to_html_radio).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(function() {
-    if ($(this).val() !== addresses[0]) {
-      Store.set(account_email, {addresses: tool.arr.unique([$(this).val()].concat(storage.addresses))}).then(() => window.location.reload());
+    let chosen_sending_address = $(this).val() as string;
+    if (chosen_sending_address !== addresses[0]) {
+      let ordered_addresses = tool.arr.unique([chosen_sending_address].concat(storage.addresses || []));
+      Store.set(account_email, {addresses: ordered_addresses}).then(() => window.location.reload()).catch(tool.catch.handle_promise_error);
     }
   });
-
-  function address_to_html_radio(a: string) {
-    return `<input type="radio" name="a" value="${tool.str.html_escape(a)}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
-  }
 
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), (self, id) => {
     $(self).html(tool.ui.spinner('green'));

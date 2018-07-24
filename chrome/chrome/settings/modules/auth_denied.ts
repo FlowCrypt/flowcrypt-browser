@@ -7,10 +7,17 @@ tool.catch.try(async () => {
   let url_params = tool.env.url_params(['account_email', 'use_account_email', 'parent_tab_id', 'email_provider']);
   let account_email = url_params.account_email as string|undefined;
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
-
   if (!url_params.email_provider) {
     url_params.email_provider = 'gmail';
   }
+
+  let render_setup_done = (setup_done: boolean) => {
+    if (setup_done) {
+      $('.show_if_setup_done').css('display', 'block');
+    } else {
+      $('.show_if_setup_not_done').css('display', 'block');
+    }
+  };
 
   if (!url_params.account_email) {
     render_setup_done(false);
@@ -29,24 +36,10 @@ tool.catch.try(async () => {
     $('.permission_read').text('Read messages');
   }
 
-  $('.action_auth_proceed').click(function() {
-    tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', { account_email: url_params.account_email });
-  });
+  $('.action_auth_proceed').click(() => tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', {account_email}));
 
-  $('.auth_action_limited').click(function() {
-    tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', { omit_read_scope: true, account_email: url_params.account_email });
-  });
+  $('.auth_action_limited').click(() => tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', {omit_read_scope: true, account_email}));
 
-  $('.close_page').click(function() {
-    tool.browser.message.send(parent_tab_id, 'close_page');
-  });
-
-  function render_setup_done(setup_done: boolean) {
-    if (setup_done) {
-      $('.show_if_setup_done').css('display', 'block');
-    } else {
-      $('.show_if_setup_not_done').css('display', 'block');
-    }
-  }
+  $('.close_page').click(() => tool.browser.message.send(parent_tab_id, 'close_page'));
 
 })();

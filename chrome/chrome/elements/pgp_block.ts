@@ -22,38 +22,35 @@ tool.catch.try(async () => {
   let admin_codes: string[];
   let user_entered_message_password: string|undefined;
 
-  function render_text(text: string) {
+  let render_text = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
-  }
+  };
 
-  function render_html_dangerously(html: string) {
+  let render_html_dangerously = (html: string) => {
     document.getElementById('pgp_block')!.innerHTML = html; // pgp_block.htm
-  }
+  };
 
-  function send_resize_message() {
-    let new_height = $('#pgp_block').height()! + 40; // pgp_block.htm
+  let send_resize_message = () => {
+    let height = $('#pgp_block').height()! + 40; // pgp_block.htm
 
-    function is_infinite_resize_loop() {
-      height_history.push(new_height);
+    let is_infinite_resize_loop = () => {
+      height_history.push(height);
       let len = height_history.length;
       if (len < 4) {
         return false;
       }
       if (height_history[len - 1] === height_history[len - 3] && height_history[len - 2] === height_history[len - 4] && height_history[len - 1] !== height_history[len - 2]) {
         console.log('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
-        new_height = Math.max(height_history[len - 1], height_history[len - 2]);
+        height = Math.max(height_history[len - 1], height_history[len - 2]);
       }
-    }
+    };
 
     if (!is_infinite_resize_loop()) {
-      tool.browser.message.send(parent_tab_id, 'set_css', {
-        selector: 'iframe#' + url_params.frame_id,
-        css: { height: new_height },
-      });
+      tool.browser.message.send(parent_tab_id, 'set_css', {selector: `iframe#${url_params.frame_id}`, css: {height}});
     }
-  }
+  };
 
-  async function render_content(content: string, is_error: boolean) {
+  let render_content = async (content: string, is_error: boolean) => {
     if (!is_error && !url_params.is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
@@ -74,20 +71,20 @@ tool.catch.try(async () => {
     $('body').attr('data-test-state', 'ready'); // set as ready so that automated tests can evaluate results
     await tool.ui.delay(1000);
     $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
-  }
+  };
 
-  function button_html(text: string, add_classes: string) {
+  let button_html = (text: string, add_classes: string) => {
     return `<div class="button long ${add_classes}" style="margin:30px 0;" target="cryptup">${text}</div>`;
-  }
+  };
 
-  function armored_message_as_html(raw_message_substitute:string|null=null) {
+  let armored_message_as_html = (raw_message_substitute:string|null=null) => {
     if (raw_message_substitute || url_params.message) {
       return '<div class="raw_pgp_block" style="display: none;">' + (raw_message_substitute || url_params.message as string).replace(/\n/g, '<br>') + '</div><a href="#" class="action_show_raw_pgp_block">show original message</a>';
     }
     return '';
-  }
+  };
 
-  function set_frame_color(color: 'red'|'green'|'gray') {
+  let set_frame_color = (color: 'red'|'green'|'gray') => {
     if (color === 'red') {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
     } else if (color === 'green') {
@@ -95,9 +92,9 @@ tool.catch.try(async () => {
     } else {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
     }
-  }
+  };
 
-  async function render_error(error_box_content: string, raw_message_substitute:string|null=null) {
+  let render_error = async (error_box_content: string, raw_message_substitute:string|null=null) => {
     set_frame_color('red');
     await render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true);
     $('.button.settings_keyserver').click(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/keyserver.htm'}));
@@ -107,9 +104,9 @@ tool.catch.try(async () => {
       alert('You should tell the sender to update their settings and send a new message.');
       tool.browser.message.send('broadcast', 'reply_pubkey_mismatch');
     });
-  }
+  };
 
-  async function handle_private_key_mismatch(account_email: string, message: string) { // todo - make it work for multiple stored keys
+  let handle_private_key_mismatch = async (account_email: string, message: string) => { // todo - make it work for multiple stored keys
     let msg_diagnosis = await tool.browser.message.bg.diagnose_message_pubkeys(account_email, message);
     if (msg_diagnosis.found_match) {
       await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.encrypted_correctly_file_bug);
@@ -118,9 +115,9 @@ tool.catch.try(async () => {
     } else {
       await render_error(Lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
     }
-  }
+  };
 
-  async function decrypt_and_save_attachment_to_downloads(encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) {
+  let decrypt_and_save_attachment_to_downloads = async (encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) => {
     let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, encrypted_data, user_entered_message_password);
     if (result.success) {
       tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.text!, render_in); // text!: did not request uint8
@@ -132,18 +129,18 @@ tool.catch.try(async () => {
       tool.file.save_to_downloads(name, type, encrypted_data, render_in);
       send_resize_message();
     }
-  }
+  };
 
-  function render_progress(element: JQuery<HTMLElement>, percent: number|null, received: number|null, size: number) {
+  let render_progress = (element: JQuery<HTMLElement>, percent: number|null, received: number|null, size: number) => {
     size = size || Number(url_params.size);
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {
       element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
     }
-  }
+  };
 
-  function render_inner_attachments(attachments: Attachment[]) {
+  let render_inner_attachments = (attachments: Attachment[]) => {
     $('#pgp_block').append('<div id="attachments"></div>');
     included_attachments = attachments;
     for (let i of attachments.keys()) {
@@ -165,9 +162,9 @@ tool.catch.try(async () => {
         await decrypt_and_save_attachment_to_downloads(downloaded, attachment.name, attachment.type, $(self));
       }
     }));
-  }
+  };
 
-  function render_pgp_signature_check_result(signature: MessageVerifyResult|null) {
+  let render_pgp_signature_check_result = (signature: MessageVerifyResult|null) => {
     if (signature) {
       let signer_email = signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email;
       $('#pgp_signature > .cursive > span').text(String(signer_email) || 'Unknown Signer');
@@ -184,9 +181,9 @@ tool.catch.try(async () => {
       }
       $('#pgp_signature').css('block');
     }
-  }
+  };
 
-  function render_future_expiration(date: string) {
+  let render_future_expiration = (date: string) => {
     let btns = '';
     if (admin_codes && admin_codes.length) {
       btns += ' <a href="#" class="extend_expiration">extend</a>';
@@ -197,16 +194,16 @@ tool.catch.try(async () => {
     $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + '. ' + btns}));
     $('.expire_settings').click(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/security.htm'}));
     $('.extend_expiration').click(render_message_expiration_renew_options);
-  }
+  };
 
-  async function recover_stored_admin_codes() {
+  let recover_stored_admin_codes = async () => {
     let storage = await Store.get_global(['admin_codes']);
     if (url_params.short && storage.admin_codes && storage.admin_codes[url_params.short as string] && storage.admin_codes[url_params.short as string].codes) {
       admin_codes = storage.admin_codes[url_params.short as string].codes;
     }
-  }
+  };
 
-  async function render_message_expiration_renew_options() {
+  let render_message_expiration_renew_options = async () => {
     let parent = $(this).parent();
     let subscription = await Store.subscription();
     if (subscription.level && subscription.active) {
@@ -221,9 +218,9 @@ tool.catch.try(async () => {
       }
       tool.browser.message.send(parent_tab_id, 'subscribe_dialog');
     }
-  }
+  };
 
-  async function handle_extend_message_expiration_clicked(self: HTMLElement) {
+  let handle_extend_message_expiration_clicked = async (self: HTMLElement) => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
     $(self).parent().html('Updating..' + tool.ui.spinner('green'));
     try {
@@ -243,9 +240,9 @@ tool.catch.try(async () => {
       let el = await tool.ui.event.clicked('.retry_expiration_change');
       await handle_extend_message_expiration_clicked(el);
     }
-  }
+  };
 
-  async function decide_decrypted_content_formatting_and_render(decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult|null) {
+  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult|null) => {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];
@@ -286,9 +283,9 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys});
       }
     }
-  }
+  };
 
-  async function decrypt_and_render(optional_password:string|null=null) {
+  let decrypt_and_render = async (optional_password:string|null=null) => {
     if (typeof url_params.signature !== 'string') {
       let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, optional_password);
       if (typeof result === 'undefined') {
@@ -341,9 +338,9 @@ tool.catch.try(async () => {
       let signature_result = await tool.browser.message.bg.crypto_message_verify_detached(account_email, url_params.message as string|Uint8Array, url_params.signature);
       await decide_decrypted_content_formatting_and_render(url_params.message as string, false, signature_result);
     }
-  }
+  };
 
-  async function render_passphrase_prompt(missing_or_wrong_pp_k_longids: string[]) {
+  let render_passphrase_prompt = async (missing_or_wrong_pp_k_longids: string[]) => {
     missing_or_wrong_passprases = {};
     let passphrases = await Promise.all(missing_or_wrong_pp_k_longids.map(longid => Store.passphrase_get(account_email, longid)));
     for (let i of missing_or_wrong_pp_k_longids.keys()) {
@@ -357,9 +354,9 @@ tool.catch.try(async () => {
         passphrase_interval = window.setInterval(check_passphrase_changed, 250);
       }));
     }
-  }
+  };
 
-  async function render_password_prompt() {
+  let render_password_prompt = async () => {
     let prompt = '<p>' + Lang.pgp_block.question_decryt_prompt + '</p>';
     prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
@@ -368,9 +365,9 @@ tool.catch.try(async () => {
     $(self).html('Opening');
     await tool.ui.delay(50); // give browser time to render
     await decrypt_and_render($('#answer').val() as string); // text input
-  }
+  };
 
-  async function check_passphrase_changed() {
+  let check_passphrase_changed = async () => {
     let longids = Object.keys(missing_or_wrong_passprases);
     let updated_passphrases = await Promise.all(longids.map(longid => Store.passphrase_get(account_email, longid)));
     for (let longid of longids) {
@@ -381,9 +378,9 @@ tool.catch.try(async () => {
         return;
       }
     }
-  }
+  };
 
-  async function render_password_encrypted_message_load_fail(link_result: ApirFcMessageLink) {
+  let render_password_encrypted_message_load_fail = async (link_result: ApirFcMessageLink) => {
     if (link_result.expired) {
       let expiration_m = Lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
       if (link_result.deleted) {
@@ -403,9 +400,9 @@ tool.catch.try(async () => {
     } else {
       await render_error(Lang.pgp_block.cannot_locate + Lang.general.write_me_to_fix_it + ' Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
     }
-  }
+  };
 
-  async function initialize(force_pull_message_from_api=false) {
+  let initialize = async (force_pull_message_from_api=false) => {
     try {
       if (can_read_emails && url_params.message && url_params.signature === true) {
         render_text('Loading signature...');
@@ -470,7 +467,7 @@ tool.catch.try(async () => {
         await render_error(String(e));
       }
     }
-  }
+  };
 
   let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes']);
   can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');

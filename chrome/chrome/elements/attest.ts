@@ -14,6 +14,21 @@ tool.catch.try(async () => {
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
+
+  let process_attest = (passphrase: string|null) => {
+    if (passphrase !== null) {
+      $('.status').html('Verifying..' + tool.ui.spinner('green'));
+      tool.browser.message.send(null, 'attest_packet_received', {
+        account_email: url_params.account_email,
+        packet: url_params.attest_packet,
+        passphrase,
+      }, async attestation => {
+        let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
+        $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
+      });
+    }
+  };
+
   if (passphrase !== null) {
     process_attest(passphrase);
   } else {
@@ -27,20 +42,6 @@ tool.catch.try(async () => {
         }
       },
     }, tab_id);
-  }
-
-  function process_attest(passphrase: string|null) {
-    if (passphrase !== null) {
-      $('.status').html('Verifying..' + tool.ui.spinner('green'));
-      tool.browser.message.send(null, 'attest_packet_received', {
-        account_email: url_params.account_email,
-        packet: url_params.attest_packet,
-        passphrase,
-      }, async attestation => {
-        let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
-        $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
-      });
-    }
   }
 
 })();

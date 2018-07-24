@@ -21,7 +21,7 @@ tool.catch.try(async () => {
     if (key_backups.length) {
       let not_imported_backup_longids: string[] = [];
       for (let longid of tool.arr.unique(key_backups.map(tool.crypto.key.longid))) {
-        if (!tool.value(longid).in(private_keys_long_ids)) {
+        if (longid && !tool.value(longid).in(private_keys_long_ids)) {
           not_imported_backup_longids.push(longid);
         }
       }

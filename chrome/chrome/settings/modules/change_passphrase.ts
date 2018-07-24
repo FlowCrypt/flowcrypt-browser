@@ -22,6 +22,14 @@ tool.catch.try(async () => {
 
   let original_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
 
+  let display_block = (name: string) => {
+    let blocks = ['step_0_enter', 'step_1_password', 'step_2_confirm', 'step_3_done'];
+    for (let block of blocks) {
+      $('#' + block).css('display', 'none');
+    }
+    $('#' + name).css('display', 'block');
+  };
+
   if (original_passphrase === null) {
     display_block('step_0_enter');
   } else {
@@ -31,14 +39,6 @@ tool.catch.try(async () => {
       $('h1').text('Change your pass phrase');
     }
     display_block('step_1_password');
-  }
-
-  function display_block(name: string) {
-    let blocks = ['step_0_enter', 'step_1_password', 'step_2_confirm', 'step_3_done'];
-    for (let block of blocks) {
-      $('#' + block).css('display', 'none');
-    }
-    $('#' + name).css('display', 'block');
   }
 
   $('.action_enter').click(async () => {

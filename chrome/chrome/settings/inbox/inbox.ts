@@ -90,7 +90,7 @@ tool.catch.try(async () => {
     }
   });
 
-  function display_block(name: string, title: string) {
+  let display_block = (name: string, title: string) => {
     if (name === 'thread') {
       S.cached('threads').css('display', 'none');
       S.cached('thread').css('display', 'block');
@@ -100,9 +100,9 @@ tool.catch.try(async () => {
       S.cached('threads').css('display', 'block');
       $('h1').text(title);
     }
-  }
+  };
 
-  async function render_thread(thread_id: string) {
+  let render_thread = async (thread_id: string) => {
     display_block('thread', 'Loading..');
     try {
       let thread = await tool.api.gmail.thread_get(account_email, thread_id, 'full');
@@ -112,34 +112,33 @@ tool.catch.try(async () => {
     } catch (e) {
       $('.thread').text('Failed to load thread');
     }
-  }
+  };
 
-  function render_message(message: any) {
+  let render_message = (message: any) => {
     let bodies = tool.api.gmail.find_bodies(message);
     let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain']!)) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html']!)));
     let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
     S.cached('thread').append(tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
-  }
+  };
 
-  function render_reply_box(thread_id: string, last_message_id: string) {
+  let render_reply_box = (thread_id: string, last_message_id: string) => {
     S.cached('thread').append(tool.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)}));
-  }
+  };
 
-
-  function thread_message_id(message_id: string) {
+  let thread_message_id = (message_id: string) => {
     return 'message_id_' + message_id;
-  }
+  };
 
-  function thread_list_item_id(thread_id: string) {
+  let thread_list_item_id = (thread_id: string) => {
     return 'list_thread_id_' + thread_id;
-  }
+  };
 
-  function thread_element_add(thread_id: string) {
+  let thread_element_add = (thread_id: string) => {
     S.cached('threads').append(tool.e('div', {
       class: 'line',
       id: thread_list_item_id(thread_id),
       html: '<span class="loading">' + tool.ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',
     }));
-  }
+  };
 
 })();

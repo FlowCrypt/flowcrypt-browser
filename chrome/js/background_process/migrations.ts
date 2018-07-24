@@ -6,17 +6,17 @@
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
-function migrate_account(data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: VoidCallback) {
+let migrate_account = (data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: VoidCallback) => {
   Store.set(data.account_email, { version: tool.catch.version('int') as number|null }).then(respond_done);
   account_update_status_pks(data.account_email).catch(tool.catch.handle_exception);
   account_update_status_keyserver(data.account_email).catch(tool.catch.handle_exception);
-}
+};
 
-async function migrate_global() {
+let migrate_global = async () => {
   await migrate_local_storage_to_extension_storage();
-}
+};
 
-function migrate_local_storage_to_extension_storage() {
+let migrate_local_storage_to_extension_storage = () => {
   return new Promise(resolve => {
     if (window.localStorage.length === 0) {
       resolve(); // nothing in localStorage
@@ -43,9 +43,9 @@ function migrate_local_storage_to_extension_storage() {
       });
     }
   });
-}
+};
 
-function legacy_local_storage_read(value: string) {
+let legacy_local_storage_read = (value: string) => {
   if (typeof value === 'undefined') {
     return value;
   } else if (value === 'null#null') {
@@ -61,9 +61,9 @@ function legacy_local_storage_read(value: string) {
   } else {
     return value.replace(/^str#/, '');
   }
-}
+};
 
-async function account_update_status_keyserver(account_email: string) { // checks which emails were registered on Attester
+let account_update_status_keyserver = async (account_email: string) => { // checks which emails were registered on Attester
   let keyinfos = await Store.keys_get(account_email);
   let my_longids = keyinfos.map(ki => ki.longid);
   let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
@@ -77,9 +77,9 @@ async function account_update_status_keyserver(account_email: string) { // check
     }
     await Store.set(account_email, { addresses_keyserver });
   }
-}
+};
 
-async function account_update_status_pks(account_email: string) { // checks if any new emails were registered on pks lately
+let account_update_status_pks = async (account_email: string) => { // checks if any new emails were registered on pks lately
   let keyinfos = await Store.keys_get(account_email);
   let my_longids = keyinfos.map(ki => ki.longid);
   let hkp = new openpgp.HKP('https://pgp.key-server.io');
@@ -101,10 +101,10 @@ async function account_update_status_pks(account_email: string) { // checks if a
     }
   }
   await Store.set(account_email, { addresses_pks });
-}
+};
 
-function schedule_cryptup_subscription_level_check() {
-  setTimeout(function() {
+let schedule_cryptup_subscription_level_check = () => {
+  setTimeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
       setTimeout(tool.catch.try(tool.api.cryptup.account_check_sync), tool.time.hours(Math.random() * 3)); // random 0-3 hours
@@ -114,4 +114,4 @@ function schedule_cryptup_subscription_level_check() {
     }
   }, 10 * 60 * 1000); // 10 minutes
   setInterval(tool.catch.try(tool.api.cryptup.account_check_sync), tool.time.hours(23 + Math.random())); // random 23-24 hours
-}
+};

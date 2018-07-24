@@ -1083,7 +1083,7 @@ class Composer {
         ul_html += '<li class="loading">loading...</li>';
       }
       this.S.cached('contacts').find('ul').html(ul_html);
-      this.S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), function(self: HTMLElement) {
+      this.S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), (self: HTMLElement) => {
         let email = $(self).attr('email');
         if (email) {
           that.select_contact(tool.str.parse_email(email).email, query);

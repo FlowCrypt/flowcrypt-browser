@@ -13,7 +13,7 @@ tool.catch.try(async () => {
     $('.storage_link_container').append(' - <a href="' + tool.env.url_create('/chrome/dev/storage.htm', {controls: true, }) + '">Storage</a>');
   }
 
-  if (url_params.account_email) {
+  if (account_email) {
 
     let {dev_outlook_allow} = await Store.get_global(['dev_outlook_allow']);
     if (dev_outlook_allow === true) {
@@ -26,17 +26,11 @@ tool.catch.try(async () => {
       Store.set(null, {'dev_outlook_allow': $(this).prop('checked')}).then(() => window.location.reload());
     });
 
-    $('.action_open_decrypt').click(function() {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm');
-    });
+    $('.action_open_decrypt').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm'));
 
-    $('.action_open_decrypt_ignore_mdc').click(function() {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm');
-    });
+    $('.action_open_decrypt_ignore_mdc').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm'));
 
-    $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
-      collect_info_and_download_backup_file(account_email).catch(tool.catch.handle_promise_error);
-    }));
+    $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(tool.catch.handle_promise_error)));
 
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('white'));
@@ -50,7 +44,7 @@ tool.catch.try(async () => {
     $('.action_exception').click(() => tool.catch.test());
 
     $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
-      if (confirm('This will remove all your FlowCrypt settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
+      if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collect_info_and_download_backup_file(account_email);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
           Settings.reset_cryptup_account_storages(account_email, () => window.parent.location.reload());
@@ -58,13 +52,9 @@ tool.catch.try(async () => {
       }
     }));
 
-    $('.action_attest_log').click(function() {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: url_params.account_email, keys: 'attest_log', title: 'Attest Log - ' + url_params.account_email}).replace('?', '&'));
-    });
+    $('.action_attest_log').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&')));
 
-    $('.action_email_client').click(function() {
-      tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email: url_params.account_email})});
-    });
+    $('.action_email_client').click(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})}));
 
     $('.action_flush_attest_info').click(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
@@ -87,14 +77,14 @@ tool.catch.try(async () => {
       tool.browser.message.send(parent_tab_id, 'reload');
     });
 
-    async function collect_info_and_download_backup_file(account_email: string) {
+    let collect_info_and_download_backup_file = async (account_email: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
       let backup_text = await collect_info_for_account_backup(account_email);
       tool.file.save_to_downloads(name, 'text/plain', backup_text);
       await tool.ui.delay(1000);
-    }
+    };
 
-    async function collect_info_for_account_backup(account_email: string) {
+    let collect_info_for_account_backup = async (account_email: string) => {
       let text = [
         'This file contains sensitive information, please put it in a safe place.',
         '',
@@ -121,7 +111,7 @@ tool.catch.try(async () => {
       }
       text.push('');
       return text.join('\n');
-    }
+    };
 
   }
 

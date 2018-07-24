@@ -10,6 +10,8 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
+  let close_dialog = () => tool.browser.message.send(parent_tab_id, 'close_dialog');
+
   for (let email of (url_params.emails as string).split(',')) {
     $('select.email').append('<option value="' + email + '">' + email + '</option>');
   }
@@ -59,9 +61,5 @@ tool.catch.try(async () => {
   }
 
   $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), close_dialog));
-
-  function close_dialog() {
-    tool.browser.message.send(parent_tab_id, 'close_dialog');
-  }
 
 })();

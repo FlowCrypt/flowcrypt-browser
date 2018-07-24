@@ -27,23 +27,7 @@ tool.catch.try(async () => {
     'photo': '.profile_photo img',
   });
 
-  S.cached('status').html('Loading..' + tool.ui.spinner('green'));
-
-  try {
-    let response = await tool.api.cryptup.account_update();
-    render_fields(response.result);
-  } catch (e) {
-    if (e.internal === 'auth') {
-      S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
-      S.now('subscribe').click(function() {
-        Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error');
-      });
-    } else {
-      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
-    }
-  }
-
-  function render_fields(result: ApirFcAccountUpdate$result) {
+  let render_fields = (result: ApirFcAccountUpdate$result) => {
     if (result.alias) {
       let me = tool.api.cryptup.url('me', result.alias);
       S.cached('status').html('Your contact page is currently <b class="good">enabled</b> at <a href="' + me + '" target="_blank">' + me.replace('https://', '') + '</a></span>');
@@ -66,9 +50,9 @@ tool.catch.try(async () => {
       S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
       S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), enable_contact_page));
     }
-  }
+  };
 
-  async function enable_contact_page() {
+  let enable_contact_page = async () => {
     S.cached('status').html('Enabling..' + tool.ui.spinner('green'));
     let auth_info = await Store.auth_info();
     let storage = await Store.get_account(auth_info.account_email!, ['full_name']);
@@ -85,7 +69,7 @@ tool.catch.try(async () => {
       alert('Failed to create account, possibly a network issue. Please try again.\n\n' + e.message);
       window.location.reload();
     }
-  }
+  };
 
   S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if (!S.cached('input_name').val()) {
@@ -104,11 +88,9 @@ tool.catch.try(async () => {
     }
   }));
 
-  S.cached('action_close').click(function() {
-    tool.browser.message.send(parent_tab_id, 'close_page');
-  });
+  S.cached('action_close').click(() =>tool.browser.message.send(parent_tab_id, 'close_page'));
 
-  async function find_available_alias(email: string): Promise<string> {
+  let find_available_alias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
     while(alias.length < 3) {
       alias += tool.str.random(1).toLowerCase();
@@ -121,6 +103,19 @@ tool.catch.try(async () => {
         return alias;
       }
       i += tool.int.random(1, 9);
+    }
+  };
+
+  S.cached('status').html('Loading..' + tool.ui.spinner('green'));
+  try {
+    let response = await tool.api.cryptup.account_update();
+    render_fields(response.result);
+  } catch (e) {
+    if (e.internal === 'auth') {
+      S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
+      S.now('subscribe').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+    } else {
+      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
     }
   }
 

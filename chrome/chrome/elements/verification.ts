@@ -13,6 +13,10 @@ tool.catch.try(async () => {
   let flowcrypt_account = new FlowCryptAccount({}, true);
   let token = flowcrypt_account.parse_token_email_text(url_params.verification_email_text as string);
 
+  let render_status = (content: string, spinner=false) => {
+    $('body .status').html(content + (spinner ? ' ' + tool.ui.spinner('white') : ''));
+  };
+
   if (!token) {
     render_status('This verification email seems to have wrong format. Please write me at human@flowcrypt.com to fix this.');
   } else {
@@ -33,10 +37,6 @@ tool.catch.try(async () => {
       render_status('Could not complete: ' + error.message);
       tool.catch.log('problem in verification.js', error);
     }
-  }
-
-  function render_status(content: string, spinner=false) {
-    $('body .status').html(content + (spinner ? ' ' + tool.ui.spinner('white') : ''));
   }
 
 })();

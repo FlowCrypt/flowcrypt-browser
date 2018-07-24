@@ -59,7 +59,6 @@ tool.catch.try(async () => {
       alert('There was an error sending message, please try again');
       tool.catch.handle_exception(e);
     }
-
   }));
 
 })();

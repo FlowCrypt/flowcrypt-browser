@@ -67,26 +67,16 @@ tool.catch.try(async () => {
     },
   }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
 
-  await initialize();
-  if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because render_settings_sub_page needs tab_id_global for the page to work properly
-    if (url_params.page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.render_sub_page(account_email || null, tab_id, url_params.page, '&use_account_email=1');
-    } else {
-      // todo - investigate. JSON parse the params? why?
-      Settings.render_sub_page(account_email || null, tab_id, url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
-    }
-  }
-
-  function display_original(selector: string) {
+  let display_original = (selector: string) => {
     let filterable = $(selector);
     filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
     filterable.filter('table').css('display', 'table');
     filterable.filter('tr').css('display', 'table-row');
     filterable.filter('td').css('display', 'table-cell');
     filterable.not('a, b, i, img, span, input, label, select, table, tr, td').css('display', 'block');
-  }
+  };
 
-  async function initialize() {
+  let initialize = async () => {
     if (account_email) {
       $('.email-address').text(account_email);
       $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
@@ -120,9 +110,9 @@ tool.catch.try(async () => {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
-  }
+  };
 
-  async function render_encrypted_contact_page_status() {
+  let render_encrypted_contact_page_status = async () => {
     let status_container = $('.public_profile_indicator_container');
     let auth_info = await Store.auth_info();
     if (auth_info.account_email) { // have auth email set
@@ -148,9 +138,9 @@ tool.catch.try(async () => {
       status_container.find('.status-indicator').addClass('inactive');
     }
     status_container.css('visibility', 'visible');
-  }
+  };
 
-  async function render_subscription_status_header() {
+  let render_subscription_status_header = async () => {
     try {
       await tool.api.cryptup.account_check_sync();
     } catch (e) {
@@ -180,9 +170,9 @@ tool.catch.try(async () => {
       }
       $('.logo-row .subscription .upgrade').css('display', 'inline-block');
     }
-  }
+  };
 
-  function add_key_rows_html(private_keys: KeyInfo[]) {
+  let add_key_rows_html = (private_keys: KeyInfo[]) => {
     let html = '';
     for (let keyinfo of private_keys) {
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
@@ -206,9 +196,9 @@ tool.catch.try(async () => {
         Store.passphrase_save('session', account_email!, $(this).attr('longid')!, undefined),
       ]).then(() => reload(true));
     });
-  }
+  };
 
-  async function new_google_account_authentication_prompt(account_email?: string, omit_read_scope=false) {
+  let new_google_account_authentication_prompt = async (account_email?: string, omit_read_scope=false) => {
     let response = await tool.api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
     if (response && response.success === true && response.account_email) {
       await Store.account_emails_add(response.account_email);
@@ -227,7 +217,7 @@ tool.catch.try(async () => {
       alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
       window.location.reload();
     }
-  }
+  };
 
   // function new_microsoft_account_authentication_prompt(account_email) {
   //   let window_id = 'popup_' + tool.str.random(20);
@@ -281,15 +271,15 @@ tool.catch.try(async () => {
     });
   });
 
-  function reload(advanced=false) {
+  let reload = (advanced=false) => {
     if (advanced) {
       window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email, advanced: true });
     } else {
       window.location.reload();
     }
-  }
+  };
 
-  function menu_account_html(email: string, photo=null) {
+  let menu_account_html = (email: string, photo=null) => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
@@ -298,6 +288,16 @@ tool.catch.try(async () => {
       // '  <div class="col-sm-1 "><img class="profile-img " src="" alt=""></div>',
       '</div>',
     ].join('');
+  };
+
+  await initialize();
+  if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because render_settings_sub_page needs tab_id_global for the page to work properly
+    if (url_params.page === '/chrome/settings/modules/auth_denied.htm') {
+      Settings.render_sub_page(account_email || null, tab_id, url_params.page, '&use_account_email=1');
+    } else {
+      // todo - investigate. JSON parse the params? why?
+      Settings.render_sub_page(account_email || null, tab_id, url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
+    }
   }
 
 })();

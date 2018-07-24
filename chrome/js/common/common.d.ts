@@ -18,6 +18,10 @@ interface FcWindow extends BrowserWidnow {
     mnemonic: (hex: string) => string;
 }
 
+type AnyThirdPartyLibrary = any;
+type AnyPlatformDependentCode = any;
+type Thrown = Error|StandardError|any;
+
 interface ContentScriptWindow extends FcWindow {
     TrySetDestroyableTimeout: (code: Function, ms: number) => number; // tslint:disable-line:ban-types
     TrySetDestroyableInterval: (code: Function, ms: number) => number; // tslint:disable-line:ban-types

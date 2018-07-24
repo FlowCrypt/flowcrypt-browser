@@ -13,7 +13,41 @@ tool.catch.try(async () => {
   let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
   let storage = await Store.get_account(account_email, storage_keys);
-  await recover_missing_url_params();
+
+  await new Promise(resolve => { // recover missing url params
+    if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
+      resolve(); // either not a reply box, or reply box & has all needed params
+      return;
+    }
+    $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
+    tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata').then(gmail_message_object => {
+      url_params.thread_id = gmail_message_object.threadId;
+      let reply = tool.api.common.reply_correspondents(account_email, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+      if (!url_params.to) {
+        url_params.to = reply.to.join(',');
+      }
+      if (!url_params.from) {
+        url_params.from = reply.from;
+      }
+      if (!url_params.subject) {
+        url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
+      }
+      $('#loader').remove();
+      resolve();
+    }, (e) => {
+      tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
+      if (!url_params.from) {
+        url_params.from = account_email;
+      }
+      if (!url_params.subject) {
+        url_params.subject = '';
+      }
+      url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
+      console.info('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
+      $('#loader').remove();
+      resolve();
+    });
+  });
 
   let tab_id = await tool.browser.message.required_tab_id();
 
@@ -22,6 +56,22 @@ tool.catch.try(async () => {
   if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
     url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
   }
+
+  let close_message = () => {
+    $('body').attr('data-test-state', 'closed');  // used by automated tests
+    if (url_params.is_reply_box) {
+      tool.browser.message.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
+    } else if (url_params.placement === 'settings') {
+        tool.browser.message.send(parent_tab_id, 'close_page');
+    } else {
+      tool.browser.message.send(parent_tab_id, 'close_new_message');
+    }
+  };
+
+  let catch_auth_error = <RETURM_TYPE_OF_F>(p: Promise<RETURM_TYPE_OF_F>): Promise<RETURM_TYPE_OF_F> => {
+    p.catch(e => tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e));
+    return p;
+  };
 
   let composer = new Composer({
     can_read_email: () => can_read_email,
@@ -199,58 +249,5 @@ tool.catch.try(async () => {
       }
     },
   }, tab_id || undefined);
-
-  function recover_missing_url_params() {
-    return new Promise(resolve => {
-      if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
-        resolve(); // either not a reply box, or reply box & has all needed params
-        return;
-      }
-      $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
-      tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata').then(gmail_message_object => {
-        url_params.thread_id = gmail_message_object.threadId;
-        let reply = tool.api.common.reply_correspondents(account_email, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
-        if (!url_params.to) {
-          url_params.to = reply.to.join(',');
-        }
-        if (!url_params.from) {
-          url_params.from = reply.from;
-        }
-        if (!url_params.subject) {
-          url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
-        }
-        $('#loader').remove();
-        resolve();
-      }, (e) => {
-        tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
-        if (!url_params.from) {
-          url_params.from = account_email;
-        }
-        if (!url_params.subject) {
-          url_params.subject = '';
-        }
-        url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
-        console.info('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
-        $('#loader').remove();
-        resolve();
-      });
-    });
-  }
-
-  function close_message() {
-    $('body').attr('data-test-state', 'closed');  // used by automated tests
-    if (url_params.is_reply_box) {
-      tool.browser.message.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
-    } else if (url_params.placement === 'settings') {
-        tool.browser.message.send(parent_tab_id, 'close_page');
-    } else {
-      tool.browser.message.send(parent_tab_id, 'close_new_message');
-    }
-  }
-
-  function catch_auth_error <RETURM_TYPE_OF_F>(p: Promise<RETURM_TYPE_OF_F>): Promise<RETURM_TYPE_OF_F> {
-    p.catch(e => tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e));
-    return p;
-  }
 
 })();

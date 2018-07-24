@@ -43,18 +43,18 @@ tool.catch.try(async () => {
     $('.which_key').css('display', 'block');
   }
 
-  function render_error() {
+  let render_error = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
-  }
+  };
 
-  function render_normal() {
+  let render_normal = () => {
     $('#passphrase').css('border-color', '');
     $('#passphrase').css('color', 'black');
     $('#passphrase').focus();
-  }
+  };
 
   $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), () => {
     tool.browser.message.send('broadcast', 'passphrase_entry', {entered: false});

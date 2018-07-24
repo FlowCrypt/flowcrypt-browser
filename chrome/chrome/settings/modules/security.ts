@@ -21,18 +21,18 @@ tool.catch.try( async () => {
     $('.line').css('padding', '7px 0');
   }
 
-  async function on_default_expire_user_change() {
+  let on_default_expire_user_change = async () => {
     $('.select_loader_container').html(tool.ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
-  }
+  };
 
   let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);
   if (stored_passphrase === null) {
     $('#passphrase_to_open_email').prop('checked', true);
   }
-  $('#passphrase_to_open_email').change(function() {
+  $('#passphrase_to_open_email').change(() => {
     $('.passhprase_checkbox_container').css('display', 'none');
     $('.passphrase_entry_container').css('display', 'block');
   });
@@ -93,9 +93,7 @@ tool.catch.try( async () => {
     }
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
-    $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(function() {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm');
-    });
+    $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm'));
   }
 
 })();
