@@ -12,8 +12,7 @@
       "sourceMap": true
   },
   "files": [
-      "source/*.ts",
-      "source/**/*.ts"
+      "source/**.ts"
   ],
   "exclude": [
       "build/*"

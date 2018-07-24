@@ -10,3 +10,5 @@ interface ConfigInterface {
 }
 
 export let config = JSON.parse(fs.readFileSync('test/puppeteer.json', 'utf8')) as ConfigInterface;
+
+export let config_k = (title: string) => config.keys.filter(k => k.title === title)[0];

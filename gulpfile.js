@@ -58,7 +58,7 @@ let subTask = {
     delete manifest.minimum_chrome_version;
     return manifest;
   }),
-  buildTest: () => recipe.ts('test/source/*.ts', 'test/build/', 'test/tsconfig.json'),
+  buildTest: () => recipe.ts('test/source/**/*.ts', 'test/build/', 'test/tsconfig.json'),
   runTest: () => recipe.exec('node test/build/test.js'),
   runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
   releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),

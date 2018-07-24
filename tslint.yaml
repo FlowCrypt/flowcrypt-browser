@@ -33,7 +33,7 @@ rules:
     ordered-imports: false
     align: false
     # todo - allow stuff below
-    only-arrow-functions: false
+    only-arrow-functions: true
     object-literal-shorthand: true
     no-bitwise: false  # may enable in the future
     no-namespace: false  # can consider later

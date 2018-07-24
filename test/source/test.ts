@@ -1,12 +1,12 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-import {print_results} from './results';
+import {print_results} from './logger';
 import {tests} from './tests';
-import * as chrome from './chrome';
+import {BrowserPool} from './browser';
 
 (async () => {
 
-  let pool = new chrome.Pool(1);
+  let pool = new BrowserPool(1);
   let handle = await pool.new_browser_handle();
 
   await tests.initial_page_shows(handle);
