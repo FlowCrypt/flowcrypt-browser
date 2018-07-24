@@ -178,6 +178,7 @@ export const tests = {
     }
     await settings_page.wait_and_click('@input-step2bmanualcreate-create-and-save');
     if(backup === 'none') {
+      await settings_page.wait_all('@input-backup-step3manual-no-backup', {timeout: 40});
       await settings_page.wait_and_click('@input-backup-step3manual-no-backup');
     } else if(backup === 'email') {
       throw Error('tests.setup_manual_create options.backup=email not implemented');
