@@ -9,7 +9,7 @@ tool.catch.try(async () => {
   let replacer: InboxElementReplacer;
   let full_name = '';
 
-  let start = (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => {
+  let start = (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: () => void) => {
     Store.get_account(account_email, ['addresses', 'google_token_scopes']).then((storage: Dict<string[]>) => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
       injector.buttons();

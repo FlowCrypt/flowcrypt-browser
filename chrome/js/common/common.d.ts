@@ -169,16 +169,6 @@ type DecryptResult = DecryptSuccess|DecryptError;
 type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult;
 
-// interface OpenpgpEncryptResult {
-//     data: string|Uint8Array;
-//     message: {
-//         packets: {
-//             write: () => Uint8Array;
-//         }
-//     };
-// }
-
-// type NamedFunctionsObject = Dict<(...args: any[]) => any>;
 type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;
 
@@ -202,11 +192,6 @@ interface MimeContent {
 
 type StoredAuthInfo = {account_email: string|null, uuid: string|null, verified: boolean|null};
 
-// interface MimeAsHeadersAndBlocks {
-//     headers: FlatHeaders;
-//     blocks: MessageBlock[];
-// }
-
 type ReplaceableMessageBlockType = 'public_key'|'private_key'|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
 type MessageBlockType = 'text'|ReplaceableMessageBlockType;
 
@@ -226,12 +211,6 @@ interface MimeParserNode {
     content: Uint8Array;
     appendChild: (child: MimeParserNode) => void;
 }
-
-// interface OpenpgpMessage {
-//     getEncryptionKeyIds?: () => string[];
-//     getSigningKeyIds?: () => string[];
-//     text?: string;
-// }
 
 interface MessageVerifyResult {
     signer: string|null;
@@ -284,7 +263,6 @@ type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 type Callback = (r?: any) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
-// type Options = Dict<any>;
 
 type BrowserMessageRequestDb = {f: string, args: any[]};
 type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
@@ -293,10 +271,8 @@ type BrowserMessageRequest = null|Dict<any>;
 type BrowserMessageResponse = any|Dict<any>;
 type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 
-// type LongidToMnemonic = (longid: string) => string;
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
-// type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
 
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
@@ -382,7 +358,7 @@ interface WebmailElementReplacer {
     set_reply_box_editable: () => void;
     reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void;
 }
-type NotificationWithCallbacks = {notification: string, callbacks: Dict<Callback>};
+type NotificationWithHandlers = {notification: string, callbacks: Dict<Callback>};
 
 interface JQueryStatic {
     featherlight: Function; // tslint:disable-line:ban-types
@@ -393,12 +369,6 @@ interface JQuery {
 }
 
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
-
-// type PromiseFactory<T> = () => T | PromiseLike<T>;
-
-// interface PromiseConstructor {
-//     sequence<T>(promise_factories: PromiseFactory<T>[]): Promise<T[]>;
-// }
 
 type SubscriptionLevel = 'pro'|null;
 
@@ -478,10 +448,6 @@ interface AccountStore extends BaseStore {
     successfully_received_at_leat_one_message?: boolean;
     notification_setup_done_seen?: boolean;
     attest_log?: StoredAttestLog[];
-}
-
-interface FcPromise<T> extends Promise<T> {
-    validate: (validator: (r: T) => void) => FcPromise<T>;
 }
 
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};

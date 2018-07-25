@@ -6,7 +6,7 @@ declare var require: any;
 
 interface ComposerAppFunctionsInterface {
     can_read_email: () => boolean;
-    does_recipient_have_my_pubkey: (email: string, cb: (has_pubkey: boolean|undefined) => void) => void;
+    does_recipient_have_my_pubkey: (email: string) => Promise<boolean|undefined>;
     storage_get_addresses: () => string[];
     storage_get_addresses_pks: () => string[];
     storage_get_addresses_keyserver: () => string[];
@@ -625,7 +625,10 @@ class Composer {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
       }
       await tool.api.aws.s3_upload(items, this.render_upload_progress);
-      let {admin_codes} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key)).validate(r => r.confirmed && r.confirmed.length === items.length);
+      let {admin_codes, confirmed} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key));
+      if(!confirmed || confirmed.length !== items.length) {
+        throw new Error('Attachments did not upload properly, please try again');
+      }
       for (let i of attachments.keys()) {
         attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
       }
@@ -1196,12 +1199,10 @@ class Composer {
         let sending_address_on_keyserver = tool.value(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_keyserver);
         if ((contact.client === 'cryptup' && !sending_address_on_keyserver) || (contact.client !== 'cryptup' && !sending_address_on_pks)) {
           // new message, and my key is not uploaded where the recipient would look for it
-          this.app.does_recipient_have_my_pubkey(email, already_has => {
-            if (!already_has) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-              this.recipients_missing_my_key.push(email);
-            }
-            this.update_pubkey_icon();
-          });
+          if (await this.app.does_recipient_have_my_pubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
+            this.recipients_missing_my_key.push(email);
+          }
+          this.update_pubkey_icon();
         } else {
           this.update_pubkey_icon();
         }
@@ -1392,7 +1393,7 @@ class Composer {
     return {
       send_message_to_main_window: (channel: string, data: Dict<Serializable>) => null,
       can_read_email: () => false,
-      does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => callback(false),
+      does_recipient_have_my_pubkey: (their_email: string): Promise<boolean|undefined> => Promise.resolve(false),
       storage_get_addresses: () => [],
       storage_get_addresses_pks: () => [],
       storage_get_addresses_keyserver: () => [],

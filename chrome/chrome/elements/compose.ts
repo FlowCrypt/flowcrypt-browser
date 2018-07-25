@@ -75,28 +75,29 @@ tool.catch.try(async () => {
 
   let composer = new Composer({
     can_read_email: () => can_read_email,
-    does_recipient_have_my_pubkey: (their_email: string, callback: (has_my_pubkey: boolean|undefined) => void) => {
+    does_recipient_have_my_pubkey: async (their_email: string): Promise<boolean|undefined> => {
       their_email = tool.str.parse_email(their_email).email;
-      Store.get_account(account_email, ['pubkey_sent_to']).then(storage => {
-        if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
-          callback(true);
-        } else if (!can_read_email) {
-          callback(undefined);
-        } else {
-          const q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
-          const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
-          tool.api.gmail.message_list(account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true).then(response => {
-            if (response.messages) {
-              Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)}).then(() => callback(true));
-            } else {
-              callback(false);
-            }
-          }, (e) => {
-            tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
-            callback(false);
-          });
+      let storage = await Store.get_account(account_email, ['pubkey_sent_to']);
+      if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
+        return true;
+      } else if (!can_read_email) {
+        return undefined;
+      } else {
+        const q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
+        const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
+        try {
+          let response = await tool.api.gmail.message_list(account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true);
+          if (response.messages) {
+            await Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)});
+            return true;
+          } else {
+            return false;
+          }
+        } catch(e) {
+          tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
+          return undefined;
         }
-      });
+      }
     },
     storage_get_addresses: () => storage.addresses || [account_email],
     storage_get_addresses_pks: () => storage.addresses_pks || [],
@@ -116,38 +117,33 @@ tool.catch.try(async () => {
         throw new ComposerUserError('FlowCrypt is not properly set up. No Public Key found in storage.');
       }
     },
-    storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => tool.catch.Promise((resolve, reject) => {
-      Store.get_account(account_email, ['drafts_reply', 'drafts_compose']).then(draft_storage => {
-        if (thread_id) { // it's a reply
-          let drafts = draft_storage.drafts_reply || {};
-          if (store_if_true) {
-            drafts[thread_id] = draft_id;
-          } else {
-            delete drafts[thread_id];
-          }
-          Store.set(account_email, {drafts_reply: drafts}).then(resolve);
-        } else { // it's a new message
-          let drafts = draft_storage.drafts_compose || {};
-          drafts = draft_storage.drafts_compose || {};
-          if (store_if_true) {
-            drafts[draft_id] = {recipients, subject, date: new Date().getTime()};
-          } else {
-            delete drafts[draft_id];
-          }
-          Store.set(account_email, {drafts_compose: drafts}).then(resolve);
+    storage_set_draft_meta: async (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => {
+      let draft_storage = await Store.get_account(account_email, ['drafts_reply', 'drafts_compose']);
+      if (thread_id) { // it's a reply
+        let drafts = draft_storage.drafts_reply || {};
+        if (store_if_true) {
+          drafts[thread_id] = draft_id;
+        } else {
+          delete drafts[thread_id];
         }
-      });
-    }),
-    storage_passphrase_get: () => {
-      return tool.catch.Promise((resolve, reject) => {
-        Store.keys_get(account_email, ['primary']).then(([primary_ki]) => {
-          if (primary_ki === null) {
-            resolve(null); // flowcrypt just uninstalled or reset?
-          } else {
-            Store.passphrase_get(account_email, primary_ki.longid).then(resolve, reject);
-          }
-        });
-      });
+        await Store.set(account_email, {drafts_reply: drafts});
+      } else { // it's a new message
+        let drafts = draft_storage.drafts_compose || {};
+        drafts = draft_storage.drafts_compose || {};
+        if (store_if_true) {
+          drafts[draft_id] = {recipients, subject, date: new Date().getTime()};
+        } else {
+          delete drafts[draft_id];
+        }
+        await Store.set(account_email, {drafts_compose: drafts});
+      }
+    },
+    storage_passphrase_get: async () => {
+      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      if (primary_ki === null) {
+        return null; // flowcrypt just uninstalled or reset?
+      }
+      return await Store.passphrase_get(account_email, primary_ki.longid);
     },
     storage_add_admin_codes: async (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => {
       let admin_code_storage = await Store.get_global(['admin_codes']);

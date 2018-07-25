@@ -30,7 +30,7 @@ tool.catch.try(async () => {
     }
   };
 
-  let stripe_credit_card_entered_handler = (data: {token: string}, sender: any, respond: Callback) => {
+  let stripe_credit_card_entered_handler: BrowserMessageHandler = (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').html('').css('display', 'none');
     flowcrypt_account.subscribe(
       account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token,

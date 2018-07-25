@@ -47,7 +47,8 @@ tool.catch.try(async () => {
       if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collect_info_and_download_backup_file(account_email);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-          Settings.reset_cryptup_account_storages(account_email, () => window.parent.location.reload());
+          await Settings.reset_cryptup_account_storages(account_email);
+          window.parent.location.reload();
         }
       }
     }));

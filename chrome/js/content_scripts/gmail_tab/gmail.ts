@@ -61,7 +61,7 @@ tool.catch.try(async () => {
     return insights;
   };
 
-  let start = (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => {
+  let start = (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: () => void) => {
     hijack_gmail_hotkeys();
     Store.get_account(account_email, ['addresses', 'google_token_scopes']).then((storage: Dict<string[]>) => {
       let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');

@@ -144,41 +144,39 @@ class Settings {
     }
   }
 
-  static reset_cryptup_account_storages = (account_email: string, callback: Callback) => {
+  static reset_cryptup_account_storages = (account_email: string) => new Promise(async resolve => {
     if (!account_email) {
       throw new Error('Missing account_email to reset');
     }
-    Store.account_emails_get().then((account_emails) => {
-      if (!tool.value(account_email).in(account_emails)) {
-        throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
-      }
-      let keys_to_remove: string[] = [];
-      let filter = Store.index(account_email, '') as string;
-      if (!filter) {
-        throw new Error('Filter is empty for account_email"' + account_email + '"');
-      }
-      chrome.storage.local.get(storage => {
-        for (let key of Object.keys(storage)) {
-          if (key.indexOf(filter) === 0) {
-            keys_to_remove.push(key.replace(filter, ''));
-          }
+    let account_emails = await Store.account_emails_get();
+    if (!tool.value(account_email).in(account_emails)) {
+      throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
+    }
+    let keys_to_remove: string[] = [];
+    let filter = Store.index(account_email, '') as string;
+    if (!filter) {
+      throw new Error('Filter is empty for account_email"' + account_email + '"');
+    }
+    chrome.storage.local.get(async storage => {
+      for (let key of Object.keys(storage)) {
+        if (key.indexOf(filter) === 0) {
+          keys_to_remove.push(key.replace(filter, ''));
         }
-        Store.remove(account_email, keys_to_remove).then(() => {
-          for (let key of Object.keys(localStorage)) {
-            if (key.indexOf(filter) === 0) {
-              localStorage.removeItem(key);
-            }
-          }
-          for (let key of Object.keys(sessionStorage)) {
-            if (key.indexOf(filter) === 0) {
-              sessionStorage.removeItem(key);
-            }
-          }
-          callback();
-        });
-      });
+      }
+      await Store.remove(account_email, keys_to_remove);
+      for (let key of Object.keys(localStorage)) {
+        if (key.indexOf(filter) === 0) {
+          localStorage.removeItem(key);
+        }
+      }
+      for (let key of Object.keys(sessionStorage)) {
+        if (key.indexOf(filter) === 0) {
+          sessionStorage.removeItem(key);
+        }
+      }
+      resolve();
     });
-  }
+  })
 
   static initialize_private_key_import_ui = (account_email: string, parent_tab_id: string|null) => {
     let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));

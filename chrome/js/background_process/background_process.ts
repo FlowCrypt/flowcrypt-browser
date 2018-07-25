@@ -21,26 +21,29 @@ chrome.runtime.onInstalled.addListener(event => {
   await Store.set(null, { version: tool.catch.version('int') as number|null });
   let storage = await Store.get_global(['settings_seen', 'errors']);
 
-  let open_settings_page = (path:string='index.htm', account_email:string|null=null, page:string='', page_url_params:Dict<FlatTypes>|null=null) => {
+  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', page_url_params:Dict<FlatTypes>|null=null) => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
-    get_cryptup_settings_tab_id_if_open(opened_tab => {
-      let open_tab = opened_tab ? (url: string) => { chrome.tabs.update(opened_tab, {url, active: true}); } : (url: string) => { chrome.tabs.create({url}); };
-      if (account_email) {
-        open_tab(tool.env.url_create(base_path, { account_email, page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
+    let opened_tab = await get_cryptup_settings_tab_id_if_open();
+    let open_tab = (url: string) => {
+      if(opened_tab === null) {
+        chrome.tabs.create({url});
       } else {
-        Store.account_emails_get().then((account_emails) => {
-          open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
-        });
+        chrome.tabs.update(opened_tab, {url, active: true});
       }
-    });
+    };
+    if (account_email) {
+      open_tab(tool.env.url_create(base_path, { account_email, page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
+    } else {
+      let account_emails = await Store.account_emails_get();
+      open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
+    }
   };
 
-  let open_settings_page_handler = (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>}, sender: chrome.runtime.MessageSender|'background', respond: Callback) => {
-    open_settings_page(message.path, message.account_email, message.page, message.page_url_params);
-    respond();
+  let open_settings_page_handler: BrowserMessageHandler = (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>}, sender, respond) => {
+    open_settings_page(message.path, message.account_email, message.page, message.page_url_params).then(respond).catch(tool.catch.handle_promise_error);
   };
 
-  let get_active_tab_info = (message: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => {
+  let get_active_tab_info: BrowserMessageHandler = (message: Dict<any>|null, sender, respond) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (tabs) => {
       if (tabs.length) {
         if (tabs[0].id !== undefined) {
@@ -56,20 +59,20 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   };
 
-  let get_cryptup_settings_tab_id_if_open = (callback: Callback) => {
+  let get_cryptup_settings_tab_id_if_open = (): Promise<number|null> => new Promise(resolve => {
     chrome.tabs.query({ currentWindow: true }, tabs => {
       let extension = chrome.extension.getURL('/');
       for (let tab of tabs) {
         if (tool.value(extension).in(tab.url || '')) {
-          callback(tab.id);
+          resolve(tab.id);
           return;
         }
       }
-      callback(null);
+      resolve(null);
     });
-  };
+  });
 
-  let update_uninstall_url = (request: Dict<any>|null, sender: chrome.runtime.MessageSender|'background', respond: Callback) => {
+  let update_uninstall_url: BrowserMessageHandler = (request: Dict<any>|null, sender, respond) => {
     Store.account_emails_get().then((account_emails) => {
       if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
         tool.catch.try(() => {
@@ -96,7 +99,7 @@ chrome.runtime.onInstalled.addListener(event => {
     })();
   };
 
-  let execute_in_background_process_and_respond_when_done = (message: Dict<any>, sender: chrome.runtime.MessageSender|'background', respond: Callback) => {
+  let execute_in_background_process_and_respond_when_done: BrowserMessageHandler = (message: Dict<any>, sender, respond) => {
     let convert_large_data_to_object_urls_and_respond = (result: DecryptSuccess|DecryptError|any) => {
       if (message.path === 'tool.crypto.message.decrypt') {
         if (result && result.success && result.content && result.content.data && (result.content.data.length >= MAX_MESSAGE_SIZE || result.content.data instanceof Uint8Array)) {
@@ -140,7 +143,7 @@ chrome.runtime.onInstalled.addListener(event => {
   };
 
   if (!storage.settings_seen) {
-    open_settings_page('initial.htm'); // called after the very first installation of the plugin
+    await open_settings_page('initial.htm'); // called after the very first installation of the plugin
     await Store.set(null, {settings_seen: true});
   }
 
@@ -148,11 +151,11 @@ chrome.runtime.onInstalled.addListener(event => {
     db = await Store.db_open(); // takes 4-10 ms first time
   } catch (e) {
     if (e instanceof StoreDbCorruptedError) {
-      open_settings_page('fatal.htm?reason=db_corrupted');
+      await open_settings_page('fatal.htm?reason=db_corrupted');
     } else if (e instanceof StoreDbDeniedError) {
-      open_settings_page('fatal.htm?reason=db_denied');
+      await open_settings_page('fatal.htm?reason=db_denied');
     } else if (e instanceof StoreDbFailedError) {
-      open_settings_page('fatal.htm?reason=db_failed');
+      await open_settings_page('fatal.htm?reason=db_failed');
     }
     return;
   }

@@ -52,7 +52,7 @@ tool.catch.try(async () => {
         $('body').append(factory.dialog_add_pubkey(data.emails));
       }
     },
-    notification_show: (data: NotificationWithCallbacks) => {
+    notification_show: (data: NotificationWithHandlers) => {
       notifications.show(data.notification, data.callbacks);
       $('body').one('click', tool.catch.try(notifications.clear));
     },

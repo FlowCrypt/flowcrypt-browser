@@ -1863,10 +1863,10 @@ let tool = {
       },
     },
     attester: {
-      lookup_email: (emails: string[]): FcPromise<{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
+      lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
         email: emails.map(e => tool.str.parse_email(e).email),
       }),
-      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): FcPromise<ApirAttInitialLegacySugmit> => tool._.api_attester_call('initial/legacy_submit', {
+      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => tool._.api_attester_call('initial/legacy_submit', {
         email: tool.str.parse_email(email).email,
         pubkey: pubkey.trim(),
         attest,
@@ -1874,7 +1874,7 @@ let tool = {
       initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
         signed_message: signed_attest_packet,
       }),
-      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): FcPromise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
+      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
         signed_message: signed_attest_packet,
         new_pubkey,
         email,
@@ -1882,7 +1882,7 @@ let tool = {
       replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
         signed_message: signed_attest_packet,
       }),
-      test_welcome: (email: string, pubkey: string): FcPromise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {
+      test_welcome: (email: string, pubkey: string): Promise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {
         email,
         pubkey,
       }),
@@ -2010,12 +2010,10 @@ let tool = {
           'web': 'https://flowcrypt.com/',
         } as Dict<string>)[type];
       },
-      help_feedback: (account_email: string, message: string): FcPromise<ApirFcHelpFeedback> => {
-        return tool._.api_cryptup_call('help/feedback', {
-          email: account_email,
-          message,
-        });
-      },
+      help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => tool._.api_cryptup_call('help/feedback', {
+        email: account_email,
+        message,
+      }),
       help_uninstall: (email: string, client: string) => tool._.api_cryptup_call('help/uninstall', {
         email,
         client,
@@ -2029,7 +2027,10 @@ let tool = {
           account,
           uuid,
           token,
-        }).validate((r: ApirFcAccountLogin) => r.registered === true);
+        });
+        if(response.registered !== true) {
+          throw new Error('account_login did not result in successful registration');
+        }
         await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription});
         return {verified: response.verified === true, subscription: response.subscription};
       },
@@ -2087,7 +2088,7 @@ let tool = {
             request[k] = update_values[k];
           }
         }
-        return await tool._.api_cryptup_call('account/update', request).validate((r: ApirFcAccountUpdate) => typeof r.result === 'object');
+        return await tool._.api_cryptup_call('account/update', request);
       },
       account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
         let auth_info = await Store.auth_info();
@@ -2133,11 +2134,9 @@ let tool = {
         }
         throw tool.api.error.new_network_error('Could not verify that all files were uploaded properly, please try again.');
       },
-      message_confirm_files: (identifiers: string[]): FcPromise<ApirFcMessageConfirmFiles> => {
-        return tool._.api_cryptup_call('message/confirm_files', {
-          identifiers,
-        });
-      },
+      message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_cryptup_call('message/confirm_files', {
+        identifiers,
+      }),
       message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
         if (encrypted_data_armored.length > 100000) {
           throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
@@ -2181,12 +2180,10 @@ let tool = {
         sender,
         message,
       }),
-      link_message: (short: string): FcPromise<ApirFcMessageLink> => {
-        return tool._.api_cryptup_call('link/message', {
-          short,
-        });
-      },
-      link_me: (alias: string) => tool._.api_cryptup_call('link/me', {
+      link_message: (short: string): Promise<ApirFcMessageLink> => tool._.api_cryptup_call('link/message', {
+        short,
+      }),
+      link_me: (alias: string) => tool._.api_cryptup_call('link/me', { // todo - add return type
         alias,
       }),
     },
@@ -2520,7 +2517,7 @@ let tool = {
       }
       return progress_reporting_xhr;
     },
-    api_call: (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST'): FcPromise<any> => {
+    api_call: async (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
       progress = progress || {} as ApiCallProgressCallbacks;
       let formatted_values:FormData|string;
       let content_type: string|false;
@@ -2541,39 +2538,23 @@ let tool = {
       } else {
         throw Error('unknown format:' + String(format));
       }
-      return tool.catch.Promise((resolve, reject) => {
-        $.ajax({
-          xhr: () => tool._.get_ajax_progress_xhr(progress),
-          url: base_url + path,
-          method,
-          data: formatted_values,
-          dataType: response_format,
-          crossDomain: true,
-          headers,
-          processData: false,
-          contentType: content_type,
-          async: true,
-          timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
-          success: (response) => {
-            tool.catch.try(() => {
-              if (response && typeof response === 'object' && typeof response.error === 'object') {
-                reject(response.error);
-              } else {
-                resolve(response);
-              }
-            })();
-          },
-          error: (XMLHttpRequest, status, error) => {
-            tool.catch.try(() => {
-              if (XMLHttpRequest.status === 0) {
-                reject(tool.api.error.new_network_error());
-              } else {
-                reject({code: XMLHttpRequest.status, message: String(error)});
-              }
-            })();
-          },
-        });
+      let response = await $.ajax({
+        xhr: () => tool._.get_ajax_progress_xhr(progress),
+        url: base_url + path,
+        method,
+        data: formatted_values,
+        dataType: response_format,
+        crossDomain: true,
+        headers,
+        processData: false,
+        contentType: content_type,
+        async: true,
+        timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
       });
+      if (response && typeof response === 'object' && typeof response.error === 'object') {
+        throw response as StandardError;
+      }
+      return response;
     },
     api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
     api_google_auth_code_url: (auth_request: AuthRequest) => tool.env.url_create(tool._.var.google_oauth2!.url_code, {
@@ -2982,16 +2963,6 @@ let tool = {
       // @ts-ignore - intentional exception
       this_will_fail();
     },
-    Promise: (f: (resolve: (result?: any) => void, reject: (error?: any) => void) => void): FcPromise<any> => {
-      return new Promise((resolve, reject) => {
-        try {
-          f(resolve, reject);
-        } catch (e) {
-          tool.catch.handle_exception(e);
-          reject({code: null, message: 'Error happened, please write me at human@flowcrypt.com to fix this\n\nError: ' + e.message, internal: 'exception'});
-        }
-      }) as FcPromise<any>;
-    },
     promise_error_alert: (note: string) => (error: Error) => { // returns a function
       console.log(error);
       alert(note);
@@ -3096,23 +3067,6 @@ tool.catch._.initialize();
     // Could we try:
     // return Array(count + 1).join(this);
     return rpt;
-  };
-
-  (Promise as any).prototype.validate = (Promise as any).prototype.validate || function(validity_checker: (r: any) => boolean) {
-    let original_promise = this;
-    return tool.catch.Promise((resolve, reject) => {
-      original_promise.then((response: any) => {
-        if (typeof response === 'object') {
-          if (validity_checker(response)) {
-            resolve(response);
-          } else {
-            reject({code: null, message: 'Could not validate result', internal: 'validate'});
-          }
-        } else {
-          reject({code: null, message: 'Could not validate result: not an object', internal: 'validate'});
-        }
-      }, reject);
-    });
   };
 
 })();

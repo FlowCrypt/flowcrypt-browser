@@ -10,14 +10,11 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let save_footer_if_has_subscription_and_requested = (requested: boolean, footer: string, cb: Callback) => {
-    Store.subscription().then(subscription => {
-      if (requested && subscription.active) {
-        Store.set(account_email, { email_footer: footer }).then(cb);
-      } else {
-        cb();
-      }
-    });
+  let save_footer_if_has_subscription_and_requested = async (requested: boolean, footer: string) => {
+    let subscription = await Store.subscription();
+    if (requested && subscription.active) {
+      await Store.set(account_email, { email_footer: footer });
+    }
   };
 
   let subscription = await Store.subscription();
@@ -36,10 +33,9 @@ tool.catch.try(async () => {
     }));
   }
 
-  $('.action_add_footer').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-    save_footer_if_has_subscription_and_requested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string, () => { // is textarea
-      tool.browser.message.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
-    });
+  $('.action_add_footer').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+    await save_footer_if_has_subscription_and_requested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
+    tool.browser.message.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
   }));
 
   $('.action_cancel').click(tool.ui.event.prevent(tool.ui.event.double(), self => {

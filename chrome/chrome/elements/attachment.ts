@@ -58,9 +58,8 @@ tool.catch.try(async () => {
     }
   };
 
-  let get_url_file_size = (original_url: string, callback: (size: number) => void) => {
+  let get_url_file_size = (original_url: string): Promise<number|null> => new Promise((resolve, reject) => {
     console.info('trying to figure out file size');
-    // will only call callback on success
     let url;
     if (tool.value('docs.googleusercontent.com/docs/securesc').in(url_params.url as string)) {
       try {
@@ -82,14 +81,15 @@ tool.catch.try(async () => {
       if (this.readyState === this.DONE) {
         let size = xhr.getResponseHeader("Content-Length");
         if (size !== null) {
-          callback(parseInt(size));
+          resolve(parseInt(size));
         } else {
           console.info('was not able to find out file size');
+          resolve(null);
         }
       }
     };
     xhr.send();
-  };
+  });
 
   let get_original_name = (name: string) => {
     return name.replace(/(\.pgp)|(\.gpg)$/, '');
@@ -117,9 +117,11 @@ tool.catch.try(async () => {
   };
 
   if (!url_params.size && url_params.url) { // download url of an unknown size
-    get_url_file_size(url_params.url as string, size => {
-      url_params.size = size;
-    });
+    get_url_file_size(url_params.url as string).then(size => {
+      if(size !== null) {
+        url_params.size = size;
+      }
+    }).catch(tool.catch.handle_promise_error);
   }
 
   let render_progress = (percent: number, received: number, size: number) => {

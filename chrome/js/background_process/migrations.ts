@@ -6,7 +6,7 @@
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
-let migrate_account = (data: {account_email: string}, sender: chrome.runtime.MessageSender|'background', respond_done: VoidCallback) => {
+let migrate_account: BrowserMessageHandler = (data: {account_email: string}, sender, respond_done) => {
   Store.set(data.account_email, { version: tool.catch.version('int') as number|null }).then(respond_done);
   account_update_status_pks(data.account_email).catch(tool.catch.handle_exception);
   account_update_status_keyserver(data.account_email).catch(tool.catch.handle_exception);
