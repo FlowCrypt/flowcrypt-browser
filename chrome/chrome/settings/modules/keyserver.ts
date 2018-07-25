@@ -22,7 +22,7 @@ tool.catch.try(async () => {
         remove = '&nbsp; <b class="bad action_remove_alias" email="' + email + '" title="Remove address from list of send-from addresses.">[x]</b>';
         color = 'orange';
       } else if (result.match) {
-        if (email === url_params.account_email && !result.attested) {
+        if (email === account_email && !result.attested) {
           if (attests_requested && attests_requested.length) {
             note = 'Submitted. Attestation was requested from ' + attests_requested.join(', ') + ' and should process shortly.';
             action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
@@ -34,7 +34,7 @@ tool.catch.try(async () => {
             remove = '';
             color = 'orange';
           }
-        } else if (email === url_params.account_email && result.attested) {
+        } else if (email === account_email && result.attested) {
           note = 'Submitted, can receive encrypted email. Attested by CRYPTUP.';
           action = '';
           remove = '';
@@ -46,17 +46,17 @@ tool.catch.try(async () => {
           color = 'green';
         }
       } else {
-        if (email === url_params.account_email && !result.attested) {
+        if (email === account_email && !result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
           action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
           remove = '';
           color = 'red';
-        } else if (email === url_params.account_email && result.attested && attests_requested && attests_requested.length) {
+        } else if (email === account_email && result.attested && attests_requested && attests_requested.length) {
           note = 'Re-Attestation requested. This should process shortly.';
           action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
           remove = '';
           color = 'orange';
-        } else if (email === url_params.account_email && result.attested) {
+        } else if (email === account_email && result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
           action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
           remove = '';
@@ -83,9 +83,11 @@ tool.catch.try(async () => {
       $(self).html(tool.ui.spinner('white'));
       Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
-    $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
+    $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
       $(self).html('Updating.. ' + tool.ui.spinner('white'));
-      tool.browser.message.send(null, 'attest_requested', { account_email: url_params.account_email, }, () => setTimeout(() => window.location.reload(), 30000));
+      tool.browser.message.send(null, 'attest_requested', {account_email});
+      await tool.time.sleep(30000);
+      window.location.reload();
     }));
     let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
     $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
@@ -100,8 +102,8 @@ tool.catch.try(async () => {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     try {
-      if (email === url_params.account_email) { // request attestation
-        await Settings.save_attest_request(url_params.account_email, 'CRYPTUP');
+      if (email === account_email) { // request attestation
+        await Settings.save_attest_request(account_email, 'CRYPTUP');
         await tool.api.attester.initial_legacy_submit(email, primary_ki.public, true);
       } else { // submit only
         await tool.api.attester.initial_legacy_submit(email, primary_ki.public, false);

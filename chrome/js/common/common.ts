@@ -1317,73 +1317,47 @@ let tool = {
     message: {
       cb: '[***|callback_placeholder|***]',
       bg: {
-        diagnose_message_pubkeys: (account_email: string, message: string) => tool.browser.message.bg.exec('tool.diagnose.message_pubkeys', [
-          account_email,
-          message,
-        ]) as Promise<DiagnoseMessagePubkeysResult>,
-        crypto_message_decrypt: (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null) => tool.browser.message.bg.exec('tool.crypto.message.decrypt', [
-          account_email,
-          encrypted_data,
-          user_entered_message_password,
-        ]) as Promise<DecryptResult>,
-        crypto_message_verify_detached: (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => tool.browser.message.bg.exec('tool.crypto.message.verify_detached', [
-          account_email,
-          message,
-          signature,
-        ]) as Promise<MessageVerifyResult>,
-        exec: (path: string, args: any[]): Promise<PossibleBgExecResults> => new Promise(resolve => {
-          args = args.map((arg) => {
-            if ((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
-              return tool.file.object_url_create(arg);
-            } else {
-              return arg;
-            }
-          });
-          tool.browser.message.send(null, 'bg_exec', {path, args}, (result: PossibleBgExecResults) => {
-            if (path === 'tool.crypto.message.decrypt') {
-              if (result && (result as DecryptResult).success && (result as DecryptSuccess).content && (result as DecryptSuccess).content.text && typeof (result as DecryptSuccess).content.text === 'string' && ((result as DecryptSuccess).content.text!).indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-                tool.file.object_url_consume((result as DecryptSuccess).content.text!).then(result_content_data => {
-                  (result as DecryptSuccess).content.text = tool.str.from_uint8(result_content_data);
-                  resolve(result);
-                });
-              } else {
-                resolve(result);
-              }
-            } else {
-              resolve(result);
-            }
-          });
-        }),
+        diagnose_message_pubkeys: (account_email: string, message: string) => tool.browser.message.bg.exec('tool.diagnose.message_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>,
+        crypto_message_decrypt: async (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null) => {
+          let result = await tool.browser.message.bg.exec('tool.crypto.message.decrypt', [account_email, encrypted_data, user_entered_message_password]) as DecryptResult;
+          if (result.success && result.content && result.content.text && result.content.text.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
+            result.content.text = tool.str.from_uint8(await tool.file.object_url_consume(result.content.text));
+          }
+          return result;
+        },
+        crypto_message_verify_detached: (acct_e: string, m: string|Uint8Array, sig: string|Uint8Array) => tool.browser.message.bg.exec('tool.crypto.message.verify_detached', [acct_e, m, sig]) as Promise<MessageVerifyResult>,
+        exec: (path: string, args: any[]) => tool.browser.message.send_await(null, 'bg_exec', {path, args: args.map(arg => {
+          if ((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
+            return tool.file.object_url_create(arg);
+          } else {
+            return arg;
+          }
+        })}) as any as Promise<PossibleBgExecResults>,
       },
-      send: (destination_string: string|null, name: string, data: Dict<any>|null=null, callback?: Callback) => {
-        let msg = { name, data, to: destination_string || null, respondable: !!(callback), uid: tool.str.random(10), stack: tool.catch.stack_trace() };
+      send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.handle_promise_error),
+      send_await: (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
+        let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
+        let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
         let is_background_page = tool.env.is_background_script();
         if (typeof  destination_string === 'undefined') { // don't know where to send the message
           tool.catch.log('tool.browser.message.send to:undefined');
-          if (typeof callback !== 'undefined') {
-            callback();
-          }
+          try_resolve_no_undefined();
         } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
-          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', callback || tool.noop); // calling from background script to background script: skip messaging completely
+          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
         } else if (is_background_page) {
-          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, r => {
-            tool.catch.try(() => {
-              if (typeof callback !== 'undefined') {
-                callback(r);
-              }
-            })();
-          });
+          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
         } else {
-          chrome.runtime.sendMessage(msg, r => {
-            tool.catch.try(() => {
-              if (typeof callback !== 'undefined') {
-                callback(r);
-              }
-            })();
-          });
+          chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
+        }
+      }),
+      tab_id: async (): Promise<string|null|undefined> => {
+        let r = await tool.browser.message.send_await(null, '_tab_', null);
+        if(typeof r === 'string' || typeof r === 'undefined' || r === null) {
+          return r; // for compatibility reasons when upgrading from 5.7.2 - can be removed later
+        } else {
+          return r.tab_id; // new format
         }
       },
-      tab_id: (): Promise<string|null|undefined> => new Promise(resolve => tool.browser.message.send(null, '_tab_', null, resolve)),
       required_tab_id: async (): Promise<string> => {
         let tab_id = await tool.browser.message.tab_id();
         if (tab_id) {
@@ -1420,7 +1394,7 @@ let tool = {
                 }
               }
             }
-            return msg.respondable === true;
+            return !!respond; // indicate that this listener intends to respond
           })();
         });
       },
@@ -1451,7 +1425,7 @@ let tool = {
           } else if (msg.to !== 'broadcast') {
             tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
           }
-          return msg.respondable === true;
+          return !!respond; // indicate that we intend to respond later
         });
       },
     },
@@ -3054,7 +3028,7 @@ let tool = {
             } catch (err) {} // tslint:disable-line:no-empty
             tool.catch._.runtime.environment = tool.catch.environment();
             if (!tool.env.is_background_script() && tool.env.is_extension()) {
-              tool.browser.message.send(null, 'runtime', null, extension_runtime => {
+              tool.browser.message.send_await(null, 'runtime', null).then(extension_runtime => {
                 if (typeof extension_runtime !== 'undefined') {
                   tool.catch._.runtime = extension_runtime;
                 } else {

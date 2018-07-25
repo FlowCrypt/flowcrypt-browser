@@ -75,20 +75,12 @@ class Store {
     }
   }
 
-  static session_get(account_email: string, key: string): Promise<string|null> {
-    return new Promise((resolve) => {
-      if (Store.env_is_background_script()) {
-        resolve(window.sessionStorage[Store.index(account_email, key) as string]);
-      } else {
-        tool.browser.message.send(null, 'session_get', {account_email, key}, resolve);
-      }
-    });
-  }
-
-  private static relay_to_background(channel: string, message:Dict<any>|null=null): Promise<any> {
-    return new Promise((resolve) => {
-      tool.browser.message.send(null, channel, message, resolve);
-    });
+  static async session_get(account_email: string, key: string): Promise<string|null> {
+    if (Store.env_is_background_script()) {
+      return window.sessionStorage[Store.index(account_email, key) as string];
+    } else {
+      return await tool.browser.message.send_await(null, 'session_get', {account_email, key});
+    }
   }
 
   static async session_set(account_email: string, key: string, value: string|undefined): Promise<void> {
@@ -99,7 +91,7 @@ class Store {
         sessionStorage.removeItem(Store.index(account_email, key) as string);
       }
     } else {
-      await Store.relay_to_background('session_set', {account_email, key, value});
+      await tool.browser.message.send_await(null, 'session_set', {account_email, key, value});
     }
   }
 
@@ -235,7 +227,7 @@ class Store {
     if (!tool.value(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);
       await Store.set(null, { account_emails: JSON.stringify(account_emails) });
-      await Store.relay_to_background('update_uninstall_url');
+      await tool.browser.message.send_await(null, 'update_uninstall_url');
     }
   }
 
@@ -345,32 +337,32 @@ class Store {
     };
   }
 
-  static db_contact_save(db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      if (db === null) { // relay op through background process
-        tool.browser.message.send(null, 'db', {f: 'db_contact_save', args: [contact]}, () => resolve()); // todo - currently will silently swallow errors
-      } else {
-        if (Array.isArray(contact)) {
-          for (let single_contact of contact) {
-            await Store.db_contact_save(db, single_contact);
-          }
-          resolve();
-        } else {
-          let tx = db.transaction('contacts', 'readwrite');
-          let contactsTable = tx.objectStore('contacts');
-          contactsTable.put(contact);
-          tx.oncomplete = () => resolve();
-          let stack_fill = String((new Error()).stack);
-          tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
+  static db_contact_save = (db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
+    if (db === null) { // relay op through background process
+      // todo - currently will silently swallow errors
+      tool.browser.message.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(tool.catch.handle_promise_error);
+    } else {
+      if (Array.isArray(contact)) {
+        for (let single_contact of contact) {
+          await Store.db_contact_save(db, single_contact);
         }
+        resolve();
+      } else {
+        let tx = db.transaction('contacts', 'readwrite');
+        let contactsTable = tx.objectStore('contacts');
+        contactsTable.put(contact);
+        tx.oncomplete = () => resolve();
+        let stack_fill = String((new Error()).stack);
+        tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
       }
-    });
-  }
+    }
+  })
 
   static db_contact_update(db: IDBDatabase|null, email: string|string[], update: ContactUpdate): Promise<void> {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
-        tool.browser.message.send(null, 'db', {f: 'db_contact_update', args: [email, update]}, resolve); // todo - currently will silently swallow errors
+        // todo - currently will silently swallow errors
+        tool.browser.message.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(tool.catch.handle_promise_error);
       } else {
         if (Array.isArray(email)) {
           for (let single_email of email) {
@@ -405,7 +397,8 @@ class Store {
   static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]): Promise<(Contact|null)[]> {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
-        tool.browser.message.send(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}, resolve);  // todo - currently will silently swallow errors
+        // todo - currently will silently swallow errors
+        tool.browser.message.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(tool.catch.handle_promise_error);
       } else {
         if (email_or_longid.length === 1) {
           let tx: IDBRequest;
@@ -432,7 +425,8 @@ class Store {
   static db_contact_search(db: IDBDatabase|null, query: DbContactFilter): Promise<Contact[]> {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
-        tool.browser.message.send(null, 'db', {f: 'db_contact_search', args: [query]}, resolve);
+        // todo - currently will silently swallow errors
+        tool.browser.message.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(tool.catch.handle_promise_error);
       } else {
         for (let key of Object.keys(query)) {
           if (!tool.value(key).in(Store.db_query_keys)) {

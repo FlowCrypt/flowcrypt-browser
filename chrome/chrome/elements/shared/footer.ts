@@ -27,13 +27,12 @@ tool.catch.try(async () => {
     $('.user_subscribed').css('display', 'block');
   } else {
     $('.user_free').css('display', 'block');
-    $('.action_upgrade').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-      tool.browser.message.send(parent_tab_id, 'subscribe', {}, newly_active => {
-        if (newly_active) {
-          $('.user_subscribed').css('display', 'block');
-          $('.user_free').css('display', 'none');
-        }
-      });
+    $('.action_upgrade').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+      let newly_active = await tool.browser.message.send(parent_tab_id, 'subscribe', {});
+      if (newly_active) {
+        $('.user_subscribed').css('display', 'block');
+        $('.user_free').css('display', 'none');
+      }
     }));
   }
 

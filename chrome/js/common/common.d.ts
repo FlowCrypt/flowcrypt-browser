@@ -290,6 +290,7 @@ type BrowserMessageRequestDb = {f: string, args: any[]};
 type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
 type BrowserMessageRequestSessionGet = {account_email: string, key: string};
 type BrowserMessageRequest = null|Dict<any>;
+type BrowserMessageResponse = any|Dict<any>;
 type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 
 // type LongidToMnemonic = (longid: string) => string;

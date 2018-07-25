@@ -15,22 +15,17 @@ tool.catch.try(async () => {
 
   let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
 
-  let process_attest = (passphrase: string|null) => {
+  let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
       $('.status').html('Verifying..' + tool.ui.spinner('green'));
-      tool.browser.message.send(null, 'attest_packet_received', {
-        account_email: url_params.account_email,
-        packet: url_params.attest_packet,
-        passphrase,
-      }, async attestation => {
-        let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
-        $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
-      });
+      let attestation = await tool.browser.message.send(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
+      let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
+      $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
     }
   };
 
   if (passphrase !== null) {
-    process_attest(passphrase);
+    await process_attest(passphrase);
   } else {
     $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
     $('.action_passphrase').click(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest'}));
@@ -38,7 +33,7 @@ tool.catch.try(async () => {
     tool.browser.message.listen({
       passphrase_entry: (message: {entered: boolean}, sender, respond) => {
         if (message.entered) {
-          Store.passphrase_get(account_email, primary_ki.longid).then(process_attest);
+          Store.passphrase_get(account_email, primary_ki.longid).then(pp => process_attest(pp).catch(tool.catch.handle_promise_error));
         }
       },
     }, tab_id);
