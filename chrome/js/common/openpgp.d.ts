@@ -5,6 +5,8 @@
 //                 FlowCrypt Limited <https://flowcrypt.com>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
+/* tslint:disable:only-arrow-functions */
+
 declare namespace OpenPGP {
 
   type DataPacketType = 'utf8' | 'binary' | 'text' | 'mime';
