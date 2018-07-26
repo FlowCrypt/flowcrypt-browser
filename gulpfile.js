@@ -8,6 +8,7 @@ let del = require('del');
 let exec = require('child_process').exec;
 let inquirer = require('inquirer');
 var replace = require('gulp-replace');
+let ava = require('gulp-ava');
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
 let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
@@ -37,6 +38,7 @@ let recipe = {
   copyEditJson: (from, to, json_processor) => gulp.src(from).pipe(jeditor(json_processor)).pipe(gulp.dest(to)),
   confirm: (keyword) => inquirer.prompt([{type: 'input', message: `Type "${keyword}" to confirm`, name: 'r'}]).then(q => q.r === keyword ? null : process.exit(1)),
   spacesToTabs: (folder) => gulp.src(`${folder}/**/*.js`).pipe(replace(/^( {4})+/gm, (m) => '\t'.repeat(m.length/4))).pipe(gulp.dest(folder)),
+  ava: (src) => gulp.src(src).pipe(ava({verbose: true})).on('error', () => process.exit(1)),
 }
 
 let subTask = {
@@ -59,7 +61,8 @@ let subTask = {
     return manifest;
   }),
   buildTest: () => recipe.ts('test/source/**/*.ts', 'test/build/', 'test/tsconfig.json'),
-  runTest: () => recipe.exec('node test/build/test.js'),
+  // runTest: () => recipe.exec('node test/build/test.js'),
+  runTest: () => recipe.ava('test/build/test.js'),
   runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
   releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),

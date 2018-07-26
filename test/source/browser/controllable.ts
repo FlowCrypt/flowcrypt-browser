@@ -25,9 +25,8 @@ abstract class ControllableBase {
     }
   }
 
-  protected selector_test_state = (state: string) => `[data-test-state="${state}"]`;
-
   protected element = async (selector: string): Promise<ElementHandle|null> => {
+    // this.wait_for_navigation();
     selector = this.selector(selector);
     if(this.is_xpath(selector)) {
       return (await this.target.$x(selector))[0];
@@ -38,13 +37,20 @@ abstract class ControllableBase {
 
   protected selectors_as_processed_array = (selector: string|string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
 
-  public wait_for_selector_test_state = async (state: string, timeout=30) => {
-    await this.wait_all(this.selector_test_state(state), {timeout});
+  public wait_for_selector_test_state = async (state: string, timeout=10) => {
+    await this.wait_all(`[data-test-state="${state}"]`, {timeout, visible: false});
   }
 
   public attr = async (element_handle: ElementHandle, name: string): Promise<string> => await (await element_handle.getProperty(name)).jsonValue();
 
+  // private wait_for_navigation = async () => { // needed for puppeteer 1.5.0 but still failing
+  //   if(typeof (this.target as Page).waitForNavigation === 'function') {
+  //     await (this.target as Page).waitForNavigation();
+  //   }
+  // }
+
   public wait_all = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}) => {
+    // this.wait_for_navigation();
     let selectors = this.selectors_as_processed_array(selector);
     for(let i = 0; i < selectors.length; i++) {
       if (this.is_xpath(selectors[i])) {
@@ -56,6 +62,7 @@ abstract class ControllableBase {
   }
 
   public wait_any = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}): Promise<ElementHandle> => {
+    // this.wait_for_navigation();
     timeout = Math.max(timeout, 1);
     let selectors = this.selectors_as_processed_array(selector);
     while (timeout-- > 0) {
@@ -79,6 +86,7 @@ abstract class ControllableBase {
   }
 
   public wait_till_gone = async (selector: string|string[], {timeout=5}: {timeout?: number}={timeout:30}) => {
+    // this.wait_for_navigation();
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
     while(seconds_left-- >= 0) {
@@ -185,7 +193,7 @@ abstract class ControllableBase {
 
 export class ControllablePage extends ControllableBase {
 
-  private page: Page;
+  public page: Page;
 
   constructor(page: Page) {
     super(page);
@@ -204,7 +212,7 @@ export class ControllablePage extends ControllableBase {
 
 export class ControllableFrame extends ControllableBase {
 
-  private frame: Frame;
+  public frame: Frame;
 
   constructor(frame: Frame) {
     super(frame);

@@ -1,6 +1,8 @@
 
 import {launch} from "puppeteer";
 import {BrowserHandle} from './browser_handle';
+import {Util} from "../util";
+import * as ava from 'ava';
 
 export class BrowserPool {
 
@@ -14,7 +16,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(pool_size);
   }
 
-  public async new_browser_handle() {
+  public async new_browser_handle(close_initial_page=true) {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     let args = [
@@ -24,7 +26,31 @@ export class BrowserPool {
       `--window-size=${this.width+10},${this.height+132}`,
     ];
     // to run headless-like: "xvfb-run node test.js"
-    return new BrowserHandle(await launch({args, headless: false, slowMo: 50, devtools: false}), this.semaphore, this.height, this.width);
+    let browser = await launch({args, headless: false, slowMo: 50, devtools: false});
+    let handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
+    if(close_initial_page) {
+      await this.close_initial_extension_page(handle);
+    }
+    return handle;
+  }
+
+  public async with_new_browser(cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) {
+    let browser = await this.new_browser_handle();
+    try {
+      await cb(browser, t);
+    } catch(e) {
+      // console.error(e);
+      throw e;
+    } finally {
+      await Util.sleep(1);
+      await browser.close();
+    }
+  }
+
+  private async close_initial_extension_page(browser: BrowserHandle) {
+    let initial_page = await browser.new_page_triggered_by(() => null); // the page triggered on its own
+    await initial_page.wait_all('@initial-page'); // first page opened by flowcrypt
+    await initial_page.close();
   }
 
 }
@@ -37,17 +63,23 @@ export class Semaphore {
     this.available_locks = pool_size;
   }
 
-  private wait = () => new Promise(resolve => setTimeout(resolve, 10 + Math.round(Math.random() * 10))); // wait 10-20 ms
+  private wait = () => new Promise(resolve => setTimeout(resolve, 50 + Math.round(Math.random() * 100))); // wait 50-150 ms
 
   acquire = async () => {
+    // let i = 0;
     while(this.available_locks < 1) {
+      // console.log(`waiting for semaphore attempt ${i++}, now available: ${this.available_locks}`);
       await this.wait();
     }
+    // console.log(`acquiring, semaphors available: ${this.available_locks}`);
     this.available_locks--;
+    // console.log(`acquired, now avaialbe: ${this.available_locks}`);
   }
 
   release = () => {
+    // console.log(`releasing semaphore, previously available: ${this.available_locks}`);
     this.available_locks++;
+    // console.log(`released semaphore, now available: ${this.available_locks}`);
   }
 
 }

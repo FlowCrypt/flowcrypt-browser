@@ -9,6 +9,6 @@ export class Url {
 
   public static extension_settings = (account_email?: string|undefined) => `chrome/settings/index.htm?account_email=${account_email || ''}`;
 
-  public static gmail = (account_email: string, url_end='') => `https://mail.google.com/mail/u/${gmail_seq.indexOf(account_email)}/#inbox${url_end}`;
+  public static gmail = (account_login_index=0, url_end='') => `https://mail.google.com/mail/u/${account_login_index}/#inbox${url_end}`;
 
 }

@@ -8,6 +8,7 @@
     "@types/openpgp": "0.0.29",
     "del": "^3.0.0",
     "gulp": "^4.0.0",
+    "gulp-ava": "^0.19.0",
     "gulp-json-editor": "^2.4.1",
     "gulp-newer": "^1.4.0",
     "gulp-replace": "^1.0.0",
@@ -18,9 +19,6 @@
     "tslint": "^5.11.0",
     "typescript": "^2.8.3"
   },
-  "scripts": {
-    "test": "test/test.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FlowCrypt/flowcrypt-browser.git"
@@ -30,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/FlowCrypt/flowcrypt-browser/issues"
   },
-  "homepage": "https://flowcrypt.com"
+  "homepage": "https://flowcrypt.com",
+  "ava": {
+		"concurrency": 1
+	}
 }
