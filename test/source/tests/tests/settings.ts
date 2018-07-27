@@ -1,7 +1,6 @@
 
 import {TestWithBrowser} from '..';
 import {PageRecipe} from '../page_recipe';
-import {BrowserRecipe} from '../browser_recipe';
 import {Url} from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';

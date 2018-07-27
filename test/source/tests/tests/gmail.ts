@@ -1,10 +1,7 @@
 
 import {TestWithBrowser} from '..';
-import {PageRecipe} from '../page_recipe';
-import {BrowserRecipe} from '../browser_recipe';
 import {Url} from '../../browser';
 import * as ava from 'ava';
-import { Util, Config } from '../../util';
 
 export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 

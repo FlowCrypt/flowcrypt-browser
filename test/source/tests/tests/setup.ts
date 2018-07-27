@@ -1,9 +1,7 @@
 import {TestWithBrowser} from '..';
 import {PageRecipe} from '../page_recipe';
 import {BrowserRecipe} from '../browser_recipe';
-import {expect} from 'chai';
 import * as ava from 'ava';
-import { Util } from '../../util';
 
 export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 

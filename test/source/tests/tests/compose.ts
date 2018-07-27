@@ -68,7 +68,8 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     // todo - verify that the contact/pubkey is showing in green once clicked
   }));
 
-  ava.only('compose - standalone - freshly loaded pubkey', test_with_new_browser(async (browser, t) => {
+  ava.test('compose - standalone - freshly loaded pubkey', test_with_new_browser(async (browser, t) => {
+    await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.compose_fill_message(compose_page, 'human@flowcrypt.com', 'freshly loaded pubkey');
     await PageRecipe.compose_send_and_close(compose_page);
