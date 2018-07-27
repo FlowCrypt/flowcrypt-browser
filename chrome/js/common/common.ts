@@ -1450,9 +1450,6 @@ let tool = {
       parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
     },
     error: {
-      new_network_error: (text?: string) => {
-        return {status: null, internal: 'network', message: text || 'No internet connection, please try again', stack: tool.catch.stack_trace()};
-      },
       is_network_error: (e: Thrown) => {
         if (typeof e === 'object') {
           if (e.internal === 'network') { // StandardError
@@ -2132,7 +2129,7 @@ let tool = {
         if (response.approvals && response.approvals.length === attachments.length) {
           return response;
         }
-        throw tool.api.error.new_network_error('Could not verify that all files were uploaded properly, please try again.');
+        throw new Error('Could not verify that all files were uploaded properly, please try again.');
       },
       message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_cryptup_call('message/confirm_files', {
         identifiers,
