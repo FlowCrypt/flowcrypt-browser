@@ -1,7 +1,6 @@
 
 import {BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmail_seq} from '../browser';
-import {config, config_k} from '../config';
-import {Util} from '../util';
+import {Util, Config} from '../util';
 import {expect} from 'chai';
 
 export class PageRecipe {
@@ -82,7 +81,7 @@ export class PageRecipe {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
     };
-    let auth = config.auth.google.filter(a => a.email === account_email)[0];
+    let auth = Config.config.auth.google.filter(a => a.email === account_email)[0];
     await oauth_page.wait_all('#Email, #submit_approve_access, #identifierId, .w6VTHd');
     if (await oauth_page.target.$('#Email') !== null) {
       await oauth_page.wait_all('#Email', {timeout: 60});
@@ -124,7 +123,7 @@ export class PageRecipe {
   }
 
   public static setup_manual_create = async (settings_page: ControllablePage, key_title: string, backup: "none"|"email"|"file", {used_pgp_before=false, submit_pubkey=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) => {
-    let k = config_k(key_title);
+    let k = Config.key(key_title);
     if(used_pgp_before) {
       await settings_page.wait_and_click('@action-step0foundkey-choose-manual-create');
     } else {
@@ -149,7 +148,7 @@ export class PageRecipe {
   }
 
   public static setup_manual_enter = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false, submit_pubkey=false, fix_key=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean, fix_key?: boolean}={}) => {
-    let k = config_k(key_title);
+    let k = Config.key(key_title);
     if(used_pgp_before) {
       await settings_page.wait_and_click('@action-step0foundkey-choose-manual-enter');
     } else {
@@ -171,7 +170,7 @@ export class PageRecipe {
   }
 
   public static setup_recover =  async (settings_page: ControllablePage, key_title: string, {wrong_passphrase=false, click_recover_more=false, has_recover_more=false, already_recovered=false}: {wrong_passphrase?: boolean, click_recover_more?: boolean, has_recover_more?: boolean, already_recovered?: boolean}={}) => {
-    let k = config_k(key_title);
+    let k = Config.key(key_title);
     await settings_page.wait_and_type('@input-recovery-pass-phrase', k.passphrase);
     if(wrong_passphrase) {
       let dialog = await settings_page.trigger_and_await_new_alert(() => settings_page.wait_and_click('@action-recover-account'));
@@ -233,7 +232,7 @@ export class PageRecipe {
     await PageRecipe.toggle_settings_screen(settings_page, 'additional');
     let my_key_frame = await PageRecipe.open_settings_page_and_await_new_frame(settings_page, trigger === 'button' ? '@action-open-pubkey-page' : '@action-show-key' , ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
-    let k = config_k(expected_key_name);
+    let k = Config.key(expected_key_name);
     await my_key_frame.wait_all(['@content-key-words', '@content-armored-key']);
     expect(await my_key_frame.read('@content-key-words')).to.equal(k.keywords);
     await my_key_frame.wait_and_click('@action-toggle-key-type(show private key)');

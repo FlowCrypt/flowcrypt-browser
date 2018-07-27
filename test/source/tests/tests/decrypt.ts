@@ -1,16 +1,11 @@
 import {TestWithBrowser} from '..';
-import {PageRecipe} from '../page_recipe';
-import {BrowserRecipe} from '../browser_recipe';
-import {Url} from '../../browser';
 import * as ava from 'ava';
-import { Util } from '../../util';
-import { config_k, config } from '../../config';
+import { Util, Config } from '../../util';
 
-export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser) => {
+export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 
-  for(let m of config.messages) {
-    ava.test(`decrypt - ${m.name}`, test_with_new_browser(async (browser, t) => {
-      await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
+  for(let m of Config.config.messages) {
+    ava.test(`decrypt[global] - ${m.name}`, test_with_semaphored_global_browser(async (browser, t) => {
       let pgp_block_page = await browser.new_page(`chrome/elements/pgp_block.htm${m.params}`);
       await pgp_block_page.wait_all('@pgp-block-content');
       await pgp_block_page.wait_for_selector_test_state('ready', 20);

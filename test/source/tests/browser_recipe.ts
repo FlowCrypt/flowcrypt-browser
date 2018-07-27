@@ -42,6 +42,7 @@ export class BrowserRecipe {
     let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
     await PageRecipe.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
     await PageRecipe.setup_recover(settings_page, 'flowcrypt.compatibility.2pp1');
+    await settings_page.close();
   }
 
 }

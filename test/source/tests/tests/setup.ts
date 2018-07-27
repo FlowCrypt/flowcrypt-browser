@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import * as ava from 'ava';
 import { Util } from '../../util';
 
-export let define_setup_tests = (test_with_browser: TestWithBrowser) => {
+export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 
   ava.test('settings > login > close oauth window > close popup', test_with_browser(async (browser, t) => {
     await BrowserRecipe.open_settings_login_but_close_oauth_window_before_granting_permission(browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -131,14 +131,6 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser) => {
     await PageRecipe.setup_recover(settings_page, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
     await PageRecipe.setup_recover(settings_page, 'flowcrypt.test.key.recovered');
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
-  }));
-
-  ava.test('REMAINING TESTS', test_with_browser(async (browser, t) => {
-    // await tests.settings_tests(browser);
-    // await tests.pgp_block_tests(browser);
-    // await tests.compose_tests(browser);
-    // await tests.gmail_tests(browser);
-    // print_results();
   }));
 
 };

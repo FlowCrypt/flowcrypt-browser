@@ -15,6 +15,7 @@
       "source/**.ts"
   ],
   "exclude": [
-      "build/*"
+      "build/*",
+      "node_modules/*"
   ]
 }

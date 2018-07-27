@@ -4,13 +4,11 @@ import {PageRecipe} from '../page_recipe';
 import {BrowserRecipe} from '../browser_recipe';
 import {Url} from '../../browser';
 import * as ava from 'ava';
-import { Util } from '../../util';
-import { config_k, config } from '../../config';
+import { Util, Config } from '../../util';
 
-export let define_gmail_tests = (test_with_new_browser: TestWithBrowser) => {
+export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 
-  ava.test('mail.google.com - compose window opens', test_with_new_browser(async (browser, t) => {
-    await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
+  ava.test('mail.google.com[global] - compose window opens', test_with_semaphored_global_browser(async (browser, t) => {
     let gmail_page = await browser.new_page(Url.gmail());
     await gmail_page.wait_and_click('@action-secure-compose', {delay: 1});
     await gmail_page.wait_all('@container-new-message');
