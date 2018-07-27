@@ -117,8 +117,16 @@ tool.catch.try(async () => {
     }
   };
 
+  let decrypt_pwd = (supplied_password?: string|null): string|null => {
+    let pwd = supplied_password || user_entered_message_password || null;
+    if(pwd && url_params.use_password) {
+      return tool.crypto.hash.challenge_answer(pwd);
+    }
+    return pwd;
+  };
+
   let decrypt_and_save_attachment_to_downloads = async (encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) => {
-    let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, encrypted_data, user_entered_message_password);
+    let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, encrypted_data, decrypt_pwd());
     if (result.success) {
       tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.text!, render_in); // text!: did not request uint8
       send_resize_message();
@@ -287,7 +295,7 @@ tool.catch.try(async () => {
 
   let decrypt_and_render = async (optional_password:string|null=null) => {
     if (typeof url_params.signature !== 'string') {
-      let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, optional_password);
+      let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, decrypt_pwd(optional_password));
       if (typeof result === 'undefined') {
         await render_error(Lang.general.restart_browser_and_try_again);
       } else if (result.success) {
@@ -323,8 +331,7 @@ tool.catch.try(async () => {
           alert('Incorrect answer, please try again');
           await render_password_prompt();
         } else if (result.error.type === DecryptErrorTypes.use_password) {
-          await render_error('Symmetrically encrypted messages not supported yet');
-          // await render_password_prompt();
+          await render_password_prompt();
         } else if (result.error.type === DecryptErrorTypes.no_mdc) {
           await render_error('This message may not be safe to open: missing MDC. To open this message, please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
         } else if (result.error) {
@@ -357,7 +364,7 @@ tool.catch.try(async () => {
   };
 
   let render_password_prompt = async () => {
-    let prompt = '<p>' + Lang.pgp_block.question_decryt_prompt + '</p>';
+    let prompt = '<p>' + Lang.pgp_block.decrypt_password_prompt + '</p>';
     prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
     prompt += armored_message_as_html();
     await render_content(prompt, true);

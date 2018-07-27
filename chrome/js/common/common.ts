@@ -1094,7 +1094,13 @@ let tool = {
           return {success: false, error: {type: DecryptErrorTypes.need_passphrase}, signature: null, message: prepared.message, longids, is_encrypted};
         }
         try {
-          let msg_passwords = msg_pwd ? [tool.crypto.hash.challenge_answer(msg_pwd!)] : null;
+          let packets = (prepared.message as OpenPGP.message.Message).packets;
+          let is_sym_encrypted = packets.filter(p => p.tag === openpgp.enums.packet.symEncryptedSessionKey).length > 0;
+          let is_pub_encrypted = packets.filter(p => p.tag === openpgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
+          if(is_sym_encrypted && !is_pub_encrypted && !msg_pwd) {
+            return {success: false, error: {type: DecryptErrorTypes.use_password}, longids, is_encrypted, signature: null};
+          }
+          let msg_passwords = msg_pwd ? [msg_pwd] : null;
           let decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prv_for_decrypt_with_passphrases.map(ki => ki.decrypted!), msg_passwords);
           // let signature_result = keys.signed_by.length ? tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
           let signature_result = null;
@@ -2439,10 +2445,8 @@ let tool = {
     },
     crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
       let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
-      if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.']) && !message_password) {
+      if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
         return {type: DecryptErrorTypes.key_mismatch, error: e};
-      } else if (e === 'Invalid session key for decryption.' && !message_password) {
-        return {type: DecryptErrorTypes.use_password, error: e};  // attempted opening password only message with key
       } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key'])) {
         return {type: DecryptErrorTypes.wrong_password, error: e};
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
