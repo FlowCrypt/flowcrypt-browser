@@ -5,7 +5,7 @@
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; font-weight: 500;
   border: 1px solid transparent; color: #fff; border-radius: 2px; font-size: 14px; text-align: center; white-space: nowrap; min-height: 25px;
-  min-width: 56px; line-height: 25px; outline: 0; vertical-align: middle; margin-top: -7px; padding: 5px 15px; text-decoration: none; cursor: pointer; }
+  min-width: 56px; line-height: 25px; outline: 0; vertical-align: middle; padding: 5px 15px; text-decoration: none; cursor: pointer; }
 .button.long { width: 200px; }
 .button:focus {
   border: rgba(0,0,0,0) solid 1px !important;
@@ -53,6 +53,7 @@ i.large_spinner img { position: relative; width: 75px; height: 75px; }
 div.line { min-height: 18px; padding: 12px 0; max-width: 650px; margin:0 auto; position: relative; }
 div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
+div.line input[type=text], div.line input[type=email], div.line input[type=password] { height: 46px; padding: 12px; min-width: 200px; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif; font-size: 16px; }
 body#settings > div#content { margin-top: 70px; margin-bottom: 150px; position: relative; }
@@ -158,7 +159,7 @@ body#settings > div#content h2 { font-size: 22px; font-weight: 100; color: #3535
 body#settings > div#content.help #input_text { width: 80%; height: 200px; font-weight: 400; padding-top: 8px; font-size: 16px; border: 2px solid #dadada; text-indent: 7px;
   font-family: 'Open Sans', sans-serif; }
 body#settings > div#content.help #input_subject { width: 80%; }
-body#settings > div#content.help .button.green { display: inline-block; position: absolute;right:57px; padding: 10px 60px;}
+body#settings > div#content.help .button.green { display: inline-block; padding: 10px 60px; }
 body#settings > div#content.help .separator { width: 60%;}
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
