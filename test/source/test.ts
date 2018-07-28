@@ -47,28 +47,3 @@ define_compose_tests(test_with_new_browser, test_with_semaphored_global_browser)
 define_decrypt_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_gmail_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_settings_tests(test_with_new_browser, test_with_semaphored_global_browser);
-
-// let flowcrypt_compatibility_browser: BrowserHandle;
-
-// export let test_with_flowcrypt_compatibility_account_browser_new = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
-//   return async (t: ava.ExecutionContext<{}>) => {
-//     await browser_pool.with_new_browser(async (_browser, _t) => {
-//       let settings_page = await BrowserRecipe.open_settings_login_approve(_browser, 'flowcrypt.compatibility@gmail.com');
-//       await PageRecipe.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
-//       await PageRecipe.setup_recover(settings_page, 'flowcrypt.compatibility.2pp1');
-//       await cb(_browser, _t);
-//     }, t);
-//     t.pass();
-//   };
-// };
-
-// export let test_with_global_browser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
-//   return async (t: ava.ExecutionContext<{}>) => {
-//     await cb(flowcrypt_compatibility_browser, t);
-//   };
-// };
-
-// ava.after('close flowcrypt.compatibility browser', async t => {
-//   await flowcrypt_compatibility_browser.close();
-//   t.pass();
-// });
