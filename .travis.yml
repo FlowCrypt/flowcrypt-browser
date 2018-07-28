@@ -1,5 +1,6 @@
 before_script:
   - npm install -g gulp-cli
   - npm install
+  - npm install --save-dev @types/jquery@3.3.1
   - cd test && npm install
 script: gulp test
