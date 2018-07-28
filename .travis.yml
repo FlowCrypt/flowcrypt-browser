@@ -1,0 +1,5 @@
+before_script:
+  - npm install -g gulp-cli
+  - npm install
+  - cd test && npm install
+script: gulp test
