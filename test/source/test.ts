@@ -3,7 +3,6 @@
 import * as ava from 'ava';
 import {BrowserHandle, BrowserPool, Semaphore} from './browser';
 import {BrowserRecipe} from './tests/browser_recipe';
-import {PageRecipe} from './tests/page_recipe';
 import {define_unit_tests} from './tests/tests/unit';
 import {define_setup_tests} from './tests/tests/setup';
 import {define_compose_tests} from './tests/tests/compose';
