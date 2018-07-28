@@ -6,6 +6,6 @@ before_script:
  - npm install -g gulp-cli
  - npm install
  - npm install --save-dev @types/jquery@3.3.1
- - cd test && npm install
  - openssl aes-256-cbc -K $encrypted_fb782cbdc340_key -iv $encrypted_fb782cbdc340_iv -in test/test-secrets.json.enc -out test/test-secrets.json -d
+ - cd test && npm install
 script: ./node_modules/gulp-cli/bin/gulp.js test
