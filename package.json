@@ -9,6 +9,7 @@
     "del": "^3.0.0",
     "gulp": "^4.0.0",
     "gulp-ava": "^0.19.0",
+    "gulp-cli": "^2.0.1",
     "gulp-json-editor": "^2.4.1",
     "gulp-newer": "^1.4.0",
     "gulp-replace": "^1.0.0",
