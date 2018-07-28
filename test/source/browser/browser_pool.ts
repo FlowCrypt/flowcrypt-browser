@@ -20,6 +20,7 @@ export class BrowserPool {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     let args = [
+      '--no-sandbox', // make it work in travis-ci
       '--disable-features=site-per-process',
       '--disable-extensions-except=build/chrome',
       '--load-extension=build/chrome',
