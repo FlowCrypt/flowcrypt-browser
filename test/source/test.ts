@@ -14,8 +14,24 @@ let browser_pool = new BrowserPool(5);
 let global_browser_semaphore = new Semaphore(1);
 let global_browser: BrowserHandle;
 
+// export let retry = async (cb: () => Promise<void>) => {
+//   for(let i of [1,2,3]) {
+//     try {
+//       await cb();
+//       return;
+//     } catch(e) {
+//       if(i < 3) {
+//         console.log(`Retrying (${e.message})`);
+//       } else {
+//         throw e;
+//       }
+//     }
+//   }
+// };
+
 export let test_with_new_browser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
+    // await retry(async () => await browser_pool.with_new_browser(cb, t));
     await browser_pool.with_new_browser(cb, t);
     t.pass();
   };
@@ -25,6 +41,7 @@ export let test_with_semaphored_global_browser = (cb: (browser: BrowserHandle, t
   return async (t: ava.ExecutionContext<{}>) => {
     await global_browser_semaphore.acquire();
     try {
+      // await retry(async () => await cb(global_browser, t));
       await cb(global_browser, t);
       t.pass();
     } finally {
@@ -34,9 +51,11 @@ export let test_with_semaphored_global_browser = (cb: (browser: BrowserHandle, t
 };
 
 ava.before('set up global browser', async t => {
+  // await retry(async () => {
   let browser = await browser_pool.new_browser_handle();
   await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
   global_browser = browser;
+  // });
   t.pass();
 });
 
