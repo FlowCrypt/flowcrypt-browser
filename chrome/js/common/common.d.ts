@@ -1,27 +1,30 @@
 
 interface BrowserWidnow extends Window {
-    XMLHttpRequest: any,
-    onunhandledrejection: (e: any) => void,
+    XMLHttpRequest: any;
+    onunhandledrejection: (e: any) => void;
 }
 
-type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number }
+type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 
 type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};
 
 interface FcWindow extends BrowserWidnow {
-    jQuery: JQuery,
-    $: JQuery,
-    iso88592: Codec,
-    // windows1252: Codec,
-    // koi8r: Codec,
-    is_bare_engine: boolean,
-    openpgp: any,
-    mnemonic: (hex: string) => string,
+    jQuery: JQuery;
+    $: JQuery;
+    iso88592: Codec;
+    // windows1252: Codec;
+    // koi8r: Codec;
+    is_bare_engine: boolean;
+    mnemonic: (hex: string) => string;
 }
 
+type AnyThirdPartyLibrary = any;
+type AnyPlatformDependentCode = any;
+type Thrown = Error|StandardError|any;
+
 interface ContentScriptWindow extends FcWindow {
-    TrySetDestroyableTimeout: (code: Function, ms: number) => number,
-    TrySetDestroyableInterval: (code: Function, ms: number) => number,
+    TrySetDestroyableTimeout: (code: Function, ms: number) => number; // tslint:disable-line:ban-types
+    TrySetDestroyableInterval: (code: Function, ms: number) => number; // tslint:disable-line:ban-types
     injected: true; // background script will use this to test if scripts were already injected, and inject if not
     account_email_global: null|string; // used by background script
     same_world_global: true; // used by background_script
@@ -30,92 +33,92 @@ interface ContentScriptWindow extends FcWindow {
     reloadable_class: string;
     destroyable_intervals: number[];
     destroyable_timeouts: number[];
-    destroy: () => void,
+    destroy: () => void;
     vacant: () => boolean;
 }
 
 interface FlowCryptManifest extends chrome.runtime.Manifest {
-    oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]},
+    oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]};
 }
-  
+
 interface SelectorCacher {
-    cached: (name: string) => JQuery,
-    now: (name: string) => JQuery,
+    cached: (name: string) => JQuery;
+    now: (name: string) => JQuery;
 }
 
 interface Contact {
-    email: string,
-    name: string | null,
-    pubkey: string | null,
-    has_pgp: 0|1,
-    searchable: string[],
-    client: string | null,
-    attested: boolean | null,
-    fingerprint: string | null,
-    longid: string | null,
-    keywords: string | null,
-    pending_lookup: number,
-    last_use: number | null,
-    date: number | null, // todo - should be removed. email provider search seems to return this?
+    email: string;
+    name: string | null;
+    pubkey: string | null;
+    has_pgp: 0|1;
+    searchable: string[];
+    client: string | null;
+    attested: boolean | null;
+    fingerprint: string | null;
+    longid: string | null;
+    keywords: string | null;
+    pending_lookup: number;
+    last_use: number | null;
+    date: number | null; // todo - should be removed. email provider search seems to return this?
 }
 
 interface ContactUpdate {
-    email?: string,
-    name?: string | null,
-    pubkey?: string,
-    has_pgp?: 0|1,
-    searchable?: string[],
-    client?: string | null,
-    attested?: boolean | null,
-    fingerprint?: string | null,
-    longid?: string | null,
-    keywords?: string | null,
-    pending_lookup?: number,
-    last_use?: number | null,
-    date?: number | null, // todo - should be removed. email provider search seems to return this?
+    email?: string;
+    name?: string | null;
+    pubkey?: string;
+    has_pgp?: 0|1;
+    searchable?: string[];
+    client?: string | null;
+    attested?: boolean | null;
+    fingerprint?: string | null;
+    longid?: string | null;
+    keywords?: string | null;
+    pending_lookup?: number;
+    last_use?: number | null;
+    date?: number | null; // todo - should be removed. email provider search seems to return this?
 }
 
 interface Attachment {
-    name: string, 
-    type: string, 
-    content?: string|Uint8Array|null,
-    data?: string, // todo - deprecate this - only use content
-    size: number,
-    inline?: boolean,
-    treat_as?: 'hidden'|'signature'|'message'|'encrypted'|'public_key'|'standard',
-    id?: string, // if data was not downloaded yet, from gmail
-    message_id?: string, // if data was not downloaded yet, from gmail
-    url?: string|null, // if data was not downloaded yet, from url
+    name: string;
+    type: string;
+    content?: string|Uint8Array|null;
+    data?: string; // todo - deprecate this - only use content
+    size: number;
+    inline?: boolean;
+    treat_as?: 'hidden'|'signature'|'message'|'encrypted'|'public_key'|'standard';
+    id?: string; // if data was not downloaded yet, from gmail
+    message_id?: string; // if data was not downloaded yet, from gmail
+    url?: string|null; // if data was not downloaded yet, from url
 }
 
 interface SetupOptions {
-    full_name: string,
-    passphrase: string,
-    passphrase_save: boolean,
-    submit_main: boolean,
-    submit_all: boolean,
-    setup_simple: boolean,
-    key_backup_prompt: number|boolean,
-    recovered?: boolean,
-    is_newly_created_key?: boolean,
+    full_name: string;
+    passphrase: string;
+    passphrase_save: boolean;
+    submit_main: boolean;
+    submit_all: boolean;
+    setup_simple: boolean;
+    key_backup_prompt: number|boolean;
+    recovered?: boolean;
+    is_newly_created_key?: boolean;
 }
 
 interface FromToHeaders {
-    from: string,
-    to: string[],
+    from: string;
+    to: string[];
 }
 
 interface PubkeySearchResult {
-    email: string,
-    pubkey: string|null,
-    attested: boolean|null,
-    has_cryptup: boolean|null,
-    longid: string|null,
+    email: string;
+    pubkey: string|null;
+    attested: boolean|null;
+    has_cryptup: boolean|null;
+    longid: string|null;
 }
 
 interface Challenge {
-    question?: string,
-    answer: string,
+    question?: string;
+    answer: string;
 }
 
 interface Dict<T> {
@@ -125,174 +128,131 @@ interface Dict<T> {
 type FlatHeaders = Dict<string>;
 type RichHeaders = Dict<string|string[]>;
 
-
 interface PreventableEvent {
-    name: 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree',
-    id: string,
+    name: 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
+    id: string;
 }
-
-interface OpenpgpDecryptResult {
-    data: string|Uint8Array,
-    filename?: string,
-}
-
-interface DecryptedErrorCounts {
-    decrypted: number,
-    potentially_matching_keys: number,
-    chosen_keys: number,
-    attempts_planned: number,
-    attempts_done: number,
-    key_mismatch: number,
-    wrong_password: number,
-    unsecure_mdc: number,
-    format_errors: number,
-}
-
 
 interface DecryptSuccess {
-    success: true,
-    content: OpenpgpDecryptResult,
-    signature: MessageVerifyResult|null,
-    encrypted: boolean|null,
+    success: true;
+    content: {
+      text?: string;
+      uint8?: Uint8Array;
+      filename: string|null;
+    };
+    signature: MessageVerifyResult|null;
+    is_encrypted: boolean|null;
 }
 
+type DecryptError$error = {
+  type: DecryptErrorTypes;
+  error?: string;
+};
+
+type DecryptError$longids = {
+  message: string[];
+  matching: string[];
+  chosen: string[];
+  need_passphrase: string[];
+};
+
 interface DecryptError {
-    success: false,
-    counts: DecryptedErrorCounts, 
-    unsecure_mdc?: boolean,
-    errors: string[],
-    missing_passphrases?: string[],
-    format_error?: string,
-    encrypted: null|boolean,
-    encrypted_for?: string[],
-    signature: null,
-    message?: OpenpgpMessage,
+    success: false;
+    error: DecryptError$error;
+    longids: DecryptError$longids;
+    is_encrypted: null|boolean;
+    signature: null;
+    message?: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage;
 }
 
 type DecryptResult = DecryptSuccess|DecryptError;
 type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult;
 
-interface OpenpgpEncryptResult {
-    data: string|Uint8Array,
-    message: {
-        packets: {
-            write: () => Uint8Array,
-        }
-    },
-}
-
-type NamedFunctionsObject = Dict<(...args: any[]) => any>;
 type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;
 
 interface KeyInfo {
-    public: string,
-    private: string,
-    fingerprint: string,
-    longid: string,
-    primary: boolean,
-    decrypted?: OpenpgpKey,
-    keywords: string,
+    public: string;
+    private: string;
+    fingerprint: string;
+    longid: string;
+    primary: boolean;
+    decrypted?: OpenPGP.key.Key;
+    keywords: string;
 }
 
 interface MimeContent {
-    headers: FlatHeaders,
-    attachments: Attachment[],
-    signature: string|undefined,
-    html: string|undefined,
-    text: string|undefined,
+    headers: FlatHeaders;
+    attachments: Attachment[];
+    signature: string|undefined;
+    html: string|undefined;
+    text: string|undefined;
 }
 
 type StoredAuthInfo = {account_email: string|null, uuid: string|null, verified: boolean|null};
-
-interface MimeAsHeadersAndBlocks {
-    headers: FlatHeaders,
-    blocks: MessageBlock[],
-}
 
 type ReplaceableMessageBlockType = 'public_key'|'private_key'|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
 type MessageBlockType = 'text'|ReplaceableMessageBlockType;
 
 interface MessageBlock {
-    type: MessageBlockType, 
-    content: string, 
-    complete: boolean,
-    signature?: string,
+    type: MessageBlockType;
+    content: string;
+    complete: boolean;
+    signature?: string;
 }
 
 interface MimeParserNode {
-    path: string[],
+    path: string[];
     headers: {
-        [key: string]: {value: string}[],
-    },
-    rawContent: string,
-    content: Uint8Array,
-    appendChild: (child: MimeParserNode) => void,
-}
-
-interface OpenpgpKey {
-    primaryKey: any,
-    getEncryptionKeyPacket: () => any|null,
-    verifyPrimaryKey: () => number,
-    subKeys: any[]|null,
-    decrypt: (pp: string) => boolean,
-    armor: () => string,
-    isPrivate: () => boolean,
-    toPublic: () => OpenpgpKey,
-    getAllKeyPackets: () => any[],
-    getSigningKeyPacket: () => any,
-    users:  Dict<any>[],
-}
-
-interface OpenpgpMessage {
-    getEncryptionKeyIds?: () => string[],
-    getSigningKeyIds?: () => string[],
-    text?: string,
+        [key: string]: {value: string}[];
+    };
+    rawContent: string;
+    content: Uint8Array;
+    appendChild: (child: MimeParserNode) => void;
 }
 
 interface MessageVerifyResult {
-    signer: string|null,
-    contact: Contact|null,
-    match: boolean|null, 
-    error: null|string,
+    signer: string|null;
+    contact: Contact|null;
+    match: boolean|null;
+    error: null|string;
 }
 
 interface InternalSortedKeysForDecrypt {
-    verification_contacts: Contact[],
-    for_verification: OpenpgpKey[],
-    encrypted_for: string[],
-    signed_by: string[],
-    prv_matching: KeyInfo[],
-    prv_for_decrypt: KeyInfo[],
-    prv_for_decrypt_with_passphrases: KeyInfo[],
-    prv_for_decrypt_without_passphrases: KeyInfo[],
+    verification_contacts: Contact[];
+    for_verification: OpenPGP.key.Key[];
+    encrypted_for: string[];
+    signed_by: string[];
+    prv_matching: KeyInfo[];
+    prv_for_decrypt: KeyInfo[];
+    prv_for_decrypt_with_passphrases: KeyInfo[];
+    prv_for_decrypt_without_passphrases: KeyInfo[];
 }
 
 interface SendableMessageBody {
-    [key: string]: string|undefined,
-    'text/plain'?: string,
-    'text/html'?: string,
+    [key: string]: string|undefined;
+    'text/plain'?: string;
+    'text/html'?: string;
 }
 
 interface SendableMessage {
-    headers: FlatHeaders,
-    from: string,
-    to: string[],
-    subject: string,
-    body: SendableMessageBody,
-    attachments: Attachment[],
-    thread: string|null,
+    headers: FlatHeaders;
+    from: string;
+    to: string[];
+    subject: string;
+    body: SendableMessageBody;
+    attachments: Attachment[];
+    thread: string|null;
 }
 
 interface StandardError {
-    code: number|null,
-    message: string,
-    internal: string|null,
-    data?: string,
-    stack?: string,
+    code: number|null;
+    message: string;
+    internal: string|null;
+    data?: string;
+    stack?: string;
 }
-
 
 type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
@@ -303,18 +263,16 @@ type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 type Callback = (r?: any) => void;
 type EncryptDecryptOutputFormat = 'utf8'|'binary';
-type Options = Dict<any>;
 
 type BrowserMessageRequestDb = {f: string, args: any[]};
 type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
 type BrowserMessageRequestSessionGet = {account_email: string, key: string};
 type BrowserMessageRequest = null|Dict<any>;
+type BrowserMessageResponse = any|Dict<any>;
 type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
 
-type LongidToMnemonic = (longid: string) => string;
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
-type ApiCallback = (ok: boolean, result: Dict<any>|string|null) => void;
 
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
@@ -327,10 +285,10 @@ type ApiResponseFormat = 'json';
 type GmailApiResponseFormat = 'raw'|'full'|'metadata';
 type NamedSelectors = Dict<JQuery<HTMLElement>>;
 type SelectorCache = {
-    cached: (name: string) => JQuery<HTMLElement>,
-    now: (name: string) => JQuery<HTMLElement>,
-    selector: (name: string) => string,
-}
+    cached: (name: string) => JQuery<HTMLElement>;
+    now: (name: string) => JQuery<HTMLElement>;
+    selector: (name: string) => string;
+};
 type StorageType = 'session'|'local';
 type EmailProvider = 'gmail';
 type ProviderContactsQuery = { substring: string };
@@ -338,13 +296,13 @@ type ProviderContactsResult = {date: string, name: string|null, email: string, f
 type ProviderContactsResults = {new: ProviderContactsResult[], all: ProviderContactsResult[]};
 
 type AccountEventHandlersOptional = {
-    render_status?: (text: string, show_spinner?: boolean) => void,
-    find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>,
-}
+    render_status?: (text: string, show_spinner?: boolean) => void;
+    find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>;
+};
 type AccountEventHandlers = {
-    render_status: (text: string, show_spinner?: boolean) => void,
-    find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>,
-}
+    render_status: (text: string, show_spinner?: boolean) => void;
+    find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>;
+};
 
 // specific api results
 type ApirFcHelpFeedback = {sent: boolean};
@@ -385,38 +343,32 @@ type ApirGmailDraftSend = {};
 
 type ApirGoogleUserInfo = {name: string, locale: string, picture: string};
 
-type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString}
+type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString};
 type WebmailVariantString = null|'html'|'standard'|'new';
 type WebmailSpecificInfo = {
-    name: WebMailName,
-    variant: WebmailVariantString,
-    get_user_account_email: () => string|undefined,
-    get_user_full_name: () => string|undefined,
-    get_replacer: () => WebmailElementReplacer,
-    start: (account_email: string, inject: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => void,
-}
+    name: WebMailName;
+    variant: WebmailVariantString;
+    get_user_account_email: () => string|undefined;
+    get_user_full_name: () => string|undefined;
+    get_replacer: () => WebmailElementReplacer;
+    start: (account_email: string, inject: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => void;
+};
 interface WebmailElementReplacer {
-    everything: () => void,
-    set_reply_box_editable: () => void,
-    reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void,
+    everything: () => void;
+    set_reply_box_editable: () => void;
+    reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void;
 }
-type NotificationWithCallbacks = {notification: string, callbacks: Dict<Callback>};
+type NotificationWithHandlers = {notification: string, callbacks: Dict<Callback>};
 
 interface JQueryStatic {
-    featherlight: Function,
+    featherlight: Function; // tslint:disable-line:ban-types
 }
 
 interface JQuery {
-    featherlight: Function,
+    featherlight: Function; // tslint:disable-line:ban-types
 }
 
-type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void}
-
-type PromiseFactory<T> = () => T | PromiseLike<T>;
-
-interface PromiseConstructor {
-    sequence<T>(promise_factories: PromiseFactory<T>[]): Promise<T[]>;
-}
+type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 
 type SubscriptionLevel = 'pro'|null;
 
@@ -439,10 +391,10 @@ type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: Aut
 type AuthResultSuccess = {success: true, result: 'Success', account_email: string, message_id?: string};
 type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email: string|null, message_id?: string, error?: string};
 type AuthResult = AuthResultSuccess|AuthResultError;
-type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
+// type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
 
 type StoredReplyDraftMeta = string; // draft_id
-type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number}
+type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number};
 type StoredAdminCode = {date: number, codes: string[]};
 type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
 type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
@@ -498,11 +450,7 @@ interface AccountStore extends BaseStore {
     attest_log?: StoredAttestLog[];
 }
 
-interface FcPromise<T> extends Promise<T> {
-    validate: (validator: (r: T) => void) => FcPromise<T>;
-}
-
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
 type CryptoArmorHeaderDefinitions = {
     readonly [type in ReplaceableMessageBlockType|'null']: CryptoArmorHeaderDefinition;
-}
+};

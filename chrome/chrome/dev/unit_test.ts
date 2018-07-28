@@ -8,20 +8,20 @@
   let f = String(url_params.f);
   let args = JSON.parse(String(url_params.args));
 
-  if(!tool.value(tool.catch.environment()).in(['chrome:ex:test', 'chrome:ex:dev'])) {
+  if (!tool.value(tool.catch.environment()).in(['chrome:ex:test', 'chrome:ex:dev'])) {
     return finish('Unit tests only available in chrome:ex:test');
   }
 
-  if(f === 'tool.crypto.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
+  if (f === 'tool.crypto.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
     return test(tool.crypto.armor.detect_blocks, args);
   } else {
     return finish('Unknown unit test f');
   }
 
-  function test(method: Function, arg: any[]) {
+  function test(method: Function, arg: any[]) { // tslint:disable-line:ban-types
     try {
       return finish(null, method.apply(null, arg));
-    } catch(e) {
+    } catch (e) {
       return finish(e);
     }
   }

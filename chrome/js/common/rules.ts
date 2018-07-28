@@ -2,7 +2,7 @@
 
 'use strict';
 
-type DomainRule = {flags: ('NO_PRV_CREATE'|'NO_PRV_BACKUP')[]}
+type DomainRule = {flags: ('NO_PRV_CREATE'|'NO_PRV_BACKUP')[]};
 
 class Rules {
 
@@ -15,10 +15,10 @@ class Rules {
   };
 
   constructor(email?: string) {
-    if(email && tool.str.is_email_valid(email)) {
+    if (email && tool.str.is_email_valid(email)) {
       let domain = email.split('@')[1];
       this.domain_hash = tool.crypto.hash.sha1(domain);
-      if(!tool.value(this.domain_hash).in(Object.keys(this.rules))) { // not a known domain
+      if (!tool.value(this.domain_hash).in(Object.keys(this.rules))) { // not a known domain
         this.domain_hash = this.other;
       }
     }

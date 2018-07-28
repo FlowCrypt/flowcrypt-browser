@@ -9,92 +9,96 @@ tool.catch.try(async () => {
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   // this is for debugging
-  if((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
+  if ((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
     $('.storage_link_container').append(' - <a href="' + tool.env.url_create('/chrome/dev/storage.htm', {controls: true, }) + '">Storage</a>');
   }
-  
-  if(url_params.account_email) {
+
+  if (account_email) {
 
     let {dev_outlook_allow} = await Store.get_global(['dev_outlook_allow']);
-    if(dev_outlook_allow === true) {
+    if (dev_outlook_allow === true) {
       $('.action_allow_outlook').prop('checked', true);
     }
-  
+
     $('.email').text(account_email);
-  
-    $('.action_allow_outlook').change(function () {
+
+    $('.action_allow_outlook').change(function() {
       Store.set(null, {'dev_outlook_allow': $(this).prop('checked')}).then(() => window.location.reload());
     });
-  
-    $('.action_open_decrypt').click(function () {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm');
-    });
 
-    $('.action_open_decrypt_ignore_mdc').click(function () {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm');
-    });
-  
-    $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), function () {
-      collect_info_and_download_backup_file(account_email);
-    }));
-  
+    $('.action_open_decrypt').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm'));
+
+    $('.action_open_decrypt_ignore_mdc').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm'));
+
+    $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(tool.catch.handle_promise_error)));
+
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('white'));
-      let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-      let all = tool.arr.unique(addresses.concat(account_email));
-      await Store.set(account_email, { addresses: all })
-      alert('Updated to: ' + all.join(', '));
+      try {
+        let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
+        let all = tool.arr.unique(addresses.concat(account_email));
+        await Store.set(account_email, { addresses: all });
+        alert('Updated to: ' + all.join(', '));
+      } catch(e) {
+        if(tool.api.error.is_network_error(e)) {
+          alert('Network error, please try again');
+        } else if(tool.api.error.is_auth_popup_needed(e)) {
+          alert('Error: account needs to be re-connected first.');
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        } else {
+          tool.catch.handle_exception(e);
+          alert(`Error happened: ${e.message}`);
+        }
+      }
       window.location.reload();
+
     }));
-  
+
     $('.action_exception').click(() => tool.catch.test());
-  
+
     $('.action_reset_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
-      if(confirm('This will remove all your FlowCrypt settings for ' + url_params.account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
+      if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collect_info_and_download_backup_file(account_email);
-        if(confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-          Settings.reset_cryptup_account_storages(account_email, () => window.parent.location.reload());
+        if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
+          await Settings.reset_cryptup_account_storages(account_email);
+          window.parent.location.reload();
         }
       }
     }));
-  
-    $('.action_attest_log').click(function () {
-      Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: url_params.account_email, keys: 'attest_log', title: 'Attest Log - ' + url_params.account_email}).replace('?', '&'));
-    });
-  
-    $('.action_email_client').click(function () {
-      tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email: url_params.account_email})});
-    });
-  
+
+    $('.action_attest_log').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&')));
+
+    $('.action_email_client').click(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})}));
+
     $('.action_flush_attest_info').click(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
       alert('Internal attest info flushed');
       window.location.reload();
     });
-  
+
     $('.action_reset_managing_auth').click(async () => {
       await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified']);
       tool.browser.message.send(parent_tab_id, 'reload');
     });
-  
+
     $('.action_make_google_auth_token_unusable').click(async () => {
       await Store.set(account_email, {google_token_access: 'flowcrypt_test_bad_access_token'});
       tool.browser.message.send(parent_tab_id, 'reload');
     });
 
     $('.action_make_google_refresh_token_unusable').click(async () => {
-      await Store.set(account_email, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'})
+      await Store.set(account_email, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'});
       tool.browser.message.send(parent_tab_id, 'reload');
     });
 
-    async function collect_info_and_download_backup_file(account_email: string) {
+    let collect_info_and_download_backup_file = async (account_email: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
       let backup_text = await collect_info_for_account_backup(account_email);
       tool.file.save_to_downloads(name, 'text/plain', backup_text);
       await tool.ui.delay(1000);
-    }
-    
-    async function collect_info_for_account_backup(account_email: string) {
+    };
+
+    let collect_info_for_account_backup = async (account_email: string) => {
       let text = [
         'This file contains sensitive information, please put it in a safe place.',
         '',
@@ -113,7 +117,7 @@ tool.catch.try(async () => {
       text.push('account_storage: ' + JSON.stringify(account_storage));
       text.push('');
       let keyinfos = await Store.keys_get(account_email);
-      for(let keyinfo of keyinfos) {
+      for (let keyinfo of keyinfos) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);
         text.push('key_primary: ' + keyinfo.primary);
@@ -121,9 +125,8 @@ tool.catch.try(async () => {
       }
       text.push('');
       return text.join('\n');
-    }
+    };
 
   }
 
 })();
-

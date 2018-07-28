@@ -1,0 +1,40 @@
+---
+extends: "tslint:recommended"
+linterOptions:
+  exclude:
+    - node_modules
+rules:
+    allow-js: false
+    max-line-length: false
+    object-literal-sort-keys: false
+    arrow-parens: false
+    no-console: false
+    prefer-const: false
+    quotemark: false
+    variable-name: false
+    member-access: false
+    member-ordering: false
+    prefer-for-of: false
+    one-variable-per-declaration: false
+    radix: false
+    no-shadowed-variable: false
+    trailing-comma: false
+    array-type: false
+    typedef-whitespace: false
+    whitespace: false
+    interface-over-type-literal: false
+    max-classes-per-file: false
+    interface-name: false
+    object-literal-key-quotes: false
+    no-empty-interface: false
+    no-reference: false
+    no-unused-expression: true
+    no-floating-promises: true
+    ordered-imports: false
+    align: false
+    object-literal-shorthand: true
+    only-arrow-functions: true
+    no-bitwise: false  # may enable in the future
+    no-namespace: false  # can consider later
+    jsdoc-format: false  # add back later
+...

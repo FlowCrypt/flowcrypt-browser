@@ -8,6 +8,6 @@
     "checkJs": false
   },
   "include": [
-    "chrome/**/*"
+    "chrome/**/*.ts"
   ]
 }

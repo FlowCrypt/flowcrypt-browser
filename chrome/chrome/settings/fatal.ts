@@ -8,8 +8,8 @@
 
     let title = $('.title');
     let details = $('.details');
-    
-    if(url_params.reason === 'db_corrupted') {
+
+    if (url_params.reason === 'db_corrupted') {
         title.text('FlowCrypt cannot function because your Browser Profile is corrupted.');
         details.html(`
         <p>To fix it:</p>
@@ -28,7 +28,7 @@
         title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
         details.html(`<p>If you are on Firefox, please report your browser version to human@flowcrypt.com</p>.`);
     } else {
-        details.text('Unknown reason. Write human@flowcrypt.com if you need help.')
+        details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
     }
 
 })();
