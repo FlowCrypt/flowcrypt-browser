@@ -35,7 +35,9 @@ tool.catch.try(async () => {
       $('#loader').remove();
       resolve();
     }, (e) => {
-      tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
+      if(tool.api.error.is_auth_popup_needed(e)) {
+        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+      }
       if (!url_params.from) {
         url_params.from = account_email;
       }
@@ -68,11 +70,6 @@ tool.catch.try(async () => {
     }
   };
 
-  let catch_auth_error = <RETURM_TYPE_OF_F>(p: Promise<RETURM_TYPE_OF_F>): Promise<RETURM_TYPE_OF_F> => {
-    p.catch(e => tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e));
-    return p;
-  };
-
   let composer = new Composer({
     can_read_email: () => can_read_email,
     does_recipient_have_my_pubkey: async (their_email: string): Promise<boolean|undefined> => {
@@ -94,7 +91,9 @@ tool.catch.try(async () => {
             return false;
           }
         } catch(e) {
-          tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
+          if(tool.api.error.is_auth_popup_needed(e)) {
+            tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          }
           return undefined;
         }
       }
@@ -159,12 +158,12 @@ tool.catch.try(async () => {
     storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
-    email_provider_draft_get: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_get(account_email, draft_id, 'raw')),
-    email_provider_draft_create: (mime_message: string) => catch_auth_error(tool.api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string)),
-    email_provider_draft_update: (draft_id: string, mime_message: string) => catch_auth_error(tool.api.gmail.draft_update(account_email, draft_id, mime_message)),
-    email_provider_draft_delete: (draft_id: string) => catch_auth_error(tool.api.gmail.draft_delete(account_email, draft_id)),
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => catch_auth_error(tool.api.gmail.message_send(account_email, message, render_upload_progress)),
-    // todo tool.api.gmail.search_contacts auth popup needed error should be handled
+    email_provider_draft_get: (draft_id: string) => tool.api.gmail.draft_get(account_email, draft_id, 'raw'),
+    email_provider_draft_create: (mime_message: string) => tool.api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => tool.api.gmail.draft_update(account_email, draft_id, mime_message),
+    email_provider_draft_delete: (draft_id: string) => tool.api.gmail.draft_delete(account_email, draft_id),
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.api.gmail.message_send(account_email, message, render_upload_progress),
+    // todo: tool.api.gmail.search_contacts auth popup needed error should be handled
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => tool.api.gmail.search_contacts(account_email, query, known_contacts, multi_cb),
     email_provider_determine_reply_message_header_variables: async () => {
       try {
@@ -177,10 +176,16 @@ tool.catch.try(async () => {
           return;
         }
       } catch (e) {
-        tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e);
+        if(tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        } else if (tool.api.error.is_network_error(e)) {
+          // todo: retry
+        } else {
+          // todo: render error
+        }
       }
     },
-    email_provider_extract_armored_block: (message_id: string) => catch_auth_error(tool.api.gmail.extract_armored_block(account_email, message_id, 'full')),
+    email_provider_extract_armored_block: (message_id: string) => tool.api.gmail.extract_armored_block(account_email, message_id, 'full'),
     send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(parent_tab_id, channel, data),
     send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {

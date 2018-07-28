@@ -1166,6 +1166,7 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
   ui: {
+    retry_link: () => `<a href="${window.location.href}">retry</a>`,
     delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
       let path = `/img/svgs/spinner-${color}-small.svg`;
@@ -1490,14 +1491,6 @@ let tool = {
           }
         }
         return false;
-      },
-      notify_parent_if_auth_popup_needed: (account_email: string, parent_tab_id: string, e: Thrown, rethrow_other_errors=true) => {
-        if (tool.api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-          throw new UnreportableError('Cannot proceed due to missing auth');
-        } else if (rethrow_other_errors) {
-          throw e;
-        }
       },
     },
     google: {

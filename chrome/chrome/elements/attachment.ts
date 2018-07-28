@@ -196,7 +196,16 @@ tool.catch.try(async () => {
       $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
     }
   } catch (e) {
-    tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e);
+    let retry_button = `<a href="${window.location.href}">retry</a>`;
+    if(tool.api.error.is_auth_popup_needed(e)) {
+      tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+      $('body.attachment').html(`Error downloading file - google auth needed. ${retry_button}`);
+    } else if(tool.api.error.is_network_error) {
+      $('body.attachment').html(`Error downloading file - no internet. ${retry_button}`);
+    } else {
+      tool.catch.handle_exception(e);
+      $('body.attachment').html(`Error downloading file - unknown error. ${retry_button}`);
+    }
   }
 
 })();

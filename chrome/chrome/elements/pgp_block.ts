@@ -463,13 +463,15 @@ tool.catch.try(async () => {
       }
     } catch (e) {
       if (tool.api.error.is_network_error(e)) {
-        await render_error(Lang.pgp_block.connection_error, e.data);
+        await render_error(`Could not load message due to network error. ${tool.ui.retry_link()}`);
+      } else if(tool.api.error.is_auth_popup_needed(e)) {
+        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        await render_error(`Could not load message due to missing auth. ${tool.ui.retry_link()}`);
       } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(url_params.is_outgoing), account_email, parent_tab_id, frame_id: url_params.frame_id });
       } else if (typeof e === 'object' && e.internal === 'format') {
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open + '\n\n' + String(e), e.data);
       } else {
-        tool.api.error.notify_parent_if_auth_popup_needed(account_email, parent_tab_id, e, false);
         tool.catch.handle_exception(e);
         await render_error(String(e));
       }

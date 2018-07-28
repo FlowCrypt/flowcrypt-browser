@@ -324,16 +324,20 @@ class Composer {
         }
       }
     } catch (e) {
-      if (this.is_reply_box && e.status === 404) {
+      if(tool.api.error.is_network_error(e)) {
+        $('body').html(`Failed to load draft. ${tool.ui.retry_link()}`);
+      } else if (tool.api.error.is_auth_popup_needed(e)) {
+        this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+        $('body').html(`Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${tool.ui.retry_link()}`);
+      } else if (this.is_reply_box && e.status === 404) {
         tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
-        setTimeout(async () => {
-          await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
-          console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
-          window.location.reload();
-        }, 500);
+        await tool.time.sleep(500);
+        await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
+        console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
+        window.location.reload();
       } else {
         console.info('tool.api.gmail.draft_get success===false');
-        console.info(e);
+        tool.catch.handle_exception(e);
         if (this.is_reply_box) {
           await this.render_reply_message_compose_table();
         }
@@ -397,9 +401,16 @@ class Composer {
           await this.app.email_provider_draft_update(this.draft_id, mime_message);
           this.S.cached('send_btn_note').text('Saved');
         }
-      } catch (error) {
-        console.log(error);
-        this.S.cached('send_btn_note').text('Not saved');
+      } catch (e) {
+        if(tool.api.error.is_network_error(e)) {
+          this.S.cached('send_btn_note').text('Not saved (network)');
+        } else if (tool.api.error.is_auth_popup_needed(e)) {
+          this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+          this.S.cached('send_btn_note').text('Not saved (reconnect)');
+        } else {
+          tool.catch.handle_exception(e);
+          this.S.cached('send_btn_note').text('Not saved');
+        }
       }
       this.draft_save_in_progress = false;
     }
@@ -410,7 +421,15 @@ class Composer {
     await tool.time.wait(() => !this.draft_save_in_progress ? true : undefined);
     if (this.draft_id) {
       await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
-      await this.app.email_provider_draft_delete(this.draft_id);
+      try {
+        await this.app.email_provider_draft_delete(this.draft_id);
+      } catch(e) {
+        if (tool.api.error.is_auth_popup_needed(e)) {
+          this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+        } else if(!tool.api.error.is_network_error(e)) {
+          tool.catch.handle_exception(e);
+        }
+      }
     }
   }
 
@@ -510,27 +529,32 @@ class Composer {
     }
   }
 
-  private handle_send_error(error: Error|StandardError) {
-    if (tool.api.error.is_network_error(error)) {
-      alert('Could not send message due to network error. Please check your internet connection.');
-    } else if (typeof error === 'object' && error.hasOwnProperty('internal')) {
-      if ((error as StandardError).internal === 'auth') {
-        if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
-        }
-      } else {
-        tool.catch.report('StandardError | failed to send message', error);
-        alert((error as StandardError).internal || error.message);
+  private handle_send_error(e: Error|StandardError) {
+    if(tool.api.error.is_network_error(e)) {
+      alert('Could not send message due to network error. Please check your internet connection and try again.');
+    } else if(tool.api.error.is_auth_popup_needed(e)) {
+      this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+      alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
+    } else if (tool.api.error.is_auth_error(e)) {
+      if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+        this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
       }
+    } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
+      tool.catch.report('StandardError | failed to send message', e);
+      alert(`Failed to send message: [${(e as StandardError).internal}] ${e.message}`);
+    } else if(e instanceof ComposerUserError) {
+      alert(`Could not send message: ${e.message}`);
     } else {
-      if (!((error instanceof ComposerUserError) || ((error instanceof ComposerResetBtnTrigger)))) {
-        tool.catch.report('Error/Exception | failed to send message', error);
-      }
-      if (!((error instanceof ComposerResetBtnTrigger) || (error instanceof ComposerNotReadyError))) {
-        alert(String(error));
+      if(!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
+        if(e instanceof Error) {
+          tool.catch.handle_exception(e);
+        } else {
+          tool.catch.report('Thrown object | failed to send message', e);
+        }
+        alert(`Failed to send message due to: ${e.message}`);
       }
     }
-    if (!(error instanceof ComposerNotReadyError)) {
+    if (!(e instanceof ComposerNotReadyError)) {
       this.reset_send_btn(100);
     }
   }
@@ -945,6 +969,12 @@ class Composer {
     } catch (e) {
       if (e.data) {
         this.S.cached('input_text').append('<br/>\n<br/>\n<br/>\n' + e.data);
+      } else if(tool.api.error.is_network_error(e)) {
+        // todo: retry
+      } else if(tool.api.error.is_auth_popup_needed(e)) {
+        this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+      } else {
+        tool.catch.handle_exception(e);
       }
       return;
     }
