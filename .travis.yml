@@ -1,4 +1,15 @@
-os: linux
+language: node_js
+node_js:
+  - "9"
+dist: trusty
+sudo: false  
+addons:
+  chrome: stable
+before_install:
+  - google-chrome-stable --disable-gpu --remote-debugging-port=9222 http://localhost &
+cache:
+  directories:
+    - node_modules
 before_script:
  - npm install -g npm@6.2.0
  - npm install -g node@9.4.0
