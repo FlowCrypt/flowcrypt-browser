@@ -34,11 +34,24 @@ tool.catch.try(async () => {
 
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('white'));
-      let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-      let all = tool.arr.unique(addresses.concat(account_email));
-      await Store.set(account_email, { addresses: all });
-      alert('Updated to: ' + all.join(', '));
+      try {
+        let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
+        let all = tool.arr.unique(addresses.concat(account_email));
+        await Store.set(account_email, { addresses: all });
+        alert('Updated to: ' + all.join(', '));
+      } catch(e) {
+        if(tool.api.error.is_network_error(e)) {
+          alert('Network error, please try again');
+        } else if(tool.api.error.is_auth_popup_needed(e)) {
+          alert('Error: account needs to be re-connected first.');
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        } else {
+          tool.catch.handle_exception(e);
+          alert(`Error happened: ${e.message}`);
+        }
+      }
       window.location.reload();
+
     }));
 
     $('.action_exception').click(() => tool.catch.test());

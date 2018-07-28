@@ -36,6 +36,9 @@ tool.catch.try(async () => {
       $('#source_backup').prop('disabled', true);
     }
   } catch (e) {
+    if(tool.api.error.is_auth_popup_needed(e)) {
+      tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+    }
     $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
     $('#source_backup').prop('disabled', true);
   }

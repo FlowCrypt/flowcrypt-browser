@@ -458,3 +458,12 @@ div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 .mt-40 { margin-top: 40px; }
 
 .display_none { display: none; }
+
+/* notifications */
+body#settings div.webmail_notifications { position: absolute; top: 0; left: 0; width: 100%; z-index: 999; height: 0px; }
+body#settings div.webmail_notifications div.webmail_notification { background-color: rgb(249, 237, 190); border: 1px solid rgb(240, 195, 109); border-radius: 2px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0; color: rgb(34, 34, 34); font-family: arial, sans-serif; font-size: 12.8px; font-weight: bold;
+  line-height: 16px; padding: 6px 10px; z-index: 999; margin-top: 90px; display:inline-block; margin-right: 50px; margin-left: 50px; }
+body#settings div.webmail_notifications div.webmail_notification a { color: blue !important; opacity: inherit; padding-left: 6px;
+  padding-right: 2px; float: inherit; font-size: inherit; line-height: inherit; }
+body#settings div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }

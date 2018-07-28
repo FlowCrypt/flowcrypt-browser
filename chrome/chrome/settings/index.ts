@@ -22,6 +22,7 @@ tool.catch.try(async () => {
   }
 
   let tab_id = await tool.browser.message.required_tab_id();
+  let notifications = new Notifications(tab_id);
 
   tool.browser.message.listen({
     open_page: (data: {page: string, add_url_text: string}, sender, respond) => {
@@ -48,7 +49,16 @@ tool.catch.try(async () => {
       window.open(factory.src_subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: (data: {notification: string}) => {
-      alert(data.notification);
+      notifications.show(data.notification);
+      let cleared = false;
+      let clear = () => {
+        if(!cleared) {
+          notifications.clear();
+          cleared = true;
+        }
+      };
+      setTimeout(clear, 10000);
+      $('.webmail_notifications').one('click', clear);
     },
     open_google_auth_dialog: (data) => {
       $('.featherlight-close').click();
@@ -59,6 +69,9 @@ tool.catch.try(async () => {
         let factory = new Factory(account_email!, tab_id);
         $('body').append(factory.dialog_passphrase(data.longids, data.type));
       }
+    },
+    notification_show_auth_popup_needed: (data: {account_email: string}) => {
+      notifications.show_auth_popup_needed(data.account_email);
     },
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();

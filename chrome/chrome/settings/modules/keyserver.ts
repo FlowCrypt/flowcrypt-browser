@@ -92,8 +92,20 @@ tool.catch.try(async () => {
     let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
     $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('green'));
-      let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-      await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
+      try {
+        let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
+        await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
+      } catch(e) {
+        if(tool.api.error.is_network_error(e)) {
+          alert('Need internet connection to finish. Please click the button again to retry.');
+        } else if(parent_tab_id && tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          alert('Account needs to be re-connected first. Please try later.');
+        } else {
+          tool.catch.handle_exception(e);
+          alert(`Error happened: ${e.message}`);
+        }
+      }
       window.location.reload();
     }));
   };

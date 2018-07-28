@@ -45,10 +45,13 @@ tool.catch.try(async () => {
         keys = await tool.api.gmail.fetch_key_backups(account_email);
       } catch (e) {
         if (tool.api.error.is_network_error(e)) {
-          $('#content').html('Could not check for backups: no internet. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+          $('#content').html(`Could not check for backups: no internet. ${tool.ui.retry_link()}`);
+        } else if(tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          $('#content').html(`Could not check for backups: account needs to be re-connected. ${tool.ui.retry_link()}`);
         } else {
           tool.catch.handle_exception(e);
-          $('#content').html('Could not check for backups: unknown error. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+          $('#content').html(`Could not check for backups: unknown error. ${tool.ui.retry_link()}`);
         }
         return;
       }
@@ -153,8 +156,16 @@ tool.catch.try(async () => {
       try {
         await do_backup_on_email_provider(account_email, prv.armor());
       } catch (e) {
+        if(tool.api.error.is_network_error(e)) {
+          alert('Need internet connection to finish. Please click the button again to retry.');
+        } else if(parent_tab_id && tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          alert('Account needs to be re-connected first. Please try later.');
+        } else {
+          tool.catch.handle_exception(e);
+          alert(`Error happened, please try again (${e.message})`);
+        }
         $(self).text(btn_text);
-        alert('Need internet connection to finish. Please click the button again to retry.');
         return;
       }
       await write_backup_done_and_render(false, 'inbox');
@@ -199,7 +210,15 @@ tool.catch.try(async () => {
     try {
       await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
-      return alert('Need internet connection to finish. Please click the button again to retry.');
+      if(tool.api.error.is_network_error(e)) {
+        return alert('Need internet connection to finish. Please click the button again to retry.');
+      } else if(parent_tab_id && tool.api.error.is_auth_popup_needed(e)) {
+        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        return alert('Account needs to be re-connected first. Please try later.');
+      } else {
+        tool.catch.handle_exception(e);
+        return alert(`Error happened: ${e.message}`);
+      }
     } finally {
       btn.text(original_btn_text);
     }
