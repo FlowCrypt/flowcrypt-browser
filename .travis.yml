@@ -2,7 +2,7 @@ os: linux
 before_script:
  - npm install -g npm@6.2.0
  - npm install -g node@9.4.0
- - apt-get remove node
+ - npm install -g gulp
  - npm install -g gulp-cli
  - npm install
  - npm install --save-dev @types/jquery@3.3.1
