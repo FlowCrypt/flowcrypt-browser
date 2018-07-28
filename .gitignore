@@ -9,6 +9,7 @@
 .DS_Store
 !.gitignore
 !/config/.gitignore
+/test/test-secrets.json
 /test/puppeteer.json
 /test/node_modules/
 /test/build/*

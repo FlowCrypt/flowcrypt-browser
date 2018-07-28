@@ -5,4 +5,5 @@ before_script:
   - npm install
   - npm install --save-dev @types/jquery@3.3.1
   - cd test && npm install
+  - openssl aes-256-cbc -K $encrypted_fb782cbdc340_key -iv $encrypted_fb782cbdc340_iv -in test-secrets.json.enc -out test-secrets.json -d
 script: gulp test

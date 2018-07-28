@@ -11,7 +11,7 @@ interface ConfigInterface {
 
 export class Config {
 
-  public static config = JSON.parse(fs.readFileSync('test/puppeteer.json', 'utf8')) as ConfigInterface;
+  public static config = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as ConfigInterface;
 
   public static key = (title: string) => Config.config.keys.filter(k => k.title === title)[0];
 
