@@ -1,5 +1,6 @@
 os: linux
 before_script:
+ - npm install -g npm@6.2.0
  - npm install -g node@9.4.0
  - npm install -g gulp-cli
  - npm install
