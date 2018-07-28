@@ -17,7 +17,7 @@
     "gulp-watch": "^5.0.0",
     "inquirer": "^5.2.0",
     "tslint": "^5.11.0",
-    "typescript": "^2.8.3"
+    "typescript": "^2.9.1"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,6 @@
   },
   "homepage": "https://flowcrypt.com",
   "ava": {
-		"concurrency": 1
-	}
+    "concurrency": 1
+  }
 }
