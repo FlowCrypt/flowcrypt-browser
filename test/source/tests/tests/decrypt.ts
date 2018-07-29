@@ -5,7 +5,7 @@ import { BrowserHandle } from '../../browser';
 
 export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 
-  let pgp_block_unit_test = async (browser: BrowserHandle, m: typeof Config.config.messages[0]) => {
+  let pgp_block_unit_test = async (browser: BrowserHandle, m: typeof Config.tests.messages[0]) => {
     let pgp_block_page = await browser.new_page(`chrome/elements/pgp_block.htm${m.params}`);
     await pgp_block_page.wait_all('@pgp-block-content');
     await pgp_block_page.wait_for_selector_test_state('ready', 20);
@@ -20,7 +20,7 @@ export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser, test_
     await pgp_block_page.close();
   };
 
-  for(let m of Config.config.messages) {
+  for(let m of Config.tests.messages) {
     ava.test(`decrypt[global] - ${m.name}`, test_with_semaphored_global_browser(async (browser, t) => {
       await pgp_block_unit_test(browser, m);
     }));

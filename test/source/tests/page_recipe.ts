@@ -81,7 +81,7 @@ export class PageRecipe {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
     };
-    let auth = Config.config.auth.google.filter(a => a.email === account_email)[0];
+    let auth = Config.secrets.auth.google.filter(a => a.email === account_email)[0];
     await oauth_page.wait_all('#Email, #submit_approve_access, #identifierId, .w6VTHd');
     if (await oauth_page.target.$('#Email') !== null) {
       await oauth_page.wait_all('#Email', {timeout: 60});

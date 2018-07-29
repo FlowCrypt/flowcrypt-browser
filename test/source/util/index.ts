@@ -1,20 +1,25 @@
 
 import * as fs from 'fs';
 
-interface ConfigInterface {
-  auth: { google: {email: string, password: string, backup: string}[],};
-  keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[];
+interface TestConfigInterface {
   messages: {name: string, content: string[], params: string}[];
   unit_tests: {name: string, f: string, args: any[], result: any}[];
+}
+
+interface TestSecretsInterface {
+  auth: { google: {email: string, password: string, backup: string}[],};
+  keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[];
 }
 
 export class Config {
 
   public static extension_id = '';
 
-  public static config = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as ConfigInterface;
+  public static secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as TestSecretsInterface;
 
-  public static key = (title: string) => Config.config.keys.filter(k => k.title === title)[0];
+  public static tests = JSON.parse(fs.readFileSync('test/tests.json', 'utf8')) as TestConfigInterface;
+
+  public static key = (title: string) => Config.secrets.keys.filter(k => k.title === title)[0];
 
 }
 
