@@ -2,7 +2,6 @@
 import * as fs from 'fs';
 
 interface ConfigInterface {
-  extension_id: string;
   auth: { google: {email: string, password: string, backup: string}[],};
   keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[];
   messages: {name: string, content: string[], params: string}[];
@@ -10,6 +9,8 @@ interface ConfigInterface {
 }
 
 export class Config {
+
+  public static extension_id = '';
 
   public static config = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as ConfigInterface;
 

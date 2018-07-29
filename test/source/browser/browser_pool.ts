@@ -36,6 +36,18 @@ export class BrowserPool {
     return handle;
   }
 
+  public async get_extension_id(): Promise<string> {
+    let browser = await this.new_browser_handle(false);
+    let initial_page = await browser.new_page_triggered_by(() => null); // the page triggered on its own
+    let url = initial_page.page.url();
+    let match = url.match(/[a-z]{32}/);
+    if(match !== null) {
+      await browser.close();
+      return match[0];
+    }
+    throw new Error(`Cannot determine extension id from url: ${url}`);
+  }
+
   public async with_new_browser(cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) {
     let browser = await this.new_browser_handle();
     try {

@@ -9,6 +9,7 @@ import {define_compose_tests} from './tests/tests/compose';
 import {define_decrypt_tests} from './tests/tests/decrypt';
 import {define_gmail_tests} from './tests/tests/gmail';
 import {define_settings_tests} from './tests/tests/settings';
+import {Config} from './util';
 
 let browser_pool = new BrowserPool(5);
 let global_browser_semaphore = new Semaphore(1);
@@ -50,8 +51,9 @@ export let test_with_semaphored_global_browser = (cb: (browser: BrowserHandle, t
   };
 };
 
-ava.before('set up global browser', async t => {
+ava.before('set up global browser and config', async t => {
   // await retry(async () => {
+  Config.extension_id = await browser_pool.get_extension_id();
   let browser = await browser_pool.new_browser_handle();
   await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
   global_browser = browser;
