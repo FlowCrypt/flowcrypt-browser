@@ -87,21 +87,27 @@ export class PageRecipe {
       await oauth_page.wait_all('#Email', {timeout: 60});
       await oauth_page.wait_and_type('#Email', auth.email);
       await oauth_page.wait_and_click('#next');
+      await oauth_page.page.waitForNavigation();
       await Util.sleep(PageRecipe.oauth_password_delay);
       await oauth_page.wait_and_type('#Passwd', auth.password, {delay: PageRecipe.oauth_password_delay});
+      await oauth_page.page.waitForNavigation();
       await oauth_page.wait_and_click('#signIn', {delay: 1});
+      await oauth_page.page.waitForNavigation();
     } else if (await oauth_page.target.$('#identifierId') !== null) {
       await oauth_page.wait_all('#identifierId', {timeout: 60});
       await oauth_page.wait_and_type('#identifierId', auth.email, {delay: 2});
       await oauth_page.wait_and_click('.zZhnYe', {delay: 2});  // confirm email
+      await oauth_page.page.waitForNavigation();
       await Util.sleep(PageRecipe.oauth_password_delay);
       await oauth_page.wait_and_type('.zHQkBf', auth.password, {delay: PageRecipe.oauth_password_delay});
       await oauth_page.wait_and_click('.CwaK9', {delay: 1});  // confirm password
+      await oauth_page.page.waitForNavigation();
     } else if (await oauth_page.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
       await oauth_page.wait_and_click('.bLzI3e', {delay: 1}); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
       await Util.sleep(2);
       return await PageRecipe.handle_gmail_oauth(oauth_page, account_email, action); // start from beginning after clicking "other email acct"
     }
+    await Util.sleep(5);
     let element = await oauth_page.wait_any([selectors.approve_button, selectors.backup_email_verification_choice], {timeout: 300});
     await Util.sleep(1);
     if((await oauth_page.target.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
