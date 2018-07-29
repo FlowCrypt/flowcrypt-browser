@@ -9,6 +9,8 @@ Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.
 
 ## Developers
 
+[![Build Status](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
+
 This project is written in TypeScript. Browsers only understand JavaScript, so the project needs to be transpiled. You need to build the project the first time you download it, and build it after each change you make to see the result in the browser. First, install tooling:
 
 ```bash
