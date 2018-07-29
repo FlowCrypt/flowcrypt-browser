@@ -108,7 +108,7 @@ export class PageRecipe {
       return await PageRecipe.handle_gmail_oauth(oauth_page, account_email, action); // start from beginning after clicking "other email acct"
     }
     await Util.sleep(5);
-    let element = await oauth_page.wait_any([selectors.approve_button, selectors.backup_email_verification_choice], {timeout: 300});
+    let element = await oauth_page.wait_any([selectors.approve_button, selectors.backup_email_verification_choice]); // , {timeout: 60}
     await Util.sleep(1);
     if((await oauth_page.target.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
       await element.click();
