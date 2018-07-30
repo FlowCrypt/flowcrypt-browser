@@ -8,28 +8,24 @@
   let f = String(url_params.f);
   let args = JSON.parse(String(url_params.args));
 
-  if (!tool.value(tool.catch.environment()).in(['chrome:ex:test', 'chrome:ex:dev'])) {
-    return finish('Unit tests only available in chrome:ex:test');
-  }
-
-  if (f === 'tool.crypto.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
-    return test(tool.crypto.armor.detect_blocks, args);
-  } else {
-    return finish('Unknown unit test f');
-  }
-
-  function test(method: Function, arg: any[]) { // tslint:disable-line:ban-types
+  let test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
     try {
       return finish(null, method.apply(null, arg));
     } catch (e) {
       return finish(e);
     }
-  }
+  };
 
-  function finish(error: string|StandardError|Error|null, result?: any) {
+  let finish = (error: string|StandardError|Error|null, result?: any) => {
     error = (error === null) ? null : String(error);
     $('#result').text(JSON.stringify({error, result}));
     $('#result').attr('data-test-state', 'ready');
+  };
+
+  if (f === 'tool.crypto.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
+    return test(tool.crypto.armor.detect_blocks, args);
+  } else {
+    return finish('Unknown unit test f');
   }
 
 })();
