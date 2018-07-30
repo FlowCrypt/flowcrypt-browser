@@ -3,6 +3,9 @@ import {launch} from "puppeteer";
 import {BrowserHandle} from './browser_handle';
 import {Util} from "../util";
 import * as ava from 'ava';
+import { resolve } from "url";
+
+class TimeoutError extends Error {}
 
 export class BrowserPool {
 
@@ -16,7 +19,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(pool_size);
   }
 
-  public async new_browser_handle(close_initial_page=true) {
+  public new_browser_handle = async (close_initial_page=true) => {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     let args = [
@@ -36,7 +39,7 @@ export class BrowserPool {
     return handle;
   }
 
-  public async get_extension_id(): Promise<string> {
+  public get_extension_id = async (): Promise<string> => {
     let browser = await this.new_browser_handle(false);
     let initial_page = await browser.new_page_triggered_by(() => null); // the page triggered on its own
     let url = initial_page.page.url();
@@ -48,20 +51,61 @@ export class BrowserPool {
     throw new Error(`Cannot determine extension id from url: ${url}`);
   }
 
-  public async with_new_browser(cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) {
+  public with_new_browser = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) => {
     let browser = await this.new_browser_handle();
     try {
       await cb(browser, t);
-    } catch(e) {
-      // console.error(e);
-      throw e;
     } finally {
       await Util.sleep(1);
       await browser.close();
     }
   }
 
-  private async close_initial_extension_page(browser: BrowserHandle) {
+  public cb_with_timeout = (cb: () => Promise<void>, timeout: number): Promise<void> => new Promise((resolve, reject) => {
+    setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
+    cb().then(resolve, reject);
+  })
+
+  public with_new_browser_timeout_and_retry = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
+    for(let i of [1,2,3]) {
+      try {
+        let browser = await this.new_browser_handle();
+        try {
+          return await this.cb_with_timeout(async () => await cb(browser, t), timeout);
+        } finally {
+          await Util.sleep(1);
+          await browser.close();
+        }
+      } catch(e) {
+        if(i < 3) {
+          console.log(`Retrying: ${t.title} (${e.message})\n${e.stack}`);
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
+  public with_global_browser_timeout_and_retry = async (browser: BrowserHandle, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
+    for(let i of [1,2,3]) {
+      try {
+        try {
+          return await this.cb_with_timeout(async () => await cb(browser, t), timeout);
+        } finally {
+          await Util.sleep(1);
+          await browser.close_all_pages();
+        }
+      } catch(e) {
+        if(i < 3) {
+          console.log(`Retrying: ${t.title} (${e.message})\n${e.stack}`);
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
+  private close_initial_extension_page = async (browser: BrowserHandle) => {
     let initial_page = await browser.new_page_triggered_by(() => null); // the page triggered on its own
     await initial_page.wait_all('@initial-page'); // first page opened by flowcrypt
     await initial_page.close();

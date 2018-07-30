@@ -15,7 +15,7 @@ export class BrowserHandle {
     this.viewport = {height, width};
   }
 
-  async new_page(url?: string): Promise<ControllablePage> {
+  new_page = async (url?: string): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
     await page.setViewport(this.viewport);
     if(url) {
@@ -24,29 +24,35 @@ export class BrowserHandle {
     return new ControllablePage(page);
   }
 
-  async new_page_triggered_by(triggering_action: () => void): Promise<ControllablePage> {
+  new_page_triggered_by = async (triggering_action: () => void): Promise<ControllablePage> => {
     let page = await this.do_await_triggered_page(triggering_action);
     await page.setViewport(this.viewport);
     return new ControllablePage(page);
   }
 
-  async close() {
+  close_all_pages = async () => {
+    for(let page of await this.browser.pages()) {
+      if(page.url() !== 'about:blank') {
+        await page.close();
+      }
+    }
+  }
+
+  close = async () => {
     await this.browser.close();
     this.semaphore.release();
   }
 
-  private do_await_triggered_page(triggering_action: () => void): Promise<Page> {
-    return new Promise((resolve) => {
-      let resolved = 0;
-      this.browser.on('targetcreated', async (target) => {
-        if(target.type() === 'page') {
-          if(!resolved++) {
-            target.page().then(resolve);
-          }
+  private do_await_triggered_page = (triggering_action: () => void): Promise<Page> => new Promise(resolve => {
+    let resolved = 0;
+    this.browser.on('targetcreated', async (target) => {
+      if(target.type() === 'page') {
+        if(!resolved++) {
+          target.page().then(resolve);
         }
-      });
-      triggering_action();
+      }
     });
-  }
+    triggering_action();
+  })
 
 }

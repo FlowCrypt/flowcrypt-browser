@@ -8,7 +8,7 @@ export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser, test_
   let pgp_block_unit_test = async (browser: BrowserHandle, m: typeof Config.tests.messages[0]) => {
     let pgp_block_page = await browser.new_page(`chrome/elements/pgp_block.htm${m.params}`);
     await pgp_block_page.wait_all('@pgp-block-content');
-    await pgp_block_page.wait_for_selector_test_state('ready', 20);
+    await pgp_block_page.wait_for_selector_test_state('ready', 100);
     await Util.sleep(1);
     let content = await pgp_block_page.read('@pgp-block-content');
     for(let j = 0; j < m.content.length; j++) {

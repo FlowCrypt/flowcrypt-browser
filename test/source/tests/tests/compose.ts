@@ -32,7 +32,6 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     let k = Config.key('flowcrypt.compatibility.1pp1');
     await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
     let settings_page = await browser.new_page(Url.extension_settings('flowcrypt.compatibility@gmail.com'));
-    let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.settings_change_pass_phrase_requirement(settings_page, k.passphrase, 'session');
     let compose_frame = await PageRecipe.compose_open_compose_page_settings(settings_page);
     await PageRecipe.compose_fill_message(compose_frame, 'human@flowcrypt.com', 'sign with entered pass phrase');
@@ -40,12 +39,10 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await compose_frame.wait_and_click('@action-send');
     let passphrase_dialog = await settings_page.get_frame(['passphrase.htm']);
     await passphrase_dialog.wait_and_type('@input-pass-phrase', k.passphrase);
-    let alert = await settings_page.trigger_and_await_new_alert(() => passphrase_dialog.wait_and_click('@action-confirm-pass-phrase-entry')); // confirming pass phrase will send the message
-    await alert.accept(); // toto - could be error alert for all I know - should distinguish
+    await passphrase_dialog.wait_and_click('@action-confirm-pass-phrase-entry'); // confirming pass phrase will send the message
     await settings_page.wait_till_gone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
-    await compose_page.close();
     // signed - done, now try to see if it remembered pp in session
-    compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
+    let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.compose_fill_message(compose_page, 'human@flowcrypt.com', 'signed message pp in session');
     await compose_page.click('@action-switch-to-sign'); // should remember pass phrase in session from previous entry
     await PageRecipe.compose_send_and_close(compose_page);
@@ -127,8 +124,7 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await add_pubkey_dialog.select_option('@input-select-copy-from', 'human@flowcrypt.com');
     await add_pubkey_dialog.wait_and_click('@action-add-pubkey');
     await compose_frame.wait_till_gone('@dialog');
-    let alert = await settings_page.trigger_and_await_new_alert(() => compose_frame.wait_and_click('@action-send', {delay: 2}));
-    await alert.accept(); // todo - read success from the alert
+    await compose_frame.wait_and_click('@action-send', {delay: 2});
     await settings_page.wait_till_gone('@dialog');
   }));
 
