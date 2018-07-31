@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -16,24 +16,49 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-/* globals self: true */
+/* eslint-disable no-restricted-globals */
+/* eslint-disable no-var */
+/* eslint-disable vars-on-top */
 
-self.window = {}; // to make UMD bundles work
+/**
+ * @fileoverview Provides functions for communicating with workers
+ * @see module:openpgp.initWorker
+ * @see module:openpgp.getWorker
+ * @see module:openpgp.destroyWorker
+ * @see module:worker/async_proxy
+ * @module worker/worker
+ */
+
+self.window = self; // to make UMD bundles work
 
 importScripts('openpgp.js');
 var openpgp = window.openpgp;
 
-var MIN_SIZE_RANDOM_BUFFER = 40000;
+var randomQueue = [];
 var MAX_SIZE_RANDOM_BUFFER = 60000;
 
-openpgp.crypto.random.randomBuffer.init(MAX_SIZE_RANDOM_BUFFER);
+/**
+ * Handle random buffer exhaustion by requesting more random bytes from the main window
+ * @returns {Promise<Object>}  Empty promise whose resolution indicates that the buffer has been refilled
+ */
+function randomCallback() {
+
+  if (!randomQueue.length) {
+    self.postMessage({ event: 'request-seed', amount: MAX_SIZE_RANDOM_BUFFER });
+  }
+
+  return new Promise(function(resolve) {
+    randomQueue.push(resolve);
+  });
+}
+
+openpgp.crypto.random.randomBuffer.init(MAX_SIZE_RANDOM_BUFFER, randomCallback);
 
 /**
  * Handle messages from the main window.
  * @param  {Object} event   Contains event type and data
  */
 self.onmessage = function(event) {
-  // throw 'yaya';
   var msg = event.data || {};
 
   switch (msg.event) {
@@ -43,6 +68,13 @@ self.onmessage = function(event) {
 
     case 'seed-random':
       seedRandom(msg.buf);
+
+      var queueCopy = randomQueue;
+      randomQueue = [];
+      for (var i = 0; i < queueCopy.length; i++) {
+        queueCopy[i]();
+      }
+
       break;
 
     default:
@@ -55,9 +87,9 @@ self.onmessage = function(event) {
  * @param  {Object} config   The openpgp configuration
  */
 function configure(config) {
-  for (var i in config) {
-    openpgp.config[i] = config[i];
-  }
+  Object.keys(config).forEach(function(key) {
+    openpgp.config[key] = config[key];
+  });
 }
 
 /**
@@ -88,7 +120,9 @@ function delegate(id, method, options) {
     // clone packets (for web worker structured cloning algorithm)
     response({ id:id, event:'method-return', data:openpgp.packet.clone.clonePackets(data) });
   }).catch(function(e) {
-    response({ id:id, event:'method-return', err:e.message, stack:e.stack });
+    response({
+      id:id, event:'method-return', err:e.message, stack:e.stack
+    });
   });
 }
 
@@ -97,9 +131,7 @@ function delegate(id, method, options) {
  * @param  {Object} event  Contains event type and data
  */
 function response(event) {
-  if (openpgp.crypto.random.randomBuffer.size < MIN_SIZE_RANDOM_BUFFER) {
-    self.postMessage({event: 'request-seed'});
-  }
-  self.postMessage(event, openpgp.util.getTransferables.call(openpgp.util, event.data));
+  self.postMessage(event, openpgp.util.getTransferables(event.data));
 }
+
 },{}]},{},[1]);
