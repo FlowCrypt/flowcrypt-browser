@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.8.0 on July 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/235?closed=1" target="_blank">OpenPGP.js v3</a></b>
+
 <b>version 5.7.2 on July 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/233?closed=1" target="_blank">Refactoring</a></b>
 
 <b>version 5.7.1 on June 27, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/232?closed=1" target="_blank">Bugfix</a></b>
