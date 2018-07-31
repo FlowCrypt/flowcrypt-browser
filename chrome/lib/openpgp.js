@@ -10987,17 +10987,19 @@ var empty = function () { /* empty */ };
 var Internal, newGenericPromiseCapability, OwnPromiseCapability, Wrapper;
 var newPromiseCapability = newGenericPromiseCapability = newPromiseCapabilityModule.f;
 
-var USE_NATIVE = !!function () {
-  try {
-    // correct subclassing with @@species support
-    var promise = $Promise.resolve(1);
-    var FakePromise = (promise.constructor = {})[_dereq_('./_wks')('species')] = function (exec) {
-      exec(empty, empty);
-    };
-    // unhandled rejections tracking support, NodeJS Promise without it fails @@species test
-    return (isNode || typeof PromiseRejectionEvent == 'function') && promise.then(empty) instanceof FakePromise;
-  } catch (e) { /* empty */ }
-}();
+// var USE_NATIVE = !!function () {
+//   try {
+//     // correct subclassing with @@species support
+//     var promise = $Promise.resolve(1);
+//     var FakePromise = (promise.constructor = {})[_dereq_('./_wks')('species')] = function (exec) {
+//       exec(empty, empty);
+//     };
+//     // unhandled rejections tracking support, NodeJS Promise without it fails @@species test
+//     return (isNode || typeof PromiseRejectionEvent == 'function') && promise.then(empty) instanceof FakePromise;
+//   } catch (e) { /* empty */ }
+// }();
+
+var USE_NATIVE = true;
 
 // helpers
 var isThenable = function (it) {
