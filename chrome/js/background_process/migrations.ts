@@ -16,34 +16,32 @@ let migrate_global = async () => {
   await migrate_local_storage_to_extension_storage();
 };
 
-let migrate_local_storage_to_extension_storage = () => {
-  return new Promise(resolve => {
-    if (window.localStorage.length === 0) {
-      resolve(); // nothing in localStorage
-    } else {
-      let values: Dict<FlatTypes> = {};
-      for (let legacy_storage_key of Object.keys(localStorage)) {
-        let value = legacy_local_storage_read(localStorage[legacy_storage_key]);
-        if (legacy_storage_key === 'settings_seen') {
-          values.cryptup_global_settings_seen = true;
-        } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
-          values[legacy_storage_key] = value;
-        } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
-          try {
-            let primary_longid = legacy_local_storage_read(localStorage[legacy_storage_key.replace('master_passphrase', 'keys')]).filter((ki: KeyInfo) => ki.primary)[0].longid;
-            values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
-          } catch (e) {} // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
-        } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
-          values[legacy_storage_key] = value;
-        }
+let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
+  if (window.localStorage.length === 0) {
+    resolve(); // nothing in localStorage
+  } else {
+    let values: Dict<FlatTypes> = {};
+    for (let legacy_storage_key of Object.keys(localStorage)) {
+      let value = legacy_local_storage_read(localStorage[legacy_storage_key]);
+      if (legacy_storage_key === 'settings_seen') {
+        values.cryptup_global_settings_seen = true;
+      } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
+        values[legacy_storage_key] = value;
+      } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
+        try {
+          let primary_longid = legacy_local_storage_read(localStorage[legacy_storage_key.replace('master_passphrase', 'keys')]).filter((ki: KeyInfo) => ki.primary)[0].longid;
+          values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
+        } catch (e) {} // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
+      } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
+        values[legacy_storage_key] = value;
       }
-      chrome.storage.local.set(values, () => {
-        localStorage.clear();
-        resolve();
-      });
     }
-  });
-};
+    chrome.storage.local.set(values, () => {
+      localStorage.clear();
+      resolve();
+    });
+  }
+});
 
 let legacy_local_storage_read = (value: string) => {
   if (typeof value === 'undefined') {
@@ -68,14 +66,20 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
   let my_longids = keyinfos.map(ki => ki.longid);
   let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
-    let {results} = await tool.api.attester.lookup_email(storage.addresses);
-    let addresses_keyserver = [];
-    for (let result of results) {
-      if (result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
-        addresses_keyserver.push(result.email);
+    try {
+      let {results} = await tool.api.attester.lookup_email(storage.addresses);
+      let addresses_keyserver = [];
+      for (let result of results) {
+        if (result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
+          addresses_keyserver.push(result.email);
+        }
+      }
+      await Store.set(account_email, { addresses_keyserver });
+    } catch(e) {
+      if(!tool.api.error.is_network_error(e)) {
+        tool.catch.handle_exception(e);
       }
     }
-    await Store.set(account_email, { addresses_keyserver });
   }
 };
 
@@ -95,8 +99,10 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
             console.info(email + ' newly found matching pubkey on PKS');
           }
         }
-      } catch (error) {
-        console.info('Error fetching keys from PKS: ' + String(error));
+      } catch (e) {
+        if(!tool.api.error.is_network_error(e)) {
+          tool.catch.handle_exception(e);
+        }
       }
     }
   }

@@ -66,20 +66,31 @@ class BgAttests {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (passphrase !== null) {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
-          for (let message of Object.values(await BgAttests.fetch_attest_emails(account_email))) {
+          let messages;
+          try {
+            messages = await BgAttests.fetch_attest_emails(account_email);
+          } catch(e) {
+            if(tool.api.error.is_network_error(e)) {
+              console.info('cannot fetch attest emails - network error - ' + account_email);
+              return;
+            } else {
+              throw e;
+            }
+          }
+          for (let message of Object.values(messages)) {
             if (message.payload.mimeType === 'text/plain' && message.payload.body && message.payload.body.size > 0 && message.payload.body.data) {
               await BgAttests.process_attest_and_log_result(account_email, tool.str.base64url_decode(message.payload.body.data), passphrase);
             }
           }
         } else {
-          await BgAttests.add_attest_log(new AttestError('cannot fetch attest emails for ' + account_email, null, account_email));
+          await BgAttests.add_attest_log(false, new AttestError('cannot fetch attest emails for ' + account_email, null, account_email));
           BgAttests.stop_watching(account_email);
         }
       } else {
-        console.log('cannot get pass phrase for signing - skip fetching attest emails for ' + account_email);
+        console.info('cannot get pass phrase for signing - skip fetching attest emails for ' + account_email);
       }
     } else {
-      console.log('no primary key set yet - skip fetching attest emails for ' + account_email);
+      console.info('no primary key set yet - skip fetching attest emails for ' + account_email);
     }
   }
 
@@ -133,9 +144,9 @@ class BgAttests {
 
   private static process_attest_and_log_result = async (account_email: string, attest_packet_text: string, passphrase: string|null) => {
     try {
-      return await BgAttests.add_attest_log(await BgAttests.process_attest_packet_text(account_email, attest_packet_text, passphrase));
+      return await BgAttests.add_attest_log(true, await BgAttests.process_attest_packet_text(account_email, attest_packet_text, passphrase));
     } catch (error) {
-      return await BgAttests.add_attest_log(error);
+      return await BgAttests.add_attest_log(false, error);
     }
   }
 
@@ -185,8 +196,7 @@ class BgAttests {
     }
   }
 
-  private static add_attest_log = async (ar: AttestResult) => {
-    let success = !(ar instanceof Error);
+  private static add_attest_log = async (success: boolean, ar: AttestResult) => {
     console.log('attest result ' + success + ': ' + ar.message);
     let storage = await Store.get_account(ar.account_email, ['attest_log']);
     if (!storage.attest_log) {
