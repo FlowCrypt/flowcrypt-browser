@@ -14,9 +14,7 @@ declare var require: AnyThirdPartyLibrary;
 declare var exports: AnyPlatformDependentCode;
 declare let openpgp: typeof OpenPGP;
 
-class UnreportableError extends Error {
-  public log = true;
-}
+class UnreportableError extends Error {}
 
 enum DecryptErrorTypes {
   key_mismatch = 'key_mismatch',
