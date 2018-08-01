@@ -66,6 +66,10 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
   let my_longids = keyinfos.map(ki => ki.longid);
   let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
+    if(tool.arr.unique(storage.addresses).length < storage.addresses.length) {
+      storage.addresses = tool.arr.unique(storage.addresses);
+      await Store.set(account_email, storage); // fix duplicate email addresses
+    }
     try {
       let {results} = await tool.api.attester.lookup_email(storage.addresses);
       let addresses_keyserver = [];
