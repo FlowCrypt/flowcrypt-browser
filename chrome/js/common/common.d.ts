@@ -337,7 +337,7 @@ type ApirGmailThreadGet = {id: string, messages: ApirGmailMessage[]};
 type ApirGmailDraftCreate = {id: string};
 type ApirGmailDraftDelete = {};
 type ApirGmailDraftUpdate = {};
-type ApirGmailDraftGet = {};
+type ApirGmailDraftGet = {id: string, message: ApirGmailMessage};
 type ApirGmailDraftSend = {};
 
 type ApirGoogleUserInfo = {name: string, locale: string, picture: string};

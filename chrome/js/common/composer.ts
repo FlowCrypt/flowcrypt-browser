@@ -311,8 +311,8 @@ class Composer {
       this.S.cached('reply_message_prompt').html('Loading draft.. ' + tool.ui.spinner('green'));
     }
     try {
-      let draft_get_response: any = await this.app.email_provider_draft_get(this.draft_id);
-      let parsed_message = await tool.mime.decode(tool.str.base64url_decode(draft_get_response.message.raw));
+      let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
+      let parsed_message = await tool.mime.decode(tool.str.base64url_decode(draft_get_response.message.raw!));
       let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
       if (armored) {
         this.S.cached('input_subject').val(parsed_message.headers.subject || '');
@@ -1440,7 +1440,7 @@ class Composer {
       storage_contact_save: (contact: Contact) => Promise.resolve(),
       storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
-      email_provider_draft_get: (draft_id: string) => Promise.resolve({}),
+      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as ApirGmailMessage}),
       email_provider_draft_create: (mime_message: string) => Promise.reject(null),
       email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
       email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
