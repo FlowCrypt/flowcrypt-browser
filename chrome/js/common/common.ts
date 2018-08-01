@@ -2968,15 +2968,17 @@ let tool = {
       return ''; // make ts happy - this will never happen
     },
     handle_promise_error: (e: PromiseRejectionEvent|StandardError|Error) => {
-      if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
-        tool.catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
-      } else if (!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
-        if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
-          let stack = (e as StandardError).stack;
-          delete (e as StandardError).stack;
-          tool.catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
-        } else {
-          tool.catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+      if(!(e instanceof UnreportableError)) {
+        if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
+          tool.catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
+        } else if (!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
+          if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
+            let stack = (e as StandardError).stack;
+            delete (e as StandardError).stack;
+            tool.catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
+          } else {
+            tool.catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+          }
         }
       }
     },
