@@ -1137,18 +1137,11 @@ let tool = {
     password: {
       estimate_strength: (zxcvbn_result_guesses: number) => {
         let time_to_crack = zxcvbn_result_guesses / tool._.var.crypto_password_GUESSES_PER_SECOND;
-        for (let i = 0; i < tool._.var.crypto_password_CRACK_TIME_WORDS.length; i++) {
+        for (let word of tool._.var.crypto_password_CRACK_TIME_WORDS) {
           let readable_time = tool._.readable_crack_time(time_to_crack);
           // looks for a word match from readable_crack_time, defaults on "weak"
-          if (tool.value(tool._.var.crypto_password_CRACK_TIME_WORDS[i].match).in(readable_time)) {
-            return {
-              word: tool._.var.crypto_password_CRACK_TIME_WORDS[i].word,
-              bar: tool._.var.crypto_password_CRACK_TIME_WORDS[i].bar,
-              time: readable_time,
-              seconds: Math.round(time_to_crack),
-              pass: tool._.var.crypto_password_CRACK_TIME_WORDS[i].pass,
-              color: tool._.var.crypto_password_CRACK_TIME_WORDS[i].color,
-            };
+          if (tool.value(word.match).in(readable_time)) {
+            return {word, seconds: Math.round(time_to_crack), time: readable_time};
           }
         }
         tool.catch.report('estimate_strength: got to end without any result');
@@ -1713,9 +1706,9 @@ let tool = {
       find_header: (api_gmail_message_object: ApirGmailMessage|ApirGmailMessage$payload, header_name: string) => {
         let node: ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as ApirGmailMessage).payload : api_gmail_message_object as ApirGmailMessage$payload;
         if (typeof node.headers !== 'undefined') {
-          for (let i = 0; i < node.headers.length; i++) {
-            if (node.headers[i].name.toLowerCase() === header_name.toLowerCase()) {
-              return node.headers[i].value;
+          for (let header of node.headers) {
+            if (header.name.toLowerCase() === header_name.toLowerCase()) {
+              return header.value;
             }
           }
         }

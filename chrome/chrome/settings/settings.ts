@@ -39,12 +39,12 @@ class Settings {
     }
     let result = Settings.evaluate_password_strength(password);
     $(parent_selector + '.password_feedback').css('display', 'block');
-    $(parent_selector + '.password_bar > div').css('width', result.bar + '%');
-    $(parent_selector + '.password_bar > div').css('background-color', result.color);
-    $(parent_selector + '.password_result, .password_time').css('color', result.color);
-    $(parent_selector + '.password_result').text(result.word);
+    $(parent_selector + '.password_bar > div').css('width', result.word.bar + '%');
+    $(parent_selector + '.password_bar > div').css('background-color', result.word.color);
+    $(parent_selector + '.password_result, .password_time').css('color', result.word.color);
+    $(parent_selector + '.password_result').text(result.word.word);
     $(parent_selector + '.password_time').text(result.time);
-    if (result.pass) {
+    if (result.word.pass) {
       $(parent_selector + button_selector).removeClass('gray');
       $(parent_selector + button_selector).addClass('green');
     } else {
