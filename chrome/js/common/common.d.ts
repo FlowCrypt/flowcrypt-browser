@@ -131,9 +131,12 @@ interface PreventableEvent {
     id: string;
 }
 
+type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
+
 interface DecryptSuccess {
     success: true;
     content: {
+      blob?: ConsummableBrowserBlob;
       text?: string;
       uint8?: Uint8Array;
       filename: string|null;
@@ -166,6 +169,8 @@ interface DecryptError {
 type DecryptResult = DecryptSuccess|DecryptError;
 type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult;
+type BgExecRequest = {path: string, args: any[]};
+type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
 
 type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;

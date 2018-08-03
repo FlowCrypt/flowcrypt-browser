@@ -55,6 +55,7 @@
       "/js/common/mnemonic.js",
       "/js/common/storage.js",
       "/js/common/common.js",
+      "/js/common/bg_exec.js",
       "/js/background_process/inject.js",
       "/js/background_process/attests.js",
       "/js/background_process/migrations.js",

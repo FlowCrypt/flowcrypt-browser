@@ -99,49 +99,6 @@ chrome.runtime.onInstalled.addListener(event => {
     })();
   };
 
-  let execute_in_background_process_and_respond_when_done: BrowserMessageHandler = (message: Dict<any>, sender, respond) => {
-    let convert_large_data_to_object_urls_and_respond = (result: DecryptSuccess|DecryptError|any) => {
-      if (message.path === 'tool.crypto.message.decrypt') {
-        if (result && result.success && result.content && result.content.data && (result.content.data.length >= MAX_MESSAGE_SIZE || result.content.data instanceof Uint8Array)) {
-          result.content.data = tool.file.object_url_create(result.content.data);
-        }
-      }
-      respond(result);
-    };
-    let has_callback = false;
-    let args = (message.args || []).map((arg: any) => {
-      if (arg === tool.browser.message.cb) {
-        has_callback = true;
-        return convert_large_data_to_object_urls_and_respond;
-      } else if (typeof arg === 'string' && arg.indexOf('blob:' + chrome.runtime.getURL('')) === 0) {
-        return tool.file.object_url_consume(arg);
-      } else {
-        return arg;
-      }
-    });
-    Promise.all(args).then(resolved_args => {
-      let f:Function|object|null = null; // tslint:disable-line:ban-types
-      for (let step of message.path.split('.')) {
-        if (f === null && step === 'tool') {
-          f = tool;
-        } else if (f === null && step === 'window') {
-          f = window;
-        } else {
-          // @ts-ignore - traversible / eventually callable object
-          f = f[step];
-        }
-      }
-      let returned = (f as Function).apply(null, resolved_args); // tslint:disable-line:ban-types // the actual operation
-      if (!has_callback) {
-        if (typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
-          returned.then(convert_large_data_to_object_urls_and_respond, (e: any) => tool.catch.handle_promise_error({code: null, internal: 'promise_rejection', message: 'error in execute_in_background_process_and_respond_when_done', data: String(e)}));
-        } else { // direct value
-          convert_large_data_to_object_urls_and_respond(returned);
-        }
-      }
-    });
-  };
-
   if (!storage.settings_seen) {
     await open_settings_page('initial.htm'); // called after the very first installation of the plugin
     await Store.set(null, {settings_seen: true});
@@ -161,7 +118,7 @@ chrome.runtime.onInstalled.addListener(event => {
   }
 
   tool.browser.message.listen_background({
-    bg_exec: execute_in_background_process_and_respond_when_done,
+    bg_exec: BgExec.background_request_handler,
     db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
     session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond),
     session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond),

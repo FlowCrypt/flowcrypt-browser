@@ -107,7 +107,7 @@ tool.catch.try(async () => {
   };
 
   let handle_private_key_mismatch = async (account_email: string, message: string) => { // todo - make it work for multiple stored keys
-    let msg_diagnosis = await tool.browser.message.bg.diagnose_message_pubkeys(account_email, message);
+    let msg_diagnosis = await BgExec.diagnose_message_pubkeys(account_email, message);
     if (msg_diagnosis.found_match) {
       await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.encrypted_correctly_file_bug);
     } else if (msg_diagnosis.receivers === 1) {
@@ -126,7 +126,7 @@ tool.catch.try(async () => {
   };
 
   let decrypt_and_save_attachment_to_downloads = async (encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) => {
-    let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, encrypted_data, decrypt_pwd());
+    let result = await BgExec.crypto_message_decrypt(account_email, encrypted_data, decrypt_pwd());
     if (result.success) {
       tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.text!, render_in); // text!: did not request uint8
       send_resize_message();
@@ -295,7 +295,7 @@ tool.catch.try(async () => {
 
   let decrypt_and_render = async (optional_password:string|null=null) => {
     if (typeof url_params.signature !== 'string') {
-      let result = await tool.browser.message.bg.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, decrypt_pwd(optional_password));
+      let result = await BgExec.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, decrypt_pwd(optional_password));
       if (typeof result === 'undefined') {
         await render_error(Lang.general.restart_browser_and_try_again);
       } else if (result.success) {
@@ -342,7 +342,7 @@ tool.catch.try(async () => {
         }
       }
     } else {
-      let signature_result = await tool.browser.message.bg.crypto_message_verify_detached(account_email, url_params.message as string|Uint8Array, url_params.signature);
+      let signature_result = await BgExec.crypto_message_verify_detached(account_email, url_params.message as string|Uint8Array, url_params.signature);
       await decide_decrypted_content_formatting_and_render(url_params.message as string, false, signature_result);
     }
   };

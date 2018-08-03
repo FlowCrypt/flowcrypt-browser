@@ -1314,25 +1314,6 @@ let tool = {
   },
   browser: {
     message: {
-      cb: '[***|callback_placeholder|***]',
-      bg: {
-        diagnose_message_pubkeys: (account_email: string, message: string) => tool.browser.message.bg.exec('tool.diagnose.message_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>,
-        crypto_message_decrypt: async (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null) => {
-          let result = await tool.browser.message.bg.exec('tool.crypto.message.decrypt', [account_email, encrypted_data, user_entered_message_password]) as DecryptResult;
-          if (result.success && result.content && result.content.text && result.content.text.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
-            result.content.text = tool.str.from_uint8(await tool.file.object_url_consume(result.content.text));
-          }
-          return result;
-        },
-        crypto_message_verify_detached: (acct_e: string, m: string|Uint8Array, sig: string|Uint8Array) => tool.browser.message.bg.exec('tool.crypto.message.verify_detached', [acct_e, m, sig]) as Promise<MessageVerifyResult>,
-        exec: (path: string, args: any[]) => tool.browser.message.send_await(null, 'bg_exec', {path, args: args.map(arg => {
-          if ((typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array) {
-            return tool.file.object_url_create(arg);
-          } else {
-            return arg;
-          }
-        })}) as any as Promise<PossibleBgExecResults>,
-      },
       send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.handle_promise_error),
       send_await: (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
         let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
