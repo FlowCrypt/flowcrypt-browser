@@ -892,7 +892,7 @@ let tool = {
     hash: {
       sha1: (string: string) => tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
       double_sha1_upper: (string: string) => tool.crypto.hash.sha1(tool.crypto.hash.sha1(string)).toUpperCase(),
-      sha256: (string: string) => tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
+      sha256: (string: string) => tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
       challenge_answer: (answer: string) => tool._.crypto_hash_sha256_loop(answer),
     },
     key: {
