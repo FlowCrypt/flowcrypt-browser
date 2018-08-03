@@ -64,7 +64,7 @@ tool.catch.try(async () => {
     if (url_params.is_reply_box) {
       tool.browser.message.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
     } else if (url_params.placement === 'settings') {
-        tool.browser.message.send(parent_tab_id, 'close_page');
+      tool.browser.message.send(parent_tab_id, 'close_page');
     } else {
       tool.browser.message.send(parent_tab_id, 'close_new_message');
     }
