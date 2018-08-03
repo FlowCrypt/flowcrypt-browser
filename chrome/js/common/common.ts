@@ -16,6 +16,7 @@ declare let openpgp: typeof OpenPGP;
 declare let mnemonic: (hex: string) => string;
 
 class UnreportableError extends Error {}
+class TabIdRequiredError extends Error {}
 
 enum DecryptErrorTypes {
   key_mismatch = 'key_mismatch',
@@ -1343,7 +1344,7 @@ let tool = {
         if (tab_id) {
           return tab_id;
         } else {
-          throw new Error(`Tab id is required, but received '${String(tab_id)}'`);
+          throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}'`);
         }
       },
       listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {

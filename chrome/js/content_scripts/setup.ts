@@ -19,7 +19,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
           console.info(`Loading FlowCrypt ${tool.catch.version()} for ${account_email}`);
           return account_email;
         } else {
-          console.info('FlowCrypt disabled: ' + webmail_specific.name + ' integration currently for development only');
+          console.info(`FlowCrypt disabled: ${webmail_specific.name} integration currently for development only`);
           throw new DestroyTrigger();
         }
       }
@@ -141,7 +141,11 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       await tool.browser.message.send(null, 'migrate_account', {account_email});
       webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
     } catch(e) {
-      if(!(e instanceof DestroyTrigger)) {
+      if(e instanceof TabIdRequiredError) {
+        console.info(`FlowCrypt cannot start: missing tab_id`);
+        console.error(e);
+        tool.catch.log(`FlowCrypt cannot start: missing tab_id: ${String(e)}`);
+      } else if(!(e instanceof DestroyTrigger)) {
         tool.catch.handle_exception(e);
       }
     }
