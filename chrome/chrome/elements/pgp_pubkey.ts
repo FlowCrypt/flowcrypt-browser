@@ -4,9 +4,11 @@
 
 tool.catch.try(async () => {
 
+  // todo - this should use KeyImportUI for consistency. Needs general refactoring, hard to follow.
+
   tool.ui.event.protect();
 
-  let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', '']);
+  let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   let armored_pubkey = tool.env.url_param_require.string(url_params, 'armored_pubkey');
