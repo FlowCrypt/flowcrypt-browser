@@ -51,6 +51,13 @@
     "scripts": [
       "/lib/jquery.min.js",
       "/lib/openpgp.js",
+      "/lib/emailjs/punycode.js",
+      "/lib/emailjs/emailjs-stringencoding.js",
+      "/lib/emailjs/emailjs-mime-codec.js",
+      "/lib/emailjs/emailjs-mime-types.js",
+      "/lib/emailjs/emailjs-addressparser.js",
+      "/lib/emailjs/emailjs-mime-builder.js",
+      "/lib/emailjs/emailjs-mime-parser.js",
       "/js/common/mnemonic.js",
       "/js/common/storage.js",
       "/js/common/common.js",
