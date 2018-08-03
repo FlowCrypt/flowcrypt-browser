@@ -2,8 +2,6 @@
 
 'use strict';
 
-declare var require: any;
-
 interface ComposerAppFunctionsInterface {
     can_read_email: () => boolean;
     does_recipient_have_my_pubkey: (email: string) => Promise<boolean|undefined>;
@@ -611,7 +609,7 @@ class Composer {
           this.reset_send_btn();
         }
       } else {
-        let MimeCodec = await tool.env.require('emailjs-mime-codec');
+        let MimeCodec = (window as BrowserWidnow)['emailjs-mime-codec'];
         // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
         // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
         // resulting in.. wait for it.. signatures that don't match

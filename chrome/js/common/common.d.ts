@@ -2,8 +2,11 @@
 interface BrowserWidnow extends Window {
     XMLHttpRequest: any;
     onunhandledrejection: (e: any) => void;
+    'emailjs-mime-codec': AnyThirdPartyLibrary;
+    'emailjs-mime-parser': AnyThirdPartyLibrary;
+    'emailjs-mime-builder': AnyThirdPartyLibrary;
+    'emailjs-addressparser': AnyThirdPartyLibrary;
 }
-
 type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 
 type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};

@@ -51,7 +51,6 @@
     "scripts": [
       "/lib/jquery.min.js",
       "/lib/openpgp.js",
-      "/lib/require.js",
       "/js/common/mnemonic.js",
       "/js/common/storage.js",
       "/js/common/common.js",

@@ -8,9 +8,6 @@
 'use strict';
 
 declare let $_HOST_html_to_text: (html: string) => string;
-declare let MimeParser: AnyThirdPartyLibrary;
-declare let MimeBuilder: AnyThirdPartyLibrary;
-declare var require: AnyThirdPartyLibrary;
 declare var exports: AnyPlatformDependentCode;
 declare let openpgp: typeof OpenPGP;
 declare let mnemonic: (hex: string) => string;
@@ -315,26 +312,6 @@ let tool = {
       return link;
     },
     key_codes: () => ({ a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, }),
-    require: (lib_name: 'emailjs-mime-codec'): Promise<any> => {
-      return new Promise(resolve => {
-        tool.env.set_up_require();
-        require([lib_name], resolve);
-      });
-    },
-    set_up_require: () => {
-      require.config({
-        baseUrl: '/lib',
-        paths: {
-          'emailjs-addressparser': './emailjs/emailjs-addressparser',
-          'emailjs-mime-builder': './emailjs/emailjs-mime-builder',
-          'emailjs-mime-codec': './emailjs/emailjs-mime-codec',
-          'emailjs-mime-parser': './emailjs/emailjs-mime-parser',
-          'emailjs-mime-types': './emailjs/emailjs-mime-types',
-          'emailjs-stringencoding': './emailjs/emailjs-stringencoding',
-          'punycode': './emailjs/punycode',
-        }
-      });
-    },
     webmails: async (): Promise<WebMailName[]> => ['gmail', 'inbox'], // async because storage may be involved in the future
   },
   arr: {
@@ -592,9 +569,9 @@ let tool = {
     decode: (mime_message: string): Promise<MimeContent> => {
       return new Promise(async resolve => {
         let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
-        let emailjs_mime_parser: AnyThirdPartyLibrary = await tool._.mime_require('parser');
         try {
-          let parser = new emailjs_mime_parser();
+          let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
+          let parser = new MimeParser();
           let parsed: {[key: string]: MimeParserNode} = {};
           parser.onheader = (node: MimeParserNode) => {
             if (!String(node.path.join('.'))) { // root node headers
@@ -633,7 +610,7 @@ let tool = {
       });
     },
     encode: async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
-      let MimeBuilder: AnyThirdPartyLibrary = await tool._.mime_require('builder');
+      let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
       let root_node = new MimeBuilder('multipart/mixed');
       for (let key of Object.keys(headers)) {
         root_node.addHeader(key, headers[key]);
@@ -2271,27 +2248,6 @@ let tool = {
       }
       return node;
     },
-    mime_require: (group: 'parser'|'builder') => new Promise(resolve => {
-      if (group === 'parser') {
-        if (typeof MimeParser !== 'undefined') { // browser
-          resolve(MimeParser);
-        } else if (typeof exports === 'object') { // electron
-          resolve(require('emailjs-mime-parser'));
-        } else { // RequireJS
-          tool.env.set_up_require();
-          require(['emailjs-mime-parser'], resolve);
-        }
-      } else {
-        if (typeof MimeBuilder !== 'undefined') { // browser
-          resolve(MimeBuilder);
-        } else if (typeof exports === 'object') { // electron
-          resolve(require('emailjs-mime-builder'));
-        } else { // RequireJS
-          tool.env.set_up_require();
-          require(['emailjs-mime-builder'], resolve);
-        }
-      }
-    }),
     crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type, content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
       let result = {found: [] as MessageBlock[], continue_at: null as number|null};
