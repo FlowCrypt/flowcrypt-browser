@@ -1140,7 +1140,7 @@ class Composer {
       } else {
         this.contact_search_in_progress = true;
         this.render_search_results(contacts, query);
-        this.app.email_provider_search_contacts(query.substring, contacts, async (search_contacts_results: {new: Contact[], all: Contact[]}) => {
+        this.app.email_provider_search_contacts(query.substring, contacts, async search_contacts_results => {
           if (search_contacts_results.new.length) {
             for (let contact of search_contacts_results.new) {
               let [in_db] = await this.app.storage_contact_get([contact.email]);

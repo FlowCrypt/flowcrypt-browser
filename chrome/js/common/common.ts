@@ -2647,16 +2647,17 @@ let tool = {
       return { content_type: 'multipart/related; boundary=' + boundary, body };
     },
     api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: ProviderContactsResults) => void) => {
-      let all_results: ProviderContactsResult[] = [];
+      let all_results: Contact[] = [];
       while(true) {
         let headers = await tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
         if (headers.to) {
-          let new_results = headers.to.split(/, ?/).map(tool.str.parse_email).map(r => ({date: headers.date, name: r.name, email: r.email, full: r.full}));
-          query += new_results.map(email => ' -to:"' + email.email + '"').join('');
-          all_results = all_results.concat(new_results);
-          chunked_callback({new: new_results, all: all_results});
+          let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
+          let new_valid_results = raw_parsed_results.filter(r => tool.str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
+          query += raw_parsed_results.map(email => ' -to:"' + email.name + '"').join('');
+          all_results = all_results.concat(new_valid_results);
+          chunked_callback({new: new_valid_results, all: all_results});
         } else {
-          chunked_callback({ new: [], all: all_results });
+          chunked_callback({new: [], all: all_results});
           return;
         }
       }

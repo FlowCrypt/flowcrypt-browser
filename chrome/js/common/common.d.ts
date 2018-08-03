@@ -5,7 +5,9 @@ interface BrowserWidnow extends Window {
     'emailjs-mime-codec': AnyThirdPartyLibrary;
     'emailjs-mime-parser': AnyThirdPartyLibrary;
     'emailjs-mime-builder': AnyThirdPartyLibrary;
-    'emailjs-addressparser': AnyThirdPartyLibrary;
+    'emailjs-addressparser': {
+      parse: (raw: string) => {name: string, address: string}[];
+    };
 }
 type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 
@@ -298,9 +300,8 @@ type SelectorCache = {
 };
 type StorageType = 'session'|'local';
 type EmailProvider = 'gmail';
-type ProviderContactsQuery = { substring: string };
-type ProviderContactsResult = {date: string, name: string|null, email: string, full: string};
-type ProviderContactsResults = {new: ProviderContactsResult[], all: ProviderContactsResult[]};
+type ProviderContactsQuery = {substring: string};
+type ProviderContactsResults = {new: Contact[], all: Contact[]};
 
 type AccountEventHandlersOptional = {
     render_status?: (text: string, show_spinner?: boolean) => void;
