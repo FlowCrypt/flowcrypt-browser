@@ -47,40 +47,21 @@ tool.catch.try(async () => {
   $('#spinner_container').text('');
 
   $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
-    let prv_headers = tool.crypto.armor.headers('private_key');
-    let normalized_armored_key = tool.crypto.key.normalize($('.input_private_key').val() as string); // textarea
-    if (!normalized_armored_key) {
-      alert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
-    } else {
-      let new_key = openpgp.key.readArmored(normalized_armored_key).keys[0];
-      let passphrase = $('.input_passphrase').val() as string; // text input
-      if (typeof new_key === 'undefined') {
-        alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
+    try {
+      let key_import_ui = new KeyImportUI({reject_known: true});
+      let checked = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
+      if(checked) {
+        await Store.keys_add(account_email, checked.normalized); // resulting new_key checked above
+        await Store.passphrase_save($('.input_passphrase_save').prop('checked') ? 'local' : 'session', account_email, checked.longid, checked.passphrase);
+        tool.browser.message.send(parent_tab_id, 'reload', { advanced: true });
+      }
+    } catch(e) {
+      if(e instanceof UserAlert) {
+        return alert(e.message);
+      } else if(e instanceof KeyCanBeFixed) {
+        return alert(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
       } else {
-        let new_key_longid = tool.crypto.key.longid(new_key);
-        if (new_key.isPublic()) {
-          alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
-        } else if (!new_key_longid) {
-          alert('This key may not be compatible. Please write me at human@flowcrypt.com and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
-        } else if (tool.value(new_key_longid).in(private_keys_long_ids)) {
-          alert('This is one of your current keys.');
-        } else {
-          let decrypt_result;
-          try {
-            decrypt_result = await tool.crypto.key.decrypt(new_key, [passphrase]);
-          } catch (e) {
-            alert(`This key type may not be supported by FlowCrypt. Please write me at human@flowcrypt.com to let us know which software created this key, so that we can add support soon. (decrypt error: ${String(e)})`);
-            return;
-          }
-          if (decrypt_result) {
-            await Store.keys_add(account_email, normalized_armored_key!); // resulting new_key checked above
-            await Store.passphrase_save($('.input_passphrase_save').prop('checked') ? 'local' : 'session', account_email, new_key_longid, passphrase);
-            tool.browser.message.send(parent_tab_id, 'reload', { advanced: true });
-          } else {
-            alert('The pass phrase does not match. Please try a different pass phrase.');
-          }
-
-        }
+        return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
   }));

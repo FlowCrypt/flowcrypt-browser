@@ -138,7 +138,7 @@ class Store {
       primary,
       longid,
       fingerprint: tool.crypto.key.fingerprint(armored_prv)!,
-      keywords: (window as FcWindow).mnemonic(longid),
+      keywords: mnemonic(longid),
     };
   }
 
@@ -330,7 +330,7 @@ class Store {
       attested: pubkey ? Boolean(attested) : null,
       fingerprint,
       longid: fingerprint ? tool.crypto.key.longid(fingerprint) : null,
-      keywords: fingerprint ? (window as FcWindow).mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
+      keywords: fingerprint ? mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
       pending_lookup: pubkey ? 0 : (pending_lookup ? 1 : 0),
       last_use: last_use || null,
       date: null,

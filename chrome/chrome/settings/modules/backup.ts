@@ -284,7 +284,7 @@ tool.catch.try(async () => {
       }
       pass_phrase = pp;
     }
-    if (Settings.evaluate_password_strength(pass_phrase).pass === true) {
+    if (Settings.evaluate_password_strength(pass_phrase).word.pass === true) {
       return true;
     }
     alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');

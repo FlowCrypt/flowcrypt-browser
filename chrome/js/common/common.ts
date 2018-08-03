@@ -13,6 +13,7 @@ declare let MimeBuilder: AnyThirdPartyLibrary;
 declare var require: AnyThirdPartyLibrary;
 declare var exports: AnyPlatformDependentCode;
 declare let openpgp: typeof OpenPGP;
+declare let mnemonic: (hex: string) => string;
 
 class UnreportableError extends Error {}
 
@@ -903,7 +904,7 @@ let tool = {
         try {
           return await key.decrypt(passphrases);
         } catch (e) {
-          if (e.message.toLowerCase().indexOf('passphrase') !== -1) {
+          if (tool.value('passphrase').in(e.message.toLowerCase())) {
             return false;
           }
           throw e;

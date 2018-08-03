@@ -14,7 +14,6 @@ interface FcWindow extends BrowserWidnow {
     // windows1252: Codec;
     // koi8r: Codec;
     is_bare_engine: boolean;
-    mnemonic: (hex: string) => string;
 }
 
 type AnyThirdPartyLibrary = any;
@@ -191,7 +190,8 @@ interface MimeContent {
 
 type StoredAuthInfo = {account_email: string|null, uuid: string|null, verified: boolean|null};
 
-type ReplaceableMessageBlockType = 'public_key'|'private_key'|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
+type KeyBlockType = 'public_key'|'private_key';
+type ReplaceableMessageBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
 type MessageBlockType = 'text'|ReplaceableMessageBlockType;
 
 interface MessageBlock {
@@ -453,3 +453,5 @@ type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|
 type CryptoArmorHeaderDefinitions = {
     readonly [type in ReplaceableMessageBlockType|'null']: CryptoArmorHeaderDefinition;
 };
+
+type KeyImportUiCheckResult = {normalized: string, longid: string, passphrase: string, fingerprint: string, decrypted: OpenPGP.key.Key, encrypted: OpenPGP.key.Key};

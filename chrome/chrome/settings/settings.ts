@@ -263,6 +263,9 @@ class Settings {
             reject(e);
             return;
           }
+          if(reformatted.key.isDecrypted()) {
+            await reformatted.key.encrypt(passphrase); // this is a security precaution, in case OpenPGP.js library changes in the future
+          }
           if (await reformatted.key.getEncryptionKey()) {
             resolve(reformatted.key);
           } else {

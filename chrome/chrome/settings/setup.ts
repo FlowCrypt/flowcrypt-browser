@@ -222,13 +222,13 @@ tool.catch.try(async () => {
   };
 
   let save_keys = async (account_email: string, prvs: OpenPGP.key.Key[], options: SetupOptions) => {
-    for (let i = 0; i < prvs.length; i++) { // save all keys
-      let longid = tool.crypto.key.longid(prvs[i]);
+    for (let prv of prvs) {
+      let longid = tool.crypto.key.longid(prv);
       if (!longid) {
         alert('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await Store.keys_add(account_email, prvs[i].armor());
+      await Store.keys_add(account_email, prv.armor());
       await Store.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, longid, options.passphrase);
     }
     let my_own_email_addresses_as_contacts = all_addresses.map(a => {
@@ -408,47 +408,30 @@ tool.catch.try(async () => {
   });
 
   $('#step_2b_manual_enter .action_save_private').click(async () => {
-    let normalized_armored_key = tool.crypto.key.normalize($('#step_2b_manual_enter .input_private_key').val() as string) || ''; // we know it's a text input
-    let prv_headers = tool.crypto.armor.headers('private_key');
-    let prv = openpgp.key.readArmored(normalized_armored_key).keys[0];
-    let passphrase = $('#step_2b_manual_enter .input_passphrase').val() as string; // we know it's a text input
-    if (typeof prv === 'undefined') {
-      alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"');
-    } else if (prv.isPublic()) {
-      alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
-    } else {
-      let decrypted;
-      try {
-        decrypted = await tool.crypto.key.decrypt(openpgp.key.readArmored(normalized_armored_key).keys[0], [passphrase]) === true;
-      } catch (e) {
-        return alert(`FlowCrypt doesn\'t support this type of key yet. Please write me at human@flowcrypt.com, so that I can add support soon. I\'m EXTREMELY prompt to fix things.\n\n(${String(e)})`);
-      }
-      if (decrypted) {
-        let options = {
-          full_name: '',
-          passphrase,
-          setup_simple: false,
-          key_backup_prompt: false,
-          submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
-          submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-          passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
-          recovered: false,
-        };
-        if (await prv.getEncryptionKey()) {
-          $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
-          await save_keys(account_email, [prv], options);
-          await finalize_setup(account_email, prv.toPublic().armor(), options);
-        } else { // cannot get a valid encryption key packet
-          if (await prv.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await tool.crypto.key.usable_but_expired(prv)) { // known issues - key can be fixed
-            await render_compatibility_fix_block_and_finalize_setup(prv, options);
-          } else {
-            alert('This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
-          }
-        }
+    let options = {
+      full_name: '',
+      passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
+      setup_simple: false,
+      key_backup_prompt: false,
+      submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
+      submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
+      passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+      recovered: false,
+    };
+    try {
+      let key_import_ui = new KeyImportUI({check_encryption: true});
+      key_import_ui.on_bad_passphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
+      let checked = await key_import_ui.check_prv(account_email, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
+      $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
+      await save_keys(account_email, [checked.encrypted], options);
+      await finalize_setup(account_email, checked.encrypted.toPublic().armor(), options);
+    } catch(e) {
+      if(e instanceof UserAlert) {
+        return alert(e.message);
+      } else if(e instanceof KeyCanBeFixed) {
+        return await render_compatibility_fix_block_and_finalize_setup(e.encrypted, options);
       } else {
-        alert('Passphrase does not match the private key. Please try to enter the passphrase again.');
-        $('#step_2b_manual_enter .input_passphrase').val('');
-        $('#step_2b_manual_enter .input_passphrase').focus();
+        return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
   });
