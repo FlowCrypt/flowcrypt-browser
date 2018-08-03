@@ -431,6 +431,7 @@ tool.catch.try(async () => {
       } else if(e instanceof KeyCanBeFixed) {
         return await render_compatibility_fix_block_and_finalize_setup(e.encrypted, options);
       } else {
+        tool.catch.handle_exception(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

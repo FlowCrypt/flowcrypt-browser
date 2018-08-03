@@ -37,16 +37,18 @@ tool.catch.try(async () => {
   });
 
   $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
-    let armored = tool.crypto.key.normalize(tool.crypto.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
-    if (!armored || !tool.crypto.key.fingerprint(armored)) {
-      alert('Could not recognize the format, please try again.');
-      $('.pubkey').val('').focus();
-    } else if (!await tool.crypto.key.usable(armored)) {
-      alert('This public key looks correctly formatted, but cannot be used for encryption. Please write me at human@flowcrypt.com so that I can see if there is a way to fix it.');
-      $('.pubkey').val('').focus();
-    } else {
-      await Store.db_contact_save(null, Store.db_contact_object($('select.email').val() as string, null, 'pgp', armored, null, false, Date.now()));
+    try {
+      let key_import_ui = new KeyImportUI({check_encryption: true});
+      let normalized = await key_import_ui.check_pub(tool.crypto.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
+      await Store.db_contact_save(null, Store.db_contact_object($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
       close_dialog();
+    } catch (e) {
+      if(e instanceof UserAlert) {
+        return alert(e.message);
+      } else {
+        tool.catch.handle_exception(e);
+        return alert(`Error happened when processing the public key: ${e.message}`);
+      }
     }
   }));
 

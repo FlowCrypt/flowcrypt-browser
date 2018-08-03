@@ -49,6 +49,7 @@ tool.catch.try(async () => {
       if(e instanceof UserAlert) {
         return alert(e.message);
       } else {
+        tool.catch.handle_exception(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

@@ -61,6 +61,7 @@ tool.catch.try(async () => {
       } else if(e instanceof KeyCanBeFixed) {
         return alert(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
       } else {
+        tool.catch.handle_exception(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

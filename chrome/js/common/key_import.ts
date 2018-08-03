@@ -29,13 +29,17 @@ class KeyImportUI {
     await this.reject_known_if_selected(account_email, decryptable);
     this.reject_if_different_from_selected_longid(longid);
     await this.decrypt(decryptable, passphrase);
-    await this.check_encryption_if_selected(decryptable, original);
+    await this.check_encryption_prv_if_selected(decryptable, original);
     await this.check_signing_if_selected(decryptable);
     return {normalized, longid, passphrase, fingerprint: tool.crypto.key.fingerprint(decryptable)!, decrypted: decryptable, encrypted: original}; // will have fp if had longid
   }
 
-  check_armored_pub = () => {
-    // todo
+  check_pub = async (armored: string): Promise<string> => {
+    let normalized = this.normalize('public_key', armored);
+    let parsed = this.read('public_key', normalized);
+    let longid = this.longid(parsed);
+    await this.check_encryption_pub_if_selected(normalized);
+    return normalized;
   }
 
   private normalize = (type: KeyBlockType, armored: string) => {
@@ -107,7 +111,7 @@ class KeyImportUI {
     }
   }
 
-  private check_encryption_if_selected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
+  private check_encryption_prv_if_selected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if(this.check_encryption && await k.getEncryptionKey() === null) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await tool.crypto.key.usable_but_expired(k)) { // known issues - key can be fixed
         let e = new KeyCanBeFixed('');
@@ -116,6 +120,12 @@ class KeyImportUI {
       } else {
         throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
       }
+    }
+  }
+
+  private check_encryption_pub_if_selected = async (normalized: string) => {
+    if(this.check_encryption && !await tool.crypto.key.usable(normalized)) {
+      throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }
 
