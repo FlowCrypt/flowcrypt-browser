@@ -114,15 +114,21 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
   await Store.set(account_email, { addresses_pks });
 };
 
+let report_non_network_errors = (e: any) => {
+  if(!tool.api.error.is_network_error(e)) {
+    tool.catch.handle_exception(e);
+  }
+};
+
 let schedule_cryptup_subscription_level_check = () => {
   setTimeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      setTimeout(tool.catch.try(tool.api.cryptup.account_check_sync), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(() => tool.api.cryptup.account_check_sync().catch(report_non_network_errors), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      tool.catch.try(tool.api.cryptup.account_check_sync)(); // now
+      tool.api.cryptup.account_check_sync().catch(report_non_network_errors); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  setInterval(tool.catch.try(tool.api.cryptup.account_check_sync), tool.time.hours(23 + Math.random())); // random 23-24 hours
+  setInterval(() => tool.api.cryptup.account_check_sync().catch(report_non_network_errors), tool.time.hours(23 + Math.random())); // random 23-24 hours
 };

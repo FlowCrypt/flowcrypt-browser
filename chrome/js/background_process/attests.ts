@@ -126,6 +126,9 @@ class BgAttests {
               throw new AttestError('Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
             }
           } catch (e) {
+            if(tool.api.error.is_network_error(e)) {
+              throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
+            }
             throw new AttestError('Error while calling Attester API. Write me at human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
           }
           await BgAttests.account_storage_mark_as_attested(account_email, attest.content.attester);
@@ -145,8 +148,8 @@ class BgAttests {
   private static process_attest_and_log_result = async (account_email: string, attest_packet_text: string, passphrase: string|null) => {
     try {
       return await BgAttests.add_attest_log(true, await BgAttests.process_attest_packet_text(account_email, attest_packet_text, passphrase));
-    } catch (error) {
-      return await BgAttests.add_attest_log(false, error);
+    } catch (e) {
+      return await BgAttests.add_attest_log(false, e);
     }
   }
 
