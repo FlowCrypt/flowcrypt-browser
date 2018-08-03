@@ -9,6 +9,7 @@ import {define_compose_tests} from './tests/tests/compose';
 import {define_decrypt_tests} from './tests/tests/decrypt';
 import {define_gmail_tests} from './tests/tests/gmail';
 import {define_settings_tests} from './tests/tests/settings';
+import {define_elements_tests} from './tests/tests/elements';
 import {Config} from './util';
 
 let browser_pool = new BrowserPool(5);
@@ -51,3 +52,4 @@ define_compose_tests(test_with_new_browser, test_with_semaphored_global_browser)
 define_decrypt_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_gmail_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_settings_tests(test_with_new_browser, test_with_semaphored_global_browser);
+define_elements_tests(test_with_new_browser, test_with_semaphored_global_browser);

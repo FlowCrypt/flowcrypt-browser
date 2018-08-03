@@ -11,10 +11,10 @@ export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser, test_
     await pgp_block_page.wait_for_selector_test_state('ready', 100);
     await Util.sleep(1);
     let content = await pgp_block_page.read('@pgp-block-content');
-    for(let j = 0; j < m.content.length; j++) {
-      if(content.indexOf(m.content[j]) === -1) {
+    for(let expected_content of m.content) {
+      if(content.indexOf(expected_content) === -1) {
         await pgp_block_page.close();
-        throw new Error(`tests:pgp_block:${m.name}: missing expected content:${m.content[j]}`);
+        throw new Error(`tests:pgp_block:${m.name}: missing expected content:${expected_content}`);
       }
     }
     await pgp_block_page.close();
