@@ -5,7 +5,7 @@
 
 .button { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none; font-weight: 500;
   border: 1px solid transparent; color: #fff; border-radius: 2px; font-size: 14px; text-align: center; white-space: nowrap; min-height: 25px;
-  min-width: 56px; line-height: 25px; outline: 0; vertical-align: middle; padding: 5px 15px; text-decoration: none; cursor: pointer; }
+  min-width: 56px; line-height: 25px; outline: 0; vertical-align: middle; padding: 5px 15px; text-decoration: none; cursor: pointer; white-space: normal;}
 .button.long { width: 200px; }
 .button:focus {
   border: rgba(0,0,0,0) solid 1px !important;
@@ -58,7 +58,7 @@ div.line input[type=text], div.line input[type=email], div.line input[type=passw
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif; font-size: 16px; }
 body#settings > div#content { margin-top: 70px; margin-bottom: 150px; position: relative; }
 body#settings > div#content.setup { margin-top: 0px; }
-body#settings > div#content.page { margin-top: 70px !important; margin-bottom: 50px; }
+body#settings > div#content.page { margin-top: 70px; margin-bottom: 50px; }
 body#settings > div#content.page h2 { font-size: 20px; font-weight: bold; color: #000; margin-top:50px; padding-bottom: 0; margin-bottom: 0; font-family: 'Open Sans', sans-serif; }
 body#settings > div#content.page img.screen { border: 1px dotted #cacaca; }
 body#settings > div#content h1 { font-size: 30px; font-weight: 100; color: #999; padding-bottom: 0; margin-bottom: 0; min-height: 40px; font-family: 'Open Sans', sans-serif; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
@@ -239,7 +239,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 .pgp_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; min-height: 25px; }
 .pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; min-height: 25px; }
 #pgp_block { height: auto; }
-#pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 270px; }
+#pgp_block .input_email { padding: 9px; position: relative; top: -2px; width: 270px; border: 2px solid #dadada}
 #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
 #pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px; font-family: monospace;}
 #pgp_block a.action_show_raw_pgp_block { position: relative; left: 12px; top: -12px; }
