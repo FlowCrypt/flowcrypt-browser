@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.8.7 on August 5, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/242?closed=1" target="_blank">Key decrypted error</a></b>
+
 <b>version 5.8.6 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/241?closed=1" target="_blank">Address parsing fix</a></b>
 
 <b>version 5.8.5 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/240?closed=1" target="_blank">Password mismatch fix</a></b>
