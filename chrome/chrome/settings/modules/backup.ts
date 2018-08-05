@@ -25,7 +25,7 @@ tool.catch.try(async () => {
   }
 
   let display_block = (name: string) => {
-    let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_manual'];
+    let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
     for (let block of blocks) {
       $('#' + block).css('display', 'none');
     }
@@ -291,6 +291,29 @@ tool.catch.try(async () => {
     return false;
   };
 
+  let setup_create_simple_automatic_inbox_backup_render_retry = () => {
+    display_block('step_3_automatic_backup_retry');
+    $('#step_3_automatic_backup_retry .action_automatic_backup_retry').one('click', () => setup_create_simple_automatic_inbox_backup().catch(tool.catch.handle_promise_error));
+  };
+
+  let setup_create_simple_automatic_inbox_backup = async () => {
+    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+    try {
+      await do_backup_on_email_provider(account_email, primary_ki.private);
+    } catch (e) {
+      if(tool.api.error.is_network_error(e)) {
+        setup_create_simple_automatic_inbox_backup_render_retry();
+      } else {
+        tool.catch.handle_exception(e);
+        alert(`Error happened, please try again (${e.message})`);
+        setup_create_simple_automatic_inbox_backup_render_retry();
+      }
+      return;
+    }
+    await write_backup_done_and_render(false, 'inbox');
+  };
+
   $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if (url_params.action === 'setup') {
       await Store.set(account_email, { key_backup_prompt: false });
@@ -319,8 +342,7 @@ tool.catch.try(async () => {
   if (url_params.action === 'setup') {
     $('.back').css('display', 'none');
     if (storage.setup_simple) {
-      display_block('step_1_password');
-      $('h1').text('Choose a pass phrase');
+      await setup_create_simple_automatic_inbox_backup();
     } else {
       display_block('step_3_manual');
       $('h1').text('Back up your private key');

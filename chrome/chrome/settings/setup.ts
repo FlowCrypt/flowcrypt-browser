@@ -56,7 +56,7 @@ tool.catch.try(async () => {
   let show_submit_all_addresses_option = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
       $('.addresses').text(tool.arr.without_value(addrs, url_params.account_email).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('visibility', 'visible');
+      $('.manual .input_submit_all').prop({checked: true, disabled: false}).closest('div.line').css('display', 'block');
     }
   };
 
@@ -213,6 +213,7 @@ tool.catch.try(async () => {
     await Store.set(account_email, {
       setup_date: Date.now(),
       setup_done: true,
+      setup_simple: options.setup_simple,
       cryptup_enabled: true,
       key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key === true,
@@ -454,10 +455,24 @@ tool.catch.try(async () => {
         submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
         key_backup_prompt: rules.can_backup_keys() ? Date.now() : false,
         recovered: false,
-        setup_simple: true,
+        setup_simple: $('#step_2a_manual_create .input_backup_inbox').prop('checked'),
       });
     }
   }));
+
+  $('#step_2a_manual_create .action_show_advanced_create_settings').click(function() {
+    let advanced_create_settings = $('#step_2a_manual_create .advanced_create_settings');
+    let container = $('#step_2a_manual_create .advanced_create_settings_container');
+    if(advanced_create_settings.is(':visible')) {
+      advanced_create_settings.hide('fast');
+      $(this).find('span').text('Show Advanced Settings');
+      container.css('width', '360px');
+    } else {
+      advanced_create_settings.show('fast');
+      $(this).find('span').text('Hide Advanced Settings');
+      container.css('width', 'auto');
+    }
+  });
 
   $('#step_4_close .action_close').click(() => { // only rendered if action=add_key which means parent_tab_id was used
     tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email: url_params.account_email, advanced: true})});

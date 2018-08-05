@@ -43,21 +43,27 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
     await gmail_page.not_present(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
   }));
 
-  ava.test('setup - manual import key - do not submit - did not use before', test_with_browser(async (browser, t) => {
+  ava.test('setup - import key - do not submit - did not use before', test_with_browser(async (browser, t) => {
     let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
     await PageRecipe.setup_manual_enter(settings_page, 'flowcrypt.test.key.used.pgp', {submit_pubkey: false, used_pgp_before: false});
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
   }));
 
-  ava.test('setup - manual import key - submit - used before', test_with_browser(async (browser, t) => {
+  ava.test('setup - import key - submit - used before', test_with_browser(async (browser, t) => {
     let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.used.pgp@gmail.com');
     await PageRecipe.setup_manual_enter(settings_page, 'flowcrypt.test.key.used.pgp', {submit_pubkey: true, used_pgp_before: true});
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
   }));
 
-  ava.test('setup - manual create key - no backup', test_with_browser(async (browser, t) => {
+  ava.test.todo('setup - create key advanced - do not remember pass phrase');
+
+  ava.test.todo('setup - create key advanced - backup as a file');
+
+  ava.test.todo('setup - create key simple');
+
+  ava.test('setup - create key advanced - no backup', test_with_browser(async (browser, t) => {
     let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.new.manual@gmail.com');
-    await PageRecipe.setup_manual_create(settings_page, 'flowcrypt.test.key.used.pgp', 'none', {submit_pubkey: false, used_pgp_before: false});
+    await PageRecipe.setup_create_advanced(settings_page, 'flowcrypt.test.key.used.pgp', 'none', {submit_pubkey: false, used_pgp_before: false});
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
   }));
 
@@ -67,7 +73,7 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
   }));
 
-  ava.test('setup - manual import key - fix key self signatures', test_with_browser(async (browser, t) => {
+  ava.test('setup - import key - fix key self signatures', test_with_browser(async (browser, t) => {
     let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
     await PageRecipe.setup_manual_enter(settings_page, 'missing.self.signatures', {submit_pubkey: false, fix_key: true});
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);

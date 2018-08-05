@@ -128,7 +128,7 @@ export class PageRecipe {
     }
   }
 
-  public static setup_manual_create = async (settings_page: ControllablePage, key_title: string, backup: "none"|"email"|"file", {used_pgp_before=false, submit_pubkey=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) => {
+  private static setup_create_begin = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
     let k = Config.key(key_title);
     if(used_pgp_before) {
       await settings_page.wait_and_click('@action-step0foundkey-choose-manual-create');
@@ -137,6 +137,20 @@ export class PageRecipe {
     }
     await settings_page.wait_and_type('@input-step2bmanualcreate-passphrase-1', k.passphrase);
     await settings_page.wait_and_type('@input-step2bmanualcreate-passphrase-2', k.passphrase);
+  }
+
+  // public static setup_create_simple = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
+  //   await PageRecipe.setup_create_begin(settings_page, key_title, {used_pgp_before});
+  //   await settings_page.wait_and_click('@input-step2bmanualcreate-create-and-save');
+  //   await settings_page.wait_and_click('@action-backup-....');
+  //   // todo
+  //   await settings_page.wait_and_click('@action-step4done-account-settings');
+  // }
+
+  public static setup_create_advanced = async (settings_page: ControllablePage, key_title: string, backup: "none"|"email"|"file", {used_pgp_before=false, submit_pubkey=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) => {
+    await PageRecipe.setup_create_begin(settings_page, key_title, {used_pgp_before});
+    await settings_page.wait_and_click('@action-step2bmanualcreate-show-advanced-create-settings'); // unfold
+    await settings_page.wait_and_click('@input-step2bmanualcreate-backup-inbox'); // uncheck
     if(!submit_pubkey) {
       await settings_page.wait_and_click('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }

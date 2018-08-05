@@ -77,51 +77,62 @@
     </div>
 
     <div id="step_2a_manual_create" class="manual">
-      <div class="aligncenter">
-        <div class="wide line">Choose a pass phrase to protect your encrypted emails. See <a href="#" data-featherlight="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>.</div>
-        <div class="wide line password_feedback"><span class="password_result"></span> (time to crack: <span class="password_time"></span>)
-          <ul></ul>
+      <div class="line left">Choose pass phrase to protect your encrypted emails. <a href="#" data-featherlight="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a></div>
+      <div class="line left password_feedback"><span class="password_result"></span> (time to crack: <span class="password_time"></span>)<ul></ul></div>
+      <div class="line left">
+        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" />
+        <br/>
+        <div class="password_bar">
+          <div></div>
         </div>
-        <div class="wide line">
-          <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" />
-          <br/>
-          <div class="password_bar">
-            <div></div>
-          </div>
-        </div>
-        <div class="wide line">
-          <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2" />
-        </div>
+      </div>
+      <div class="line left">
+        <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2" />
+      </div>
 
-        <div class="line left">
-          <div class="squaredFour">
-            <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing" name="check" checked="" />
-            <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing" data-test="input-step2bmanualcreate-save-passphrase"></label>
-          </div>
-          <span class="labelCopy">Remember Pass Phrase after closing browser</span>
+      <div class="line left">
+        <div class="advanced_create_settings_container">
+            <div class="action_show_advanced_create_settings" data-test="action-step2bmanualcreate-show-advanced-create-settings"><img src="/img/svgs/settings-icon.svg" /><span>Show Advanced Settings</span></div>
+            <div class="line advanced_create_settings display_none">
+              <hr style="border: 1px dotted rgba(0,0,0,0.25);height: 1px;border-bottom: none;margin: 0;">
+              <div class="line left">
+                <div class="squaredFour">
+                  <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing" name="check" checked="" />
+                  <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing" data-test="input-step2bmanualcreate-save-passphrase"></label>
+                </div>
+                <span class="labelCopy">Remember Pass Phrase after closing browser (recommended)</span>
+              </div>
+              <div class="line left">
+                  <div class="squaredFour">
+                    <input type="checkbox" class="input_backup_inbox" value="" id="c_backupInInbox" name="check" checked="" />
+                    <label class="checkboxSquaredOne" for="c_backupInInbox" data-test="input-step2bmanualcreate-backup-inbox"></label>
+                  </div>
+                  <span class="labelCopy">Back up encrypted private key in inbox (recommended)</span>
+                </div>
+  
+              <div class="line left">
+                <div class="squaredFour">
+                  <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check" checked="">
+                  <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver" data-test="input-step2bmanualcreate-submit-pubkey"></label>
+                </div>
+                <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (strongly recommended)</span>
+              </div>
+              <div class="line left display_none">
+                <div class="squaredFour">
+                  <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll" />
+                  <label class="checkboxSquaredOne" for="c_submitAll"></label>
+                </div>
+                <label class="checkboxSquaredOne" for="c_submitAll" style="position: relative; left: 25px;">
+                  Also submit the same pubkey for:
+                  <br /><span class="addresses" style="padding-left: 35px;"></span>
+                </label>
+              </div>
+            </div>    
         </div>
+      </div>
 
-        <div class="line left">
-          <div class="squaredFour">
-            <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check" checked="">
-            <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver" data-test="input-step2bmanualcreate-submit-pubkey"></label>
-          </div>
-          <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
-        </div>
-
-        <div class="line left" style="visibility: hidden;">
-          <div class="squaredFour">
-            <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll" />
-            <label class="checkboxSquaredOne" for="c_submitAll"></label>
-          </div>
-          <label class="checkboxSquaredOne" for="c_submitAll" style="position: relative; left: 25px;">
-            Also submit the same pubkey for:
-            <br /><span class="addresses" style="padding-left: 35px;"></span>
-          </label>
-        </div>
-        <div class="wide line">
-          <div class="button long gray action_create_private" data-test="input-step2bmanualcreate-create-and-save">CREATE AND SAVE</div>
-        </div>
+      <div class="line left">
+        <div class="button long gray action_create_private" data-test="input-step2bmanualcreate-create-and-save">CREATE AND SAVE</div>
       </div>
     </div>
 
