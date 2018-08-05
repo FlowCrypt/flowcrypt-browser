@@ -25,7 +25,7 @@ tool.catch.try(async () => {
   await tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
   let storage = await Store.get_account(account_email, [
-    'setup_done', 'key_backup_prompt', 'setup_simple', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
+    'setup_done', 'key_backup_prompt', 'key_backup_method', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
   ]);
 
   storage.email_provider = storage.email_provider || 'gmail';
@@ -214,7 +214,6 @@ tool.catch.try(async () => {
       setup_date: Date.now(),
       setup_done: true,
       cryptup_enabled: true,
-      setup_simple: options.setup_simple,
       key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key === true,
     });
@@ -270,32 +269,6 @@ tool.catch.try(async () => {
 
   $('.action_show_help').click(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm'));
 
-  $('.action_simple_setup').click(async function() {
-    if ($(this).parents('.manual').length) {
-      if (rules.can_create_keys()) {
-        if (!confirm('This sets up your account automatically. Great choice for most users.')) {
-          return;
-        }
-      } else {
-        alert(Lang.setup.creating_keys_not_allowed_please_import);
-        return;
-      }
-    }
-    Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
-    display_block('step_2_easy_generating');
-    $('h1').text('Please wait, setting up FlowCrypt');
-    let userinfo = await get_and_save_google_user_info(account_email);
-    await create_save_key_pair(account_email, {
-      full_name: userinfo.full_name,
-      passphrase: '',
-      passphrase_save: true,
-      submit_main: true,
-      submit_all: true,
-      setup_simple: true,
-      key_backup_prompt: rules.can_backup_keys() ? Date.now() : false,
-    });
-  });
-
   $('.back').off().click(() => {
     $('h1').text('Set Up');
     display_block('step_1_easy_or_manual');
@@ -322,9 +295,9 @@ tool.catch.try(async () => {
           submit_all: false,
           passphrase,
           passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-          setup_simple: true,
           key_backup_prompt: false,
           recovered: true,
+          setup_simple: true,
         };
         recovered_key_matching_passphrases.push(passphrase);
         await save_keys(account_email, matching_keys, options);
@@ -411,12 +384,13 @@ tool.catch.try(async () => {
     let options = {
       full_name: '',
       passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
-      setup_simple: false,
       key_backup_prompt: false,
       submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
       submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
       passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+      is_newly_created_key: false,
       recovered: false,
+      setup_simple: false,
     };
     try {
       let key_import_ui = new KeyImportUI({check_encryption: true});
@@ -478,9 +452,9 @@ tool.catch.try(async () => {
         passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
         submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
         submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
-        setup_simple: false,
         key_backup_prompt: rules.can_backup_keys() ? Date.now() : false,
         recovered: false,
+        setup_simple: true,
       });
     }
   }));

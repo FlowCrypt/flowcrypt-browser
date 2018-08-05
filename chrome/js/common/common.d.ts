@@ -449,6 +449,7 @@ interface AccountStore extends BaseStore {
     cryptup_enabled?: boolean;
     setup_done?: boolean;
     setup_simple?: boolean;
+    is_newly_created_key?: boolean;
     key_backup_method?: KeyBackupMethod;
     attests_requested?: string[]; // attester names
     attests_processed?: string[]; // attester names
