@@ -17,3 +17,4 @@
 /build/*
 *.code-workspace
 release/log.txt
+package-lock.json
