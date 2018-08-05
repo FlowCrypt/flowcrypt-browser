@@ -624,7 +624,9 @@ class Composer {
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
 
-        await tool.crypto.key.decrypt(prv, [passphrase!]); // checked !== null above
+        if(!prv.isDecrypted()) {
+          await tool.crypto.key.decrypt(prv, [passphrase!]); // checked !== null above
+        }
         let signed_data = await tool.crypto.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
         // noinspection JSIgnoredPromiseFromCall

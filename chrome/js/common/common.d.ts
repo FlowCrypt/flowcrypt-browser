@@ -235,7 +235,7 @@ interface InternalSortedKeysForDecrypt {
     signed_by: string[];
     prv_matching: KeyInfo[];
     prv_for_decrypt: KeyInfo[];
-    prv_for_decrypt_with_passphrases: KeyInfo[];
+    prv_for_decrypt_decrypted: KeyInfo[];
     prv_for_decrypt_without_passphrases: KeyInfo[];
 }
 

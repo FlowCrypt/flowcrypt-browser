@@ -1061,13 +1061,13 @@ let tool = {
         let keys = await tool._.crypto_message_get_sorted_keys_for_message(account_email, prepared.message);
         longids.message = keys.encrypted_for;
         longids.matching = keys.prv_for_decrypt.map(ki => ki.longid);
-        longids.chosen = keys.prv_for_decrypt_with_passphrases.map(ki => ki.longid);
+        longids.chosen = keys.prv_for_decrypt_decrypted.map(ki => ki.longid);
         longids.need_passphrase = keys.prv_for_decrypt_without_passphrases.map(ki => ki.longid);
         let is_encrypted = !prepared.is_cleartext;
         if (!is_encrypted) {
           return {success: true, content: {text: prepared.message.getText(), filename: null}, is_encrypted, signature: await tool.crypto.message.verify(prepared.message, keys.for_verification, keys.verification_contacts[0])};
         }
-        if (!keys.prv_for_decrypt_with_passphrases.length && !msg_pwd) {
+        if (!keys.prv_for_decrypt_decrypted.length && !msg_pwd) {
           return {success: false, error: {type: DecryptErrorTypes.need_passphrase}, signature: null, message: prepared.message, longids, is_encrypted};
         }
         try {
@@ -1078,7 +1078,7 @@ let tool = {
             return {success: false, error: {type: DecryptErrorTypes.use_password}, longids, is_encrypted, signature: null};
           }
           let msg_passwords = msg_pwd ? [msg_pwd] : null;
-          let decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prv_for_decrypt_with_passphrases.map(ki => ki.decrypted!), msg_passwords);
+          let decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prv_for_decrypt_decrypted.map(ki => ki.decrypted!), msg_passwords);
           // let signature_result = keys.signed_by.length ? tool.crypto.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
           let signature_result = null;
           if(get_uint8) {
@@ -2336,7 +2336,7 @@ let tool = {
         signed_by: [],
         prv_matching: [],
         prv_for_decrypt: [],
-        prv_for_decrypt_with_passphrases: [],
+        prv_for_decrypt_decrypted: [],
         prv_for_decrypt_without_passphrases: [],
       };
       keys.encrypted_for = (message instanceof openpgp.message.Message ? (message as OpenPGP.message.Message).getEncryptionKeyIds() : []).map(id => tool.crypto.key.longid(id.bytes)).filter(Boolean) as string[];
@@ -2350,13 +2350,13 @@ let tool = {
       }
       let passphrases = (await Promise.all(keys.prv_for_decrypt.map(ki => Store.passphrase_get(account_email, ki.longid))));
       let passphrases_filtered = passphrases.filter(pp => pp !== null) as string[];
-      for (let i of keys.prv_for_decrypt.keys()) {
-        let key = openpgp.key.readArmored(keys.prv_for_decrypt[i].private).keys[0];
-        if (passphrases_filtered.length && await tool.crypto.key.decrypt(key, passphrases_filtered) === true) {
-          keys.prv_for_decrypt[i].decrypted = key;
-          keys.prv_for_decrypt_with_passphrases.push(keys.prv_for_decrypt[i]);
+      for (let prv_for_decrypt of keys.prv_for_decrypt) {
+        let key = openpgp.key.readArmored(prv_for_decrypt.private).keys[0];
+        if (key.isDecrypted() || (passphrases_filtered.length && await tool.crypto.key.decrypt(key, passphrases_filtered) === true)) {
+          prv_for_decrypt.decrypted = key;
+          keys.prv_for_decrypt_decrypted.push(prv_for_decrypt);
         } else {
-          keys.prv_for_decrypt_without_passphrases.push(keys.prv_for_decrypt[i]);
+          keys.prv_for_decrypt_without_passphrases.push(prv_for_decrypt);
         }
       }
       if (keys.signed_by.length && typeof Store.db_contact_get === 'function') {
