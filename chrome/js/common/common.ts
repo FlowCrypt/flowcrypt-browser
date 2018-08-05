@@ -1472,7 +1472,7 @@ let tool = {
                 }
               },
             }, auth_request.tab_id);
-            let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+            let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
             // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
             // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
             if (tool.env.browser().name !== 'firefox') {
