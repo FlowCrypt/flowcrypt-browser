@@ -287,19 +287,24 @@ class Settings {
     }
   }
 
-  static prompt_to_retry = async (type: 'REQUIRED'|'OPTIONAL', e: Error, user_message: string, retry_callback: (skip_error?: string) => Promise<void>): Promise<void> => {
-    tool.catch.handle_exception(e);
+  static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_message: string, retry_callback: () => Promise<void>): Promise<void> => {
+    // |'OPTIONAL' - needs to be tested again
+    if(!tool.api.error.is_network_error(e)) {
+      tool.catch.handle_exception(e);
+    }
     while(await Settings.render_retry_prompt_and_resolve_true_when_user_wants_to_retry(type, user_message)) {
       try {
         return await retry_callback();
       } catch (e2) {
-        tool.catch.handle_exception(e2);
+        if(!tool.api.error.is_network_error(e2)) {
+          tool.catch.handle_exception(e2);
+        }
       }
     }
     // pressing retry button causes to get stuck in while loop until success, at which point it returns, or until user closes tab
     // if it got down here, user has chosen 'skip'. This option is only available on 'OPTIONAL' type
     // if the error happens again, op will be skipped
-    return await retry_callback(String(e));
+    return await retry_callback();
   }
 
   private static render_retry_prompt_and_resolve_true_when_user_wants_to_retry = (type: 'REQUIRED'|'OPTIONAL', user_message: string): Promise<boolean> => {

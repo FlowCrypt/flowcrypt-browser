@@ -246,7 +246,7 @@ tool.catch.try(async () => {
   let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
     await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
     if (url_params.action === 'setup') {
-      window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
+      window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });
     } else {
       await show_status();
     }
@@ -291,26 +291,10 @@ tool.catch.try(async () => {
     return false;
   };
 
-  let setup_create_simple_automatic_inbox_backup_render_retry = () => {
-    display_block('step_3_automatic_backup_retry');
-    $('#step_3_automatic_backup_retry .action_automatic_backup_retry').one('click', () => setup_create_simple_automatic_inbox_backup().catch(tool.catch.handle_promise_error));
-  };
-
   let setup_create_simple_automatic_inbox_backup = async () => {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
-    try {
-      await do_backup_on_email_provider(account_email, primary_ki.private);
-    } catch (e) {
-      if(tool.api.error.is_network_error(e)) {
-        setup_create_simple_automatic_inbox_backup_render_retry();
-      } else {
-        tool.catch.handle_exception(e);
-        alert(`Error happened, please try again (${e.message})`);
-        setup_create_simple_automatic_inbox_backup_render_retry();
-      }
-      return;
-    }
+    await do_backup_on_email_provider(account_email, primary_ki.private);
     await write_backup_done_and_render(false, 'inbox');
   };
 
@@ -341,8 +325,13 @@ tool.catch.try(async () => {
 
   if (url_params.action === 'setup') {
     $('.back').css('display', 'none');
+    $('.action_skip_backup').parent().css('display', 'none');
     if (storage.setup_simple) {
-      await setup_create_simple_automatic_inbox_backup();
+      try {
+        await setup_create_simple_automatic_inbox_backup();
+      } catch (e) {
+        return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to back up your key, probably due to internet connection.', setup_create_simple_automatic_inbox_backup);
+      }
     } else {
       display_block('step_3_manual');
       $('h1').text('Back up your private key');

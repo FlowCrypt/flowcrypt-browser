@@ -103,7 +103,7 @@ interface SetupOptions {
     setup_simple: boolean;
     key_backup_prompt: number|boolean;
     recovered?: boolean;
-    is_newly_created_key?: boolean;
+    is_newly_created_key: boolean;
 }
 
 interface FromToHeaders {
@@ -457,6 +457,10 @@ interface AccountStore extends BaseStore {
     successfully_received_at_leat_one_message?: boolean;
     notification_setup_done_seen?: boolean;
     attest_log?: StoredAttestLog[];
+
+    // temporary
+    tmp_submit_main?: boolean;
+    tmp_submit_all?: boolean;
 }
 
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};

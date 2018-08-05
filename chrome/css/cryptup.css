@@ -146,6 +146,7 @@ body#settings > div#content.backup div#step_3_done { display: none; }
 body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
 body#settings > div#content.backup div#step_3_manual { display: none; }
+body#settings > div#content.backup div#step_3_automatic_backup_retry { display: none; }
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.details td { padding-top: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px;}

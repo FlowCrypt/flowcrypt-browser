@@ -287,7 +287,8 @@ let tool = {
     is_background_script: () => Boolean(window.location && tool.value('_generated_background_page.html').in(window.location.href)),
     is_extension: () => tool.env.runtime_id() !== null,
     url_param_require: {
-      string: (values: UrlParams, name: string): string => tool.ui.abort_and_render_error_on_url_param_mismatch(values, name, 'string') as string,
+      string: (values: UrlParams, name: string): string => tool.ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
+      oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => tool.ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
     },
     url_params: (expected_keys: string[], string:string|null=null) => {
       let url = (string || window.location.search.replace('?', ''));
@@ -1143,10 +1144,18 @@ let tool = {
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
-    abort_and_render_error_on_url_param_mismatch: (values: UrlParams, name: string, expected_type: string): UrlParam => {
+    abort_and_render_error_on_url_param_type_mismatch: (values: UrlParams, name: string, expected_type: string): UrlParam => {
       let actual_type = typeof values[name];
       if (actual_type !== expected_type) {
         let msg = `Cannot render page (expected ${name} to be of type ${expected_type} but got ${actual_type})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+        throw new UnreportableError(msg);
+      }
+      return values[name];
+    },
+    abort_and_render_error_on_url_param_value_mismatch: <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
+      if (expected_values.indexOf(values[name]) === -1) {
+        let msg = `Cannot render page (expected ${name} to be one of ${expected_values.map(String).join(',')} but got ${values[name]})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
         $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
         throw new UnreportableError(msg);
       }
@@ -2557,6 +2566,7 @@ let tool = {
           request.headers!.Authorization = await tool._.google_api_authorization_header(account_email, true);
           return await $.ajax(request);
         }
+        throw e;
       }
     },
     api_google_call: async (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string) => {

@@ -17,7 +17,7 @@
 <body id="settings">
 
   <div id="content" class="backup">
-    
+
     <div id="loading">
       <div class="loader" title="0">
         <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve">
@@ -69,15 +69,8 @@
       </div>
     </div>
 
-    <div id="step_3_automatic_backup_retry">
-      <div class="line">Backup failed, possibly due to bad internet connection. Please retry.</div>
-      <div class="line">
-        <div class="button long green action_automatic_backup_retry">RETRY</div>
-      </div>
-    </div>
-
     <div id="step_3_manual">
-      <div class="line">Your key is stored in the browser. Backups are useful if you lose your device in the future.</div>
+      <div class="line">Your key is stored in the browser. Backups are useful if you ever lose your device.</div>
       <div class="line">
         <table class="backup_options">
           <tr class="details">
@@ -127,8 +120,7 @@
       </div>
       <div class="line backup_action_buttons_container">
         <div class="button long green action_manual_backup" data-test="action-backup-step3manual-continue">BACK UP AS EMAIL</div>
-        &nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;
-        <div class="button long gray action_skip_backup">LATER</div>
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;<div class="button long gray action_skip_backup">LATER</div></span>
       </div>
     </div>
   </div>
