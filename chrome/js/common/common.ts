@@ -1930,7 +1930,7 @@ let tool = {
           }
           return await tool.crypto.message.sign(decrypted_prv, content_text);
         },
-        parse: (text: string) => {
+        parse: (text: string): ParsedAttest => {
           let accepted_values = {
             'ACT': 'action',
             'ATT': 'attester',
@@ -1939,9 +1939,9 @@ let tool = {
             'OLD': 'fingerprint_old',
             'RAN': 'random',
           } as Dict<string>;
-          let result = {
+          let result: ParsedAttest = {
             success: false,
-            content: {} as Dict<string>,
+            content: {},
             error: null as string|null,
             text: null as string|null,
           };
@@ -1994,7 +1994,7 @@ let tool = {
               result.content = {};
               return result;
             }
-            if (result.content.action && !tool.value(result.content.action).in(['CRYPTUP'])) {
+            if (result.content.attester && !tool.value(result.content.attester).in(['CRYPTUP'])) {
               result.error = 'Wrong ATT line value format';
               result.content = {};
               return result;

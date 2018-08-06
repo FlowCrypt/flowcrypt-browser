@@ -469,3 +469,18 @@ type CryptoArmorHeaderDefinitions = {
 };
 
 type KeyImportUiCheckResult = {normalized: string, longid: string, passphrase: string, fingerprint: string, decrypted: OpenPGP.key.Key, encrypted: OpenPGP.key.Key};
+
+type ParsedAttest = {
+  success: boolean;
+  content: {
+    [key: string]: string|undefined;
+    action?: string;
+    attester?: string;
+    email_hash?: string;
+    fingerprint?: string;
+    fingerprint_old?: string;
+    random?: string;
+  };
+  text: string|null;
+  error: string|null;
+};

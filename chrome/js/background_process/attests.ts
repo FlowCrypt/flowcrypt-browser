@@ -108,33 +108,37 @@ class BgAttests {
       if (await tool.crypto.key.decrypt(key, [passphrase || stored_passphrase || '']) === true) {
         let expected_fingerprint = key.primaryKey.getFingerprint().toUpperCase();
         let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
-        if (attest && attest.success && attest.text && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
-          let signed;
-          try {
-            signed = await tool.crypto.message.sign(key, attest.text);
-          } catch (e) {
-            throw new AttestError('Error signing the attest. Email human@flowcrypt.com to find out why:' + e.message, attest_packet_text, account_email);
+        if (attest && attest.success && attest.text) {
+          if(attest.content.attester && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
+            let signed;
+            try {
+              signed = await tool.crypto.message.sign(key, attest.text);
+            } catch (e) {
+              throw new AttestError('Error signing the attest. Email human@flowcrypt.com to find out why:' + e.message, attest_packet_text, account_email);
+            }
+            try {
+              let api_r;
+              if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
+                api_r = await tool.api.attester.initial_confirm(signed);
+              } else {
+                api_r = await tool.api.attester.replace_confirm(signed);
+              }
+              if (!api_r.attested) {
+                throw new AttestError('Refused by Attester. Email human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
+              }
+            } catch (e) {
+              if(tool.api.error.is_network_error(e)) {
+                throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
+              }
+              throw new AttestError('Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
+            }
+            await BgAttests.account_storage_mark_as_attested(account_email, attest.content.attester);
+            return {attest_packet_text, message: 'Successfully attested ' + account_email, account_email};
+          } else {
+            throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attest_packet_text, account_email);
           }
-          try {
-            let api_r;
-            if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
-              api_r = await tool.api.attester.initial_confirm(signed);
-            } else {
-              api_r = await tool.api.attester.replace_confirm(signed);
-            }
-            if (!api_r.attested) {
-              throw new AttestError('Refused by Attester. Email human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
-            }
-          } catch (e) {
-            if(tool.api.error.is_network_error(e)) {
-              throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
-            }
-            throw new AttestError('Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
-          }
-          await BgAttests.account_storage_mark_as_attested(account_email, attest.content.attester);
-          return {attest_packet_text, message: 'Successfully attested ' + account_email, account_email};
         } else {
-          throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attest_packet_text, account_email);
+          throw new AttestError('Could not parse this attest message.', attest_packet_text, account_email);
         }
       } else {
         throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attest_packet_text, account_email);
