@@ -13,6 +13,7 @@ tool.catch.try(async () => {
   let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
   let storage = await Store.get_account(account_email, storage_keys);
+  await tool.ui.abort_and_render_error_on_unprotected_key(account_email);
 
   await new Promise(resolve => { // recover missing url params
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {

@@ -288,11 +288,12 @@ class Settings {
   }
 
   static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_message: string, retry_callback: () => Promise<void>): Promise<void> => {
+    // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
     if(!tool.api.error.is_network_error(e)) {
       tool.catch.handle_exception(e);
     }
-    while(await Settings.render_retry_prompt_and_resolve_true_when_user_wants_to_retry(type, user_message)) {
+    while(await tool.ui.render_overlay_prompt_await_user_choice({retry: 'RETRY'}, user_message) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {
@@ -305,34 +306,6 @@ class Settings {
     // if it got down here, user has chosen 'skip'. This option is only available on 'OPTIONAL' type
     // if the error happens again, op will be skipped
     return await retry_callback();
-  }
-
-  private static render_retry_prompt_and_resolve_true_when_user_wants_to_retry = (type: 'REQUIRED'|'OPTIONAL', user_message: string): Promise<boolean> => {
-    return new Promise(resolve => {
-      let skip_button = (type === 'OPTIONAL') ? ' &nbsp; &nbsp; <div class="button gray action_skip_retry">skip</div>' : '';
-      $('body').append(`
-        <div class="featherlight white retry_prompt" style="display: block;">
-          <div class="featherlight-content" data-test="dialog">
-            <div class="line">${user_message.replace(/\n/g, '<br>')}</div>
-            <div class="line">
-              <div class="button green action_do_retry">retry</div>
-              ${skip_button}
-            </div>
-            <div class="line">&nbsp;</div>
-            <div class="line">Please email human@flowcrypt.com if you need assistance.</div>
-          </div>
-        </div>
-      `);
-      let overlay = $('.retry_prompt');
-      overlay.find('.action_do_retry').one('click', () => {
-        overlay.remove();
-        resolve(true);
-      });
-      overlay.find('.action_skip_retry').one('click', () => {
-        overlay.remove();
-        resolve(false);
-      });
-    });
   }
 
   static forbid_and_refresh_page_if_cannot = (action: 'CREATE_KEYS'|'BACKUP_KEYS', rules: Rules) => {

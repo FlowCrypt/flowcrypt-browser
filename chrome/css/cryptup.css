@@ -456,7 +456,7 @@ div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 .featherlight .featherlight-content > .line { color: white; text-align: center; font-weight: 200; letter-spacing: 0.25px;}
 .featherlight.white .featherlight-content > .line { color: black; }
 .featherlight.white:last-of-type { background: white; }
-.featherlight.retry_prompt .featherlight-content { margin-bottom: 20%; -webkit-animation: fadeIn 0.5s ease;  animation: fadeIn 0.5s ease; }
+.featherlight.prompt_overlay .featherlight-content { margin-bottom: 20%; -webkit-animation: fadeIn 0.5s ease;  animation: fadeIn 0.5s ease; }
 .lightboxed { width: 700px; }
 .lightboxed pre { padding-top: 0; margin-top: 0; }
 .mt-40 { margin-top: 40px; }

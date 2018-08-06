@@ -302,6 +302,7 @@ tool.catch.try(async () => {
   };
 
   await initialize();
+  await tool.ui.abort_and_render_error_on_unprotected_key(account_email, tab_id);
   if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because render_settings_sub_page needs tab_id_global for the page to work properly
     if (url_params.page === '/chrome/settings/modules/auth_denied.htm') {
       Settings.render_sub_page(account_email || null, tab_id, url_params.page, '&use_account_email=1');

@@ -1144,6 +1144,44 @@ let tool = {
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
+    render_overlay_prompt_await_user_choice: (buttons: Dict<string>, prompt: string): Promise<string> => {
+      return new Promise(resolve => {
+        let formatted_buttons = Object.keys(buttons).map(id => `<div class="button green prompt_overlay_action_${id}">${buttons[id]}</div>`).join('&nbsp;'.repeat(5));
+        $('body').append(`
+          <div class="featherlight white prompt_overlay" style="display: block;">
+            <div class="featherlight-content" data-test="dialog">
+              <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
+              <div class="line">${formatted_buttons}</div>
+              <div class="line">&nbsp;</div>
+              <div class="line">Please email human@flowcrypt.com if you need assistance.</div>
+            </div>
+          </div>
+        `);
+        let overlay = $('.prompt_overlay');
+        for(let id of Object.keys(buttons)) {
+          overlay.find(`.prompt_overlay_action_${id}`).one('click', () => {
+            overlay.remove();
+            resolve(id);
+          });
+        }
+      });
+    },
+    abort_and_render_error_on_unprotected_key: async (account_email?: string, tab_id?: string) => {
+      if(account_email) {
+        let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+        let {setup_done, setup_simple} = await Store.get_account(account_email, ['setup_simple', 'setup_done']);
+        if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
+          if(window.location.pathname === '/chrome/settings/index.htm') {
+            Settings.render_sub_page(account_email, tab_id!, 'backup.htm', {action: 'setup'});
+          } else {
+            let r = await tool.ui.render_overlay_prompt_await_user_choice({finish_setup: 'FINISH SETUP', later: 'LATER'}, `Please protect your key with a pass phrase first.`);
+            if(r === 'finish_setup') {
+              tool.browser.message.send(null, 'settings', {account_email});
+            }
+          }
+        }
+      }
+    },
     abort_and_render_error_on_url_param_type_mismatch: (values: UrlParams, name: string, expected_type: string): UrlParam => {
       let actual_type = typeof values[name];
       if (actual_type !== expected_type) {
