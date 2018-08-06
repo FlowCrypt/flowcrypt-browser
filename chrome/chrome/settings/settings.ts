@@ -2,12 +2,6 @@
 
 'use strict';
 
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
-/// <reference path="common.d.ts" />
-
-declare let zxcvbn: Function; // tslint:disable-line:ban-types
-
 class Settings {
 
   private static is_embedded = Boolean(tool.env.url_params(['embedded']).embedded);
