@@ -633,7 +633,7 @@ class Composer {
         this.app.storage_contact_update(recipients, {last_use: Date.now()});
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
-        await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+        await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -754,10 +754,10 @@ class Composer {
       body = this.format_password_protected_email(short, body, armored_pubkeys);
       body = this.format_email_text_footer(body);
       await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
-      await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
     } else {
       body = this.format_email_text_footer(body);
-      await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
     }
   }
 

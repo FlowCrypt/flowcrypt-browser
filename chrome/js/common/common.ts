@@ -1547,14 +1547,10 @@ let tool = {
       },
     },
     common: {
-      message: (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): SendableMessage => {
-        // TODO
-        // let [primary_pubkey] = await Store.keys_get(account_email, ['primary']); // todo - changing to async - add back later
-        // headers: (typeof exports !== 'object' && primary_pubkey !== null) ? { // todo - make it work in electron as well
-        //   OpenPGP: 'id=' + primary_pubkey.fingerprint,
-        // } : {},
+      message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMessage> => {
+        let [primary_ki] = await Store.keys_get(account_email, ['primary']);
         return {
-          headers: {} as FlatHeaders,
+          headers: primary_ki ? {OpenPGP: `id=${primary_ki.fingerprint}`} : {},
           from,
           to: Array.isArray(to) ? to as string[] : (to as string).split(','),
           subject,

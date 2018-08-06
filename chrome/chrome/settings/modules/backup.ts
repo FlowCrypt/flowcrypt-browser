@@ -191,7 +191,7 @@ tool.catch.try(async () => {
   let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
     let email_message = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
     let email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
-    let message = tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
+    let message = await tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
     if (email_provider === 'gmail') {
       return await tool.api.gmail.message_send(account_email, message);
     } else {
