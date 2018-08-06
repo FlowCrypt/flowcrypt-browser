@@ -480,7 +480,6 @@ tool.catch.try(async () => {
 
   let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes']);
   can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
-  await tool.ui.abort_and_render_error_on_unprotected_key(account_email);
   if (storage.setup_done) {
     await initialize();
   } else {

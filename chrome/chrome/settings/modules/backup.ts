@@ -202,6 +202,7 @@ tool.catch.try(async () => {
   let backup_on_email_provider_and_update_ui = async (primary_ki: KeyInfo) => {
     let pass_phrase = await Store.passphrase_get(account_email, primary_ki.longid);
     if (!pass_phrase || !await is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
+      alert('Your key is not protected with a strong pass phrase, skipping');
       return;
     }
     let btn = $('.action_manual_backup');
@@ -272,12 +273,15 @@ tool.catch.try(async () => {
   }));
 
   let is_pass_phrase_strong_enough = async (ki: KeyInfo, pass_phrase: string) => {
+    let k = tool.crypto.key.read(ki.private);
+    if(k.isDecrypted()) {
+      return false;
+    }
     if (!pass_phrase) {
       let pp = prompt('Please enter your pass phrase:');
       if (!pp) {
         return false;
       }
-      let k = tool.crypto.key.read(ki.private);
       if (await tool.crypto.key.decrypt(k, [pp]) !== true) {
         alert('Pass phrase did not match, please try again.');
         return false;
@@ -293,6 +297,10 @@ tool.catch.try(async () => {
 
   let setup_create_simple_automatic_inbox_backup = async () => {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    if(tool.crypto.key.read(primary_ki.private).isDecrypted()) {
+      alert('Key not protected with a pass phrase, skipping');
+      throw new UnreportableError('Key not protected with a pass phrase, skipping');
+    }
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     await do_backup_on_email_provider(account_email, primary_ki.private);
     await write_backup_done_and_render(false, 'inbox');

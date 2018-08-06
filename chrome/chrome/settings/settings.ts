@@ -293,7 +293,7 @@ class Settings {
     if(!tool.api.error.is_network_error(e)) {
       tool.catch.handle_exception(e);
     }
-    while(await tool.ui.render_overlay_prompt_await_user_choice({retry: 'RETRY'}, user_message) === 'retry') {
+    while(await tool.ui.render_overlay_prompt_await_user_choice({retry: {}}, user_message) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {

@@ -1144,22 +1144,22 @@ let tool = {
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
-    render_overlay_prompt_await_user_choice: (buttons: Dict<string>, prompt: string): Promise<string> => {
+    render_overlay_prompt_await_user_choice: (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
       return new Promise(resolve => {
-        let formatted_buttons = Object.keys(buttons).map(id => `<div class="button green prompt_overlay_action_${id}">${buttons[id]}</div>`).join('&nbsp;'.repeat(5));
+        let btns = Object.keys(buttons).map(id => `<div class="button ${buttons[id].color || 'green'} overlay_action_${id}">${buttons[id].title || id.replace(/_/g, ' ')}</div>`).join('&nbsp;'.repeat(5));
         $('body').append(`
           <div class="featherlight white prompt_overlay" style="display: block;">
             <div class="featherlight-content" data-test="dialog">
               <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
-              <div class="line">${formatted_buttons}</div>
+              <div class="line">${btns}</div>
               <div class="line">&nbsp;</div>
-              <div class="line">Please email human@flowcrypt.com if you need assistance.</div>
+              <div class="line">Email human@flowcrypt.com if you need assistance.</div>
             </div>
           </div>
         `);
         let overlay = $('.prompt_overlay');
         for(let id of Object.keys(buttons)) {
-          overlay.find(`.prompt_overlay_action_${id}`).one('click', () => {
+          overlay.find(`.overlay_action_${id}`).one('click', () => {
             overlay.remove();
             resolve(id);
           });
@@ -1172,9 +1172,10 @@ let tool = {
         let {setup_done, setup_simple} = await Store.get_account(account_email, ['setup_simple', 'setup_done']);
         if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
           if(window.location.pathname === '/chrome/settings/index.htm') {
-            Settings.render_sub_page(account_email, tab_id!, 'backup.htm', {action: 'setup'});
+            Settings.render_sub_page(account_email, tab_id!, '/chrome/settings/modules/change_passphrase.htm');
           } else {
-            let r = await tool.ui.render_overlay_prompt_await_user_choice({finish_setup: 'FINISH SETUP', later: 'LATER'}, `Please protect your key with a pass phrase first.`);
+            let msg = `Protect your key with a pass phrase to finish setup.`;
+            let r = await tool.ui.render_overlay_prompt_await_user_choice({finish_setup: {}, later: {color: 'gray'}}, msg);
             if(r === 'finish_setup') {
               tool.browser.message.send(null, 'settings', {account_email});
             }
@@ -1298,29 +1299,43 @@ let tool = {
       double: (): PreventableEvent => ({ name: 'double', id: tool.str.random(10) }),
       parallel: (): PreventableEvent => ({ name: 'parallel', id: tool.str.random(10) }),
       spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: tool.str.random(10) }),
-      prevent: (preventable_event: PreventableEvent, callback: (e: HTMLElement, id: string) => void) => { // todo: messy + needs refactoring
+      prevent: (preventable_event: PreventableEvent, callback: (e: HTMLElement, id: string) => void|Promise<void>) => { // todo: messy + needs refactoring
+        let cb_with_errors_handled = (e: HTMLElement, id: string) => {
+          // todo - there should be a better system to surface these errors back to the ui
+          // cannot throw up stack because this is a browser event - it would just get logged into console.error
+          // could start requiring callbacks for types of errors, where the default is log and report
+          let r;
+          try {
+            r = callback(e, id);
+            if(typeof r === 'object' && typeof r.catch === 'function') {
+              r.catch(tool.catch.handle_promise_error);
+            }
+          } catch(e) {
+            tool.catch.handle_exception(e);
+          }
+        };
         return function() {
           if (preventable_event.name === 'spree') {
             clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(callback, tool._.var.ui_event_SPREE_MS);
+            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SPREE_MS);
           } else if (preventable_event.name === 'slowspree') {
             clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(callback, tool._.var.ui_event_SLOW_SPREE_MS);
+            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SLOW_SPREE_MS);
           } else if (preventable_event.name === 'veryslowspree') {
             clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(callback, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
+            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
           } else {
             if (preventable_event.id in tool._.var.ui_event_fired) {
               // if (meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
               if (preventable_event.name === 'double') {
                 if (Date.now() - tool._.var.ui_event_fired[preventable_event.id] > tool._.var.ui_event_DOUBLE_MS) {
                   tool._.var.ui_event_fired[preventable_event.id] = Date.now();
-                  callback(this, preventable_event.id);
+                  cb_with_errors_handled(this, preventable_event.id);
                 }
               }
             } else {
               tool._.var.ui_event_fired[preventable_event.id] = Date.now();
-              callback(this, preventable_event.id);
+              cb_with_errors_handled(this, preventable_event.id);
             }
           }
         };

@@ -78,7 +78,9 @@ tool.catch.try(async () => {
       $('#password2').focus();
     } else {
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
-      await tool.crypto.key.decrypt(prv, [original_passphrase!]); // !null because we checked for this above, and user entry cannot be null
+      if(!prv.isDecrypted()) {
+        await tool.crypto.key.decrypt(prv, [original_passphrase!]); // !null because we checked for this above, and user entry cannot be null
+      }
       await Settings.openpgp_key_encrypt(prv, new_passphrase);
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);
       await Store.keys_add(account_email, prv.armor());
