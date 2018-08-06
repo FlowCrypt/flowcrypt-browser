@@ -19,7 +19,7 @@
           <li>If previous steps didn't work, go to <b>chrome://extensions</b> (on Chrome) or <b>about:addons</b> (on Firefox), and remove FlowCrypt from your browser. After that, go to <a href="https://flowcrypt.com">flowcrypt.com</a> to install it again.</li>
           <li>If this didn't help either, you may need to re-install your browser.</li>
         </ol>
-        <p>Write me at human@flowcrypt.com if you need any help.</p>
+        <p>Email human@flowcrypt.com if you need any help.</p>
         `);
     } else if (url_params.reason === 'db_denied') {
         title.text('FlowCrypt cannot function because browser IndexedDB is disabled');

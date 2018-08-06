@@ -63,7 +63,7 @@ class KeyImportUI {
   private longid = (k: OpenPGP.key.Key) => {
     let longid = tool.crypto.key.longid(k);
     if (!longid) {
-      throw new UserAlert('This key may not be compatible. Please write me at human@flowcrypt.com and let me know which software created this key, so that I can fix it.\n\n(error: cannot get long_id)');
+      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and let us know which software created this key, so we can get it resolved.\n\n(error: cannot get long_id)');
     }
     return longid;
   }

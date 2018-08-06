@@ -251,7 +251,7 @@ tool.catch.try(async () => {
       await save_keys([prv], options);
     } catch (e) {
       tool.catch.handle_exception(e);
-      $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Please write me at human@flowcrypt.com so that I can fix it ASAP.');
+      $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
     }
   };
 

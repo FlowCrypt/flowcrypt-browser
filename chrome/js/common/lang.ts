@@ -27,7 +27,7 @@ const Lang = {
     dont_know_how_open: 'Please email me at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
     enter_passphrase: 'Enter passphrase',
     to_open_message: 'to open this message.',
-    write_me: 'Please write me at human@flowcrypt.com so that I can fix it. I respond very promptly. ',
+    write_me: 'Email human@flowcrypt.com to get this resolved. We respond promptly. ',
     refresh_window: 'Please refresh your web mail window to read encrypted messages. ',
     update_chrome_settings: 'Need to update chrome settings to view encrypted messages. ',
     not_properly_set_up: 'FlowCrypt is not properly set up to decrypt messages. ',
@@ -51,7 +51,7 @@ const Lang = {
   },
   general: {
     something_went_wrong_try_again: 'Something went wrong, please try again. If this happens again, please write me at human@flowcrypt.com to fix it. ',
-    write_me_to_fix_it: 'Please write me at human@flowcrypt.com to fix this if it happens repeatedly. ',
+    write_me_to_fix_it: 'Email human@flowcrypt.com to get this resolved if it happens repeatedly. ',
     restart_browser_and_try_again: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
   }
 };

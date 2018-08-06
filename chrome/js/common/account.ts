@@ -104,7 +104,7 @@ class FlowCryptAccount {
     if (response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
       return response.subscription;
     }
-    throw {code: null, message: 'Something went wrong when upgrading, please email me at human@flowcrypt.com to fix this.', internal: 'mismatch'};
+    throw {code: null, message: 'Something went wrong when upgrading, please email human@flowcrypt.com to get this resolved.', internal: 'mismatch'};
   }
 
   private fetch_token_emails_on_gmail_and_find_matching_token = async (account_email: string, uuid: string): Promise<string[]|null> => {

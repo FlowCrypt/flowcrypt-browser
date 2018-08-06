@@ -134,7 +134,7 @@ tool.catch.try(async () => {
     } else {
       delete result.message;
       console.info(result);
-      alert('There was a problem decrypting this file. Downloading encrypted original. Write me at human@flowcrypt.com if this happens repeatedly.');
+      alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
       tool.file.save_to_downloads(name, type, encrypted_data, render_in);
       send_resize_message();
     }

@@ -636,7 +636,7 @@ class Composer {
         await this.do_send_message(tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
       }
     } else {
-      alert('Cannot sign the message because your plugin is not correctly set up. Write me at human@flowcrypt.com if this persists.');
+      alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
       this.reset_send_btn();
     }
   }

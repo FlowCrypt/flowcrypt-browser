@@ -41,7 +41,7 @@ tool.catch.try(async () => {
           let fixed_encrypted_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(account_email, '.compatibility_fix_container', updated_key_encrypted, updated_key_passphrase, url_my_key_page);
           await store_updated_key_and_passphrase(fixed_encrypted_prv, updated_key_passphrase);
         } else {
-          alert('Key update: This looks like a valid key but it cannot be used for encryption. Please write me at human@flowcrypt.com to see why is that. I\'m VERY prompt to respond.');
+          alert('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
           window.location.href = url_my_key_page;
         }
       }

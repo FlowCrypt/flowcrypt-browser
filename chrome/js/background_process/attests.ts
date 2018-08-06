@@ -113,7 +113,7 @@ class BgAttests {
           try {
             signed = await tool.crypto.message.sign(key, attest.text);
           } catch (e) {
-            throw new AttestError('Error signing the attest. Write me at human@flowcrypt.com to find out why:' + e.message, attest_packet_text, account_email);
+            throw new AttestError('Error signing the attest. Email human@flowcrypt.com to find out why:' + e.message, attest_packet_text, account_email);
           }
           try {
             let api_r;
@@ -123,18 +123,18 @@ class BgAttests {
               api_r = await tool.api.attester.replace_confirm(signed);
             }
             if (!api_r.attested) {
-              throw new AttestError('Refused by Attester. Write me at human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
+              throw new AttestError('Refused by Attester. Email human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
             }
           } catch (e) {
             if(tool.api.error.is_network_error(e)) {
               throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
             }
-            throw new AttestError('Error while calling Attester API. Write me at human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
+            throw new AttestError('Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
           }
           await BgAttests.account_storage_mark_as_attested(account_email, attest.content.attester);
           return {attest_packet_text, message: 'Successfully attested ' + account_email, account_email};
         } else {
-          throw new AttestError('This attest message is ignored as it does not match your settings.\n\nWrite me at human@flowcrypt.com to help.', attest_packet_text, account_email);
+          throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attest_packet_text, account_email);
         }
       } else {
         throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attest_packet_text, account_email);

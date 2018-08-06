@@ -18,7 +18,7 @@ tool.catch.try(async () => {
   };
 
   if (!token) {
-    render_status('This verification email seems to have wrong format. Please write me at human@flowcrypt.com to fix this.');
+    render_status('This verification email seems to have wrong format. Email human@flowcrypt.com to get this resolved.');
   } else {
     try {
       let {cryptup_subscription_attempt} = await Store.get_global(['cryptup_subscription_attempt']);
@@ -28,7 +28,7 @@ tool.catch.try(async () => {
         if (subscription && subscription.level === 'pro') {
           render_status('Welcome to FlowCrypt Advanced.');
         } else {
-          render_status('Email verified, but had trouble enabling FlowCrypt Advanced. Please write me at human@flowcrypt.com to fix this.');
+          render_status('Email verified, but had trouble enabling FlowCrypt Advanced. Email human@flowcrypt.com to get this resolved.');
         }
       } else {
         render_status('Email verified, no further action needed.');

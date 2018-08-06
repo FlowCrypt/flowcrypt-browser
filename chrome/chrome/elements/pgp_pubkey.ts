@@ -48,7 +48,7 @@ tool.catch.try(async () => {
     if (typeof pubkeys[0] !== 'undefined') {
       if ((await pubkeys[0].getEncryptionKey() === null) && (await pubkeys[0].getSigningKey() === null)) {
         // todo - people may still get errors if this is signing only key and they try to encrypt, but I'm leaving it here in case they just want to verify signatures
-        $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Please write me at human@flowcrypt.com so that I can see if there is a way to fix it.');
+        $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       } else {
         if (pubkeys.length === 1) {
