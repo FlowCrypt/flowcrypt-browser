@@ -5,6 +5,14 @@ import * as ava from 'ava';
 
 export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
 
+  ava.test.todo('setup - no connection when pulling backup - retry prompt shows and works');
+
+  ava.test.todo('setup - simple - no connection when making a backup - retry prompt shows');
+
+  ava.test.todo('setup - advanced - no connection when making a backup - retry prompt shows');
+
+  ava.test.todo('setup - no connection when submitting public key - retry prompt shows and works');
+
   ava.test('settings > login > close oauth window > close popup', test_with_browser(async (browser, t) => {
     await BrowserRecipe.open_settings_login_but_close_oauth_window_before_granting_permission(browser, 'flowcrypt.test.key.imported@gmail.com');
   }));
