@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "5.8.8",
+  "version": "5.8.9",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "devDependencies": {
     "@types/chrome": "0.0.65",

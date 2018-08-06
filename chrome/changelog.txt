@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.8.9 on August 6, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/244?closed=1" target="_blank">Attestation fix</a></b>
+
 <b>version 5.8.8 on August 6, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/243?closed=1" target="_blank">Pass phrase prompt</a></b>
 
 <b>version 5.8.7 on August 5, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/242?closed=1" target="_blank">Key decrypted error</a></b>
