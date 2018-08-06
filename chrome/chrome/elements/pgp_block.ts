@@ -78,8 +78,9 @@ tool.catch.try(async () => {
   };
 
   let armored_message_as_html = (raw_message_substitute:string|null=null) => {
-    if (raw_message_substitute || url_params.message) {
-      return '<div class="raw_pgp_block" style="display: none;">' + (raw_message_substitute || url_params.message as string).replace(/\n/g, '<br>') + '</div><a href="#" class="action_show_raw_pgp_block">show original message</a>';
+    let m = raw_message_substitute || url_params.message;
+    if (m && typeof m === 'string') {
+      return `<div class="raw_pgp_block" style="display: none;">${ m.replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
     }
     return '';
   };
