@@ -1680,25 +1680,25 @@ let tool = {
       scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
       has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
       thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => tool._.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
-          format,
+        format,
       }),
       draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => tool._.api_gmail_call(account_email, 'POST', 'drafts', {
-          message: {
-            raw: tool.str.base64url_encode(mime_message),
-            threadId: thread_id || null,
-          },
+        message: {
+          raw: tool.str.base64url_encode(mime_message),
+          threadId: thread_id || null,
+        },
       }),
       draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
       draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => tool._.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
-          message: {
-            raw: tool.str.base64url_encode(mime_message),
-          },
+        message: {
+          raw: tool.str.base64url_encode(mime_message),
+        },
       }),
       draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => tool._.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
-          format,
+        format,
       }),
       draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
-          id,
+        id,
       }),
       message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
         message.headers.From = message.from;
@@ -1709,11 +1709,11 @@ let tool = {
         return tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
       },
       message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => tool._.api_gmail_call(account_email, 'GET', 'messages', {
-            q,
-            includeSpamTrash: include_deleted,
+        q,
+        includeSpamTrash: include_deleted,
       }),
       message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
-            format: format || 'full',
+        format: format || 'full',
       }),
       messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
         return Promise.all(message_ids.map(id => tool.api.gmail.message_get(account_email, id, format)));
