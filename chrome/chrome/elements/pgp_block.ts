@@ -18,7 +18,7 @@ tool.catch.try(async () => {
   let passphrase_interval: number|undefined;
   let missing_or_wrong_passprases: Dict<string|null> = {};
   let can_read_emails: undefined|boolean;
-  let password_message_link_result: ApirFcMessageLink;
+  let password_message_link_result: ApirFcLinkMessage;
   let admin_codes: string[];
   let user_entered_message_password: string|undefined;
 
@@ -389,7 +389,7 @@ tool.catch.try(async () => {
     }
   };
 
-  let render_password_encrypted_message_load_fail = async (link_result: ApirFcMessageLink) => {
+  let render_password_encrypted_message_load_fail = async (link_result: ApirFcLinkMessage) => {
     if (link_result.expired) {
       let expiration_m = Lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
       if (link_result.deleted) {

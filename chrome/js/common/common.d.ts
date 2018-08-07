@@ -327,7 +327,10 @@ type ApirFcMessagePresignFiles = {approvals: {base_url: string, fields: {key: st
 type ApirFcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
 type ApirFcMessageToken = {token: string};
 type ApirFcMessageUpload = {short: string, admin_code: string};
-type ApirFcMessageLink = {expire: string, deleted: boolean, url: string, expired: boolean};
+type ApirFcLinkMessage = {expire: string, deleted: boolean, url: string, expired: boolean};
+type ApirFcLinkMe$profile = {alias: string|null, name: string|null, photo: string|null, photo_circle: boolean, intro: string|null, web: string|null,
+  phone: string|null, token: string|null, subscription_level: string|null, subscription_method: string|null, email: string|null};
+type ApirFcLinkMe = {profile: null|ApirFcLinkMe$profile};
 type ApirFcMessageExpiration = {updated: boolean};
 
 type ApirAttInitialConfirm = {attested: boolean};

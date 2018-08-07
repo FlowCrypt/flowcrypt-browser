@@ -2258,10 +2258,10 @@ let tool = {
         sender,
         message,
       }),
-      link_message: (short: string): Promise<ApirFcMessageLink> => tool._.api_cryptup_call('link/message', {
+      link_message: (short: string): Promise<ApirFcLinkMessage> => tool._.api_cryptup_call('link/message', {
         short,
       }),
-      link_me: (alias: string) => tool._.api_cryptup_call('link/me', { // todo - add return type
+      link_me: (alias: string): Promise<ApirFcLinkMe> => tool._.api_cryptup_call('link/me', {
         alias,
       }),
     },
