@@ -61,23 +61,22 @@ tool.catch.try(async () => {
     return insights;
   };
 
-  let start = (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: () => void) => {
+  let start = async (account_email: string, injector: Injector, notifications: Notifications, factory: Factory, notify_murdered: () => void) => {
     hijack_gmail_hotkeys();
-    Store.get_account(account_email, ['addresses', 'google_token_scopes']).then((storage: Dict<string[]>) => {
-      let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes, 'read');
-      injector.buttons();
-      replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, notifications, host_page_info.gmail_variant);
-      notifications.show_initial(account_email);
-      replacer.everything();
-      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as FcWindow).$ === 'function') {
-          replacer.everything();
-        } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replace_pgp_elements_interval);
-          notify_murdered();
-        }
-      }, replace_pgp_elements_interval_ms);
-    }).catch(tool.catch.handle_promise_error);
+    let storage = await Store.get_account(account_email, ['addresses', 'google_token_scopes']);
+    let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
+    injector.buttons();
+    replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, notifications, host_page_info.gmail_variant);
+    await notifications.show_initial(account_email);
+    replacer.everything();
+    replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+      if (typeof (window as FcWindow).$ === 'function') {
+        replacer.everything();
+      } else { // firefox will unload jquery when extension is restarted or updated
+        clearInterval(replace_pgp_elements_interval);
+        notify_murdered();
+      }
+    }, replace_pgp_elements_interval_ms);
   };
 
   let hijack_gmail_hotkeys = () => {

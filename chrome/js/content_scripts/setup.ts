@@ -139,7 +139,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       await show_notifications_and_wait_until_account_set_up(account_email, notifications);
       browser_message_listen(account_email, tab_id, inject, factory, notifications);
       await tool.browser.message.send_await(null, 'migrate_account', {account_email});
-      webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
+      await webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
     } catch(e) {
       if(e instanceof TabIdRequiredError) {
         console.info(`FlowCrypt cannot start: missing tab_id`);
