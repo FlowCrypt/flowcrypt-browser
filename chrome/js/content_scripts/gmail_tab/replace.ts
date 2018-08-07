@@ -314,8 +314,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
     return $(conversation_root_element).find(this.selector.subject).attr('data-legacy-thread-id') || '';
   }
 
-  private get_message_body_element(message_id: string) { // todo - test
-    return $(this.selector.message_outer).filter('[data-legacy-message-id="' + message_id + '"]').find(this.selector.message_inner);
+  private get_message_body_element(message_id: string) {
+    return $(this.selector.message_outer).filter(`[data-legacy-message-id="${message_id}"]`).find(this.selector.message_inner);
   }
 
   private wrap_message_body_element = (html_content: string) => {

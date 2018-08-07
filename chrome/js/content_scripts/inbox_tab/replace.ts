@@ -106,7 +106,6 @@ class InboxElementReplacer implements WebmailElementReplacer {
         } else if (treat_as === 'message') {
           message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block');
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          // todo - make sure attachment_meta.id present
           tool.api.gmail.attachment_get(this.account_email, message_id, a.id!).then(downloaded_attachment => {
             if (tool.value(tool.crypto.armor.headers('null').begin).in(downloaded_attachment.data)) {
               message_element.append(this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing));
