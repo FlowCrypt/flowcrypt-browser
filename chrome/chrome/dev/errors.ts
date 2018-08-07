@@ -10,6 +10,9 @@ tool.catch.try(async () => {
     $('.pre').html(errors);
   }
 
-  $('.clear').click(() => Store.remove(null, ['errors']).then(() => window.location.reload()));
+  $('.clear').click(tool.ui.event.handle(async () => {
+    await Store.remove(null, ['errors']);
+    window.location.reload();
+  }));
 
 })();

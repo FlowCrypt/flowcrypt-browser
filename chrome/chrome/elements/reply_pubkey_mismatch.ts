@@ -49,8 +49,8 @@ tool.catch.try(async () => {
   }
 
   // send
-  $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
-    $('#send_btn').text('sending..');
+  $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
+    $(target).text('sending..');
     let message = await tool.api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
     for (let k of Object.keys(additional_message_headers)) {
       message.headers[k] = additional_message_headers[k];
@@ -61,15 +61,15 @@ tool.catch.try(async () => {
       $('#compose').replaceWith('Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if(tool.api.error.is_auth_popup_needed(e)) {
-        $('#send_btn').text('send response');
+        $(target).text('send response');
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         alert('Google account permission needed, please re-connect account and try again.');
       } else if(tool.api.error.is_network_error(e)) {
-        $('#send_btn').text('send response');
+        $(target).text('send response');
         alert('No internet connection, please try again.');
       } else {
         tool.catch.handle_exception(e);
-        $('#send_btn').text('send response');
+        $(target).text('send response');
         alert('There was an error sending, please try again.');
       }
     }

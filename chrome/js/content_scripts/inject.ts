@@ -50,7 +50,7 @@ class Injector {
         } else {
           container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name));
         }
-        container.find(this.S.selector('compose_button')).click(tool.catch.try(() => this.open_compose_window()));
+        container.find(this.S.selector('compose_button')).click(tool.ui.event.handle(() => this.open_compose_window()));
       }
     }
   }

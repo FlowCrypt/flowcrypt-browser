@@ -134,7 +134,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         }
         if (button) {
           contenteditable.replaceWith(button);
-          $(`a.open_draft_${button_href_id}`).click(tool.catch.try(() => {
+          $(`a.open_draft_${button_href_id}`).click(tool.ui.event.handle(() => {
             $('div.new_message').remove();
             $('body').append(this.factory.embedded_compose(button_href_id));
           }));
@@ -164,7 +164,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.catch.try(() => {
+            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => {
               tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
@@ -458,7 +458,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           }
           if (everyone_uses_encryption) {
             if (!standard_compose_window.find('.recipients_use_encryption').length) {
-              standard_compose_window.find('div.az9 span[email]').first().parents('form').first().prepend(this.factory.button_recipients_use_encryption('gmail')).find('a').click(this.injector.open_compose_window);
+              standard_compose_window.find('div.az9 span[email]').first().parents('form').first().prepend(this.factory.button_recipients_use_encryption('gmail')).find('a').click(tool.ui.event.handle(() => this.injector.open_compose_window()));
             }
           } else {
             standard_compose_window.find('.recipients_use_encryption').remove();

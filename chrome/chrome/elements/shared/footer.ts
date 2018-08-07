@@ -24,7 +24,7 @@ tool.catch.try(async () => {
     $('.user_subscribed').css('display', 'block');
   } else {
     $('.user_free').css('display', 'block');
-    $('.action_upgrade').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+    $('.action_upgrade').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
       let newly_active = await tool.browser.message.send(parent_tab_id, 'subscribe', {});
       if (newly_active) {
         $('.user_subscribed').css('display', 'block');
@@ -38,8 +38,6 @@ tool.catch.try(async () => {
     tool.browser.message.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
   }));
 
-  $('.action_cancel').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-    tool.browser.message.send(parent_tab_id, 'close_dialog');
-  }));
+  $('.action_cancel').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
 
 })();

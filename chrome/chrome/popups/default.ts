@@ -11,21 +11,21 @@ tool.catch.try(async () => {
 
   let choose_email_or_settings_popup = (active_account_email:string|null=null) => {
     $('#email_or_settings').css('display', 'block');
-    $('.action_open_settings').click(() => {
+    $('.action_open_settings').click(tool.ui.event.handle(() => {
       if (active_account_email) {
         redirect_to_initial_setup(active_account_email);
       } else {
         window.location.href = 'select_account.htm?action=settings';
       }
-    });
-    $('.action_send_email').click(async () => {
+    }));
+    $('.action_send_email').click(tool.ui.event.handle(async () => {
       if (active_account_email) {
         await tool.browser.message.send_await(null, 'settings', { account_email: active_account_email, page: '/chrome/elements/compose.htm' });
         window.close();
       } else {
         window.location.href = 'select_account.htm?action=new_message';
       }
-    });
+    }));
   };
 
   let set_up_accont_prompt_popup = (active_account_email: string) => {

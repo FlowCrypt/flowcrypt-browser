@@ -32,9 +32,7 @@ tool.catch.try(async () => {
 
   let stripe_credit_card_entered_handler: BrowserMessageHandler = (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').html('').css('display', 'none');
-    flowcrypt_account.subscribe(
-      account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token,
-    ).then(handle_successful_upgrade, handle_error_response);
+    flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token).then(handle_successful_upgrade, handle_error_response);
   };
 
   let render_status = (content: string) => {
@@ -101,29 +99,23 @@ tool.catch.try(async () => {
   }
   $('#content').css('display', 'block');
 
-  $('.action_show_stripe').click(() => {
+  $('.action_show_stripe').click(tool.ui.event.handle(() => {
     $('.status').text('You are subscribing to a $5 monthly payment for FlowCrypt Advanced.');
     $('.hide_on_checkout').css('display', 'none');
     $('.stripe_checkout').css('display', 'block');
-  });
-
-  $('.action_contact_page').click(() => {
-    tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email});
-  });
-
-  $('.action_close').click(close_dialog);
-
-  $('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), self => {
-    button_spin(self);
-    flowcrypt_account.subscribe(
-      account_email,
-      flowcrypt_account.PRODUCTS.trial,
-      null,
-    ).then(handle_successful_upgrade, handle_error_response);
   }));
 
-  $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), self => {
-    button_spin(self);
+  $('.action_contact_page').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email})));
+
+  $('.action_close').click(tool.ui.event.handle(close_dialog));
+
+  $('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), target => {
+    button_spin(target);
+    flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.trial, null).then(handle_successful_upgrade, handle_error_response);
+  }));
+
+  $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), target => {
+    button_spin(target);
     flowcrypt_account.register_new_device(account_email).then(close_dialog, handle_error_response);
   }));
 
@@ -154,12 +146,12 @@ tool.catch.try(async () => {
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
         $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
-        $('.action_close').click(() => {
+        $('.action_close').click(tool.ui.event.handle(() => {
           if (url_params.subscribe_result_tab_id) {
             tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
           }
           close_dialog();
-        });
+        }));
       }
     } else {
       $('h1').text('New Device');

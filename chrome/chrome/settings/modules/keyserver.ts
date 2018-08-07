@@ -139,7 +139,7 @@ tool.catch.try(async () => {
       $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>');
       tool.catch.handle_exception(e);
     }
-    $('a.reload').click(() =>  window.location.reload());
+    $('a.reload').click(tool.ui.event.handle(() =>  window.location.reload()));
   }
 
 })();

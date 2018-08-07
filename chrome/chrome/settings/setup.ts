@@ -271,12 +271,12 @@ tool.catch.try(async () => {
     }
   };
 
-  $('.action_show_help').click(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm'));
+  $('.action_show_help').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm')));
 
-  $('.back').off().click(() => {
+  $('.back').off().click(tool.ui.event.handle(() => {
     $('h1').text('Set Up');
     display_block('step_1_easy_or_manual');
-  });
+  }));
 
   $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
     let passphrase = $('#recovery_pasword').val() as string; // text input
@@ -327,7 +327,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_4_more_to_recover .action_recover_remaining').click(async () => {
+  $('#step_4_more_to_recover .action_recover_remaining').click(tool.ui.event.handle(async () => {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
     let stored_keys = await Store.keys_get(account_email);
@@ -337,16 +337,16 @@ tool.catch.try(async () => {
     if (action !== 'add_key') {
       $('#step_2_recovery .recovery_status').html('You successfully recovered ' + got + ' of ' + bups + ' backups. There ' + left + ' left.<br><br>Try a different pass phrase to unlock all backups.');
       $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
-      $('#step_2_recovery .skip_recover_remaining').click(() => {
+      $('#step_2_recovery .skip_recover_remaining').click(tool.ui.event.handle(() => {
         window.location.href = tool.env.url_create('index.htm', { account_email });
-      });
+      }));
     } else {
       $('#step_2_recovery .recovery_status').html('There ' + left + ' left to recover.<br><br>Try different pass phrases to unlock all backups.');
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
-  });
+  }));
 
-  $('.action_skip_recovery').click(() => {
+  $('.action_skip_recovery').click(tool.ui.event.handle(() => {
     if (confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
       recovered_keys = [];
       recovered_key_matching_passphrases = [];
@@ -354,40 +354,40 @@ tool.catch.try(async () => {
       recovered_keys_successful_longids = [];
       display_block('step_1_easy_or_manual');
     }
-  });
+  }));
 
-  $('.action_send').click(() => {
+  $('.action_send').click(tool.ui.event.handle(() => {
     window.location.href = tool.env.url_create('index.htm', { account_email, page: '/chrome/elements/compose.htm' });
-  });
+  }));
 
-  $('.action_account_settings').click(() => {
+  $('.action_account_settings').click(tool.ui.event.handle(() => {
     window.location.href = tool.env.url_create('index.htm', { account_email });
-  });
+  }));
 
-  $('.action_go_auth_denied').click(() => {
+  $('.action_go_auth_denied').click(tool.ui.event.handle(() => {
     window.location.href = tool.env.url_create('index.htm', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
-  });
+  }));
 
-  $('.input_submit_key').click(function() {
-    let input_submit_all = $(this).closest('.manual').find('.input_submit_all').first();
-    if ($(this).prop('checked')) {
+  $('.input_submit_key').click(tool.ui.event.handle(target => {
+    let input_submit_all = $(target).closest('.manual').find('.input_submit_all').first();
+    if ($(target).prop('checked')) {
       if (input_submit_all.closest('div.line').css('visibility') === 'visible') {
         input_submit_all.prop({ checked: true, disabled: false });
       }
     } else {
       input_submit_all.prop({ checked: false, disabled: true });
     }
-  });
+  }));
 
-  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(() => {
+  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(tool.ui.event.handle(() => {
     display_block('step_2a_manual_create');
-  });
+  }));
 
-  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(() => {
+  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(tool.ui.event.handle(() => {
     display_block('step_2b_manual_enter');
-  });
+  }));
 
-  $('#step_2b_manual_enter .action_save_private').click(async () => {
+  $('#step_2b_manual_enter .action_save_private').click(tool.ui.event.handle(async () => {
     let options = {
       full_name: '',
       passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
@@ -418,7 +418,7 @@ tool.catch.try(async () => {
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
-  });
+  }));
 
   let render_compatibility_fix_block_and_finalize_setup = async (original_prv: OpenPGP.key.Key, options: SetupOptions) => {
     display_block('step_3_compatibility_fix');
@@ -491,23 +491,23 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_2a_manual_create .action_show_advanced_create_settings').click(function() {
+  $('#step_2a_manual_create .action_show_advanced_create_settings').click(tool.ui.event.handle(target => {
     let advanced_create_settings = $('#step_2a_manual_create .advanced_create_settings');
     let container = $('#step_2a_manual_create .advanced_create_settings_container');
     if(advanced_create_settings.is(':visible')) {
       advanced_create_settings.hide('fast');
-      $(this).find('span').text('Show Advanced Settings');
+      $(target).find('span').text('Show Advanced Settings');
       container.css('width', '360px');
     } else {
       advanced_create_settings.show('fast');
-      $(this).find('span').text('Hide Advanced Settings');
+      $(target).find('span').text('Hide Advanced Settings');
       container.css('width', 'auto');
     }
-  });
+  }));
 
-  $('#step_4_close .action_close').click(() => { // only rendered if action=add_key which means parent_tab_id was used
+  $('#step_4_close .action_close').click(tool.ui.event.handle(() => { // only rendered if action=add_key which means parent_tab_id was used
     tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email, advanced: true})});
-  });
+  }));
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {

@@ -1081,7 +1081,7 @@ class Composer {
   }
 
   private remove_receiver = (element: HTMLElement) => {
-    this.recipients_missing_my_key = tool.arr.without_value(this.recipients_missing_my_key, $(this).parent().text());
+    this.recipients_missing_my_key = tool.arr.without_value(this.recipients_missing_my_key, $(element).parent().text());
     $(element).parent().remove();
     this.resize_input_to();
     this.show_hide_password_or_pubkey_container_and_color_send_button();

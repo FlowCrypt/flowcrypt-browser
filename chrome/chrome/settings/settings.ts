@@ -234,20 +234,20 @@ class Settings {
         '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
         '</div>',
       ].join('\n'));
-      container.find('select.input_fix_expire_years').change(function() {
-        if ($(this).val()) {
+      container.find('select.input_fix_expire_years').change(tool.ui.event.handle(target => {
+        if ($(target).val()) {
           (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
         } else {
           (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
         }
-      });
-      container.find('.action_fix_compatibility').click(async function() {
+      }));
+      container.find('.action_fix_compatibility').click(tool.ui.event.handle(async target => {
         // @ts-ignore - TS doesn't like $.parents($(blah)). jQuery doesn't seem to mind - investigate
-        let expire_years = $(this).parents(container).find('select.input_fix_expire_years').val() as string;
+        let expire_years = $(target).parents(container).find('select.input_fix_expire_years').val() as string;
         if (!expire_years) {
           alert('Please select key expiration');
         } else {
-          $(this).off().html(tool.ui.spinner('white'));
+          $(target).off().html(tool.ui.spinner('white'));
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await tool.crypto.key.decrypt(original_prv, [passphrase]);
           let reformatted;
@@ -264,10 +264,10 @@ class Settings {
             resolve(reformatted.key);
           } else {
             alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            $(this).replaceWith(tool.e('a', {href: back_url, text: 'Go back and try something else'}));
+            $(target).replaceWith(tool.e('a', {href: back_url, text: 'Go back and try something else'}));
           }
         }
-      });
+      }));
     });
   }
 

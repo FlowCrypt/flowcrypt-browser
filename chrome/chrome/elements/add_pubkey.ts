@@ -23,9 +23,9 @@ tool.catch.try(async () => {
     $('select.copy_from_email').append('<option value="' + contact.email + '">' + contact.email + '</option>');
   }
 
-  $('select.copy_from_email').change(async function() {
-    if ($(this).val()) {
-      let [contact] = await Store.db_contact_get(null, [$(this).val() as string]);
+  $('select.copy_from_email').change(tool.ui.event.handle(async target => {
+    if ($(target).val()) {
+      let [contact] = await Store.db_contact_get(null, [$(target).val() as string]);
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
@@ -34,9 +34,9 @@ tool.catch.try(async () => {
     } else {
       $('.pubkey').val('').prop('disabled', false);
     }
-  });
+  }));
 
-  $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
+  $('.action_ok').click(tool.ui.event.handle(async () => {
     try {
       let key_import_ui = new KeyImportUI({check_encryption: true});
       let normalized = await key_import_ui.check_pub(tool.crypto.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
@@ -53,7 +53,7 @@ tool.catch.try(async () => {
   }));
 
   if (url_params.placement !== 'settings') {
-    $('.action_settings').click(tool.ui.event.prevent(tool.ui.event.double(), () => tool.browser.message.send(null, 'settings', {
+    $('.action_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',
       account_email,
@@ -62,6 +62,6 @@ tool.catch.try(async () => {
     $('#content').addClass('inside_compose');
   }
 
-  $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), close_dialog));
+  $('.action_close').click(tool.ui.event.handle(close_dialog));
 
 })();

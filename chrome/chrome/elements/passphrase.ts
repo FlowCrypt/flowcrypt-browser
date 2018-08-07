@@ -56,12 +56,12 @@ tool.catch.try(async () => {
     $('#passphrase').focus();
   };
 
-  $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), () => {
+  $('.action_close').click(tool.ui.event.handle(() => {
     tool.browser.message.send('broadcast', 'passphrase_entry', {entered: false});
     tool.browser.message.send(parent_tab_id, 'close_dialog');
   }));
 
-  $('.action_ok').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
+  $('.action_ok').click(tool.ui.event.handle(async () => {
     let pass = $('#passphrase').val() as string; // it's a text input
     let storage_type: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let at_least_one_matched = false;

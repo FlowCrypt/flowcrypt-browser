@@ -22,13 +22,13 @@ tool.catch.try(async () => {
 
     $('.email').text(account_email);
 
-    $('.action_allow_outlook').change(function() {
-      Store.set(null, {'dev_outlook_allow': $(this).prop('checked')}).then(() => window.location.reload());
-    });
+    $('.action_allow_outlook').change(tool.ui.event.handle(async target => {
+      await Store.set(null, {'dev_outlook_allow': $(target).prop('checked')}).then(() => window.location.reload());
+    }));
 
-    $('.action_open_decrypt').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm'));
+    $('.action_open_decrypt').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm')));
 
-    $('.action_open_decrypt_ignore_mdc').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm'));
+    $('.action_open_decrypt_ignore_mdc').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
 
     $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(tool.catch.handle_promise_error)));
 
@@ -66,30 +66,30 @@ tool.catch.try(async () => {
       }
     }));
 
-    $('.action_attest_log').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&')));
+    $('.action_attest_log').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
 
-    $('.action_email_client').click(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})}));
+    $('.action_email_client').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})})));
 
-    $('.action_flush_attest_info').click(async () => {
+    $('.action_flush_attest_info').click(tool.ui.event.handle(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
       alert('Internal attest info flushed');
       window.location.reload();
-    });
+    }));
 
-    $('.action_reset_managing_auth').click(async () => {
+    $('.action_reset_managing_auth').click(tool.ui.event.handle(async () => {
       await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified']);
       tool.browser.message.send(parent_tab_id, 'reload');
-    });
+    }));
 
-    $('.action_make_google_auth_token_unusable').click(async () => {
+    $('.action_make_google_auth_token_unusable').click(tool.ui.event.handle(async () => {
       await Store.set(account_email, {google_token_access: 'flowcrypt_test_bad_access_token'});
       tool.browser.message.send(parent_tab_id, 'reload');
-    });
+    }));
 
-    $('.action_make_google_refresh_token_unusable').click(async () => {
+    $('.action_make_google_refresh_token_unusable').click(tool.ui.event.handle(async () => {
       await Store.set(account_email, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'});
       tool.browser.message.send(parent_tab_id, 'reload');
-    });
+    }));
 
     let collect_info_and_download_backup_file = async (account_email: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';

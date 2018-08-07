@@ -77,7 +77,7 @@ tool.catch.try(async () => {
     }
   };
 
-  $('.action_add_contact').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+  $('.action_add_contact').click(tool.ui.event.handle(async target => {
     if (pubkeys.length > 1) {
       let contacts: Contact[] = [];
       for (let pubkey of pubkeys) {
@@ -87,13 +87,13 @@ tool.catch.try(async () => {
         }
       }
       await Store.db_contact_save(null, contacts);
-      $(self).replaceWith('<span class="good">added public keys</span>');
+      $(target).replaceWith('<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else {
       if (tool.str.is_email_valid($('.input_email').val() as string)) { // text input
         let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
         await Store.db_contact_save(null, contact);
-        $(self).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
+        $(target).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
         $('.input_email').remove();
       } else {
         alert('This email is invalid, please check for typos. Not added.');
@@ -104,11 +104,11 @@ tool.catch.try(async () => {
 
   $('.input_email').keyup(() => set_button_text());
 
-  $('.action_show_full').click(function() {
-    $(this).css('display', 'none');
+  $('.action_show_full').click(tool.ui.event.handle(target => {
+    $(target).css('display', 'none');
     $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
     send_resize_message();
-  });
+  }));
 
   await render();
   send_resize_message();

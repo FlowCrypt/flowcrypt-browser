@@ -138,9 +138,9 @@ tool.catch.try(async () => {
         }
       } catch (e) {
         if (tool.api.error.is_auth_error(e)) {
-          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
         } else if (tool.api.error.is_network_error(e)) {
-          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', render_encrypted_contact_page_status);
+          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(render_encrypted_contact_page_status));
         } else {
           status_container.text('ecp error');
           tool.catch.handle_exception(e);
@@ -163,7 +163,7 @@ tool.catch.try(async () => {
 
     let subscription = await Store.subscription();
     if (subscription.active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(() => Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/account.htm')).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -196,18 +196,17 @@ tool.catch.try(async () => {
       html += '</div>';
     }
     $('.key_list').append(html);
-    $('.action_show_key').click(function() {
+    $('.action_show_key').click(tool.ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
-      Settings.render_sub_page(account_email!, tab_id, $(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
-    });
-    $('.action_remove_key').click(function() {
+      Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+    }));
+    $('.action_remove_key').click(tool.ui.event.handle(async target => {
       // the UI below only gets rendered when account_email is available
-      Promise.all([
-        Store.keys_remove(account_email!, $(this).attr('longid')!),
-        Store.passphrase_save('local', account_email!, $(this).attr('longid')!, undefined),
-        Store.passphrase_save('session', account_email!, $(this).attr('longid')!, undefined),
-      ]).then(() => reload(true));
-    });
+      await Store.keys_remove(account_email!, $(target).attr('longid')!);
+      await Store.passphrase_save('local', account_email!, $(target).attr('longid')!, undefined);
+      await Store.passphrase_save('session', account_email!, $(target).attr('longid')!, undefined);
+      reload(true);
+    }));
   };
 
   let new_google_account_authentication_prompt = async (account_email?: string, omit_read_scope=false) => {
@@ -243,44 +242,44 @@ tool.catch.try(async () => {
 
   $('.action_send_email').click(() => window.open('https://mail.google.com'));
 
-  $('.show_settings_page').click(function() {
-    Settings.render_sub_page(account_email!, tab_id, $(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
-  });
+  $('.show_settings_page').click(tool.ui.event.handle(target => {
+    Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+  }));
 
-  $('.action_go_auth_denied').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm'));
+  $('.action_go_auth_denied').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
 
-  $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), () => new_google_account_authentication_prompt().catch(tool.catch.handle_exception)));
+  $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await new_google_account_authentication_prompt()));
 
-  $('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), () => new_google_account_authentication_prompt(account_email).catch(tool.catch.handle_exception)));
+  $('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await new_google_account_authentication_prompt(account_email)));
 
   // $('.action_microsoft_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
   //   new_microsoft_account_authentication_prompt(account_email);
   // }));
 
-  $('body').click(() => {
+  $('body').click(tool.ui.event.handle(() => {
     $("#alt-accounts").removeClass("active");
     $(".ion-ios-arrow-down").removeClass("up");
     $(".add-account").removeClass("hidden");
-  });
+  }));
 
-  $(".toggle-settings").click(() => {
+  $(".toggle-settings").click(tool.ui.event.handle(() => {
     $("#settings").toggleClass("advanced");
-  });
+  }));
 
-  $(".action-toggle-accounts-menu").click((event) => {
+  $(".action-toggle-accounts-menu").click(tool.ui.event.handle((target, event) => {
     event.stopPropagation();
     $("#alt-accounts").toggleClass("active");
     $(".ion-ios-arrow-down").toggleClass("up");
     $(".add-account").toggleClass("hidden");
-  });
+  }));
 
   Store.account_emails_get().then((account_emails) => {
     for (let email of account_emails) {
       $('#alt-accounts').prepend(menu_account_html(email));
     }
-    $('.action_select_account').click(function() {
-      window.location.href = tool.env.url_create('index.htm', { account_email: $(this).find('.contains_email').text() });
-    });
+    $('.action_select_account').click(tool.ui.event.handle(target => {
+      window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
+    }));
   });
 
   let reload = (advanced=false) => {

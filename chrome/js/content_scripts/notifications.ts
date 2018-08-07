@@ -59,7 +59,7 @@ class Notifications {
       callbacks.subscribe = tool.catch.try(() => tool.browser.message.send(this.tab_id, 'subscribe_dialog'));
     }
     for (let name of Object.keys(callbacks)) {
-      $(`.webmail_notifications a.${name}`).click(tool.catch.try(tool.ui.event.prevent(tool.ui.event.double(), callbacks[name])));
+      $(`.webmail_notifications a.${name}`).click(tool.ui.event.prevent(tool.ui.event.double(), callbacks[name]));
     }
   }
 

@@ -27,15 +27,15 @@ tool.catch.try(async () => {
     }
   }
 
-  function render(obj: RenderableStorage) {
+  const render = (obj: RenderableStorage) => {
     for (let filtered_key of Object.keys(obj)) {
       let del = controls ? ' <span class="bad delete" key="' + obj[filtered_key].key + '" style="cursor: pointer;">[X]</span>' : '';
       $('.pre').append('<div><b>' + filtered_key + del + '</b> ' + tool.str.pretty_print(obj[filtered_key].value) + '</div>');
     }
-    $('.delete').click(function() {
-      chrome.storage.local.remove($(this).attr('key')!, () => window.location.reload()); // we set the attr key above
-    });
-  }
+    $('.delete').click(tool.ui.event.handle(self => {
+      chrome.storage.local.remove($(self).attr('key')!, () => window.location.reload()); // we set the attr key above
+    }));
+  };
 
   chrome.storage.local.get(storage => {
     let real_filter: string;
@@ -58,7 +58,7 @@ tool.catch.try(async () => {
 
   if (controls) {
     $('#controls, #filters').css('display', 'block');
-    $('.save').click(() => {
+    $('.save').click(tool.ui.event.handle(() => {
       try {
         let namespace_selector = $('.namespace');
         let key_selector = $('.key');
@@ -73,7 +73,7 @@ tool.catch.try(async () => {
       } catch (e) {
         $('.error').text(e.name + ':' + e.message);
       }
-    });
+    }));
   }
 
 })();

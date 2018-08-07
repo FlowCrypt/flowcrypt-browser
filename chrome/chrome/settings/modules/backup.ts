@@ -59,52 +59,52 @@ tool.catch.try(async () => {
       if (keys && keys.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
         $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
-        $('.action_go_manual').click(() => {
+        $('.action_go_manual').click(tool.ui.event.handle(() => {
           display_block('step_3_manual');
           $('h1').text('Back up your private key');
-        });
+        }));
       } else if (storage.key_backup_method) {
         if (storage.key_backup_method === 'file') {
           $('.status_summary').text('You have previously backed up your key into a file.');
           $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
-          $('.action_go_manual').click(() => {
+          $('.action_go_manual').click(tool.ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
-          });
+          }));
         } else if (storage.key_backup_method === 'print') {
           $('.status_summary').text('You have previously backed up your key by printing it.');
           $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
-          $('.action_go_manual').click(() => {
+          $('.action_go_manual').click(tool.ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
-          });
+          }));
         } else { // inbox or other methods
           $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
           $('#step_0_status .container').html('<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
-          $('.action_go_manual').click(() => {
+          $('.action_go_manual').click(tool.ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
-          });
+          }));
         }
       } else {
         if (storage.setup_simple) {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
           $('#step_0_status .container').html('<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
-          $('.action_go_backup').click(() => {
+          $('.action_go_backup').click(tool.ui.event.handle(() => {
             display_block('step_1_password');
             $('h1').text('Set Backup Pass Phrase');
-          });
-          $('.action_go_manual').click(() => {
+          }));
+          $('.action_go_manual').click(tool.ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
-          });
+          }));
         } else {
           $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
           $('#step_0_status .container').html('<div class="button long green action_go_manual">BACK UP MY KEY</div>');
-          $('.action_go_manual').click(() => {
+          $('.action_go_manual').click(tool.ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
-          });
+          }));
         }
       }
     } else { // gmail read permission not granted - cannot check for backups
@@ -112,41 +112,39 @@ tool.catch.try(async () => {
       $('.status_summary').html('FlowCrypt cannot check your backups.');
       let pemissions_button_if_gmail = email_provider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
       $('#step_0_status .container').html(pemissions_button_if_gmail + '<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>');
-      $('.action_go_manual').click(() => {
+      $('.action_go_manual').click(tool.ui.event.handle(() => {
         display_block('step_3_manual');
         $('h1').text('Back up your private key');
-      });
-      $('.action_go_auth_denied').click(() => {
-        tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
-      });
+      }));
+      $('.action_go_auth_denied').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/auth_denied.htm'})));
     }
   };
 
-  $('.action_password').click(function() {
-    if ($(this).hasClass('green')) {
+  $('.action_password').click(tool.ui.event.handle(target => {
+    if ($(target).hasClass('green')) {
       display_block('step_2_confirm');
     } else {
       alert('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
-  });
+  }));
 
-  $('.action_reset_password').click(() => {
+  $('.action_reset_password').click(tool.ui.event.handle(() => {
     $('#password').val('');
     $('#password2').val('');
     display_block('step_1_password');
     Settings.render_password_strength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
-  });
+  }));
 
-  $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+  $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (target) => {
     let new_passphrase = $('#password').val() as string; // text input
     if (new_passphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');
       $('#password2').val('');
       $('#password2').focus();
     } else {
-      let btn_text = $(self).text();
-      $(self).html(tool.ui.spinner('white'));
+      let btn_text = $(target).text();
+      $(target).html(tool.ui.spinner('white'));
       let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
@@ -165,7 +163,7 @@ tool.catch.try(async () => {
           tool.catch.handle_exception(e);
           alert(`Error happened, please try again (${e.message})`);
         }
-        $(self).text(btn_text);
+        $(target).text(btn_text);
         return;
       }
       await write_backup_done_and_render(false, 'inbox');
@@ -258,7 +256,7 @@ tool.catch.try(async () => {
     }
   };
 
-  $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+  $('.action_manual_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async (target) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
@@ -320,21 +318,21 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_3_manual input[name=input_backup_choice]').click(function() {
-    if ($(this).val() === 'inbox') {
+  $('#step_3_manual input[name=input_backup_choice]').click(tool.ui.event.handle(target => {
+    if ($(target).val() === 'inbox') {
       $('.action_manual_backup').text('back up as email');
       $('.action_manual_backup').removeClass('red').addClass('green');
-    } else if ($(this).val() === 'file') {
+    } else if ($(target).val() === 'file') {
       $('.action_manual_backup').text('back up as a file');
       $('.action_manual_backup').removeClass('red').addClass('green');
-    } else if ($(this).val() === 'print') {
+    } else if ($(target).val() === 'print') {
       $('.action_manual_backup').text('back up on paper');
       $('.action_manual_backup').removeClass('red').addClass('green');
     } else {
       $('.action_manual_backup').text('try my luck');
       $('.action_manual_backup').removeClass('green').addClass('red');
     }
-  });
+  }));
 
   if (url_params.action === 'setup') {
     $('.back').css('display', 'none');

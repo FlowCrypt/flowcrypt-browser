@@ -80,7 +80,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
             }, () => $(new_pgp_messages).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_messages).prepend(self.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.catch.try(() => {
+            $(new_pgp_messages).prepend(self.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => {
               tool.browser.message.send(null, 'settings', { account_email: self.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }

@@ -41,7 +41,7 @@ tool.catch.try(async () => {
     display_block('step_1_password');
   }
 
-  $('.action_enter').click(async () => {
+  $('.action_enter').click(tool.ui.event.handle(async () => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     if(await tool.crypto.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
       original_passphrase = $('#original_password').val() as string; // text input
@@ -50,25 +50,25 @@ tool.catch.try(async () => {
       alert('Pass phrase did not match, please try again.');
       $('#original_password').val('').focus();
     }
-  });
+  }));
 
   $('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
 
-  $('.action_password').click(function() {
-    if ($(this).hasClass('green')) {
+  $('.action_password').click(tool.ui.event.handle(target => {
+    if ($(target).hasClass('green')) {
       display_block('step_2_confirm');
     } else {
       alert('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
-  });
+  }));
 
-  $('.action_reset_password').click(() => {
+  $('.action_reset_password').click(tool.ui.event.handle(() => {
     $('#password').val('');
     $('#password2').val('');
     display_block('step_1_password');
     Settings.render_password_strength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
-  });
+  }));
 
   $('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
     let new_passphrase = $('#password').val() as string; // text input

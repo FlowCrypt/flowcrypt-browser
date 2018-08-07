@@ -28,7 +28,7 @@ tool.catch.try(async () => {
     await process_attest(passphrase);
   } else {
     $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
-    $('.action_passphrase').click(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest'}));
+    $('.action_passphrase').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest'})));
     let tab_id = await tool.browser.message.required_tab_id();
     tool.browser.message.listen({
       passphrase_entry: (message: {entered: boolean}, sender, respond) => {

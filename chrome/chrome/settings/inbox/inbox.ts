@@ -82,7 +82,7 @@ tool.catch.try(async () => {
             }
             thread_item.find('.loading').text('');
             thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
-            thread_item.addClass('loaded').click(() => render_thread(thread_id).catch(tool.catch.handle_exception));
+            thread_item.addClass('loaded').click(tool.ui.event.handle(() => render_thread(thread_id).catch(tool.catch.handle_exception)));
           }, () => $('.threads #' + thread_list_item_id(thread_id)).find('.loading').text('Failed to load'));
         }
       }, () => $('body').text('Connection error trying to get list of messages'));

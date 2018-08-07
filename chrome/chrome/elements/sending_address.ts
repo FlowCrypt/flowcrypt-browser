@@ -19,21 +19,21 @@ tool.catch.try(async () => {
 
   container.html(addresses.map(address_to_html_radio).join(''));
   container.find('input').first().prop('checked', true);
-  container.find('input').click(function() {
-    let chosen_sending_address = $(this).val() as string;
+  container.find('input').click(tool.ui.event.handle(target => {
+    let chosen_sending_address = $(target).val() as string;
     if (chosen_sending_address !== addresses[0]) {
       let ordered_addresses = tool.arr.unique([chosen_sending_address].concat(storage.addresses || []));
       Store.set(account_email, {addresses: ordered_addresses}).then(() => window.location.reload()).catch(tool.catch.handle_promise_error);
     }
-  });
-
-  $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), (self, id) => {
-    $(self).html(tool.ui.spinner('green'));
-    Settings.fetch_account_aliases_from_gmail(account_email).then(addresses => {
-      Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) }).then(() => window.location.reload());
-    });
   }));
 
-  $('.action_close').click(tool.ui.event.prevent(tool.ui.event.double(), () => tool.browser.message.send(parent_tab_id, 'close_dialog')));
+  $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async (target, id) => {
+    $(target).html(tool.ui.spinner('green'));
+    let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
+    await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
+    window.location.reload();
+  }));
+
+  $('.action_close').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
 
 })();

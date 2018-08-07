@@ -1306,19 +1306,19 @@ let tool = {
           passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
           passphrase_input.attr('type', 'password');
         }
-        $('#toggle_' + id).click(function() {
+        $('#toggle_' + id).click(tool.ui.event.handle(target => {
           if (passphrase_input.attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
-            $(this).html(button_hide);
+            $(target).html(button_hide);
             // noinspection JSIgnoredPromiseFromCall
             Store.set(null, { hide_pass_phrases: false });
           } else {
             $('#' + id).attr('type', 'password');
-            $(this).html(button_show);
+            $(target).html(button_show);
             // noinspection JSIgnoredPromiseFromCall
             Store.set(null, { hide_pass_phrases: true });
           }
-        });
+        }));
       }
     },
     enter: (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
@@ -1383,11 +1383,11 @@ let tool = {
       double: (): PreventableEvent => ({ name: 'double', id: tool.str.random(10) }),
       parallel: (): PreventableEvent => ({ name: 'parallel', id: tool.str.random(10) }),
       spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: tool.str.random(10) }),
-      handle: (cb: (e: HTMLElement) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
-        return function() {
+      handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+        return function(event: JQuery.Event<HTMLElement, null>) {
           let r;
           try {
-            r = cb(this);
+            r = cb(this, event);
             if(typeof r === 'object' && typeof r.catch === 'function') {
               r.catch(e => tool.ui.event.__dispatch_err(e, err_handler));
             }

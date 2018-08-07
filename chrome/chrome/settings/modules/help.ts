@@ -12,7 +12,7 @@ tool.catch.try(async () => {
     $('#input_email').val(account_email).attr('disabled', 'disabled');
   }
 
-  $('.action_send_feedback').click(async function() {
+  $('.action_send_feedback').click(tool.ui.event.handle(async target => {
     let my_email = account_email;
     if(!my_email) {
       if(tool.str.is_email_valid($('#input_email').val() as string)) {
@@ -22,9 +22,9 @@ tool.catch.try(async () => {
         return;
       }
     }
-    let original_button_text = $(this).text();
+    let original_button_text = $(target).text();
     let button = this;
-    $(this).html(tool.ui.spinner('white'));
+    $(target).html(tool.ui.spinner('white'));
     await tool.ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + tool.env.browser().name +  ' ' +  tool.catch.version();
     try {
@@ -44,6 +44,6 @@ tool.catch.try(async () => {
       $(button).text(original_button_text);
       alert('There was an error sending message. Our direct email is human@flowcrypt.com');
     }
-  });
+  }));
 
 })();

@@ -30,7 +30,7 @@ tool.catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
-      $('#page_back_button').click(() => render_contact_list());
+      $('#page_back_button').click(tool.ui.event.handle(() => render_contact_list()));
     }));
 
     $('table#emails').html('');
@@ -56,7 +56,7 @@ tool.catch.try(async () => {
       $('#view_contact .key_fingerprint').text(contact!.fingerprint!); // should exist - from list of contacts && should have pgp - filtered
       $('#view_contact .key_words').text(contact!.keywords!); // should exist - from list of contacts && should have pgp - filtered
       $('#view_contact').css('display', 'block');
-      $('#page_back_button').click(render_contact_list);
+      $('#page_back_button').click(tool.ui.event.handle(() => render_contact_list()));
     }));
 
     $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
@@ -65,7 +65,7 @@ tool.catch.try(async () => {
       $('h1').html('<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + email + '&nbsp;&nbsp;&nbsp;&nbsp;(edit)');
       $('#edit_contact').css('display', 'block');
       $('#edit_contact .input_pubkey').val('').attr('email', email);
-      $('#page_back_button').click(() => render_contact_list());
+      $('#page_back_button').click(tool.ui.event.handle(() => render_contact_list()));
     }));
 
     $('#edit_contact .action_save_edited_pubkey').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
@@ -89,7 +89,7 @@ tool.catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
-      $('#page_back_button').click(() => render_contact_list());
+      $('#page_back_button').click(tool.ui.event.handle(() => render_contact_list()));
     }));
 
     $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {

@@ -88,7 +88,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  S.cached('action_close').click(() =>tool.browser.message.send(parent_tab_id, 'close_page'));
+  S.cached('action_close').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
 
   let find_available_alias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
@@ -113,7 +113,7 @@ tool.catch.try(async () => {
   } catch (e) {
     if (e.internal === 'auth') {
       S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
-      S.now('subscribe').click(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+      S.now('subscribe').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
     }
