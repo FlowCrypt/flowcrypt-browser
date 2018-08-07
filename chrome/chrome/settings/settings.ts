@@ -58,7 +58,7 @@ class Settings {
       storage.attests_processed = [];
     }
     await Store.set(account_email, storage);
-    return await tool.browser.message.send(null, 'attest_requested', {account_email});
+    return await tool.browser.message.send_await(null, 'attest_requested', {account_email});
   }
 
   static mark_as_attested = async (account_email: string, attester: string) => {

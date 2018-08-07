@@ -77,7 +77,7 @@ tool.catch.try(async () => {
           notify_murdered();
         }
       }, replace_pgp_elements_interval_ms);
-    });
+    }).catch(tool.catch.handle_promise_error);
   };
 
   let hijack_gmail_hotkeys = () => {

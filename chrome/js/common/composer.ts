@@ -148,8 +148,7 @@ class Composer {
     if (this.app.storage_get_hide_message_password()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    // noinspection JSIgnoredPromiseFromCall
-    this.initialize_compose_box(variables);
+    this.initialize_compose_box(variables).catch(tool.catch.handle_promise_error);
     this.initialize_actions();
   }
 
@@ -655,8 +654,7 @@ class Composer {
         }
         let signed_data = await tool.crypto.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
-        // noinspection JSIgnoredPromiseFromCall
-        this.app.storage_contact_update(recipients, {last_use: Date.now()});
+        this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(tool.catch.handle_promise_error);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
         await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
@@ -1372,7 +1370,7 @@ class Composer {
       }
     }, this.handle_errors(`focus on recipient field`))).children().click(() => false);
     this.resize_input_to();
-    tool.time.wait(() => this.attach ? true : undefined).then(() => this.attach.initialize_attach_dialog('fineuploader', 'fineuploader_button'));
+    this.attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     this.S.cached('input_to').focus();
     if (this.is_reply_box) {
       if (this.supplied_to) {

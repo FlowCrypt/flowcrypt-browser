@@ -7,6 +7,7 @@ tool.catch.try(async () => {
   let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
   let account_email = url_params.account_email as string|undefined;
   let page_url_params = (typeof url_params.page_url_params === 'string') ? JSON.parse(url_params.page_url_params) : null;
+  let account_emails = await Store.account_emails_get();
 
   // let microsoft_auth_attempt = {};
 
@@ -273,15 +274,6 @@ tool.catch.try(async () => {
     $(".add-account").toggleClass("hidden");
   }));
 
-  Store.account_emails_get().then((account_emails) => {
-    for (let email of account_emails) {
-      $('#alt-accounts').prepend(menu_account_html(email));
-    }
-    $('.action_select_account').click(tool.ui.event.handle(target => {
-      window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
-    }));
-  });
-
   let reload = (advanced=false) => {
     if (advanced) {
       window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email, advanced: true });
@@ -310,5 +302,12 @@ tool.catch.try(async () => {
       Settings.render_sub_page(account_email || null, tab_id, url_params.page as string, page_url_params);
     }
   }
+
+  for (let email of account_emails) {
+    $('#alt-accounts').prepend(menu_account_html(email));
+  }
+  $('.action_select_account').click(tool.ui.event.handle(target => {
+    window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
+  }));
 
 })();

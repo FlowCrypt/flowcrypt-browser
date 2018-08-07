@@ -25,7 +25,7 @@ tool.catch.try(async () => {
   } else {
     $('.user_free').css('display', 'block');
     $('.action_upgrade').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
-      let newly_active = await tool.browser.message.send(parent_tab_id, 'subscribe', {});
+      let newly_active = await tool.browser.message.send_await(parent_tab_id, 'subscribe', {});
       if (newly_active) {
         $('.user_subscribed').css('display', 'block');
         $('.user_free').css('display', 'none');

@@ -86,7 +86,7 @@ chrome.runtime.onInstalled.addListener(event => {
       if (respond) {
         respond();
       }
-    });
+    }).catch(tool.catch.handle_promise_error);
   };
 
   let db_operation = (request: BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) => {
@@ -159,4 +159,4 @@ chrome.runtime.onInstalled.addListener(event => {
     await Store.remove(null, ['errors']);
   }
 
-})();
+})().catch(tool.catch.handle_promise_error);

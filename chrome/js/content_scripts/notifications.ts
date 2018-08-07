@@ -15,13 +15,13 @@ class Notifications {
       if (!account_storage.notification_setup_done_seen) {
         Store.set(account_email, { notification_setup_done_seen: true }).then(() => {
           this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
-        });
+        }).catch(tool.catch.handle_promise_error);
       } else if (account_storage.key_backup_prompt !== false && account_storage.setup_simple === true) {
         this.show('<a href="#" class="action_backup">Back up your FlowCrypt key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
           action_backup: () => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/backup.htm' }),
         });
       }
-    });
+    }).catch(tool.catch.handle_promise_error);
   }
 
   show_auth_popup_needed = (account_email: string) => {

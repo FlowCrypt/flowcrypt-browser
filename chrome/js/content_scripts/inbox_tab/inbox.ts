@@ -24,7 +24,7 @@ tool.catch.try(async () => {
           notify_murdered();
         }
       }, replace_pgp_elements_interval_ms);
-    });
+    }).catch(tool.catch.handle_promise_error);
   };
 
   await content_script_setup_if_vacant({

@@ -1310,13 +1310,11 @@ let tool = {
           if (passphrase_input.attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
             $(target).html(button_hide);
-            // noinspection JSIgnoredPromiseFromCall
-            Store.set(null, { hide_pass_phrases: false });
+            Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.handle_promise_error);
           } else {
             $('#' + id).attr('type', 'password');
             $(target).html(button_show);
-            // noinspection JSIgnoredPromiseFromCall
-            Store.set(null, { hide_pass_phrases: true });
+            Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.handle_promise_error);
           }
         }));
       }
@@ -1464,7 +1462,9 @@ let tool = {
   },
   browser: {
     message: {
-      send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.handle_promise_error),
+      send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
+        tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.handle_promise_error);
+      },
       send_await: (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
         let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
         let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
@@ -2935,7 +2935,7 @@ let tool = {
               s.errors.unshift(error_message || String(error));
             }
             Store.set(null, s).catch(console.error);
-          });
+          }).catch(console.error);
         }
       } catch (storage_err) {
         console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
@@ -2995,7 +2995,7 @@ let tool = {
             }
             s.errors.unshift(e.stack || name);
             Store.set(null, s).catch(console.error);
-          });
+          }).catch(console.error);
         } catch (storage_err) {
           console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
         }
@@ -3090,7 +3090,7 @@ let tool = {
                 } else {
                   setTimeout(figure_out_flowcrypt_runtime, 200);
                 }
-              });
+              }).catch(tool.catch.handle_promise_error);
             }
           }
         };

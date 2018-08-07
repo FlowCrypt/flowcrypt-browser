@@ -58,7 +58,7 @@ tool.catch.try(async () => {
 
   if (controls) {
     $('#controls, #filters').css('display', 'block');
-    $('.save').click(tool.ui.event.handle(() => {
+    $('.save').click(tool.ui.event.handle(async () => {
       try {
         let namespace_selector = $('.namespace');
         let key_selector = $('.key');
@@ -68,7 +68,8 @@ tool.catch.try(async () => {
           let storage_update: BaseStore = {};
           storage_update[key_selector.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
           let account_email = namespace_selector.val() === 'global' ? null : decodeURIComponent(namespace_selector.val() as string); // it's a text input
-          Store.set(account_email, storage_update).then(() => window.location.reload());
+          await Store.set(account_email, storage_update);
+          window.location.reload();
         }
       } catch (e) {
         $('.error').text(e.name + ':' + e.message);

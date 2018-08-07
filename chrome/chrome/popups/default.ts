@@ -11,9 +11,9 @@ tool.catch.try(async () => {
 
   let choose_email_or_settings_popup = (active_account_email:string|null=null) => {
     $('#email_or_settings').css('display', 'block');
-    $('.action_open_settings').click(tool.ui.event.handle(() => {
+    $('.action_open_settings').click(tool.ui.event.handle(async () => {
       if (active_account_email) {
-        redirect_to_initial_setup(active_account_email);
+        await redirect_to_initial_setup(active_account_email);
       } else {
         window.location.href = 'select_account.htm?action=settings';
       }
@@ -34,7 +34,7 @@ tool.catch.try(async () => {
     $('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(tool.catch.handle_promise_error)));
   };
 
-  let active_tab = await tool.browser.message.send(null, 'get_active_tab_info', {});
+  let active_tab = await tool.browser.message.send_await(null, 'get_active_tab_info', {});
   if (active_tab && active_tab.account_email !== null) {
     let {setup_done} = await Store.get_account(active_tab.account_email, ['setup_done']);
     if (setup_done) {

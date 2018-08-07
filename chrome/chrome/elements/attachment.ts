@@ -74,7 +74,7 @@ tool.catch.try(async () => {
           clearInterval(passphrase_interval);
           $('#download').click();
         }
-      });
+      }).catch(tool.catch.handle_promise_error);
     }
   };
 

@@ -109,7 +109,6 @@ tool.catch.try(async () => {
 
   };
 
-  // noinspection JSIgnoredPromiseFromCall
-  render_contact_list();
+  await render_contact_list();
 
 })();

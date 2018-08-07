@@ -25,4 +25,4 @@
     await tool.time.sleep(50);
   }
 
-})();
+})().catch(console.error);

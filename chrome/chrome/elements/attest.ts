@@ -18,7 +18,7 @@ tool.catch.try(async () => {
   let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
       $('.status').html('Verifying..' + tool.ui.spinner('green'));
-      let attestation = await tool.browser.message.send(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
+      let attestation = await tool.browser.message.send_await(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
       let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
       $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
     }
@@ -33,7 +33,7 @@ tool.catch.try(async () => {
     tool.browser.message.listen({
       passphrase_entry: (message: {entered: boolean}, sender, respond) => {
         if (message.entered) {
-          Store.passphrase_get(account_email, primary_ki.longid).then(pp => process_attest(pp).catch(tool.catch.handle_promise_error));
+          Store.passphrase_get(account_email, primary_ki.longid).then(pp => process_attest(pp).catch(tool.catch.handle_promise_error)).catch(tool.catch.handle_promise_error);
         }
       },
     }, tab_id);
