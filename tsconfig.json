@@ -9,5 +9,9 @@
   },
   "include": [
     "chrome/**/*.ts"
-  ]
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ],
 }
