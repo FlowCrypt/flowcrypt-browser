@@ -114,15 +114,15 @@ class FlowCryptAccount {
       return null;
     }
     let messages = await tool.api.gmail.messages_get(account_email, response.messages.map(m => m.id), 'full');
-    for (let gmail_message_object of Object.values(messages)) {
-      if ((gmail_message_object as any).payload.mimeType === 'text/plain' && (gmail_message_object as any).payload.body.size > 0) {
-        let token = this.parse_token_email_text(tool.str.base64url_decode((gmail_message_object as any).payload.body.data), uuid);
+    for (let gmail_message_object of messages) {
+      if (gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body && gmail_message_object.payload.body.size > 0 && gmail_message_object.payload.body.data) {
+        let token = this.parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
         if (token && typeof token === 'string') {
           tokens.push(token);
         }
       }
     }
-    tokens.reverse();
+    tokens.reverse(); // most recent first
     return tokens.length ? tokens : null;
   }
 

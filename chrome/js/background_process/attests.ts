@@ -66,7 +66,7 @@ class BgAttests {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (passphrase !== null) {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
-          let messages;
+          let messages: ApirGmailMessage[];
           try {
             messages = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
@@ -77,7 +77,7 @@ class BgAttests {
               throw e;
             }
           }
-          for (let message of Object.values(messages)) {
+          for (let message of messages) {
             if (message.payload.mimeType === 'text/plain' && message.payload.body && message.payload.body.size > 0 && message.payload.body.data) {
               await BgAttests.process_attest_and_log_result(account_email, tool.str.base64url_decode(message.payload.body.data), passphrase);
             }
@@ -157,7 +157,7 @@ class BgAttests {
     }
   }
 
-  private static fetch_attest_emails = async (account_email: string): Promise<Dict<ApirGmailMessage>> => {
+  private static fetch_attest_emails = async (account_email: string): Promise<ApirGmailMessage[]> => {
     let q = [
       '(from:"' + BgAttests.get_attester_emails().join('" OR from: "') + '")',
       'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.

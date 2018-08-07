@@ -1697,7 +1697,7 @@ let tool = {
       draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => tool._.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
           format,
       }),
-      draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', { // todo - not used yet, and should be
+      draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
           id,
       }),
       message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
@@ -1715,12 +1715,8 @@ let tool = {
       message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
             format: format || 'full',
       }),
-      messages_get: async (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<Dict<ApirGmailMessage>> => {
-        let results: Dict<ApirGmailMessage> = {};
-        for (let message_id of message_ids) { // todo: serialized requests are slow. parallel processing would be better
-          results[message_id] = await tool.api.gmail.message_get(account_email, message_id, format);
-        }
-        return results;
+      messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
+        return Promise.all(message_ids.map(id => tool.api.gmail.message_get(account_email, id, format)));
       },
       attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
         let r: ApirGmailAttachment = await tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
@@ -1927,8 +1923,8 @@ let tool = {
         let message_ids = response.messages.map(m => m.id);
         let messages = await tool.api.gmail.messages_get(account_email, message_ids, 'full');
         let attachments:Attachment[] = [];
-        for (let id of Object.keys(messages)) {
-          attachments = attachments.concat(tool.api.gmail.find_attachments(messages[id]));
+        for (let message of messages) {
+          attachments = attachments.concat(tool.api.gmail.find_attachments(message));
         }
         await tool.api.gmail.fetch_attachments(account_email, attachments);
         let keys:OpenPGP.key.Key[] = [];
