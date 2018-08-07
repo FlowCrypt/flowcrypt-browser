@@ -2697,7 +2697,6 @@ let tool = {
       let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
       return await tool._.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    // todo - asyncified
     api_gmail_call: async (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, progress:ApiCallProgressCallbacks|null=null, contentType:string|null=null) => {
       progress = progress || {};
       let data;
@@ -2847,18 +2846,18 @@ let tool = {
       if (!error) {
         return;
       }
-      if (ignored_errors.indexOf((error as Error).message) !== -1) { // todo - remove cast & debug
+      if (error instanceof Error && ignored_errors.indexOf(error.message) !== -1) {
         return true;
       }
-      if ((error as Error).stack) { // todo - remove cast & debug
-        console.log('%c[' + error_message + ']\n' + (error as Error).stack, 'color: #F00; font-weight: bold;');  // todo - remove cast & debug
+      if (error instanceof Error && error.stack) {
+        console.log('%c[' + error_message + ']\n' + error.stack, 'color: #F00; font-weight: bold;');
       } else {
         console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
       }
       if (is_manually_called !== true && tool.catch._.original_on_error && tool.catch._.original_on_error !== (tool.catch.handle_error as ErrorEventHandler)) {
         tool.catch._.original_on_error.apply(this, arguments); // Call any previously assigned handler
       }
-      if (((error as Error).stack || '').indexOf('PRIVATE') !== -1) { // todo - remove cast & debug
+      if (error instanceof Error && (error.stack || '').indexOf('PRIVATE') !== -1) {
         return;
       }
       if (error instanceof UnreportableError) {
