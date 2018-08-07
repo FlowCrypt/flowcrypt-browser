@@ -34,10 +34,11 @@ tool.catch.try(async () => {
     }
   }));
 
-  let decrypt_and_download = async (attachment: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
-    let result = await tool.crypto.message.decrypt(account_email, attachment.content as Uint8Array, null, true); // todo - I don't like these casts
+  let decrypt_and_download = async (encrypted: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
+    let result = await tool.crypto.message.decrypt(account_email, encrypted.as_bytes(), null, true);
     if (result.success) {
-      tool.file.save_to_downloads(attachment.name.replace(/\.(pgp|gpg|asc)$/i, ''), attachment.type, result.content.uint8!); // uint8!: requested uint8 above
+      let attachment = new Attachment({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
+      tool.file.save_to_downloads(attachment);
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase));
     } else {

@@ -675,12 +675,12 @@ class Composer {
 
   private add_uploaded_file_links_to_message_body = (plaintext: string, attachments: Attachment[]) => {
     plaintext += '\n\n';
-    for (let i of attachments.keys()) {
-      const size_mb = attachments[i].size / (1024 * 1024);
-      const size_text = size_mb < 0.1 ? '' : ' ' + (Math.round(size_mb * 10) / 10) + 'MB';
-      const link_text = 'Attachment: ' + attachments[i].name + ' (' + attachments[i].type + ')' + size_text;
-      const cryptup_data = tool.str.html_attribute_encode({size: attachments[i].size, type: attachments[i].type, name: attachments[i].name});
-      plaintext += '<a href="' + attachments[i].url + '" class="cryptup_file" cryptup-data="' + cryptup_data + '">' + link_text + '</a>\n';
+    for (let a of attachments) {
+      const size_mb = a.length / (1024 * 1024);
+      const size_text = size_mb < 0.1 ? '' : ` ${(Math.round(size_mb * 10) / 10)}MB`;
+      const link_text = `Attachment: ${a.name} (${a.type})${size_text}`;
+      const cryptup_data = tool.str.html_attribute_encode({size: a.length, type: a.type, name: a.name});
+      plaintext += `<a href="${a.url}" class="cryptup_file" cryptup-data="${cryptup_data}">${link_text}</a>\n`;
     }
     return plaintext;
   }

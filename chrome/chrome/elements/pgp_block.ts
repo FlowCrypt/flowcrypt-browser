@@ -40,7 +40,7 @@ tool.catch.try(async () => {
         return false;
       }
       if (height_history[len - 1] === height_history[len - 3] && height_history[len - 2] === height_history[len - 4] && height_history[len - 1] !== height_history[len - 2]) {
-        console.log('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
+        console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
         height = Math.max(height_history[len - 1], height_history[len - 2]);
       }
     };
@@ -126,16 +126,17 @@ tool.catch.try(async () => {
     return pwd;
   };
 
-  let decrypt_and_save_attachment_to_downloads = async (encrypted_data: Uint8Array, name: string, type: string, render_in: JQuery<HTMLElement>) => {
-    let result = await BgExec.crypto_message_decrypt(account_email, encrypted_data, decrypt_pwd());
-    if (result.success) {
-      tool.file.save_to_downloads(name.replace(/(\.pgp)|(\.gpg)$/, ''), type, result.content.text!, render_in); // text!: did not request uint8
+  let decrypt_and_save_attachment_to_downloads = async (encrypted: Attachment, render_in: JQuery<HTMLElement>) => {
+    let decrypted = await BgExec.crypto_message_decrypt(account_email, encrypted.data(), decrypt_pwd(), true);
+    if (decrypted.success) {
+      let attachment = new Attachment({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
+      tool.file.save_to_downloads(attachment, render_in);
       send_resize_message();
     } else {
-      delete result.message;
-      console.info(result);
+      delete decrypted.message;
+      console.info(decrypted);
       alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
-      tool.file.save_to_downloads(name, type, encrypted_data, render_in);
+      tool.file.save_to_downloads(encrypted, render_in);
       send_resize_message();
     }
   };
@@ -154,21 +155,21 @@ tool.catch.try(async () => {
     included_attachments = attachments;
     for (let i of attachments.keys()) {
       let name = (attachments[i].name ? tool.str.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
-      let size = tool.str.number_format(Math.ceil(attachments[i].size / 1024)) + 'KB';
-      $('#attachments').append('<div class="attachment" index="' + i + '"><b>' + name + '</b>&nbsp;&nbsp;&nbsp;' + size + '<span class="progress"><span class="percent"></span></span></div>');
+      let size = tool.str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
+      $('#attachments').append(`<div class="attachment" index="${i}"><b>${name}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
     }
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
       let attachment = included_attachments[Number($(self).attr('index') as string)];
-      if (attachment.content) {
-        tool.file.save_to_downloads(attachment.name, attachment.type, (typeof attachment.content === 'string') ? tool.str.to_uint8(attachment.content) : attachment.content, $(self));
+      if (attachment.has_data()) {
+        tool.file.save_to_downloads(attachment, $(self));
         send_resize_message();
       } else {
         $(self).find('.progress').prepend(tool.ui.spinner('green'));
-        let downloaded = await tool.file.download_as_uint8(attachment.url as string, (perc, load, total) => render_progress($(self).find('.progress .percent'), perc, load, total || attachment.size));
+        attachment.set_data(await tool.file.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(self).find('.progress .percent'), perc, load, total || attachment.length)));
         await tool.ui.delay(100); // give browser time to render
         $(self).find('.progress').html('');
-        await decrypt_and_save_attachment_to_downloads(downloaded, attachment.name, attachment.type, $(self));
+        await decrypt_and_save_attachment_to_downloads(attachment, $(self));
       }
     }));
   };
@@ -279,10 +280,10 @@ tool.catch.try(async () => {
       await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string, url_params.message as string), false);
       let renderable_attachments: Attachment[] = [];
       for (let attachment of decoded.attachments) {
-        if (tool.file.treat_as(attachment) !== 'public_key') {
+        if (attachment.treat_as() !== 'public_key') {
           renderable_attachments.push(attachment);
         } else {
-          public_keys.push(attachment.content as string); // todo - verify that this is indeed a string
+          public_keys.push(attachment.as_text());
         }
       }
       if (renderable_attachments.length) {

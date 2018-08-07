@@ -81,7 +81,7 @@ tool.catch.try(async () => {
       S.cached('status').html('Updating' + tool.ui.spinner('green'));
       let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
-        update.photo_content = btoa(tool.str.from_uint8(new_photo_file.content as Uint8Array));
+        update.photo_content = btoa(new_photo_file.as_text());
       }
       await tool.api.cryptup.account_update(update);
       window.location.reload();

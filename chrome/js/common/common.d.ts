@@ -81,18 +81,19 @@ interface ContactUpdate {
     date?: number | null; // todo - should be removed. email provider search seems to return this?
 }
 
-interface Attachment {
-    name: string;
-    type: string;
-    content?: string|Uint8Array|null;
-    data?: string; // todo - deprecate this - only use content
-    size: number;
-    inline?: boolean;
-    treat_as?: 'hidden'|'signature'|'message'|'encrypted'|'public_key'|'standard';
-    id?: string; // if data was not downloaded yet, from gmail
-    message_id?: string; // if data was not downloaded yet, from gmail
-    url?: string|null; // if data was not downloaded yet, from url
-}
+type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
+
+type AttachmentMeta = {
+  data?: string|Uint8Array|null;
+  type?:string|null;
+  name?: string|null;
+  length?: number|null;
+  url?: string|null;
+  inline?: boolean|null;
+  id?: string|null;
+  message_id?: string|null;
+  treat_as?: Attachment$treat_as;
+};
 
 interface SetupOptions {
     full_name: string;

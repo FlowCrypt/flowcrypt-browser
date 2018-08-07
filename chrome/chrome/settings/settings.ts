@@ -174,17 +174,17 @@ class Settings {
 
   static initialize_private_key_import_ui = (account_email: string, parent_tab_id: string|null) => {
     let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+    // todo - this is a vague copy of KeyImportUI - could be combined
     attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     attach.set_attachment_added_callback((file: Attachment) => {
-      let content = tool.str.from_uint8(file.content as Uint8Array);
       let k;
-      if (tool.value(tool.crypto.armor.headers('private_key').begin).in(content)) {
-        let first_prv = tool.crypto.armor.detect_blocks(content).blocks.filter(b => b.type === 'private_key')[0];
+      if (tool.value(tool.crypto.armor.headers('private_key').begin).in(file.as_text())) {
+        let first_prv = tool.crypto.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
         if (first_prv) {
           k = openpgp.key.readArmored(first_prv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
         }
       } else {
-        k = openpgp.key.read(file.content as Uint8Array).keys[0];
+        k = openpgp.key.read(file.as_bytes()).keys[0];
       }
       if (typeof k !== 'undefined') {
         $('.input_private_key').val(k.armor()).prop('disabled', true);

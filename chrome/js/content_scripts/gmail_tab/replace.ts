@@ -182,22 +182,23 @@ class GmailElementReplacer implements WebmailElementReplacer {
     attachments_container_inner = $(attachments_container_inner);
     attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let rendered_attachments_count = attachment_metas.length;
-    for (let attachment_meta of attachment_metas) {
+    for (let a of attachment_metas) {
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      let attachment_selector = this.filter_attachments(attachments_container_inner.children().not('.attachment_processed'), [attachment_meta.name]).first();
-      if (attachment_meta.treat_as !== 'standard') {
+      let treat_as = a.treat_as();
+      let attachment_selector = this.filter_attachments(attachments_container_inner.children().not('.attachment_processed'), [a.name]).first();
+      if (treat_as !== 'standard') {
         this.hide_attachment(attachment_selector, attachments_container_inner);
         rendered_attachments_count--;
-        if (attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
-          attachments_container_inner.prepend(this.factory.embedded_attachment(attachment_meta));
+        if (treat_as === 'encrypted') { // actual encrypted attachment - show it
+          attachments_container_inner.prepend(this.factory.embedded_attachment(a));
           rendered_attachments_count++;
-        } else if (attachment_meta.treat_as === 'message') {
-          if (!(attachment_meta.name === 'encrypted.asc' && !tool.value(attachment_meta.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
-            if (attachment_meta.name.substr(-4) === '.asc' && !tool.value(attachment_meta.name).in(['message.asc', 'encrypted.asc'])) { // .asc files can be ambiguous. Inspect a chunk
-              let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
+        } else if (treat_as === 'message') {
+          if (!(a.name === 'encrypted.asc' && !tool.value(a.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
+            if (a.name.substr(-4) === '.asc' && !tool.value(a.name).in(['message.asc', 'encrypted.asc'])) { // .asc files can be ambiguous. Inspect a chunk
+              let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
               let openpgp_type = tool.crypto.message.is_openpgp(file_chunk);
               if (openpgp_type && openpgp_type.type === 'public_key') { // if it looks like OpenPGP public key
-                rendered_attachments_count = await this.render_public_key_from_file(attachment_meta, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
+                rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
               } else if (openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
                 message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
               } else {
@@ -205,10 +206,10 @@ class GmailElementReplacer implements WebmailElementReplacer {
                 rendered_attachments_count++;
               }
             }
-            if (attachment_meta.name && attachment_meta.name !== 'noname') {
+            if (a.name && a.name !== 'noname') {
               message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
             } else { // attachments without name are ambiguous. They may or may not be OpenPGP related. Inspect a chunk of the message to see if it looks like OpenPGP format
-              let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, attachment_meta.id!); // .id is present when fetched from api
+              let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
               if (tool.crypto.message.is_openpgp(file_chunk)) { // if it looks like OpenPGP, render it as a message
                 message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
               } else {
@@ -217,9 +218,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
               }
             }
           }
-        } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          rendered_attachments_count = await this.render_public_key_from_file(attachment_meta, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
-        } else if (attachment_meta.treat_as === 'signature') {
+        } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
+          rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
+        } else if (treat_as === 'signature') {
           let signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';
           let embedded_signed_message = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
           let replace = !message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text());
@@ -240,7 +241,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let download_url = $(loader_element).parent().attr('download_url');
         if (download_url) {
           let meta = download_url.split(':');
-          google_drive_attachments.push({ message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted', size: 0});
+          google_drive_attachments.push(new Attachment({message_id, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treat_as: 'encrypted'}));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
@@ -258,10 +259,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
       rendered_attachments_count++;
       return rendered_attachments_count;
     }
-    let armored_key = tool.str.base64url_decode(downloaded_attachment.data);
-    let openpgp_type = tool.crypto.message.is_openpgp(armored_key);
+    let openpgp_type = tool.crypto.message.is_openpgp(downloaded_attachment.data);
     if (openpgp_type && openpgp_type.type === 'public_key') {
-      message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(armored_key, is_outgoing));
+      message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing));
     } else {
       attachment_selector.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
       rendered_attachments_count++;
@@ -272,14 +272,14 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private filter_attachments = (potential_matches: JQuery<HTMLElement>|HTMLElement, patterns: string[]) => {
     return $(potential_matches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function() {
       let name = this.innerText.trim();
-      for (let i = 0; i < patterns.length; i++) {
-        if (patterns[i].indexOf('*.') === 0) { // wildcard
-          if (name.endsWith(patterns[i].substr(1))) {
+      for (let pattern of patterns) {
+        if (pattern.indexOf('*.') === 0) { // wildcard
+          if (name.endsWith(pattern.substr(1))) {
             return true;
           }
-        } else if (name === patterns[i]) { // exact match
+        } else if (name === pattern) { // exact match
           return true;
-        } else if ((name === 'noname' && patterns[i] === '') || (name === '' && patterns[i] === 'noname')) { // empty filename (sometimes represented as "noname" in Gmail)
+        } else if ((name === 'noname' && pattern === '') || (name === '' && pattern === 'noname')) { // empty filename (sometimes represented as "noname" in Gmail)
           return true;
         }
       }

@@ -96,26 +96,26 @@ class InboxElementReplacer implements WebmailElementReplacer {
     let sender_email = this.dom_extract_sender_email(message_element);
     let is_outgoing = tool.value(sender_email).in(this.addresses);
     attachments_container = $(attachments_container);
-    for (let attachment_meta of attachment_metas) {
-      if (attachment_meta.treat_as !== 'standard') {
-        let attachment_selector = (attachments_container as JQuery<HTMLElement>).find(this.get_attachment_selector(attachment_meta.name)).first();
+    for (let a of attachment_metas) {
+      let treat_as = a.treat_as();
+      if (treat_as !== 'standard') {
+        let attachment_selector = (attachments_container as JQuery<HTMLElement>).find(this.get_attachment_selector(a.name)).first();
         this.hide_attachment(attachment_selector, attachments_container);
-        if (attachment_meta.treat_as === 'encrypted') { // actual encrypted attachment - show it
-          (attachments_container as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(attachment_meta));
-        } else if (attachment_meta.treat_as === 'message') {
+        if (treat_as === 'encrypted') { // actual encrypted attachment - show it
+          (attachments_container as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(a));
+        } else if (treat_as === 'message') {
           message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block');
-        } else if (attachment_meta.treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
+        } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           // todo - make sure attachment_meta.id present
-          tool.api.gmail.attachment_get(this.account_email, message_id, attachment_meta.id!).then(downloaded_attachment => {
-            let armored_key = tool.str.base64url_decode(downloaded_attachment.data!);
-            if (tool.value(tool.crypto.armor.headers('null').begin).in(armored_key)) {
-              message_element.append(this.factory.embedded_pubkey(armored_key, is_outgoing));
+          tool.api.gmail.attachment_get(this.account_email, message_id, a.id!).then(downloaded_attachment => {
+            if (tool.value(tool.crypto.armor.headers('null').begin).in(downloaded_attachment.data)) {
+              message_element.append(this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing));
             } else {
               attachment_selector.css('display', 'block');
               attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
             }
           }).catch(e => (attachments_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
-        } else if (attachment_meta.treat_as === 'signature') {
+        } else if (treat_as === 'signature') {
           let embedded_signed_message = this.factory.embedded_message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
           if (!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text())) {
             message_element.addClass('evaluated');
@@ -133,7 +133,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
       not_processed_attachments_loaders.each((i, loader_element) => {
         try {
           let meta = $(loader_element).parent().attr('download_url')!.split(':');
-          google_drive_attachments.push({ message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted', size: 0});
+          google_drive_attachments.push(new Attachment({message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted'}));
         } catch (e) {
           tool.catch.report(e);
         }

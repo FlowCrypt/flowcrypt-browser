@@ -26,6 +26,111 @@ enum DecryptErrorTypes {
   other = 'other',
 }
 
+class Attachment {
+
+  private text: string|null = null;
+  private bytes: Uint8Array|null = null;
+  private treat_as_value: Attachment$treat_as|null = null;
+
+  public length: number;
+  public type: string;
+  public name: string;
+  public url: string|null;
+  public id: string|null;
+  public message_id: string|null;
+  public inline: boolean;
+
+  constructor({data, type, name, length, url, inline, id, message_id, treat_as}: AttachmentMeta) {
+    if(typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
+      throw new Error('Attachment: one of data|url|id has to be set');
+    }
+    if(id && !message_id) {
+      throw new Error('Attachment: if id is set, message_id must be set too');
+    }
+    if(data !== null && typeof data !== 'undefined') {
+      this.set_data(data);
+    }
+    this.name = name || '';
+    this.type = type || 'application/octet-stream';
+    this.length = data ? data.length : (length || NaN);
+    this.url = url || null;
+    this.inline = inline !== true;
+    this.id = id || null;
+    this.message_id = message_id || null;
+    this.treat_as_value = treat_as || null;
+  }
+
+  public set_data = (data: string|Uint8Array) => {
+    if(this.text !== null || this.bytes !== null) {
+      throw new Error('Attachment: data already set');
+    }
+    if(data instanceof Uint8Array) {
+      this.bytes = data;
+    } else if(typeof data === 'string') {
+      this.text = data;
+    }
+    this.length = data.length;
+  }
+
+  public has_data = () => this.bytes !== null || this.text !== null;
+
+  public data = (): string|Uint8Array => {
+    if(this.bytes !== null) {
+      return this.bytes;
+    }
+    if (this.text !== null) {
+      return this.text;
+    }
+    throw new Error('Attachment has no data set');
+  }
+
+  public as_text = (): string => {
+    if(this.text === null && this.bytes !== null) {
+      this.text = tool.str.from_uint8(this.bytes);
+    }
+    if(this.text !== null) {
+      return this.text;
+    }
+    throw new Error('Attachment has no data set');
+  }
+
+  public as_bytes = (): Uint8Array => {
+    if(this.bytes === null && this.text !== null) {
+      this.bytes = tool.str.to_uint8(this.text);
+    }
+    if (this.bytes !== null) {
+      return this.bytes;
+    }
+    throw new Error('Attachment has no data set');
+  }
+
+  public treat_as = (): Attachment$treat_as => {
+    if(this.treat_as_value) { // pre-set
+      return this.treat_as_value;
+    }
+    if (tool.value(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
+      return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
+    } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
+      return  'signature';
+    } else if (!this.name && !tool.value('image/').in(this.type)) { // this.name may be '' or undefined - catch either
+      return this.length < 100 ? 'hidden' : 'message';
+    } else if (tool.value(this.name).in(['message', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'])) {
+      return 'message';
+    } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
+      return 'encrypted';
+    } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
+      return 'public_key';
+    } else if (tool.value('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
+      return 'public_key';
+    } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
+      return 'message';
+    } else {
+      return 'standard';
+    }
+  }
+
+}
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -103,8 +208,8 @@ let tool = {
       }
       return id;
     },
-    html_attribute_encode: (values: object): string => tool._.str_base64url_utf_encode(JSON.stringify(values)),
-    html_attribute_decode: (encoded: string): object => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
+    html_attribute_encode: (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values)),
+    html_attribute_decode: (encoded: string): Dict<any> => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
     // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
     html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
@@ -214,8 +319,8 @@ let tool = {
           let element = $(found_link);
           let cryptup_data = element.attr('cryptup-data');
           if (cryptup_data) {
-            let attachment_data = tool.str.html_attribute_decode(cryptup_data) as Attachment;
-            cryptup_attachments.push(tool.file.attachment(attachment_data.name, attachment_data.type, null, attachment_data.size, element.attr('href')));
+            let a = tool.str.html_attribute_decode(cryptup_data); // todo - this should be a type {name, type, size}
+            cryptup_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
           }
           return '';
         });
@@ -401,14 +506,14 @@ let tool = {
       request.onload = e => resolve(new Uint8Array(request.response));
       request.send();
     }),
-    save_to_downloads: (name: string, type: string, content: Uint8Array|string|Blob, render_in:JQuery<HTMLElement>|null=null) => {
-      let blob = new Blob([content], { type });
+    save_to_downloads: (attachment: Attachment, render_in:JQuery<HTMLElement>|null=null) => {
+      let blob = new Blob([attachment.data()], {type: attachment.type});
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, name);
+        window.navigator.msSaveBlob(blob, attachment.name);
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = name;
+        a.download = attachment.name;
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
@@ -443,33 +548,8 @@ let tool = {
         }
       }
     },
-    attachment: (name='', type='application/octet-stream', content: string|Uint8Array|null, size:number|null=null, url:string|null=null): Attachment => { // todo - refactor as (content, name, type, LENGTH, url), making all but content voluntary
-      // todo: accept any type of content, then add getters for content(str, uint8, blob) and fetch(), also size('formatted')
-      return {name, type, content, size: size || (content || '').length, url};
-    },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => tool.file.attachment(`0x${ki.longid}.asc`, 'application/pgp-keys', ki.public),
-    treat_as: (attachment: Attachment) => {
-      if (tool.value(attachment.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
-        return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
-      } else if (attachment.name === 'signature.asc' || attachment.type === 'application/pgp-signature') {
-        return  'signature';
-      } else if (!attachment.name && !tool.value('image/').in(attachment.type)) { // attachment.name may be '' or undefined - catch either
-        return attachment.size < 100 ? 'hidden' : 'message';
-      } else if (tool.value(attachment.name).in(['message', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'])) {
-        return 'message';
-      } else if (attachment.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
-        return 'encrypted';
-      } else if (attachment.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
-        return 'public_key';
-      } else if (tool.value('public').in(attachment.name.toLowerCase()) && attachment.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
-        return 'public_key';
-      } else if (attachment.name.match(/\.asc$/) && attachment.size < 100000 && !attachment.inline) {
-        return 'message';
-      } else {
-        return 'standard';
-      }
-    },
+    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
   },
   mime: {
     process: async (mime_message: string) => {
@@ -482,16 +562,16 @@ let tool = {
         blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text).blocks);
       }
       for (let file of decoded.attachments) {
-        let treat_as = tool.file.treat_as(file);
+        let treat_as = file.treat_as();
         if (treat_as === 'message') {
-          let armored = tool.crypto.armor.clip(file.content as string); // todo - what if file.content is uint8?
+          let armored = tool.crypto.armor.clip(file.as_text());
           if (armored) {
             blocks.push(tool._.crypto_armor_block_object('message', armored));
           }
         } else if (treat_as === 'signature') {
-          decoded.signature = decoded.signature || file.content as string; // todo - what if file.content is uint8?
+          decoded.signature = decoded.signature || file.as_text();
         } else if (treat_as === 'public_key') {
-          blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.content as string).blocks); // todo - what if file.content is uint8?
+          blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.as_text()).blocks);
         }
       }
       if (decoded.signature) {
@@ -597,8 +677,7 @@ let tool = {
               } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
                 mime_content.text = node.rawContent;
               } else {
-                let node_content = tool.str.from_uint8(node.content);
-                mime_content.attachments.push(tool.file.attachment(tool._.mime_node_filename(node), tool._.mime_node_type(node), node_content));
+                mime_content.attachments.push(new Attachment({name: tool._.mime_node_filename(node), type: tool._.mime_node_type(node), data: node.content}));
               }
             }
             resolve(mime_content);
@@ -633,7 +712,7 @@ let tool = {
       for (let attachment of attachments) {
         let type = `${attachment.type}; name="${attachment.name}"`;
         let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${tool.str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
-        root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.content));
+        root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.data()));
       }
       return root_node.build();
     },
@@ -1644,8 +1723,10 @@ let tool = {
         }
         return results;
       },
-      attachment_get: (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
-        return tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+      attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
+        let r: ApirGmailAttachment = await tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+        r.data = tool.str.base64url_decode(r.data);
+        return r;
       },
       attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
         let min_bytes = 1000;
@@ -1744,16 +1825,14 @@ let tool = {
           }
         }
         if (message_or_payload_or_part.hasOwnProperty('body') && (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.hasOwnProperty('attachmentId')) {
-          let attachment = {
+          internal_results.push(new Attachment({
             message_id: internal_message_id,
             id: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.attachmentId,
-            size: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.size,
+            length: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.size,
             name: (message_or_payload_or_part as ApirGmailMessage$payload$part).filename,
             type: (message_or_payload_or_part as ApirGmailMessage$payload$part).mimeType,
             inline: (tool.api.gmail.find_header(message_or_payload_or_part, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
-          } as Attachment;
-          attachment.treat_as = tool.file.treat_as(attachment);
-          internal_results.push(attachment);
+          }));
         }
         return internal_results;
       },
@@ -1771,12 +1850,11 @@ let tool = {
         }
         return internal_results as SendableMessageBody;
       },
-      fetch_attachments: async (account_email: string, attachments:Attachment[]) => {
-        let responses = await Promise.all(attachments.map(a => tool.api.gmail.attachment_get(account_email, a.message_id!, a.id!))); // if .message_id or .id not present, api will fail anyway
+      fetch_attachments: async (account_email: string, attachments: Attachment[]) => {
+        let responses = await Promise.all(attachments.map(a => tool.api.gmail.attachment_get(account_email, a.message_id!, a.id!)));
         for (let i of responses.keys()) {
-          attachments[i].data = responses[i].data;
+          attachments[i].set_data(responses[i].data);
         }
-        return attachments;
       },
       search_contacts: (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
         let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
@@ -1809,15 +1887,14 @@ let tool = {
           if (armored_message_from_bodies) {
             return armored_message_from_bodies;
           } else if (attachments.length) {
-            for (let attachment_meta of attachments) {
-              if (attachment_meta.treat_as === 'message') {
-                let attachments = await tool.api.gmail.fetch_attachments(account_email, [attachment_meta]);
-                let armored_message_text = tool.str.base64url_decode(attachments[0].data!);
-                let armored_message = tool.crypto.armor.clip(armored_message_text);
+            for (let attachment of attachments) {
+              if (attachment.treat_as() === 'message') {
+                await tool.api.gmail.fetch_attachments(account_email, [attachment]);
+                let armored_message = tool.crypto.armor.clip(attachment.as_text());
                 if (armored_message) {
                   return armored_message;
                 } else {
-                  throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: armored_message_text};
+                  throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: attachment.as_text()};
                 }
               }
             }
@@ -1854,12 +1931,11 @@ let tool = {
         for (let id of Object.keys(messages)) {
           attachments = attachments.concat(tool.api.gmail.find_attachments(messages[id]));
         }
-        attachments = await tool.api.gmail.fetch_attachments(account_email, attachments);
+        await tool.api.gmail.fetch_attachments(account_email, attachments);
         let keys:OpenPGP.key.Key[] = [];
         for (let attachment of attachments) {
           try {
-            let armored_key = tool.str.base64url_decode(attachment.data!);
-            let key = openpgp.key.readArmored(armored_key).keys[0];
+            let key = openpgp.key.readArmored(attachment.as_text()).keys[0];
             if (key.isPrivate()) {
               keys.push(key);
             }
@@ -2113,7 +2189,7 @@ let tool = {
       },
       message_presign_files: async (attachments: Attachment[], auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessagePresignFiles> => {
         let response: ApirFcMessagePresignFiles;
-        let lengths = attachments.map(a => a.size);
+        let lengths = attachments.map(a => a.length);
         if (!auth_method) {
           response = await tool._.api_cryptup_call('message/presign_files', {
             lengths,
@@ -2147,7 +2223,7 @@ let tool = {
         if (encrypted_data_armored.length > 100000) {
           throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
         }
-        let content = tool.file.attachment('cryptup_encrypted_message.asc', 'text/plain', encrypted_data_armored);
+        let content = new Attachment({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
         if (!auth_method) {
           return await tool._.api_cryptup_call('message/upload', {content}, 'FORM');
         } else {
@@ -2202,7 +2278,7 @@ let tool = {
         }
         for (let i of items.keys()) {
           let values = items[i].fields;
-          values.file = tool.file.attachment('encrpted_attachment', 'application/octet-stream', items[i].attachment.content!);
+          values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
           promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
             progress[i] = single_file_progress;
             tool.ui.event.prevent(tool.ui.event.spree(), () => {
@@ -2500,21 +2576,21 @@ let tool = {
       }
       return progress_reporting_xhr;
     },
-    api_call: async (base_url: string, path: string, values: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
+    api_call: async (base_url: string, path: string, fields: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
       progress = progress || {} as ApiCallProgressCallbacks;
-      let formatted_values:FormData|string;
+      let formatted_data: FormData|string;
       let content_type: string|false;
-      if (format === 'JSON' && values !== null) {
-        formatted_values = JSON.stringify(values);
+      if (format === 'JSON' && fields !== null) {
+        formatted_data = JSON.stringify(fields);
         content_type = 'application/json; charset=UTF-8';
       } else if (format === 'FORM') {
-        formatted_values = new FormData();
-        for (let name of Object.keys(values)) {
-          let value = values[name];
-          if (typeof value === 'object' && value.name && value.content && value.type) {
-            (formatted_values as FormData).append(name, new Blob([value.content], { type: value.type }), value.name); // todo - type should be just app/pgp? for privacy
+        formatted_data = new FormData();
+        for (let form_field_name of Object.keys(fields)) {
+          let a: Attachment|string = fields[form_field_name];
+          if (a instanceof Attachment) {
+            formatted_data.append(form_field_name, new Blob([a.data()], {type: a.type}), a.name);
           } else {
-            (formatted_values as FormData).append(name, value);
+            formatted_data.append(form_field_name, a);
           }
         }
         content_type = false;
@@ -2525,7 +2601,7 @@ let tool = {
         xhr: () => tool._.get_ajax_progress_xhr(progress),
         url: base_url + path,
         method,
-        data: formatted_values,
+        data: formatted_data,
         dataType: response_format,
         crossDomain: true,
         headers,

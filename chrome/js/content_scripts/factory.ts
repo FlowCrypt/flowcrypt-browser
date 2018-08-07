@@ -58,8 +58,8 @@ class Factory {
     return this.frame_src(this.ext_url('chrome/elements/sending_address.htm'), { placement });
   }
 
-  src_pgp_attachment_iframe = (meta: Attachment) => {
-    return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: meta.message_id, name: meta.name, type: meta.type, size: meta.size, attachment_id: meta.id, url: meta.url });
+  src_pgp_attachment_iframe = (a: Attachment) => {
+    return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.message_id, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
   }
 
   src_pgp_block_iframe = (message: string, message_id: string|null, is_outgoing: boolean|null, sender_email: string|null, has_password: boolean, signature: string|null|boolean, short: string|null) => {

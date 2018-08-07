@@ -49,7 +49,7 @@ class Attach {
 
   collect_attachment = async (id: string) => {
     let file_data = await this.read_attachment_data_as_uint8(id);
-    return tool.file.attachment(this.attached_files[id].name, this.attached_files[id].type, file_data);
+    return new Attachment({name: this.attached_files[id].name, type: this.attached_files[id].type, data: file_data});
   }
 
   collect_attachments = async () => {
@@ -66,7 +66,7 @@ class Attach {
       let file = this.attached_files[id];
       let file_data = await this.read_attachment_data_as_uint8(id);
       let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
-      attachments.push(tool.file.attachment(file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', file.type, encrypted.message.packets.write()));
+      attachments.push(new Attachment({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
     }
     return attachments;
   }

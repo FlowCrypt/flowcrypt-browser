@@ -10,7 +10,27 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   url_params.size = url_params.size ? parseInt(url_params.size as string) : undefined;
-  let original_name = url_params.name ? (url_params.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+  let original_name_based_on_filename = url_params.name ? (url_params.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+
+  let decrypted_a: Attachment|null = null;
+  let encrypted_a: Attachment|null = null;
+  try {
+    if(url_params.decrypted) {
+      decrypted_a = new Attachment({name: original_name_based_on_filename, type: url_params.type as string|undefined, data: url_params.decrypted as string});
+    } else {
+      encrypted_a = new Attachment({
+        name: original_name_based_on_filename,
+        type: url_params.type as string|undefined,
+        data: url_params.content as string|undefined,
+        message_id: url_params.message_id as string|undefined,
+        id: url_params.attachment_id as string|undefined,
+        url: url_params.url as string|undefined,
+      });
+    }
+  } catch(e) {
+    tool.catch.handle_exception(e);
+    return $('body.attachment').html(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+  }
 
   let original_html_content: string;
   let button = $('#download');
@@ -24,7 +44,7 @@ tool.catch.try(async () => {
 
   $('img#file-format').attr('src', (() => {
     let icon = (name: string) => `/img/fileformat/${name}.png`;
-    let name_split = original_name.split('.');
+    let name_split = original_name_based_on_filename.split('.');
     let extension = name_split[name_split.length - 1].toLowerCase();
     switch (extension) {
       case 'jpg':
@@ -91,19 +111,15 @@ tool.catch.try(async () => {
     xhr.send();
   });
 
-  let get_original_name = (name: string) => {
-    return name.replace(/(\.pgp)|(\.gpg)$/, '');
-  };
-
-  let decrypt_and_save_attachment_to_downloads = async (encrypted_data: Uint8Array) => {
-    let result = await tool.crypto.message.decrypt(account_email, encrypted_data, null, true);
+  let decrypt_and_save_attachment_to_downloads = async (enc_a: Attachment) => {
+    let result = await tool.crypto.message.decrypt(account_email, enc_a.data(), null, true);
     $('#download').html(original_html_content).removeClass('visible');
     if (result.success) {
-      let filename = result.content.filename;
-      if (!filename || tool.value(filename).in(['msg.txt', 'null'])) {
-        filename = get_original_name(url_params.name as string);
+      let name = result.content.filename;
+      if (!name || tool.value(name).in(['msg.txt', 'null'])) {
+        name = enc_a.name;
       }
-      tool.file.save_to_downloads(filename, url_params.type as string, result.content.uint8!, $('body')); // uint8!: requested uint8 above
+      tool.file.save_to_downloads(new Attachment({name, type: enc_a.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
@@ -112,7 +128,7 @@ tool.catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').html('Error opening file<br>Downloading original..');
-      tool.file.save_to_downloads(url_params.name as string, url_params.type as string, encrypted_data);
+      tool.file.save_to_downloads(new Attachment({name: url_params.name as string, type: url_params.type as string, data: enc_a.data()}));
     }
   };
 
@@ -134,23 +150,39 @@ tool.catch.try(async () => {
   };
 
   let save_to_downloads = async () => {
-    original_html_content = button.html();
-    button.addClass('visible');
-    button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
-    await recover_missing_attachment_id_if_needed();
-    progress_element = $('.download_progress');
-    if (url_params.decrypted) { // when content was downloaded and decrypted
-      tool.file.save_to_downloads(get_original_name(url_params.name as string), url_params.type as string, tool.str.to_uint8(url_params.decrypted as string), tool.env.browser().name === 'firefox' ? $('body') : null);
-    } else if (url_params.content) { // when encrypted content was already downloaded
-      await decrypt_and_save_attachment_to_downloads(tool.str.to_uint8(url_params.content as string));
-    } else if (url_params.attachment_id) { // gmail attachment_id
-      let attachment = await tool.api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string, render_progress);
-      await decrypt_and_save_attachment_to_downloads(tool.str.to_uint8(tool.str.base64url_decode(attachment.data as string)));
-    } else if (url_params.url) { // gneneral url to download attachment
-      let data = await tool.file.download_as_uint8(url_params.url as string, render_progress);
-      await decrypt_and_save_attachment_to_downloads(data);
-    } else {
-      throw Error('Missing both attachment_id and url');
+    try {
+      original_html_content = button.html();
+      button.addClass('visible');
+      button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
+      await recover_missing_attachment_id_if_needed();
+      progress_element = $('.download_progress');
+      if (decrypted_a) { // when content was downloaded and decrypted
+        tool.file.save_to_downloads(decrypted_a, tool.env.browser().name === 'firefox' ? $('body') : null);
+      } else if (encrypted_a && encrypted_a.has_data()) { // when encrypted content was already downloaded
+        await decrypt_and_save_attachment_to_downloads(encrypted_a);
+      } else if (encrypted_a && encrypted_a.id && encrypted_a.message_id) { // gmail attachment_id
+        let attachment = await tool.api.gmail.attachment_get(account_email, encrypted_a.message_id, encrypted_a.id, render_progress);
+        encrypted_a.set_data(attachment.data);
+        await decrypt_and_save_attachment_to_downloads(encrypted_a!);
+      } else if (encrypted_a && encrypted_a.url) { // gneneral url to download attachment
+        encrypted_a.set_data(await tool.file.download_as_uint8(encrypted_a.url, render_progress));
+        await decrypt_and_save_attachment_to_downloads(encrypted_a);
+      } else {
+        console.log(encrypted_a);
+        console.log(encrypted_a!.has_data());
+        throw Error('Missing both id and url');
+      }
+    } catch(e) {
+      let retry_button = `<a href="${window.location.href}">retry</a>`;
+      if(tool.api.error.is_auth_popup_needed(e)) {
+        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        $('body.attachment').html(`Error downloading file: google auth needed. ${retry_button}`);
+      } else if(tool.api.error.is_network_error(e)) {
+        $('body.attachment').html(`Error downloading file: no internet. ${retry_button}`);
+      } else {
+        tool.catch.handle_exception(e);
+        $('body.attachment').html(`Error downloading file: unknown error. ${retry_button}`);
+      }
     }
   };
 
@@ -176,11 +208,10 @@ tool.catch.try(async () => {
   };
 
   try {
-    if (url_params.message_id && url_params.attachment_id && tool.file.treat_as(tool.file.attachment(original_name, url_params.type as string, url_params.content as string)) === 'public_key') {
+    if (encrypted_a && encrypted_a.message_id && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
       let attachment = await tool.api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
-      let encrypted_data = tool.str.base64url_decode(attachment.data as string);
-      let result = await tool.crypto.message.decrypt(account_email, encrypted_data);
+      let result = await tool.crypto.message.decrypt(account_email, attachment.data);
       if (result.success && result.content.text && tool.crypto.message.is_openpgp(result.content.text)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
         // render pubkey
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
@@ -200,7 +231,7 @@ tool.catch.try(async () => {
     if(tool.api.error.is_auth_popup_needed(e)) {
       tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       $('body.attachment').html(`Error downloading file - google auth needed. ${retry_button}`);
-    } else if(tool.api.error.is_network_error) {
+    } else if(tool.api.error.is_network_error(e)) {
       $('body.attachment').html(`Error downloading file - no internet. ${retry_button}`);
     } else {
       tool.catch.handle_exception(e);

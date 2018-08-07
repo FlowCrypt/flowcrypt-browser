@@ -188,10 +188,14 @@ tool.catch.try(async () => {
     return true;
   };
 
+  let as_backup_file = (account_email: string, armored_key: string) => {
+    return new Attachment({name: `cryptup-backup-${account_email.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armored_key});
+  };
+
   let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
     let email_message = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
-    let email_attachments = [tool.file.attachment('cryptup-backup-' + account_email.replace(/[^A-Za-z0-9]+/g, '') + '.key', 'text/plain', armored_key)];
-    let message = await tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], { 'text/html': email_message }, email_attachments);
+    let email_attachments = [as_backup_file(account_email, armored_key)];
+    let message = await tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], {'text/html': email_message}, email_attachments);
     if (email_provider === 'gmail') {
       return await tool.api.gmail.message_send(account_email, message);
     } else {
@@ -228,11 +232,12 @@ tool.catch.try(async () => {
 
   let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     $(self).html(tool.ui.spinner('white'));
+    let attachment = as_backup_file(account_email, primary_ki.private);
     if (tool.env.browser().name !== 'firefox') {
-      tool.file.save_to_downloads('cryptup-' + (account_email).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private);
+      tool.file.save_to_downloads(attachment);
       await write_backup_done_and_render(false, 'file');
     } else {
-      tool.file.save_to_downloads('cryptup-' + (account_email).toLowerCase().replace(/[^a-z0-9]/g, '') + '.key', 'text/plain', primary_ki.private, $('.backup_action_buttons_container'));
+      tool.file.save_to_downloads(attachment, $('.backup_action_buttons_container'));
     }
   };
 

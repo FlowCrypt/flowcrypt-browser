@@ -13,11 +13,11 @@ class BgExec {
   }
 
   public static diagnose_message_pubkeys = (account_email: string, message: string) => {
-    return BgExec.request_creator('tool.diagnose.message_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
+    return BgExec.request_to_process_in_background('tool.diagnose.message_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
   }
 
-  public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null) => {
-    let result = await BgExec.request_creator('tool.crypto.message.decrypt', [account_email, encrypted_data, user_entered_message_password]) as DecryptResult;
+  public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null, get_uint8=false) => {
+    let result = await BgExec.request_to_process_in_background('tool.crypto.message.decrypt', [account_email, encrypted_data, user_entered_message_password, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
         result.content.text = tool.str.from_uint8(await tool.file.object_url_consume(result.content.blob.blob_url));
@@ -30,7 +30,7 @@ class BgExec {
   }
 
   public static crypto_message_verify_detached = (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => {
-    return BgExec.request_creator('tool.crypto.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
+    return BgExec.request_to_process_in_background('tool.crypto.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
   }
 
   private static execute_and_format_result = (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => new Promise((resolve, reject) => {
@@ -113,7 +113,7 @@ class BgExec {
     };
   }
 
-  private static request_creator = async (path: string, args: any[]) => {
+  private static request_to_process_in_background = async (path: string, args: any[]) => {
     let response: BgExecResponse = await tool.browser.message.send_await(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
     if(response.exception) {
       let e = new Error(`[BgExec] ${response.exception.name}: ${response.exception.message}`);
