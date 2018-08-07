@@ -684,11 +684,11 @@ let tool = {
             }
             resolve(mime_content);
           };
-          parser.write(mime_message); // todo - better chunk it for very big messages containing attachments? research
+          parser.write(mime_message);
           parser.end();
         } catch (e) {
           tool.catch.handle_exception(e);
-          resolve(mime_content); // maybe could reject? this will return partial info
+          resolve(mime_content);
         }
       });
     },
@@ -1564,9 +1564,6 @@ let tool = {
         return false;
       },
       is_auth_error: (e: Thrown) => {
-        if (e === 'auth') { // todo - deprecate this
-          return true;
-        }
         if (typeof e === 'object') {
           if (e.internal === 'auth') { // StandardError
             return true;
