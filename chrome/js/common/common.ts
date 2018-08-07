@@ -1383,22 +1383,48 @@ let tool = {
       double: (): PreventableEvent => ({ name: 'double', id: tool.str.random(10) }),
       parallel: (): PreventableEvent => ({ name: 'parallel', id: tool.str.random(10) }),
       spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: tool.str.random(10) }),
-      prevent: (preventable_event: PreventableEvent, callback: (e: HTMLElement, id: string) => void|Promise<void>) => { // todo: messy + needs refactoring
-        let cb_with_errors_handled = (e: HTMLElement, id: string) => {
-          // todo - there should be a better system to surface these errors back to the ui
-          // cannot throw up stack because this is a browser event - it would just get logged into console.error
-          // could start requiring callbacks for types of errors, where the default is log and report
+      handle: (cb: (e: HTMLElement) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+        return function() {
           let r;
           try {
-            r = callback(e, id);
+            r = cb(this);
             if(typeof r === 'object' && typeof r.catch === 'function') {
-              r.catch(tool.catch.handle_promise_error);
+              r.catch(e => tool.ui.event.__dispatch_err(e, err_handler));
             }
           } catch(e) {
-            tool.catch.handle_exception(e);
+            tool.ui.event.__dispatch_err(e, err_handler);
+          }
+        };
+      },
+      __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
+        if(tool.api.error.is_network_error(e) && err_handler && err_handler.network) {
+          err_handler.network();
+        } else if (tool.api.error.is_auth_error(e) && err_handler && err_handler.auth) {
+          err_handler.auth();
+        } else if (tool.api.error.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
+          err_handler.auth_popup();
+        } else if (err_handler && err_handler.other) {
+          err_handler.other(e);
+        } else {
+          tool.catch.handle_exception(e);
+        }
+      },
+      prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, id: string) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+        let cb_with_errors_handled = (e: HTMLElement, id: string) => {
+          let r;
+          try {
+            r = cb(e, id);
+            if(typeof r === 'object' && typeof r.catch === 'function') {
+              r.catch(e => tool.ui.event.__dispatch_err(e, err_handler));
+            }
+          } catch(e) {
+            tool.ui.event.__dispatch_err(e, err_handler);
           }
         };
         return function() {
+          // todo - maybe this could use some refactoring. It works, but I have no clue how.
+          // also, the setTimeouts are weird - don't they get called without the arguments?! that would cause trouble
+          // although spree-s tend to be called on events that do not need the callback (window resize), it's still better to do this consistently
           if (preventable_event.name === 'spree') {
             clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
             tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SPREE_MS);

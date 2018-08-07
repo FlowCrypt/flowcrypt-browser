@@ -199,6 +199,32 @@ class Composer {
     }
   }
 
+  private handle_errors = (could_not_do_what: string): BrowserEventErrorHandler => {
+    return {
+      network: () => alert(`Could not ${could_not_do_what} (network error). Please try again.`),
+      auth_popup: () => this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email}),
+      auth: () => {
+        if (confirm(`Could not ${could_not_do_what}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
+          this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+        }
+      },
+      other: (e: any) => {
+        // todo - add an alert that action could not be finished
+        // alert(`Could not ${could_not_do_what} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
+        if(e instanceof Error) {
+          e.stack = (e.stack || '') + `\n\n[compose action: ${could_not_do_what}]`;
+        } else if (typeof e === 'object' && e && typeof e.stack === 'undefined') {
+          try {
+            e.stack = `[compose action: ${could_not_do_what}]`;
+          } catch (e) {
+            // no need
+          }
+        }
+        tool.catch.handle_exception(e);
+      },
+    };
+  }
+
   private initialize_actions = () => {
     let S = this.S;
     let that = this;
@@ -206,7 +232,7 @@ class Composer {
     S.cached('input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), () => this.show_hide_password_or_pubkey_container_and_color_send_button()));
     S.cached('input_password').focus(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
     S.cached('input_password').blur(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
-    S.cached('add_their_pubkey').click(() => {
+    S.cached('add_their_pubkey').click(tool.ui.event.handle(() => {
       let no_pgp_emails = this.get_recipients_from_dom('no_pgp');
       this.app.render_add_pubkey_dialog(no_pgp_emails);
       clearInterval(this.added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
@@ -221,14 +247,14 @@ class Composer {
           }
         }
       }, 1000);
-    });
-    S.cached('add_intro').click(function() {
-      $(this).css('display', 'none');
+    }, this.handle_errors('add recipient public key')));
+    S.cached('add_intro').click(tool.ui.event.handle(self => {
+      $(self).css('display', 'none');
       S.cached('intro_container').css('display', 'table-row');
       S.cached('input_intro').focus();
       that.set_input_text_height_manually_if_needed();
-    });
-    S.cached('icon_help').click(() => this.app.render_help_dialog());
+    }, this.handle_errors(`add intro`)));
+    S.cached('icon_help').click(tool.ui.event.handle(() => this.app.render_help_dialog(), this.handle_errors(`render help dialog`)));
     S.now('input_from').change(() => {
       // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
       // because they might not have a pubkey for the alternative address, and might get confused
@@ -242,23 +268,23 @@ class Composer {
         that.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
       }
     };
-    S.cached('icon_pubkey').click(function() {
+    S.cached('icon_pubkey').click(tool.ui.event.handle(self => {
       that.include_pubkey_toggled_manually = true;
-      that.update_pubkey_icon(!$(this).is('.active'));
-    });
-    S.cached('icon_footer').click(function() {
-      if (!$(this).is('.active')) {
+      that.update_pubkey_icon(!$(self).is('.active'));
+    }, this.handle_errors(`set/unset pubkey attachment`)));
+    S.cached('icon_footer').click(tool.ui.event.handle(self => {
+      if (!$(self).is('.active')) {
         that.app.render_footer_dialog();
       } else {
-        that.update_footer_icon(!$(this).is('.active'));
+        that.update_footer_icon(!$(self).is('.active'));
       }
-    });
-    $('.delete_draft').click(async () => {
+    }, this.handle_errors(`change footer`)));
+    $('.delete_draft').click(tool.ui.event.handle(async () => {
       await this.draft_delete();
       this.app.close_message();
-    });
+    }, this.handle_errors('delete draft')));
     S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
-    S.cached('icon_sign').click(() => this.toggle_sign_icon());
+    S.cached('icon_sign').click(tool.ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
   }
 
   show_subscribe_dialog_and_wait_for_response = (_data: any, _sender: chrome.runtime.MessageSender | "background", respond: (subscribed: boolean) => void) => {
@@ -275,14 +301,14 @@ class Composer {
         if (variables.skip_click_prompt) {
           await this.render_reply_message_compose_table();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(async function() {
-            if ($(this).attr('id') === 'a_reply') {
+          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(tool.ui.event.handle(async self => {
+            if ($(self).attr('id') === 'a_reply') {
               that.supplied_to = that.supplied_to.split(',')[0];
-            } else if ($(this).attr('id') === 'a_forward') {
+            } else if ($(self).attr('id') === 'a_forward') {
               that.supplied_to = '';
             }
-            that.render_reply_message_compose_table((($(this).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward').catch(tool.catch.handle_exception);
-          });
+            that.render_reply_message_compose_table((($(self).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward').catch(tool.catch.handle_exception);
+          }, this.handle_errors(`activate repply box`)));
         }
       }
     }
@@ -1085,7 +1111,6 @@ class Composer {
   }
 
   private render_search_results = (contacts: Contact[], query: ProviderContactsQuery) => {
-    let that = this;
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
     renderable_contacts.splice(8);
@@ -1119,11 +1144,11 @@ class Composer {
       this.S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), (self: HTMLElement) => {
         let email = $(self).attr('email');
         if (email) {
-          that.select_contact(tool.str.parse_email(email).email, query);
+          this.select_contact(tool.str.parse_email(email).email, query);
         }
-      }));
+      }, this.handle_errors(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function() { $(this).addClass('hover'); }, function() { $(this).removeClass('hover'); });
-      this.S.cached('contacts').find('ul li.auth_contacts').click(() => this.auth_contacts(this.account_email));
+      this.S.cached('contacts').find('ul li.auth_contacts').click(tool.ui.event.handle(() => this.auth_contacts(this.account_email), this.handle_errors(`authorize contact search`)));
       this.S.cached('contacts').css({
         display: 'block',
         top: ($('#compose > tbody > tr:first').height()! + $('#input_addresses_container > div:first').height()! + 10) + 'px', // both are in the template
@@ -1241,12 +1266,13 @@ class Composer {
       }
     }
     $(email_element).children('img, i').remove();
-    $(email_element).append('<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />').find('img.close-icon').click((e) => this.remove_receiver(e.target));
+    let content_html = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
+    $(email_element).append(content_html).find('img.close-icon').click(tool.ui.event.handle(self => this.remove_receiver(self), this.handle_errors('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
       $(email_element).children('img:visible').replaceWith('<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
-      $(email_element).find('.action_retry_pubkey_fetch').click((e) => this.remove_receiver(e.target)); // todo - actual refresh
+      $(email_element).find('.action_retry_pubkey_fetch').click(tool.ui.event.handle(self => this.remove_receiver(self), this.handle_errors('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
@@ -1339,12 +1365,12 @@ class Composer {
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));
     this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.parse_and_render_recipients().catch(tool.catch.handle_promise_error)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
-    this.S.cached('compose_table').click(() => this.hide_contacts());
-    $('#input_addresses_container > div').click(() => {
+    this.S.cached('compose_table').click(tool.ui.event.handle(() => this.hide_contacts(), this.handle_errors(`hide contact box`)));
+    $('#input_addresses_container > div').click(tool.ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
         this.S.cached('input_to').focus();
       }
-    }).children().click(() => false);
+    }, this.handle_errors(`focus on recipient field`))).children().click(() => false);
     this.resize_input_to();
     tool.time.wait(() => this.attach ? true : undefined).then(() => this.attach.initialize_attach_dialog('fineuploader', 'fineuploader_button'));
     this.S.cached('input_to').focus();
@@ -1361,12 +1387,12 @@ class Composer {
         this.S.cached('input_text').keyup(() => this.resize_reply_box());
       }, 1000);
     } else {
-      $('.close_new_message').click(() => this.app.close_message());
+      $('.close_new_message').click(tool.ui.event.handle(() => this.app.close_message(), this.handle_errors(`close message`)));
       let addresses = this.app.storage_get_addresses() as string[];
       if (addresses.length > 1) {
         let input_addr_container = $('#input_addresses_container');
         input_addr_container.addClass('show_send_from').append('<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
-        input_addr_container.find('#input_from_settings').click(() => this.app.render_sending_address_dialog());
+        input_addr_container.find('#input_from_settings').click(tool.ui.event.handle(() => this.app.render_sending_address_dialog(), this.handle_errors(`open sending address dialog`)));
         input_addr_container.find('#input_from').append(addresses.map(a => '<option value="' + a + '">' + a + '</option>').join('')).change(() => this.update_pubkey_icon());
         if (tool.env.browser().name === 'firefox') {
           input_addr_container.find('#input_from_settings').css('margin-top', '20px');

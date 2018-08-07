@@ -413,6 +413,8 @@ type StoredAdminCode = {date: number, codes: string[]};
 type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
 type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
 
+type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
+
 interface RawStore {
     [key: string]: Storable;
 }
