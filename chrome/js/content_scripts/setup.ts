@@ -68,9 +68,15 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
 
   let browser_message_listen = (account_email: string, tab_id: string, inject: Injector, factory: Factory, notifications: Notifications) => {
     tool.browser.message.listen({
-      open_new_message: data => inject.open_compose_window(),
-      close_new_message: data => $('div.new_message').remove(),
-      close_reply_message: (data: {frame_id: string}) => $('iframe#' + data.frame_id).remove(),
+      open_new_message: () => {
+        inject.open_compose_window();
+      },
+      close_new_message: () => {
+        $('div.new_message').remove();
+      },
+      close_reply_message: (data: {frame_id: string}) => {
+        $('iframe#' + data.frame_id).remove();
+      },
       reinsert_reply_box: (data: {subject: string, my_email: string, their_email: string[], thread_id:string}) => webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id),
       render_public_keys: (data: {public_keys: string[], after_frame_id: string, traverse_up?: number}) => {
         let traverse_up_levels = data.traverse_up as number || 0;
@@ -82,7 +88,9 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
           append_after.after(factory.embedded_pubkey(armored_pubkey, false));
         }
       },
-      close_dialog: (data) => $('#cryptup_dialog').remove(),
+      close_dialog: () => {
+        $('#cryptup_dialog').remove();
+      },
       scroll: (data: {selector: string, repeat: number[]}) => tool.ui.scroll(data.selector, data.repeat),
       passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
         if (!$('#cryptup_dialog').length) {

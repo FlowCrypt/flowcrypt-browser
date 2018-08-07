@@ -286,7 +286,7 @@ class Composer {
     S.cached('icon_sign').click(tool.ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
   }
 
-  show_subscribe_dialog_and_wait_for_response = (_data: any, _sender: chrome.runtime.MessageSender | "background", respond: (subscribed: boolean) => void) => {
+  show_subscribe_dialog_and_wait_for_response: BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
     this.subscribe_result_listener = respond;
     this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
   }

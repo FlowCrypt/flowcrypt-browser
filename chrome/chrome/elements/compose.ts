@@ -245,7 +245,7 @@ tool.catch.try(async () => {
       composer.update_footer_icon();
       $('.featherlight.featherlight-iframe').remove();
     },
-    subscribe: (data, sender, respond) => composer.show_subscribe_dialog_and_wait_for_response,
+    subscribe: composer.show_subscribe_dialog_and_wait_for_response,
     subscribe_result: (new_subscription: Subscription) => {
       if (new_subscription.active && !subscription_when_page_was_opened.active) {
         subscription_when_page_was_opened.active = new_subscription.active;

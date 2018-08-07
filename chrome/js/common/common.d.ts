@@ -281,7 +281,7 @@ type BrowserMessageRequestSessionSet = {account_email: string, key: string, valu
 type BrowserMessageRequestSessionGet = {account_email: string, key: string};
 type BrowserMessageRequest = null|Dict<any>;
 type BrowserMessageResponse = any|Dict<any>;
-type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void;
+type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void|Promise<void>;
 
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;

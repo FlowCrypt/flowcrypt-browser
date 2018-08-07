@@ -1477,6 +1477,7 @@ let tool = {
         } else if (is_background_page) {
           chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
         } else {
+          console.log('bm.send_await chrome.runtime.sendMessage');
           chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
         }
       }),
@@ -1509,12 +1510,16 @@ let tool = {
         }
         let processed:string[] = [];
         chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-          return tool.catch.try(() => {
+          try {
             if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
               if (!tool.value(msg.uid).in(processed)) {
                 processed.push(msg.uid);
                 if (typeof tool._.var.browser_message_frame_registered_handlers[msg.name] !== 'undefined') {
-                  tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
+                  let r = tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
+                  if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
+                    // todo - a way to callback the error to be re-thrown to caller stack
+                    (r as Promise<void>).catch(tool.catch.handle_promise_error);
+                  }
                 } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
                   if (tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
                     tool.catch.report('tool.browser.message.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
@@ -1525,7 +1530,10 @@ let tool = {
               }
             }
             return !!respond; // indicate that this listener intends to respond
-          })();
+          } catch(e) {
+            // todo - a way to callback the error to be re-thrown to caller stack
+            tool.catch.handle_exception(e);
+          }
         });
       },
       listen_background: (handlers: Dict<BrowserMessageHandler>) => {
@@ -1537,25 +1545,35 @@ let tool = {
           }
         }
         chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-          let safe_respond = (response: any) => {
-            try { // avoiding unnecessary errors when target tab gets closed
-              respond(response);
-            } catch (e) {
-              if (e.message !== 'Attempting to use a disconnected port object') {
-                tool.catch.handle_exception(e);
-                throw e;
+          try {
+            let safe_respond = (response: any) => {
+              try { // avoiding unnecessary errors when target tab gets closed
+                respond(response);
+              } catch (e) {
+                // todo - the sender should still know - could have PageClosedError
+                if (e.message !== 'Attempting to use a disconnected port object') {
+                  tool.catch.handle_exception(e);
+                  throw e;
+                }
               }
+            };
+            if (msg.to && msg.to !== 'broadcast') {
+              msg.sender = sender;
+              chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
+            } else if (tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
+              let r = tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because checked above
+              if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
+                // todo - a way to callback the error to be re-thrown to caller stack
+                (r as Promise<void>).catch(tool.catch.handle_promise_error);
+              }
+            } else if (msg.to !== 'broadcast') {
+              tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
             }
-          };
-          if (msg.to && msg.to !== 'broadcast') {
-            msg.sender = sender;
-            chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
-          } else if (tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
-            tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because added above
-          } else if (msg.to !== 'broadcast') {
-            tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+            return !!respond; // indicate that we intend to respond later
+          } catch (e) {
+            // todo - a way to callback the error to be re-thrown to caller stack
+            tool.catch.handle_exception(e);
           }
-          return !!respond; // indicate that we intend to respond later
         });
       },
     },
