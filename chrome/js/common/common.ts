@@ -209,7 +209,7 @@ let tool = {
       return id;
     },
     html_attribute_encode: (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values)),
-    html_attribute_decode: (encoded: string): Dict<any> => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
+    html_attribute_decode: (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
     // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
     html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
@@ -319,15 +319,17 @@ let tool = {
           let element = $(found_link);
           let cryptup_data = element.attr('cryptup-data');
           if (cryptup_data) {
-            let a = tool.str.html_attribute_decode(cryptup_data); // todo - this should be a type {name, type, size}
-            cryptup_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+            let a: FlowCryptAttachmentLinkData = tool.str.html_attribute_decode(cryptup_data);
+            if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
+              cryptup_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+            }
           }
           return '';
         });
       }
       return decrypted_content;
     },
-    extract_cryptup_reply_token: (decrypted_content: string) => {
+    extract_cryptup_reply_token: (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
       let cryptup_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
       if (cryptup_token_element.length) {
         let cryptup_data = cryptup_token_element.attr('cryptup-data');

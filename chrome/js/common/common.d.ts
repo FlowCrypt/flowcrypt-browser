@@ -81,6 +81,8 @@ interface ContactUpdate {
     date?: number | null; // todo - should be removed. email provider search seems to return this?
 }
 
+type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
+
 type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 
 type AttachmentMeta = {
