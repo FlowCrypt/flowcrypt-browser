@@ -197,7 +197,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             if (a.name.substr(-4) === '.asc' && !tool.value(a.name).in(['message.asc', 'encrypted.asc'])) { // .asc files can be ambiguous. Inspect a chunk
               let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
               let openpgp_type = tool.crypto.message.is_openpgp(file_chunk);
-              if (openpgp_type && openpgp_type.type === 'public_key') { // if it looks like OpenPGP public key
+              if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
                 rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
               } else if (openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
                 message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
@@ -226,7 +226,17 @@ class GmailElementReplacer implements WebmailElementReplacer {
           let replace = !message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text());
           message_element = this.update_message_body_element(message_element, replace ? 'set': 'append', embedded_signed_message);
         }
-      } else {
+      } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
+        let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
+        let openpgp_type = tool.crypto.message.is_openpgp(file_chunk);
+        if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
+          rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
+          this.hide_attachment(attachment_selector, attachments_container_inner);
+          rendered_attachments_count--;
+        } else {
+          attachment_selector.addClass('attachment_processed').children('.attachment_loader').remove();
+        }
+      } else { // standard file
         attachment_selector.addClass('attachment_processed').children('.attachment_loader').remove();
       }
     }

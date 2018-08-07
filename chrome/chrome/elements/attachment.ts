@@ -207,23 +207,31 @@ tool.catch.try(async () => {
     }
   };
 
-  try {
+  let process_as_a_public_key_and_hide_attachment_if_appropriate = async () => {
     if (encrypted_a && encrypted_a.message_id && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
       let attachment = await tool.api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
       let result = await tool.crypto.message.decrypt(account_email, attachment.data);
-      if (result.success && result.content.text && tool.crypto.message.is_openpgp(result.content.text)) { // todo - specifically check that it's a pubkey within tool.crypto.message.resembles_beginning
-        // render pubkey
-        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
-        // hide attachment
-        tool.browser.message.send(parent_tab_id, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
-        $('body').text('');
-      } else {
-        // could not process as a pubkey - let user download it by clicking
-        $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
+      if (result.success && result.content.text) {
+        let openpgp_message_type = tool.crypto.message.is_openpgp(result.content.text);
+        if(openpgp_message_type && openpgp_message_type.type === 'public_key') {
+          if(openpgp_message_type.armored) { // could potentially process unarmored pubkey files, maybe later
+            // render pubkey
+            tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
+            // hide attachment
+            tool.browser.message.send(parent_tab_id, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
+            $('body').text('');
+            return true;
+          }
+        }
       }
-    } else {
-      // standard encrypted attachment - let user download it by clicking
+    }
+    return false;
+  };
+
+  try {
+    if(!await process_as_a_public_key_and_hide_attachment_if_appropriate()) {
+      // normal attachment, let user download it by clicking
       $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
     }
   } catch (e) {
