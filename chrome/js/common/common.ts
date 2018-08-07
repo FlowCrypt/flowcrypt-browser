@@ -1997,6 +1997,7 @@ let tool = {
           }
           return await tool.crypto.message.sign(decrypted_prv, content_text);
         },
+        is_valid_hash: (v: string) => /^[A-F0-9]{40}$/.test(v),
         parse: (text: string): ParsedAttest => {
           let accepted_values = {
             'ACT': 'action',
@@ -2036,22 +2037,22 @@ let tool = {
               }
               result.content[accepted_values[line_parts[0]]] = line_parts[1];
             }
-            if (result.content.fingerprint && result.content.fingerprint.length !== 40) { // todo - we should use regex here, everywhere
+            if (result.content.fingerprint && !tool.api.attester.packet.is_valid_hash(result.content.fingerprint)) {
               result.error = 'Wrong PUB line value format';
               result.content = {};
               return result;
             }
-            if (result.content.email_hash && result.content.email_hash.length !== 40) {
+            if (result.content.email_hash && !tool.api.attester.packet.is_valid_hash(result.content.email_hash)) {
               result.error = 'Wrong ADD line value format';
               result.content = {};
               return result;
             }
-            if (result.content.str_random && result.content.str_random.length !== 40) {
+            if (result.content.str_random && !tool.api.attester.packet.is_valid_hash(result.content.str_random)) {
               result.error = 'Wrong RAN line value format';
               result.content = {};
               return result;
             }
-            if (result.content.fingerprint_old && result.content.fingerprint_old.length !== 40) {
+            if (result.content.fingerprint_old && !tool.api.attester.packet.is_valid_hash(result.content.fingerprint_old)) {
               result.error = 'Wrong OLD line value format';
               result.content = {};
               return result;
