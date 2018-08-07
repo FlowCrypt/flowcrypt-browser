@@ -105,6 +105,8 @@ class Attachment {
   }
 
   public treat_as = (): Attachment$treat_as => {
+    // todo - should return a probability in the range of certain-likely-maybe
+    // could also return possible types as an array - which makes basic usage more difficult - to think through
     if(this.treat_as_value) { // pre-set
       return this.treat_as_value;
     }
