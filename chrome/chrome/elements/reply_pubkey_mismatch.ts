@@ -25,7 +25,7 @@ tool.catch.try(async () => {
 
   // render
   $('.pubkey_file_name').text(attachment.name);
-  composer.resize_reply_box(); // todo - change to class
+  composer.resize_reply_box();
   tool.browser.message.send(parent_tab_id, 'scroll', {selector: '.reply_message_iframe_container', repeat: [500]});
   $('#input_text').focus();
 

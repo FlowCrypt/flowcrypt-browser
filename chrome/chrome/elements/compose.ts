@@ -163,8 +163,18 @@ tool.catch.try(async () => {
     email_provider_draft_update: (draft_id: string, mime_message: string) => tool.api.gmail.draft_update(account_email, draft_id, mime_message),
     email_provider_draft_delete: (draft_id: string) => tool.api.gmail.draft_delete(account_email, draft_id),
     email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.api.gmail.message_send(account_email, message, render_upload_progress),
-    // todo: tool.api.gmail.search_contacts auth popup needed error should be handled
-    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => tool.api.gmail.search_contacts(account_email, query, known_contacts, multi_cb),
+    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => {
+      tool.api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
+        if(tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        } else if (tool.api.error.is_network_error(e)) {
+          // todo: render network error
+        } else {
+          tool.catch.handle_exception(e);
+          // todo: render error
+        }
+      });
+    },
     email_provider_determine_reply_message_header_variables: async () => {
       try {
         let thread = await tool.api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
@@ -179,8 +189,9 @@ tool.catch.try(async () => {
         if(tool.api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else if (tool.api.error.is_network_error(e)) {
-          // todo: retry
+          // todo: render retry
         } else {
+          tool.catch.handle_exception(e);
           // todo: render error
         }
       }

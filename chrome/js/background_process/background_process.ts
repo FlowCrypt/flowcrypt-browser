@@ -21,7 +21,7 @@ chrome.runtime.onInstalled.addListener(event => {
   await Store.set(null, { version: tool.catch.version('int') as number|null });
   let storage = await Store.get_global(['settings_seen', 'errors']);
 
-  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', page_url_params:Dict<FlatTypes>|null=null) => {
+  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null) => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
     let opened_tab = await get_cryptup_settings_tab_id_if_open();
     let open_tab = (url: string) => {
@@ -31,11 +31,12 @@ chrome.runtime.onInstalled.addListener(event => {
         chrome.tabs.update(opened_tab, {url, active: true});
       }
     };
+    let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
-      open_tab(tool.env.url_create(base_path, { account_email, page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null}));
+      open_tab(tool.env.url_create(base_path, { account_email, page, page_url_params}));
     } else {
       let account_emails = await Store.account_emails_get();
-      open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page, page_url_params: page_url_params ? JSON.stringify(page_url_params) : null }));
+      open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
     }
   };
 

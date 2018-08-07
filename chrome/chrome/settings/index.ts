@@ -6,6 +6,7 @@ tool.catch.try(async () => {
 
   let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
   let account_email = url_params.account_email as string|undefined;
+  let page_url_params = (typeof url_params.page_url_params === 'string') ? JSON.parse(url_params.page_url_params) : null;
 
   // let microsoft_auth_attempt = {};
 
@@ -76,7 +77,7 @@ tool.catch.try(async () => {
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();
     },
-  }, tab_id); // adding tab_id_global to tool.browser.message.listen is necessary on FlowCrypt-only pages because otherwise they will receive messages meant for ANY/ALL tabs
+  }, tab_id);
 
   let display_original = (selector: string) => {
     let filterable = $(selector);
@@ -222,7 +223,7 @@ tool.catch.try(async () => {
         window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
       }
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
-      Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=gmail' : '');
+      Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
     } else {
       tool.catch.log('failed to log into google', response);
       alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
@@ -233,7 +234,7 @@ tool.catch.try(async () => {
   // function new_microsoft_account_authentication_prompt(account_email) {
   //   let window_id = 'popup_' + tool.str.random(20);
   //   let close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function() {
-  //     render_settings_sub_page(account_email, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&use_account_email=1&email_provider=outlook' : '');
+  //     render_settings_sub_page(account_email, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&email_provider=outlook' : '');
   //   });
   //   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
   // }
@@ -246,7 +247,7 @@ tool.catch.try(async () => {
     Settings.render_sub_page(account_email!, tab_id, $(this).attr('page')!, $(this).attr('addurltext') || ''); // all such elements do have page attr
   });
 
-  $('.action_go_auth_denied').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm', '&use_account_email=1'));
+  $('.action_go_auth_denied').click(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm'));
 
   $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), () => new_google_account_authentication_prompt().catch(tool.catch.handle_exception)));
 
@@ -303,12 +304,11 @@ tool.catch.try(async () => {
 
   await initialize();
   await tool.ui.abort_and_render_error_on_unprotected_key(account_email, tab_id);
-  if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') { // needs to be placed here, because render_settings_sub_page needs tab_id_global for the page to work properly
+  if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') {
     if (url_params.page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.render_sub_page(account_email || null, tab_id, url_params.page, '&use_account_email=1');
+      Settings.render_sub_page(account_email || null, tab_id, url_params.page);
     } else {
-      // todo - investigate. JSON parse the params? why?
-      Settings.render_sub_page(account_email || null, tab_id, url_params.page as string, url_params.page_url_params ? JSON.parse(url_params.page_url_params as string) : null);
+      Settings.render_sub_page(account_email || null, tab_id, url_params.page as string, page_url_params);
     }
   }
 

@@ -1853,7 +1853,7 @@ let tool = {
           attachments[i].set_data(responses[i].data);
         }
       },
-      search_contacts: (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
+      search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
         let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
         if (user_query) {
           let variations_of_to = user_query.split(/[ .]/g).filter(v => !tool.value(v).in(['com', 'org', 'net']));
@@ -1865,8 +1865,7 @@ let tool = {
         for (let contact of known_contacts) {
           gmail_query.push('-to:"' + contact.email + '"');
         }
-        // noinspection JSIgnoredPromiseFromCall - we are only using the chunked callbacks
-        tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
+        await tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
       },
       /*
       * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
