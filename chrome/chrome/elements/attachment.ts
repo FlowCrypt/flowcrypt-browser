@@ -213,9 +213,9 @@ tool.catch.try(async () => {
       let attachment = await tool.api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
       let result = await tool.crypto.message.decrypt(account_email, attachment.data);
       if (result.success && result.content.text) {
-        let openpgp_message_type = tool.crypto.message.is_openpgp(result.content.text);
-        if(openpgp_message_type && openpgp_message_type.type === 'public_key') {
-          if(openpgp_message_type.armored) { // could potentially process unarmored pubkey files, maybe later
+        let openpgp_type = tool.crypto.message.type(result.content.text);
+        if(openpgp_type && openpgp_type.type === 'public_key') {
+          if(openpgp_type.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
             tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
             // hide attachment

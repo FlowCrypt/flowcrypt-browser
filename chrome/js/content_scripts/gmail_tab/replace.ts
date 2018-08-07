@@ -196,7 +196,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           if (!(a.name === 'encrypted.asc' && !tool.value(a.name).in(new_pgp_attachments_names))) { // prevent doubling of enigmail emails
             if (a.name.substr(-4) === '.asc' && !tool.value(a.name).in(['message.asc', 'encrypted.asc'])) { // .asc files can be ambiguous. Inspect a chunk
               let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
-              let openpgp_type = tool.crypto.message.is_openpgp(file_chunk);
+              let openpgp_type = tool.crypto.message.type(file_chunk);
               if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
                 rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
               } else if (openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
@@ -210,7 +210,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
               message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
             } else { // attachments without name are ambiguous. They may or may not be OpenPGP related. Inspect a chunk of the message to see if it looks like OpenPGP format
               let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
-              if (tool.crypto.message.is_openpgp(file_chunk)) { // if it looks like OpenPGP, render it as a message
+              if (tool.crypto.message.type(file_chunk)) { // if it looks like OpenPGP, render it as a message
                 message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
               } else {
                 attachment_selector.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -228,7 +228,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         }
       } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
         let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
-        let openpgp_type = tool.crypto.message.is_openpgp(file_chunk);
+        let openpgp_type = tool.crypto.message.type(file_chunk);
         if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
           rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
           this.hide_attachment(attachment_selector, attachments_container_inner);
@@ -269,7 +269,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       rendered_attachments_count++;
       return rendered_attachments_count;
     }
-    let openpgp_type = tool.crypto.message.is_openpgp(downloaded_attachment.data);
+    let openpgp_type = tool.crypto.message.type(downloaded_attachment.data);
     if (openpgp_type && openpgp_type.type === 'public_key') {
       message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing));
     } else {

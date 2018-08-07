@@ -1065,7 +1065,7 @@ let tool = {
 
     },
     message: {
-      is_openpgp: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => { // todo - rename as type
+      type: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => {
         if (!data || !data.length) {
           return null;
         }
