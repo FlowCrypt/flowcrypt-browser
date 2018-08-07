@@ -1633,42 +1633,40 @@ let tool = {
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
-      auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => {
-        return new Promise((resolve, reject) => {
-          if (tool.env.is_background_script()) {
-            throw {code: null, message: 'Cannot produce auth window from background script'};
-          }
-          let response_handled = false;
-          tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
-            let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
-            tool.browser.message.listen({
-              google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
-                if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
+      auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
+        if (tool.env.is_background_script()) {
+          throw {code: null, message: 'Cannot produce auth window from background script'};
+        }
+        let response_handled = false;
+        tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
+          let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
+          tool.browser.message.listen({
+            google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
+              if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
+                response_handled = true;
+                tool._.google_auth_window_result_handler(result).then(resolve, reject);
+                close_auth_window();
+              }
+            },
+          }, auth_request.tab_id);
+          let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
+          // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+          // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
+          if (tool.env.browser().name !== 'firefox') {
+            let window_closed_timer = window.setInterval(() => {
+              if (auth_code_window === null || typeof auth_code_window === 'undefined') {
+                clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
+              } else if (auth_code_window.closed) {
+                clearInterval(window_closed_timer);
+                if (!response_handled) {
+                  resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
                   response_handled = true;
-                  tool._.google_auth_window_result_handler(result).then(resolve, reject);
-                  close_auth_window();
                 }
-              },
-            }, auth_request.tab_id);
-            let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
-            // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-            // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-            if (tool.env.browser().name !== 'firefox') {
-              let window_closed_timer = window.setInterval(() => {
-                if (auth_code_window === null || typeof auth_code_window === 'undefined') {
-                  clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
-                } else if (auth_code_window.closed) {
-                  clearInterval(window_closed_timer);
-                  if (!response_handled) {
-                    resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
-                    response_handled = true;
-                  }
-                }
-              }, 250);
-            }
-          }, reject);
-        });
-      },
+              }
+            }, 250);
+          }
+        }, reject);
+      }),
     },
     common: {
       message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMessage> => {

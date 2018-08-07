@@ -40,8 +40,9 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let open_settings_page_handler: BrowserMessageHandler = (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>}, sender, respond) => {
-    open_settings_page(message.path, message.account_email, message.page, message.page_url_params).then(respond).catch(tool.catch.handle_promise_error);
+  let open_settings_page_handler: BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>}, sender, respond) => {
+    await open_settings_page(message.path, message.account_email, message.page, message.page_url_params);
+    respond();
   };
 
   let get_active_tab_info: BrowserMessageHandler = (message: Dict<any>|null, sender, respond) => {
@@ -73,27 +74,20 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   });
 
-  let update_uninstall_url: BrowserMessageHandler = (request: Dict<any>|null, sender, respond) => {
-    Store.account_emails_get().then((account_emails) => {
-      if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
-        tool.catch.try(() => {
-          chrome.runtime.setUninstallURL('https://flowcrypt.com/leaving.htm#' + JSON.stringify({
-            email: (account_emails && account_emails.length) ? account_emails[0] : null,
-            metrics: null,
-          }));
-        })();
-      }
-      if (respond) {
-        respond();
-      }
-    }).catch(tool.catch.handle_promise_error);
+  let update_uninstall_url: BrowserMessageHandler = async (request: Dict<any>|null, sender, respond) => {
+    respond();
+    let account_emails = await Store.account_emails_get();
+    if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
+      let email = (account_emails && account_emails.length) ? account_emails[0] : null;
+      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({email, metrics: null})}`);
+    }
   };
 
   let db_operation = (request: BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) => {
     tool.catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
-        Store[request.f].apply(null, [db].concat(request.args)).then(respond);
+        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(tool.catch.handle_promise_error);
       } else {
         tool.catch.log('db corrupted, skipping: ' + request.f);
       }
@@ -121,8 +115,8 @@ chrome.runtime.onInstalled.addListener(event => {
   tool.browser.message.listen_background({
     bg_exec: BgExec.background_request_handler,
     db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
-    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond),
-    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond),
+    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(tool.catch.handle_promise_error),
+    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(tool.catch.handle_promise_error),
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account,
     settings: open_settings_page_handler,

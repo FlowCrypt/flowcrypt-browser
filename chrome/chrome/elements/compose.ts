@@ -14,27 +14,15 @@ tool.catch.try(async () => {
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
   let storage = await Store.get_account(account_email, storage_keys);
 
-  await new Promise(resolve => { // recover missing url params
+  await (async () => { // attempt to recover missing params
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
-      resolve(); // either not a reply box, or reply box & has all needed params
-      return;
+      return; // either not a reply box, or reply box & has all needed params
     }
     $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
-    tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata').then(gmail_message_object => {
-      url_params.thread_id = gmail_message_object.threadId;
-      let reply = tool.api.common.reply_correspondents(account_email, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
-      if (!url_params.to) {
-        url_params.to = reply.to.join(',');
-      }
-      if (!url_params.from) {
-        url_params.from = reply.from;
-      }
-      if (!url_params.subject) {
-        url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
-      }
-      $('#loader').remove();
-      resolve();
-    }, (e) => {
+    let gmail_message_object;
+    try {
+      gmail_message_object = await tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');
+    } catch(e) {
       if(tool.api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       }
@@ -47,9 +35,21 @@ tool.catch.try(async () => {
       url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
       console.info('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
       $('#loader').remove();
-      resolve();
-    });
-  });
+      return;
+    }
+    url_params.thread_id = gmail_message_object.threadId;
+    let reply = tool.api.common.reply_correspondents(account_email, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+    if (!url_params.to) {
+      url_params.to = reply.to.join(',');
+    }
+    if (!url_params.from) {
+      url_params.from = reply.from;
+    }
+    if (!url_params.subject) {
+      url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
+    }
+    $('#loader').remove();
+  })();
 
   let tab_id = await tool.browser.message.required_tab_id();
 

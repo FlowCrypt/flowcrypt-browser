@@ -31,9 +31,10 @@ tool.catch.try(async () => {
     $('.action_passphrase').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest'})));
     let tab_id = await tool.browser.message.required_tab_id();
     tool.browser.message.listen({
-      passphrase_entry: (message: {entered: boolean}, sender, respond) => {
+      passphrase_entry: async (message: {entered: boolean}, sender, respond) => {
         if (message.entered) {
-          Store.passphrase_get(account_email, primary_ki.longid).then(pp => process_attest(pp).catch(tool.catch.handle_promise_error)).catch(tool.catch.handle_promise_error);
+          let pp = await Store.passphrase_get(account_email, primary_ki.longid);
+          await process_attest(pp);
         }
       },
     }, tab_id);

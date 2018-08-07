@@ -23,8 +23,9 @@ tool.catch.try(async () => {
       ul_emails += `<li><a class="button gray2 long" href="#" email="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</a></li>`;
     }
   }
-  $('ul.emails').html(ul_emails).find('a').click(tool.ui.event.handle(target => {
-    tool.browser.message.send_await(null, 'settings', { account_email: $(target).attr('email'), page }).then(() => window.close()).catch(tool.catch.handle_promise_error);
+  $('ul.emails').html(ul_emails).find('a').click(tool.ui.event.handle(async target => {
+    await tool.browser.message.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
+    window.close();
   }));
   $('html, body').css('height', $('.content').height()! + (tool.env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
 

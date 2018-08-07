@@ -63,18 +63,17 @@ tool.catch.try(async () => {
     }
   })());
 
-  let check_passphrase_entered = () => { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
+  let check_passphrase_entered = async () => { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
     if (missing_passprase_longids) {
-      Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid))).then(passphrases => {
-        // todo - copy/pasted - unify
-        // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
-        // see pgp_block.js for proper common implmenetation
-        if (passphrases.filter(passphrase => passphrase !== null).length) {
-          missing_passprase_longids = [];
-          clearInterval(passphrase_interval);
-          $('#download').click();
-        }
-      }).catch(tool.catch.handle_promise_error);
+      let passphrases = await Promise.all(missing_passprase_longids.map(longid => Store.passphrase_get(account_email, longid)));
+      // todo - copy/pasted - unify
+      // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
+      // see pgp_block.js for proper common implmenetation
+      if (passphrases.filter(passphrase => passphrase !== null).length) {
+        missing_passprase_longids = [];
+        clearInterval(passphrase_interval);
+        $('#download').click();
+      }
     }
   };
 
@@ -123,7 +122,7 @@ tool.catch.try(async () => {
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
-      passphrase_interval = window.setInterval(check_passphrase_entered, 1000);
+      passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(tool.catch.handle_promise_error), 1000);
     } else {
       delete result.message;
       console.info(result);

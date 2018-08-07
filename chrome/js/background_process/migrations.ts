@@ -6,10 +6,11 @@
 /// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
 /// <reference path="../common/common.d.ts" />
 
-let migrate_account: BrowserMessageHandler = (data: {account_email: string}, sender, respond_done) => {
-  Store.set(data.account_email, { version: tool.catch.version('int') as number|null }).then(respond_done).catch(tool.catch.handle_promise_error);
-  account_update_status_pks(data.account_email).catch(tool.catch.handle_exception);
-  account_update_status_keyserver(data.account_email).catch(tool.catch.handle_exception);
+let migrate_account: BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
+  await Store.set(data.account_email, { version: tool.catch.version('int') as number|null });
+  respond_done();
+  await account_update_status_pks(data.account_email);
+  await account_update_status_keyserver(data.account_email);
 };
 
 let migrate_global = async () => {

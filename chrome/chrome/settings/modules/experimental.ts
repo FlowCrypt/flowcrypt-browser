@@ -23,7 +23,8 @@ tool.catch.try(async () => {
     $('.email').text(account_email);
 
     $('.action_allow_outlook').change(tool.ui.event.handle(async target => {
-      await Store.set(null, {'dev_outlook_allow': $(target).prop('checked')}).then(() => window.location.reload());
+      await Store.set(null, {'dev_outlook_allow': $(target).prop('checked')});
+      window.location.reload();
     }));
 
     $('.action_open_decrypt').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm')));

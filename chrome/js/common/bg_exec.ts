@@ -1,14 +1,30 @@
 
 class BgExec {
 
-  public static background_request_handler: BrowserMessageHandler = (message: BgExecRequest, sender, respond: (r: BgExecResponse) => void) => {
+  public static background_request_handler: BrowserMessageHandler = async (message: BgExecRequest, sender, respond: (r: BgExecResponse) => void) => {
     try {
       let arg_promises = BgExec.arg_object_urls_consume(message.args);
-      Promise.all(arg_promises).then(args => {
-        BgExec.execute_and_format_result(message.path, args).then(result => respond({result}), BgExec.exception_response(respond));
-      }, BgExec.exception_response(respond));
+      let args = await Promise.all(arg_promises);
+      let result = await BgExec.execute_and_format_result(message.path, args);
+      respond({result});
     } catch(e) {
-      BgExec.exception_response(respond)(e);
+      try {
+        respond({
+          exception: {
+            name: e.constructor.name,
+            message: e.message,
+            stack: (e.stack || '') + ((e as any).workerStack ? `\n\nWorker stack:\n${(e as any).workerStack}`: ''),
+          },
+        });
+      } catch (e2) {
+        respond({
+          exception: {
+            name: `CANNOT_PROCESS_BG_EXEC_ERROR: ${String(e2)}`,
+            message: String(e),
+            stack: new Error().stack!,
+          },
+        });
+      }
     }
   }
 
@@ -33,28 +49,18 @@ class BgExec {
     return BgExec.request_to_process_in_background('tool.crypto.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
   }
 
-  private static execute_and_format_result = (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => new Promise((resolve, reject) => {
-    try {
-      let f = BgExec.resolve_path_to_callable_function(path);
-      let returned = f.apply(null, resolved_args);
-      if (typeof returned === 'object' && typeof returned.then === 'function') { // got a promise
-        returned.then((result: PossibleBgExecResults) => {
-          try {
-            if (path === 'tool.crypto.message.decrypt') {
-              BgExec.crypto_message_decrypt_result_create_blobs(result as DecryptResult);
-            }
-            return resolve(result);
-          } catch(e) {
-            return reject(e);
-          }
-        }, reject);
-      } else { // direct value
-        return resolve(returned);
+  private static execute_and_format_result = async (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => {
+    let f = BgExec.resolve_path_to_callable_function(path);
+    let returned: Promise<PossibleBgExecResults>|PossibleBgExecResults = f.apply(null, resolved_args);
+    if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
+      let resolved = await returned;
+      if (path === 'tool.crypto.message.decrypt') {
+        BgExec.crypto_message_decrypt_result_create_blobs(resolved as DecryptResult);
       }
-    } catch(e) {
-      return reject(e);
+      return resolved;
     }
-  })
+    return returned as PossibleBgExecResults; // direct result
+  }
 
   private static crypto_message_decrypt_result_create_blobs = (decrypt_result: DecryptResult) => {
     if (decrypt_result && decrypt_result.success && decrypt_result.content) {
@@ -89,28 +95,6 @@ class BgExec {
       }
     }
     return f as Function; // tslint:disable-line:ban-types
-  }
-
-  private static exception_response = (respond: (r: BgExecResponse) => void) => {
-    return (e: Error) => {
-      try {
-        respond({
-          exception: {
-            name: e.constructor.name,
-            message: e.message,
-            stack: (e.stack || '') + ((e as any).workerStack ? `\n\nWorker stack:\n${(e as any).workerStack}`: ''),
-          },
-        });
-      } catch (e2) {
-        respond({
-          exception: {
-            name: `CANNOT_PROCESS_BG_EXEC_ERROR: ${String(e2)}`,
-            message: String(e),
-            stack: new Error().stack!,
-          },
-        });
-      }
-    };
   }
 
   private static request_to_process_in_background = async (path: string, args: any[]) => {

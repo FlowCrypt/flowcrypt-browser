@@ -34,9 +34,10 @@ class BgAttests {
     }
   }
 
-  static attest_requested_handler: BrowserMessageHandler = (request: {account_email: string}, sender, respond) => {
+  static attest_requested_handler: BrowserMessageHandler = async (request: {account_email: string}, sender, respond) => {
     respond();
-    BgAttests.get_pending_attest_requests().then(() => BgAttests.watch_for_attest_email(request.account_email)).catch(tool.catch.handle_promise_error);
+    await BgAttests.get_pending_attest_requests();
+    BgAttests.watch_for_attest_email(request.account_email);
   }
 
   static attest_packet_received_handler = async (request: {account_email: string, packet: string, passphrase: string}, sender: chrome.runtime.MessageSender|'background', respond: Callback) => {

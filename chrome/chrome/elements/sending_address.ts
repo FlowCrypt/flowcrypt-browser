@@ -19,11 +19,12 @@ tool.catch.try(async () => {
 
   container.html(addresses.map(address_to_html_radio).join(''));
   container.find('input').first().prop('checked', true);
-  container.find('input').click(tool.ui.event.handle(target => {
+  container.find('input').click(tool.ui.event.handle(async target => {
     let chosen_sending_address = $(target).val() as string;
     if (chosen_sending_address !== addresses[0]) {
       let ordered_addresses = tool.arr.unique([chosen_sending_address].concat(storage.addresses || []));
-      Store.set(account_email, {addresses: ordered_addresses}).then(() => window.location.reload()).catch(tool.catch.handle_promise_error);
+      await Store.set(account_email, {addresses: ordered_addresses});
+      window.location.reload();
     }
   }));
 
