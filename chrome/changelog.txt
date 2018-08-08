@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.9.2 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/247?closed=1" target="_blank">Maintenance</a></b>
+
 <b>version 5.9.1 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/246?closed=1" target="_blank">Error handling</a></b>
 
 <b>version 5.9.0 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/245?closed=1" target="_blank">Attachment bugfix</a></b>
