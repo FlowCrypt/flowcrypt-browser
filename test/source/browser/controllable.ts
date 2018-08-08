@@ -26,7 +26,6 @@ abstract class ControllableBase {
   }
 
   protected element = async (selector: string): Promise<ElementHandle|null> => {
-    // this.wait_for_navigation();
     selector = this.selector(selector);
     if(this.is_xpath(selector)) {
       return (await this.target.$x(selector))[0];
@@ -50,28 +49,33 @@ abstract class ControllableBase {
   // }
 
   public wait_all = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}) => {
-    // this.wait_for_navigation();
     let selectors = this.selectors_as_processed_array(selector);
-    for(let i = 0; i < selectors.length; i++) {
-      if (this.is_xpath(selectors[i])) {
-        await (this.target as any).waitForXPath(selectors[i], {timeout: timeout * 1000, visible});  // @types/puppeteer doesn't know about this.target.waitForXPath
+    // console.log(`wait_all:1:${selectors.join(',')}`);
+    for(let selector of selectors) {
+      // console.log(`wait_all:2:${selector}`);
+      if (this.is_xpath(selector)) {
+        // console.log(`wait_all:3:${selector}`);
+        await (this.target as any).waitForXPath(selector, {timeout: timeout * 1000, visible});  // @types/puppeteer doesn't know about this.target.waitForXPath
+        // console.log(`wait_all:4:${selector}`);
       } else {
-        await this.target.waitForSelector(selectors[i], {timeout: timeout * 1000, visible});
+        // console.log(`wait_all:5:${selector}`);
+        await this.target.waitForSelector(selector, {timeout: timeout * 1000, visible});
+        // console.log(`wait_all:6:${selector}`);
       }
     }
+    // console.log(`wait_all:7:${selectors.join(',')}`);
   }
 
   public wait_any = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}): Promise<ElementHandle> => {
-    // this.wait_for_navigation();
     timeout = Math.max(timeout, 1);
     let selectors = this.selectors_as_processed_array(selector);
     while (timeout-- > 0) {
       try {
-        for (let i = 0; i < selectors.length; i++) {
-          let elements = await (this.is_xpath(selectors[i]) ? this.target.$x(selectors[i]) : this.target.$$(selectors[i]));
-          for (let j = 0; j < elements.length; j++) {
-            if ((await elements[j].boundingBox()) !== null || !visible) { // element is visible
-              return elements[j];
+        for (let selector of selectors) {
+          let elements = await (this.is_xpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          for (let element of elements ) {
+            if ((await element.boundingBox()) !== null || !visible) { // element is visible
+              return element;
             }
           }
         }
@@ -86,7 +90,6 @@ abstract class ControllableBase {
   }
 
   public wait_till_gone = async (selector: string|string[], {timeout=5}: {timeout?: number}={timeout:30}) => {
-    // this.wait_for_navigation();
     let seconds_left = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
     while(seconds_left-- >= 0) {
@@ -105,11 +108,15 @@ abstract class ControllableBase {
   public not_present = async (selector: string|string[]) => await this.wait_till_gone(selector, {timeout: 0});
 
   public click = async (selector: string) => {
+    // console.log(`click:1:${selector}`);
     let e = await this.element(selector);
+    // console.log(`click:2:${selector}`);
     if(!e) {
       throw Error(`Element not found: ${selector}`);
     }
+    // console.log(`click:4:${selector}`);
     await e.click();
+    // console.log(`click:5:${selector}`);
   }
 
   public type = async (selector: string, text: string, letter_by_letter=false) => {
@@ -155,9 +162,13 @@ abstract class ControllableBase {
   }
 
   public wait_and_click = async (selector: string, {delay=0.1, confirm_gone=false}: {delay?: number, confirm_gone?: boolean}={}) => {
+    // console.log(`wait_and_click:1:${selector}`);
     await this.wait_all(selector);
+    // console.log(`wait_and_click:2:${selector}`);
     await Util.sleep(delay);
+    // console.log(`wait_and_click:3:${selector}`);
     await this.click(selector);
+    // console.log(`wait_and_click:4:${selector}`);
     if(confirm_gone) {
       await this.wait_till_gone(selector);
     }
@@ -167,7 +178,7 @@ abstract class ControllableBase {
     if(sleep) {
       await Util.sleep(sleep);
     }
-    let frames;
+    let frames: Frame[];
     if(this.target.constructor.name === 'Page') {
       frames = await (this.target as Page).frames();
     } else if(this.target.constructor.name === 'Frame') {
@@ -176,8 +187,8 @@ abstract class ControllableBase {
       throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
     }
     let frame = frames.find(frame => {
-      for(let i = 0; i < url_matchables.length; i++) {
-        if(frame.url().indexOf(url_matchables[i]) === -1) {
+      for(let fragment of url_matchables) {
+        if(frame.url().indexOf(fragment) === -1) {
           return false;
         }
       }

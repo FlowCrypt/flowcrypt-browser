@@ -167,8 +167,6 @@ tool.catch.try(async () => {
         encrypted_a.set_data(await tool.file.download_as_uint8(encrypted_a.url, render_progress));
         await decrypt_and_save_attachment_to_downloads(encrypted_a);
       } else {
-        console.log(encrypted_a);
-        console.log(encrypted_a!.has_data());
         throw Error('Missing both id and url');
       }
     } catch(e) {

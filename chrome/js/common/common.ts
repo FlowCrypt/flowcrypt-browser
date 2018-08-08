@@ -1477,7 +1477,6 @@ let tool = {
         } else if (is_background_page) {
           chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
         } else {
-          console.log('bm.send_await chrome.runtime.sendMessage');
           chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
         }
       }),

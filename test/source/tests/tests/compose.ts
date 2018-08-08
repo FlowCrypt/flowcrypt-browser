@@ -56,12 +56,12 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await compose_page.wait_all(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
   }));
 
-  ava.test('compose - standalone - can choose found contact', test_with_new_browser(async (browser, t) => {
+  ava.test.only(`compose - standalone - can choose found contact`, test_with_new_browser(async (browser, t) => {
     await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await compose_page.type('@input-to', 'human'); // test loading of contacts
     await compose_page.wait_all(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
-    await compose_page.wait_and_click('@action-select-contact(human@flowcrypt.com)', {delay: 1});
+    await compose_page.wait_and_click('@action-select-contact(human@flowcrypt.com)', {confirm_gone: true, delay: 1});
     // todo - verify that the contact/pubkey is showing in green once clicked
   }));
 
