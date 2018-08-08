@@ -56,7 +56,7 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await compose_page.wait_all(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
   }));
 
-  ava.test.only(`compose - standalone - can choose found contact`, test_with_new_browser(async (browser, t) => {
+  ava.test(`compose - standalone - can choose found contact`, test_with_new_browser(async (browser, t) => {
     await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await compose_page.type('@input-to', 'human'); // test loading of contacts
