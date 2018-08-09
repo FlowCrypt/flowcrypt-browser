@@ -95,7 +95,7 @@ tool.catch.try(async () => {
       $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
       let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider']);
       if (storage.setup_done) {
-        render_subscription_status_header().catch(tool.catch.handle_promise_error);
+        render_subscription_status_header().catch(tool.catch.rejection);
         render_encrypted_contact_page_status().catch(tool.catch.handle_exception);
         if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');

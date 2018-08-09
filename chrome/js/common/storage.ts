@@ -344,7 +344,7 @@ class Store {
   static db_contact_save = (db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (db === null) { // relay op through background process
       // todo - currently will silently swallow errors
-      tool.browser.message.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(tool.catch.handle_promise_error);
+      tool.browser.message.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(tool.catch.rejection);
     } else {
       if (Array.isArray(contact)) {
         for (let single_contact of contact) {
@@ -366,7 +366,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        tool.browser.message.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(tool.catch.handle_promise_error);
+        tool.browser.message.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(tool.catch.rejection);
       } else {
         if (Array.isArray(email)) {
           for (let single_email of email) {
@@ -402,7 +402,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        tool.browser.message.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(tool.catch.handle_promise_error);
+        tool.browser.message.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(tool.catch.rejection);
       } else {
         if (email_or_longid.length === 1) {
           let tx: IDBRequest;
@@ -430,7 +430,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        tool.browser.message.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(tool.catch.handle_promise_error);
+        tool.browser.message.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(tool.catch.rejection);
       } else {
         for (let key of Object.keys(query)) {
           if (!tool.value(key).in(Store.db_query_keys)) {

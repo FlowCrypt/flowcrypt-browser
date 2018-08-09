@@ -93,7 +93,7 @@ class Attach {
       }
       this.attached_files[id] = new_file;
       if (typeof this.attachment_added_callback === 'function') {
-        this.collect_attachment(id).then((a) => this.attachment_added_callback(a)).catch(tool.catch.handle_promise_error);
+        this.collect_attachment(id).then((a) => this.attachment_added_callback(a)).catch(tool.catch.rejection);
       }
     }
   }

@@ -31,7 +31,7 @@ tool.catch.try(async () => {
   let set_up_accont_prompt_popup = (active_account_email: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(active_account_email);
-    $('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(tool.catch.handle_promise_error)));
+    $('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(tool.catch.rejection)));
   };
 
   let active_tab = await tool.browser.message.send_await(null, 'get_active_tab_info', {});

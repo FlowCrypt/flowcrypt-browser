@@ -148,7 +148,7 @@ class Composer {
     if (this.app.storage_get_hide_message_password()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initialize_compose_box(variables).catch(tool.catch.handle_promise_error);
+    this.initialize_compose_box(variables).catch(tool.catch.rejection);
     this.initialize_actions();
   }
 
@@ -654,7 +654,7 @@ class Composer {
         }
         let signed_data = await tool.crypto.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
-        this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(tool.catch.handle_promise_error);
+        this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(tool.catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
         await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
@@ -1361,7 +1361,7 @@ class Composer {
       .keypress(tool.ui.enter(() => this.extract_process_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));
-    this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.parse_and_render_recipients().catch(tool.catch.handle_promise_error)));
+    this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.parse_and_render_recipients().catch(tool.catch.rejection)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(tool.ui.event.handle(() => this.hide_contacts(), this.handle_errors(`hide contact box`)));
     $('#input_addresses_container > div').click(tool.ui.event.handle(() => {

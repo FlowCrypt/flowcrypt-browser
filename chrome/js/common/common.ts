@@ -1310,11 +1310,11 @@ let tool = {
           if (passphrase_input.attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
             $(target).html(button_hide);
-            Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.handle_promise_error);
+            Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.rejection);
           } else {
             $('#' + id).attr('type', 'password');
             $(target).html(button_show);
-            Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.handle_promise_error);
+            Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.rejection);
           }
         }));
       }
@@ -1463,7 +1463,7 @@ let tool = {
   browser: {
     message: {
       send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
-        tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.handle_promise_error);
+        tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.rejection);
       },
       send_await: (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
         let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
@@ -1517,7 +1517,7 @@ let tool = {
                   let r = tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
                   if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
                     // todo - a way to callback the error to be re-thrown to caller stack
-                    (r as Promise<void>).catch(tool.catch.handle_promise_error);
+                    (r as Promise<void>).catch(tool.catch.rejection);
                   }
                 } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
                   if (tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
@@ -1563,7 +1563,7 @@ let tool = {
               let r = tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because checked above
               if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
                 // todo - a way to callback the error to be re-thrown to caller stack
-                (r as Promise<void>).catch(tool.catch.handle_promise_error);
+                (r as Promise<void>).catch(tool.catch.rejection);
               }
             } else if (msg.to !== 'broadcast') {
               tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
@@ -3030,7 +3030,7 @@ let tool = {
       try {
         let r = code();
         if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
-          r.catch(tool.catch.handle_promise_error);
+          r.catch(tool.catch.rejection);
         }
       } catch (code_err) {
         tool.catch.handle_exception(code_err);
@@ -3076,7 +3076,7 @@ let tool = {
       }
       return ''; // make ts happy - this will never happen
     },
-    handle_promise_error: (e: PromiseRejectionEvent|StandardError|Error) => {
+    rejection: (e: PromiseRejectionEvent|StandardError|Error) => {
       if(!(e instanceof UnreportableError)) {
         if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
           tool.catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
@@ -3108,13 +3108,13 @@ let tool = {
                 } else {
                   setTimeout(figure_out_flowcrypt_runtime, 200);
                 }
-              }).catch(tool.catch.handle_promise_error);
+              }).catch(tool.catch.rejection);
             }
           }
         };
         figure_out_flowcrypt_runtime();
         (window as FcWindow).onerror = (tool.catch.handle_error as ErrorEventHandler);
-        (window as FcWindow).onunhandledrejection = tool.catch.handle_promise_error;
+        (window as FcWindow).onunhandledrejection = tool.catch.rejection;
       },
     }
   },

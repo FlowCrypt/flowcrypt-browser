@@ -516,9 +516,9 @@ tool.catch.try(async () => {
     }
     if (typeof storage.addresses === 'undefined') {
       if (tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option).catch(tool.catch.handle_promise_error);
+        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option).catch(tool.catch.rejection);
       } else { // cannot read emails, don't fetch alternative addresses
-        save_and_fill_submit_option([account_email]).catch(tool.catch.handle_promise_error);
+        save_and_fill_submit_option([account_email]).catch(tool.catch.rejection);
       }
     } else {
       show_submit_all_addresses_option(storage.addresses as string[]);

@@ -87,7 +87,7 @@ chrome.runtime.onInstalled.addListener(event => {
     tool.catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
-        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(tool.catch.handle_promise_error);
+        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(tool.catch.rejection);
       } else {
         tool.catch.log('db corrupted, skipping: ' + request.f);
       }
@@ -115,8 +115,8 @@ chrome.runtime.onInstalled.addListener(event => {
   tool.browser.message.listen_background({
     bg_exec: BgExec.background_request_handler,
     db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
-    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(tool.catch.handle_promise_error),
-    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(tool.catch.handle_promise_error),
+    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(tool.catch.rejection),
+    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(tool.catch.rejection),
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account,
     settings: open_settings_page_handler,
@@ -147,10 +147,10 @@ chrome.runtime.onInstalled.addListener(event => {
   update_uninstall_url(null, 'background', tool.noop);
   inject_cryptup_into_webmail_if_needed();
   schedule_cryptup_subscription_level_check();
-  BgAttests.watch_for_attest_email_if_appropriate().catch(tool.catch.handle_promise_error);
+  BgAttests.watch_for_attest_email_if_appropriate().catch(tool.catch.rejection);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100
     await Store.remove(null, ['errors']);
   }
 
-})().catch(tool.catch.handle_promise_error);
+})().catch(tool.catch.rejection);

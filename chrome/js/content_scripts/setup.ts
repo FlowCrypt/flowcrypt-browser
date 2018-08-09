@@ -41,7 +41,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     let inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
     inject.meta();
     await Store.account_emails_add(account_email);
-    save_account_email_full_name_if_needed(account_email).catch(tool.catch.handle_promise_error); // may take a long time, thus async
+    save_account_email_full_name_if_needed(account_email).catch(tool.catch.rejection); // may take a long time, thus async
     return {tab_id, notifications, factory, inject};
   };
 
@@ -54,7 +54,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
         notifications.show(set_up_notification, {
-          notification_setup_needed_dismiss: () => Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(tool.catch.handle_promise_error),
+          notification_setup_needed_dismiss: () => Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(tool.catch.rejection),
           action_open_settings: () => tool.browser.message.send_await(null, 'settings', {account_email}),
           close: () => { show_setup_needed_notification_if_setup_not_done = false; },
         });

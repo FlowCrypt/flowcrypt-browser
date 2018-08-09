@@ -122,7 +122,7 @@ tool.catch.try(async () => {
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
-      passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(tool.catch.handle_promise_error), 1000);
+      passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(tool.catch.rejection), 1000);
     } else {
       delete result.message;
       console.info(result);
@@ -136,7 +136,7 @@ tool.catch.try(async () => {
       if(size !== null) {
         url_params.size = size;
       }
-    }).catch(tool.catch.handle_promise_error);
+    }).catch(tool.catch.rejection);
   }
 
   let render_progress = (percent: number, received: number, size: number) => {

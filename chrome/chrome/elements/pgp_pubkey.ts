@@ -61,7 +61,7 @@ tool.catch.try(async () => {
           $('.input_email').css({display: 'none'});
           $('.add_contact').append(' for ' + pubkeys.map(pubkey => tool.str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => tool.str.is_email_valid(e)).join(', '));
         }
-        set_button_text().catch(tool.catch.handle_promise_error);
+        set_button_text().catch(tool.catch.rejection);
       }
     } else {
       let fixed = url_params.armored_pubkey as string;
