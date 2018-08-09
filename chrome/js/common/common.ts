@@ -1598,7 +1598,10 @@ let tool = {
     },
     error: {
       is_network_error: (e: Thrown) => {
-        if (typeof e === 'object') {
+        if(e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
+          return true; // openpgp.js uses fetch()... which produces these errors
+        }
+        if (e && typeof e === 'object') {
           if (e.internal === 'network') { // StandardError
             return true;
           }
@@ -1609,7 +1612,7 @@ let tool = {
         return false;
       },
       is_auth_error: (e: Thrown) => {
-        if (typeof e === 'object') {
+        if (e && typeof e === 'object') {
           if (e.internal === 'auth') { // StandardError
             return true;
           }
