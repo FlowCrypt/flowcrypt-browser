@@ -24,20 +24,26 @@ tool.catch.try(async () => {
     }
   };
 
-  if (passphrase !== null) {
-    await process_attest(passphrase);
-  } else {
-    $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
-    $('.action_passphrase').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest'})));
-    let tab_id = await tool.browser.message.required_tab_id();
-    tool.browser.message.listen({
-      passphrase_entry: async (message: {entered: boolean}, sender, respond) => {
-        if (message.entered) {
-          let pp = await Store.passphrase_get(account_email, primary_ki.longid);
-          await process_attest(pp);
-        }
-      },
-    }, tab_id);
+  if(openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) { // unencrypted private key
+    $('.status').html('Not allowed to attest keys that do not have a pass phrase. Please go to FlowCrypt Settings -> Security -> Change pass phrase');
+    return;
   }
+
+  if (passphrase !== null && passphrase) {
+    await process_attest(passphrase);
+    return;
+  }
+
+  $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
+  $('.action_passphrase').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
+  let tab_id = await tool.browser.message.required_tab_id();
+  tool.browser.message.listen({
+    passphrase_entry: async (message: {entered: boolean}, sender, respond) => {
+      if (message.entered) {
+        let pp = await Store.passphrase_get(account_email, primary_ki.longid);
+        await process_attest(pp);
+      }
+    },
+  }, tab_id);
 
 })();

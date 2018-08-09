@@ -625,7 +625,7 @@ class Composer {
     if (primary_k) {
       const prv = openpgp.key.readArmored(primary_k.private).keys[0];
       let passphrase = await this.app.storage_passphrase_get();
-      if (passphrase === null) {
+      if (passphrase === null && !prv.isDecrypted()) {
         this.app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         if ((await this.when_master_passphrase_entered(60)) !== null) { // pass phrase entered
           await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);

@@ -9,26 +9,25 @@ tool.catch.try(async () => {
   let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let longids = tool.env.url_param_require.string(url_params, 'longids').split(',');
+  let type = tool.env.url_param_require.oneof(url_params, 'type', ['embedded', 'sign', 'attest', 'message']);
 
-  if (url_params.type === 'embedded') {
+  if (type === 'embedded') {
     $('h1').parent().css('display', 'none');
     $('div.separator').css('display', 'none');
     $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
     $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-  } else if (url_params.type === 'sign') {
+  } else if (type === 'sign') {
     $('h1').text('Enter your pass phrase to sign email');
-  } else if (url_params.type === 'attest') {
+  } else if (type === 'attest') {
     $('h1').text('Enter your pass phrase to confirm attestation');
   }
   await tool.ui.passphrase_toggle(['passphrase']);
   $('#passphrase').focus();
 
   let all_private_keys = await Store.keys_get(account_email);
-  let selected_private_keys = all_private_keys;
-  if (url_params.longids) {
-    let longids = (url_params.longids as string).split(',');
-    selected_private_keys = all_private_keys.filter(ki => tool.value(ki.longid).in(longids) || (ki.primary && tool.value('primary').in(longids)));
-  }
+  let selected_private_keys = all_private_keys.filter(ki => tool.value(ki.longid).in(longids) || (ki.primary && tool.value('primary').in(longids)));
+
   if (all_private_keys.length > 1) {
     let html: string;
     if (selected_private_keys.length === 1) {
