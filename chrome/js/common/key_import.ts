@@ -99,7 +99,7 @@ class KeyImportUI {
     try {
       decrypt_result = await tool.crypto.key.decrypt(k, [passphrase]);
     } catch (e) {
-      throw new UserAlert(`This key is not be supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
+      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }
     if (!decrypt_result) {
       this.on_bad_passphrase();
