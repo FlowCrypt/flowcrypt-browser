@@ -66,9 +66,17 @@ tool.catch.try(async () => {
     let at_least_one_matched = false;
     for (let keyinfo of selected_private_keys) { // if passphrase matches more keys, it will save them all
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
-      if (await tool.crypto.key.decrypt(prv, [pass]) === true) {
-        await Store.passphrase_save(storage_type, account_email, keyinfo.longid, pass);
-        at_least_one_matched = true;
+      try {
+        if (await tool.crypto.key.decrypt(prv, [pass]) === true) {
+          await Store.passphrase_save(storage_type, account_email, keyinfo.longid, pass);
+          at_least_one_matched = true;
+        }
+      } catch(e) {
+        if(e.message === 'Unknown s2k type.') {
+          alert(`One of your keys ${keyinfo.longid} is not well supported yet (${e.message}).\n\nPlease write human@flowcrypt.com with details about how was this key created so that we can add support soon.`);
+        } else {
+          throw e;
+        }
       }
     }
     if (at_least_one_matched) {
