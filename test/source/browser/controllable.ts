@@ -53,12 +53,6 @@ abstract class ControllableBase {
 
   public attr = async (element_handle: ElementHandle, name: string): Promise<string> => await (await element_handle.getProperty(name)).jsonValue();
 
-  // private wait_for_navigation = async () => { // needed for puppeteer 1.5.0 but still failing
-  //   if(typeof (this.target as Page).waitForNavigation === 'function') {
-  //     await (this.target as Page).waitForNavigation();
-  //   }
-  // }
-
   public wait_all = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}) => {
     let selectors = this.selectors_as_processed_array(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
@@ -242,6 +236,17 @@ export class ControllablePage extends ControllableBase {
 
   public trigger_and_await_new_alert = async (triggering_action: () => void): Promise<Dialog> => {
     return new Promise(resolve => this.page.on('dialog', resolve) && triggering_action()) as Promise<Dialog>;
+  }
+
+  public wait_for_navigation_if_any = async (seconds: number = 20) => {
+    try {
+      await this.page.waitForNavigation({timeout: seconds * 1000});
+    } catch(e) {
+      if(e.message.indexOf('Navigation Timeout Exceeded') === 0) {
+        return;
+      }
+      throw e;
+    }
   }
 
   public goto = async (url: string) => await this.page.goto(url);
