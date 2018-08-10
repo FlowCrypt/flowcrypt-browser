@@ -61,7 +61,7 @@ class Attachment {
   }
 
   public set_data = (data: string|Uint8Array) => {
-    if(this.text !== null || this.bytes !== null) {
+    if(this.has_data()) {
       throw new Error('Attachment: data already set');
     }
     if(data instanceof Uint8Array) {
@@ -72,7 +72,12 @@ class Attachment {
     this.length = data.length;
   }
 
-  public has_data = () => this.bytes !== null || this.text !== null;
+  public has_data = () => {
+    if(this.bytes === null && this.text === null) {
+      return false;
+    }
+    return true;
+  }
 
   public data = (): string|Uint8Array => {
     if(this.bytes !== null) {
