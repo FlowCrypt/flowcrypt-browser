@@ -62,8 +62,7 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     compose_page.enable_debugging('choose-contact');
     await compose_page.type('@input-to', 'human'); // test loading of contacts
     await compose_page.wait_all(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
-    await Util.sleep(10); // attempt to make the test more reliable
-    await compose_page.wait_and_click('@action-select-contact(human@flowcrypt.com)', {confirm_gone: true});
+    await compose_page.wait_and_click('@action-select-contact(human@flowcrypt.com)', {retry_errors: true, confirm_gone: true});
     // todo - verify that the contact/pubkey is showing in green once clicked
   }));
 

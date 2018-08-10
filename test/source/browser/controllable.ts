@@ -172,17 +172,35 @@ abstract class ControllableBase {
     await this.type(selector, text);
   }
 
-  public wait_and_click = async (selector: string, {delay=0.1, confirm_gone=false}: {delay?: number, confirm_gone?: boolean}={}) => {
-    this.log(`wait_and_click:1:${selector}`);
-    await this.wait_all(selector);
-    this.log(`wait_and_click:2:${selector}`);
-    await Util.sleep(delay);
-    this.log(`wait_and_click:3:${selector}`);
-    await this.click(selector);
-    this.log(`wait_and_click:4:${selector}`);
+  public wait_and_click = async (selector: string, {delay=0.1, confirm_gone=false, retry_errors=false}: {delay?: number, confirm_gone?: boolean, retry_errors?: boolean}={}) => {
+    for(let i of [1, 2, 3]) {
+      this.log(`wait_and_click(i${i}):1:${selector}`);
+      await this.wait_all(selector);
+      this.log(`wait_and_click(i${i}):2:${selector}`);
+      await Util.sleep(delay);
+      this.log(`wait_and_click(i${i}):3:${selector}`);
+      try {
+        this.log(`wait_and_click(i${i}):4:${selector}`);
+        await this.click(selector);
+        this.log(`wait_and_click(i${i}):5:${selector}`);
+      } catch(e) {
+        this.log(`wait_and_click(i${i}):6:err(${e.message}):${selector}`);
+        if(e.message === 'Node is either not visible or not an HTMLElement') { // maybe the node just re-rendered?
+          if(!retry_errors || i === 3) {
+            throw e;
+          }
+          this.log(`wait_and_click(i${i}):retrying`);
+          Util.sleep(2);
+          continue;
+        }
+        throw e;
+      }
+    }
     if(confirm_gone) {
+      this.log(`wait_and_click:7:${selector}`);
       await this.wait_till_gone(selector);
     }
+    this.log(`wait_and_click:8:${selector}`);
   }
 
   public get_frame = async (url_matchables: string[], {sleep=1}={sleep: 1}): Promise<ControllableFrame> => {
