@@ -1013,7 +1013,7 @@ let tool = {
           if (RegExp(tool.crypto.armor.headers('public_key', 're').begin).test(armored)) {
             key = openpgp.key.readArmored(armored).keys[0];
           } else if (RegExp(tool.crypto.armor.headers('message', 're').begin).test(armored)) {
-            key = new OpenPGP.key.Key(openpgp.message.readArmored(armored).packets);
+            key = new openpgp.key.Key(openpgp.message.readArmored(armored).packets);
           }
           if (key) {
             return key.armor();
