@@ -83,7 +83,7 @@ export class PageRecipe {
     };
     let auth = Config.secrets.auth.google.filter(a => a.email === account_email)[0];
     await oauth_page.wait_all('#Email, #submit_approve_access, #identifierId, .w6VTHd');
-    if (await oauth_page.target.$('#Email') !== null) {
+    if (await oauth_page.target.$('#Email') !== null) { // 2016-style login
       await oauth_page.wait_all('#Email', {timeout: 60});
       await oauth_page.wait_and_type('#Email', auth.email);
       await oauth_page.wait_and_click('#next');
@@ -93,7 +93,7 @@ export class PageRecipe {
       await oauth_page.wait_for_navigation_if_any();
       await oauth_page.wait_and_click('#signIn', {delay: 1});
       await oauth_page.wait_for_navigation_if_any();
-    } else if (await oauth_page.target.$('#identifierId') !== null) {
+    } else if (await oauth_page.target.$('#identifierId') !== null) { // 2017-style login
       await oauth_page.wait_all('#identifierId', {timeout: 60});
       await oauth_page.wait_and_type('#identifierId', auth.email, {delay: 2});
       await oauth_page.wait_and_click('.zZhnYe', {delay: 2});  // confirm email

@@ -177,6 +177,7 @@ abstract class ControllableBase {
         this.log(`wait_and_click(i${i}):4:${selector}`);
         await this.click(selector);
         this.log(`wait_and_click(i${i}):5:${selector}`);
+        break;
       } catch(e) {
         this.log(`wait_and_click(i${i}):6:err(${e.message}):${selector}`);
         if(e.message === 'Node is either not visible or not an HTMLElement') { // maybe the node just re-rendered?
@@ -184,7 +185,7 @@ abstract class ControllableBase {
             throw e;
           }
           this.log(`wait_and_click(i${i}):retrying`);
-          Util.sleep(2);
+          await Util.sleep(2);
           continue;
         }
         throw e;
@@ -238,7 +239,7 @@ export class ControllablePage extends ControllableBase {
     return new Promise(resolve => this.page.on('dialog', resolve) && triggering_action()) as Promise<Dialog>;
   }
 
-  public wait_for_navigation_if_any = async (seconds: number = 20) => {
+  public wait_for_navigation_if_any = async (seconds: number = 5) => {
     try {
       await this.page.waitForNavigation({timeout: seconds * 1000});
     } catch(e) {
