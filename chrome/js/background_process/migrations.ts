@@ -7,10 +7,14 @@
 /// <reference path="../common/common.d.ts" />
 
 let migrate_account: BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
-  await Store.set(data.account_email, { version: tool.catch.version('int') as number|null });
-  respond_done();
-  await account_update_status_pks(data.account_email);
-  await account_update_status_keyserver(data.account_email);
+  if(data.account_email) {
+    await Store.set(data.account_email, { version: tool.catch.version('int') as number|null });
+    respond_done();
+    await account_update_status_pks(data.account_email);
+    await account_update_status_keyserver(data.account_email);  
+  } else {
+    console.error('not migrating account: no account_email provided');
+  }
 };
 
 let migrate_global = async () => {
