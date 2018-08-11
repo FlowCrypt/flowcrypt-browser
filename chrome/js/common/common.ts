@@ -1664,6 +1664,7 @@ let tool = {
         return false;
       },
       is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax status code 400: bad request
+      is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax: server error
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
