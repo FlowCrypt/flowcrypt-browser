@@ -138,6 +138,34 @@ class Attachment {
 
 }
 
+class Extension { // todo - move extension-specific common.js code here
+
+  public static prepare_bug_report = (name: string, details?: Dict<FlatTypes>, error?: Error|any): string => {
+    let bug_report: Dict<string> = {
+      name,
+      stack: tool.catch.stack_trace(),
+    };
+    try {
+      bug_report.error = JSON.stringify(error, null, 2);
+    } catch(e) {
+      bug_report.error_as_string = String(error);
+      bug_report.error_serialization_error = String(e);
+    }
+    try {
+      bug_report.details = JSON.stringify(details, null, 2);
+    } catch(e) {
+      bug_report.details_as_string = String(details);
+      bug_report.details_serialization_error = String(e);
+    }
+    let result = '';
+    for(let k of Object.keys(bug_report)) {
+      result += `\n[${k}]\n${bug_report[k]}\n`;
+    }
+    return result;
+  }
+
+}
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -1628,15 +1656,14 @@ let tool = {
         return false;
       },
       is_auth_popup_needed: (e: Thrown) => {
-        if (typeof e === 'object') {
-          if (e.status === 400 && typeof e.responseJSON === 'object') {
-            if (e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
-              return true;
-            }
+        if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
+          if (e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
+            return true;
           }
         }
         return false;
       },
+      is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax status code 400: bad request
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),

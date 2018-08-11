@@ -4,12 +4,19 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'bug_report']);
   let account_email = url_params.account_email as string|undefined;
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let bug_report = url_params.bug_report as string|undefined;
 
   if(account_email) {
     $('#input_email').val(account_email).attr('disabled', 'disabled');
+  }
+
+  if(bug_report) {
+    $('h2').text('Submit Bug Report to FlowCrypt');
+    $('.line.info').text('Please describe in detail what were you doing. Does this happen repeatedly?');
+    $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${bug_report}`);
   }
 
   $('.action_send_feedback').click(tool.ui.event.handle(async target => {

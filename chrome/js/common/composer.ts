@@ -562,6 +562,12 @@ class Composer {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
         this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
       }
+    } else if(tool.api.error.is_bad_request(e)) {
+      if(confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
+        let page = '/chrome/settings/modules/help.htm';
+        let page_url_params = {bug_report: Extension.prepare_bug_report('composer: send: bad request', {}, e)};
+        this.app.send_message_to_background_script('settings', {account_email: this.account_email, page, page_url_params});
+      }
     } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
       tool.catch.report('StandardError | failed to send message', e);
       alert(`Failed to send message: [${(e as StandardError).internal}] ${e.message}`);
