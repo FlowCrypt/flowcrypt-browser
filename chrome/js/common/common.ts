@@ -2005,7 +2005,7 @@ let tool = {
           attachments = attachments.concat(tool.api.gmail.find_attachments(message));
         }
         await tool.api.gmail.fetch_attachments(account_email, attachments);
-        let keys:OpenPGP.key.Key[] = [];
+        let keys: OpenPGP.key.Key[] = [];
         for (let attachment of attachments) {
           try {
             let key = openpgp.key.readArmored(attachment.as_text()).keys[0];
