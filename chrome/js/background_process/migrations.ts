@@ -13,7 +13,7 @@ let migrate_account: BrowserMessageHandler = async (data: {account_email: string
     await account_update_status_pks(data.account_email);
     await account_update_status_keyserver(data.account_email);
   } else {
-    console.error('not migrating account: no account_email provided');
+    tool.catch.report('not migrating account: no account_email provided');
   }
 };
 
