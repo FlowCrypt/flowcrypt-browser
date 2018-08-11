@@ -106,9 +106,7 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
           }
         }
       } catch (e) {
-        if(!tool.api.error.is_network_error(e)) {
-          tool.catch.handle_exception(e);
-        }
+        report_useful_errors(e);
       }
     }
   }
