@@ -3169,12 +3169,10 @@ tool.catch._.initialize();
 
 (( /* EXTENSIONS AND CONFIG */ ) => {
 
-  if (typeof openpgp === 'object' && typeof openpgp.config === 'object') {
-    openpgp.config.versionstring = 'FlowCrypt ' + (tool.catch.version() || '') + ' Gmail Encryption flowcrypt.com';
-    openpgp.config.commentstring = 'Seamlessly send, receive and search encrypted email';
+  if (openpgp && typeof openpgp === 'object' && typeof openpgp.config === 'object') {
+    openpgp.config.versionstring = `FlowCrypt ${tool.catch.version() || ''} Gmail Encryption`;
+    openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   }
-
-  (RegExp as any).escape = (s: string) => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 
   String.prototype.repeat = String.prototype.repeat || function(count) {
     if (this == null) {
