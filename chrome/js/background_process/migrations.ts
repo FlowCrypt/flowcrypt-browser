@@ -10,8 +10,8 @@ let migrate_account: BrowserMessageHandler = async (data: {account_email: string
   if(data.account_email) {
     await Store.set(data.account_email, { version: tool.catch.version('int') as number|null });
     respond_done();
-    await account_update_status_pks(data.account_email);
     await account_update_status_keyserver(data.account_email);
+    await account_update_status_pks(data.account_email);
   } else {
     tool.catch.report('not migrating account: no account_email provided');
   }
@@ -71,7 +71,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
   let my_longids = keyinfos.map(ki => ki.longid);
   let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
-    let unique = tool.arr.unique(storage.addresses.map(a => a.toLowerCase().trim()));
+    let unique = tool.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && tool.str.is_email_valid(a));
     if(unique.length < storage.addresses.length) {
       storage.addresses = unique;
       await Store.set(account_email, storage); // fix duplicate email addresses
