@@ -153,6 +153,9 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
         console.info(`FlowCrypt cannot start: missing tab_id`);
         console.error(e);
         tool.catch.log(`FlowCrypt cannot start: missing tab_id: ${String(e)}`);
+      } else if(e && e.message === 'Extension context invalidated.') {
+        console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
+        (window as ContentScriptWindow).destroy();
       } else if(!(e instanceof DestroyTrigger)) {
         tool.catch.handle_exception(e);
       }
