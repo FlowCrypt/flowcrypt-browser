@@ -1663,8 +1663,9 @@ let tool = {
         }
         return false;
       },
-      is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax status code 400: bad request
-      is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax: server error
+      is_not_found: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
+      is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
+      is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
     },
     google: {
       user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
@@ -2671,7 +2672,7 @@ let tool = {
       } else {
         throw Error('unknown format:' + String(format));
       }
-      let response = await $.ajax({
+      let request: JQueryAjaxSettings = {
         xhr: () => tool._.get_ajax_progress_xhr(progress),
         url: base_url + path,
         method,
@@ -2683,11 +2684,19 @@ let tool = {
         contentType: content_type,
         async: true,
         timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
-      });
-      if (response && typeof response === 'object' && typeof response.error === 'object') {
-        throw response as StandardError;
+      };
+      try {
+        let response = await $.ajax(request);
+        if (response && typeof response === 'object' && typeof response.error === 'object') {
+          throw response as StandardError;
+        }
+        return response;
+      } catch(e) {
+        if(e && typeof e === 'object' && e.readyState === 4) {
+          e.url = request.url; // for debugging
+        }
+        throw e;
       }
-      return response;
     },
     api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
     api_google_auth_code_url: (auth_request: AuthRequest) => tool.env.url_create(tool._.var.google_oauth2!.url_code, {
@@ -2765,6 +2774,9 @@ let tool = {
         if (tool.api.error.is_auth_error(e)) { // force refresh token
           request.headers!.Authorization = await tool._.google_api_authorization_header(account_email, true);
           return await $.ajax(request);
+        }
+        if(e && typeof e === 'object' && e.readyState === 4) {
+          e.url = request.url; // for debugging
         }
         throw e;
       }

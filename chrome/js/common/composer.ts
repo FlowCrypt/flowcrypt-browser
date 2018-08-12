@@ -352,7 +352,7 @@ class Composer {
       } else if (tool.api.error.is_auth_popup_needed(e)) {
         this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         $('body').html(`Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${tool.ui.retry_link()}`);
-      } else if (this.is_reply_box && e.status === 404) {
+      } else if (this.is_reply_box && tool.api.error.is_not_found(e)) {
         tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         await tool.time.sleep(500);
         await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
