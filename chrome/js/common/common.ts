@@ -3172,6 +3172,7 @@ tool.catch._.initialize();
   if (openpgp && typeof openpgp === 'object' && typeof openpgp.config === 'object') {
     openpgp.config.versionstring = `FlowCrypt ${tool.catch.version() || ''} Gmail Encryption`;
     openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+    // openpgp.config.require_uid_self_cert = false;
   }
 
   String.prototype.repeat = String.prototype.repeat || function(count) {
