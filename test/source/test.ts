@@ -1,7 +1,5 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference path="../node_modules/ava/index.d.ts" />
-
 import * as ava from 'ava';
 import {BrowserHandle, BrowserPool, Semaphore} from './browser';
 import {BrowserRecipe} from './tests/browser_recipe';
