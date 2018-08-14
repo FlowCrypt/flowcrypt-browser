@@ -1,7 +1,5 @@
 
 let gulp = require('gulp');
-let typescript = require('gulp-typescript');
-let sourcemaps = require('gulp-sourcemaps');
 let jeditor = require("gulp-json-editor");
 let fs = require('fs');
 let del = require('del');
@@ -26,8 +24,6 @@ let recipe = {
       });
     }
   },
-  // ts: (from, to, configfile) => gulp.src(from).pipe(sourcemaps.init()).pipe(typescript(config(configfile).compilerOptions)).on('error', recipe.crash()).pipe(sourcemaps.write()).pipe(gulp.dest(to)),
-  ts: (from, to, configfile) => gulp.src(from).pipe(typescript(config(configfile).compilerOptions)).on('error', recipe.crash()).pipe(gulp.dest(to)),
   copy: (from, to) => gulp.src(from).pipe(gulp.dest(to)),
   exec: (shell_command) => new Promise((resolve, reject) => {
     let subprocess = exec(shell_command, (err, stdout, stderr) => err === null ? resolve() : reject(err));
@@ -41,7 +37,7 @@ let recipe = {
 
 let subTask = {
   flush: () => Promise.all([del(chromeTo), del(ffTo)]),
-  transpileProjectTs: () => recipe.ts(source('**/*.ts') ,chromeTo, 'tsconfig.json'),
+  transpileProjectTs: () => recipe.exec('./node_modules/typescript/bin/tsc'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
   chromeBuildSpacesToTabs: () => Promise.all([
     recipe.spacesToTabs(`${chromeTo}/js`),

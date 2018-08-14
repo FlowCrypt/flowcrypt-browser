@@ -5,7 +5,8 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "sourceMap": false,
-    "checkJs": false
+    "checkJs": false,
+    "outDir": "build/chrome"
   },
   "include": [
     "chrome/**/*.ts"
