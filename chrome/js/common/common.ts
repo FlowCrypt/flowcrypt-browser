@@ -3175,7 +3175,7 @@ tool.catch._.initialize();
 
 (( /* EXTENSIONS AND CONFIG */ ) => {
 
-  if (openpgp && typeof openpgp === 'object' && typeof openpgp.config === 'object') {
+  if (typeof openpgp === 'object' && openpgp && typeof openpgp.config === 'object') {
     openpgp.config.versionstring = `FlowCrypt ${tool.catch.version() || ''} Gmail Encryption`;
     openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
     // openpgp.config.require_uid_self_cert = false;
