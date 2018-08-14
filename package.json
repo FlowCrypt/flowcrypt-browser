@@ -14,6 +14,7 @@
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.2",
     "gulp-watch": "^5.0.0",
+    "del": "^3.0.0",
     "inquirer": "^5.2.0",
     "tslint": "^5.11.0",
     "typescript": "^2.9.1"
