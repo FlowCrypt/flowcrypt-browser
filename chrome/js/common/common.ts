@@ -1384,7 +1384,7 @@ let tool = {
       };
     },
     scroll: (selector: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
-      let el = $(selector).first()[0];
+      let el = $(selector as string).first()[0]; // as string due to JQuery TS quirk
       if (el) {
         el.scrollIntoView();
         for (let delay of repeat) { // useful if mobile keyboard is about to show up
@@ -1845,7 +1845,7 @@ let tool = {
           let r = new XMLHttpRequest();
           r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${attachment_id}`, true);
           r.setRequestHeader('Authorization', auth_token);
-          r.send(null);
+          r.send();
           let status: number;
           let response_poll_interval = window.setInterval(() => {
             if (status >= 200 && status <= 299 && r.responseText.length >= min_bytes) {
@@ -2720,23 +2720,23 @@ let tool = {
       }
       await Store.set(account_email, to_save);
     },
-    google_auth_get_tokens: (code: string): Promise<GoogleAuthTokensResponse> => $.ajax({
+    google_auth_get_tokens: (code: string) => $.ajax({
       url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }),
-    google_auth_refresh_token: (refresh_token: string): Promise<GoogleAuthTokensResponse> => $.ajax({
+    }) as any as Promise<GoogleAuthTokensResponse>,
+    google_auth_refresh_token: (refresh_token: string) => $.ajax({
       url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }),
-    google_auth_check_access_token: (access_token: string): Promise<GoogleAuthTokenInfo> => $.ajax({
+    }) as any as Promise<GoogleAuthTokensResponse>,
+    google_auth_check_access_token: (access_token: string) => $.ajax({
       url: tool.env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
       crossDomain: true,
       async: true,
-    }),
+    }) as any as Promise<GoogleAuthTokenInfo>,
     google_auth_check_email: async (expected_email: string|null, access_token: string) => {
       try {
         let r = await $.ajax({

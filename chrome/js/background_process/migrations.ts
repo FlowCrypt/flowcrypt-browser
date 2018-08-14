@@ -27,14 +27,14 @@ let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
   } else {
     let values: Dict<FlatTypes> = {};
     for (let legacy_storage_key of Object.keys(localStorage)) {
-      let value = legacy_local_storage_read(localStorage[legacy_storage_key]);
+      let value = legacy_local_storage_read(localStorage.getItem(legacy_storage_key)!);
       if (legacy_storage_key === 'settings_seen') {
         values.cryptup_global_settings_seen = true;
       } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
         values[legacy_storage_key] = value;
       } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
         try {
-          let primary_longid = legacy_local_storage_read(localStorage[legacy_storage_key.replace('master_passphrase', 'keys')]).filter((ki: KeyInfo) => ki.primary)[0].longid;
+          let primary_longid = legacy_local_storage_read(localStorage.getItem(legacy_storage_key.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
           values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
         } catch (e) {} // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
       } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {

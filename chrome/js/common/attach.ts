@@ -109,7 +109,9 @@ class Attach {
   private read_attachment_data_as_uint8 = (id: string): Promise<Uint8Array> => {
     return new Promise(resolve => {
       let reader = new FileReader();
-      reader.onload = () => resolve(new Uint8Array(reader.result));
+      reader.onload = () => {
+        resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting
+      };
       reader.readAsArrayBuffer(this.attached_files[id]);
     });
   }

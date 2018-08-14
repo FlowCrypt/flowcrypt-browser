@@ -77,7 +77,7 @@ class Store {
 
   static async session_get(account_email: string, key: string): Promise<string|null> {
     if (Store.env_is_background_script()) {
-      return window.sessionStorage[Store.index(account_email, key) as string];
+      return window.sessionStorage.getItem(Store.index(account_email, key) as string);
     } else {
       return await tool.browser.message.send_await(null, 'session_get', {account_email, key});
     }
@@ -86,7 +86,7 @@ class Store {
   static async session_set(account_email: string, key: string, value: string|undefined): Promise<void> {
     if (Store.env_is_background_script()) {
       if (typeof value !== 'undefined') {
-        sessionStorage[Store.index(account_email, key) as string] = String(value);
+        sessionStorage.setItem(Store.index(account_email, key) as string, String(value));
       } else {
         sessionStorage.removeItem(Store.index(account_email, key) as string);
       }
@@ -278,14 +278,14 @@ class Store {
           contacts.createIndex('index_pending_lookup', 'pending_lookup');
         }
         if (event.oldVersion < 2) {
-          contacts = open_db.transaction.objectStore('contacts');
+          contacts = open_db.transaction!.objectStore('contacts'); // todo - added ! after ts3 upgrade - investigate
           contacts.createIndex('index_longid', 'longid');
         }
       };
       open_db.onsuccess = () => resolve(open_db.result);
       let stack_fill = String((new Error()).stack);
-      open_db.onblocked = () => reject(Store.db_error_categorize(open_db.error, stack_fill));
-      open_db.onerror = () => reject(Store.db_error_categorize(open_db.error, stack_fill));
+      open_db.onblocked = () => reject(Store.db_error_categorize(open_db.error!, stack_fill)); // todo - added ! after ts3 upgrade - investigate
+      open_db.onerror = () => reject(Store.db_error_categorize(open_db.error!, stack_fill)); // todo - added ! after ts3 upgrade - investigate
     });
   }
 
@@ -413,7 +413,7 @@ class Store {
           }
           tx.onsuccess = tool.catch.try(() => resolve([tx.result !== undefined ? tx.result : null]));
           let stack_fill = String((new Error()).stack);
-          tx.onerror = () => reject(Store.db_error_categorize(tx.error, stack_fill));
+          tx.onerror = () => reject(Store.db_error_categorize(tx.error!, stack_fill)); // todo - added ! after ts3 upgrade - investigate
         } else {
           let results: (Contact|null)[] = [];
           for (let single_email_or_longid of email_or_longid) {
@@ -471,7 +471,7 @@ class Store {
             }
           });
           let stack_fill = String((new Error()).stack);
-          search.onerror = () => reject(Store.db_error_categorize(search!.error, stack_fill));
+          search.onerror = () => reject(Store.db_error_categorize(search!.error!, stack_fill)); // todo - added ! after ts3 upgrade - investigate
         }
       }
     });

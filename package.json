@@ -4,8 +4,9 @@
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "devDependencies": {
     "@types/chrome": "0.0.65",
-    "@types/jquery": "3.3.1",
+    "@types/jquery": "^3.3.5",
     "@types/openpgp": "0.0.29",
+    "del": "^3.0.0",
     "gulp": "^4.0.0",
     "gulp-cli": "^2.0.1",
     "gulp-json-editor": "^2.4.1",
@@ -14,10 +15,9 @@
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.2",
     "gulp-watch": "^5.0.0",
-    "del": "^3.0.0",
     "inquirer": "^5.2.0",
     "tslint": "^5.11.0",
-    "typescript": "^2.9.1"
+    "typescript": "^3.0.1"
   },
   "scripts": {
     "test_0_tslint": "./node_modules/tslint/bin/tslint --project tsconfig.json",

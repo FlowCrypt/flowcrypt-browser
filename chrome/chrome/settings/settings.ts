@@ -214,7 +214,7 @@ class Settings {
       if (!userIds.length) {
         userIds.push(account_email);
       }
-      container = $(container);
+      container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
       container.html([
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
         '<div class="line compatibility_fix_user_ids">' + userIds.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
