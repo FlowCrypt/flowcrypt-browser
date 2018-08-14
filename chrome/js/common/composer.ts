@@ -47,7 +47,7 @@ class ComposerResetBtnTrigger extends Error {}
 
 class Composer {
 
-  S = tool.ui.build_jquery_selectors({
+  private S = tool.ui.build_jquery_selectors({
     body: 'body',
     compose_table: 'table#compose',
     header: '#section_header',
@@ -73,12 +73,14 @@ class Composer {
     icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
     icon_sign: '.icon.action_sign',
-    reply_message_prompt: 'div#reply_message_prompt',
+    prompt: 'div#initial_prompt',
     reply_message_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
     replied_attachments: '#attachments',
     contacts: '#contacts',
-  }) as SelectorCacher;
+    input_addresses_container_outer: '#input_addresses_container',
+    input_addresses_container_inner: '#input_addresses_container > div:first',
+  });
 
   private attach: Attach;
   private app: ComposerAppFunctionsInterface;
@@ -225,13 +227,11 @@ class Composer {
   }
 
   private initialize_actions = () => {
-    let S = this.S;
-    let that = this;
-    S.cached('icon_pubkey').attr('title', Lang.compose.include_pubkey_icon_title);
-    S.cached('input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), () => this.show_hide_password_or_pubkey_container_and_color_send_button()));
-    S.cached('input_password').focus(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
-    S.cached('input_password').blur(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
-    S.cached('add_their_pubkey').click(tool.ui.event.handle(() => {
+    this.S.cached('icon_pubkey').attr('title', Lang.compose.include_pubkey_icon_title);
+    this.S.cached('input_password').keyup(tool.ui.event.prevent(tool.ui.event.spree(), () => this.show_hide_password_or_pubkey_container_and_color_send_button()));
+    this.S.cached('input_password').focus(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
+    this.S.cached('input_password').blur(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
+    this.S.cached('add_their_pubkey').click(tool.ui.event.handle(() => {
       let no_pgp_emails = this.get_recipients_from_dom('no_pgp');
       this.app.render_add_pubkey_dialog(no_pgp_emails);
       clearInterval(this.added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
@@ -247,43 +247,43 @@ class Composer {
         }
       }, 1000);
     }, this.handle_errors('add recipient public key')));
-    S.cached('add_intro').click(tool.ui.event.handle(self => {
-      $(self).css('display', 'none');
-      S.cached('intro_container').css('display', 'table-row');
-      S.cached('input_intro').focus();
-      that.set_input_text_height_manually_if_needed();
+    this.S.cached('add_intro').click(tool.ui.event.handle(target => {
+      $(target).css('display', 'none');
+      this.S.cached('intro_container').css('display', 'table-row');
+      this.S.cached('input_intro').focus();
+      this.set_input_text_height_manually_if_needed();
     }, this.handle_errors(`add intro`)));
-    S.cached('icon_help').click(tool.ui.event.handle(() => this.app.render_help_dialog(), this.handle_errors(`render help dialog`)));
-    S.now('input_from').change(() => {
+    this.S.cached('icon_help').click(tool.ui.event.handle(() => this.app.render_help_dialog(), this.handle_errors(`render help dialog`)));
+    this.S.now('input_from').change(() => {
       // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
       // because they might not have a pubkey for the alternative address, and might get confused
     });
-    S.cached('input_text').get(0).onpaste = async e => {
+    this.S.cached('input_text').get(0).onpaste = async e => {
       let clipboard_html_data = e.clipboardData.getData('text/html');
       if (clipboard_html_data) {
         e.preventDefault();
         e.stopPropagation();
         let text = await tool.str.html_as_text(clipboard_html_data);
-        that.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
+        this.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
       }
     };
-    S.cached('icon_pubkey').click(tool.ui.event.handle(self => {
-      that.include_pubkey_toggled_manually = true;
-      that.update_pubkey_icon(!$(self).is('.active'));
+    this.S.cached('icon_pubkey').click(tool.ui.event.handle(target => {
+      this.include_pubkey_toggled_manually = true;
+      this.update_pubkey_icon(!$(target).is('.active'));
     }, this.handle_errors(`set/unset pubkey attachment`)));
-    S.cached('icon_footer').click(tool.ui.event.handle(self => {
-      if (!$(self).is('.active')) {
-        that.app.render_footer_dialog();
+    this.S.cached('icon_footer').click(tool.ui.event.handle(target => {
+      if (!$(target).is('.active')) {
+        this.app.render_footer_dialog();
       } else {
-        that.update_footer_icon(!$(self).is('.active'));
+        this.update_footer_icon(!$(target).is('.active'));
       }
     }, this.handle_errors(`change footer`)));
     $('.delete_draft').click(tool.ui.event.handle(async () => {
       await this.draft_delete();
       this.app.close_message();
     }, this.handle_errors('delete draft')));
-    S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
-    S.cached('icon_sign').click(tool.ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
+    this.S.cached('body').bind({drop: tool.ui.event.stop(), dragover: tool.ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
+    this.S.cached('icon_sign').click(tool.ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
   }
 
   show_subscribe_dialog_and_wait_for_response: BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
@@ -292,7 +292,13 @@ class Composer {
   }
 
   private initialize_compose_box = async (variables: UrlParams) => {
-    let that = this;
+    if(this.is_reply_box) {
+      this.S.cached('header').remove();
+      this.S.cached('subject').remove();
+      this.S.cached('contacts').css('top', '39px');
+      this.S.cached('compose_table').css({'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf'});
+      this.S.cached('input_text').css('overflow-y', 'hidden');
+    }
     if (this.draft_id) {
       await this.initial_draft_load();
     } else {
@@ -300,30 +306,24 @@ class Composer {
         if (variables.skip_click_prompt) {
           await this.render_reply_message_compose_table();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(tool.ui.event.handle(async self => {
-            if ($(self).attr('id') === 'a_reply') {
-              that.supplied_to = that.supplied_to.split(',')[0];
-            } else if ($(self).attr('id') === 'a_forward') {
-              that.supplied_to = '';
+          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(tool.ui.event.handle(async target => {
+            if ($(target).attr('id') === 'a_reply') {
+              this.supplied_to = this.supplied_to.split(',')[0];
+            } else if ($(target).attr('id') === 'a_forward') {
+              this.supplied_to = '';
             }
-            that.render_reply_message_compose_table((($(self).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward').catch(tool.catch.handle_exception);
+            await this.render_reply_message_compose_table((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward');
           }, this.handle_errors(`activate repply box`)));
         }
       }
     }
     if (this.is_reply_box) {
-      if (!variables.skip_click_prompt) {
-        this.S.cached('reply_message_prompt').css('display', 'block');
+      if (!variables.skip_click_prompt && !this.draft_id) {
+        this.S.cached('prompt').css('display', 'block');
       }
-      this.S.cached('header').remove();
-      this.S.cached('subject').remove();
-      this.S.cached('contacts').css('top', '39px');
-      this.S.cached('compose_table').css({'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf'});
-      this.S.cached('input_text').css('overflow-y', 'hidden');
       $(document).ready(() => this.resize_reply_box());
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
-      this.S.cached('compose_table').css('display', 'table');
       await this.render_compose_table();
     }
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
@@ -331,7 +331,7 @@ class Composer {
 
   private initial_draft_load = async () => {
     if (this.is_reply_box) {
-      this.S.cached('reply_message_prompt').html('Loading draft.. ' + tool.ui.spinner('green'));
+      this.S.cached('prompt').html(`Loading draft.. ${tool.ui.spinner('green')}`);
     }
     try {
       let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
@@ -339,7 +339,7 @@ class Composer {
       let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
       if (armored) {
         this.S.cached('input_subject').val(parsed_message.headers.subject || '');
-        await this.decrypt_and_render_draft(armored, this.is_reply_box ? this.render_reply_message_compose_table : null, tool.mime.headers_to_from(parsed_message));
+        await this.decrypt_and_render_draft(armored, tool.mime.headers_to_from(parsed_message));
       } else {
         console.info('tool.api.gmail.draft_get tool.mime.decode else {}');
         if (this.is_reply_box) {
@@ -456,11 +456,12 @@ class Composer {
     }
   }
 
-  private decrypt_and_render_draft = async (encrypted_draft: string, render_function: (() => void)|null, headers: FromToHeaders) => {
-    let passphrase = this.app.storage_passphrase_get();
+  private decrypt_and_render_draft = async (encrypted_draft: string, headers: FromToHeaders) => {
+    let passphrase = await this.app.storage_passphrase_get();
     if (passphrase !== null) {
       let result = await tool.crypto.message.decrypt(this.account_email, encrypted_draft);
       if (result.success) {
+        this.S.cached('prompt').css({display: 'none'});
         let safe_html_draft = await tool.str.as_safe_html(result.content.text!.replace(/\n/g, '<br>\n'));
         this.S.cached('input_text').html(safe_html_draft);
         if (headers && headers.to && headers.to.length) {
@@ -472,21 +473,24 @@ class Composer {
           this.S.now('input_from').val(headers.from);
         }
         this.set_input_text_height_manually_if_needed();
-        if (render_function) {
-          render_function();
-        }
       } else {
         this.set_input_text_height_manually_if_needed();
-        if (render_function) {
-          render_function();
-        }
+      }
+      if(this.is_reply_box) {
+        await this.render_reply_message_compose_table();
       }
     } else {
-      if (this.is_reply_box) {
-        this.S.cached('reply_message_prompt').html(tool.ui.spinner('green') + ' Waiting for pass phrase to open previous draft..');
-        await this.when_master_passphrase_entered();
-        await this.decrypt_and_render_draft(encrypted_draft, render_function, headers);
+      let prompt_text = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
+      if(this.is_reply_box) {
+        this.S.cached('prompt').html(prompt_text).css({display: 'block'});
+        this.resize_reply_box();
+      } else {
+        this.S.cached('prompt').html(`${prompt_text}<br><br><a href="#" class="action_close">close</a>`).css({display: 'block', height: '100%'});
       }
+      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(tool.ui.event.handle(target => this.app.send_message_to_main_window('passphrase_dialog', {type: 'draft', longids: 'primary'})));
+      this.S.cached('prompt').find('a.action_close').click(tool.ui.event.handle(target => this.app.close_message()));
+      await this.when_master_passphrase_entered();
+      await this.decrypt_and_render_draft(encrypted_draft, headers);
     }
   }
 
@@ -838,7 +842,9 @@ class Composer {
           return this.PUBKEY_LOOKUP_RESULT_FAIL;
         }
       } catch (e) {
-        console.log(e);
+        if(!tool.api.error.is_network_error(e) && !tool.api.error.is_server_error(e)) {
+          tool.catch.handle_exception(e);
+        }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
       }
     }
@@ -978,7 +984,7 @@ class Composer {
       } else if (this.S.cached('reply_message_successful').is(':visible')) {
         current_height = this.S.cached('reply_message_successful').outerHeight() || 0;
       } else {
-        current_height = this.S.cached('reply_message_prompt').outerHeight() || 0;
+        current_height = this.S.cached('prompt').outerHeight() || 0;
       }
       if (current_height !== this.last_reply_box_table_height && Math.abs(current_height - this.last_reply_box_table_height) > 2) { // more then two pixel difference compared to last time
         this.last_reply_box_table_height = current_height;
@@ -1022,8 +1028,7 @@ class Composer {
   }
 
   private render_reply_message_compose_table = async (method:"forward"|"reply"="reply") => {
-    this.S.cached('reply_message_prompt').css('display', 'none');
-    this.S.cached('compose_table').css('display', 'table');
+    this.S.cached('prompt').css({display: 'none'});
     this.S.cached('input_to').val(this.supplied_to + (this.supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.render_compose_table();
     if (this.can_read_emails) {
@@ -1037,8 +1042,8 @@ class Composer {
         }
       }
     } else {
-      this.S.cached('reply_message_prompt').html('FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
-      this.S.cached('reply_message_prompt').attr('style', 'border:none !important');
+      this.S.cached('prompt').html('FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
+      this.S.cached('prompt').attr('style', 'border:none !important');
       $('.auth_settings').click(() => this.app.send_message_to_background_script('settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm'}));
       $('.new_message_button').click(() => this.app.send_message_to_main_window('open_new_message'));
     }
@@ -1145,8 +1150,8 @@ class Composer {
         ul_html += '<li class="loading">loading...</li>';
       }
       this.S.cached('contacts').find('ul').html(ul_html);
-      this.S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), (self: HTMLElement) => {
-        let email = $(self).attr('email');
+      this.S.cached('contacts').find('ul li.select_contact').click(tool.ui.event.prevent(tool.ui.event.double(), (target: HTMLElement) => {
+        let email = $(target).attr('email');
         if (email) {
           this.select_contact(tool.str.parse_email(email).email, query);
         }
@@ -1155,7 +1160,7 @@ class Composer {
       this.S.cached('contacts').find('ul li.auth_contacts').click(tool.ui.event.handle(() => this.auth_contacts(this.account_email), this.handle_errors(`authorize contact search`)));
       this.S.cached('contacts').css({
         display: 'block',
-        top: ($('#compose > tbody > tr:first').height()! + $('#input_addresses_container > div:first').height()! + 10) + 'px', // both are in the template
+        top: `${$('#compose > tbody > tr:first').height()! + this.S.cached('input_addresses_container_inner').height()! + 10}px`, // both are in the template
       });
     } else {
       this.hide_contacts();
@@ -1271,12 +1276,12 @@ class Composer {
     }
     $(email_element).children('img, i').remove();
     let content_html = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    $(email_element).append(content_html).find('img.close-icon').click(tool.ui.event.handle(self => this.remove_receiver(self), this.handle_errors('remove recipient')));
+    $(email_element).append(content_html).find('img.close-icon').click(tool.ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
       $(email_element).children('img:visible').replaceWith('<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
-      $(email_element).find('.action_retry_pubkey_fetch').click(tool.ui.event.handle(self => this.remove_receiver(self), this.handle_errors('remove recipient')));
+      $(email_element).find('.action_retry_pubkey_fetch').click(tool.ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
@@ -1360,17 +1365,18 @@ class Composer {
   }
 
   private render_compose_table = async () => {
+    this.S.cached('compose_table').css('display', 'table');
     if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
-    $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message()))
-      .keypress(tool.ui.enter(() => this.extract_process_send_message()));
+    this.S.cached('send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message()));
+    this.S.cached('send_btn').keypress(tool.ui.enter(() => this.extract_process_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(tool.ui.event.prevent(tool.ui.event.spree('veryslow'), () => this.search_contacts()));
     this.S.cached('input_to').blur(tool.ui.event.prevent(tool.ui.event.double(), () => this.parse_and_render_recipients().catch(tool.catch.rejection)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(tool.ui.event.handle(() => this.hide_contacts(), this.handle_errors(`hide contact box`)));
-    $('#input_addresses_container > div').click(tool.ui.event.handle(() => {
+    this.S.cached('input_addresses_container_inner').click(tool.ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
         this.S.cached('input_to').focus();
       }

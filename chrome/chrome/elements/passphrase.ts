@@ -10,7 +10,7 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
   let longids = tool.env.url_param_require.string(url_params, 'longids').split(',');
-  let type = tool.env.url_param_require.oneof(url_params, 'type', ['embedded', 'sign', 'attest', 'message']);
+  let type = tool.env.url_param_require.oneof(url_params, 'type', ['embedded', 'sign', 'attest', 'message', 'draft']);
 
   if (type === 'embedded') {
     $('h1').parent().css('display', 'none');
@@ -19,6 +19,8 @@ tool.catch.try(async () => {
     $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
   } else if (type === 'sign') {
     $('h1').text('Enter your pass phrase to sign email');
+  } else if (type === 'draft') {
+    $('h1').text('Enter your pass phrase to load a draft');
   } else if (type === 'attest') {
     $('h1').text('Enter your pass phrase to confirm attestation');
   }

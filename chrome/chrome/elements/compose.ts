@@ -221,7 +221,7 @@ tool.catch.try(async () => {
       if (url_params.placement !== 'settings') {
         tool.browser.message.send(parent_tab_id, 'add_pubkey_dialog', {emails});
       } else {
-        $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: composer.S.cached('body').height()! - 50}); // body element is present
+        $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50}); // body element is present
       }
     },
     render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/help.htm' }),

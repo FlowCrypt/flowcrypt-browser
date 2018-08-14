@@ -44,11 +44,6 @@ interface FlowCryptManifest extends chrome.runtime.Manifest {
     oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]};
 }
 
-interface SelectorCacher {
-    cached: (name: string) => JQuery;
-    now: (name: string) => JQuery;
-}
-
 interface Contact {
     email: string;
     name: string | null;

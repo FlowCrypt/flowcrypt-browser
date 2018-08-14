@@ -400,8 +400,8 @@ body#new_message.popup table#compose { width: 490px; border: none; }
 body#new_message.popup table#compose tr td { border-left: none; border-right: none; }
 
 div#reply_message_table_container { display: none; }
-div#reply_message_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
-div#reply_message_prompt #reply_click_area { width: 95%; height: 50px; margin-top: 3px; position: absolute; }
+div#initial_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
+div#initial_prompt #reply_click_area { width: 95%; height: 50px; margin-top: 3px; position: absolute; }
 p#reply_links { margin: 0; }
 div#reply_message_table_container table#compose { border-top: 1px solid #cfcfcf; width: 100%; }
 div#reply_message_successful_container { width: 100%; display: none; padding-bottom: 40px; }
