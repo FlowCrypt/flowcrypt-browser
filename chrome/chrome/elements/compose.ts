@@ -74,28 +74,33 @@ tool.catch.try(async () => {
     can_read_email: () => can_read_email,
     does_recipient_have_my_pubkey: async (their_email: string): Promise<boolean|undefined> => {
       their_email = tool.str.parse_email(their_email).email;
+      if(!their_email) {
+        return false;
+      }
       let storage = await Store.get_account(account_email, ['pubkey_sent_to']);
       if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
         return true;
-      } else if (!can_read_email) {
+      }
+      if (!can_read_email) {
         return undefined;
-      } else {
-        const q_sent_pubkey = 'is:sent to:' + their_email + ' "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"';
-        const q_received_message = 'from:' + their_email + ' "BEGIN PGP MESSAGE" "END PGP MESSAGE"';
-        try {
-          let response = await tool.api.gmail.message_list(account_email, '(' + q_sent_pubkey + ') OR (' + q_received_message + ')', true);
-          if (response.messages) {
-            await Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)});
-            return true;
-          } else {
-            return false;
-          }
-        } catch(e) {
-          if(tool.api.error.is_auth_popup_needed(e)) {
-            tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-          }
-          return undefined;
+      }
+      const q_sent_pubkey = `is:sent to:${their_email} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
+      const q_received_message = `from:${their_email} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
+      try {
+        let response = await tool.api.gmail.message_list(account_email, `(${q_sent_pubkey}) OR (${q_received_message})`, true);
+        if (response.messages) {
+          await Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)});
+          return true;
+        } else {
+          return false;
         }
+      } catch(e) {
+        if(tool.api.error.is_auth_popup_needed(e)) {
+          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        } else if(!tool.api.error.is_network_error(e)) {
+          tool.catch.handle_exception(e);
+        }
+        return undefined;
       }
     },
     storage_get_addresses: () => storage.addresses || [account_email],
