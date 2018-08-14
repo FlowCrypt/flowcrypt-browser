@@ -1938,10 +1938,11 @@ let tool = {
           if (!tool.value(user_query).in(variations_of_to)) {
             variations_of_to.push(user_query);
           }
-          gmail_query.push('(to:' + variations_of_to.join(' OR to:') + ')');
+          gmail_query.push(`(to:${variations_of_to.join(' OR to:')})`);
         }
-        for (let contact of known_contacts) {
-          gmail_query.push('-to:"' + contact.email + '"');
+        let filtered_contacts = known_contacts.filter(c => tool.str.is_email_valid(c.email));
+        for (let contact of filtered_contacts) {
+          gmail_query.push(`-to:${contact.email}`);
         }
         await tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
       },
@@ -2874,9 +2875,13 @@ let tool = {
         if (headers.to) {
           let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
           let new_valid_results = raw_parsed_results.filter(r => tool.str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
-          query += raw_parsed_results.map(email => ' -to:"' + email.name + '"').join('');
+          query += raw_parsed_results.map(raw => ` -to:"${raw.address}"`).join('');
           all_results = all_results.concat(new_valid_results);
           chunked_callback({new: new_valid_results, all: all_results});
+          if(query.length > 6000) { // gmail search string can handle about this much
+            chunked_callback({new: [], all: all_results});
+            return;
+          }
         } else {
           chunked_callback({new: [], all: all_results});
           return;
@@ -2942,6 +2947,7 @@ let tool = {
       if (error instanceof Error && error.stack) {
         console.log('%c[' + error_message + ']\n' + error.stack, 'color: #F00; font-weight: bold;');
       } else {
+        console.error(error);
         console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
       }
       if (is_manually_called !== true && tool.catch._.original_on_error && tool.catch._.original_on_error !== (tool.catch.handle_error as ErrorEventHandler)) {
@@ -3005,7 +3011,7 @@ let tool = {
       }
       return true;
     },
-    handle_exception: (exception: Error) => {
+    handle_exception: (exception: any) => {
       let line, col;
       try {
         let caller_line = exception.stack!.split('\n')[1]; // will be catched below
