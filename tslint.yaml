@@ -27,6 +27,7 @@ rules:
     object-literal-key-quotes: false
     no-empty-interface: false
     no-reference: false
+    await-promise: true
     no-unused-expression: true
     no-floating-promises: true
     ordered-imports: false

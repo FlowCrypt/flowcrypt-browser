@@ -783,7 +783,7 @@ declare namespace OpenPGP {
       armor(): string;
       decrypt(passphrase: string|string[]): Promise<boolean>;
       encrypt(passphrase: string|string[]): Promise<void>;
-      getExpirationTime(): Date|typeof Infinity;
+      getExpirationTime(): Promise<Date|typeof Infinity>;
       getKeyIds(): Keyid[];
       getPrimaryUser(): any;
       getUserIds(): string[];
