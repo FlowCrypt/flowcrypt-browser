@@ -9,10 +9,11 @@
       "noImplicitAny": true,
       "strictNullChecks": true,
       "module": "commonjs",
-      "sourceMap": true
+      "sourceMap": true,
+      "outDir": "build"
   },
   "files": [
-      "source/**.ts"
+      "source/test.ts"
   ],
   "exclude": [
       "build/*",
