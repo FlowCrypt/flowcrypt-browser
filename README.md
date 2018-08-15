@@ -15,32 +15,33 @@ This project is written in TypeScript. Browsers only understand JavaScript, so t
 
 ```bash
 $ cd some/folder/flowcrypt-browser
-$ npm install --only=dev
-$ sudo npm install -g gulp
+$ npm install
 ```
 
-To build your project:
-```bash
-$ gulp
+To build the project:
 ```
+$ npm run-script build
 
-You will see something like:
-```
-[13:09:03] Using gulpfile ~/git/flowcrypt-browser/gulpfile.js
-[13:09:03] Starting 'default'...
-[13:09:03] Starting 'flush'...
-[13:09:03] Finished 'flush' after 84 ms
-[13:09:03] Starting 'transpileProjectTs'...
-[13:09:03] Starting 'copySourceFiles'...
-[13:09:03] Starting 'copyVersionedManifest'...
-[13:09:04] Finished 'copyVersionedManifest' after 404 ms
-[13:09:10] Finished 'transpileProjectTs' after 6.83 s
-[13:09:10] Finished 'copySourceFiles' after 6.89 s
-[13:09:10] Starting 'copyChromeToFirefox'...
-[13:09:11] Finished 'copyChromeToFirefox' after 254 ms
-[13:09:11] Starting 'copyChromeToFirefoxEditedManifest'...
-[13:09:11] Finished 'copyChromeToFirefoxEditedManifest' after 13 ms
-[13:09:11] Finished 'default' after 7.24 s
+> flowcrypt-browser@5.9.7 build /home/luke/git/flowcrypt-browser
+> gulp
+
+[02:42:04] Using gulpfile ~/git/flowcrypt-browser/gulpfile.js
+[02:42:04] Starting 'default'...
+[02:42:04] Starting 'flush'...
+[02:42:04] Finished 'flush' after 62 ms
+[02:42:04] Starting 'transpileProjectTs'...
+[02:42:04] Starting 'copySourceFiles'...
+[02:42:04] Starting 'copyVersionedManifest'...
+[02:42:05] Finished 'copyVersionedManifest' after 199 ms
+[02:42:05] Finished 'copySourceFiles' after 557 ms
+[02:42:12] Finished 'transpileProjectTs' after 7.57 s
+[02:42:12] Starting 'chromeBuildSpacesToTabs'...
+[02:42:12] Finished 'chromeBuildSpacesToTabs' after 4.55 ms
+[02:42:12] Starting 'copyChromeToFirefox'...
+[02:42:12] Finished 'copyChromeToFirefox' after 323 ms
+[02:42:12] Starting 'copyChromeToFirefoxEditedManifest'...
+[02:42:12] Finished 'copyChromeToFirefoxEditedManifest' after 10 ms
+[02:42:12] Finished 'default' after 7.97 s
 ```
 
 Now you can find your built project in `build/chrome` and `build/firefox`
