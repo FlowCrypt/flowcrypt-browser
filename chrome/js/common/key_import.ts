@@ -38,6 +38,7 @@ class KeyImportUI {
     $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(tool.ui.event.handle(target => {
       $('.source_paste_container .input_passphrase').val(tool.crypto.password.random());
       $('.input_passphrase').attr('type', 'text');
+      $('#e_rememberPassphrase').prop('checked', true);
     }));
     $('.input_private_key').change(tool.ui.event.handle(target => {
       let k = openpgp.key.readArmored($(target).val() as string).keys[0];
