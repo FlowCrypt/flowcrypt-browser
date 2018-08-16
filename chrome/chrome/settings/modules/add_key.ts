@@ -9,6 +9,8 @@ tool.catch.try(async () => {
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
   await tool.ui.passphrase_toggle(['input_passphrase']);
+  let key_import_ui = new KeyImportUI({reject_known: true});
+  key_import_ui.init_prv_import_source_form(account_email, parent_tab_id);
 
   $('#spinner_container').html(tool.ui.spinner('green') + ' loading..');
 
@@ -48,7 +50,6 @@ tool.catch.try(async () => {
 
   $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     try {
-      let key_import_ui = new KeyImportUI({reject_known: true});
       let checked = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if(checked) {
         await Store.keys_add(account_email, checked.normalized); // resulting new_key checked above
@@ -66,7 +67,5 @@ tool.catch.try(async () => {
       }
     }
   }));
-
-  Settings.initialize_private_key_import_ui(account_email, parent_tab_id);
 
 })();

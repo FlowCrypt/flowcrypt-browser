@@ -20,18 +20,69 @@ class KeyImportUI {
     this.check_signing = o.check_signing === true;
   }
 
+  public init_prv_import_source_form = (account_email: string, parent_tab_id: string|null) => {
+    $('input[type=radio][name=source]').off().change(function() {
+      if ((this as HTMLInputElement).value === 'file') {
+        $('.input_private_key').val('').change().prop('disabled', true);
+        $('.source_paste_container').css('display', 'none');
+        $('.source_paste_container .pass_phrase_needed').hide();
+        $('#fineuploader_button > input').click();
+      } else if ((this as HTMLInputElement).value === 'paste') {
+        $('.input_private_key').val('').change().prop('disabled', false);
+        $('.source_paste_container').css('display', 'block');
+        $('.source_paste_container .pass_phrase_needed').hide();
+      } else if ((this as HTMLInputElement).value === 'backup') {
+        window.location.href = tool.env.url_create('/chrome/settings/setup.htm', {account_email, parent_tab_id, action: 'add_key'});
+      }
+    });
+    $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(tool.ui.event.handle(target => {
+      $('.source_paste_container .input_passphrase').val(tool.crypto.password.random());
+      $('.input_passphrase').attr('type', 'text');
+    }));
+    $('.input_private_key').change(tool.ui.event.handle(target => {
+      let k = openpgp.key.readArmored($(target).val() as string).keys[0];
+      $('.input_passphrase').val('');
+      if(k && k.isPrivate() && k.isDecrypted()) {
+        $('.line.pass_phrase_needed').show();
+      } else {
+        $('.line.pass_phrase_needed').hide();
+      }
+    }));
+    let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+    attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+    attach.set_attachment_added_callback(file => {
+      let k;
+      if (tool.value(tool.crypto.armor.headers('private_key').begin).in(file.as_text())) {
+        let first_prv = tool.crypto.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
+        if (first_prv) {
+          k = openpgp.key.readArmored(first_prv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
+        }
+      } else {
+        k = openpgp.key.read(file.as_bytes()).keys[0];
+      }
+      if (typeof k !== 'undefined') {
+        $('.input_private_key').val(k.armor()).change().prop('disabled', true);
+        $('.source_paste_container').css('display', 'block');
+      } else {
+        $('.input_private_key').val('').change().prop('disabled', false);
+        alert('Not able to read this key. Is it a valid PGP private key?');
+        $('input[type=radio][name=source]').removeAttr('checked');
+      }
+    });
+  }
+
   check_prv = async (account_email: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
     let normalized = this.normalize('private_key', armored);
-    let decryptable = this.read('private_key', normalized);
-    let original = this.read('private_key', normalized);
-    let longid = this.longid(decryptable);
-    this.reject_if_not('private_key', decryptable);
-    await this.reject_known_if_selected(account_email, decryptable);
+    let decrypted = this.read('private_key', normalized);
+    let encrypted = this.read('private_key', normalized);
+    let longid = this.longid(decrypted);
+    this.reject_if_not('private_key', decrypted);
+    await this.reject_known_if_selected(account_email, decrypted);
     this.reject_if_different_from_selected_longid(longid);
-    await this.decrypt(decryptable, passphrase);
-    await this.check_encryption_prv_if_selected(decryptable, original);
-    await this.check_signing_if_selected(decryptable);
-    return {normalized, longid, passphrase, fingerprint: tool.crypto.key.fingerprint(decryptable)!, decrypted: decryptable, encrypted: original}; // will have fp if had longid
+    await this.decrypt_and_encrypt_as_needed(decrypted, encrypted, passphrase);
+    await this.check_encryption_prv_if_selected(decrypted, encrypted);
+    await this.check_signing_if_selected(decrypted);
+    return {normalized, longid, passphrase, fingerprint: tool.crypto.key.fingerprint(decrypted)!, decrypted, encrypted}; // will have fp if had longid
   }
 
   check_pub = async (armored: string): Promise<string> => {
@@ -94,10 +145,19 @@ class KeyImportUI {
     }
   }
 
-  private decrypt = async (k: OpenPGP.key.Key, passphrase: string) => {
+  private decrypt_and_encrypt_as_needed = async (to_decrypt: OpenPGP.key.Key, to_encrypt: OpenPGP.key.Key, passphrase: string): Promise<void> => {
+    if(!passphrase) {
+      throw new UserAlert('Please enter a pass phrase to use with this key');
+    }
     let decrypt_result;
     try {
-      decrypt_result = await tool.crypto.key.decrypt(k, [passphrase]);
+      if(to_encrypt.isDecrypted()) {
+        await to_encrypt.encrypt(passphrase);
+      }
+      if(to_decrypt.isDecrypted()) {
+        return;
+      }
+      decrypt_result = await tool.crypto.key.decrypt(to_decrypt, [passphrase]);
     } catch (e) {
       throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }

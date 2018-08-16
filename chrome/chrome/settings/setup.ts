@@ -44,6 +44,10 @@ tool.catch.try(async () => {
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
+  let key_import_ui = new KeyImportUI({check_encryption: true});
+  key_import_ui.init_prv_import_source_form(account_email, parent_tab_id); // for step_2b_manual_enter, if user chooses so
+  key_import_ui.on_bad_passphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
+
   let tab_id = await tool.browser.message.required_tab_id();
   tool.browser.message.listen({
     close_page: () => {
@@ -78,21 +82,18 @@ tool.catch.try(async () => {
       'step_4_done',
       'step_4_close',
     ];
-    if (name) { // set
+    if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');
       $('#' + name).css('display', 'block');
       $('.back').css('visibility', tool.value(name).in(['step_2b_manual_enter', 'step_2a_manual_create']) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(recovered_keys.length > 1 ? recovered_keys.length + ' backups' : 'a backup');
       }
-    } else { // get
-      return $('#' + blocks.join(', #')).filter(':visible').first().attr('id') || null;
     }
   };
 
   let render_setup_dialog = async (): Promise<void> => {
     let keyserver_result, fetched_keys;
-    Settings.initialize_private_key_import_ui(account_email, parent_tab_id); // for step_2b_manual_enter, if user chooses so
 
     try {
       let r = await tool.api.attester.lookup_email([account_email]);
@@ -379,13 +380,9 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(tool.ui.event.handle(() => {
-    display_block('step_2a_manual_create');
-  }));
+  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(tool.ui.event.handle(() => display_block('step_2a_manual_create')));
 
-  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(tool.ui.event.handle(() => {
-    display_block('step_2b_manual_enter');
-  }));
+  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(tool.ui.event.handle(() => display_block('step_2b_manual_enter')));
 
   $('#step_2b_manual_enter .action_save_private').click(tool.ui.event.handle(async () => {
     let options = {
@@ -400,8 +397,6 @@ tool.catch.try(async () => {
       setup_simple: false,
     };
     try {
-      let key_import_ui = new KeyImportUI({check_encryption: true});
-      key_import_ui.on_bad_passphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
       let checked = await key_import_ui.check_prv(account_email, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
       $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white'));
       await save_keys([checked.encrypted], options);

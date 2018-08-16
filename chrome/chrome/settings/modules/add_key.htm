@@ -20,7 +20,8 @@
     <div id="step_2b_manual_enter" class="manual" style="display: block;text-align: left;">
       <div class="line">
         <h1>Add Private Key <span id="spinner_container"></span></h1>
-
+      </div>
+      <div class="line">
         <ul style="list-style: none;margin-left: 0;padding-left: 0;" class="source_selector display_none">
           <li><input type="radio" name="source" id="source_backup" value="backup"> <label for="source_backup">Load from backup</label></li>
           <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a file</label></li>
@@ -34,6 +35,9 @@
       <div class="source_paste_container display_none">
         <div class="line">
           <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
+        </div>
+        <div class="line display_none pass_phrase_needed" style="text-align: left; padding-left: 40px;">
+          This key is unprotected. Choose a pass phrase or <a href="#" class="action_use_random_pass_phrase">use a random one</a>.
         </div>
         <div class="line">
           <input id="input_passphrase" class="input_passphrase" type="text" placeholder="Private Key Passphrase" />

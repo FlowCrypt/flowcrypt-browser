@@ -1250,6 +1250,11 @@ let tool = {
         'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
         'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
       ],
+      random: () => { // eg TDW6-DU5M-TANI-LJXY
+        let secure_random_array = new Uint8Array(128);
+        window.crypto.getRandomValues(secure_random_array);
+        return btoa(tool.str.from_uint8(secure_random_array)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
+      },
     }
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */

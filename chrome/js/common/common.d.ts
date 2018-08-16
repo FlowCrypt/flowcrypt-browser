@@ -471,7 +471,14 @@ type CryptoArmorHeaderDefinitions = {
     readonly [type in ReplaceableMessageBlockType|'null']: CryptoArmorHeaderDefinition;
 };
 
-type KeyImportUiCheckResult = {normalized: string, longid: string, passphrase: string, fingerprint: string, decrypted: OpenPGP.key.Key, encrypted: OpenPGP.key.Key};
+type KeyImportUiCheckResult = {
+  normalized: string;
+  longid: string;
+  passphrase: string;
+  fingerprint: string;
+  decrypted: OpenPGP.key.Key;
+  encrypted: OpenPGP.key.Key;
+};
 
 type ParsedAttest = {
   success: boolean;

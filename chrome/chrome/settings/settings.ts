@@ -172,42 +172,6 @@ class Settings {
     });
   })
 
-  static initialize_private_key_import_ui = (account_email: string, parent_tab_id: string|null) => {
-    let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
-    // todo - this is a vague copy of KeyImportUI - could be combined
-    attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    attach.set_attachment_added_callback((file: Attachment) => {
-      let k;
-      if (tool.value(tool.crypto.armor.headers('private_key').begin).in(file.as_text())) {
-        let first_prv = tool.crypto.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
-        if (first_prv) {
-          k = openpgp.key.readArmored(first_prv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-        }
-      } else {
-        k = openpgp.key.read(file.as_bytes()).keys[0];
-      }
-      if (typeof k !== 'undefined') {
-        $('.input_private_key').val(k.armor()).prop('disabled', true);
-        $('.source_paste_container').css('display', 'block');
-      } else {
-        alert('Not able to read this key. Is it a valid PGP private key?');
-        $('input[type=radio][name=source]').removeAttr('checked');
-      }
-    });
-
-    $('input[type=radio][name=source]').change(function() {
-      if ((this as HTMLInputElement).value === 'file') {
-        $('.source_paste_container').css('display', 'none');
-        $('#fineuploader_button > input').click();
-      } else if ((this as HTMLInputElement).value === 'paste') {
-        $('.input_private_key').val('').prop('disabled', false);
-        $('.source_paste_container').css('display', 'block');
-      } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = tool.env.url_create('../setup.htm', {account_email, parent_tab_id, action: 'add_key'});
-      }
-    });
-  }
-
   static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, original_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
       let userIds = original_prv.users.map(u => u.userId).filter(u => u !== null).map(u => u!.userid) as string[];
