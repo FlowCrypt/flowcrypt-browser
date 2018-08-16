@@ -1,5 +1,7 @@
 <div>
 
+<b>version 5.9.8 on August 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/253?closed=1" target="_blank">Import naked key</a></b>
+
 <b>version 5.9.7 on August 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/252?closed=1" target="_blank">Bugfixes</a></b>
 
 <b>version 5.9.6 on August 12, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/251?closed=1" target="_blank">Bugfixes</a></b>
