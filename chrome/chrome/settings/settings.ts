@@ -174,7 +174,7 @@ class Settings {
 
   static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, original_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      let userIds = original_prv.users.map(u => u.userId).filter(u => u !== null).map(u => u!.userid) as string[];
+      let userIds = original_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && tool.str.is_email_valid(tool.str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
       if (!userIds.length) {
         userIds.push(account_email);
       }
@@ -206,8 +206,7 @@ class Settings {
         }
       }));
       container.find('.action_fix_compatibility').click(tool.ui.event.handle(async target => {
-        // @ts-ignore - TS doesn't like $.parents($(blah)). jQuery doesn't seem to mind - investigate
-        let expire_years = $(target).parents(container).find('select.input_fix_expire_years').val() as string;
+        let expire_years = $(target).parents(container as string).find('select.input_fix_expire_years').val() as string; // JQuery quirk
         if (!expire_years) {
           alert('Please select key expiration');
         } else {

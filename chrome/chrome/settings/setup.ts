@@ -422,7 +422,8 @@ tool.catch.try(async () => {
       fixed_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(account_email, '#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       tool.catch.handle_exception(e);
-      alert(`Failed to fix key: ${String(e)}`);
+      alert(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
+      display_block('step_2b_manual_enter');
       return;
     }
     await save_keys([fixed_prv], options);
