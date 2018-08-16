@@ -63,6 +63,20 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
   }));
 
+  ava.test('setup - import key - naked - choose my own pass phrase', test_with_browser(async (browser, t) => {
+    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.import.naked@gmail.com');
+    await PageRecipe.setup_manual_enter(settings_page, 'flowcrypt.test.key.naked', {submit_pubkey: false, used_pgp_before: false, naked: true});
+    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  }));
+
+  ava.test('setup - import key - naked - auto-generate a pass phrase', test_with_browser(async (browser, t) => {
+    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.import.naked@gmail.com');
+    await PageRecipe.setup_manual_enter(settings_page, 'flowcrypt.test.key.naked', {submit_pubkey: false, used_pgp_before: false, naked: true, gen_pp: true});
+    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  }));
+
+  ava.test.todo('setup - import key - naked - do not supply pass phrase gets error');
+
   ava.test.todo('setup - create key advanced - do not remember pass phrase');
 
   ava.test.todo('setup - create key advanced - backup as a file');

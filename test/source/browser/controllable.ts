@@ -152,7 +152,7 @@ abstract class ControllableBase {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
-  public read = async (selector: string) => {
+  public read = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => document.querySelector(s).innerText, this.selector(selector));
   }
 

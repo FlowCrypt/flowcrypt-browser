@@ -167,7 +167,7 @@ export class PageRecipe {
     await settings_page.wait_and_click('@action-step4done-account-settings');
   }
 
-  public static setup_manual_enter = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false, submit_pubkey=false, fix_key=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean, fix_key?: boolean}={}) => {
+  public static setup_manual_enter = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false, submit_pubkey=false, fix_key=false, naked=false, gen_pp=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean, fix_key?: boolean, naked?: boolean, gen_pp?: boolean}={}) => {
     let k = Config.key(key_title);
     if(used_pgp_before) {
       await settings_page.wait_and_click('@action-step0foundkey-choose-manual-enter');
@@ -176,7 +176,24 @@ export class PageRecipe {
     }
     await settings_page.wait_and_click('@input-step2bmanualenter-source-paste');
     await settings_page.wait_and_type('@input-step2bmanualenter-ascii-key', k.armored || '');
-    await settings_page.wait_and_type('@input-step2bmanualenter-passphrase', k.passphrase);
+    if(!naked) {
+      await Util.sleep(1);
+      await settings_page.not_present('@action-step2bmanualenter-new-random-passphrase');
+      await settings_page.wait_and_type('@input-step2bmanualenter-passphrase', k.passphrase);
+    } else {
+      await settings_page.wait_and_click('@input-step2bmanualenter-passphrase');
+      await settings_page.wait_all('@action-step2bmanualenter-new-random-passphrase', {visible: true});
+      if(gen_pp) {
+        await settings_page.wait_and_click('@action-step2bmanualenter-new-random-passphrase');
+        await Util.sleep(1);
+        let generated_passphrase = await settings_page.value('@input-step2bmanualenter-passphrase');
+        if(!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generated_passphrase)) {
+          throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generated_passphrase}`);
+        }
+      } else {
+        await settings_page.wait_and_type('@input-step2bmanualenter-passphrase', k.passphrase);
+      }
+    }
     if(!submit_pubkey) {
       await settings_page.wait_and_click('@input-step2bmanualenter-submit-pubkey'); // uncheck
     }
