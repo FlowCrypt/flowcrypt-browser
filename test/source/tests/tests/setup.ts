@@ -77,6 +77,18 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
 
   ava.test.todo('setup - import key - naked - do not supply pass phrase gets error');
 
+  ava.test('setup - import key - fix key self signatures', test_with_browser(async (browser, t) => {
+    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await PageRecipe.setup_manual_enter(settings_page, 'missing.self.signatures', {submit_pubkey: false, fix_key: true});
+    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  }));
+
+  ava.test('setup - import key - fix key self signatures - skip invalid uid', test_with_browser(async (browser, t) => {
+    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await PageRecipe.setup_manual_enter(settings_page, 'missing.self.signatures.invalid.uid', {submit_pubkey: false, fix_key: true});
+    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  }));
+
   ava.test.todo('setup - create key advanced - do not remember pass phrase');
 
   ava.test.todo('setup - create key advanced - backup as a file');
@@ -92,12 +104,6 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
   ava.test('setup - recover with a pass phrase - skip remaining', test_with_browser(async (browser, t) => {
     let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
     await PageRecipe.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: false});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
-  }));
-
-  ava.test('setup - import key - fix key self signatures', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
-    await PageRecipe.setup_manual_enter(settings_page, 'missing.self.signatures', {submit_pubkey: false, fix_key: true});
     await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
   }));
 
