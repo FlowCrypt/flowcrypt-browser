@@ -176,6 +176,7 @@ export class PageRecipe {
     }
     await settings_page.wait_and_click('@input-step2bmanualenter-source-paste');
     await settings_page.wait_and_type('@input-step2bmanualenter-ascii-key', k.armored || '');
+    await settings_page.wait_and_click('@input-step2bmanualenter-passphrase'); // blur ascii key input
     if(!naked) {
       await Util.sleep(1);
       await settings_page.not_present('@action-step2bmanualenter-new-random-passphrase');
