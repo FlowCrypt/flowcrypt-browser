@@ -16,6 +16,15 @@
     "default_title": "FlowCrypt Encryption for Gmail",
     "default_popup": "/chrome/popups/default.htm"
   },
+  "icons": {
+    "16": "/img/logo/flowcrypt-logo-16-16.png",
+    "19": "/img/logo/flowcrypt-logo-19-19.png",
+    "24": "/img/logo/flowcrypt-logo-24-24.png",
+    "32": "/img/logo/flowcrypt-logo-32-32.png",
+    "48": "/img/logo/flowcrypt-logo-48-48.png",
+    "64": "/img/logo/flowcrypt-logo-64-64.png",
+    "128": "/img/logo/flowcrypt-logo-128-128.png"
+  },
   "permissions": ["storage", "tabs", "*://*/*", "unlimitedStorage", "clipboardWrite", "webRequest"],
   "content_scripts": [
     {
