@@ -1,296 +1,298 @@
 <div>
 
-<b>version 5.9.9 on August 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/254?closed=1" target="_blank">Skip invalid userids</a></b>
+version 6.0.0 on August 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/255?closed=1" target="_blank">Mutt compatibility</a>
 
-<b>version 5.9.8 on August 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/253?closed=1" target="_blank">Import naked key</a></b>
+version 5.9.9 on August 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/254?closed=1" target="_blank">Skip invalid userids</a>
 
-<b>version 5.9.7 on August 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/252?closed=1" target="_blank">Bugfixes</a></b>
+version 5.9.8 on August 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/253?closed=1" target="_blank">Import naked key</a>
 
-<b>version 5.9.6 on August 12, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/251?closed=1" target="_blank">Bugfixes</a></b>
+version 5.9.7 on August 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/252?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.9.5 on August 11, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/250?closed=1" target="_blank">Bugfixes</a></b>
+version 5.9.6 on August 12, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/251?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.9.4 on August 10, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/249?closed=1" target="_blank">Bugfixes</a></b>
+version 5.9.5 on August 11, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/250?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.9.3 on August 9, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/248?closed=1" target="_blank">Bugfixes</a></b>
+version 5.9.4 on August 10, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/249?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.9.2 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/247?closed=1" target="_blank">Maintenance</a></b>
+version 5.9.3 on August 9, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/248?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.9.1 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/246?closed=1" target="_blank">Error handling</a></b>
+version 5.9.2 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/247?closed=1" target="_blank">Maintenance</a>
 
-<b>version 5.9.0 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/245?closed=1" target="_blank">Attachment bugfix</a></b>
+version 5.9.1 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/246?closed=1" target="_blank">Error handling</a>
 
-<b>version 5.8.9 on August 6, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/244?closed=1" target="_blank">Attestation fix</a></b>
+version 5.9.0 on August 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/245?closed=1" target="_blank">Attachment bugfix</a>
 
-<b>version 5.8.8 on August 6, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/243?closed=1" target="_blank">Pass phrase prompt</a></b>
+version 5.8.9 on August 6, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/244?closed=1" target="_blank">Attestation fix</a>
 
-<b>version 5.8.7 on August 5, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/242?closed=1" target="_blank">Key decrypted error</a></b>
+version 5.8.8 on August 6, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/243?closed=1" target="_blank">Pass phrase prompt</a>
 
-<b>version 5.8.6 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/241?closed=1" target="_blank">Address parsing fix</a></b>
+version 5.8.7 on August 5, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/242?closed=1" target="_blank">Key decrypted error</a>
 
-<b>version 5.8.5 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/240?closed=1" target="_blank">Password mismatch fix</a></b>
+version 5.8.6 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/241?closed=1" target="_blank">Address parsing fix</a>
 
-<b>version 5.8.4 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/239?closed=1" target="_blank">Bugfixes</a></b>
+version 5.8.5 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/240?closed=1" target="_blank">Password mismatch fix</a>
 
-<b>version 5.8.3 on August 1, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/238?closed=1" target="_blank">Bugfixes</a></b>
+version 5.8.4 on August 3, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/239?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.8.2 on July 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/237?closed=1" target="_blank">Update Worker</a></b>
+version 5.8.3 on August 1, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/238?closed=1" target="_blank">Bugfixes</a>
 
-<b>version 5.8.1 on July 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/236?closed=1" target="_blank">Firefox Fix</a></b>
+version 5.8.2 on July 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/237?closed=1" target="_blank">Update Worker</a>
 
-<b>version 5.8.0 on July 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/235?closed=1" target="_blank">OpenPGP.js v3</a></b>
+version 5.8.1 on July 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/236?closed=1" target="_blank">Firefox Fix</a>
 
-<b>version 5.7.2 on July 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/233?closed=1" target="_blank">Refactoring</a></b>
+version 5.8.0 on July 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/235?closed=1" target="_blank">OpenPGP.js v3</a>
 
-<b>version 5.7.1 on June 27, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/232?closed=1" target="_blank">Bugfix</a></b>
+version 5.7.2 on July 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/233?closed=1" target="_blank">Refactoring</a>
 
-<b>version 5.7.0 on June 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/231?closed=1" target="_blank">Change Gmail Password</a></b>
+version 5.7.1 on June 27, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/232?closed=1" target="_blank">Bugfix</a>
 
-<b>version 5.6.9 on June 23, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/230?closed=1" target="_blank">Refactoring</a></b>
+version 5.7.0 on June 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/231?closed=1" target="_blank">Change Gmail Password</a>
 
-<b>version 5.6.8 on June 18, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/229?closed=1" target="_blank">Fix Opening Drafts</a></b>
+version 5.6.9 on June 23, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/230?closed=1" target="_blank">Refactoring</a>
 
-<b>version 5.6.7 on June 18, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/227?closed=1" target="_blank">Auth Popups</a></b>
+version 5.6.8 on June 18, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/229?closed=1" target="_blank">Fix Opening Drafts</a>
 
-<b>version 5.6.6 on June 17, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/226?closed=1" target="_blank">Decrypt Error</a></b>
+version 5.6.7 on June 18, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/227?closed=1" target="_blank">Auth Popups</a>
 
-<b>version 5.6.5 on June 15, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/224?closed=1" target="_blank">Pubkey Attachments</a></b>
+version 5.6.6 on June 17, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/226?closed=1" target="_blank">Decrypt Error</a>
 
-<b>version 5.6.4 on June 15, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/223?closed=1" target="_blank">Message Parsing</a></b>
+version 5.6.5 on June 15, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/224?closed=1" target="_blank">Pubkey Attachments</a>
 
-<b>version 5.6.3 on June 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/222?closed=1" target="_blank">Domain rules</a></b>
+version 5.6.4 on June 15, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/223?closed=1" target="_blank">Message Parsing</a>
 
-<b>version 5.6.2 on June 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/221?closed=1" target="_blank">Setup retries</a></b>
+version 5.6.3 on June 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/222?closed=1" target="_blank">Domain rules</a>
 
-<b>version 5.6.1 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/219?closed=1" target="_blank">TypeScript Stable</a></b>
+version 5.6.2 on June 13, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/221?closed=1" target="_blank">Setup retries</a>
 
-<b>version 5.6.0 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/220?closed=1" target="_blank">Experimental missing MDC support</a></b>
+version 5.6.1 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/219?closed=1" target="_blank">TypeScript Stable</a>
 
-<b>version 5.5.9 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/218?closed=1" target="_blank">Fix inbox compose button</a></b>
+version 5.6.0 on June 8, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/220?closed=1" target="_blank">Experimental missing MDC support</a>
 
-<b>version 5.5.8 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/217?closed=1" target="_blank">New compose button</a></b>
+version 5.5.9 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/218?closed=1" target="_blank">Fix inbox compose button</a>
 
-<b>version 5.5.7 on May 30, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/216?closed=1" target="_blank">Fix reading signed messages</a></b>
+version 5.5.8 on May 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/217?closed=1" target="_blank">New compose button</a>
 
-<b>version 5.5.6 on May 29, 2018: Removed old logos</b>
+version 5.5.7 on May 30, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/216?closed=1" target="_blank">Fix reading signed messages</a>
 
-<b>version 5.5.5 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/214?closed=1" target="_blank">Firefox reply fix</a></b>
+version 5.5.6 on May 29, 2018: Removed old logos
 
-<b>version 5.5.3 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/213?closed=1" target="_blank">Memory leak fix</a></b>
+version 5.5.5 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/214?closed=1" target="_blank">Firefox reply fix</a>
 
-<b>version 5.5.2 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/212?closed=1" target="_blank">Subscription bugfixes</a></b>
+version 5.5.3 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/213?closed=1" target="_blank">Memory leak fix</a>
 
-<b>version 5.5.1 on May 21, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/211?closed=1" target="_blank">Bugfixes</a></b>
+version 5.5.2 on May 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/212?closed=1" target="_blank">Subscription bugfixes</a>
 
-<b>version 5.5.0 on May 20, 2018: TypeScript</b>
+version 5.5.1 on May 21, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/211?closed=1" target="_blank">Bugfixes</a>
+
+version 5.5.0 on May 20, 2018: TypeScript
 internal: refactor project to take advantage of TypeScript
 sending: send button keeps spinning on certain errors - fix
 design: logo updates
 
-<b>version 5.4.8 on May 15, 2018: Security</b>
+version 5.4.8 on May 15, 2018: Security
 security: additional efail precautions - require MDC on all ciphers (may break compatibility with dated pgp software)
 
-<b>version 5.4.7 on May 14, 2018: Security</b>
+version 5.4.7 on May 14, 2018: Security
 security: efail mitigation
 
-<b>version 5.4.6 on May 6, 2018: Bugfixes</b>
+version 5.4.6 on May 6, 2018: Bugfixes
 settings: design fixes
 composing: improved/fixed contact search
 internal: https warning when cross checking PKS fixed
 
-<b>version 5.4.5 on April 16, 2018: Error handling</b>
+version 5.4.5 on April 16, 2018: Error handling
 composing: Footer settings screen overflowing fixed
 composing: stop including footer in email when trial ends
 reading: restart browser when background page not responsive
 
-<b>version 5.4.4 on April 13, 2018: Bugfix</b>
+version 5.4.4 on April 13, 2018: Bugfix
 settings: subscription not shown in settings - bug
 
-<b>version 5.4.3 on April 8, 2018: Gmail compatibility</b>
+version 5.4.3 on April 8, 2018: Gmail compatibility
 
-<b>version 5.4.2 on April 1, 2018: Do not activate in separate window</b>
+version 5.4.2 on April 1, 2018: Do not activate in separate window
 
-<b>version 5.4.1 on April 1, 2018: Sending address settings</b>
+version 5.4.1 on April 1, 2018: Sending address settings
 composing: choosing default send-from address/alias
 composing: send button gets stuck with utf8 in title /fixed
 
-<b>version 5.4.0 on March 31, 2018: Gmail load fix</b>
+version 5.4.0 on March 31, 2018: Gmail load fix
 reading: fix gmail missing FlowCrypt ui
 
-<b>version 5.3.9 on March 30, 2018: Design updates</b>
+version 5.3.9 on March 30, 2018: Design updates
 settings: design updates
 reading: fixed links in signed messages
 
-<b>version 5.3.8 on March 16, 2018: Update Key</b>
+version 5.3.8 on March 16, 2018: Update Key
 settings: import updated private key
 reading: fixed issue opening pgp/mime with large attachments
 
-<b>version 5.3.7 on March 15, 2018: PGP/Mime attachments</b>
+version 5.3.7 on March 15, 2018: PGP/Mime attachments
 reading: fixed issue opening pgp/mime with large attachments
 
-<b>version 5.3.6 on March 10, 2018: Attachments</b>
+version 5.3.6 on March 10, 2018: Attachments
 reading: attachments download on Chrome fixed
 
-<b>version 5.3.5 on March 02, 2018: Firefox compose</b>
+version 5.3.5 on March 02, 2018: Firefox compose
 composing: fix firefox ever expanding text box in compose
 reading: fix verifying detached signatures
 
-<b>version 5.3.3 on February 25, 2018: Domain</b>
+version 5.3.3 on February 25, 2018: Domain
 fix api domain issue
 
-<b>version 5.3.2 on February 25, 2018: Domain</b>
+version 5.3.2 on February 25, 2018: Domain
 fix api domain issue
 
-<b>version 5.3.1 on February 22, 2018: Attachments</b>
+version 5.3.1 on February 22, 2018: Attachments
 reading: fixed issue decrypting files
 
-<b>version 5.3.0 on February 21, 2018: Bugfixes</b>
+version 5.3.0 on February 21, 2018: Bugfixes
 composing: Firefox compose text box keeps expanding fixed
 internal: storage, utf8 and other bugfixes
 
-<b>version 5.2.9 on February 20, 2018: Unicode II</b>
+version 5.2.9 on February 20, 2018: Unicode II
 reading: compatibility fix -  unicode from gpgmail
 
-<b>version 5.2.8 on February 20, 2018: Maintenance</b>
+version 5.2.8 on February 20, 2018: Maintenance
 internal: allow extension to work when block 3rd party cookies enabled
 internal: library upgrades, bugfixes and other maintenance
 
-<b>version 5.2.7 on February 19, 2018: Session</b>
+version 5.2.7 on February 19, 2018: Session
 reading: fixed decrypting when pass phrase is in session
 
-<b>version 5.2.6 on February 19, 2018: Unicode</b>
+version 5.2.6 on February 19, 2018: Unicode
 reading: fixed Russian and Chinese UTF from facebook
 
-<b>version 5.2.5 on February 19, 2018: Performance</b>
+version 5.2.5 on February 19, 2018: Performance
 reading: decrypting at 2x-10x speed now
 settings: show a notice when key is missing
 
-<b>version 5.2.4 on February 18, 2018: Storage permissions fix</b>
+version 5.2.4 on February 18, 2018: Storage permissions fix
 internal: do not rely on browser cookies settings
 internal: support Incognito / Private Browsing Mode
 
-<b>version 5.2.3 on February 18, 2018: Attest fix</b>
+version 5.2.3 on February 18, 2018: Attest fix
 internal: fix background process attest exception
 
-<b>version 5.2.2 on February 17, 2018: Security page fix</b>
+version 5.2.2 on February 17, 2018: Security page fix
 settings: fix security settings page exceptions
 
-<b>version 5.2.1 on February 17, 2018: Storage</b>
+version 5.2.1 on February 17, 2018: Storage
 internal: stop relying on local storage
 internal: stop unnecessary reports
 tests: improve automated tests
 
-<b>version 5.2.0 on February 11, 2018: Security</b>
+version 5.2.0 on February 11, 2018: Security
 security: double check passphrase strength when trying to back up imported key security
 settings: rename to "test my pass phrase"
 reading: support eM client compatibility
 
-<b>version 5.1.9 on January 31, 2018: Public key management</b>
+version 5.1.9 on January 31, 2018: Public key management
 settings: handle multiple pubkeys within single armor
 settings: export all public keys into a file (help coworker) good first issue
 settings: Attester screen should have a link to refresh list of emails
 reading: add support for public key files with unusual names
 
-<b>version 5.1.8 on January 8, 2018: Gmail freezing</b>
+version 5.1.8 on January 8, 2018: Gmail freezing
 reading: more robust inbox freezing fix
 
-<b>version 5.1.7 on January 5, 2018: Enigmail attachments</b>
+version 5.1.7 on January 5, 2018: Enigmail attachments
 sending: prevent enigmail from attempting to display encrypted attachments
 
-<b>version 5.1.6 on January 2, 2018: Decrypted null</b>
+version 5.1.6 on January 2, 2018: Decrypted null
 reading: fix decrypted null error
 
-<b>version 5.1.5 on December 20, 2017: Decrypt errors fix</b>
+version 5.1.5 on December 20, 2017: Decrypt errors fix
 reading: fix diagnosis of decrypt errors
 
-<b>version 5.1.4 on December 20, 2017: Decrypt Fix, Imports</b>
+version 5.1.4 on December 20, 2017: Decrypt Fix, Imports
 reading: errors recognizing encrypted messages
 reading: "master public key" misrepresentation
 setup: allow importing non-armored private keys
 setup: recognize pub-prv in one file (GPGKeychain)
 
-<b>version 5.1.3 on December 14, 2017: Firefox Backup</b>
+version 5.1.3 on December 14, 2017: Firefox Backup
 settings: download pubkey as a file on Firefox
 settings: download backup as a file on Firefox
 
-<b>version 5.1.2 on December 05, 2017: Firefox attachments</b>
+version 5.1.2 on December 05, 2017: Firefox attachments
 setup: remove "CryptUp is now called FlowCrypt" notification
 reading: fix inner attachments in firefox
 
-<b>version 5.1.1 on November 22, 2017: PGP Desktop Compatibility</b>
+version 5.1.1 on November 22, 2017: PGP Desktop Compatibility
 setup: offer to fix and reformat key during import
 
-<b>version 5.1.0 on November 15, 2017: Freezing fix</b>
+version 5.1.0 on November 15, 2017: Freezing fix
 replying: fixed gmail freezing bug
 
-<b>version 5.0.9 on November 11, 2017: Bugfix</b>
+version 5.0.9 on November 11, 2017: Bugfix
 internal: migration issue fixed
 
-<b>version 5.0.8 on November 10, 2017: Bugfixes</b>
+version 5.0.8 on November 10, 2017: Bugfixes
 internal: various bugfixes
 
-<b>version 5.0.7 on November 6, 2017: Noname</b>
+version 5.0.7 on November 6, 2017: Noname
 reading: noname inline images should not trigger FlowCrypt
 setup: remove and ignore nobody@google.com aliases
 composing: time formatting wrong on a sent message
 composing: error searching contacts fix
 composing: error saving draft fix
 
-<b>version 5.0.6 on November 5, 2017: Refactoring bugfix</b>
+version 5.0.6 on November 5, 2017: Refactoring bugfix
 internal: fix migration bug
 
-<b>version 5.0.5 on November 3, 2017: Refactoring</b>
+version 5.0.5 on November 3, 2017: Refactoring
 internal: preparing new extension storage
 
-<b>version 5.0.4 on October 26, 2017: Sending stuck</b>
+version 5.0.4 on October 26, 2017: Sending stuck
 composing: send message getting stuck
 setup: fix google inbox
 
-<b>version 5.0.3 on October 25, 2017: Large Attachments</b>
+version 5.0.3 on October 25, 2017: Large Attachments
 composing: allow attachments to non-users up to 200mb
 composing: attach -> please subscribe -> already subscribed -> loop - fixed
 
-<b>version 5.0.2 on October 21, 2017: Firefox Attachments</b>
+version 5.0.2 on October 21, 2017: Firefox Attachments
 reading: fix attachments in firefox
 composing: remove unwanted scrollbar + scroll to reply box
 composing: change UP button to "Encrypted Reply"
 internal: switch to attester.flowcrypt.com
 
-<b>version 5.0.1 on October 20, 2017: Inbox fix</b>
+version 5.0.1 on October 20, 2017: Inbox fix
 setup: inbox integration fixed
 
-<b>version 5.0.0 on October 13, 2017: FlowCrypt</b>
+version 5.0.0 on October 13, 2017: FlowCrypt
 CryptUp is now called FlowCrypt
 
-<b>version 4.4.6 on September 14, 2017: Facebook Mime</b>
+version 4.4.6 on September 14, 2017: Facebook Mime
 reading: improve mime recognition
 
-<b>version 4.4.5 on September 13, 2017: Unknown account</b>
+version 4.4.5 on September 13, 2017: Unknown account
 settings: fix unknown account error on subscribe
 
-<b>version 4.4.4 on September 7, 2017: Decrypt Fix</b>
+version 4.4.4 on September 7, 2017: Decrypt Fix
 reading: fix decrypted messages that require verification
 
-<b>version 4.4.3 on August 25, 2017: Inbox Fix</b>
+version 4.4.3 on August 25, 2017: Inbox Fix
 setup: google inbox fix
 
-<b>version 4.4.2 on August 19, 2017: Contact Page Fix 2</b>
+version 4.4.2 on August 19, 2017: Contact Page Fix 2
 settings: contact page fix when alias already taken #2
 
-<b>version 4.4.1 on August 17, 2017: Contact Page Fix</b>
+version 4.4.1 on August 17, 2017: Contact Page Fix
 settings: contact page fix when alias already taken
 
-<b>version 4.4.0 on August 7, 2017: Logo</b>
+version 4.4.0 on August 7, 2017: Logo
 design: updated FlowCrypt Logo
 
-<b>version 4.3.9 on August 1, 2017: Inbox fix</b>
+version 4.3.9 on August 1, 2017: Inbox fix
 setup: google inbox fix
 
-<b>version 4.3.8 on July 28, 2017: Signature fix</b>
+version 4.3.8 on July 28, 2017: Signature fix
 reading: recognize pgp signatures by mime type
 sending: more reliable signed messages
 
-<b>version 4.3.7 on July 25, 2017: Groups</b>
+version 4.3.7 on July 25, 2017: Groups
 settings: link to group licensing calculator
 reading: could not extend messages - fixed
 internal: cannot split supplied to
@@ -299,60 +301,60 @@ internal: payment method "group"
 internal: unexpected set_css call + others
 internal: update openpgp.js
 
-<b>version 4.3.6 on July 21, 2017: Airmail fix</b>
+version 4.3.6 on July 21, 2017: Airmail fix
 reading: Airmail compatibility fix
 internal: fix key array migration missing key
 internal: update openpgp.js
 
-<b>version 4.3.5 on July 21, 2017: Migration fix</b>
+version 4.3.5 on July 21, 2017: Migration fix
 internal: getting pass phrase during migrations fixed
 
-<b>version 4.3.4 on July 20, 2017: Attest fix</b>
+version 4.3.4 on July 20, 2017: Attest fix
 setup: fixing attest element
 
-<b>version 4.3.3 on July 20, 2017: Storage</b>
+version 4.3.3 on July 20, 2017: Storage
 internal: updating internal storage methods
 
-<b>version 4.3.2 on July 19, 2017: Extending</b>
+version 4.3.2 on July 19, 2017: Extending
 reading: please submit a bug report when message incompatible
 reading: fixed subscription checking when extending message
 
-<b>version 4.3.1 on July 9, 2017: UX Bugfixes</b>
+version 4.3.1 on July 9, 2017: UX Bugfixes
 internal: fix a typo in function name
 internal: prevent auth windows from background script
 setup: fix a typo when recovering account
 
-<b>version 4.3.0 on July 8, 2017: Error handling</b>
+version 4.3.0 on July 8, 2017: Error handling
 internal: figure out missing parent id for set_css
 internal: unhandled promise errors
 setup: connection dropped while checking backups
 reading: FlowCrypt not properly setup notice for incognito
 composing: fix quoting previous message on forward
 
-<b>version 4.2.9 on July 5, 2017: Large file fix</b>
+version 4.2.9 on July 5, 2017: Large file fix
 composing: fix sending large files when subscribed
 
-<b>version 4.2.8 on July 3, 2017: Reply Load</b>
+version 4.2.8 on July 3, 2017: Reply Load
 composing: reply box sometimes takes time to load - add loader
 internal: more info about promise errors
 internal: TypeError: error_callback is not a function fixed
 
-<b>version 4.2.7 on July 2, 2017: Reply bugfix</b>
+version 4.2.7 on July 2, 2017: Reply bugfix
 compose: reply bugfix
 
-<b>version 4.2.6 on July 2, 2017: Compose bugfix</b>
+version 4.2.6 on July 2, 2017: Compose bugfix
 compose: closing message window on missing db fixed
 
-<b>version 4.2.5 on July 1, 2017: Content script bugfix</b>
+version 4.2.5 on July 1, 2017: Content script bugfix
 internal: content script bugfix
 
-<b>version 4.2.4 on July 1, 2017: Minimum chrome version</b>
+version 4.2.4 on July 1, 2017: Minimum chrome version
 internal: minimum chrome version 49
 
-<b>version 4.2.3 on July 1, 2017: Background fix</b>
+version 4.2.3 on July 1, 2017: Background fix
 internal: background script fix
 
-<b>version 4.2.2 on July 1, 2017: Refactoring</b>
+version 4.2.2 on July 1, 2017: Refactoring
 security: fix naked keys
 internal: use modern javascript where possible
 internal: better reporting of unhandled promise errors
@@ -362,46 +364,46 @@ internal: consolidate new_message and reply_message into one template refactor
 settings: Repeat password -> Repeat pass phrase placeholder backup
 reading: fix formatting of password messages
 
-<b>version 4.2.1 on June 25, 2017: Bugfixes</b>
+version 4.2.1 on June 25, 2017: Bugfixes
 internal: several bugfixes after previous release
 internal: put all language dicts into a single file
 
-<b>version 4.2.0 on June 24, 2017: Technical Debt</b>
+version 4.2.0 on June 24, 2017: Technical Debt
 settings: extend period to refresh attestation
 settings: add "later" button for stripe screen
 settings: account subscription should renew whenever opening settings
 settings: should show trial expired when appropriate
 internal: large amount of code cleaning, refactoring, etc
 
-<b>version 4.1.8 on June 18, 2017: Expired subscription</b>
+version 4.1.8 on June 18, 2017: Expired subscription
 reading: attachment names compatibility
 composing: fix token error response on expired subscription
 internal: libsync detect_blocks
 
-<b>version 4.1.7 on June 15, 2017: Bugfixes</b>
+version 4.1.7 on June 15, 2017: Bugfixes
 settings: public page indicator should also show to Free Forever users
 settings: option to flush attest info
 reading: draft skipped wording
 
-<b>version 4.1.6 on June 10, 2017: Renewal</b>
+version 4.1.6 on June 10, 2017: Renewal
 reading: fixed renewing expired messages
 
-<b>version 4.1.5 on June 10, 2017: Expiration</b>
+version 4.1.5 on June 10, 2017: Expiration
 reading: a way to extend expiration of password encrypted messages
 reading: utf8 extended ASCII compatibility improvements
 reading: attachments inner names should be preferred
 reading: drafts in the middle of convos add unwanted extra reply box
 
-<b>version 4.1.4 on June 6, 2017: Browser Settings</b>
+version 4.1.4 on June 6, 2017: Browser Settings
 settings: shareable pubkey link
 settings: notify when in private browsing mode
 
-<b>version 4.1.3 on June 6, 2017: Encrypted Contact Page</b>
+version 4.1.3 on June 6, 2017: Encrypted Contact Page
 settings: public contact page - settings button and indicator
 settings: profile page choose a photo
 settings: advanced features on account page were outdated
 
-<b>version 4.1.2 on June 5, 2017: Pubkeys, Attachments, Fixes</b>
+version 4.1.2 on June 5, 2017: Pubkeys, Attachments, Fixes
 composing: drag and drop attachments
 reading: recognize public keys sent as inner attachment of pgp message
 reading: recognize pubkeys inside encrypted messages
@@ -410,30 +412,30 @@ reading: enter pass phrase misbehaved with "show original message"
 reading: "Forget passphrase when I close chrome" in firefox fixed
 setup: fix wording after setup done
 
-<b>version 4.1.1 on June 4, 2017: Key Mismatch</b>
+version 4.1.1 on June 4, 2017: Key Mismatch
 reading: messages from enigmail doubled up
 reading: simplify + improve handling of messages encrypted for wrong key
 settings: add key more options
 setup: allow FlowCrypt as a backup title
 
-<b>version 4.1.0 on June 1, 2017: Decrypting Key</b>
+version 4.1.0 on June 1, 2017: Decrypting Key
 setup: fixed error decrypting a key
 reading: recognize xxx.zip.asc as a an attachment and not a message
 
-<b>version 4.0.9 on May 28, 2017: Firefox setup</b>
+version 4.0.9 on May 28, 2017: Firefox setup
 setup: fixed account setup in Firefox
 
-<b>version 4.0.8 on May 23, 2017: Bugfixes</b>
+version 4.0.8 on May 23, 2017: Bugfixes
 composing: improve reply message headers
 reading: facebook emails don't display properly in Inbox
 reading: google drive attachments fix
 settings: don't show error on server page if attest matches any of loaded keys
 settings: errors in popup fixed
 
-<b>version 4.0.7 on May 22, 2017: Fix Inbox</b>
+version 4.0.7 on May 22, 2017: Fix Inbox
 setup: fixed google inbox support
 
-<b>version 4.0.6 on May 13, 2017: Multiple Key Recovery</b>
+version 4.0.6 on May 13, 2017: Multiple Key Recovery
 setup: when loading key from backup, import ALL matching keys
 setup: emails like i@something.com will not work - fixed
 settings: unlimited private keys per account
@@ -441,13 +443,13 @@ settings: take down hiring notice
 settings: update license info
 internal: Android compatibility updates
 
-<b>version 4.0.5 on May 5, 2017: Hyphens</b>
+version 4.0.5 on May 5, 2017: Hyphens
 setup: added support for hyphens in emails
 
-<b>version 4.0.4 on May 3, 2017: Google Auth Fix</b>
+version 4.0.4 on May 3, 2017: Google Auth Fix
 setup: fixed google auth sign up loop
 
-<b>version 4.0.3 on May 3, 2017: Subscriptions</b>
+version 4.0.3 on May 3, 2017: Subscriptions
 reading: fix inner attachments that don't have any name
 reading: fix noname attachments that actually have message in it
 reading: fix pulling messages in experimental inbox
@@ -456,12 +458,12 @@ settings: set trial to 30 days for new users
 internal: check subscription expiration
 internal: firefox - db is not defined
 
-<b>version 4.0.2 on May 1, 2017: Expiration</b>
+version 4.0.2 on May 1, 2017: Expiration
 reading: new design for internal attachments
 reading: update message expiration note
 internal: refactor crypto_message_decrypt
 
-<b>version 4.0.1 on April 29, 2017: Free Attachments</b>
+version 4.0.1 on April 29, 2017: Free Attachments
 composing: allow sending attachments w/o Advanced + expiration
 composing: make intro button more prominent
 settings: setting up & editing public contact page
@@ -470,7 +472,7 @@ settings: browser button seems to show only one account
 internal: add api version with each request to the FlowCrypt api
 internal: refactor mime_decode to work on Android
 
-<b>version 4.0.0 on April 26, 2017: Firefox Release</b>
+version 4.0.0 on April 26, 2017: Firefox Release
 setup: firefox fixing update notification
 reading: fix encrypted attachments in Firefox
 composing: fix firefox message password entry
@@ -479,21 +481,21 @@ internal: problem watching for closed auth window from background script
 internal: refactor crypto_key_decrypt
 internal: update tool for web and Android
 
-<b>version 3.9.9 on April 22, 2017: Bugfixes</b>
+version 3.9.9 on April 22, 2017: Bugfixes
 settings: problem viewing messages in firefox - cookie settings
 settings: remove simple fix from chrome content settings
 internal: refreshing auth token on the background page
 
-<b>version 3.9.8 on April 21, 2017: Firefox reload</b>
+version 3.9.8 on April 21, 2017: Firefox reload
 setup: firefox extension init and reload
 
-<b>version 3.9.7 on April 20, 2017: Firefox styles</b>
+version 3.9.7 on April 20, 2017: Firefox styles
 setup; firefox backup prompt notification doesn't work
 setup: exclude google standard email addresses from send-from
 setup: Differentiate browsers when submitting help message
 reading: Firefox pgp block styling overflow
 
-<b>version 3.9.6 on April 18, 2017: Refactoring</b>
+version 3.9.6 on April 18, 2017: Refactoring
 reading: revise mdc message flag
 composing: searching contacts can cycle up (fixed)
 settings: re-word hide one time messages
@@ -501,85 +503,85 @@ internal: revise environment detection
 internal: remove remaining unused files
 internal: better listener handling
 
-<b>version 3.9.5 on April 8, 2017: Cleanup</b>
+version 3.9.5 on April 8, 2017: Cleanup
 internal: removed unneeded libraries
 
-<b>version 3.9.4 on April 8, 2017: Firefox Fixes</b>
+version 3.9.4 on April 8, 2017: Firefox Fixes
 firefox: messaging, spinner, auth window, browser action
 firefox: newlines and minor ux fixes
 firefox: plugin self-publish auto-update
 
-<b>version 3.9.3 on April 5, 2017: Firefox Tests</b>
+version 3.9.3 on April 5, 2017: Firefox Tests
 firefox: basic firefox compatibility
 setup: update uninstall url when adding account email
 setup: limit aliases to emails max 1 year old
 internal: remove outdated api calls
 composing: option to obfuscate one time password
 
-<b>version 3.9.2 on April 2, 2017: Welcome Message</b>
+version 3.9.2 on April 2, 2017: Welcome Message
 setup: send encrypted email to each new user
 composing: show who uses encryption in standard compose
 reading: copy-pasting pubkey from settings makes it badly formatted
 
-<b>version 3.9.1 on March 31, 2017: Compose Bugfixes</b>
+version 3.9.1 on March 31, 2017: Compose Bugfixes
 composing: drafts lose newlines
 composing: pubkey sent in title when signing after passphrase entry
 composing: prevent events to bubble out of iframes
 internal: document.body.append is not a function bug
 
-<b>version 3.9.0 on March 30, 2017: Experimental Client</b>
+version 3.9.0 on March 30, 2017: Experimental Client
 settings: alternative email client
 reading: improve MIME support
 setup: mention in backup email that it's protected by pass phrase
 
-<b>version 3.8.9 on March 28, 2017: Fix xss</b>
+version 3.8.9 on March 28, 2017: Fix xss
 security: fix xss issue outside of pgp blocks
 
-<b>version 3.8.8 on March 26, 2017: Setup Issues</b>
+version 3.8.8 on March 26, 2017: Setup Issues
 setup: people sometimes having issues with google auth
 setup: link in webmail notification didn't work for some people
 
-<b>version 3.8.7 on March 24, 2017: Inbox Bugfixes</b>
+version 3.8.7 on March 24, 2017: Inbox Bugfixes
 reading: problems decrypting attached messages in Inbox
 reading: better mime message recognition
 composing: key expirations should be ignored
 composing: reply message refactoring
 
-<b>version 3.8.6 on March 23, 2017: HTML Email</b>
+version 3.8.6 on March 23, 2017: HTML Email
 composing: send password encrypted messages as html
 reading: better pgp/mime email recognition
 reading: outlook: remove link previews
 
-<b>version 3.8.5 on March 21, 2017: Intro</b>
+version 3.8.5 on March 21, 2017: Intro
 composing: option to add plain text intro to password encrypted messages
 reading: links inside encrypted messages are now clickable
 reading: fixed recipient couldn't open password protected emails after installing FlowCrypt
 settings: fixed having to click twice on browser button
 settings: fixed attempting to save empty account email
 
-<b>version 3.8.4 on March 19, 2017: Aliases</b>
+version 3.8.4 on March 19, 2017: Aliases
 setup: remove unused email aliases
 composing: better recognition of reply to addresses
 
-<b>version 3.8.3 on March 19, 2017: Bugfix</b>
+version 3.8.3 on March 19, 2017: Bugfix
 composing: fixed problem replacing reply box
 
-<b>version 3.8.2 on March 18, 2017: Replying</b>
+version 3.8.2 on March 18, 2017: Replying
 composing: fixed problems replying from google inbox
 composing: outlook: reply
 setup: properly handle google auth error
 
-<b>version 3.8.1 on March 17, 2017: Double Inject Prevention</b>
+version 3.8.1 on March 17, 2017: Double Inject Prevention
 internal: prevent content script double injection
 
-<b>version 3.8.0 on March 17, 2017: Stripe and preparing Outlook</b>
+version 3.8.0 on March 17, 2017: Stripe and preparing Outlook
 settings: finalize stripe
 internal: outlook - compose messages
 internal: outlook - basig pgp message replacing
 internal: better environment recognition
 internal: all send functions to use common message format
 
-<b>version 3.7.8 on March 16, 2017: Design and compatibility</b>
+version 3.7.8 on March 16, 2017: Design and compatibility
 reading: trouble recognizing public keys from Enigmail
 reading: recognize new mime format from enigmail
 reading: hide PGPexch.htm.pgp
@@ -590,7 +592,7 @@ composing: include filename in pgp data packet
 composing: reply box can double up - try to prevent it
 internal: don't include mnemonic twice in new_message and reply_message
 
-<b>version 3.7.7 on March 14, 2017: Style fix</b>
+version 3.7.7 on March 14, 2017: Style fix
 internal: include webmail css directly in manifest
 internal: basic outlook setup
 internal: change auth button based on google guidelines
@@ -599,23 +601,23 @@ internal: properly recognizing mime file names
 internal: prevent empty strings from gettings into the list of accounts
 settings: lifetime member account fix
 
-<b>version 3.7.6 on March 13, 2017: Subscriptions</b>
+version 3.7.6 on March 13, 2017: Subscriptions
 setup: more robust subscriptions
 setup: basic microsoft auth tests
 
-<b>version 3.7.5 on March 12, 2017: Import Contacts</b>
+version 3.7.5 on March 12, 2017: Import Contacts
 settings: bulk import contacts form from settings
 settings: preparing FlowCrypt Advanced
 composing: show a friendly message if missing prv on signing
 reading: try to process messages with detached sigs even without text
 
-<b>version 3.7.4 on March 10, 2017: Attest Without Pass Phrase</b>
+version 3.7.4 on March 10, 2017: Attest Without Pass Phrase
 setup: prompt user to enter passphrase on attest if needed
 setup: fixing public key submit if checked on manual enter
 composing: passphrase_dialog broken in settings compose
 reading: display friendly error when failed to get detached signature
 
-<b>version 3.7.3 on March 9, 2017: Signing Compatibility</b>
+version 3.7.3 on March 9, 2017: Signing Compatibility
 composing: fixed signed messages line folding
 reading:noname file left hanging
 reading: google inbox - base element is not defined
@@ -623,35 +625,35 @@ internal: don't try to sync if no emails yet
 internal: preparing stripe
 internal: handle chrome messaging listener exceptions
 
-<b>version 3.7.2 on March 9, 2017: Bugfixes</b>
+version 3.7.2 on March 9, 2017: Bugfixes
 internal: prevent excessive subscription sync
 
-<b>version 3.7.1 on March 8, 2017: Subscription Sync</b>
+version 3.7.1 on March 8, 2017: Subscription Sync
 setup: update subscription done message
 setup: add account subscription sync
 settings: add attest log and error log on experimental page
 settings: publish pricing
 internal: update api endpoint
 
-<b>version 3.7.0 on March 7, 2017: Google Inbox</b>
+version 3.7.0 on March 7, 2017: Google Inbox
 composing, reading: FlowCrypt can now run on inbox.google.com
 setup: added compatibility for broken Windows GPA keys
 
-<b>version 3.6.3 on March 6, 2017: Refactoring</b>
+version 3.6.3 on March 6, 2017: Refactoring
 internal: preparing for Google Inbox
 settings: add link to source code
 
-<b>version 3.6.2 on March 5, 2017: Prompts</b>
+version 3.6.2 on March 5, 2017: Prompts
 composing: upgrade prompts don't refresh info in compose window
 reading: newlines doubled in signed messages
 internal: lower fingerprint check interval
 internal: switch to new api endpoint
 
-<b>version 3.6.1 on March 2, 2017: Compose Bugfixes</b>
+version 3.6.1 on March 2, 2017: Compose Bugfixes
 composing: compose form ignoring from: field
 composing: fix rendering conversation drafts
 
-<b>version 3.6.0 on March 2, 2017: Signatures</b>
+version 3.6.0 on March 2, 2017: Signatures
 composing: stop reply box from expanding on its own - second attempt
 composing: option to sign outgoing messages instead of encrypting them
 reading: verify detached signatures
@@ -660,7 +662,7 @@ settings: fix settings decrypt form
 settings: FlowCrypt is hiring note in settings
 settings: rename advanced settings
 
-<b>version 3.5.5 on March 1, 2017: Large Attachments</b>
+version 3.5.5 on March 1, 2017: Large Attachments
 composing: allow larger attachments
 composing: show progress when uploading files
 composing: draft subject format fix
@@ -672,18 +674,18 @@ reading: recognize pgp messages attached as "message"
 settings: fix missing scroll bar in settings
 settings: changed servers attest text
 
-<b>version 3.5.4 on February 28, 2017: Strip Reply Tokens</b>
+version 3.5.4 on February 28, 2017: Strip Reply Tokens
 reading: strip reply tokens from received or sent message
 
-<b>version 3.5.3 on February 28, 2017: Recipients Fix</b>
+version 3.5.3 on February 28, 2017: Recipients Fix
 compose: fixing compose window recipients behavior
 
-<b>version 3.5.2 on February 27, 2017: Reply Scroll</b>
+version 3.5.2 on February 27, 2017: Reply Scroll
 compose: use proper upload API for gmail messages
 compose: reply button scrolling didn't work on some browsers
 compose: messages containing &lt; were getting clipped
 
-<b>version 3.5.1 on February 26, 2017: New Attester</b>
+version 3.5.1 on February 26, 2017: New Attester
 composing: address not showing after clicking on contact
 composing: prevent doubling of recipients
 internal: every page/frame should have a title
@@ -691,25 +693,25 @@ internal: new attester url
 setup: properly display lifetime members
 setup: error signing attest
 
-<b>version 3.5.0 on February 23, 2017: Web Reply</b>
+version 3.5.0 on February 23, 2017: Web Reply
 composing: allow anyone without PGP to reply to encrypted messages
 composing: fixed reply box to properly render sent attachment
 composing: fixed problem upgrading acct
 
-<b>version 3.4.3 on February 22, 2017: Email Footer</b>
+version 3.4.3 on February 22, 2017: Email Footer
 composing: add email footer
 composing: new lines will get messed up when rendering sent message
 reading: better decrypt error handling
 setup: show result of attestation in an iframe
 internal: organize common functions
 
-<b>version 3.4.2 on February 20, 2017: Legal</b>
+version 3.4.2 on February 20, 2017: Legal
 legal: included a privacy policy
 legal: included licensing and terms of use in the settings
 design: improving buttons that only have a spinner in it
 design: changed size of profile image on setup
 
-<b>version 3.4.1 on February 19, 2017: User Friendly</b>
+version 3.4.1 on February 19, 2017: User Friendly
 reading: badly displayed verification message result
 reading: correct pass phrase will get rejected when opening email
 reading: FlowCrypt failing to render decrypted messages
@@ -724,16 +726,16 @@ design: Update basic/advanced Settings icons
 setup: add a HUGE warning not to delete backup emails
 setup: subscribtion status in settings
 
-<b>version 3.4.0 on February 17, 2017: Signing Fix</b>
+version 3.4.0 on February 17, 2017: Signing Fix
 internal: fixed bug that will repeatedly show error alerts
 
-<b>version 3.3.9 on February 16, 2017: Direct Attachments</b>
+version 3.3.9 on February 16, 2017: Direct Attachments
 reading: google drive attachment downloading issue
 internal: refactor gmail_tab content scripts
 internal: separate attester endpoints
 internal: direct attachments with signed certs
 
-<b>version 3.3.8 on February 13, 2017: Compatibility</b>
+version 3.3.8 on February 13, 2017: Compatibility
 composing: fixed misbehaving send button on empty form
 composing: tab+enter should allow hitting the send button
 composing: sending all emails as plain-text only (compatibility)
@@ -742,7 +744,7 @@ setup: work better with incompatible master or sub prv keys
 setup: check key can be encrypted for on setup
 setup: refresh aliases
 
-<b>version 3.3.7 on February 11, 2017: Short Urls</b>
+version 3.3.7 on February 11, 2017: Short Urls
 composing: use link shortening for password encrypted messages
 composing: don't save incompatible pubkeys from keyserver
 composing: straight to password prompt on missing pubkey
@@ -751,7 +753,7 @@ reading: browser crash fix on file download
 reading: fingeprint shown in gmail element pubkey block should be spaced
 internal: separate keyserver and FlowCrypt urls
 
-<b>version 3.3.6 on February 8, 2017: Attachment Handling Fixes</b>
+version 3.3.6 on February 8, 2017: Attachment Handling Fixes
 composing: binary files can now be attached as well
 composing: surfacing file upload errors to user
 reading: fixed problem with attachments containing pgp messages
@@ -759,16 +761,16 @@ setup: add a version number along with help/feedback message
 internal: simplify browser testing
 internal: ignore errors during extension update
 
-<b>version 3.3.5 on February 8, 2017: Password Encrypted Messages</b>
+version 3.3.5 on February 8, 2017: Password Encrypted Messages
 composing: fixed password encrypted messages web browser incompatibility
 
-<b>version 3.3.4 on February 8, 2017: Pubkey Button Fix II</b>
+version 3.3.4 on February 8, 2017: Pubkey Button Fix II
 composing: fixed error re-rendering pubkey button
 
-<b>version 3.3.3 on February 7, 2017: Pubkey Button</b>
+version 3.3.3 on February 7, 2017: Pubkey Button
 composing: fixed issue rendering pubkey button
 
-<b>version 3.3.2 on February 7, 2017: Bugfixes</b>
+version 3.3.2 on February 7, 2017: Bugfixes
 reading: show icon to disable FlowCrypt for the convo
 reading: show quoted pubkeys properly
 setup: cannot uncheck submit email aliases on setup
@@ -780,14 +782,14 @@ internal: basic automated testing
 internal: common function to create urls + fixed indexOf + static vars
 design: rename CryptUP -> CryptUp
 
-<b>version 3.3.1 on February 4, 2017: Experimental</b>
+version 3.3.1 on February 4, 2017: Experimental
 setup: download pubkey as a file
 setup: experimental: download a backup
 setup: experimental: reset account
 setup: experimental: produce an exception
 setup: remove ugly featherlight close button border
 
-<b>version 3.3.0 on February 4, 2017: Attachments for Anyone</b>
+version 3.3.0 on February 4, 2017: Attachments for Anyone
 composing: send attachments to non-pgp people
 composing: no drafts left behind
 composing: rename a challenge question to a password + hint
@@ -802,7 +804,7 @@ internal: refactor common.js as a module with structure
 internal: recognize web and local environments
 internal: featherlight naturalWidth issue
 
-<b>version 3.2.0 on January 27, 2017: Large Files</b>
+version 3.2.0 on January 27, 2017: Large Files
 reading: decrypting large files in settings
 reading: recognizing and decrypting google drive attachments
 reading: improve pubkey attachment recognition
@@ -810,10 +812,10 @@ composing: lowercase all recipient emails to prevent errors
 composing: option to include a public key in a reply
 composing: re-word attachment to non pgp people alert
 
-<b>version 3.1.8 on January 25, 2017: Error Decrypting Key</b>
+version 3.1.8 on January 25, 2017: Error Decrypting Key
 setup: fixed error working with special key types
 
-<b>version 3.1.7 on January 25, 2017: Contact Details</b>
+version 3.1.7 on January 25, 2017: Contact Details
 setup: add additional details next to each contact
 setup: full name to be included in key user list
 setup: missing toggle button when adding a secondary key
@@ -829,20 +831,20 @@ internal: better handling of gmail api responses
 internal: error pulling headers from gmail api
 internal: change openpgpjs versionstring through proper config
 
-<b>version 3.1.6 on January 24, 2017: UpperCase in Addresses</b>
+version 3.1.6 on January 24, 2017: UpperCase in Addresses
 setup: make sure to correctly use emails with upper cases in them
 
-<b>version 3.1.5 on January 20, 2017: Hyphen Email Addresses</b>
+version 3.1.5 on January 20, 2017: Hyphen Email Addresses
 setup: properly recognize email address with a hyphen
 
-<b>version 3.1.4 on January 20, 2017: Bugfixes</b>
+version 3.1.4 on January 20, 2017: Bugfixes
 setup: improve behavior when changed passphrase
 setup: verify passphrase to actually test decrypting the key
 setup: option to delete account info when missing prv
 internal: background page bugfix: pks lookup fail
 internal: use new version of decrypt_key as needed
 
-<b>version 3.1.3 on January 18, 2017: Subkeys</b>
+version 3.1.3 on January 18, 2017: Subkeys
 reading: recognizing facebook encrypted messages
 composing: fixed errors when waiting for pubkey entry
 setup: allow easy use of subkey-only keys
@@ -850,10 +852,10 @@ setup: toggle hide passphrase text
 setup: fixed verify passphrase link
 setup: fixed unexpected set_css call
 
-<b>version 3.1.2 on January 17, 2017: Lightbox fix</b>
+version 3.1.2 on January 17, 2017: Lightbox fix
 setup: fixed lightbox backgrounds back to white
 
-<b>version 3.1.1 on January 16, 2017: Compatibility</b>
+version 3.1.1 on January 16, 2017: Compatibility
 reading: recognizing pubkeys clipped by gmail
 reading: Improve MIME/PGP recognition
 composing: cannot add contact pubkey when sending from settings page
@@ -865,48 +867,48 @@ setup: error when updating plugin + several tabs open
 internal: some exceptions won't be handled properly
 internal: improve chrome plugin message passing
 
-<b>version 3.1.0 on January 13, 2017: First Time Success</b>
+version 3.1.0 on January 13, 2017: First Time Success
 setup: gmail tab will immediatelly work after install + after update
 setup: better browser compatibility test on setup
 setup: better behavior on backup refused
 composing: notify users about expired pubkeys but use them anyway
 
-<b>version 3.0.7 on January 12, 2017: Non Standard Pubkey Messages</b>
+version 3.0.7 on January 12, 2017: Non Standard Pubkey Messages
 composing: accepting non standard pubkey messages
 
-<b>version 3.0.6 on January 11, 2017: Better Reply Box Replacing</b>
+version 3.0.6 on January 11, 2017: Better Reply Box Replacing
 composing: better reply box replacing
 
-<b>version 3.0.5 on January 11, 2017: Update OpenPGP.js</b>
+version 3.0.5 on January 11, 2017: Update OpenPGP.js
 setup: hopefully improved browser compatibility
 setup: active tab to be properly found among multiple windows
 reading: better behavior when missing signature contact
 
-<b>version 3.0.4 on January 11, 2017: Checking Signature</b>
+version 3.0.4 on January 11, 2017: Checking Signature
 reading: verify signed messages + show a visual
 reading: attachments decrypt exception fix
 composing: replacing gmail elements exception fix
 composing: reply message exception fix
 setup: background page exceptions fix
 
-<b>version 3.0.3 on January 8, 2017: Compose Buttons</b>
+version 3.0.3 on January 8, 2017: Compose Buttons
 reading: added button to reply encrypted to a plain text conversation
 composing: added button to include my public key
 
-<b>version 3.0.2 on January 8, 2017: Challenge Question Fix</b>
+version 3.0.2 on January 8, 2017: Challenge Question Fix
 composing: fixing challenge question after Seamless Contacts update
 
-<b>version 3.0.1 on January 7, 2017: DB Permission Notification</b>
+version 3.0.1 on January 7, 2017: DB Permission Notification
 composing: notify user if chrome permissions need adjustment
 
-<b>version 3.0.0 on January 7, 2017: Seamless Contacts</b>
+version 3.0.0 on January 7, 2017: Seamless Contacts
 composing: using sent emails for contacts search
 setup: fixing broken adding of secondary keys
 setup: notify user about incompatible s2k type key
 setup: injecting initial scripts into gmail broken on some browsers
 setup: fixing broken manual key create
 
-<b>version 2.9.3 on January 3, 2017: Browser Incompatibility Test</b>
+version 2.9.3 on January 3, 2017: Browser Incompatibility Test
 setup: do a test during setup to see if the created key is usable
 setup: error on entering ECC keys - notify user
 setup: better behavior when closing FlowCrypt tabs
@@ -914,25 +916,25 @@ reading: match multiple PGP blocks in a message
 reading: properly catch PGP message format errors when decrypting
 sending: more robust key fingerprints
 
-<b>version 2.9.2 on January 2, 2017: Recognizing Signed Messages</b>
+version 2.9.2 on January 2, 2017: Recognizing Signed Messages
 reading: properly display signed messages (don't verify yet)
 reading: stop treating signature attachments as message content
 
-<b>version 2.9.1 on January 1, 2017: Message Content Security</b>
+version 2.9.1 on January 1, 2017: Message Content Security
 composing: strip all html from text before sending or on pasting
 reading: scrip all html from text before displaying
 reading: fixed double newlines issue
 setup: improved extension browser button behavior
 setup: handling errors while fetching alternative addresses
 
-<b>version 2.9.0 on December 31, 2016: Permission Update</b>
+version 2.9.0 on December 31, 2016: Permission Update
 setup: allowing FlowCrypt to work with any webmail in future (Yahoo etc)
 setup: gmail notification that page needs refresh after install
 setup: fingerprint check exception fix
 composing: more robust reply box replacing
 composing: attach pubkey if didn't submit to FlowCrypt Attester
 
-<b>version 2.8.5 on December 30, 2016: Compose Bugfixes</b>
+version 2.8.5 on December 30, 2016: Compose Bugfixes
 composing: fixed exception when pulling pubkeys
 composing: fixed trouble retrieving fingerprint to include in header
 reading: fixed issue with very large messages + more efficient
@@ -941,23 +943,23 @@ setup: checking public key fingerprints on keyserver
 setup: fixed bug in internal plugin messaging during setup
 setup: evaluating pass phrase strength error fix
 
-<b>version 2.8.4 on December 29, 2016: Improved Message Detection</b>
+version 2.8.4 on December 29, 2016: Improved Message Detection
 reading: more robust and faster pgp block replacing
 
-<b>version 2.8.3 on December 29, 2016: Composing and Reading Bugfixes</b>
+version 2.8.3 on December 29, 2016: Composing and Reading Bugfixes
 composing: inform and offer to retry failed pubkey lookups
 setup: safer FlowCrypt content script loading
 
-<b>version 2.8.2 on December 29, 2016: Setup Bugfixes</b>
+version 2.8.2 on December 29, 2016: Setup Bugfixes
 setup: background page was failing repeatedly for some users
 setup: clearing error log if it gets too big
 
-<b>version 2.8.1 on December 28, 2016: Conversation Bugfixes</b>
+version 2.8.1 on December 28, 2016: Conversation Bugfixes
 composing: fixed thread_id problems when replying
 reading: better pgp block behavior on install/update
 setup: add key exception on wrongly formatted key fixed
 
-<b>version 2.8.0 on December 28, 2016: Multiple Private Keys</b>
+version 2.8.0 on December 28, 2016: Multiple Private Keys
 setup: allow multiple private keys per account
 setup: Public Key Server page blank screen fix
 setup: updated chrome content settings instructions
@@ -967,77 +969,77 @@ reading: fixed broken pass phrase dialog
 reading: improved compatibility with PGP/MIME
 composing: stopped repeated 404 errors when missing a draft
 
-<b>version 2.7.0 on December 25, 2016: Pubkey Attests</b>
+version 2.7.0 on December 25, 2016: Pubkey Attests
 setup: re-attesting a new pubkey
 setup: additional text when entering pubkey
 
-<b>version 2.6.2 on December 23, 2016: Better setup choices</b>
+version 2.6.2 on December 23, 2016: Better setup choices
 setup: make initial setup choices clearer
 composing: removed confusing pubkey fix message on sent messages
 composing: display attested ppl with white lock vs gray
 composing: pgp fingerprints as KeyWords
 
-<b>version 2.6.1 on December 19, 2016: Chrome settings, Forward email</b>
+version 2.6.1 on December 19, 2016: Chrome settings, Forward email
 composing: Forward Encrypted will include the previous message
 setup: notify user when chrome settings change is needed
 setup: include user email with submitted feedback
 
-<b>version 2.6.0 on December 17, 2016: Email Attestation</b>
+version 2.6.0 on December 17, 2016: Email Attestation
 setup: request and process email attestations
 setup: increased minimal passphrase strength
 setup: fixed broken pubkey submitting on keyservers page
 setup: fixed broken checkboxes on manual setup page
 
-<b>version 2.5.6 on December 14, 2016: Pass phrase change</b>
+version 2.5.6 on December 14, 2016: Pass phrase change
 setup: create a new backup on pass phrase change
 setup: smoother plugin update: prompt to refresh gmail
 composing: opened compose window won't close - bugfix
 
-<b>version 2.5.5 on December 11, 2016: Typo and compatibility</b>
+version 2.5.5 on December 11, 2016: Typo and compatibility
 composing: fixed typos in compose ui
 composing: improved compatibility with other installed gmail plugins
 
-<b>version 2.5.4 on December 11, 2016: Drafts and bugs</b>
+version 2.5.4 on December 11, 2016: Drafts and bugs
 composing: drafts will remember to and from fields
 composing: drafts will always have a clickable link
 composing: preventing multiple compose buttons from showing
 setup: help button moved to prevent accidental clicks
 
-<b>version 2.5.3 on December 10, 2016: Uninstall feedback</b>
+version 2.5.3 on December 10, 2016: Uninstall feedback
 request feedback when someone uninstalls the app
 
-<b>version 2.5.2 on December 10, 2016: Scrollbar flashing fix</b>
+version 2.5.2 on December 10, 2016: Scrollbar flashing fix
 reading: fixed scrollbar flashing when reading messages
 
-<b>version 2.5.1 on December 8, 2016: Draft saving</b>
+version 2.5.1 on December 8, 2016: Draft saving
 composing: fixed bug preventing drafts from saving
 
-<b>version 2.5.0 on December 8, 2016: Optional permissions</b>
+version 2.5.0 on December 8, 2016: Optional permissions
 setup: some gmail permissions are now optional
 setup: closing auth window acts same as clicking Deny
 composing: added help buttons
 
-<b>version 2.4.6 on December 6, 2016: Google Auth UX</b>
+version 2.4.6 on December 6, 2016: Google Auth UX
 composing: secure compose window to fit small screens
 setup: a popup explaining needed permissions when denied
 setup: fixed broken buttons when setup done
 
-<b>version 2.4.5 on December 5, 2016: Description change</b>
+version 2.4.5 on December 5, 2016: Description change
 Updated app description
 
-<b>version 2.4.4 on December 3, 2016: Name change</b>
+version 2.4.4 on December 3, 2016: Name change
 Updated name and description
 
-<b>version 2.4.3 on December 2, 2016: compose window fix</b>
+version 2.4.3 on December 2, 2016: compose window fix
 composing: fixing compose window hangup for some users
 
-<b>version 2.4.2 on November 30, 2016: button texts fix</b>
+version 2.4.2 on November 30, 2016: button texts fix
 composing: all compose buttons to read "Encrypt and Send"
 
-<b>version 2.4.1 on November 30, 2016: first compose fix</b>
+version 2.4.1 on November 30, 2016: first compose fix
 composing: first time users send button freeze fix
 
-<b>version 2.4.0 on November 22, 2016: human feedback</b>
+version 2.4.0 on November 22, 2016: human feedback
 setup: guide user to send their first email
 setup: explain what is pass phrase for
 setup: suggest to refresh gmail window after installation
@@ -1051,13 +1053,13 @@ composing: message sent confirmation
 reading: formatting email response from non-FlowCrypt people
 reading: mime encrypted attachments fix
 
-<b>version 2.3.2 on November 14, 2016: setting bugfix</b>
+version 2.3.2 on November 14, 2016: setting bugfix
 setup: fixed manual backup page
 
-<b>version 2.3.1 on July 5, 2016: setting bugfix</b>
+version 2.3.1 on July 5, 2016: setting bugfix
 setup: open settings empty page bugfix
 
-<b>version 2.3.0 on July 5, 2016: Usability: Settings</b>
+version 2.3.0 on July 5, 2016: Usability: Settings
 design: whole new settings screen
 design: unified green colors
 setup: fixed bug preventing initial setup for some
@@ -1065,7 +1067,7 @@ setup: using a plugin popup
 messaging: fixing enter passphrase link in pgp block
 messaging: fixing reply error
 
-<b>version 2.2.0 on May 21, 2016: Usability: Messaging UX II</b>
+version 2.2.0 on May 21, 2016: Usability: Messaging UX II
 composing: nicer challenge question link
 composing: better recipients selection UX
 composing: fixed newlines in drafts
@@ -1077,28 +1079,28 @@ composing: bugfix traditional drafts mid-convo
 composing: bugfix very first google contact not to wipe previous one
 composing: bugfix recipients missing placeholder
 
-<b>version 2.1.0 on May 18, 2016: Usability: Setup</b>
+version 2.1.0 on May 18, 2016: Usability: Setup
 setup: initial screen image link fix
 setup: option to disable FlowCrypt for each account
 setup: remind user didn't submit pubkey and never received encrypted message
 setup: creating a new key even if doesn't remember passphrase from last
 
-<b>version 2.0.3 on May 12, 2016: Setup bugfix</b>
+version 2.0.3 on May 12, 2016: Setup bugfix
 setup: initial screen image link fix
 
-<b>version 2.0.2 on May 10, 2016: Reply button bugfix and setup improvements</b>
+version 2.0.2 on May 10, 2016: Reply button bugfix and setup improvements
 composing: fix reply button
 setup: point to plugin button on first run
 setup: explain what is gmail auth for
 setup: add a visual guide in backup email
 
-<b>version 2.0.1 on May 9, 2016: Draft and setup bugfixes</b>
+version 2.0.1 on May 9, 2016: Draft and setup bugfixes
 composing: fixed displaying conversation drafts
 composing: fixed gmail freezing due to draft window replacing
 composing: improved challenge question / add PGP key prompt
 setup: fixed footer covering the SAVE button
 
-<b>version 2.0.0 on May 1, 2016: Messaging UX</b>
+version 2.0.0 on May 1, 2016: Messaging UX
 composing: using TAB in recipients field
 composing: long messages get a scroller
 composing: all receiving addresses to show after hitting reply
@@ -1112,15 +1114,15 @@ reading: replacing PGP blocks with search keywords in them
 reading: pubkey block button renames dynamically
 setup: don't rely on English language
 
-<b>version 1.9.2 on April 28, 2016: Google API auth bugfix</b>
+version 1.9.2 on April 28, 2016: Google API auth bugfix
 internal: google API auth handling bugfix (affecting contact search)
 composing: removed duplicate contacts
 
-<b>version 1.9.1 on April 28, 2016: Contacts select bugfix</b>
+version 1.9.1 on April 28, 2016: Contacts select bugfix
 composing: contacts are above secure background
 composing: long contacts shortened
 
-<b>version 1.9.0 on April 28, 2016: Security</b>
+version 1.9.0 on April 28, 2016: Security
 security: reply button results in encrypted message
 security: hotkeys A R F will result in encrypted message
 security: libraries update script
@@ -1128,17 +1130,17 @@ security: XSS protection tests
 security: clear design distinction for PGP
 setup: don't rely on English language
 
-<b>version 1.8.0 on April 17, 2016: Drafts</b>
+version 1.8.0 on April 17, 2016: Drafts
 composing: encrypted drafts functionality
 setup: remember pass phrase and submit pubkey by default for new keys
 
-<b>version 1.7.0 on April 14, 2016: Contacts</b>
+version 1.7.0 on April 14, 2016: Contacts
 composing: search google contacts in new messge and reply box
 composing: add all recipients on group reply
 composing: change any recipient on reply
 setup: changing pass phrase
 
-<b>version 1.6.0 on April 11, 2016: Public key management</b>
+version 1.6.0 on April 11, 2016: Public key management
 setup: see and manage list of pubkeys
 setup: resubmitting pubkey on
 composing: manually add pubkeys for unknown
@@ -1146,7 +1148,7 @@ composing: add pubkey fingerprint to email headers
 composing: contacts search is case insensitive
 reading: load pgp pubkey blocs into pubkey cache
 
-<b>version 1.5.0 on April 9, 2016: Private key best practices and backups</b>
+version 1.5.0 on April 9, 2016: Private key best practices and backups
 reading: better pass phrase dialog
 security: more and clearer setup and backup options
 security: pass phrase strength bar + examples
@@ -1154,7 +1156,7 @@ security: better always encrypting private key
 replying: triple recipient bugfix
 design: new logo
 
-<b>version 1.4.0 on Mar 27, 2016: Session based private key pass phrase</b>
+version 1.4.0 on Mar 27, 2016: Session based private key pass phrase
 security: manual setup has option to forget passphrase
 security: session passphrase entering dialog
 reading: attachment file icons
@@ -1163,14 +1165,14 @@ composing: show error on attachments bigger then 5MB
 composing: include my own pubkey even if recipients don't have any
 composing: recipients + challenge question styling changes
 
-<b>version 1.3.0 on Mar 23, 2016: Sending email to multiple receivers</b>
+version 1.3.0 on Mar 23, 2016: Sending email to multiple receivers
 composing: allow multiple receivers
 replying: reply to our own emails bugfix
 composing: correct line breaks bugfix
 setup: handle denied google auth access
 setup: get name from google api into pubkey
 
-<b>version 1.2.0 on Mar 21, 2016: Compatibility with other clients</b>
+version 1.2.0 on Mar 21, 2016: Compatibility with other clients
 added changelog :)
 mac client + gpg tools compatibility fix (PGP MIME)
 thunderbird + enigmail compatibility fix (ISO encoding)
@@ -1179,25 +1181,25 @@ fixing duplicate email send (better google token refreshing)
 reply box style fixes
 support to parse very long PGP messages
 
-<b>version 1.1.0 on Mar 17, 2016: Password encrypted email</b>
+version 1.1.0 on Mar 17, 2016: Password encrypted email
 encrypt to non-PGP contacts with a challenge question
 
-<b>version 1.0.0 on Mar 14, 2016: Attachments + prv diagnosis</b>
+version 1.0.0 on Mar 14, 2016: Attachments + prv diagnosis
 binary attachment support (such as images)
 unreadable message / wrong pubkey diagnosis
 bugfixes
 
-<b>version 0.9.0 on Mar 9, 2016</b>
+version 0.9.0 on Mar 9, 2016
 basic attachment support
 
-<b>version 0.8.0 on Mar 3, 2016</b>
+version 0.8.0 on Mar 3, 2016
 setup in a separate tab
 register secondary emails on keyserver
 replying improved
 new key backup on setup
 selecting FROM on compose
 
-<b>version 0.7.0 on Feb 29, 2016</b>
+version 0.7.0 on Feb 29, 2016
 search in pgp contacts on compose
 separate prv key per account
 improved settings
