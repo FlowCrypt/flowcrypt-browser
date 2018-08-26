@@ -89,6 +89,7 @@ export class BrowserPool {
   public with_global_browser_timeout_and_retry = async (browser: BrowserHandle, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
     for(let i of [1,2,3]) {
       try {
+        await browser.close_all_pages();
         try {
           return await this.cb_with_timeout(async () => await cb(browser, t), timeout);
         } finally {

@@ -19,7 +19,7 @@ export class BrowserHandle {
     const page = await this.browser.newPage();
     await page.setViewport(this.viewport);
     if(url) {
-      await page.goto(url.indexOf('https://') === 0 ? url : Url.extension(url));
+      await page.goto(url.indexOf('https://') === 0 || url.indexOf(Url.extension('')) === 0 ? url : Url.extension(url));
     }
     return new ControllablePage(page);
   }

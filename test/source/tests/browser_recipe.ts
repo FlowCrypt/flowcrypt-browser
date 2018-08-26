@@ -45,4 +45,19 @@ export class BrowserRecipe {
     await settings_page.close();
   }
 
+  public static pgp_block_verify_decrypted_content = async (browser: BrowserHandle, url: string, expected_contents: string[]) => {
+    let pgp_block_page = await browser.new_page(url);
+    await pgp_block_page.wait_all('@pgp-block-content');
+    await pgp_block_page.wait_for_selector_test_state('ready', 100);
+    await Util.sleep(1);
+    let content = await pgp_block_page.read('@pgp-block-content');
+    for(let expected_content of expected_contents) {
+      if(content.indexOf(expected_content) === -1) {
+        await pgp_block_page.close();
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected content:${expected_content}`);
+      }
+    }
+    await pgp_block_page.close();
+  }
+
 }

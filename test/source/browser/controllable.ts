@@ -198,6 +198,21 @@ abstract class ControllableBase {
     this.log(`wait_and_click:8:${selector}`);
   }
 
+  public get_frames_hrefs = async (url_matchables: string[], {sleep}={sleep: 3}): Promise<string[]> => {
+    if(sleep) {
+      await Util.sleep(sleep);
+    }
+    let matching_links = [];
+    for(let iframe of await this.target.$$('iframe')) {
+      let src_handle = await iframe.getProperty('src');
+      let src = await src_handle.jsonValue() as string;
+      if(url_matchables.filter(m => src.indexOf(m) !== -1).length === url_matchables.length) {
+        matching_links.push(src);
+      }
+    }
+    return matching_links;
+  }
+
   public get_frame = async (url_matchables: string[], {sleep=1}={sleep: 1}): Promise<ControllableFrame> => {
     if(sleep) {
       await Util.sleep(sleep);
