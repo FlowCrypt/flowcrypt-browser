@@ -1,4 +1,4 @@
-import {TestWithBrowser} from '..';
+import {TestWithBrowser, TestWithGlobalBrowser} from '..';
 import {Config} from '../../util';
 import {expect} from 'chai';
 const ordered_stringify = require('json-stable-stringify'); // tslint:disable-line
@@ -6,7 +6,7 @@ import * as ava from 'ava';
 
 // tslint:disable:no-unused-expression
 
-export let define_unit_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
+export let define_unit_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
 
   for(let ut of Config.tests.unit_tests) {
     ava.test(`unit ${ut.name}`, test_with_browser(async browser => {

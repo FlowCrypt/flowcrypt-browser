@@ -1,11 +1,11 @@
-import {TestWithBrowser} from '..';
+import {TestWithBrowser, TestWithGlobalBrowser} from '..';
 import {PageRecipe} from '../page_recipe';
 import {BrowserRecipe} from '../browser_recipe';
 import {Url} from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 
-export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
+export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
 
   ava.test('compose - standalone - can set and remember default send address', test_with_new_browser(async (browser, t) => {
     await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
@@ -73,20 +73,20 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await PageRecipe.compose_send_and_close(compose_page);
   }));
 
-  ava.test('compose[global] - standalone - nopgp', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('compose[global] - standalone - nopgp', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.compose_fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
     await PageRecipe.compose_send_and_close(compose_page, 'test-pass');
   }));
 
-  ava.test('compose[global] - standalone - from alias', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('compose[global] - standalone - from alias', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await compose_page.select_option('@input-from', 'flowcryptcompatibility@gmail.com');
     await PageRecipe.compose_fill_message(compose_page, 'human@flowcrypt.com', 'from alias');
     await PageRecipe.compose_send_and_close(compose_page);
   }));
 
-  ava.test('compose[global] - standalone - with attachments', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('compose[global] - standalone - with attachments', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.compose_fill_message(compose_page, 'human@flowcrypt.com', 'with files');
     let file_input = await compose_page.target.$('input[type=file]');
@@ -94,7 +94,7 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await PageRecipe.compose_send_and_close(compose_page);
   }));
 
-  ava.test('compose[global] - standalone - with attachments + nopgp', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('compose[global] - standalone - with attachments + nopgp', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.compose_fill_message(compose_page, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     let file_input = await compose_page.target.$('input[type=file]');
@@ -102,14 +102,14 @@ export let define_compose_tests = (test_with_new_browser: TestWithBrowser, test_
     await PageRecipe.compose_send_and_close(compose_page, 'test-pass');
   }));
 
-  ava.test('compose[global] - signed message', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('compose[global] - signed message', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let compose_page = await PageRecipe.compose_open_compose_page_standalone(browser);
     await PageRecipe.compose_fill_message(compose_page, 'human@flowcrypt.com', 'signed message');
     await compose_page.click('@action-switch-to-sign');
     await PageRecipe.compose_send_and_close(compose_page);
   }));
 
-  ava.test('compose[global] - settings - manually copied pubkey', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('compose[global] - settings - manually copied pubkey', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let settings_page = await browser.new_page(Url.extension_settings('flowcrypt.compatibility@gmail.com'));
     let compose_frame = await PageRecipe.compose_open_compose_page_settings(settings_page);
     await PageRecipe.compose_fill_message(compose_frame, 'human@flowcrypt.com', 'just to load - will close this page');

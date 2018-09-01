@@ -1,11 +1,10 @@
-
-import {TestWithBrowser} from '..';
+import {TestWithBrowser, TestWithGlobalBrowser} from '..';
 import {Url, BrowserHandle, ControllablePage} from '../../browser';
 import * as ava from 'ava';
 import {expect} from 'chai';
 import {BrowserRecipe} from '../browser_recipe';
 
-export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
+export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
 
   let page_has_a_reply_container = async (gmail_page: ControllablePage) => {
     let urls = await gmail_page.get_frames_hrefs(['/chrome/elements/compose.htm'], {sleep: 0});
@@ -22,7 +21,7 @@ export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_wi
     return gmail_page;
   };
 
-  ava.test('mail.google.com[global] - compose window opens', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('mail.google.com[global] - compose window opens', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let gmail_page = await browser.new_page(Url.gmail());
     await gmail_page.wait_and_click('@action-secure-compose', {delay: 1});
     await gmail_page.wait_all('@container-new-message');
@@ -30,7 +29,7 @@ export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_wi
 
   ava.test.todo('inbox.google.com - compose window opens');
 
-  ava.test('mail.google.com[global] - msg.asc message content renders', test_with_semaphored_global_browser(async (browser, t) => {
+  ava.test('mail.google.com[global] - msg.asc message content renders', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let gmail_page = await open_gmail_page(browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
     let urls = await gmail_page.get_frames_hrefs(['/chrome/elements/pgp_block.htm'], {sleep: 10});
     expect(urls.length).to.equal(1);

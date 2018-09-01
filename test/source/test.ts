@@ -10,12 +10,40 @@ import {define_decrypt_tests} from './tests/tests/decrypt';
 import {define_gmail_tests} from './tests/tests/gmail';
 import {define_settings_tests} from './tests/tests/settings';
 import {define_elements_tests} from './tests/tests/elements';
+import {define_account_tests} from './tests/tests/account';
 import {Config} from './util';
+import {FlowCryptApi} from './tests/api';
 
-let browser_pool = new BrowserPool(5);
-let global_browser_semaphore = new Semaphore(1);
-let global_browser: BrowserHandle;
+type GlobalBrowserGroup = 'compatibility'|'trial';
+type GlobalBrowser = {browser?: BrowserHandle, semaphore: Semaphore, before_each_test: () => Promise<void>};
+
 let test_timeout = 5 * 60 * 1000;
+let browser_pool = new BrowserPool(5);
+let browser_global: {[group: string]: GlobalBrowser} = {
+  compatibility: {
+    browser: undefined,
+    semaphore: new Semaphore(1),
+    before_each_test: async () => undefined,
+  },
+  trial: {
+    browser: undefined,
+    semaphore: new Semaphore(1),
+    before_each_test: async () => {
+      await FlowCryptApi.hook_ci_account_delete(Config.secrets.ci_admin_token);
+      if(browser_global.trial.browser) { // a new browser for each trial test
+        await browser_global.trial.browser.close();
+      }
+      browser_global.trial.browser = await browser_pool.new_browser_handle();
+    },
+  },
+};
+
+ava.before('set up global browser and config', async t => {
+  Config.extension_id = await browser_pool.get_extension_id();
+  browser_global.compatibility.browser = await browser_pool.new_browser_handle();
+  await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser_global.compatibility.browser!);
+  t.pass();
+});
 
 export let test_with_new_browser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
@@ -24,25 +52,18 @@ export let test_with_new_browser = (cb: (browser: BrowserHandle, t: ava.Executio
   };
 };
 
-export let test_with_semaphored_global_browser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
+export let test_with_semaphored_global_browser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
-    await global_browser_semaphore.acquire();
+    await browser_global[group].semaphore.acquire();
     try {
-      await browser_pool.with_global_browser_timeout_and_retry(global_browser, cb, t, test_timeout);
+      await browser_global[group].before_each_test();
+      await browser_pool.with_global_browser_timeout_and_retry(browser_global[group].browser!, cb, t, test_timeout);
       t.pass();
     } finally {
-      global_browser_semaphore.release();
+      browser_global[group].semaphore.release();
     }
   };
 };
-
-ava.before('set up global browser and config', async t => {
-  Config.extension_id = await browser_pool.get_extension_id();
-  let browser = await browser_pool.new_browser_handle();
-  await BrowserRecipe.set_up_flowcrypt_compatibility_account(browser);
-  global_browser = browser;
-  t.pass();
-});
 
 define_setup_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_unit_tests(test_with_new_browser, test_with_semaphored_global_browser);
@@ -51,3 +72,4 @@ define_decrypt_tests(test_with_new_browser, test_with_semaphored_global_browser)
 define_gmail_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_settings_tests(test_with_new_browser, test_with_semaphored_global_browser);
 define_elements_tests(test_with_new_browser, test_with_semaphored_global_browser);
+define_account_tests(test_with_new_browser, test_with_semaphored_global_browser);

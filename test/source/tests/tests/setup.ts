@@ -1,9 +1,9 @@
-import {TestWithBrowser} from '..';
+import {TestWithBrowser, TestWithGlobalBrowser} from '..';
 import {PageRecipe} from '../page_recipe';
 import {BrowserRecipe} from '../browser_recipe';
 import * as ava from 'ava';
 
-export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithBrowser) => {
+export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
 
   ava.test.todo('setup - no connection when pulling backup - retry prompt shows and works');
 

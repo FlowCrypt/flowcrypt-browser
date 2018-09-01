@@ -7,6 +7,8 @@ interface TestConfigInterface {
 }
 
 interface TestSecretsInterface {
+  ci_admin_token: string;
+  ci_dev_account: string;
   auth: { google: {email: string, password: string, backup: string}[],};
   keys: {title: string, passphrase: string, armored: string|null, keywords: string|null}[];
 }
