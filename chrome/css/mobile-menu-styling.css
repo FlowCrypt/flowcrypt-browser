@@ -320,7 +320,9 @@
   body#settings .pubkeys.page #emails td:nth-child(2),
   body#settings .pubkeys.page #emails td:nth-child(3),
   body#settings .pubkeys.page #emails td:nth-child(4) {
-    display: block;
+    float: left;
+    text-align: center!important;
+    width: 33%;
   }
   body#settings .pubkeys.page #emails tr {
     margin: 10px;
