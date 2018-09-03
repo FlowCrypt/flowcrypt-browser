@@ -23,6 +23,7 @@ a:focus { outline: none !important; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
 .green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
+.colored_label { border-radius: 10px; padding: 5px 10px;}
 .green_label.short, .orange_label.short, .red_label.short, .gray_label.short { min-width: 0; }
 .green_label { color: white; background-color: #31A217; }
 .orange_label { color: white; background-color: #d18826; }
@@ -69,6 +70,7 @@ body#settings > div#content > div#accounts a.button.has_email b { padding-right:
 body#settings > div#content p.line { min-height: 18px; padding: 12px 0; max-width: 570px; margin:0 auto; position: relative; padding-bottom: 0; opacity: .5}
 body#settings > div#content div.col { width: 280px; display:inline-block; }
 body#settings > div#content p { margin: 21px 0; }
+body#settings > div#content .copy--light {margin: 0; font-weight: 400; font-size: 13px; line-height: 1.75;}
 body#settings > div#content hr { height: 1px; border: none; border-bottom: 1px solid #CACACA; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { padding: 0; box-sizing: border-box;
   width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px; }
@@ -147,7 +149,9 @@ body#settings > div#content.backup div#step_1_password { display: none; }
 body#settings > div#content.backup div#step_2_confirm { display: none; }
 body#settings > div#content.backup div#step_3_manual { display: none; }
 body#settings > div#content.backup div#step_3_automatic_backup_retry { display: none; }
-body#settings > div#content.backup div#step_3_manual table.backup_options tr.details td { padding-top: 20px; }
+body#settings > div#content.backup div#step_3_manual .details { text-align: left; }
+body#settings > div#content.backup div#step_3_manual .backup_options_details_option { margin-bottom: 10px; }
+body#settings > div#content.backup div#step_3_manual .backup_options_details_option label { font-weight: 600;}
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px;}
 body#settings .password_feedback { display: none; }
@@ -220,9 +224,10 @@ body#settings > div#content .list_table table tr td { padding-bottom: 2px; text-
 body#settings > div#content .list_table table tr td:first-child { padding-left: 20px; }
 body#settings > div#content .list_table table tr:hover td { background-color: #f6f6f6; }
 
-body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 110px; text-align: center; }
+body#settings > div#content.subscribe .list_table table tr td:not(:first-child) { width: 40px; text-align: center; }
 body#settings > div#content.subscribe .stripe_checkout { display: none; }
 body#settings > div#content.subscribe .stripe_checkout iframe { width: 500px; border: none; }
+body#settings > div#content.subscribe tr:nth-child(even) { background: #f3f3f3; }
 
 body#settings > div#content.account .list_table.account_table { width: 500px; }
 body#settings > div#content.account .list_table.account_table tr td { padding-right: 20px; }

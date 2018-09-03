@@ -73,28 +73,36 @@
       <div class="line">Your key is stored in the browser. Backups are useful if you ever lose your device.</div>
       <div class="line">
         <table class="backup_options">
-          <tr class="details">
-            <td>
-              <input type="radio" name="input_backup_choice" value="inbox" id="input_backup_inbox" checked="checked" />
-              <label for="input_backup_inbox">Email Inbox</label>
-            </td>
-            <td><span class="green_label">easy recovery</span></td>
-            <td><span class="orange_label">reasonable security</span></td>
-          </tr>
-          <tr class="text">
-            <td colspan="3">Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase, which should be very long and hard to guess. Best option for most users.</td>
-          </tr>
-          <tr class="details">
-            <td>
-              <input type="radio" name="input_backup_choice" value="file" id="input_backup_download" />
-              <label for="input_backup_download">download</label>
-            </td>
-            <td><span class="orange_label">medium recovery</span></td>
-            <td><span class="green_label">great security</span></td>
-          </tr>
-          <tr class="text">
-            <td colspan="3">Download your key as a file. Very secure option if your device is encrypted, or if you can keep a file stored securely. If you lose both your laptop and the file, your encrypted email will be unreadable, so you need to keep this file in a safe place. Regular emails will not be affected.</td>
-          </tr>
+          <div class="details text-left">
+            <div class="row">
+              <div class="col-sm-3 backup_options_details_option">
+                <input type="radio" name="input_backup_choice" value="inbox" id="input_backup_inbox" checked="checked" />
+                <label for="input_backup_inbox">Email Inbox</label>
+              </div>
+              <div class="col-sm-3">
+                <span class="green_label colored_label">easy recovery</span>
+                <span class="orange_label colored_label">reasonable security</span>
+              </div>
+              <div class="text-left">
+                <p>Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase, which should be very long and hard to guess. Best option for most users.</p>
+              </div>
+            </div>
+          </div>
+          <div class="details text-left">
+            <div class="row">
+              <div class="col-sm-3 backup_options_details_option">
+                <input type="radio" name="input_backup_choice" value="file" id="input_backup_download" />
+                <label for="input_backup_download">Download</label>
+              </div>
+              <div class="col-sm-3">
+                <span class="orange_label colored_label">medium recovery</span>
+                <span class="green_label colored_label">great security</span>
+              </div>
+              <div class="text-left">
+                <p>Download your key as a file. Very secure option if your device is encrypted, or if you can keep a file stored securely. If you lose both your laptop and the file, your encrypted email will be unreadable, so you need to keep this file in a safe place. Regular emails will not be affected.</p>
+              </div>
+            </div>
+          </div>
           <!-- <tr class="details">
             <td><input type="radio" name="input_backup_choice" value="print" id="input_backup_print" /> <label for="input_backup_print">Print</label></td>
             <td><span class="orange_label">effortful recovery</span></td>
