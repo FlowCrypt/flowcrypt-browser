@@ -17,7 +17,7 @@ abstract class ControllableBase {
 
   protected log = (msg: string) => {
     if(this.debug_namespace) {
-      console.log(`[debug][controllable] ${msg}`);
+      console.log(`[debug][controllable][${this.debug_namespace}] ${msg}`);
     }
   }
 
@@ -198,7 +198,7 @@ abstract class ControllableBase {
     this.log(`wait_and_click:8:${selector}`);
   }
 
-  public get_frames_hrefs = async (url_matchables: string[], {sleep}={sleep: 3}): Promise<string[]> => {
+  public get_frames_urls = async (url_matchables: string[], {sleep}={sleep: 3}): Promise<string[]> => {
     if(sleep) {
       await Util.sleep(sleep);
     }

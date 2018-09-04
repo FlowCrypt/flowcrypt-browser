@@ -15,7 +15,7 @@ import {Config} from './util';
 import {FlowCryptApi} from './tests/api';
 
 type GlobalBrowserGroup = 'compatibility'|'trial';
-type GlobalBrowser = {browser?: BrowserHandle, semaphore: Semaphore, before_each_test: () => Promise<void>};
+export type GlobalBrowser = {browser?: BrowserHandle, semaphore: Semaphore, before_each_test: () => Promise<void>};
 
 let test_timeout = 5 * 60 * 1000;
 let browser_pool = new BrowserPool(5);
@@ -29,7 +29,7 @@ let browser_global: {[group: string]: GlobalBrowser} = {
     browser: undefined,
     semaphore: new Semaphore(1),
     before_each_test: async () => {
-      await FlowCryptApi.hook_ci_account_delete(Config.secrets.ci_admin_token);
+      await FlowCryptApi.hook_ci_account_delete(Config.secrets.ci_dev_account);
       if(browser_global.trial.browser) { // a new browser for each trial test
         await browser_global.trial.browser.close();
       }
@@ -56,8 +56,7 @@ export let test_with_semaphored_global_browser = (group: GlobalBrowserGroup, cb:
   return async (t: ava.ExecutionContext<{}>) => {
     await browser_global[group].semaphore.acquire();
     try {
-      await browser_global[group].before_each_test();
-      await browser_pool.with_global_browser_timeout_and_retry(browser_global[group].browser!, cb, t, test_timeout);
+      await browser_pool.with_global_browser_timeout_and_retry(browser_global[group], cb, t, test_timeout);
       t.pass();
     } finally {
       browser_global[group].semaphore.release();

@@ -31,4 +31,6 @@ export class Util {
 
   public static random = () => Math.random().toString(36).substring(7);
 
+  public static html_escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+
 }

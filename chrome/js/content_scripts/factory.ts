@@ -102,15 +102,15 @@ class Factory {
   }
 
   dialog_passphrase = (longids: string[], type: PassphraseDialogType) => {
-    return this.div_dialog(this.iframe(this.src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}));
+    return this.div_dialog(this.iframe(this.src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}), 'dialog-passphrase');
   }
 
   dialog_subscribe = (verif_em_txt: string|null, source: string|null, sub_res_tab_id: string|null) => {
-    return this.div_dialog(this.iframe(this.src_subscribe_dialog(verif_em_txt, 'dialog', source, sub_res_tab_id), ['mediumtall'], {scrolling: 'no'}));
+    return this.div_dialog(this.iframe(this.src_subscribe_dialog(verif_em_txt, 'dialog', source, sub_res_tab_id), ['mediumtall'], {scrolling: 'no'}), 'dialog-subscribe');
   }
 
   dialog_add_pubkey = (emails: string[]) => {
-    return this.div_dialog(this.iframe(this.src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}));
+    return this.div_dialog(this.iframe(this.src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}), 'dialog-add-pubkey');
   }
 
   embedded_compose = (draft_id?: string) => {
@@ -142,7 +142,7 @@ class Factory {
   }
 
   embedded_passphrase = (longids: string[]) => {
-    return this.div_dialog(this.iframe(this.src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}));
+    return this.div_dialog(this.iframe(this.src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}), 'embedded-passphrase');
   }
 
   embedded_attachment_status = (content: string) => {
@@ -199,16 +199,16 @@ class Factory {
     return { to: their_emails, from: my_email };
   }
 
-  private iframe = (src: string, classes:string[]=[], additional_attributes:UrlParams={}) => {
+  private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
     let attributes: Dict<string> = {id: tool.env.url_params(['frame_id'], src).frame_id as string, class: (classes || []).concat(this.reloadable_class).join(' '), src};
-    for (let name of Object.keys(additional_attributes)) {
-      attributes[name] = String(additional_attributes[name]);
+    for (let name of Object.keys(element_attrs)) {
+      attributes[name] = String(element_attrs[name]);
     }
     return tool.e('iframe', attributes);
   }
 
-  private div_dialog = (content: string) => {
-    return tool.e('div', { id: 'cryptup_dialog', html: content });
+  private div_dialog = (content: string, data_test: string) => {
+    return tool.e('div', { id: 'cryptup_dialog', html: content, 'data-test': data_test });
   }
 
 }

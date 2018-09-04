@@ -4,6 +4,7 @@ import {BrowserHandle} from './browser_handle';
 import {Util} from "../util";
 import * as ava from 'ava';
 import { resolve } from "url";
+import {GlobalBrowser} from "../test";
 
 class TimeoutError extends Error {}
 
@@ -86,15 +87,16 @@ export class BrowserPool {
     }
   }
 
-  public with_global_browser_timeout_and_retry = async (browser: BrowserHandle, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
+  public with_global_browser_timeout_and_retry = async (global_browser: GlobalBrowser, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
     for(let i of [1,2,3]) {
       try {
-        await browser.close_all_pages();
+        await global_browser.before_each_test();
+        await global_browser.browser!.close_all_pages();
         try {
-          return await this.cb_with_timeout(async () => await cb(browser, t), timeout);
+          return await this.cb_with_timeout(async () => await cb(global_browser.browser!, t), timeout);
         } finally {
           await Util.sleep(1);
-          await browser.close_all_pages();
+          await global_browser.browser!.close_all_pages();
         }
       } catch(e) {
         if(i < 3) {
