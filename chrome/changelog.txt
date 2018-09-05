@@ -1,5 +1,7 @@
 <div>
 
+version 6.0.1 on September 05, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/256?closed=1" target="_blank">User id parse fix</a>
+
 version 6.0.0 on August 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/255?closed=1" target="_blank">Mutt compatibility</a>
 
 version 5.9.9 on August 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/254?closed=1" target="_blank">Skip invalid userids</a>
