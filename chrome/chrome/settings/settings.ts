@@ -174,14 +174,14 @@ class Settings {
 
   static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, original_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      let userIds = original_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && tool.str.is_email_valid(tool.str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
-      if (!userIds.length) {
-        userIds.push(account_email);
+      let uids = original_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && tool.str.is_email_valid(tool.str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
+      if (!uids.length) {
+        uids.push(account_email);
       }
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
       container.html([
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
-        '<div class="line compatibility_fix_user_ids">' + userIds.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
+        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
         '  Choose expiration of updated key',
         '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
@@ -214,6 +214,7 @@ class Settings {
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await tool.crypto.key.decrypt(original_prv, [passphrase]);
           let reformatted;
+          let userIds = uids.map(uid => tool.str.parse_email(uid)).map(u => ({email: u.email, name: u.name || ''}));
           try {
             reformatted = await openpgp.reformatKey({privateKey: original_prv, passphrase, userIds, keyExpirationTime: expire_seconds}) as {key: OpenPGP.key.Key};
           } catch (e) {
