@@ -1527,12 +1527,15 @@ let tool = {
         }
       },
       required_tab_id: async (): Promise<string> => {
-        let tab_id = await tool.browser.message.tab_id();
-        if (tab_id) {
-          return tab_id;
-        } else {
-          throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}'`);
+        let tab_id;
+        for(let i = 0; i < 10; i++) { // up to 10 attempts. Sometimes returns undefined right after browser start
+          tab_id = await tool.browser.message.tab_id();
+          if(tab_id) {
+            return tab_id;
+          }
+          await tool.time.sleep(200); // sleep 200ms between attempts
         }
+        throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
       },
       listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
         for (let name of Object.keys(handlers)) {
