@@ -102,7 +102,7 @@
   .subscription {
     display: block;
     margin: 0 auto;
-    font-size: 11px;
+    font-size: 13px;
   }
   .cryptup-logo-row {
     padding: 10px 0;
@@ -296,8 +296,9 @@
     font-size: 11px;
     height: auto;
     padding: 10px 0;
-    word-break: break-word;
-    text-indent: 20px;
+  }
+  body#settings > div#content.pubkeys table#emails tr {
+    height: auto;
   }
   body#settings #emails td {
     display: block;
@@ -313,9 +314,7 @@
   body#settings .pubkeys.page #emails td:nth-child(2),
   body#settings .pubkeys.page #emails td:nth-child(3),
   body#settings .pubkeys.page #emails td:nth-child(4) {
-    float: left;
-    text-align: center!important;
-    width: 33%;
+    display: block;
   }
   body#settings .pubkeys.page #emails tr {
     margin: 10px;
@@ -323,27 +322,26 @@
   body#settings .pubkeys.page #emails tr[email] {
     border-radius: 4px;
     display: block;
-    margin-bottom: 70px;
+    margin-bottom: 25px;
     position: relative;
   }
   body#settings .pubkeys.page #emails tr[email] a {
-    border: 1px solid #cacaca;
-    border-radius: 15px;
     display: block;
     font-size: 11px;
+    font-weight: 500;
     margin: 0 5px;
     margin-right: 5%;
     padding: 5px 0;
     padding-left: 7px;
     position: relative;
-    text-align: left;
+    text-align: center;
     transition: 0.25s;
   }
   body#settings .pubkeys.page #emails tr[email]:before {
     position: absolute;
     content: "";
     width: 100%;
-    height: 90px;
+    height: 100%;
     border: 1px solid #cacaca;
     border-radius: 4px;
   }
@@ -354,26 +352,5 @@
   }
   body#settings > div#content textarea {
     width: 100%;
-  }
-  body#settings a.action_show:before,
-  body#settings a.action_change:before,
-  body#settings a.action_remove:before {
-    background-size: 100%;
-    content:"";
-    height: 20px;
-    left: 2px;
-    position: absolute;
-    width: 20px;
-    top: 2.5px;
-  }
-  body#settings .action_show:before {
-    background-image: url("/img/svgs/contact__show-icon.svg");
-    left: 5px;
-  }
-  body#settings .action_change:before {
-    background-image: url("/img/svgs/contact__edit-icon.svg");
-  }
-  body#settings .action_remove:before {
-    background-image: url("/img/svgs/contact__remove-icon.svg");
   }
 }
