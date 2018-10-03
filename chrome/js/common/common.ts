@@ -12,6 +12,7 @@ declare var exports: AnyPlatformDependentCode;
 declare let openpgp: typeof OpenPGP;
 declare let mnemonic: (hex: string) => string;
 declare let zxcvbn: Function; // tslint:disable-line:ban-types
+declare module 'dompurify';
 
 class UnreportableError extends Error {}
 class TabIdRequiredError extends Error {}
@@ -183,42 +184,6 @@ let tool = {
       };
     },
     pretty_print: (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj),
-    html_as_text: (html_text: string): Promise<string> => new Promise((resolve, reject) => {
-      // extracts innerText from a html text in a safe way without executing any contained js
-      // firefox does not preserve line breaks of iframe.contentDocument.body.innerText due to a bug - have to guess the newlines with regexes
-      // this is still safe because Firefox does strip all other tags
-      let br: string;
-      let block_start: string;
-      let block_end: string;
-      if (tool.env.browser().name === 'firefox') {
-        br = 'CU_BR_' + tool.str.random(5);
-        block_start = 'CU_BS_' + tool.str.random(5);
-        block_end = 'CU_BE_' + tool.str.random(5);
-        html_text = html_text.replace(/<br[^>]*>/gi, br);
-        html_text = html_text.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
-        html_text = html_text.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
-      }
-      let e = document.createElement('iframe');
-      (e as any).sandbox = 'allow-same-origin';
-      e.srcdoc = html_text;
-      e.style.display = 'none';
-      e.onload = () => {
-        if (e.contentDocument === null) {
-          tool.catch.report('e.contentDocument null');
-          return;
-        }
-        let text = e.contentDocument.body.innerText;
-        if (tool.env.browser().name === 'firefox') {
-          text = text.replace(RegExp('(' + block_start + ')+', 'g'), block_start).replace(RegExp('(' + block_end + ')+', 'g'), block_end);
-          text = text.split(block_end + block_start).join(br).split(br + block_end).join(br);
-          text = text.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
-          text = text.replace(/\n{2,}/g, '\n\n');
-        }
-        resolve(text.trim());
-        document.body.removeChild(e);
-      };
-      document.body.appendChild(e);
-    }),
     normalize_spaces: (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n'),
     normalize_dashes: (str: string) => str.replace(/^—–|—–$/gm, '-----'),
     normalize: (str: string) => tool.str.normalize_spaces(tool.str.normalize_dashes(str)),
@@ -248,10 +213,29 @@ let tool = {
     // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
     html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
-    as_safe_html: async (text_or_html: string): Promise<string> => {
-      let nl = '_cryptup_newline_placeholder_' + tool.str.random(3) + '_';
-      let plain = await tool.str.html_as_text(text_or_html.replace(/<br ?\/?> ?\r?\n/gm, nl).replace(/\r?\n/gm, nl).replace(/</g, '&lt;').replace(RegExp(nl, 'g'), '<br>'));
-      return plain.trim().replace(/</g, '&lt;').replace(/\n/g, '<br>').replace(/ {2,}/g, (spaces) => '&nbsp;'.repeat(spaces.length));
+    html_sanitize: (dirty_html: string): string => { // originaly text_or_html
+      return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true});
+    },
+    html_sanitize_keep_basic_tags: (dirty_html: string): string => { // originaly text_or_html
+      return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true});
+    },
+    html_sanitize_and_strip_all_except_br: (dirty_html: string): string => {
+      let html = tool.str.html_sanitize_keep_basic_tags(dirty_html);
+      let random = tool.str.random(5);
+      let br = `CU_BR_${random}`;
+      let block_start = `CU_BS_${random}`;
+      let block_end = `CU_BE_${random}`;
+      html = html.replace(/<br[^>]*>/gi, br);
+      html = html.replace(/\n/g, '');
+      html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
+      html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
+      html = html.replace(RegExp(`(${block_start})+`, 'g'), block_start).replace(RegExp(`(${block_end})+`, 'g'), block_end);
+      html = html.split(block_end + block_start).join(br).split(br + block_end).join(br);
+      let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
+      text = text.replace(/\n{2,}/g, '\n\n');
+      // not all tags were removed above. Remove all remaining tags
+      text = DOMPurify.sanitize(text, {ALLOWED_TAGS: [], KEEP_CONTENT: true});
+      return text.trim().replace(/\n/g, '<br>');
     },
     base64url_encode: (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
     base64url_decode: (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
@@ -2435,6 +2419,7 @@ let tool = {
       ],
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
+      str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a'],
     },
     // meant to be used privately within this file like so: tool._.???
     str_base64url_utf_encode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings

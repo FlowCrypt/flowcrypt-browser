@@ -19,8 +19,7 @@ tool.catch.try(async () => {
     if (passphrase !== null) {
       $('.status').html('Verifying..' + tool.ui.spinner('green'));
       let attestation = await tool.browser.message.send_await(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
-      let text = await tool.str.html_as_text(attestation.result.replace(/\n/g, '<br>'));
-      $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(text).replace(/\n/g, '<br>'));
+      $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(attestation.result).replace(/\n/g, '<br>'));
     }
   };
 

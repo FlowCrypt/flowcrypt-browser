@@ -263,8 +263,8 @@ class Composer {
       if (clipboard_html_data) {
         e.preventDefault();
         e.stopPropagation();
-        let text = await tool.str.html_as_text(clipboard_html_data);
-        this.simulate_ctrl_v(text.replace(/\n/g, '<br>'));
+        let sanitized = tool.str.html_sanitize_and_strip_all_except_br(clipboard_html_data);
+        this.simulate_ctrl_v(sanitized);
       }
     };
     this.S.cached('icon_pubkey').click(tool.ui.event.handle(target => {
@@ -462,7 +462,7 @@ class Composer {
       let result = await tool.crypto.message.decrypt(this.account_email, encrypted_draft);
       if (result.success) {
         this.S.cached('prompt').css({display: 'none'});
-        let safe_html_draft = await tool.str.as_safe_html(result.content.text!.replace(/\n/g, '<br>\n'));
+        let safe_html_draft = await tool.str.html_sanitize_keep_basic_tags(result.content.text!);
         this.S.cached('input_text').html(safe_html_draft);
         if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();

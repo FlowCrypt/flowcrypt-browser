@@ -100,7 +100,7 @@ class BgAttests {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     if (!primary_ki) {
       BgAttests.stop_watching(account_email);
-      return {attest_packet_text, message: 'No primary_ki for ' + account_email, account_email};
+      return {attest_packet_text, message: `No primary_ki for ${account_email}`, account_email};
     }
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     let {attests_processed} = await Store.get_account(account_email, ['attests_processed']);
@@ -115,7 +115,7 @@ class BgAttests {
             try {
               signed = await tool.crypto.message.sign(key, attest.text);
             } catch (e) {
-              throw new AttestError('Error signing the attest. Email human@flowcrypt.com to find out why:' + e.message, attest_packet_text, account_email);
+              throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${e.message}`, attest_packet_text, account_email);
             }
             try {
               let api_r;
@@ -125,16 +125,16 @@ class BgAttests {
                 api_r = await tool.api.attester.replace_confirm(signed);
               }
               if (!api_r.attested) {
-                throw new AttestError('Refused by Attester. Email human@flowcrypt.com to find out why.\n\n' + JSON.stringify(api_r), attest_packet_text, account_email);
+                throw new AttestError(`Refused by Attester. Email human@flowcrypt.com to find out why.\n\n${JSON.stringify(api_r)}`, attest_packet_text, account_email);
               }
             } catch (e) {
               if(tool.api.error.is_network_error(e)) {
                 throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
               }
-              throw new AttestError('Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n' + e.message, attest_packet_text, account_email);
+              throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${e.message}`, attest_packet_text, account_email);
             }
             await BgAttests.account_storage_mark_as_attested(account_email, attest.content.attester);
-            return {attest_packet_text, message: 'Successfully attested ' + account_email, account_email};
+            return {attest_packet_text, message: `Successfully attested ${account_email}`, account_email};
           } else {
             throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attest_packet_text, account_email);
           }
@@ -146,7 +146,7 @@ class BgAttests {
       }
     } else {
       BgAttests.stop_watching(account_email);
-      return {attest_packet_text, message: 'Already attested ' + account_email, account_email};
+      return {attest_packet_text, message: `Already attested ${account_email}`, account_email};
     }
   }
 

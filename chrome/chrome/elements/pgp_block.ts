@@ -54,7 +54,7 @@ tool.catch.try(async () => {
     if (!is_error && !url_params.is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
-    let safe_html = await tool.str.as_safe_html(content);
+    let safe_html = tool.str.html_sanitize_keep_basic_tags(content);
     render_html_dangerously(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
     // if (unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
