@@ -267,6 +267,7 @@ tool.catch.try(async () => {
       if (public_keys.length) {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys});
       }
+      decrypted_content = tool.str.html_escape(decrypted_content);
       await render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message as string), false);
       if (cryptup_attachments.length) {
         render_inner_attachments(cryptup_attachments);
