@@ -22,7 +22,6 @@ interface FcWindow extends BrowserWidnow {
 }
 
 type AnyThirdPartyLibrary = any;
-type AnyPlatformDependentCode = any;
 type Thrown = Error|StandardError|any;
 
 interface ContentScriptWindow extends FcWindow {

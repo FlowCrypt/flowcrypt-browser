@@ -8,7 +8,6 @@
 'use strict';
 
 declare let $_HOST_html_to_text: (html: string) => string;
-declare var exports: AnyPlatformDependentCode;
 declare let openpgp: typeof OpenPGP;
 declare let mnemonic: (hex: string) => string;
 declare let zxcvbn: Function; // tslint:disable-line:ban-types
