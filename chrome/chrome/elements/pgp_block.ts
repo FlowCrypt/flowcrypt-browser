@@ -277,7 +277,7 @@ tool.catch.try(async () => {
     } else {
       render_text('Formatting...');
       let decoded = await tool.mime.decode(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string, url_params.message as string), false);
+      await render_content(tool.mime.format_content_to_display(decoded.html || decoded.text || decrypted_content as string, url_params.message as string), false);
       let renderable_attachments: Attachment[] = [];
       for (let attachment of decoded.attachments) {
         if (attachment.treat_as() !== 'public_key') {

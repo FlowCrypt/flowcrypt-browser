@@ -216,7 +216,17 @@ let tool = {
       return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true});
     },
     html_sanitize_keep_basic_tags: (dirty_html: string): string => { // originaly text_or_html
-      return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true});
+      // @ts-ignore - https://github.com/cure53/DOMPurify/issues/305
+      DOMPurify.removeAllHooks();
+      DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+        if ('target' in node) {
+          (node as Element).setAttribute('target', '_blank');
+        }
+      });
+      let clean = DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true});
+      // @ts-ignore - https://github.com/cure53/DOMPurify/issues/305
+      DOMPurify.removeAllHooks();
+      return clean;
     },
     html_sanitize_and_strip_all_except_br: (dirty_html: string): string => {
       let html = tool.str.html_sanitize_keep_basic_tags(dirty_html);
@@ -2418,7 +2428,7 @@ let tool = {
       ],
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
-      str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a'],
+      str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'],
     },
     // meant to be used privately within this file like so: tool._.???
     str_base64url_utf_encode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
