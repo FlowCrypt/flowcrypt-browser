@@ -257,17 +257,18 @@ tool.catch.try(async () => {
   };
 
   let get_and_save_google_user_info = async (): Promise<{full_name: string, locale?: string, picture?: string}> => {
-    if (storage.email_provider === 'gmail') {
-      let user_info: ApirGoogleUserInfo;
+    if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and let the user choose
+      let me: ApirGooglePlusPeopleMe;
       try {
-        user_info = await tool.api.google.user_info(account_email);
+        me = await tool.api.google.plus.people_me(account_email);
       } catch (e) {
+        tool.catch.handle_exception(e);
         return {full_name: ''};
       }
-      let result = {full_name: user_info.name || '', locale: user_info.locale, picture: user_info.picture};
+      let result = {full_name: me.displayName || '', locale: me.language, picture: me.image.url};
       await Store.set(account_email, result);
       return result;
-    } else { // todo - find alternative way to do this for outlook - at least get name from sent emails
+    } else {
       return {full_name: ''};
     }
   };

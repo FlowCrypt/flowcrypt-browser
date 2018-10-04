@@ -1669,7 +1669,9 @@ let tool = {
       is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
     },
     google: {
-      user_info: (account_email: string): Promise<ApirGoogleUserInfo> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/oauth2/v1/userinfo', {alt: 'json'}),
+      plus: {
+        people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
+      },
       auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
         if (tool.env.is_background_script()) {
           throw {code: null, message: 'Cannot produce auth window from background script'};
@@ -1760,6 +1762,16 @@ let tool = {
       },
       scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
       has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
+      users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
+        let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
+        if(account_email && !access_token) {
+          return await tool._.api_google_call(account_email, 'GET', url, {});
+        } else if (!account_email && access_token) {
+          return await $.ajax({url, method: 'GET', headers: {'Authorization': `Bearer ${access_token}`}, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true});
+        } else {
+          throw new Error('tool.api.gmail.users_me_profile: need either account_email or access_token');
+        }
+      },
       thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => tool._.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
         format,
       }),
@@ -2739,27 +2751,14 @@ let tool = {
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokenInfo>,
-    google_auth_check_email: async (expected_email: string|null, access_token: string) => {
-      try {
-        let r = await $.ajax({
-          url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
-          method: 'GET',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          crossDomain: true,
-          contentType: 'application/json; charset=UTF-8',
-          async: true,
-        });
-        return r.emailAddress || expected_email;  // todo - emailAddress may be undefined. Handle better
-      } catch (e) {
-        console.log(['google_auth_check_email error', expected_email, e]);
-        return expected_email; // todo - handle better. On a network error, this could result in saving this wrongly. Should re-try two times with some delay, then call back.
-      }
-    },
     google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
       if (result.result === 'Success') {
         let tokens_object = await tool._.google_auth_get_tokens(result.params.code);
         let _ = await tool._.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        let account_email = await tool._.google_auth_check_email(result.state.account_email, tokens_object.access_token);
+        let {emailAddress: account_email} = await tool.api.gmail.users_me_profile(null, tokens_object.access_token);
+        if(result.state.account_email !== account_email) {
+          tool.catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
+        }
         await tool._.google_auth_save_tokens(account_email, tokens_object, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
         return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
       } else if (result.result === 'Denied') {

@@ -333,6 +333,7 @@ type ApirAttReplaceConfirm = {attested: boolean};
 type ApirAttTestWelcome = {sent: boolean};
 type ApirAttInitialLegacySugmit = {attested: boolean, saved: boolean};
 
+type ApirGmailUsersMeProfile = {emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string};
 type ApirGmailMessage$header = {name: string, value: string};
 type ApirGmailMessage$payload$body = {attachmentId: string, size: number, data?: string};
 type ApirGmailMessage$payload$part = {body?: ApirGmailMessage$payload$body, filename?: string, mimeType?: string, headers?: ApirGmailMessage$header[]};
@@ -349,7 +350,7 @@ type ApirGmailDraftUpdate = {};
 type ApirGmailDraftGet = {id: string, message: ApirGmailMessage};
 type ApirGmailDraftSend = {};
 
-type ApirGoogleUserInfo = {name: string, locale: string, picture: string};
+type ApirGooglePlusPeopleMe = {displayName: string, language: string, image: {url: string}};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString};
 type WebmailVariantString = null|'html'|'standard'|'new';

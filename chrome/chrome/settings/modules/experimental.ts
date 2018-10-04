@@ -52,7 +52,6 @@ tool.catch.try(async () => {
         }
       }
       window.location.reload();
-
     }));
 
     $('.action_exception').click(() => tool.catch.test());
