@@ -251,8 +251,14 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
 }
 .security-copy { margin-left: 5px; font-weight: 600;}
 
-#footer-row { position: fixed; bottom: 0; padding-bottom: 20px; padding-top: 20px; text-align: center; right: 0; left: 0; font-weight: 600; -webkit-animation: fadeInUp .4s; background: white; border-top: 1px solid #f3f3f3; }
-#footer-row .container { position: relative;}
+#footer-row { position: fixed; bottom: 0; padding-bottom: 0px; padding-top: 20px; text-align: center; right: 0; left: 0; font-weight: 600; -webkit-animation: fadeInUp .4s; 
+  background: white; border-top: 1px solid #f3f3f3; }
+#footer-row .container { position: relative; }
+#footer-row #status-row { bottom: 0; height: 20px; margin-top: 20px; background: #eee; text-align: left; padding-left: 4px; font-weight: normal; left: 0; border-top: 1px solid #ddd;
+  font-family: monospace; font-size: 10px; padding-top: 4px; letter-spacing: 0px; opacity: 0.4; }
+  #footer-row #status-row span { padding-right: 6px; }
+#footer-row #status-row span.bad { color: #f00; }
+#footer-row #status-row span.link:hover { text-decoration: underline; cursor: pointer; }
 input#passphrase-to-open-email {
   margin-left: 15px;
   margin-right: 5px;

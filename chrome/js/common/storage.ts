@@ -231,6 +231,12 @@ class Store {
     }
   }
 
+  static async account_emails_remove(account_email: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
+    let account_emails = await Store.account_emails_get();
+    await Store.set(null, { account_emails: JSON.stringify(tool.arr.without_value(account_emails, account_email)) });
+    await tool.browser.message.send_await(null, 'update_uninstall_url');
+  }
+
   static async auth_info(): Promise<StoredAuthInfo> {
     let storage = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified']);
     return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null, verified: storage.cryptup_account_verified || false};

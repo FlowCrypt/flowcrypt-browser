@@ -138,37 +138,110 @@ class Settings {
     }
   }
 
-  static reset_cryptup_account_storages = (account_email: string) => new Promise(async resolve => {
+  static refresh_account_aliases = async (account_email: string) => {
+    let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
+    let all = tool.arr.unique(addresses.concat(account_email));
+    await Store.set(account_email, { addresses: all });
+    return all;
+  }
+
+  static account_storage_reset = (account_email: string) => new Promise(async (resolve, reject) => {
     if (!account_email) {
       throw new Error('Missing account_email to reset');
     }
     let account_emails = await Store.account_emails_get();
     if (!tool.value(account_email).in(account_emails)) {
-      throw new Error('"' + account_email + '" is not a known account_email in "' + JSON.stringify(account_emails) + '"');
+      throw new Error(`"${account_email}" is not a known account_email in "${JSON.stringify(account_emails)}"`);
     }
-    let keys_to_remove: string[] = [];
+    let storage_indexes_to_remove: string[] = [];
     let filter = Store.index(account_email, '') as string;
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + account_email + '"');
     }
     chrome.storage.local.get(async storage => {
-      for (let key of Object.keys(storage)) {
-        if (key.indexOf(filter) === 0) {
-          keys_to_remove.push(key.replace(filter, ''));
+      try {
+        for (let storage_index of Object.keys(storage)) {
+          if (storage_index.indexOf(filter) === 0) {
+            storage_indexes_to_remove.push(storage_index.replace(filter, ''));
+          }
         }
-      }
-      await Store.remove(account_email, keys_to_remove);
-      for (let key of Object.keys(localStorage)) {
-        if (key.indexOf(filter) === 0) {
-          localStorage.removeItem(key);
+        await Store.remove(account_email, storage_indexes_to_remove);
+        for (let local_storage_index of Object.keys(localStorage)) {
+          if (local_storage_index.indexOf(filter) === 0) {
+            localStorage.removeItem(local_storage_index);
+          }
         }
-      }
-      for (let key of Object.keys(sessionStorage)) {
-        if (key.indexOf(filter) === 0) {
-          sessionStorage.removeItem(key);
+        for (let session_storage_index of Object.keys(sessionStorage)) {
+          if (session_storage_index.indexOf(filter) === 0) {
+            sessionStorage.removeItem(session_storage_index);
+          }
         }
+        resolve();
+      } catch(e) {
+        reject(e);
       }
-      resolve();
+    });
+  })
+
+  static account_storage_change_email = (old_account_email: string, new_account_email: string) => new Promise(async (resolve, reject) => {
+    if (!old_account_email || !new_account_email || !tool.str.is_email_valid(new_account_email)) {
+      throw new Error('Missing or wrong account_email to reset');
+    }
+    let account_emails = await Store.account_emails_get();
+    if (!tool.value(old_account_email).in(account_emails)) {
+      throw new Error(`"${old_account_email}" is not a known account_email in "${JSON.stringify(account_emails)}"`);
+    }
+    let storage_indexes_to_change: string[] = [];
+    let old_account_email_index_prefix = Store.index(old_account_email, '') as string;
+    let new_account_email_index_prefix = Store.index(new_account_email, '') as string;
+    // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
+    let destination_account_private_keys = await Store.keys_get(new_account_email);
+    let destination_account_pass_phrases: Dict<string> = {};
+    for(let ki of destination_account_private_keys) {
+      let pp = await Store.passphrase_get(new_account_email, ki.longid, true);
+      if(pp) {
+        destination_account_pass_phrases[ki.longid] = pp;
+      }
+    }
+    if (!old_account_email_index_prefix) {
+      throw new Error(`Filter is empty for account_email "${old_account_email}"`);
+    }
+    await Store.account_emails_add(new_account_email);
+    chrome.storage.local.get(async storage => {
+      try {
+        for (let key of Object.keys(storage)) {
+          if (key.indexOf(old_account_email_index_prefix) === 0) {
+            storage_indexes_to_change.push(key.replace(old_account_email_index_prefix, ''));
+          }
+        }
+        let old_account_storage = await Store.get_account(old_account_email, storage_indexes_to_change);
+        await Store.set(new_account_email, old_account_storage);
+        for (let local_storage_index of Object.keys(localStorage)) {
+          if (local_storage_index.indexOf(old_account_email_index_prefix) === 0) {
+            let v = localStorage.getItem(local_storage_index);
+            localStorage.setItem(local_storage_index.replace(old_account_email_index_prefix, new_account_email_index_prefix), v!);
+            localStorage.removeItem(local_storage_index);
+          }
+        }
+        for (let session_storage_index of Object.keys(sessionStorage)) {
+          if (session_storage_index.indexOf(old_account_email_index_prefix) === 0) {
+            let v = sessionStorage.getItem(session_storage_index);
+            sessionStorage.setItem(session_storage_index.replace(old_account_email_index_prefix, new_account_email_index_prefix), v!);
+            sessionStorage.removeItem(session_storage_index);
+          }
+        }
+        for(let ki of destination_account_private_keys) {
+          await Store.keys_add(new_account_email, ki.private);
+        }
+        for(let longid of Object.keys(destination_account_pass_phrases)) {
+          await Store.passphrase_save('local', new_account_email, longid, destination_account_pass_phrases[longid]);
+        }
+        await Settings.account_storage_reset(old_account_email);
+        await Store.account_emails_remove(old_account_email);
+        resolve();
+      } catch(e) {
+        reject(e);
+      }
     });
   })
 

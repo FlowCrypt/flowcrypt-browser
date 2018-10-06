@@ -183,6 +183,9 @@ body#settings > div#content > div#changelog { width: 550px; margin: 0 auto; text
 body#settings > div#content > div#changelog b { display: inline-block; margin-top: 20px; }
 body#settings > div#content > pre#key_container { padding-bottom: 80px;}
 
+body#settings > div#content.debug_api { padding-left: 10px; padding-right: 10px; text-align: left; font-size: 10px; font-family: monospace; }
+body#settings > div#content.debug_api pre { font-size: 10px; overflow-x: scroll; margin-bottom: 20px; }
+
 body#settings > div#footer { width: 99%; position: fixed; bottom: 0; padding: 20px 0; margin: 0 auto; text-align: center; font-size: 18px; color: #666; background: white;}
 body#settings > div#footer > div.left { position: relative; float: left; margin-left: 40px; }
 body#settings > div#footer > div.right { position: relative; float: right; margin-right: 40px; }

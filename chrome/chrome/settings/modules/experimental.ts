@@ -36,9 +36,7 @@ tool.catch.try(async () => {
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       $(self).html(tool.ui.spinner('white'));
       try {
-        let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-        let all = tool.arr.unique(addresses.concat(account_email));
-        await Store.set(account_email, { addresses: all });
+        let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));
       } catch(e) {
         if(tool.api.error.is_network_error(e)) {
@@ -60,7 +58,7 @@ tool.catch.try(async () => {
       if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collect_info_and_download_backup_file(account_email);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-          await Settings.reset_cryptup_account_storages(account_email);
+          await Settings.account_storage_reset(account_email);
           window.parent.location.reload();
         }
       }

@@ -11,7 +11,7 @@ tool.catch.try(async () => {
 
   // let microsoft_auth_attempt = {};
 
-  $('.logo-row span#v').text(String(tool.catch.version()));
+  $('#status-row #status_v').text(`v:${String(tool.catch.version())}`);
 
   let rules = new Rules(account_email);
   if (!rules.can_backup_keys()) {
@@ -96,7 +96,8 @@ tool.catch.try(async () => {
       let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider']);
       if (storage.setup_done) {
         render_subscription_status_header().catch(tool.catch.rejection);
-        render_encrypted_contact_page_status().catch(tool.catch.handle_exception);
+        check_google_account().catch(tool.catch.handle_exception);
+        check_flowcrypt_account_and_contact_page().catch(tool.catch.handle_exception);
         if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
@@ -125,12 +126,13 @@ tool.catch.try(async () => {
     }
   };
 
-  let render_encrypted_contact_page_status = async () => {
+  let check_flowcrypt_account_and_contact_page = async () => {
     let status_container = $('.public_profile_indicator_container');
     let auth_info = await Store.auth_info();
     if (auth_info.account_email) { // have auth email set
       try {
         let response = await tool.api.cryptup.account_update();
+        $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:ok`);
         if (response && response.result && response.result.alias) {
           status_container.find('.status-indicator-text').css('display', 'none');
           status_container.find('.status-indicator').addClass('active');
@@ -139,36 +141,83 @@ tool.catch.try(async () => {
         }
       } catch (e) {
         if (tool.api.error.is_auth_error(e)) {
-          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
+          let action_reauth = tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
+          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (tool.api.error.is_network_error(e)) {
-          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(render_encrypted_contact_page_status));
+          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_contact_page));
+          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');
+          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${tool.str.html_escape(String(e))}`);
           tool.catch.handle_exception(e);
         }
       }
     } else { // never set up
       status_container.find('.status-indicator').addClass('inactive');
+      $('#status-row #status_flowcrypt').text(`fc:none`);
     }
     status_container.css('visibility', 'visible');
   };
 
-  let render_subscription_status_header = async () => {
+  let resolve_changed_google_account = async (new_account_email: string) => {
     try {
-      await tool.api.cryptup.account_check_sync();
+      await Settings.refresh_account_aliases(account_email!);
+      await Settings.account_storage_change_email(account_email!, new_account_email);
+      alert(`Email address changed to ${new_account_email}. You should now check that your public key is properly submitted.`);
+      window.location.href = tool.env.url_create('index.htm', { account_email: new_account_email, page: '/chrome/settings/modules/keyserver.htm' });
+    } catch(e) {
+      tool.catch.handle_exception(e);
+      alert('There was an error changing google account, please write human@flowcrypt.com');
+    }
+  };
+
+  let check_google_account = async () => {
+    try {
+      let me = await tool.api.gmail.users_me_profile(account_email!);
+      $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
+      if(me.emailAddress !== account_email) {
+        $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
+        if(me.emailAddress && account_email) {
+          if(confirm(`Your Google Account address seems to have changed from ${account_email} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
+            await resolve_changed_google_account(me.emailAddress);
+          }
+        }
+      }
     } catch (e) {
-      if (!tool.api.error.is_network_error(e)) {
+      if (tool.api.error.is_auth_error(e)) {
+        $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.');
+      } else if (tool.api.error.is_network_error(e)) {
+        $('#status-row #status_google').text(`g:?:offline`);
+      } else {
+        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${tool.str.html_escape(String(e))}`);
         tool.catch.handle_exception(e);
       }
     }
+  };
 
+  let render_subscription_status_header = async () => {
+    let liveness = '';
+    try {
+      await tool.api.cryptup.account_check_sync();
+      liveness = 'live';
+    } catch (e) {
+      if (!tool.api.error.is_network_error(e)) {
+        tool.catch.handle_exception(e);
+        liveness = 'err';
+      } else {
+        liveness = 'offline';
+      }
+    }
     let subscription = await Store.subscription();
+    $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
       } else if (subscription.method === 'group') {
+        $('#status-row #status_google').text(`s:${liveness}:active:group`);
         $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
       }
     } else {
@@ -239,7 +288,7 @@ tool.catch.try(async () => {
   //   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
   // }
 
-  $.get(chrome.extension.getURL('/changelog.txt'), data => $('.cryptup-logo-row').featherlight(data.replace(/\n/g, '<br>')), 'html');
+  $.get(chrome.extension.getURL('/changelog.txt'), data => $('#status-row #status_v').featherlight(data.replace(/\n/g, '<br>')), 'html');
 
   $('.action_send_email').click(() => window.open('https://mail.google.com'));
 
@@ -273,6 +322,10 @@ tool.catch.try(async () => {
     $(".ion-ios-arrow-down").toggleClass("up");
     $(".add-account").toggleClass("hidden");
   }));
+
+  $('#status-row #status_google').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
+  // $('#status-row #status_flowcrypt').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
+  // $('#status-row #status_subscription').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
 
   let reload = (advanced=false) => {
     if (advanced) {
