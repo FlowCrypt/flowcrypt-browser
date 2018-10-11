@@ -100,7 +100,7 @@ tool.catch.try(async () => {
       if (!replaced || replaced === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {
-        tool.ui.$('#bulk_import #processed').html(replaced).css('display', 'block');
+        $('#bulk_import #processed').html(replaced).css('display', 'block');
         $('#bulk_import .input_pubkey, #bulk_import .action_process').css('display', 'none');
       }
     }));

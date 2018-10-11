@@ -112,7 +112,7 @@ tool.catch.try(async () => {
 
   let decrypt_and_save_attachment_to_downloads = async (enc_a: Attachment) => {
     let result = await tool.crypto.message.decrypt(account_email, enc_a.data(), null, true);
-    tool.ui.$('#download').html(original_html_content).removeClass('visible');
+    $('#download').html(original_html_content).removeClass('visible'); // xss-reinsert
     if (result.success) {
       let name = result.content.filename;
       if (!name || tool.value(name).in(['msg.txt', 'null'])) {

@@ -1256,9 +1256,6 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
   ui: {
-    $: (selector: string) => ({
-      html: (dirty_html: string) => $(selector).html(tool.str.html_sanitize(dirty_html)),
-    }),
     retry_link: () => `<a href="${window.location.href}">retry</a>`,
     delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
