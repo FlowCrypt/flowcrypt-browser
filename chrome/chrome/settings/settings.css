@@ -378,6 +378,6 @@ body#settings .settings-border .key_list {
 #settings.client .threads .line.loaded:hover { background-color: #fff; cursor: pointer; }
 #settings.client .threads .line .loading {display: inline-block; }
 #settings.client .threads .line .from { font-weight: bold; display: inline-block; width: 300px; }
-#settings.client .threads .line .subject { }
+/* #settings.client .threads .line .subject { } */
 #settings.client .threads .line .date { position: absolute; right: 20px; }
 #settings.client .thread .message > iframe, #settings.client .thread .reply > iframe { width: 100%; border: none; }
