@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   // this is for debugging
   if ((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    $('.storage_link_container').append(' - <a href="' + tool.env.url_create('/chrome/dev/storage.htm', {controls: true, }) + '">Storage</a>');
+    $('.storage_link_container').append(` - <a href="${tool.str.html_escape(tool.env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`); // xss-escaped
   }
 
   if (account_email) {
@@ -34,7 +34,7 @@ tool.catch.try(async () => {
     $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(tool.catch.rejection)));
 
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
-      $(self).html(tool.ui.spinner('white'));
+      $(self).html(tool.ui.spinner('white')); // xss-direct
       try {
         let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));

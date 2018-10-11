@@ -29,11 +29,11 @@ tool.catch.try(async () => {
 
   let get_insights_from_host_variables = () => {
     let insights: WebmailVariantObject = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
-    $('body').append(['<script>', '(function() {',
+    $('body').append(['<script>', '(function() {', // xss-direct
       'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
       'let e = document.getElementById("FC_VAR_PASS");',
       'if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
-      'e.innerHTML=payload;',
+      'e.innerText=payload;',
     '})();', '</script>'].join('')); // executed synchronously - we can read the vars below
     try {
       let extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);

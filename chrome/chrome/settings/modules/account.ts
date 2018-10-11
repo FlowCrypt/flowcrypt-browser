@@ -8,7 +8,7 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
-  $('.loading').html(tool.ui.spinner('green', 'large_spinner'));
+  $('.loading').html(tool.ui.spinner('green', 'large_spinner')); // xss-direct
 
   await tool.api.cryptup.account_check_sync();
   let auth_info = await Store.auth_info();
@@ -28,7 +28,7 @@ tool.catch.try(async () => {
   } else {
     $('.expire_label').text('Until');
     $('.price').text('free');
-    $('.method').html('trial <a href="#" class="action_go_subscription">upgrade</a>');
+    $('.method').html('trial <a href="#" class="action_go_subscription">upgrade</a>'); // xss-direct
     $('.action_go_subscription').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&placement=settings')));
   }
   if (subscription.method !== 'group') {

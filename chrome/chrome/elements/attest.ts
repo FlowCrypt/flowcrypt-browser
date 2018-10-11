@@ -17,14 +17,14 @@ tool.catch.try(async () => {
 
   let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
-      $('.status').html('Verifying..' + tool.ui.spinner('green'));
+      $('.status').html('Verifying..' + tool.ui.spinner('green')); // xss-direct
       let attestation = await tool.browser.message.send_await(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
-      $('.status').addClass(attestation.success ? 'good' : 'bad').html(tool.str.html_escape(attestation.result).replace(/\n/g, '<br>'));
+      $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };
 
   if(openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) { // unencrypted private key
-    $('.status').html('Not allowed to attest keys that do not have a pass phrase. Please go to FlowCrypt Settings -> Security -> Change pass phrase');
+    $('.status').text('Not allowed to attest keys that do not have a pass phrase. Please go to FlowCrypt Settings -> Security -> Change pass phrase');
     return;
   }
 
@@ -33,7 +33,7 @@ tool.catch.try(async () => {
     return;
   }
 
-  $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
+  $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');  // xss-direct
   $('.action_passphrase').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
   let tab_id = await tool.browser.message.required_tab_id();
   tool.browser.message.listen({

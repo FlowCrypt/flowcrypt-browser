@@ -16,14 +16,14 @@ class FlowCryptAccount {
 
   constructor(handlers: AccountEventHandlersOptional, can_read_email: boolean) {
     this.event_handlers = {
-      render_status: handlers.render_status || ((text: string, show_spinner?:boolean) => undefined),
+      render_status_text: handlers.render_status_text || ((text: string, show_spinner?:boolean) => undefined),
       find_matching_tokens_from_email: handlers.find_matching_tokens_from_email || this.fetch_token_emails_on_gmail_and_find_matching_token,
     };
     this.can_read_email = can_read_email;
   }
 
   subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
-    this.event_handlers.render_status(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
+    this.event_handlers.render_status_text(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     await tool.api.cryptup.account_check_sync();
     let auth_info = await Store.auth_info();
     if (auth_info.verified) {
@@ -41,13 +41,13 @@ class FlowCryptAccount {
   }
 
   register = async (account_email: string) => { // register_and_attempt_to_verify
-    this.event_handlers.render_status('registering..', true);
+    this.event_handlers.render_status_text('registering..', true);
     let response = await tool.api.cryptup.account_login(account_email);
     if (response.verified) {
       return response;
     }
     if (this.can_read_email) {
-      this.event_handlers.render_status('verifying..', true);
+      this.event_handlers.render_status_text('verifying..', true);
       let tokens = await this.wait_for_token_email(30);
       if (tokens && tokens.length) {
         return await this.verify(account_email, tokens);
@@ -60,7 +60,7 @@ class FlowCryptAccount {
   }
 
   verify = async (account_email: string, tokens: string[]) => {
-    this.event_handlers.render_status('verifying your email address..', true);
+    this.event_handlers.render_status_text('verifying your email address..', true);
     let last_token_error;
     for (let token of tokens) {
       try {
@@ -78,7 +78,7 @@ class FlowCryptAccount {
 
   register_new_device = async (account_email: string) => {
     await Store.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false });
-    this.event_handlers.render_status('checking..', true);
+    this.event_handlers.render_status_text('checking..', true);
     return await this.register(account_email);
   }
 
@@ -134,9 +134,9 @@ class FlowCryptAccount {
     let end = Date.now() + timeout * 1000;
     while (Date.now() < end) {
       if ((end - Date.now()) < 20000) { // 20s left
-        this.event_handlers.render_status('Still working..');
+        this.event_handlers.render_status_text('Still working..');
       } else if ((end - Date.now()) < 10000) { // 10s left
-        this.event_handlers.render_status('A little while more..');
+        this.event_handlers.render_status_text('A little while more..');
       }
       let auth_info = await Store.auth_info();
       let tokens = await this.event_handlers.find_matching_tokens_from_email(auth_info.account_email!, auth_info.uuid!);

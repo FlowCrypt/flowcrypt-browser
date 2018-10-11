@@ -22,7 +22,7 @@ tool.catch.try( async () => {
   }
 
   let on_default_expire_user_change = async () => {
-    $('.select_loader_container').html(tool.ui.spinner('green'));
+    $('.select_loader_container').html(tool.ui.spinner('green')); // xss-direct
     $('.default_message_expire').css('display', 'none');
     await tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
@@ -75,25 +75,26 @@ tool.catch.try( async () => {
 
   let subscription = await Store.subscription();
   if (subscription.active) {
-    $('.select_loader_container').html(tool.ui.spinner('green'));
+    $('.select_loader_container').html(tool.ui.spinner('green')); // safe source
     try {
       let response = await tool.api.cryptup.account_update();
-      $('.select_loader_container').html('');
+      $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(on_default_expire_user_change);
     } catch (e) {
       if (tool.api.error.is_auth_error(e)) {
-        $('.expiration_container').html('(unknown: <a href="#">verify your device</a>)').find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
+        $('.expiration_container').html('(unknown: <a href="#">verify your device</a>)').find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));  // safe source
       } else if (tool.api.error.is_network_error(e)) {
-        $('.expiration_container').html('(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload());
+        $('.expiration_container').html('(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         tool.catch.handle_exception(e);
-        $('.expiration_container').html('(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload());
+        $('.expiration_container').html('(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
-    $('.default_message_expire').parent().append('<a href="#">upgrade</a>').find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm')));
+    $('.default_message_expire').parent().append('<a href="#">upgrade</a>') // xss-direct
+    .find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm')));
   }
 
 })();

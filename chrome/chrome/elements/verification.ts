@@ -14,7 +14,7 @@ tool.catch.try(async () => {
   let token = flowcrypt_account.parse_token_email_text(url_params.verification_email_text as string);
 
   let render_status = (content: string, spinner=false) => {
-    $('body .status').html(content + (spinner ? ' ' + tool.ui.spinner('white') : ''));
+    $('body .status').html(tool.str.html_sanitize(content + (spinner ? ' ' + tool.ui.spinner('white') : ''))); // xss-sanitized
   };
 
   if (!token) {

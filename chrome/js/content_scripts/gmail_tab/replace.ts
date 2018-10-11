@@ -77,7 +77,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(on_click)));
+    container_selector.append(icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(on_click))); // xss-known
   }
 
   private replace_conversation_buttons = (force:boolean=false) => {
@@ -91,7 +91,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let has_visible_replacements = visible_reply_buttons.filter('.replaced').length > 0;
         conversation_reply_buttons_to_replace.addClass('replaced').each((i, reply_button) => {
           if (i + 1 < conversation_reply_buttons_to_replace.length || has_visible_replacements) {
-            $(reply_button).addClass('replaced').html(''); // hide all except last
+            $(reply_button).addClass('replaced').text(''); // hide all except last
           } else {
             $(reply_button).html(this.factory.button_reply()).click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(this.set_reply_box_editable))); // replace last
           }
@@ -128,12 +128,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let button;
         let [full_link, name, button_href_id] = found_cryptup_link;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${button_href_id}">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${tool.str.html_escape(button_href_id)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${button_href_id}">Open draft</a>`;
+          button = `<a href="#inbox/${tool.str.html_escape(button_href_id)}">Open draft</a>`;
         }
         if (button) {
-          contenteditable.replaceWith(button);
+          contenteditable.replaceWith(button); // xss-escaped
           $(`a.open_draft_${button_href_id}`).click(tool.ui.event.handle(() => {
             $('div.new_message').remove();
             $('body').append(this.factory.embedded_compose(button_href_id));
@@ -385,7 +385,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         for (let reply_box_element of new_reply_boxes.reverse()) { // looping in reverse
           let reply_box = $(reply_box_element);
           if (mid_convo_draft || already_has_encrypted_reply_box) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
-            reply_box.attr('class', 'reply_message_evaluated').append('<font>&nbsp;&nbsp;Draft skipped</font>').children(':not(font)').hide();
+            reply_box.attr('class', 'reply_message_evaluated').append('<font>&nbsp;&nbsp;Draft skipped</font>').children(':not(font)').hide(); // xss-direct
           } else {
             let secure_reply_box = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;
             if (reply_box.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing

@@ -142,10 +142,10 @@ tool.catch.try(async () => {
       } catch (e) {
         if (tool.api.error.is_auth_error(e)) {
           let action_reauth = tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
-          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
+          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth); // xss-direct
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (tool.api.error.is_network_error(e)) {
-          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_contact_page));
+          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_contact_page)); // xss-direct
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');
@@ -243,13 +243,13 @@ tool.catch.try(async () => {
     for (let keyinfo of private_keys) {
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       let date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + keyinfo.longid + '">remove</a>)';
-      html += '<div class="row key-content-row key_' + keyinfo.longid + '">';
-      html += '  <div class="col-sm-12"><a href="#" data-test="action-show-key" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + keyinfo.longid + '">' + tool.str.parse_email(prv.users[0].userId ? prv.users[0].userId!.userid : '').email + '</a> from ' + date + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
-      html += '  <div class="col-sm-12">KeyWords: <span class="good">' + keyinfo.keywords + '</span></div>';
+      let primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + tool.str.html_escape(keyinfo.longid) + '">remove</a>)';
+      html += '<div class="row key-content-row key_' + tool.str.html_escape(keyinfo.longid) + '">';
+      html += '  <div class="col-sm-12"><a href="#" data-test="action-show-key" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + tool.str.html_escape(keyinfo.longid) + '">' + tool.str.html_escape(tool.str.parse_email(prv.users[0].userId ? prv.users[0].userId!.userid : '').email) + '</a> from ' + tool.str.html_escape(date) + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
+      html += '  <div class="col-sm-12">KeyWords: <span class="good">' + tool.str.html_escape(keyinfo.keywords) + '</span></div>';
       html += '</div>';
     }
-    $('.key_list').append(html);
+    $('.key_list').append(html); // xss-escaped
     $('.action_show_key').click(tool.ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
       Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
@@ -343,7 +343,7 @@ tool.catch.try(async () => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
-      '    <div class="row contains_email" data-test="action-switch-to-account">' + email + '</div>',
+      '    <div class="row contains_email" data-test="action-switch-to-account">' + tool.str.html_escape(email) + '</div>',
       '  </div>',
       // '  <div class="col-sm-1 "><img class="profile-img " src="" alt=""></div>',
       '</div>',
@@ -361,7 +361,7 @@ tool.catch.try(async () => {
   }
 
   for (let email of account_emails) {
-    $('#alt-accounts').prepend(menu_account_html(email));
+    $('#alt-accounts').prepend(menu_account_html(email)); // xss-escaped
   }
   $('.action_select_account').click(tool.ui.event.handle(target => {
     window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });

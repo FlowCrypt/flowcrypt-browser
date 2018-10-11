@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   $('.email-address').text(account_email);
 
-  $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
+  $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green')); // xss-direct
 
   let render_diagnosis = (diagnosis: any, attests_requested: string[], attests_processed: string[]) => {
     for (let email of Object.keys(diagnosis.results)) {
@@ -18,19 +18,19 @@ tool.catch.try(async () => {
       let note, action, remove, color;
       if (result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
-        action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Submit public key</div>';
-        remove = '&nbsp; <b class="bad action_remove_alias" email="' + email + '" title="Remove address from list of send-from addresses.">[x]</b>';
+        action = `<div class="button gray2 small action_request_attestation" email="${tool.str.html_escape(email)}">Submit public key</div>`;
+        remove = `&nbsp; <b class="bad action_remove_alias" email="${tool.str.html_escape(email)}" title="Remove address from list of send-from addresses.">[x]</b>`;
         color = 'orange';
       } else if (result.match) {
         if (email === account_email && !result.attested) {
           if (attests_requested && attests_requested.length) {
-            note = 'Submitted. Attestation was requested from ' + attests_requested.join(', ') + ' and should process shortly.';
-            action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
+            note = `Submitted. Attestation was requested from ${tool.str.html_escape(attests_requested.join(', '))} and should process shortly.`;
+            action = `<div class="button gray2 small refresh_after_attest_request" email="${tool.str.html_escape(email)}">Refresh</div>`;
             remove = '';
             color = 'orange';
           } else {
             note = 'Found but not attested.';
-            action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
+            action = `<div class="button gray2 small action_request_attestation" email="${tool.str.html_escape(email)}">Request Attestation</div>`;
             remove = '';
             color = 'orange';
           }
@@ -48,17 +48,17 @@ tool.catch.try(async () => {
       } else {
         if (email === account_email && !result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = '<div class="button gray2 small action_request_attestation" email="' + email + '">Request Attestation</div>';
+          action = `<div class="button gray2 small action_request_attestation" email="${tool.str.html_escape(email)}">Request Attestation</div>`;
           remove = '';
           color = 'red';
         } else if (email === account_email && result.attested && attests_requested && attests_requested.length) {
           note = 'Re-Attestation requested. This should process shortly.';
-          action = '<div class="button gray2 small refresh_after_attest_request" email="' + email + '">Refresh</div>';
+          action = `<div class="button gray2 small refresh_after_attest_request" email="${tool.str.html_escape(email)}">Refresh</div>`;
           remove = '';
           color = 'orange';
         } else if (email === account_email && result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = '<div class="button gray2 small request_replacement" email="' + email + '">Request Replacement Attestation</div>';
+          action = `<div class="button gray2 small request_replacement" email="${tool.str.html_escape(email)}">Request Replacement Attestation</div>`;
           remove = '';
           color = 'red';
         } else {
@@ -68,10 +68,10 @@ tool.catch.try(async () => {
           color = 'red';
         }
       }
-      $('table#emails').append('<tr><td>' + email + remove + '</td><td class="' + color + '">' + note + '</td><td>' + action + '</td></tr>');
+      $('table#emails').append(`<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`); // xss-escaped above
     }
     $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      $(self).html(tool.ui.spinner('white'));
+      $(self).html(tool.ui.spinner('white')); // xss-direct
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
@@ -80,18 +80,18 @@ tool.catch.try(async () => {
       window.location.reload();
     }));
     $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-      $(self).html(tool.ui.spinner('white'));
+      $(self).html(tool.ui.spinner('white')); // xss-direct
       Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
     $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      $(self).html('Updating.. ' + tool.ui.spinner('white'));
+      $(self).html('Updating.. ' + tool.ui.spinner('white')); // xss-direct
       tool.browser.message.send(null, 'attest_requested', {account_email});
       await tool.time.sleep(30000);
       window.location.reload();
     }));
-    let refresh_aliases_html = '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>';
-    $('#content').append(refresh_aliases_html).find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
-      $(self).html(tool.ui.spinner('green'));
+    $('#content').append('<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>') // xss-direct
+    .find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
+      $(self).html(tool.ui.spinner('green')); // xss-direct
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
@@ -130,13 +130,13 @@ tool.catch.try(async () => {
   let storage = await Store.get_account(account_email, ['attests_processed', 'attests_requested', 'addresses']);
   try {
     let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(account_email);
-    $('.summary').html('');
+    $('.summary').text('');
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
   } catch (e) {
     if (tool.api.error.is_network_error(e)) {
-      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>');
+      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>'); // xss-direct
     } else {
-      $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>');
+      $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>'); // xss-direct
       tool.catch.handle_exception(e);
     }
     $('a.reload').click(tool.ui.event.handle(() =>  window.location.reload()));

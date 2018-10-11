@@ -18,7 +18,7 @@ tool.catch.try(async () => {
 
   tool.browser.message.listen({
     close_dialog: () => {
-      $('.passphrase_dialog').html('');
+      $('.passphrase_dialog').text('');
     },
   }, tab_id);
 
@@ -26,7 +26,7 @@ tool.catch.try(async () => {
     let ids = attach_js.get_attachment_ids();
     if (ids.length === 1) {
       original_content = $(self).html();
-      $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
+      $(self).html('Decrypting.. ' + tool.ui.spinner('white')); // xss-direct
       let collected = await attach_js.collect_attachment(ids[0]);
       await decrypt_and_download(collected);
     } else {
@@ -40,13 +40,13 @@ tool.catch.try(async () => {
       let attachment = new Attachment({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
       tool.file.save_to_downloads(attachment);
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
-      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase));
+      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // safe source
     } else {
       delete result.message;
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    $('.action_decrypt_and_download').html(original_content);
+    $('.action_decrypt_and_download').html(original_content); // safe source
   };
 
 })();

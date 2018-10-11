@@ -47,7 +47,7 @@ tool.catch.try(async () => {
     }
     if (typeof pubkeys[0] !== 'undefined') {
       if ((await pubkeys[0].getEncryptionKey() === null) && (await pubkeys[0].getSigningKey() === null)) {
-        $('.line.add_contact').addClass('bad').html('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
+        $('.line.add_contact').addClass('bad').text('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       } else {
         if (pubkeys.length === 1) {
@@ -59,7 +59,7 @@ tool.catch.try(async () => {
         } else {
           $('.email').text('more than one person');
           $('.input_email').css({display: 'none'});
-          $('.add_contact').append(' for ' + pubkeys.map(pubkey => tool.str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => tool.str.is_email_valid(e)).join(', '));
+          $('.add_contact').append(tool.str.html_escape(' for ' + pubkeys.map(pubkey => tool.str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => tool.str.is_email_valid(e)).join(', '))); // xss-escaped
         }
         set_button_text().catch(tool.catch.rejection);
       }
@@ -71,7 +71,7 @@ tool.catch.try(async () => {
       if (fixed !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
         window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
       } else {
-        $('.line.add_contact').addClass('bad').html('This public key is invalid or has unknown format.');
+        $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       }
     }
@@ -87,13 +87,13 @@ tool.catch.try(async () => {
         }
       }
       await Store.db_contact_save(null, contacts);
-      $(target).replaceWith('<span class="good">added public keys</span>');
+      $(target).replaceWith('<span class="good">added public keys</span>'); // xss-direct
       $('.input_email').remove();
     } else {
       if (tool.str.is_email_valid($('.input_email').val() as string)) { // text input
         let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
         await Store.db_contact_save(null, contact);
-        $(target).replaceWith('<span class="good">' + $('.input_email').val() + ' added</span>');
+        $(target).replaceWith(`<span class="good">${tool.str.html_escape(String($('.input_email').val()))} added</span>`); // xss-escaped
         $('.input_email').remove();
       } else {
         alert('This email is invalid, please check for typos. Not added.');

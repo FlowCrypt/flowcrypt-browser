@@ -13,14 +13,14 @@ tool.catch.try(async () => {
   let close_dialog = () => tool.browser.message.send(parent_tab_id, 'close_dialog');
 
   for (let email of (url_params.emails as string).split(',')) {
-    $('select.email').append('<option value="' + email + '">' + email + '</option>');
+    $('select.email').append(`<option value="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</option>`); // xss-escaped
   }
 
   let contacts = await Store.db_contact_search(null, {has_pgp: true});
 
-  $('select.copy_from_email').append('<option value=""></option>');
+  $('select.copy_from_email').append('<option value=""></option>'); // xss-direct
   for (let contact of contacts) {
-    $('select.copy_from_email').append('<option value="' + contact.email + '">' + contact.email + '</option>');
+    $('select.copy_from_email').append(`<option value="${tool.str.html_escape(contact.email)}">${tool.str.html_escape(contact.email)}</option>`); // xss-escaped
   }
 
   $('select.copy_from_email').change(tool.ui.event.handle(async target => {

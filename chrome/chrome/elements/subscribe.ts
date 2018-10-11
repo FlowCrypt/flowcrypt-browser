@@ -21,7 +21,7 @@ tool.catch.try(async () => {
     if (error.internal === 'email') {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
-      render_status(error.message);
+      render_status_text(error.message);
       button_restore();
     } else {
       alert('Could not complete action: ' + error.message);
@@ -31,12 +31,12 @@ tool.catch.try(async () => {
   };
 
   let stripe_credit_card_entered_handler: BrowserMessageHandler = (data: {token: string}, sender, respond) => {
-    $('.stripe_checkout').html('').css('display', 'none');
+    $('.stripe_checkout').text('').css('display', 'none');
     flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token).then(handle_successful_upgrade, handle_error_response);
   };
 
-  let render_status = (content: string) => {
-    $('.status').html(content);
+  let render_status_text = (content: string) => {
+    $('.status').text(content);
   };
 
   let button_spin = (element: HTMLElement) => {
@@ -72,19 +72,19 @@ tool.catch.try(async () => {
   } catch (e) {
     if (tool.api.error.is_auth_error(e)) {
       // todo - handle auth error - add device
-      $('#content').html('Failed to load - unknown device. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+      $('#content').html('Failed to load - unknown device. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload()); // xss-direct
     } else if (tool.api.error.is_network_error(e)) {
-      $('#content').html('Failed to load due to internet connection. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+      $('#content').html('Failed to load due to internet connection. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload()); // xss-direct
     } else {
       tool.catch.handle_exception(e);
-      $('#content').html('Unknown error happened when fetching account info. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload());
+      $('#content').html('Unknown error happened when fetching account info. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload()); // xss-direct
     }
   }
 
   let subscription = await Store.subscription();
   let {google_token_scopes} = await Store.get_account(account_email, ['google_token_scopes']);
   let can_read_email = tool.api.gmail.has_scope(google_token_scopes || [] , 'read');
-  let flowcrypt_account = new FlowCryptAccount({render_status}, can_read_email);
+  let flowcrypt_account = new FlowCryptAccount({render_status_text}, can_read_email);
 
   if (url_params.placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -134,7 +134,7 @@ tool.catch.try(async () => {
       $('.status').text('After the trial, your account will automatically switch to Free Forever.');
     }
   } else if (subscription.active && subscription.method === 'trial') {
-    $('.status').html('After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
+    $('.status').html('After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');  // xss-direct
   } else {
     // todo - upgrade to business
   }
@@ -145,7 +145,7 @@ tool.catch.try(async () => {
         $('.action_get_trial').css('display', 'none');
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
-        $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+        $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>'); // xss-direct
         $('.action_close').click(tool.ui.event.handle(() => {
           if (url_params.subscribe_result_tab_id) {
             tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});

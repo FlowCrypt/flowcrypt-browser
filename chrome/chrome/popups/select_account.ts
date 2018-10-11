@@ -23,7 +23,7 @@ tool.catch.try(async () => {
       ul_emails += `<li><a class="button gray2 long" href="#" email="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</a></li>`;
     }
   }
-  $('ul.emails').html(ul_emails).find('a').click(tool.ui.event.handle(async target => {
+  $('ul.emails').html(ul_emails).find('a').click(tool.ui.event.handle(async target => { // xss-escaped
     await tool.browser.message.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
     window.close();
   }));

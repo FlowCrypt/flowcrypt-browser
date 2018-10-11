@@ -223,10 +223,10 @@ let tool = {
           (node as Element).setAttribute('target', '_blank');
         }
       });
-      let clean = DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true});
+      let clean_html = DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true});
       // @ts-ignore - https://github.com/cure53/DOMPurify/issues/305
       DOMPurify.removeAllHooks();
-      return clean;
+      return clean_html;
     },
     html_sanitize_and_strip_all_tags: (dirty_html: string, output_newline: string): string => {
       let html = tool.str.html_sanitize_keep_basic_tags(dirty_html);
@@ -547,12 +547,12 @@ let tool = {
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = attachment.name;
+        a.download = tool.str.html_escape(attachment.name);
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
-          render_in.append(a);
+          render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>'); // xss-direct
+          render_in.append(a); // xss-escaped
           render_in.css('height', 'auto');
           render_in.find('a').click(e => {
             alert('Please use right-click and select Save Link As');
@@ -1256,6 +1256,9 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
   ui: {
+    $: (selector: string) => ({
+      html: (dirty_html: string) => $(selector).html(tool.str.html_sanitize(dirty_html)),
+    }),
     retry_link: () => `<a href="${window.location.href}">retry</a>`,
     delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
@@ -1265,9 +1268,9 @@ let tool = {
     },
     render_overlay_prompt_await_user_choice: (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
       return new Promise(resolve => {
-        let btns = Object.keys(buttons).map(id => `<div class="button ${buttons[id].color || 'green'} overlay_action_${id}">${buttons[id].title || id.replace(/_/g, ' ')}</div>`).join('&nbsp;'.repeat(5));
-        $('body').append(`
-          <div class="featherlight white prompt_overlay" style="display: block;">
+        let btns = Object.keys(buttons).map(id => `<div class="button ${tool.str.html_escape(buttons[id].color || 'green')} overlay_action_${tool.str.html_escape(id)}">${tool.str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
+        $('body').append(tool.str.html_sanitize( // xss-sanitized
+          `<div class="featherlight white prompt_overlay" style="display: block;">
             <div class="featherlight-content" data-test="dialog">
               <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
               <div class="line">${btns}</div>
@@ -1275,7 +1278,7 @@ let tool = {
               <div class="line">Email human@flowcrypt.com if you need assistance.</div>
             </div>
           </div>
-        `);
+        `));
         let overlay = $('.prompt_overlay');
         for(let id of Object.keys(buttons)) {
           overlay.find(`.overlay_action_${id}`).one('click', () => {
@@ -1305,16 +1308,16 @@ let tool = {
     abort_and_render_error_on_url_param_type_mismatch: (values: UrlParams, name: string, expected_type: string): UrlParam => {
       let actual_type = typeof values[name];
       if (actual_type !== expected_type) {
-        let msg = `Cannot render page (expected ${name} to be of type ${expected_type} but got ${actual_type})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+        let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be of type ${tool.str.html_escape(expected_type)} but got ${tool.str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});  // safe source + escaped
         throw new UnreportableError(msg);
       }
       return values[name];
     },
     abort_and_render_error_on_url_param_value_mismatch: <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
       if (expected_values.indexOf(values[name]) === -1) {
-        let msg = `Cannot render page (expected ${name} to be one of ${expected_values.map(String).join(',')} but got ${values[name]})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+        let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be one of ${tool.str.html_escape(expected_values.map(String).join(','))} but got ${tool.str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});  // safe source + escaped
         throw new UnreportableError(msg);
       }
       return values[name];
@@ -1344,11 +1347,11 @@ let tool = {
         $('#toggle_' + id).click(tool.ui.event.handle(target => {
           if (passphrase_input.attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
-            $(target).html(button_hide);
+            $(target).html(button_hide);  // safe source
             Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.rejection);
           } else {
             $('#' + id).attr('type', 'password');
-            $(target).html(button_show);
+            $(target).html(button_show);  // safe source
             Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.rejection);
           }
         }));
@@ -2682,9 +2685,9 @@ let tool = {
         for (let form_field_name of Object.keys(fields)) {
           let a: Attachment|string = fields[form_field_name];
           if (a instanceof Attachment) {
-            formatted_data.append(form_field_name, new Blob([a.data()], {type: a.type}), a.name);
+            formatted_data.append(form_field_name, new Blob([a.data()], {type: a.type}), a.name); // xss-none
           } else {
-            formatted_data.append(form_field_name, a);
+            formatted_data.append(form_field_name, a); // xss-none
           }
         }
         content_type = false;

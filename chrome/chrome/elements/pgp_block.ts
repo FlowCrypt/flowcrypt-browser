@@ -26,8 +26,8 @@ tool.catch.try(async () => {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
   };
 
-  let render_html_dangerously = (html: string) => {
-    document.getElementById('pgp_block')!.innerHTML = html; // pgp_block.htm
+  let sanitize_and_render_html = (html: string) => {
+    document.getElementById('pgp_block')!.innerHTML = tool.str.html_sanitize_keep_basic_tags(html); // pgp_block.htm
   };
 
   let send_resize_message = () => {
@@ -54,11 +54,10 @@ tool.catch.try(async () => {
     if (!is_error && !url_params.is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
-    let safe_html = tool.str.html_sanitize_keep_basic_tags(content);
-    render_html_dangerously(is_error ? content : anchorme(safe_html, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
+    sanitize_and_render_html(is_error ? content : anchorme(content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
     // if (unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
-    //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
+    //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>'); // xss-direct
     // }
     if (is_error) {
       $('.action_show_raw_pgp_block').click(tool.ui.event.handle(target => {
@@ -151,12 +150,12 @@ tool.catch.try(async () => {
   };
 
   let render_inner_attachments = (attachments: Attachment[]) => {
-    $('#pgp_block').append('<div id="attachments"></div>');
+    $('#pgp_block').append('<div id="attachments"></div>'); // xss-direct
     included_attachments = attachments;
     for (let i of attachments.keys()) {
       let name = (attachments[i].name ? tool.str.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
       let size = tool.str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
-      $('#attachments').append(`<div class="attachment" index="${i}"><b>${name}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
+      $('#attachments').append(`<div class="attachment" index="${Number(i)}"><b>${tool.str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`); // xss-escaped
     }
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
@@ -165,10 +164,10 @@ tool.catch.try(async () => {
         tool.file.save_to_downloads(attachment, $(target));
         send_resize_message();
       } else {
-        $(target).find('.progress').prepend(tool.ui.spinner('green'));
+        $(target).find('.progress').prepend(tool.ui.spinner('green')); // xss-direct
         attachment.set_data(await tool.file.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
         await tool.ui.delay(100); // give browser time to render
-        $(target).find('.progress').html('');
+        $(target).find('.progress').text('');
         await decrypt_and_save_attachment_to_downloads(attachment, $(target));
       }
     }));
@@ -201,7 +200,7 @@ tool.catch.try(async () => {
     if (url_params.is_outgoing) {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
-    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: 'This message will expire on ' + tool.time.expiration_format(date) + '. ' + btns}));
+    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`})); // xss-direct
     $('.expire_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/security.htm'})));
     $('.extend_expiration').click(tool.ui.event.handle(target => render_message_expiration_renew_options(target)));
   };
@@ -217,7 +216,7 @@ tool.catch.try(async () => {
     let parent = $(target).parent();
     let subscription = await Store.subscription();
     if (subscription.level && subscription.active) {
-      parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
+      parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');  // xss-direct
       let element = await tool.ui.event.clicked('.do_extend');
       await handle_extend_message_expiration_clicked(element);
     } else {
@@ -232,7 +231,7 @@ tool.catch.try(async () => {
 
   let handle_extend_message_expiration_clicked = async (self: HTMLElement) => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
-    $(self).parent().html('Updating..' + tool.ui.spinner('green'));
+    $(self).parent().html('Updating..' + tool.ui.spinner('green')); // xss-direct
     try {
       let r = await tool.api.cryptup.message_expiration(admin_codes, n_days);
       if (r.updated) {
@@ -246,7 +245,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       }
       tool.catch.report('error when extending message expiration', e);
-      $(self).parent().html('Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
+      $(self).parent().html('Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');  // xss-direct
       let el = await tool.ui.event.clicked('.retry_expiration_change');
       await handle_extend_message_expiration_clicked(el);
     }
@@ -372,7 +371,7 @@ tool.catch.try(async () => {
     prompt += armored_message_as_html();
     await render_content(prompt, true);
     await tool.ui.event.clicked('.button.decrypt');
-    $(self).html('Opening');
+    $(self).text('Opening');
     await tool.ui.delay(50); // give browser time to render
     await decrypt_and_render($('#answer').val() as string); // text input
   };
@@ -460,7 +459,7 @@ tool.catch.try(async () => {
           message_fetched_from_api = format;
           await decrypt_and_render();
         } else { // gmail message read auth not allowed
-          render_html_dangerously('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+          sanitize_and_render_html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
           $('.auth_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }

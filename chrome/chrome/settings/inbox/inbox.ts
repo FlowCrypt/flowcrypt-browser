@@ -65,7 +65,7 @@ tool.catch.try(async () => {
     if (name === 'thread') {
       S.cached('threads').css('display', 'none');
       S.cached('thread').css('display', 'block');
-      $('h1').text(title).prepend('<a href="#">< back</a> ').find('a').click(() => window.location.reload());
+      $('h1').text(title).prepend('<a href="#">&lt; back</a> ').find('a').click(() => window.location.reload()); // xss-direct
     } else {
       S.cached('thread').css('display', 'none');
       S.cached('threads').css('display', 'block');
@@ -132,7 +132,7 @@ tool.catch.try(async () => {
   };
 
   let thread_element_add = (thread_id: string) => {
-    S.cached('threads').append(tool.e('div', {
+    S.cached('threads').append(tool.e('div', { // xss-direct
       class: 'line',
       id: thread_list_item_id(thread_id),
       html: '<span class="loading">' + tool.ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',

@@ -192,7 +192,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
         }
         $('.' + (window as ContentScriptWindow).destroyable_class).remove();
         $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadable_element) => {
-          $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML);
+          $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML); // xss-reinsert
         });
         was_destroyed = true;
       })();

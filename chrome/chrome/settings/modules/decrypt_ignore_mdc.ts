@@ -18,7 +18,7 @@ tool.catch.try(async () => {
 
   tool.browser.message.listen({
     close_dialog: () => {
-      $('.passphrase_dialog').html('');
+      $('.passphrase_dialog').text('');
     },
   }, tab_id);
 
@@ -29,7 +29,7 @@ tool.catch.try(async () => {
       return;
     }
     original_content = $(self).html();
-    $(self).html('Decrypting.. ' + tool.ui.spinner('white'));
+    $(self).html('Decrypting.. ' + tool.ui.spinner('white')); // xss-direct
     let result = await tool.crypto.message.decrypt(account_email, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
@@ -40,7 +40,7 @@ tool.catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    $(self).html(original_content);
+    $(self).html(original_content); // xss-reinsert
   }));
 
 })();

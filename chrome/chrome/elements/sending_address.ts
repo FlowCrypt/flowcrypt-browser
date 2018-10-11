@@ -14,10 +14,11 @@ tool.catch.try(async () => {
   let addresses = storage.addresses || [url_params.account_email];
 
   let address_to_html_radio = (a: string) => {
-    return `<input type="radio" name="a" value="${tool.str.html_escape(a)}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
+    a = tool.str.html_escape(a);
+    return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
   };
 
-  container.html(addresses.map(address_to_html_radio).join(''));
+  container.html(addresses.map(address_to_html_radio).join('')); // xss-escaped
   container.find('input').first().prop('checked', true);
   container.find('input').click(tool.ui.event.handle(async target => {
     let chosen_sending_address = $(target).val() as string;
@@ -29,7 +30,7 @@ tool.catch.try(async () => {
   }));
 
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async (target, id) => {
-    $(target).html(tool.ui.spinner('green'));
+    $(target).html(tool.ui.spinner('green')); // xss-direct
     let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
     await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
     window.location.reload();

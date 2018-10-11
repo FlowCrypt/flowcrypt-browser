@@ -29,7 +29,7 @@ class Injector {
   }
 
   meta = () => {
-    this.S.cached('body').addClass(`cryptup_${this.webmail_name} cryptup_${this.webmail_name}_${this.webmail_variant}`).append(this.factory.meta_stylesheet('webmail') + this.factory.meta_notification_container());
+    this.S.cached('body').addClass(`cryptup_${this.webmail_name} cryptup_${this.webmail_name}_${this.webmail_variant}`).append(this.factory.meta_stylesheet('webmail') + this.factory.meta_notification_container()); // xss-known
   }
 
   open_compose_window = () => {

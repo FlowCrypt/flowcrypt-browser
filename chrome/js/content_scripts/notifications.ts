@@ -36,11 +36,11 @@ class Notifications {
   }
 
   clear = () => {
-    $('.webmail_notifications').html('');
+    $('.webmail_notifications').text('');
   }
 
   show = (text: string, callbacks:Dict<Callback>={}) => {
-    $('.webmail_notifications').html(`<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
+    $('.webmail_notifications').html(tool.str.html_sanitize(`<div class="webmail_notification" data-test="webmail-notification">${text}</div>`)); // xss-sanitized
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;
       callbacks.close = tool.catch.try(() => {
