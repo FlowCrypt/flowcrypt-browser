@@ -228,7 +228,7 @@ let tool = {
       DOMPurify.removeAllHooks();
       return clean;
     },
-    html_sanitize_and_strip_all_except_br: (dirty_html: string): string => {
+    html_sanitize_and_strip_all_tags: (dirty_html: string, output_newline: string): string => {
       let html = tool.str.html_sanitize_keep_basic_tags(dirty_html);
       let random = tool.str.random(5);
       let br = `CU_BR_${random}`;
@@ -244,7 +244,11 @@ let tool = {
       text = text.replace(/\n{2,}/g, '\n\n');
       // not all tags were removed above. Remove all remaining tags
       text = DOMPurify.sanitize(text, {ALLOWED_TAGS: [], KEEP_CONTENT: true});
-      return text.trim().replace(/\n/g, '<br>');
+      text = text.trim();
+      if(output_newline !== '\n') {
+        text = text.replace(/\n/g, output_newline);
+      }
+      return text;
     },
     base64url_encode: (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
     base64url_decode: (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')), // used for 3rd party API calls - do not change w/o testing Gmail api attachments

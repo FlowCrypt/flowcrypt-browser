@@ -263,7 +263,7 @@ class Composer {
       if (clipboard_html_data) {
         e.preventDefault();
         e.stopPropagation();
-        let sanitized = tool.str.html_sanitize_and_strip_all_except_br(clipboard_html_data);
+        let sanitized = tool.str.html_sanitize_and_strip_all_tags(clipboard_html_data, '<br>');
         this.simulate_ctrl_v(sanitized);
       }
     };
@@ -399,7 +399,7 @@ class Composer {
       this.draft_save_in_progress = true;
       this.S.cached('send_btn_note').text('Saving');
       let primary_ki = await this.app.storage_get_key(this.account_email);
-      let encrypted = await tool.crypto.message.encrypt([primary_ki.public], null, null, this.S.cached('input_text')[0].innerText, null, true) as OpenPGP.EncryptArmorResult;
+      let encrypted = await tool.crypto.message.encrypt([primary_ki.public], null, null, this.extract_as_text('input_text'), null, true) as OpenPGP.EncryptArmorResult;
       let body;
       if (this.thread_id) { // replied message
         body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
@@ -592,11 +592,15 @@ class Composer {
     }
   }
 
+  private extract_as_text = (element_selector: 'input_text'|'input_intro') => {
+    return tool.str.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n');
+  }
+
   private extract_process_send_message = async () => {
     try {
       const recipients = this.get_recipients_from_dom();
       const subject = this.supplied_subject || String($('#input_subject').val()); // replies have subject in url params
-      const plaintext = $('#input_text').get(0).innerText;
+      const plaintext = this.extract_as_text('input_text');
       this.throw_if_form_not_ready(recipients);
       this.S.now('send_btn_span').text('Loading');
       this.S.now('send_btn_i').replaceWith(tool.ui.spinner('white'));
@@ -1424,7 +1428,7 @@ class Composer {
   private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) => {
     const decrypt_url = this.CRYPTUP_WEB_URL + '/' + short_id;
     const a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
-    const intro = this.S.cached('input_intro').length ? this.S.cached('input_intro').get(0).innerText.trim() : '';
+    const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
     const html = [];
     if (intro) {
