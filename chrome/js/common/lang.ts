@@ -50,7 +50,7 @@ const Lang = {
     header_title_compose_sign: 'New Signed Message (not encrypted)',
   },
   general: {
-    something_went_wrong_try_again: 'Something went wrong, please try again. If this happens again, please write me at human@flowcrypt.com to fix it. ',
+    something_went_wrong_try_again: 'Something went wrong, please try again. If this happens again, please write us at human@flowcrypt.com to fix it. ',
     write_me_to_fix_it: 'Email human@flowcrypt.com to get this resolved if it happens repeatedly. ',
     restart_browser_and_try_again: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
   }

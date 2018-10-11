@@ -34,12 +34,12 @@ tool.catch.try(async () => {
           signed_packet = await tool.api.attester.packet.create_sign(request_replacement, checked_old_key.decrypted);
         } catch (e) {
           tool.catch.report('Error signing REQUEST_REPLACEMENT: ' + e.message);
-          return alert('Error signing request. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
+          return alert('Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
         try {
           await tool.api.attester.replace_request(account_email, signed_packet, primary_pubkey_armored);
         } catch (e) {
-          return alert('Error requesting Re-Attestation. If this happens repeatedly, write me at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
+          return alert('Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
         await Settings.save_attest_request(account_email, 'CRYPTUP'); // todo - should be the original attester
         alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');

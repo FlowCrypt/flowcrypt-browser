@@ -89,6 +89,37 @@ tool.catch.try(async () => {
       tool.browser.message.send(parent_tab_id, 'reload');
     }));
 
+    $('.action_account_email_changed').click(tool.ui.event.handle(async () => {
+      if(confirm(`Your current account email is ${account_email}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
+        let tab_id = await tool.browser.message.required_tab_id();
+        let response = await tool.api.google.auth_popup(account_email, tab_id);
+        if (response && response.success === true && response.account_email) {
+          if(response.account_email === account_email) {
+            alert(`Account email address seems to be the same, nothing to update: ${account_email}`);
+          } else if(response.account_email) {
+            if(confirm(`Change your Google Account email from ${account_email} to ${response.account_email}?`)) {
+              try {
+                await Settings.account_storage_change_email(account_email, response.account_email);
+                alert(`Email address changed to ${response.account_email}. You should now check that your public key is properly submitted.`);
+                tool.browser.message.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.account_email});
+              } catch(e) {
+                tool.catch.handle_exception(e);
+                alert('There was an error changing google account, please write human@flowcrypt.com');
+              }
+            }
+          } else {
+            alert('Not able to retrieve new account email, please write at human@flowcrypt.com');
+          }
+        } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+          alert('Canceled by user, skippoing.');
+        } else {
+          tool.catch.log('failed to log into google', response);
+          alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com.');
+          window.location.reload();
+        }
+      }
+    }));
+
     let collect_info_and_download_backup_file = async (account_email: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
       let backup_text = await collect_info_for_account_backup(account_email);

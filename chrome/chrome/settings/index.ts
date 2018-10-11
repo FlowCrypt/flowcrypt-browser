@@ -185,8 +185,12 @@ tool.catch.try(async () => {
         }
       }
     } catch (e) {
-      if (tool.api.error.is_auth_error(e)) {
-        $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.');
+      if (tool.api.error.is_auth_popup_needed(e)) {
+        $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
+          .off().click(tool.ui.event.handle(() => new_google_account_authentication_prompt(account_email)));
+      } else if (tool.api.error.is_auth_error(e)) {
+        $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
+          .off().click(tool.ui.event.handle(() => new_google_account_authentication_prompt(account_email)));
       } else if (tool.api.error.is_network_error(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
@@ -275,7 +279,7 @@ tool.catch.try(async () => {
       Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
     } else {
       tool.catch.log('failed to log into google', response);
-      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write me at human@flowcrypt.com to fix it.');
+      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com to fix it.');
       window.location.reload();
     }
   };

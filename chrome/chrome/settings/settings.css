@@ -280,7 +280,6 @@ body#settings.advanced .advanced {
 }
 body#settings.advanced a.advanced {
   display: inline-block;
-  width: 100%;
 }
 body#settings.advanced .basic {
   display: none;
