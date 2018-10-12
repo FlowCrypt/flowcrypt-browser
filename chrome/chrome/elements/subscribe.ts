@@ -46,7 +46,7 @@ tool.catch.try(async () => {
   };
 
   let button_restore = () => {
-    original_button_selector.html(original_button_content);
+    tool.ui.sanitize_render(original_button_selector, original_button_content);
   };
 
   let handle_successful_upgrade = () => {
@@ -72,12 +72,12 @@ tool.catch.try(async () => {
   } catch (e) {
     if (tool.api.error.is_auth_error(e)) {
       // todo - handle auth error - add device
-      $('#content').html('Failed to load - unknown device. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload()); // xss-direct
+      tool.ui.sanitize_render('#content', `Failed to load - unknown device. ${tool.ui.retry_link()}`);
     } else if (tool.api.error.is_network_error(e)) {
-      $('#content').html('Failed to load due to internet connection. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload()); // xss-direct
+      tool.ui.sanitize_render('#content', `Failed to load due to internet connection. ${tool.ui.retry_link()}`);
     } else {
       tool.catch.handle_exception(e);
-      $('#content').html('Unknown error happened when fetching account info. <a href="#">Try Again</a>').find('a').click(() =>  window.location.reload()); // xss-direct
+      tool.ui.sanitize_render('#content', `Unknown error happened when fetching account info. ${tool.ui.retry_link()}`);
     }
   }
 
@@ -134,7 +134,7 @@ tool.catch.try(async () => {
       $('.status').text('After the trial, your account will automatically switch to Free Forever.');
     }
   } else if (subscription.active && subscription.method === 'trial') {
-    $('.status').html('After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');  // xss-direct
+    tool.ui.sanitize_render('.status', 'After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
   } else {
     // todo - upgrade to business
   }
@@ -145,7 +145,7 @@ tool.catch.try(async () => {
         $('.action_get_trial').css('display', 'none');
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
-        $('#content').html('<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>'); // xss-direct
+        tool.ui.sanitize_render('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
         $('.action_close').click(tool.ui.event.handle(() => {
           if (url_params.subscribe_result_tab_id) {
             tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});

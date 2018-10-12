@@ -27,7 +27,7 @@ tool.catch.try(async () => {
   };
 
   let sanitize_and_render_html = (html: string) => {
-    document.getElementById('pgp_block')!.innerHTML = tool.str.html_sanitize_keep_basic_tags(html); // pgp_block.htm
+    $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html)); // xss-sanitized - content was sanitized before rendering
   };
 
   let send_resize_message = () => {
@@ -57,7 +57,7 @@ tool.catch.try(async () => {
     sanitize_and_render_html(is_error ? content : anchorme(content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
     // if (unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
-    //   $('#pgp_block').prepend('<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>'); // xss-direct
+    //   tool.ui.sanitize_prepend('#pgp_block', '<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
     // }
     if (is_error) {
       $('.action_show_raw_pgp_block').click(tool.ui.event.handle(target => {
@@ -150,12 +150,12 @@ tool.catch.try(async () => {
   };
 
   let render_inner_attachments = (attachments: Attachment[]) => {
-    $('#pgp_block').append('<div id="attachments"></div>'); // xss-direct
+    tool.ui.sanitize_append('#pgp_block', '<div id="attachments"></div>');
     included_attachments = attachments;
     for (let i of attachments.keys()) {
       let name = (attachments[i].name ? tool.str.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
       let size = tool.str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
-      $('#attachments').append(`<div class="attachment" index="${Number(i)}"><b>${tool.str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`); // xss-escaped
+      tool.ui.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${tool.str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
     }
     send_resize_message();
     $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
@@ -164,7 +164,7 @@ tool.catch.try(async () => {
         tool.file.save_to_downloads(attachment, $(target));
         send_resize_message();
       } else {
-        $(target).find('.progress').prepend(tool.ui.spinner('green')); // xss-direct
+        tool.ui.sanitize_prepend($(target).find('.progress'), tool.ui.spinner('green'));
         attachment.set_data(await tool.file.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
         await tool.ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
@@ -200,7 +200,7 @@ tool.catch.try(async () => {
     if (url_params.is_outgoing) {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
-    $('#pgp_block').append(tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`})); // xss-direct
+    tool.ui.sanitize_append('#pgp_block', tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`}));
     $('.expire_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/security.htm'})));
     $('.extend_expiration').click(tool.ui.event.handle(target => render_message_expiration_renew_options(target)));
   };
@@ -216,7 +216,7 @@ tool.catch.try(async () => {
     let parent = $(target).parent();
     let subscription = await Store.subscription();
     if (subscription.level && subscription.active) {
-      parent.html('<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');  // xss-direct
+      tool.ui.sanitize_render(parent, '<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
       let element = await tool.ui.event.clicked('.do_extend');
       await handle_extend_message_expiration_clicked(element);
     } else {
@@ -245,7 +245,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       }
       tool.catch.report('error when extending message expiration', e);
-      $(self).parent().html('Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');  // xss-direct
+      tool.ui.sanitize_render($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
       let el = await tool.ui.event.clicked('.retry_expiration_change');
       await handle_extend_message_expiration_clicked(el);
     }

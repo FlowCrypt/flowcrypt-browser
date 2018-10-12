@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   // this is for debugging
   if ((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    $('.storage_link_container').append(` - <a href="${tool.str.html_escape(tool.env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`); // xss-escaped
+    tool.ui.sanitize_append('.storage_link_container', ` - <a href="${tool.str.html_escape(tool.env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
   if (account_email) {

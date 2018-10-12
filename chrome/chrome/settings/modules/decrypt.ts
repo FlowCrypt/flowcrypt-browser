@@ -46,7 +46,7 @@ tool.catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    $('.action_decrypt_and_download').html(original_content); // safe source
+    tool.ui.sanitize_render('.action_decrypt_and_download', original_content);
   };
 
 })();

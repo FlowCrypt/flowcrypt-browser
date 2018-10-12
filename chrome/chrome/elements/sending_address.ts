@@ -18,7 +18,7 @@ tool.catch.try(async () => {
     return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
   };
 
-  container.html(addresses.map(address_to_html_radio).join('')); // xss-escaped
+  tool.ui.sanitize_render(container, addresses.map(address_to_html_radio).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(tool.ui.event.handle(async target => {
     let chosen_sending_address = $(target).val() as string;

@@ -551,8 +551,8 @@ let tool = {
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          render_in.html('<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>'); // xss-direct
-          render_in.append(a); // xss-escaped
+          tool.ui.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+          render_in.append(a); // xss-escaped attachment name above
           render_in.css('height', 'auto');
           render_in.find('a').click(e => {
             alert('Please use right-click and select Save Link As');
@@ -1256,21 +1256,22 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
   ui: {
-    retry_link: () => `<a href="${window.location.href}">retry</a>`,
+    retry_link: () => `<a href="${tool.str.html_escape(window.location.href)}">retry</a>`,
     delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
       let path = `/img/svgs/spinner-${color}-small.svg`;
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
-    sanitize_render: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(tool.str.html_sanitize(dirty_html)), // xss-sanitize
-    sanitize_append: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(tool.str.html_sanitize(dirty_html)), // xss-sanitize
-    sanitize_prepend: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(tool.str.html_sanitize(dirty_html)), // xss-sanitize
+    sanitize_render: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(tool.str.html_sanitize(dirty_html)), // xss-sanitized
+    sanitize_append: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(tool.str.html_sanitize(dirty_html)), // xss-sanitized
+    sanitize_prepend: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(tool.str.html_sanitize(dirty_html)), // xss-sanitized
+    sanitize_replace: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(tool.str.html_sanitize(dirty_html)), // xss-sanitized
     render_overlay_prompt_await_user_choice: (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
       return new Promise(resolve => {
         let btns = Object.keys(buttons).map(id => `<div class="button ${tool.str.html_escape(buttons[id].color || 'green')} overlay_action_${tool.str.html_escape(id)}">${tool.str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
-        $('body').append(tool.str.html_sanitize( // xss-sanitized
-          `<div class="featherlight white prompt_overlay" style="display: block;">
+        tool.ui.sanitize_append('body', `
+          <div class="featherlight white prompt_overlay" style="display: block;">
             <div class="featherlight-content" data-test="dialog">
               <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
               <div class="line">${btns}</div>
@@ -1278,7 +1279,7 @@ let tool = {
               <div class="line">Email human@flowcrypt.com if you need assistance.</div>
             </div>
           </div>
-        `));
+        `);
         let overlay = $('.prompt_overlay');
         for(let id of Object.keys(buttons)) {
           overlay.find(`.overlay_action_${id}`).one('click', () => {
@@ -1309,7 +1310,7 @@ let tool = {
       let actual_type = typeof values[name];
       if (actual_type !== expected_type) {
         let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be of type ${tool.str.html_escape(expected_type)} but got ${tool.str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});  // safe source + escaped
+        tool.ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
         throw new UnreportableError(msg);
       }
       return values[name];
@@ -1317,7 +1318,7 @@ let tool = {
     abort_and_render_error_on_url_param_value_mismatch: <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
       if (expected_values.indexOf(values[name]) === -1) {
         let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be one of ${tool.str.html_escape(expected_values.map(String).join(','))} but got ${tool.str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-        $('body').html(msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});  // safe source + escaped
+        tool.ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
         throw new UnreportableError(msg);
       }
       return values[name];
@@ -1347,11 +1348,11 @@ let tool = {
         $('#toggle_' + id).click(tool.ui.event.handle(target => {
           if (passphrase_input.attr('type') === 'password') {
             $('#' + id).attr('type', 'text');
-            $(target).html(button_hide);  // safe source
+            tool.ui.sanitize_render(target, button_hide);
             Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.rejection);
           } else {
             $('#' + id).attr('type', 'password');
-            $(target).html(button_show);  // safe source
+            tool.ui.sanitize_render(target, button_show);
             Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.rejection);
           }
         }));

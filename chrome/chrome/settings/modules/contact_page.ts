@@ -32,7 +32,7 @@ tool.catch.try(async () => {
       let me = tool.api.cryptup.url('me', result.alias);
       let me_escaped = tool.str.html_escape(me);
       let me_escaped_display = tool.str.html_escape(me.replace('https://', ''));
-      S.cached('status').html(`Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);  // xss-escaped
+      tool.ui.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');
       S.cached('input_email').val(result.email);
@@ -45,11 +45,11 @@ tool.catch.try(async () => {
       attach_js.initialize_attach_dialog('fineuploader', 'select_photo');
       attach_js.set_attachment_added_callback((file: Attachment) => {
         new_photo_file = file;
-        $('#select_photo').replaceWith(tool.e('span', {text: file.name})); // xss-direct
+        tool.ui.sanitize_replace('#select_photo', tool.e('span', {text: file.name}));
       });
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
-      S.cached('status').html('Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>'); // safe source
+      tool.ui.sanitize_render(S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
       S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), enable_contact_page));
     }
   };
@@ -114,7 +114,7 @@ tool.catch.try(async () => {
     render_fields(response.result);
   } catch (e) {
     if (e.internal === 'auth') {
-      S.cached('status').html('Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>'); // safe source
+      tool.ui.sanitize_render(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');

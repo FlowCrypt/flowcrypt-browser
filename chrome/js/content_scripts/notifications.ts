@@ -40,7 +40,7 @@ class Notifications {
   }
 
   show = (text: string, callbacks:Dict<Callback>={}) => {
-    $('.webmail_notifications').html(tool.str.html_sanitize(`<div class="webmail_notification" data-test="webmail-notification">${text}</div>`)); // xss-sanitized
+    tool.ui.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;
       callbacks.close = tool.catch.try(() => {

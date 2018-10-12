@@ -42,7 +42,7 @@ tool.catch.try(async () => {
         html += `KeyWords ${String(i + 1)}: <div class="good">${tool.str.html_escape(mnemonic(selected_private_keys[i].longid))}</div>`;
       }
     }
-    $('.which_key').html(html); // xss-escaped
+    tool.ui.sanitize_render('.which_key', html);
     $('.which_key').css('display', 'block');
   }
 

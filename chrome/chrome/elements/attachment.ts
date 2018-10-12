@@ -112,7 +112,7 @@ tool.catch.try(async () => {
 
   let decrypt_and_save_attachment_to_downloads = async (enc_a: Attachment) => {
     let result = await tool.crypto.message.decrypt(account_email, enc_a.data(), null, true);
-    $('#download').html(original_html_content).removeClass('visible'); // xss-reinsert
+    tool.ui.sanitize_render('#download', original_html_content).removeClass('visible');
     if (result.success) {
       let name = result.content.filename;
       if (!name || tool.value(name).in(['msg.txt', 'null'])) {
@@ -170,15 +170,14 @@ tool.catch.try(async () => {
         throw Error('Missing both id and url');
       }
     } catch(e) {
-      let retry_button = `<a href="${tool.str.html_escape(window.location.href)}">retry</a>`;
       if(tool.api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        $('body.attachment').html(`Error downloading file: google auth needed. ${retry_button}`); // safe source
+        tool.ui.sanitize_render('body.attachment', `Error downloading file: google auth needed. ${tool.ui.retry_link()}`);
       } else if(tool.api.error.is_network_error(e)) {
-        $('body.attachment').html(`Error downloading file: no internet. ${retry_button}`); // safe source
+        tool.ui.sanitize_render('body.attachment', `Error downloading file: no internet. ${tool.ui.retry_link()}`);
       } else {
         tool.catch.handle_exception(e);
-        $('body.attachment').html(`Error downloading file: unknown error. ${retry_button}`); // safe source
+        tool.ui.sanitize_render('body.attachment', `Error downloading file: unknown error. ${tool.ui.retry_link()}`);
       }
     }
   };
@@ -232,15 +231,14 @@ tool.catch.try(async () => {
       $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
     }
   } catch (e) {
-    let retry_button = `<a href="${tool.str.html_escape(window.location.href)}">retry</a>`;
     if(tool.api.error.is_auth_popup_needed(e)) {
       tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-      $('body.attachment').html(`Error downloading file - google auth needed. ${retry_button}`); // safe source
+      tool.ui.sanitize_render('body.attachment', `Error downloading file - google auth needed. ${tool.ui.retry_link()}`);
     } else if(tool.api.error.is_network_error(e)) {
-      $('body.attachment').html(`Error downloading file - no internet. ${retry_button}`); // safe source
+      tool.ui.sanitize_render('body.attachment', `Error downloading file - no internet. ${tool.ui.retry_link()}`);
     } else {
       tool.catch.handle_exception(e);
-      $('body.attachment').html(`Error downloading file - unknown error. ${retry_button}`); // safe source
+      tool.ui.sanitize_render('body.attachment', `Error downloading file - unknown error. ${tool.ui.retry_link()}`);
     }
   }
 

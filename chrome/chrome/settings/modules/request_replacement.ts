@@ -59,8 +59,7 @@ tool.catch.try(async () => {
     let r = await tool.api.attester.lookup_email([account_email]);
     keyserver_result = r.results[0];
   } catch (e) {
-    $('#status').html('Internet connection dropped. <div class="button long green reload">load again</div>'); // safe source
-    $('.reload').click(() => window.location.reload());
+    tool.ui.sanitize_render('#status', `Internet connection dropped. ${tool.ui.retry_link()}`);
     return;
   }
 
@@ -68,7 +67,7 @@ tool.catch.try(async () => {
     Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
     expect_longid = tool.crypto.key.fingerprint(keyserver_result.pubkey!)!;
-    $('#status').html(`Original key KeyWords:<br/><span class="good">${mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!)}<br/>${tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid // safe source
+    tool.ui.sanitize_render('#status', `Original key KeyWords:<br/><span class="good">${mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!)}<br/>${tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid
     $('#step_2b_manual_enter').css('display', 'block');
     $('.action_request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), request_replacement));
   }

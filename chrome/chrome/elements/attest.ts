@@ -33,7 +33,7 @@ tool.catch.try(async () => {
     return;
   }
 
-  $('.status').html('Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');  // xss-direct
+  tool.ui.sanitize_render('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
   $('.action_passphrase').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
   let tab_id = await tool.browser.message.required_tab_id();
   tool.browser.message.listen({

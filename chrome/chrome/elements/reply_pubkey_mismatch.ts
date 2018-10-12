@@ -20,7 +20,7 @@ tool.catch.try(async () => {
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
 
   for (let to of (url_params.to as string).split(',')) {
-    $('.recipients').append(tool.e('span', {text: to})); // xss-direct
+    tool.ui.sanitize_append('.recipients', tool.e('span', {text: to}));
   }
 
   // render
@@ -58,7 +58,7 @@ tool.catch.try(async () => {
     try {
       await tool.api.gmail.message_send(account_email, message);
       tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
-      $('#compose').replaceWith('Message sent. The other person should use this information to send a new message.'); // xss-direct
+      tool.ui.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if(tool.api.error.is_auth_popup_needed(e)) {
         $(target).text('send response');

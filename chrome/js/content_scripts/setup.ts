@@ -137,7 +137,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
   };
 
   let notify_murdered = () => {
-    document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>';
+    document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>'; // xss-direct
   };
 
   let entrypoint = async () => {
@@ -192,7 +192,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
         }
         $('.' + (window as ContentScriptWindow).destroyable_class).remove();
         $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadable_element) => {
-          $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML); // xss-reinsert
+          $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
         });
         was_destroyed = true;
       })();

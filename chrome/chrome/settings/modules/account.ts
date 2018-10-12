@@ -28,7 +28,7 @@ tool.catch.try(async () => {
   } else {
     $('.expire_label').text('Until');
     $('.price').text('free');
-    $('.method').html('trial <a href="#" class="action_go_subscription">upgrade</a>'); // xss-direct
+    tool.ui.sanitize_render('.method', 'trial <a href="#" class="action_go_subscription">upgrade</a>');
     $('.action_go_subscription').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&placement=settings')));
   }
   if (subscription.method !== 'group') {

@@ -40,7 +40,7 @@ tool.catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    $(self).html(original_content); // xss-reinsert
+    tool.ui.sanitize_render(self, original_content);
   }));
 
 })();

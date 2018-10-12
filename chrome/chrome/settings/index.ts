@@ -142,10 +142,10 @@ tool.catch.try(async () => {
       } catch (e) {
         if (tool.api.error.is_auth_error(e)) {
           let action_reauth = tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
-          status_container.html('<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth); // xss-direct
+          tool.ui.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (tool.api.error.is_network_error(e)) {
-          status_container.html('<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_contact_page)); // xss-direct
+          tool.ui.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_contact_page));
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');
@@ -249,7 +249,7 @@ tool.catch.try(async () => {
       html += '  <div class="col-sm-12">KeyWords: <span class="good">' + tool.str.html_escape(keyinfo.keywords) + '</span></div>';
       html += '</div>';
     }
-    $('.key_list').append(html); // xss-escaped
+    tool.ui.sanitize_append('.key_list', html);
     $('.action_show_key').click(tool.ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
       Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
@@ -361,7 +361,7 @@ tool.catch.try(async () => {
   }
 
   for (let email of account_emails) {
-    $('#alt-accounts').prepend(menu_account_html(email)); // xss-escaped
+    tool.ui.sanitize_prepend('#alt-accounts', menu_account_html(email));
   }
   $('.action_select_account').click(tool.ui.event.handle(target => {
     window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });

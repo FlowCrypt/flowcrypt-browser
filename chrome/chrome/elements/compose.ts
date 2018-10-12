@@ -18,7 +18,7 @@ tool.catch.try(async () => {
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
-    $('#new_message').prepend(tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')})); // xss-direct
+    tool.ui.sanitize_prepend('#new_message', tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
     let gmail_message_object;
     try {
       gmail_message_object = await tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');

@@ -40,7 +40,7 @@ tool.catch.try(async () => {
   let rules = new Rules(account_email);
   if (!rules.can_create_keys()) {
     let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${tool.str.html_escape(window.location.href)}">Back</a>`;
-    $('#step_2a_manual_create, #step_2_easy_generating').html(`<div class="aligncenter"><div class="line">${forbidden}</div></div>`); // xss-escaped
+    tool.ui.sanitize_render('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
@@ -126,7 +126,7 @@ tool.catch.try(async () => {
         if (keyserver_result.has_cryptup) {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           display_block('step_2b_manual_enter');
-          $('#step_2b_manual_enter').prepend('<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>'); // xss-direct
+          tool.ui.sanitize_prepend('#step_2b_manual_enter', '<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
         } else if (rules.can_create_keys()) {
           // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           display_block('step_1_easy_or_manual');
@@ -147,7 +147,7 @@ tool.catch.try(async () => {
   let render_add_key_from_backup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     let fetched_keys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
-    $('h1').parent().html('<h1>Recover key from backup</h1>'); // safe source
+    tool.ui.sanitize_render($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
       fetched_keys = await tool.api.gmail.fetch_key_backups(account_email);
@@ -252,7 +252,7 @@ tool.catch.try(async () => {
       await save_keys([prv], options);
     } catch (e) {
       tool.catch.handle_exception(e);
-      $('#step_2_easy_generating, #step_2a_manual_create').html('FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.'); // safe sources
+      tool.ui.sanitize_render('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
     }
   };
 
@@ -337,13 +337,13 @@ tool.catch.try(async () => {
     let n_bups = recovered_keys.length;
     let t_left = (n_bups - n_got > 1) ? 'are ' + (n_bups - n_got) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
-      $('#step_2_recovery .recovery_status').html(`You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`); // safe source
-      $('#step_2_recovery .line_skip_recovery').replaceWith(tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})})); // xss-direct
+      tool.ui.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
+      tool.ui.sanitize_replace('#step_2_recovery .line_skip_recovery', tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
       $('#step_2_recovery .skip_recover_remaining').click(tool.ui.event.handle(() => {
         window.location.href = tool.env.url_create('index.htm', { account_email });
       }));
     } else {
-      $('#step_2_recovery .recovery_status').html(`There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`); // safe source
+      tool.ui.sanitize_render('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   }));

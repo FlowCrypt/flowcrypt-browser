@@ -125,7 +125,7 @@ class Settings {
       close_on_click = false;
     }
     $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
-    $('.new_message_featherlight .featherlight-content').prepend('<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>'); // xss-direct
+    tool.ui.sanitize_prepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
 
   }
 
@@ -252,7 +252,7 @@ class Settings {
         uids.push(account_email);
       }
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
-      container.html([ // safe source + escaped
+      tool.ui.sanitize_render(container, [
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
         '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
@@ -302,7 +302,7 @@ class Settings {
             resolve(reformatted.key);
           } else {
             alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            $(target).replaceWith(tool.e('a', {href: back_url, text: 'Go back and try something else'})); // xss-text
+            tool.ui.sanitize_replace(target, tool.e('a', {href: back_url, text: 'Go back and try something else'}));
           }
         }
       }));
@@ -312,7 +312,7 @@ class Settings {
   static abort_and_render_error_if_keyinfo_empty = (ki: KeyInfo|undefined, do_throw:boolean=true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
-      $('#content').html(`${msg} <a href="${tool.str.html_escape(window.location.href)}">Retry</a>`); // safe source + escaped
+      tool.ui.sanitize_render('#content', `${msg} ${tool.ui.retry_link()}`);
       if (do_throw) {
         throw new UnreportableError(msg);
       }

@@ -68,7 +68,7 @@ tool.catch.try(async () => {
           color = 'red';
         }
       }
-      $('table#emails').append(`<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`); // xss-escaped above
+      tool.ui.sanitize_append('table#emails', `<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`);
     }
     $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
       tool.ui.sanitize_render(self, tool.ui.spinner('white'));
@@ -89,8 +89,7 @@ tool.catch.try(async () => {
       await tool.time.sleep(30000);
       window.location.reload();
     }));
-    $('#content').append('<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>') // xss-direct
-    .find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
+    tool.ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
       tool.ui.sanitize_render(self, tool.ui.spinner('green'));
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
@@ -134,12 +133,11 @@ tool.catch.try(async () => {
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
   } catch (e) {
     if (tool.api.error.is_network_error(e)) {
-      $('.summary').html('Failed to load due to internet connection. <a href="#" class="reload">Try Again</a>'); // xss-direct
+      tool.ui.sanitize_render('.summary', `Failed to load due to internet connection. ${tool.ui.retry_link()}`);
     } else {
-      $('.summary').html('Failed to load. <a href="#" class="reload">Try Again</a>'); // xss-direct
+      tool.ui.sanitize_render('.summary', `Failed to load. ${tool.ui.retry_link()}`);
       tool.catch.handle_exception(e);
     }
-    $('a.reload').click(tool.ui.event.handle(() =>  window.location.reload()));
   }
 
 })();
