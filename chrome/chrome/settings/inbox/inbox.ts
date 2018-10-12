@@ -10,7 +10,7 @@ tool.catch.try(async () => {
   let message_headers = ['message', 'signed_message', 'public_key'].map(t => tool.crypto.armor.headers(t as ReplaceableMessageBlockType).begin);
   let q_encrypted_messages = 'is:inbox (' + tool.api.gmail.query.or(message_headers, true) + ')';
   let email_provider;
-  let factory: Factory;
+  let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
 
@@ -22,7 +22,7 @@ tool.catch.try(async () => {
 
   let tab_id = await tool.browser.message.required_tab_id();
   notifications = new Notifications(tab_id);
-  factory = new Factory(account_email, tab_id);
+  factory = new XssSafeFactory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
   tool.browser.message.listen({
     open_new_message: (data) => {

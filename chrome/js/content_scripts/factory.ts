@@ -2,7 +2,7 @@
 
 'use strict';
 
-class Factory {
+class XssSafeFactory {
 
   /**
    * XSS WARNING

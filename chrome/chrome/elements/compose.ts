@@ -54,7 +54,7 @@ tool.catch.try(async () => {
   let tab_id = await tool.browser.message.required_tab_id();
 
   const can_read_email = tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
-  const factory = new Factory(account_email, tab_id);
+  const factory = new XssSafeFactory(account_email, tab_id);
   if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
     url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
   }

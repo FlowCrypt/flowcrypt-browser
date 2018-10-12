@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   let tab_id = await tool.browser.message.required_tab_id();
 
-  let factory = new Factory(account_email, tab_id, undefined, undefined, {compact: true});
+  let factory = new XssSafeFactory(account_email, tab_id, undefined, undefined, {compact: true});
 
   tool.browser.message.listen({}, tab_id); // set_css
 

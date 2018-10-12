@@ -42,12 +42,12 @@ tool.catch.try(async () => {
     },
     add_pubkey_dialog: (data: {emails: string[]}, sender, respond) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      let factory = new Factory(account_email!, tab_id);
+      let factory = new XssSafeFactory(account_email!, tab_id);
       window.open(factory.src_add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: (data) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      let factory = new Factory(account_email!, tab_id);
+      let factory = new XssSafeFactory(account_email!, tab_id);
       window.open(factory.src_subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: (data: {notification: string}) => {
@@ -68,7 +68,7 @@ tool.catch.try(async () => {
     },
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
-        let factory = new Factory(account_email!, tab_id);
+        let factory = new XssSafeFactory(account_email!, tab_id);
         $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
       }
     },

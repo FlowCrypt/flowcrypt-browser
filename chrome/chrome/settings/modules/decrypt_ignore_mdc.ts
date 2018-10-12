@@ -14,7 +14,7 @@ tool.catch.try(async () => {
 
   let original_content: string;
 
-  let factory = new Factory(account_email, tab_id);
+  let factory = new XssSafeFactory(account_email, tab_id);
 
   tool.browser.message.listen({
     close_dialog: () => {

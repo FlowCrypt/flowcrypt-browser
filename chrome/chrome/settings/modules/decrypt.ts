@@ -14,7 +14,7 @@ tool.catch.try(async () => {
 
   let attach_js = new Attach(() => ({count: 1, size: 100 * 1024 * 1024, size_mb: 100}));
   attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-  let factory = new Factory(account_email, tab_id);
+  let factory = new XssSafeFactory(account_email, tab_id);
 
   tool.browser.message.listen({
     close_dialog: () => {

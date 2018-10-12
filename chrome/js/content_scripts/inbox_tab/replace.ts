@@ -6,7 +6,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
 
   private recipient_has_pgp: Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
   private addresses: string[];
-  private factory: Factory;
+  private factory: XssSafeFactory;
   private account_email: string;
   private can_read_emails: boolean;
   private injector: Injector;
@@ -14,7 +14,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
 
   private message_text_element_selector = 'div.b5.xJNT8d';
 
-  constructor(factory: Factory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: WebmailVariantString) {
+  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: WebmailVariantString) {
     this.factory = factory;
     this.account_email = account_email;
     this.addresses = addresses;

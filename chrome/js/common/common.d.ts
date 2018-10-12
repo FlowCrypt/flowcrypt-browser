@@ -360,7 +360,7 @@ type WebmailSpecificInfo = {
     get_user_account_email: () => string|undefined;
     get_user_full_name: () => string|undefined;
     get_replacer: () => WebmailElementReplacer;
-    start: (account_email: string, inject: Injector, notifications: Notifications, factory: Factory, notify_murdered: Callback) => Promise<void>;
+    start: (account_email: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: Callback) => Promise<void>;
 };
 interface WebmailElementReplacer {
     everything: () => void;

@@ -942,7 +942,7 @@ let tool = {
        *
        * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
        */
-      replace_blocks: (factory: Factory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+      replace_blocks: (factory: XssSafeFactory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
         let blocks = tool.crypto.armor.detect_blocks(original_text).blocks;
         if (blocks.length === 1 && blocks[0].type === 'text') {
           return;

@@ -4,7 +4,7 @@
 
 class Injector {
 
-  private factory: Factory;
+  private factory: XssSafeFactory;
   private webmail_name: WebMailName;
   private webmail_variant: WebmailVariantString;
   private S: SelectorCache;
@@ -15,7 +15,7 @@ class Injector {
     'settings': '#does_not_have',
   };
 
-  constructor(webmail_name: WebMailName, webmail_variant: WebmailVariantString, factory: Factory) {
+  constructor(webmail_name: WebMailName, webmail_variant: WebmailVariantString, factory: XssSafeFactory) {
     this.webmail_name = webmail_name;
     this.webmail_variant = webmail_variant;
     this.factory = factory;

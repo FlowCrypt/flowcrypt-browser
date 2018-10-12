@@ -37,7 +37,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
   let initialize_internal_variables = async (account_email: string) => {
     let tab_id = await tool.browser.message.required_tab_id();
     let notifications = new Notifications(tab_id);
-    let factory = new Factory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
+    let factory = new XssSafeFactory(account_email, tab_id, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
     let inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
     inject.meta();
     await Store.account_emails_add(account_email);
@@ -66,7 +66,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     }
   };
 
-  let browser_message_listen = (account_email: string, tab_id: string, inject: Injector, factory: Factory, notifications: Notifications) => {
+  let browser_message_listen = (account_email: string, tab_id: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
     tool.browser.message.listen({
       open_new_message: () => {
         inject.open_compose_window();
