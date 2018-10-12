@@ -243,7 +243,7 @@ let tool = {
       let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
       text = text.replace(/\n{2,}/g, '\n\n');
       // not all tags were removed above. Remove all remaining tags
-      text = DOMPurify.sanitize(text, {ALLOWED_TAGS: [], KEEP_CONTENT: true});
+      text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: [], KEEP_CONTENT: true});
       text = text.trim();
       if(output_newline !== '\n') {
         text = text.replace(/\n/g, output_newline);
@@ -1263,6 +1263,9 @@ let tool = {
       let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
       return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
     },
+    sanitize_render: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(tool.str.html_sanitize(dirty_html)), // xss-sanitize
+    sanitize_append: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(tool.str.html_sanitize(dirty_html)), // xss-sanitize
+    sanitize_prepend: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(tool.str.html_sanitize(dirty_html)), // xss-sanitize
     render_overlay_prompt_await_user_choice: (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
       return new Promise(resolve => {
         let btns = Object.keys(buttons).map(id => `<div class="button ${tool.str.html_escape(buttons[id].color || 'green')} overlay_action_${tool.str.html_escape(id)}">${tool.str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));

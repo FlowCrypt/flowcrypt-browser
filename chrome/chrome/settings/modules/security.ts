@@ -22,7 +22,7 @@ tool.catch.try( async () => {
   }
 
   let on_default_expire_user_change = async () => {
-    $('.select_loader_container').html(tool.ui.spinner('green')); // xss-direct
+    tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
@@ -75,7 +75,7 @@ tool.catch.try( async () => {
 
   let subscription = await Store.subscription();
   if (subscription.active) {
-    $('.select_loader_container').html(tool.ui.spinner('green')); // safe source
+    tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
     try {
       let response = await tool.api.cryptup.account_update();
       $('.select_loader_container').text('');

@@ -34,7 +34,7 @@ tool.catch.try(async () => {
     $('.action_backup').click(tool.ui.event.prevent(tool.ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(tool.catch.rejection)));
 
     $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
-      $(self).html(tool.ui.spinner('white')); // xss-direct
+      tool.ui.sanitize_render(self, tool.ui.spinner('white'));
       try {
         let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));

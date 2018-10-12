@@ -283,7 +283,8 @@ class Settings {
         if (!expire_years) {
           alert('Please select key expiration');
         } else {
-          $(target).off().html(tool.ui.spinner('white')); // safe source
+          $(target).off();
+          tool.ui.sanitize_render(target, tool.ui.spinner('white'));
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await tool.crypto.key.decrypt(original_prv, [passphrase]);
           let reformatted;

@@ -64,31 +64,31 @@ class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private replace_attachments = () => {
-    let self = this;
-    $('div.OW').each((i, attachments_container: JQuery<HTMLElement>|HTMLElement) => {
-      attachments_container = $(attachments_container);
-      let new_pgp_messages = attachments_container.children(tool.file.pgp_name_patterns().map(self.get_attachment_selector).join(',')).not('.evaluated').addClass('evaluated');
+
+    for(let attachments_container_element of $('div.OW').get()) {
+      let attachments_container = $(attachments_container_element);
+      let new_pgp_messages = attachments_container.children(tool.file.pgp_name_patterns().map(this.get_attachment_selector).join(',')).not('.evaluated').addClass('evaluated');
       if (new_pgp_messages.length) {
         let message_root_container = attachments_container.parents('.ap');
-        let message_element = message_root_container.find(self.message_text_element_selector);
-        let message_id = self.dom_extract_message_id(message_element);
+        let message_element = message_root_container.find(this.message_text_element_selector);
+        let message_id = this.dom_extract_message_id(message_element);
         if (message_id) {
-          if (self.can_read_emails) {
-            $(new_pgp_messages).prepend(self.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
-            tool.api.gmail.message_get(self.account_email, message_id, 'full').then(message => {
-              self.process_attachments(message_id!, message_element, tool.api.gmail.find_attachments(message), attachments_container); // message_id checked right above
+          if (this.can_read_emails) {
+            tool.ui.sanitize_prepend(new_pgp_messages, this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
+            tool.api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
+              this.process_attachments(message_id!, message_element, tool.api.gmail.find_attachments(message), attachments_container); // message_id checked right above
             }, () => $(new_pgp_messages).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_messages).prepend(self.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => {
-              tool.browser.message.send(null, 'settings', { account_email: self.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
+            $(new_pgp_messages).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => {
+              tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {
-          $(new_pgp_messages).prepend(self.factory.embedded_attachment_status('Unknown message id'));
+          $(new_pgp_messages).prepend(this.factory.embedded_attachment_status('Unknown message id'));
         }
       }
-    });
+    }
   }
 
   // todo - mostly the same as gmail/replace.ts

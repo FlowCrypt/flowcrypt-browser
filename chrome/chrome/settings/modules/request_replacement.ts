@@ -8,7 +8,7 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
-  $('#status').html('Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green')); // xss-direct
+  tool.ui.sanitize_render('#status', 'Loading from keyserver<br/><br/><br/>' + tool.ui.spinner('green'));
 
   let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);

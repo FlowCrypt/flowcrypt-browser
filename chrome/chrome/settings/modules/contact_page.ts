@@ -55,7 +55,7 @@ tool.catch.try(async () => {
   };
 
   let enable_contact_page = async () => {
-    S.cached('status').html('Enabling..' + tool.ui.spinner('green')); // safe sources
+    tool.ui.sanitize_render(S.cached('status'), 'Enabling..' + tool.ui.spinner('green'));
     let auth_info = await Store.auth_info();
     let storage = await Store.get_account(auth_info.account_email!, ['full_name']);
     try {
@@ -80,7 +80,7 @@ tool.catch.try(async () => {
       alert('Please add intro text');
     } else {
       S.cached('show_if_active').css('display', 'none');
-      S.cached('status').html('Updating' + tool.ui.spinner('green')); // safe source
+      tool.ui.sanitize_render(S.cached('status'), 'Updating ' + tool.ui.spinner('green'));
       let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.as_text());
@@ -108,7 +108,7 @@ tool.catch.try(async () => {
     }
   };
 
-  S.cached('status').html('Loading..' + tool.ui.spinner('green')); // safe source
+  tool.ui.sanitize_render(S.cached('status'), 'Loading..' + tool.ui.spinner('green'));
   try {
     let response = await tool.api.cryptup.account_update();
     render_fields(response.result);

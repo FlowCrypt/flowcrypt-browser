@@ -331,7 +331,7 @@ class Composer {
 
   private initial_draft_load = async () => {
     if (this.is_reply_box) {
-      this.S.cached('prompt').html(`Loading draft.. ${tool.ui.spinner('green')}`);  // xss-direct
+      tool.ui.sanitize_render(this.S.cached('prompt'), `Loading draft.. ${tool.ui.spinner('green')}`);
     }
     try {
       let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
@@ -602,7 +602,7 @@ class Composer {
       const plaintext = this.extract_as_text('input_text');
       this.throw_if_form_not_ready(recipients);
       this.S.now('send_btn_span').text('Loading');
-      this.S.now('send_btn_i').replaceWith(tool.ui.spinner('white')); // xss-direct
+      tool.ui.sanitize_render(this.S.now('send_btn_i'), tool.ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       let subscription = await this.app.storage_get_subscription();
       let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
@@ -1058,10 +1058,10 @@ class Composer {
     if (tool.value(',').in(input_to)) {
       const emails = input_to.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
-        this.S.cached('input_to').siblings('.recipients').append('<span>' + tool.str.html_escape(emails[i]) + tool.ui.spinner('green') + '</span>'); // xss-escaped
+        tool.ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${tool.str.html_escape(emails[i])} ${tool.ui.spinner('green')}</span>`);
       }
     } else if (!this.S.cached('input_to').is(':focus') && input_to) {
-      this.S.cached('input_to').siblings('.recipients').append('<span>' + tool.str.html_escape(input_to) + tool.ui.spinner('green') + '</span>'); // xss-escaped
+      tool.ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${tool.str.html_escape(input_to)} ${tool.ui.spinner('green')}</span>`);
     } else {
       return;
     }

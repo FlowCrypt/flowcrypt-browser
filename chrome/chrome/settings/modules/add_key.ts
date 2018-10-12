@@ -12,7 +12,7 @@ tool.catch.try(async () => {
   let key_import_ui = new KeyImportUI({reject_known: true});
   key_import_ui.init_prv_import_source_form(account_email, parent_tab_id);
 
-  $('#spinner_container').html(tool.ui.spinner('green') + ' loading..'); // xss-direct
+  tool.ui.sanitize_render('#spinner_container', tool.ui.spinner('green') + ' loading..');
 
   let keyinfos = await Store.keys_get(account_email);
   let private_keys_long_ids = keyinfos.map(ki => ki.longid);

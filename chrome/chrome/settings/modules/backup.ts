@@ -144,7 +144,7 @@ tool.catch.try(async () => {
       $('#password2').focus();
     } else {
       let btn_text = $(target).text();
-      $(target).html(tool.ui.spinner('white')); // safe source
+      tool.ui.sanitize_render(target, tool.ui.spinner('white'));
       let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
@@ -209,7 +209,7 @@ tool.catch.try(async () => {
     }
     let btn = $('.action_manual_backup');
     let original_btn_text = btn.text();
-    btn.html(tool.ui.spinner('white')); // safe source
+    tool.ui.sanitize_render(btn, tool.ui.spinner('white'));
     try {
       await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
@@ -229,7 +229,7 @@ tool.catch.try(async () => {
   };
 
   let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
-    $(self).html(tool.ui.spinner('white')); // safe source
+    tool.ui.sanitize_render(self, tool.ui.spinner('white')); // todo -w hat was this??
     let attachment = as_backup_file(account_email, primary_ki.private);
     if (tool.env.browser().name !== 'firefox') {
       tool.file.save_to_downloads(attachment);

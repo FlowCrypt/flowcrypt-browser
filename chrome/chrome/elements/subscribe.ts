@@ -42,7 +42,7 @@ tool.catch.try(async () => {
   let button_spin = (element: HTMLElement) => {
     original_button_content = $(element).html();
     original_button_selector = $(element);
-    $(element).html(tool.ui.spinner('white'));
+    tool.ui.sanitize_render(element, tool.ui.spinner('white'));
   };
 
   let button_restore = () => {

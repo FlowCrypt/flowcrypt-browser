@@ -231,7 +231,7 @@ tool.catch.try(async () => {
 
   let handle_extend_message_expiration_clicked = async (self: HTMLElement) => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
-    $(self).parent().html('Updating..' + tool.ui.spinner('green')); // xss-direct
+    tool.ui.sanitize_render($(self).parent(), 'Updating..' + tool.ui.spinner('green'));
     try {
       let r = await tool.api.cryptup.message_expiration(admin_codes, n_days);
       if (r.updated) {

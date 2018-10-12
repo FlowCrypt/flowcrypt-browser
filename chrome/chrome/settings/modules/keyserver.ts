@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   $('.email-address').text(account_email);
 
-  $('.summary').html('<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green')); // xss-direct
+  tool.ui.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
   let render_diagnosis = (diagnosis: any, attests_requested: string[], attests_processed: string[]) => {
     for (let email of Object.keys(diagnosis.results)) {
@@ -71,7 +71,7 @@ tool.catch.try(async () => {
       $('table#emails').append(`<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`); // xss-escaped above
     }
     $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      $(self).html(tool.ui.spinner('white')); // xss-direct
+      tool.ui.sanitize_render(self, tool.ui.spinner('white'));
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
@@ -80,18 +80,18 @@ tool.catch.try(async () => {
       window.location.reload();
     }));
     $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-      $(self).html(tool.ui.spinner('white')); // xss-direct
+      tool.ui.sanitize_render(self, tool.ui.spinner('white'));
       Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
     $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      $(self).html('Updating.. ' + tool.ui.spinner('white')); // xss-direct
+      tool.ui.sanitize_render(self, 'Updating..' + tool.ui.spinner('white'));
       tool.browser.message.send(null, 'attest_requested', {account_email});
       await tool.time.sleep(30000);
       window.location.reload();
     }));
     $('#content').append('<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>') // xss-direct
     .find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
-      $(self).html(tool.ui.spinner('green')); // xss-direct
+      tool.ui.sanitize_render(self, tool.ui.spinner('green'));
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });

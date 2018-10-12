@@ -399,7 +399,7 @@ tool.catch.try(async () => {
     };
     try {
       let checked = await key_import_ui.check_prv(account_email, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
-      $('#step_2b_manual_enter .action_save_private').html(tool.ui.spinner('white')); // safe source
+      tool.ui.sanitize_render('#step_2b_manual_enter .action_save_private', tool.ui.spinner('white'));
       await save_keys([checked.encrypted], options);
       await pre_finalize_setup(options);
       await finalize_setup(options);
@@ -464,7 +464,7 @@ tool.catch.try(async () => {
     }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
-      $('#step_2a_manual_create .action_create_private').html(tool.ui.spinner('white') + 'just a minute'); // safe source
+      tool.ui.sanitize_render('#step_2a_manual_create .action_create_private', tool.ui.spinner('white') + 'just a minute');
       let userinfo = await get_and_save_google_user_info();
       let options: SetupOptions = {
         full_name: userinfo.full_name,

@@ -152,7 +152,7 @@ tool.catch.try(async () => {
     try {
       original_html_content = button.html();
       button.addClass('visible');
-      button.html(tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>'); // safe source
+      tool.ui.sanitize_render(button, tool.ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
       await recover_missing_attachment_id_if_needed();
       progress_element = $('.download_progress');
       if (decrypted_a) { // when content was downloaded and decrypted

@@ -8,7 +8,7 @@ tool.catch.try(async () => {
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
 
-  $('.loading').html(tool.ui.spinner('green', 'large_spinner')); // xss-direct
+  tool.ui.sanitize_render('.loading', tool.ui.spinner('green', 'large_spinner'));
 
   await tool.api.cryptup.account_check_sync();
   let auth_info = await Store.auth_info();

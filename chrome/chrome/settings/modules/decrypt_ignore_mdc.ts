@@ -29,7 +29,7 @@ tool.catch.try(async () => {
       return;
     }
     original_content = $(self).html();
-    $(self).html('Decrypting.. ' + tool.ui.spinner('white')); // xss-direct
+    tool.ui.sanitize_render(self, 'Decrypting.. ' + tool.ui.spinner('white'));
     let result = await tool.crypto.message.decrypt(account_email, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);

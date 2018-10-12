@@ -30,7 +30,7 @@ tool.catch.try(async () => {
   }));
 
   $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async (target, id) => {
-    $(target).html(tool.ui.spinner('green')); // xss-direct
+    tool.ui.sanitize_render(target, tool.ui.spinner('green'));
     let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
     await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
     window.location.reload();

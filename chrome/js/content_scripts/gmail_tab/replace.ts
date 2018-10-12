@@ -152,7 +152,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let message_id = this.determine_message_id(attachments_container);
         if (message_id) {
           if (this.can_read_emails) {
-            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
+            tool.ui.sanitize_prepend(new_pgp_attachments, this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
             try {
               let message = await tool.api.gmail.message_get(this.account_email, message_id, 'full');
               await this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);

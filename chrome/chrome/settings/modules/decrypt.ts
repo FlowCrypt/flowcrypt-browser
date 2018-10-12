@@ -26,7 +26,7 @@ tool.catch.try(async () => {
     let ids = attach_js.get_attachment_ids();
     if (ids.length === 1) {
       original_content = $(self).html();
-      $(self).html('Decrypting.. ' + tool.ui.spinner('white')); // xss-direct
+      tool.ui.sanitize_render(self, 'Decrypting.. ' + tool.ui.spinner('white'));
       let collected = await attach_js.collect_attachment(ids[0]);
       await decrypt_and_download(collected);
     } else {

@@ -17,7 +17,7 @@ tool.catch.try(async () => {
 
   let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
-      $('.status').html('Verifying..' + tool.ui.spinner('green')); // xss-direct
+      tool.ui.sanitize_render('.status', 'Verifying..' + tool.ui.spinner('green'));
       let attestation = await tool.browser.message.send_await(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
