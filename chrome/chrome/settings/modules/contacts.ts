@@ -94,11 +94,11 @@ tool.catch.try(async () => {
     }));
 
     $('#bulk_import .action_process').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-      let replaced = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
-      if (!replaced || replaced === $('#bulk_import .input_pubkey').val()) {
+      let replaced_html_safe = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
+      if (!replaced_html_safe || replaced_html_safe === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {
-        $('#bulk_import #processed').html(replaced).css('display', 'block');
+        $('#bulk_import #processed').html(replaced_html_safe).css('display', 'block'); // xss-safe-factory
         $('#bulk_import .input_pubkey, #bulk_import .action_process').css('display', 'none');
       }
     }));

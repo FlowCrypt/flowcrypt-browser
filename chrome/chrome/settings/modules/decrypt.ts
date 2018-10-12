@@ -40,7 +40,7 @@ tool.catch.try(async () => {
       let attachment = new Attachment({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
       tool.file.save_to_downloads(attachment);
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
-      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // safe source
+      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // xss-safe-factory
     } else {
       delete result.message;
       console.info(result);

@@ -4,14 +4,24 @@
 
 class Factory {
 
+  /**
+   * XSS WARNING
+   *
+   * Method return values are inserted directly into DOM.
+   *
+   * All public methods are expected to escape unknown content to prevent XSS.
+   *
+   * If you add or edit a method, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+   */
+
   private set_params: UrlParams;
   private reloadable_class: string;
   private destroyable_class: string;
   private hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:UrlParams={}) {
-    this.reloadable_class = reloadable_class;
-    this.destroyable_class = destroyable_class;
+    this.reloadable_class = tool.str.html_escape(reloadable_class);
+    this.destroyable_class = tool.str.html_escape(destroyable_class);
     this.set_params = set_params;
     this.set_params.account_email = account_email;
     this.set_params.parent_tab_id = parent_tab_id;
@@ -102,15 +112,15 @@ class Factory {
   }
 
   dialog_passphrase = (longids: string[], type: PassphraseDialogType) => {
-    return this.div_dialog(this.iframe(this.src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}), 'dialog-passphrase');
+    return this.div_dialog_DANGEROUS(this.iframe(this.src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}), 'dialog-passphrase'); // xss-safe-factory
   }
 
   dialog_subscribe = (verif_em_txt: string|null, source: string|null, sub_res_tab_id: string|null) => {
-    return this.div_dialog(this.iframe(this.src_subscribe_dialog(verif_em_txt, 'dialog', source, sub_res_tab_id), ['mediumtall'], {scrolling: 'no'}), 'dialog-subscribe');
+    return this.div_dialog_DANGEROUS(this.iframe(this.src_subscribe_dialog(verif_em_txt, 'dialog', source, sub_res_tab_id), ['mediumtall'], {scrolling: 'no'}), 'dialog-subscribe'); // xss-safe-factory
   }
 
   dialog_add_pubkey = (emails: string[]) => {
-    return this.div_dialog(this.iframe(this.src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}), 'dialog-add-pubkey');
+    return this.div_dialog_DANGEROUS(this.iframe(this.src_add_pubkey_dialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}), 'dialog-add-pubkey'); // xss-safe-factory
   }
 
   embedded_compose = (draft_id?: string) => {
@@ -142,11 +152,11 @@ class Factory {
   }
 
   embedded_passphrase = (longids: string[]) => {
-    return this.div_dialog(this.iframe(this.src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}), 'embedded-passphrase');
+    return this.div_dialog_DANGEROUS(this.iframe(this.src_passphrase_dialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}), 'embedded-passphrase'); // xss-safe-factory
   }
 
   embedded_attachment_status = (content: string) => {
-    return tool.e('div', {class: 'attachment_loader', html: content});
+    return tool.e('div', {class: 'attachment_loader', html: tool.str.html_sanitize(content)});
   }
 
   embedded_attest = (attest_packet: string) => {
@@ -200,15 +210,17 @@ class Factory {
   }
 
   private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
-    let attributes: Dict<string> = {id: tool.env.url_params(['frame_id'], src).frame_id as string, class: (classes || []).concat(this.reloadable_class).join(' '), src};
+    let id = tool.env.url_params(['frame_id'], src).frame_id as string;
+    let class_attr = (classes || []).concat(this.reloadable_class).join(' ');
+    let attributes: Dict<string> = {id, class: class_attr, src};
     for (let name of Object.keys(element_attrs)) {
       attributes[name] = String(element_attrs[name]);
     }
     return tool.e('iframe', attributes);
   }
 
-  private div_dialog = (content: string, data_test: string) => {
-    return tool.e('div', { id: 'cryptup_dialog', html: content, 'data-test': data_test });
+  private div_dialog_DANGEROUS = (safe_content: string, data_test: string) => {
+    return tool.e('div', { id: 'cryptup_dialog', html: safe_content, 'data-test': data_test });
   }
 
 }

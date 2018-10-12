@@ -58,7 +58,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
     let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
-    $('.reply_message_iframe_container:visible').last().append(this.factory.embedded_reply(params, false, true));
+    $('.reply_message_iframe_container:visible').last().append(this.factory.embedded_reply(params, false, true)); // xss-safe-value
   }
 
   private replace_armored_blocks = () => {
@@ -67,10 +67,10 @@ class GmailElementReplacer implements WebmailElementReplacer {
       $(email_container).addClass('evaluated');
       let sender_email = this.get_sender_email(email_container);
       let is_outgoing = tool.value(sender_email).in(this.addresses);
-      let replacement = tool.crypto.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
-      if (typeof replacement !== 'undefined') {
+      let replacement_xss_safe = tool.crypto.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
+      if (typeof replacement_xss_safe !== 'undefined') {
         $(this.selector.translate_prompt).hide();
-        let new_selector = this.update_message_body_element(email_container, 'set', replacement.replace(/\n/g, '<br>'));
+        let new_selector = this.update_message_body_element_DANGEROUSLY(email_container, 'set', replacement_xss_safe.replace(/\n/g, '<br>')); // xss-safe-factory: replace_blocks is XSS safe
       }
     }
   }
@@ -93,7 +93,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
           if (i + 1 < conversation_reply_buttons_to_replace.length || has_visible_replacements) {
             $(reply_button).addClass('replaced').text(''); // hide all except last
           } else {
-            $(reply_button).html(this.factory.button_reply()).click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(this.set_reply_box_editable))); // replace last
+            $(reply_button).html(this.factory.button_reply()); // replace last,  // xss-safe-factory
+            $(reply_button).click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(this.set_reply_box_editable)));
           }
         });
       }
@@ -136,7 +137,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           tool.ui.sanitize_replace(contenteditable, button);
           $(`a.open_draft_${button_href_id}`).click(tool.ui.event.handle(() => {
             $('div.new_message').remove();
-            $('body').append(this.factory.embedded_compose(button_href_id));
+            $('body').append(this.factory.embedded_compose(button_href_id)); // xss-safe-factory
           }));
         }
       }
@@ -164,12 +165,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => {
+            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => { // xss-safe-factory
               tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {
-          $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Unknown message id'));
+          $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status('Unknown message id')); // xss-safe-factory
         }
       }
     }
@@ -190,7 +191,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         this.hide_attachment(attachment_selector, attachments_container_inner);
         rendered_attachments_count--;
         if (treat_as === 'encrypted') { // actual encrypted attachment - show it
-          attachments_container_inner.prepend(this.factory.embedded_attachment(a));
+          attachments_container_inner.prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
           rendered_attachments_count++;
         } else if (treat_as === 'message') {
           let is_ambiguous_asc_file = a.name.substr(-4) === '.asc' && !tool.value(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
@@ -201,21 +202,21 @@ class GmailElementReplacer implements WebmailElementReplacer {
             if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
               rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
             } else if (openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
-              message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
+              message_element = this.update_message_body_element_DANGEROUSLY(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false)); // xss-safe-factory
             } else {
               attachment_selector.show().children('.attachment_loader').text('Unknown OpenPGP format');
               rendered_attachments_count++;
             }
           } else {
-            message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false));
+            message_element = this.update_message_body_element_DANGEROUSLY(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false)); // xss-safe-factory
           }
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
         } else if (treat_as === 'signature') {
           let signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';
-          let embedded_signed_message = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
+          let embedded_signed_message_xss_safe = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
           let replace = !message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text());
-          message_element = this.update_message_body_element(message_element, replace ? 'set': 'append', embedded_signed_message);
+          message_element = this.update_message_body_element_DANGEROUSLY(message_element, replace ? 'set': 'append', embedded_signed_message_xss_safe); // xss-safe-factory
         }
       } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
         let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
@@ -262,7 +263,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
     let openpgp_type = tool.crypto.message.type(downloaded_attachment.data);
     if (openpgp_type && openpgp_type.type === 'public_key') {
-      message_element = this.update_message_body_element(message_element, 'append', this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing));
+      message_element = this.update_message_body_element_DANGEROUSLY(message_element, 'append', this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing)); // xss-safe-factory
     } else {
       attachment_selector.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
       rendered_attachments_count++;
@@ -313,7 +314,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
     return '<div class="message_inner_body evaluated">' + html_content + '</div>';
   }
 
-  private update_message_body_element = (element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content: string) => {
+  /**
+   * XSS WARNING
+   *
+   * new_html_content must be XSS safe
+   */
+  private update_message_body_element_DANGEROUSLY = (element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content: string) => {
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -323,18 +329,18 @@ class GmailElementReplacer implements WebmailElementReplacer {
     if (method === 'set') {
       if (replace) {
         let parent = message_body.parent();
-        message_body.replaceWith(this.wrap_message_body_element(new_html_content));
+        message_body.replaceWith(this.wrap_message_body_element(new_html_content)); // xss-unsafe
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
-        return message_body.html(new_html_content);
+        return message_body.html(new_html_content); // xss-unsafe
       }
     } else if (method === 'append') {
       if (replace) {
         let parent = message_body.parent();
-        message_body.replaceWith(this.wrap_message_body_element(message_body.html() + new_html_content));
+        message_body.replaceWith(this.wrap_message_body_element(message_body.html() + new_html_content)); // xss-unsafe
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
-        return message_body.append(new_html_content);
+        return message_body.append(new_html_content); // xss-unsafe
       }
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);
@@ -389,17 +395,17 @@ class GmailElementReplacer implements WebmailElementReplacer {
             tool.ui.sanitize_append(reply_box, '<font>&nbsp;&nbsp;Draft skipped</font>');
             reply_box.children(':not(font)').hide();
           } else {
-            let secure_reply_box = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;
+            let secure_reply_box_xss_safe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;
             if (reply_box.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               let original_children = reply_box.children();
-              reply_box.addClass('reply_message_evaluated').append(secure_reply_box);
+              reply_box.addClass('reply_message_evaluated').append(secure_reply_box_xss_safe); // xss-safe-factory
               if (this.gmail_variant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
                 original_children.attr('style', this.css_hidden);
               } else { // in old gmail, we can safely hide it without causing freezes navigating away
                 original_children.hide();
               }
             } else { // non-activated reply box: replaced so that originally bound events would go with it (prevents inbox freezing)
-              reply_box.replaceWith(secure_reply_box);
+              reply_box.replaceWith(secure_reply_box_xss_safe); // xss-safe-factory
             }
           }
           mid_convo_draft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
@@ -451,7 +457,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
           }
           if (everyone_uses_encryption) {
             if (!standard_compose_window.find('.recipients_use_encryption').length) {
-              standard_compose_window.find('div.az9 span[email]').first().parents('form').first().prepend(this.factory.button_recipients_use_encryption('gmail')).find('a').click(tool.ui.event.handle(() => this.injector.open_compose_window()));
+              let prependable = standard_compose_window.find('div.az9 span[email]').first().parents('form').first();
+              prependable.prepend(this.factory.button_recipients_use_encryption('gmail')); // xss-safe-factory
+              prependable.find('a').click(tool.ui.event.handle(() => this.injector.open_compose_window()));
             }
           } else {
             standard_compose_window.find('.recipients_use_encryption').remove();

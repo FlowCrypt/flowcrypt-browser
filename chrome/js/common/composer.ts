@@ -1355,7 +1355,7 @@ class Composer {
     this.S.cached('reply_message_successful').find('div.replied_time').text(time);
     this.S.cached('reply_message_successful').css('display', 'block');
     if (message.attachments.length) {
-      this.S.cached('replied_attachments').html(message.attachments.map(a => {
+      this.S.cached('replied_attachments').html(message.attachments.map(a => { // xss-safe-factory
         a.message_id = message_id;
         return this.app.factory_attachment(a);
       }).join('')).css('display', 'block');

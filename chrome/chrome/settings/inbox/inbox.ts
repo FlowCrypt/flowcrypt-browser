@@ -39,17 +39,17 @@ tool.catch.try(async () => {
     },
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog_passphrase(data.longids, data.type));
+        $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
       }
     },
     subscribe_dialog: (data) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
+        $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null)); // xss-safe-factory
       }
     },
     add_pubkey_dialog: (data: {emails: string[]}) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog_add_pubkey(data.emails));
+        $('body').append(factory.dialog_add_pubkey(data.emails)); // xss-safe-factory
       }
     },
     notification_show: (data: NotificationWithHandlers) => {
@@ -75,7 +75,7 @@ tool.catch.try(async () => {
 
   let storage = await Store.get_account(account_email, ['email_provider']);
   email_provider = storage.email_provider || 'gmail';
-  S.cached('body').prepend(factory.meta_notification_container());
+  S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
   if (email_provider !== 'gmail') {
     $('body').text('Not supported for ' + email_provider);
   } else {

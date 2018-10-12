@@ -165,7 +165,6 @@ tool.catch.try(async () => {
   tool.browser.message.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
-  let html = Lang.account.credit_or_debit + '<br><br>' + new Factory(account_email, tab_id).embedded_stripe_checkout() + '<br><a href="#">back</a>';
-  $('.stripe_checkout').html(html).children('a').click(() => window.location.reload());
+  $('.stripe_checkout').html(`${Lang.account.credit_or_debit}<br><br>${new Factory(account_email, tab_id).embedded_stripe_checkout()}<br>${tool.ui.retry_link('back')}`); // xss-safe-factory
 
 })();

@@ -34,7 +34,7 @@ tool.catch.try(async () => {
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
-      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase));
+      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // xss-safe-factory
     } else {
       delete result.message;
       console.info(result);

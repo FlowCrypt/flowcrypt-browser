@@ -69,7 +69,7 @@ tool.catch.try(async () => {
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
         let factory = new Factory(account_email!, tab_id);
-        $('body').append(factory.dialog_passphrase(data.longids, data.type));
+        $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
       }
     },
     notification_show_auth_popup_needed: (data: {account_email: string}) => {

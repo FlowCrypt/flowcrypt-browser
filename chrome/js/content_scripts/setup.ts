@@ -94,17 +94,17 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       scroll: (data: {selector: string, repeat: number[]}) => tool.ui.scroll(data.selector, data.repeat),
       passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
         if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialog_passphrase(data.longids, data.type));
+          $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
         }
       },
       subscribe_dialog: (data: {source: string, subscribe_result_tab_id: string}) => {
         if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null));
+          $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null)); // xss-safe-factory
         }
       },
       add_pubkey_dialog: (data: {emails: string[]}) => {
         if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialog_add_pubkey(data.emails));
+          $('body').append(factory.dialog_add_pubkey(data.emails)); // xss-safe-factory
         }
       },
       notification_show: (data: NotificationWithHandlers) => {

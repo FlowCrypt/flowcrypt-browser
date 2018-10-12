@@ -35,7 +35,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
 
   reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
     let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
-    $('.reply_message_iframe_container').append(this.factory.embedded_reply(params, false, true));
+    $('.reply_message_iframe_container').append(this.factory.embedded_reply(params, false, true)); // xss-safe-factory
   }
 
   private replace_armored_blocks = () => {
@@ -44,10 +44,10 @@ class InboxElementReplacer implements WebmailElementReplacer {
       let message_id = self.dom_extract_message_id(message_element);
       let sender_email = self.dom_extract_sender_email(message_element);
       let is_outgoing = tool.value(sender_email).in(this.addresses);
-      let replacement = tool.crypto.armor.replace_blocks(self.factory, message_element.innerText, message_id || '', sender_email || '', is_outgoing);
-      if (typeof replacement !== 'undefined') {
+      let replacement_xss_safe = tool.crypto.armor.replace_blocks(self.factory, message_element.innerText, message_id || '', sender_email || '', is_outgoing);  // xss-safe-factory
+      if (typeof replacement_xss_safe !== 'undefined') {
         $(message_element).parents('.ap').addClass('pgp_message_container');
-        $(message_element).html(replacement.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>'));
+        $(message_element).html(replacement_xss_safe.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>')); // xss-safe-factory
       }
     });
   }
@@ -57,8 +57,8 @@ class InboxElementReplacer implements WebmailElementReplacer {
     $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, reply_box) => {
       let root_element = self.dom_get_conversation_root_element(reply_box);
       if (root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force_replace_even_if_pgp_block_is_not_present)) {
-        let iframe = self.factory.embedded_reply(self.get_conversation_params(root_element), editable);
-        $(reply_box).addClass('reply_message_iframe_container').html(iframe).children(':not(iframe)').css('display', 'none'); // .addClass('remove_borders')
+        let iframe_xss_safe = self.factory.embedded_reply(self.get_conversation_params(root_element), editable);
+        $(reply_box).addClass('reply_message_iframe_container').html(iframe_xss_safe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
       }
     });
   }
@@ -80,12 +80,12 @@ class InboxElementReplacer implements WebmailElementReplacer {
             }, () => $(new_pgp_messages).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_messages).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => {
+            $(new_pgp_messages).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => { // xss-safe-factory
               tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {
-          $(new_pgp_messages).prepend(this.factory.embedded_attachment_status('Unknown message id'));
+          $(new_pgp_messages).prepend(this.factory.embedded_attachment_status('Unknown message id')); // xss-safe-factory
         }
       }
     }
@@ -102,25 +102,25 @@ class InboxElementReplacer implements WebmailElementReplacer {
         let attachment_selector = (attachments_container as JQuery<HTMLElement>).find(this.get_attachment_selector(a.name)).first();
         this.hide_attachment(attachment_selector, attachments_container);
         if (treat_as === 'encrypted') { // actual encrypted attachment - show it
-          (attachments_container as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(a));
+          (attachments_container as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
         } else if (treat_as === 'message') {
-          message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block');
+          message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           tool.api.gmail.attachment_get(this.account_email, message_id, a.id!).then(downloaded_attachment => {
             if (tool.value(tool.crypto.armor.headers('null').begin).in(downloaded_attachment.data)) {
-              message_element.append(this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing));
+              message_element.append(this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing)); // xss-safe-factory
             } else {
               attachment_selector.css('display', 'block');
               attachment_selector.children('.attachment_loader').text('Unknown Public Key Format');
             }
           }).catch(e => (attachments_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
         } else if (treat_as === 'signature') {
-          let embedded_signed_message = this.factory.embedded_message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
+          let embedded_signed_message_xss_safe = this.factory.embedded_message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
           if (!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text())) {
             message_element.addClass('evaluated');
-            message_element.html(embedded_signed_message).css('display', 'block');
+            message_element.html(embedded_signed_message_xss_safe).css('display', 'block'); // xss-safe-factory
           } else {
-            message_element.append(embedded_signed_message).css('display', 'block');
+            message_element.append(embedded_signed_message_xss_safe).css('display', 'block'); // xss-safe-factory
           }
         }
       }

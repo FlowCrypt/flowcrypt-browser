@@ -447,7 +447,7 @@ let tool = {
         let value = params[key];
         if (typeof value !== 'undefined') {
           let transformed = tool.obj.key_by_value(tool._.var.env_url_param_DICT, value);
-          link += (!tool.value('?').in(link) ? '?' : '&') + key + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+          link += (!tool.value('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
         }
       }
       return link;
@@ -935,6 +935,13 @@ let tool = {
           }
         }
       },
+      /**
+       * XSS WARNING
+       *
+       * Return values are inserted directly into DOM. Results must be html escaped.
+       *
+       * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+       */
       replace_blocks: (factory: Factory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
         let blocks = tool.crypto.armor.detect_blocks(original_text).blocks;
         if (blocks.length === 1 && blocks[0].type === 'text') {
@@ -1256,7 +1263,7 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
   ui: {
-    retry_link: () => `<a href="${tool.str.html_escape(window.location.href)}">retry</a>`,
+    retry_link: (caption:string='retry') => `<a href="${tool.str.html_escape(window.location.href)}">${tool.str.html_escape(caption)}</a>`,
     delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
     spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
       let path = `/img/svgs/spinner-${color}-small.svg`;
@@ -2390,7 +2397,7 @@ let tool = {
   },
   /* [BARE_ENGINE_OMIT_END] */
   value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
-  e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML,
+  e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML, // xss-tested: jquery escapes attributes
   noop: (): void => undefined,
   enums: {
     recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
