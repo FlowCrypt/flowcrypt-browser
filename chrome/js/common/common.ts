@@ -1662,6 +1662,9 @@ let tool = {
       },
       is_auth_error: (e: Thrown) => {
         if (e && typeof e === 'object') {
+          if(e.error && typeof e.error === 'object' && e.error.internal === 'auth') {
+            return true; // API auth error response
+          }
           if (e.internal === 'auth') { // StandardError
             return true;
           }
@@ -2186,7 +2189,6 @@ let tool = {
       },
     },
     cryptup: {
-      auth_error: () => ({code: 401, message: 'Could not log in', internal: 'auth', stack: tool.catch.stack_trace()}),
       url: (type: string, variable='') => {
         return ({
           'api': 'https://flowcrypt.com/api/',
@@ -2217,7 +2219,7 @@ let tool = {
         if(response.registered !== true) {
           throw new Error('account_login did not result in successful registration');
         }
-        await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_verified: response.verified === true, cryptup_account_subscription: response.subscription});
+        await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription});
         return {verified: response.verified === true, subscription: response.subscription};
       },
       account_check: (emails: string[]) => tool._.api_cryptup_call('account/check', {
@@ -2232,16 +2234,14 @@ let tool = {
           let local_storage_update: GlobalStore = {};
           if (response.email) {
             if (response.email !== auth_info.account_email) {
-              // this will of course fail auth on the server when used. The user will be prompted to verify this new device when that happens.
+              // will fail auth when used on server, user will be prompted to verify this new device when that happens
               local_storage_update.cryptup_account_email = response.email;
               local_storage_update.cryptup_account_uuid = tool.crypto.hash.sha1(tool.str.random(40));
-              local_storage_update.cryptup_account_verified = false;
             }
           } else {
             if (auth_info.account_email) {
               local_storage_update.cryptup_account_email = null;
               local_storage_update.cryptup_account_uuid = null;
-              local_storage_update.cryptup_account_verified = false;
             }
           }
           if (response.subscription) {
@@ -2265,9 +2265,6 @@ let tool = {
       },
       account_update: async (update_values?: Dict<Serializable>): Promise<ApirFcAccountUpdate> => {
         let auth_info = await Store.auth_info();
-        if (!auth_info.verified) {
-          throw tool.api.cryptup.auth_error();
-        }
         let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
         if (update_values) {
           for (let k of Object.keys(update_values)) {
@@ -2278,9 +2275,6 @@ let tool = {
       },
       account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
         let auth_info = await Store.auth_info();
-        if (!auth_info.verified) {
-          throw tool.api.cryptup.auth_error();
-        }
         let response: ApirFcAccountSubscribe = await tool._.api_cryptup_call('account/subscribe', {
           account: auth_info.account_email,
           uuid: auth_info.uuid,
@@ -2300,9 +2294,6 @@ let tool = {
           });
         } else if (auth_method === 'uuid') {
           let auth_info = await Store.auth_info();
-          if (!auth_info.verified) {
-            throw tool.api.cryptup.auth_error();
-          }
           response = await tool._.api_cryptup_call('message/presign_files', {
             account: auth_info.account_email,
             uuid: auth_info.uuid,
@@ -2332,24 +2323,15 @@ let tool = {
           return await tool._.api_cryptup_call('message/upload', {content}, 'FORM');
         } else {
           let auth_info = await Store.auth_info();
-          if (!auth_info.verified) {
-            throw tool.api.cryptup.auth_error();
-          }
           return await tool._.api_cryptup_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
         }
       },
       message_token: async (): Promise<ApirFcMessageToken> => {
         let auth_info = await Store.auth_info();
-        if (!auth_info.verified) {
-          throw tool.api.cryptup.auth_error();
-        }
         return await tool._.api_cryptup_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
       },
       message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
         let auth_info = await Store.auth_info();
-        if (!auth_info.verified) {
-          throw tool.api.cryptup.auth_error();
-        }
         return await tool._.api_cryptup_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
       },
       message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_cryptup_call('message/reply', {
@@ -2924,9 +2906,7 @@ let tool = {
     },
     api_attester_packet_armor: (content_text: string) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
     api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
-    // api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('http://127.0.0.1:5002/, path, values, 'JSON', null, {'api-version': '3'} as HeadersDict),
     api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(tool.api.cryptup.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
-    // api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call('http://127.0.0.1:5001/', path, values, format, null, {'api-version': '3'} as HeadersDict),
     /* [BARE_ENGINE_OMIT_END] */
   },
   catch: { // web and extension code

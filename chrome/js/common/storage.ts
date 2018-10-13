@@ -238,12 +238,12 @@ class Store {
   }
 
   static async auth_info(): Promise<StoredAuthInfo> {
-    let storage = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified']);
-    return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null, verified: storage.cryptup_account_verified || false};
+    let storage = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid']);
+    return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
   }
 
   static async subscription(): Promise<Subscription> {
-    let s = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_verified', 'cryptup_account_subscription']);
+    let s = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
     if (s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       return new Subscription(s.cryptup_account_subscription);
     } else {

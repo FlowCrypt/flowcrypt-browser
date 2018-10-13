@@ -95,9 +95,8 @@ tool.catch.try(async () => {
       $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
       let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider']);
       if (storage.setup_done) {
-        render_subscription_status_header().catch(tool.catch.rejection);
         check_google_account().catch(tool.catch.handle_exception);
-        check_flowcrypt_account_and_contact_page().catch(tool.catch.handle_exception);
+        check_flowcrypt_account_and_subscription_and_contact_page().catch(tool.catch.handle_exception);
         if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
@@ -126,8 +125,13 @@ tool.catch.try(async () => {
     }
   };
 
-  let check_flowcrypt_account_and_contact_page = async () => {
+  let check_flowcrypt_account_and_subscription_and_contact_page = async () => {
     let status_container = $('.public_profile_indicator_container');
+    try {
+      await render_subscription_status_header();
+    } catch(e) {
+      tool.catch.handle_exception(e);
+    }
     let auth_info = await Store.auth_info();
     if (auth_info.account_email) { // have auth email set
       try {
@@ -145,7 +149,7 @@ tool.catch.try(async () => {
           tool.ui.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (tool.api.error.is_network_error(e)) {
-          tool.ui.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_contact_page));
+          tool.ui.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');

@@ -25,19 +25,16 @@ class FlowCryptAccount {
   subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
     this.event_handlers.render_status_text(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     await tool.api.cryptup.account_check_sync();
-    let auth_info = await Store.auth_info();
-    if (auth_info.verified) {
-      try {
+    try {
+      return await this.do_subscribe(chosen_product, source);
+    } catch (error) {
+      if (error.internal === 'auth') {
+        await this.save_subscription_attempt(chosen_product, source);
+        let response = await this.register(account_email);
         return await this.do_subscribe(chosen_product, source);
-      } catch (error) {
-        if (error.internal !== 'auth') { // auth error will get resolved by continuing below
-          throw error;
-        }
       }
+      throw error;
     }
-    await this.save_subscription_attempt(chosen_product, source);
-    let response = await this.register(account_email);
-    return await this.do_subscribe(chosen_product, source);
   }
 
   register = async (account_email: string) => { // register_and_attempt_to_verify
@@ -77,7 +74,7 @@ class FlowCryptAccount {
   }
 
   register_new_device = async (account_email: string) => {
-    await Store.set(null, { cryptup_account_uuid: undefined, cryptup_account_verified: false });
+    await Store.set(null, { cryptup_account_uuid: undefined });
     this.event_handlers.render_status_text('checking..', true);
     return await this.register(account_email);
   }

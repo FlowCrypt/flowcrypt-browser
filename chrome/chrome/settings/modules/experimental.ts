@@ -75,7 +75,7 @@ tool.catch.try(async () => {
     }));
 
     $('.action_reset_managing_auth').click(tool.ui.event.handle(async () => {
-      await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid', 'cryptup_account_verified']);
+      await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
       tool.browser.message.send(parent_tab_id, 'reload');
     }));
 

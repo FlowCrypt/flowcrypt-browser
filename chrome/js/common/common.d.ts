@@ -195,7 +195,7 @@ interface MimeContent {
     text: string|undefined;
 }
 
-type StoredAuthInfo = {account_email: string|null, uuid: string|null, verified: boolean|null};
+type StoredAuthInfo = {account_email: string|null, uuid: string|null};
 
 type KeyBlockType = 'public_key'|'private_key';
 type ReplaceableMessageBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
@@ -426,10 +426,11 @@ interface GlobalStore extends BaseStore {
     cryptup_account_email?: string|null;
     cryptup_account_uuid?: string|null;
     cryptup_account_subscription?: SubscriptionInfo|null;
-    cryptup_account_verified?: boolean;
     dev_outlook_allow?: boolean;
     cryptup_subscription_attempt?: SubscriptionAttempt;
     admin_codes?: Dict<StoredAdminCode>;
+    // following are not used anymore but may still be present in storage:
+    // cryptup_account_verified?: boolean;
 }
 
 interface AccountStore extends BaseStore {

@@ -157,7 +157,18 @@ tool.catch.try(async () => {
       $('h1').text('New Device');
       $('.action_show_stripe, .action_show_group').css('display', 'none');
       $('.status').text(`This browser or device is not registered on your FlowCrypt Account (${account_email}).`);
-      $('.action_get_trial, .action_close').addClass('long');
+      $('.action_add_device, .action_close').addClass('long');
+      // try API call auth in case it got fixed meanwhile
+      try {
+        await tool.api.cryptup.account_update();
+        $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${account_email}).`);
+        $('.action_add_device').css('display', 'none');
+        $('.action_close').removeClass('gray').addClass('green').text('ok');
+      } catch(e) {
+        if(!tool.api.error.is_auth_error(e) && !tool.api.error.is_network_error(e)) {
+          tool.catch.handle_exception(e);
+        }
+      }
     }
   }
 
