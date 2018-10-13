@@ -58,9 +58,6 @@
   table#compose th {
     width: 100% !important;
   }
-  #view_contact .key_dump {
-    white-space: normal;
-  }
 }
 
 @media (max-width: 450px) {
@@ -105,7 +102,7 @@
   .subscription {
     display: block;
     margin: 0 auto;
-    font-size: 13px;
+    font-size: 11px;
   }
   .cryptup-logo-row {
     padding: 10px 0;
@@ -320,16 +317,15 @@
     padding: 5px;
     text-align: center;
   }
-
   body#settings .pubkeys.page #emails td:nth-child(2),
   body#settings .pubkeys.page #emails td:nth-child(3),
   body#settings .pubkeys.page #emails td:nth-child(4) {
-    width: 33% !important;
-    padding: 0 !important;
+    float: left;
+    text-align: center!important;
+    width: 33%;
   }
-
   body#settings .pubkeys.page #emails tr {
-    padding-bottom: 50px;
+    margin: 10px;
   }
   body#settings .pubkeys.page #emails tr[email] {
     border-radius: 4px;
@@ -365,5 +361,4 @@
   body#settings > div#content textarea {
     width: 100%;
   }
-
 }
