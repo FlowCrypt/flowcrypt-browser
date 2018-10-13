@@ -1676,7 +1676,7 @@ let tool = {
           if(e.internal === internal_type) {
             return true;
           }
-          if(e.error && e.error === 'object' && e.error.internal === internal_type) {
+          if(e.error && typeof e.error === 'object' && e.error.internal === internal_type) {
             return true;
           }
         }
