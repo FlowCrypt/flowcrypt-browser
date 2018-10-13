@@ -288,11 +288,18 @@
   body#settings > div#content.pubkeys table#emails {
     min-width: 100%;
   }
+  body#settings > div#content.pubkeys table#emails tr {
+    border-bottom: 30px solid white;
+  }
+  body#settings > div#content.pubkeys table#emails {
+    margin: 0px auto;
+  }
   body#settings > div#content.pubkeys table#emails td {
-    font-size: 11px;
-    height: auto;
     padding: 10px 0;
     word-break: break-word;
+    display: inline;
+    border: none;
+    padding-right: 20px;
   }
   body#settings #emails td {
     display: block;

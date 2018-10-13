@@ -13,6 +13,7 @@ tool.catch.try(async () => {
   tool.ui.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
 
   let render_diagnosis = (diagnosis: any, attests_requested: string[], attests_processed: string[]) => {
+    let table_contents = '';
     for (let email of Object.keys(diagnosis.results)) {
       let result = diagnosis.results[email];
       let note, action, remove, color;
@@ -68,8 +69,10 @@ tool.catch.try(async () => {
           color = 'red';
         }
       }
-      tool.ui.sanitize_append('table#emails', `<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`);
+      table_contents += `<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`;
     }
+    tool.ui.sanitize_replace('table#emails', `<table id="emails">${table_contents}</table>`);
+
     $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
       tool.ui.sanitize_render(self, tool.ui.spinner('white'));
       await action_submit_or_request_attestation($(self).attr('email')!);
