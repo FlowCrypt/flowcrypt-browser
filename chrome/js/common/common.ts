@@ -11,7 +11,8 @@ declare let $_HOST_html_to_text: (html: string) => string;
 declare let openpgp: typeof OpenPGP;
 declare let mnemonic: (hex: string) => string;
 declare let zxcvbn: Function; // tslint:disable-line:ban-types
-declare module 'dompurify';
+// declare module 'dompurify'; // useful if on @types repo
+// declare let dompurify: typeof DOMPurify;
 
 class UnreportableError extends Error {}
 class TabIdRequiredError extends Error {}
@@ -207,24 +208,23 @@ let tool = {
       }
       return id;
     },
+    regex_escape: (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
     html_attribute_encode: (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values)),
     html_attribute_decode: (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
     // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
     html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
     html_sanitize: (dirty_html: string): string => { // originaly text_or_html
-      return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true});
+      return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp()});
     },
     html_sanitize_keep_basic_tags: (dirty_html: string): string => { // originaly text_or_html
-      // @ts-ignore - https://github.com/cure53/DOMPurify/issues/305
       DOMPurify.removeAllHooks();
       DOMPurify.addHook('afterSanitizeAttributes', (node) => {
         if ('target' in node) {
           (node as Element).setAttribute('target', '_blank');
         }
       });
-      let clean_html = DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true});
-      // @ts-ignore - https://github.com/cure53/DOMPurify/issues/305
+      let clean_html = DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true, ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp()});
       DOMPurify.removeAllHooks();
       return clean_html;
     },
@@ -2438,6 +2438,17 @@ let tool = {
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
       str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'],
+      str_sanitize_HREF_REGEX_CACHE: null as null|RegExp,
+    },
+    str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension
+      if(tool._.var.str_sanitize_HREF_REGEX_CACHE === null) {
+        if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
+          tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https):|${tool.str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+        } else {
+          tool._.var.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+        }
+      }
+      return tool._.var.str_sanitize_HREF_REGEX_CACHE;
     },
     // meant to be used privately within this file like so: tool._.???
     str_base64url_utf_encode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
