@@ -345,15 +345,15 @@ let tool = {
       }
       return str;
     },
-    extract_cryptup_attachments: (decrypted_content: string, cryptup_attachments: Attachment[]) => {
+    extract_fc_attachments: (decrypted_content: string, fc_attachments: Attachment[]) => {
       if (tool.value('cryptup_file').in(decrypted_content)) {
         decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, found_link => {
           let element = $(found_link);
-          let cryptup_data = element.attr('cryptup-data');
-          if (cryptup_data) {
-            let a: FlowCryptAttachmentLinkData = tool.str.html_attribute_decode(cryptup_data);
+          let fc_data = element.attr('cryptup-data');
+          if (fc_data) {
+            let a: FlowCryptAttachmentLinkData = tool.str.html_attribute_decode(fc_data);
             if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
-              cryptup_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+              fc_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
             }
           }
           return '';
@@ -361,16 +361,16 @@ let tool = {
       }
       return decrypted_content;
     },
-    extract_cryptup_reply_token: (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
-      let cryptup_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
-      if (cryptup_token_element.length) {
-        let cryptup_data = cryptup_token_element.attr('cryptup-data');
-        if (cryptup_data) {
-          return tool.str.html_attribute_decode(cryptup_data);
+    extract_fc_reply_token: (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
+      let fc_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
+      if (fc_token_element.length) {
+        let fc_data = fc_token_element.attr('cryptup-data');
+        if (fc_data) {
+          return tool.str.html_attribute_decode(fc_data);
         }
       }
     },
-    strip_cryptup_reply_token: (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, ''),
+    strip_fc_reply_token: (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, ''),
     strip_public_keys: (decrypted_content: string, found_public_keys: string[]) => {
       let {blocks, normalized} = tool.crypto.armor.detect_blocks(decrypted_content);
       for (let block of blocks) {
@@ -2188,7 +2188,7 @@ let tool = {
         },
       },
     },
-    cryptup: {
+    fc: {
       url: (type: string, variable='') => {
         return ({
           'api': 'https://flowcrypt.com/api/',
@@ -2198,11 +2198,11 @@ let tool = {
           'web': 'https://flowcrypt.com/',
         } as Dict<string>)[type];
       },
-      help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => tool._.api_cryptup_call('help/feedback', {
+      help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => tool._.api_fc_call('help/feedback', {
         email: account_email,
         message,
       }),
-      help_uninstall: (email: string, client: string) => tool._.api_cryptup_call('help/uninstall', {
+      help_uninstall: (email: string, client: string) => tool._.api_fc_call('help/uninstall', {
         email,
         client,
         metrics: null,
@@ -2211,7 +2211,7 @@ let tool = {
         let auth_info = await Store.auth_info();
         let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
         let account = auth_info.account_email || account_email;
-        let response: ApirFcAccountLogin = await tool._.api_cryptup_call('account/login', {
+        let response: ApirFcAccountLogin = await tool._.api_fc_call('account/login', {
           account,
           uuid,
           token,
@@ -2222,13 +2222,13 @@ let tool = {
         await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription});
         return {verified: response.verified === true, subscription: response.subscription};
       },
-      account_check: (emails: string[]) => tool._.api_cryptup_call('account/check', {
+      account_check: (emails: string[]) => tool._.api_fc_call('account/check', {
         emails,
       }) as Promise<ApirFcAccountCheck>,
       account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
         let emails = await Store.account_emails_get();
         if (emails.length) {
-          let response = await tool.api.cryptup.account_check(emails);
+          let response = await tool.api.fc.account_check(emails);
           let auth_info = await Store.auth_info();
           let subscription = await Store.subscription();
           let local_storage_update: GlobalStore = {};
@@ -2271,11 +2271,11 @@ let tool = {
             request[k] = update_values[k];
           }
         }
-        return await tool._.api_cryptup_call('account/update', request);
+        return await tool._.api_fc_call('account/update', request);
       },
       account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
         let auth_info = await Store.auth_info();
-        let response: ApirFcAccountSubscribe = await tool._.api_cryptup_call('account/subscribe', {
+        let response: ApirFcAccountSubscribe = await tool._.api_fc_call('account/subscribe', {
           account: auth_info.account_email,
           uuid: auth_info.uuid,
           method,
@@ -2289,18 +2289,18 @@ let tool = {
         let response: ApirFcMessagePresignFiles;
         let lengths = attachments.map(a => a.length);
         if (!auth_method) {
-          response = await tool._.api_cryptup_call('message/presign_files', {
+          response = await tool._.api_fc_call('message/presign_files', {
             lengths,
           });
         } else if (auth_method === 'uuid') {
           let auth_info = await Store.auth_info();
-          response = await tool._.api_cryptup_call('message/presign_files', {
+          response = await tool._.api_fc_call('message/presign_files', {
             account: auth_info.account_email,
             uuid: auth_info.uuid,
             lengths,
           });
         } else {
-          response = await tool._.api_cryptup_call('message/presign_files', {
+          response = await tool._.api_fc_call('message/presign_files', {
             message_token_account: auth_method.account,
             message_token: auth_method.token,
             lengths,
@@ -2311,7 +2311,7 @@ let tool = {
         }
         throw new Error('Could not verify that all files were uploaded properly, please try again.');
       },
-      message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_cryptup_call('message/confirm_files', {
+      message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_fc_call('message/confirm_files', {
         identifiers,
       }),
       message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
@@ -2320,21 +2320,21 @@ let tool = {
         }
         let content = new Attachment({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
         if (!auth_method) {
-          return await tool._.api_cryptup_call('message/upload', {content}, 'FORM');
+          return await tool._.api_fc_call('message/upload', {content}, 'FORM');
         } else {
           let auth_info = await Store.auth_info();
-          return await tool._.api_cryptup_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
+          return await tool._.api_fc_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
         }
       },
       message_token: async (): Promise<ApirFcMessageToken> => {
         let auth_info = await Store.auth_info();
-        return await tool._.api_cryptup_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
+        return await tool._.api_fc_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
       },
       message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
         let auth_info = await Store.auth_info();
-        return await tool._.api_cryptup_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
+        return await tool._.api_fc_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
       },
-      message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_cryptup_call('message/reply', {
+      message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_fc_call('message/reply', {
         short,
         token,
         from,
@@ -2342,16 +2342,16 @@ let tool = {
         subject,
         message,
       }),
-      message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => tool._.api_cryptup_call('message/contact', {
+      message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => tool._.api_fc_call('message/contact', {
         message_token_account: message_token.account,
         message_token: message_token.token,
         sender,
         message,
       }),
-      link_message: (short: string): Promise<ApirFcLinkMessage> => tool._.api_cryptup_call('link/message', {
+      link_message: (short: string): Promise<ApirFcLinkMessage> => tool._.api_fc_call('link/message', {
         short,
       }),
-      link_me: (alias: string): Promise<ApirFcLinkMe> => tool._.api_cryptup_call('link/me', {
+      link_me: (alias: string): Promise<ApirFcLinkMe> => tool._.api_fc_call('link/me', {
         alias,
       }),
     },
@@ -2906,7 +2906,7 @@ let tool = {
     },
     api_attester_packet_armor: (content_text: string) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
     api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
-    api_cryptup_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(tool.api.cryptup.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
+    api_fc_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(tool.api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
     /* [BARE_ENGINE_OMIT_END] */
   },
   catch: { // web and extension code

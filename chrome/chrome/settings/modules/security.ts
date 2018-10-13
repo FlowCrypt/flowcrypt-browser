@@ -24,7 +24,7 @@ tool.catch.try( async () => {
   let on_default_expire_user_change = async () => {
     tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await tool.api.cryptup.account_update({default_message_expire: Number($('.default_message_expire').val())});
+    await tool.api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
   };
 
@@ -77,7 +77,7 @@ tool.catch.try( async () => {
   if (subscription.active) {
     tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
     try {
-      let response = await tool.api.cryptup.account_update();
+      let response = await tool.api.fc.account_update();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(on_default_expire_user_change);

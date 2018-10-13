@@ -68,7 +68,7 @@ tool.catch.try(async () => {
   };
 
   try {
-    await tool.api.cryptup.account_check_sync();
+    await tool.api.fc.account_check_sync();
   } catch (e) {
     if (tool.api.error.is_auth_error(e)) {
       // todo - handle auth error - add device
@@ -160,7 +160,7 @@ tool.catch.try(async () => {
       $('.action_add_device, .action_close').addClass('long');
       // try API call auth in case it got fixed meanwhile
       try {
-        await tool.api.cryptup.account_update();
+        await tool.api.fc.account_update();
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${account_email}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');

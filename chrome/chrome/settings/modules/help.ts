@@ -35,7 +35,7 @@ tool.catch.try(async () => {
     await tool.ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + tool.env.browser().name +  ' ' +  tool.catch.version();
     try {
-      let r = await tool.api.cryptup.help_feedback(my_email, msg);
+      let r = await tool.api.fc.help_feedback(my_email, msg);
       if (r.sent) {
         $(button).text('sent!');
         alert(`Message sent! You will find your response in ${my_email}, check your email later. Thanks!`);

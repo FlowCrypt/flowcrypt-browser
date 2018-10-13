@@ -93,7 +93,7 @@ class Composer {
   private BTN_WRONG_ENTRY = 'Re-enter recipient..';
   private BTN_LOADING = 'Loading..';
   private BTN_SENDING = 'Sending..';
-  private CRYPTUP_WEB_URL = 'https://flowcrypt.com'; // todo - should use tool.api.url()
+  private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use tool.api.url()
 
   private last_draft = '';
   private can_read_emails: boolean;
@@ -624,7 +624,7 @@ class Composer {
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
     if (attachments.length && challenge) { // these will be password encrypted attachments
       this.button_update_timeout = window.setTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
-      let attachment_admin_codes = await this.upload_attachments_to_cryptup(attachments, subscription);
+      let attachment_admin_codes = await this.upload_attachments_to_fc(attachments, subscription);
       plaintext = this.add_uploaded_file_links_to_message_body(plaintext, attachments);
       await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
     } else {
@@ -678,15 +678,15 @@ class Composer {
     }
   }
 
-  private upload_attachments_to_cryptup = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
+  private upload_attachments_to_fc = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: ApirFcMessagePresignFiles = await tool.api.cryptup.message_presign_files(attachments, subscription.active ? 'uuid' : null);
+      let pf_response: ApirFcMessagePresignFiles = await tool.api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for (let i of pf_response.approvals.keys()) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
       }
       await tool.api.aws.s3_upload(items, this.render_upload_progress);
-      let {admin_codes, confirmed} = await tool.api.cryptup.message_confirm_files(items.map((item) => item.fields.key));
+      let {admin_codes, confirmed} = await tool.api.fc.message_confirm_files(items.map((item) => item.fields.key));
       if(!confirmed || confirmed.length !== items.length) {
         throw new Error('Attachments did not upload properly, please try again');
       }
@@ -728,7 +728,7 @@ class Composer {
     }
     let response;
     try {
-      response = await tool.api.cryptup.message_token();
+      response = await tool.api.fc.message_token();
     } catch (message_token_error) {
       if (message_token_error.internal === 'auth') {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
@@ -787,7 +787,7 @@ class Composer {
     if (challenge) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      let {short, admin_code} = await tool.api.cryptup.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null);
+      let {short, admin_code} = await tool.api.fc.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null);
       body = this.format_password_protected_email(short, body, armored_pubkeys);
       body = this.format_email_text_footer(body);
       await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
@@ -1427,7 +1427,7 @@ class Composer {
   }
 
   private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) => {
-    const decrypt_url = this.CRYPTUP_WEB_URL + '/' + short_id;
+    const decrypt_url = this.FC_WEB_URL + '/' + short_id;
     const a = '<a href="' + tool.str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
@@ -1441,9 +1441,9 @@ class Composer {
     html.push('<div style="opacity: 0;">' + tool.crypto.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.message_encrypted_html + a + '<br><br>');
     html.push(Lang.compose.alternatively_copy_paste + tool.str.html_escape(decrypt_url) + '<br><br><br>');
-    const html_cryptup_web_url_link = '<a href="' + tool.str.html_escape(this.CRYPTUP_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(this.CRYPTUP_WEB_URL) + '</a>';
+    const html_fc_web_url_link = '<a href="' + tool.str.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + tool.str.html_escape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.CRYPTUP_WEB_URL, html_cryptup_web_url_link).replace(/\n/g, '<br>\n');
+      const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + html_pgp_message + '</div>');
       text.push(original_body['text/plain']);
     }

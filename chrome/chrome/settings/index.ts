@@ -135,7 +135,7 @@ tool.catch.try(async () => {
     let auth_info = await Store.auth_info();
     if (auth_info.account_email) { // have auth email set
       try {
-        let response = await tool.api.cryptup.account_update();
+        let response = await tool.api.fc.account_update();
         $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:ok`);
         if (response && response.result && response.result.alias) {
           status_container.find('.status-indicator-text').css('display', 'none');
@@ -207,7 +207,7 @@ tool.catch.try(async () => {
   let render_subscription_status_header = async () => {
     let liveness = '';
     try {
-      await tool.api.cryptup.account_check_sync();
+      await tool.api.fc.account_check_sync();
       liveness = 'live';
     } catch (e) {
       if (!tool.api.error.is_network_error(e)) {

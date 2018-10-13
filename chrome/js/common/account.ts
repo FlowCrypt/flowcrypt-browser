@@ -24,7 +24,7 @@ class FlowCryptAccount {
 
   subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
     this.event_handlers.render_status_text(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-    await tool.api.cryptup.account_check_sync();
+    await tool.api.fc.account_check_sync();
     try {
       return await this.do_subscribe(chosen_product, source);
     } catch (error) {
@@ -39,7 +39,7 @@ class FlowCryptAccount {
 
   register = async (account_email: string) => { // register_and_attempt_to_verify
     this.event_handlers.render_status_text('registering..', true);
-    let response = await tool.api.cryptup.account_login(account_email);
+    let response = await tool.api.fc.account_login(account_email);
     if (response.verified) {
       return response;
     }
@@ -61,7 +61,7 @@ class FlowCryptAccount {
     let last_token_error;
     for (let token of tokens) {
       try {
-        return await tool.api.cryptup.account_login(account_email, token);
+        return await tool.api.fc.account_login(account_email, token);
       } catch (error) {
         if (error.internal === 'token') {
           last_token_error = error;
@@ -97,7 +97,7 @@ class FlowCryptAccount {
   private do_subscribe = async (chosen_product: Product, source:string|null=null) => {
     await Store.remove(null, ['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
-    let response = await tool.api.cryptup.account_subscribe(chosen_product.id!, chosen_product.method!, source);
+    let response = await tool.api.fc.account_subscribe(chosen_product.id!, chosen_product.method!, source);
     if (response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
       return response.subscription;
     }

@@ -29,7 +29,7 @@ tool.catch.try(async () => {
 
   let render_fields = (result: ApirFcAccountUpdate$result) => {
     if (result.alias) {
-      let me = tool.api.cryptup.url('me', result.alias);
+      let me = tool.api.fc.url('me', result.alias);
       let me_escaped = tool.str.html_escape(me);
       let me_escaped_display = tool.str.html_escape(me.replace('https://', ''));
       tool.ui.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
@@ -61,7 +61,7 @@ tool.catch.try(async () => {
     try {
       let alias = await find_available_alias(auth_info.account_email!);
       let initial = {alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
-      let response = await tool.api.cryptup.account_update(initial);
+      let response = await tool.api.fc.account_update(initial);
       if (!response.updated) {
         alert('Failed to enable your Contact Page. Please try again');
       }
@@ -85,7 +85,7 @@ tool.catch.try(async () => {
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.as_text());
       }
-      await tool.api.cryptup.account_update(update);
+      await tool.api.fc.account_update(update);
       window.location.reload();
     }
   }));
@@ -100,7 +100,7 @@ tool.catch.try(async () => {
     let i = 0;
     while(true) {
       alias += (i || '');
-      let response = await tool.api.cryptup.link_me(alias);
+      let response = await tool.api.fc.link_me(alias);
       if (!response.profile) {
         return alias;
       }
@@ -110,7 +110,7 @@ tool.catch.try(async () => {
 
   tool.ui.sanitize_render(S.cached('status'), 'Loading..' + tool.ui.spinner('green'));
   try {
-    let response = await tool.api.cryptup.account_update();
+    let response = await tool.api.fc.account_update();
     render_fields(response.result);
   } catch (e) {
     if (e.internal === 'auth') {

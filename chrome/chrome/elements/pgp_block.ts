@@ -233,7 +233,7 @@ tool.catch.try(async () => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
     tool.ui.sanitize_render($(self).parent(), 'Updating..' + tool.ui.spinner('green'));
     try {
-      let r = await tool.api.cryptup.message_expiration(admin_codes, n_days);
+      let r = await tool.api.fc.message_expiration(admin_codes, n_days);
       if (r.updated) {
         window.location.reload();
       } else {
@@ -259,17 +259,17 @@ tool.catch.try(async () => {
       decrypted_content = tool.str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
     if (!tool.mime.resembles_message(decrypted_content)) {
-      let cryptup_attachments: Attachment[] = [];
-      decrypted_content = tool.str.extract_cryptup_attachments(decrypted_content, cryptup_attachments);
-      decrypted_content = tool.str.strip_cryptup_reply_token(decrypted_content);
+      let fc_attachments: Attachment[] = [];
+      decrypted_content = tool.str.extract_fc_attachments(decrypted_content, fc_attachments);
+      decrypted_content = tool.str.strip_fc_reply_token(decrypted_content);
       decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
       if (public_keys.length) {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys});
       }
       decrypted_content = tool.str.html_escape(decrypted_content);
       await render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message as string), false);
-      if (cryptup_attachments.length) {
-        render_inner_attachments(cryptup_attachments);
+      if (fc_attachments.length) {
+        render_inner_attachments(fc_attachments);
       }
       if (password_message_link_result && password_message_link_result.expire) {
         render_future_expiration(password_message_link_result.expire);
@@ -441,7 +441,7 @@ tool.catch.try(async () => {
       } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from FlowCrypt API
         render_text('Loading message...');
         await recover_stored_admin_codes();
-        let m_link_result = await tool.api.cryptup.link_message(url_params.short as string);
+        let m_link_result = await tool.api.fc.link_message(url_params.short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
           let download_uint_result = await tool.file.download_as_uint8(m_link_result.url, null);

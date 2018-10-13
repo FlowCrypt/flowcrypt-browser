@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   tool.ui.sanitize_render('.loading', tool.ui.spinner('green', 'large_spinner'));
 
-  await tool.api.cryptup.account_check_sync();
+  await tool.api.fc.account_check_sync();
   let auth_info = await Store.auth_info();
   let subscription = await Store.subscription();
 
