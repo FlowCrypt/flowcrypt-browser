@@ -22,8 +22,8 @@ a:focus { outline: none !important; }
 .line.pad_links a { padding-right: 20px; }
 .hover_underline { text-decoration: none; }
 .hover_underline:hover { text-decoration: underline; cursor: pointer; }
-.green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; }
-.colored_label { border-radius: 10px; padding: 5px 10px;}
+.green_label, .orange_label, .red_label, .gray_label { display: inline-block; min-width: 150px; padding: 0 5px 1px 5px; text-transform: uppercase; border-radius: 4px; 
+  padding: 2px 6px; font-size: 14px; font-weight: bold; margin-right: 10px; }
 .green_label.short, .orange_label.short, .red_label.short, .gray_label.short { min-width: 0; }
 .green_label { color: white; background-color: #31A217; }
 .orange_label { color: white; background-color: #d18826; }
