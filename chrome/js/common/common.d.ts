@@ -260,6 +260,8 @@ interface StandardError {
     stack?: string;
 }
 
+interface StandardErrorResponse {error: StandardError;}
+
 type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';

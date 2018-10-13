@@ -17,16 +17,19 @@ tool.catch.try(async () => {
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
 
-  let handle_error_response = (error: StandardError) => {
-    if (error.internal === 'email') {
+  let handle_error_response = (e: Thrown) => {
+    if(tool.api.error.is_network_error(e)) {
+      tool.ui.sanitize_render('#content', `Could not complete action: network error. ${tool.ui.retry_link()}`);
+    } else if (tool.api.error.is_auth_error(e)) {
+      tool.ui.sanitize_render('#content', `Could not complete action: auth error. Please write us at human@flowcrypt.com to get this resolved. ${tool.ui.retry_link()}<br><br><pre>${JSON.stringify(e, null, 2)}</pre>`);
+    } else if(e.internal === 'email' || e.error && e.error.internal === 'email') {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
-      render_status_text(error.message);
+      render_status_text(e.message);
       button_restore();
     } else {
-      alert('Could not complete action: ' + error.message);
-      tool.catch.report('problem during subscribe.js', error);
-      window.location.reload();
+      tool.ui.sanitize_render('#content', `Could not complete action: unknown error. Please write us at human@flowcrypt.com to get this resolved. ${tool.ui.retry_link()}<br><br><pre>${JSON.stringify(e, null, 2)}</pre>`);
+      tool.catch.report('problem during subscribe.js', e);
     }
   };
 

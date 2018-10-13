@@ -27,13 +27,13 @@ class FlowCryptAccount {
     await tool.api.fc.account_check_sync();
     try {
       return await this.do_subscribe(chosen_product, source);
-    } catch (error) {
-      if (error.internal === 'auth') {
+    } catch (e) {
+      if (e.internal === 'auth') {
         await this.save_subscription_attempt(chosen_product, source);
         let response = await this.register(account_email);
         return await this.do_subscribe(chosen_product, source);
       }
-      throw error;
+      throw e;
     }
   }
 
