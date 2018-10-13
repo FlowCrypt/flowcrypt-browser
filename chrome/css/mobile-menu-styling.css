@@ -58,6 +58,9 @@
   table#compose th {
     width: 100% !important;
   }
+  #view_contact .key_dump {
+    white-space: normal;
+  }
 }
 
 @media (max-width: 450px) {
@@ -317,15 +320,16 @@
     padding: 5px;
     text-align: center;
   }
+
   body#settings .pubkeys.page #emails td:nth-child(2),
   body#settings .pubkeys.page #emails td:nth-child(3),
   body#settings .pubkeys.page #emails td:nth-child(4) {
-    float: left;
-    text-align: center!important;
-    width: 33%;
+    width: 33% !important;
+    padding: 0 !important;
   }
+
   body#settings .pubkeys.page #emails tr {
-    margin: 10px;
+    padding-bottom: 50px;
   }
   body#settings .pubkeys.page #emails tr[email] {
     border-radius: 4px;
@@ -361,4 +365,5 @@
   body#settings > div#content textarea {
     width: 100%;
   }
+
 }
