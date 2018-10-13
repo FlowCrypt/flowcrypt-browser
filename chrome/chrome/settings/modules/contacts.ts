@@ -39,10 +39,12 @@ tool.catch.try(async () => {
     $('h1').text('Contacts and their Public Keys');
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
 
+    let table_contents = '';
     for (let c of contacts) {
       let e = tool.str.html_escape(c.email);
-      tool.ui.sanitize_append('table#emails', `<tr email="${e}"><td>${e}</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>`);
+      table_contents += `<tr email="${e}"><td>${e}</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>`;
     }
+    tool.ui.sanitize_replace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${table_contents}</table>`);
 
     $('a.action_show').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
       let [contact] = await Store.db_contact_get(null, [$(self).closest('tr').attr('email')!]); // defined above

@@ -215,7 +215,11 @@ let tool = {
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
     html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
     html_sanitize: (dirty_html: string): string => { // originaly text_or_html
-      return DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp()});
+      return DOMPurify.sanitize(dirty_html, {
+        SAFE_FOR_JQUERY: true,
+        ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
+        ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
+      });
     },
     html_sanitize_keep_basic_tags: (dirty_html: string): string => { // originaly text_or_html
       DOMPurify.removeAllHooks();
@@ -224,7 +228,12 @@ let tool = {
           (node as Element).setAttribute('target', '_blank');
         }
       });
-      let clean_html = DOMPurify.sanitize(dirty_html, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS, KEEP_CONTENT: true, ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp()});
+      let clean_html = DOMPurify.sanitize(dirty_html, {
+        SAFE_FOR_JQUERY: true,
+        ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
+        ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS,
+        ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
+      });
       DOMPurify.removeAllHooks();
       return clean_html;
     },
@@ -243,7 +252,7 @@ let tool = {
       let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
       text = text.replace(/\n{2,}/g, '\n\n');
       // not all tags were removed above. Remove all remaining tags
-      text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: [], KEEP_CONTENT: true});
+      text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
       text = text.trim();
       if(output_newline !== '\n') {
         text = text.replace(/\n/g, output_newline);
@@ -2446,6 +2455,7 @@ let tool = {
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
       str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'],
+      str_sanitize_ADD_ATTR: ['email', 'page', 'addurltext', 'longid'],
       str_sanitize_HREF_REGEX_CACHE: null as null|RegExp,
     },
     str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension
