@@ -18,6 +18,9 @@
     position: relative;
     text-align: center;
   }
+  body#settings #view_contact pre {
+    white-space: normal;
+  }
   .featherlight-inner {
     width: 100%;
   }
