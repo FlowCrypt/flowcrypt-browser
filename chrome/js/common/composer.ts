@@ -694,11 +694,11 @@ class Composer {
         attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
       }
       return admin_codes;
-    } catch (error) {
-      if (error && typeof error === 'object' && error.internal === 'auth') {
-        throw error;
+    } catch (e) {
+      if (tool.api.error.is_auth_error(e)) {
+        throw e;
       } else {
-        throw new ComposerNetworkError(error && typeof error === 'object' && error.message ? error.message : 'Some files failed to upload, please try again');
+        throw new ComposerNetworkError(e && typeof e === 'object' && e.message ? e.message : 'Some files failed to upload, please try again');
       }
     }
   }
@@ -730,12 +730,12 @@ class Composer {
     try {
       response = await tool.api.fc.message_token();
     } catch (message_token_error) {
-      if (message_token_error.internal === 'auth') {
+      if (tool.api.error.is_auth_error(message_token_error)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
           this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
         }
         throw new ComposerResetBtnTrigger();
-      } else if (message_token_error.internal === 'subscription') {
+      } else if (tool.api.error.is_standard_error(message_token_error, 'subscription')) {
         return plaintext;
       } else {
         throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + message_token_error.message);

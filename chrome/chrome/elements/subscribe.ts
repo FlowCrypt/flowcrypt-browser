@@ -21,14 +21,14 @@ tool.catch.try(async () => {
     if(tool.api.error.is_network_error(e)) {
       tool.ui.sanitize_render('#content', `Could not complete action: network error. ${tool.ui.retry_link()}`);
     } else if (tool.api.error.is_auth_error(e)) {
-      tool.ui.sanitize_render('#content', `Could not complete action: auth error. Please write us at human@flowcrypt.com to get this resolved. ${tool.ui.retry_link()}<br><br><pre>${JSON.stringify(e, null, 2)}</pre>`);
-    } else if(e.internal === 'email' || e.error && e.error.internal === 'email') {
+      tool.ui.sanitize_render('#content', `Could not complete action: auth error. Please write us at human@flowcrypt.com to get this resolved. ${tool.ui.retry_link()}<br><br><pre>${tool.str.html_escape(JSON.stringify(e, null, 2))}</pre>`);
+    } else if(tool.api.error.is_standard_error(e, 'email')) {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
-      render_status_text(e.message);
+      render_status_text(e.message || e.error.message);
       button_restore();
     } else {
-      tool.ui.sanitize_render('#content', `Could not complete action: unknown error. Please write us at human@flowcrypt.com to get this resolved. ${tool.ui.retry_link()}<br><br><pre>${JSON.stringify(e, null, 2)}</pre>`);
+      tool.ui.sanitize_render('#content', `Could not complete action: unknown error. Please write us at human@flowcrypt.com to get this resolved. ${tool.ui.retry_link()}<br><br><pre>${tool.str.html_escape(JSON.stringify(e, null, 2))}</pre>`);
       tool.catch.report('problem during subscribe.js', e);
     }
   };

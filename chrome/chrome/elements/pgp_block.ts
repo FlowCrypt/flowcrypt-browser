@@ -243,8 +243,9 @@ tool.catch.try(async () => {
       if (tool.api.error.is_auth_error(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
         tool.browser.message.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
+      } else {
+        tool.catch.report('error when extending message expiration', e);
       }
-      tool.catch.report('error when extending message expiration', e);
       tool.ui.sanitize_render($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
       let el = await tool.ui.event.clicked('.retry_expiration_change');
       await handle_extend_message_expiration_clicked(el);
@@ -471,7 +472,7 @@ tool.catch.try(async () => {
         await render_error(`Could not load message due to missing auth. ${tool.ui.retry_link()}`);
       } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(url_params.is_outgoing), account_email, parent_tab_id, frame_id: url_params.frame_id });
-      } else if (typeof e === 'object' && e.internal === 'format') {
+      } else if (tool.api.error.is_standard_error(e, 'format')) {
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open + '\n\n' + String(e), e.data);
       } else {
         tool.catch.handle_exception(e);

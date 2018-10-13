@@ -1651,7 +1651,7 @@ let tool = {
           return true; // openpgp.js uses fetch()... which produces these errors
         }
         if (e && typeof e === 'object') {
-          if (e.internal === 'network') { // StandardError
+          if (tool.api.error.is_standard_error(e, 'network')) { // StandardError
             return true;
           }
           if (e.status === 0 && e.statusText === 'error') { // $.ajax network error
@@ -1662,13 +1662,21 @@ let tool = {
       },
       is_auth_error: (e: Thrown) => {
         if (e && typeof e === 'object') {
-          if(e.error && typeof e.error === 'object' && e.error.internal === 'auth') {
+          if(tool.api.error.is_standard_error(e, 'auth')) {
             return true; // API auth error response
           }
-          if (e.internal === 'auth') { // StandardError
+          if (e.status === 401) { // $.ajax auth error
             return true;
           }
-          if (e.status === 401) { // $.ajax auth error
+        }
+        return false;
+      },
+      is_standard_error: (e: Thrown, internal_type: string) => {
+        if(e && typeof e === 'object') {
+          if(e.internal === internal_type) {
+            return true;
+          }
+          if(e.error && e.error === 'object' && e.error.internal === internal_type) {
             return true;
           }
         }

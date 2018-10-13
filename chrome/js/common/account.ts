@@ -28,7 +28,7 @@ class FlowCryptAccount {
     try {
       return await this.do_subscribe(chosen_product, source);
     } catch (e) {
-      if (e.internal === 'auth') {
+      if (tool.api.error.is_auth_error(e)) {
         await this.save_subscription_attempt(chosen_product, source);
         let response = await this.register(account_email);
         return await this.do_subscribe(chosen_product, source);
@@ -62,11 +62,11 @@ class FlowCryptAccount {
     for (let token of tokens) {
       try {
         return await tool.api.fc.account_login(account_email, token);
-      } catch (error) {
-        if (error.internal === 'token') {
-          last_token_error = error;
+      } catch (e) {
+        if (tool.api.error.is_standard_error(e, 'token')) {
+          last_token_error = e;
         } else {
-          throw error;
+          throw e;
         }
       }
     }

@@ -113,7 +113,7 @@ tool.catch.try(async () => {
     let response = await tool.api.fc.account_update();
     render_fields(response.result);
   } catch (e) {
-    if (e.internal === 'auth') {
+    if (tool.api.error.is_auth_error(e)) {
       tool.ui.sanitize_render(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
     } else {
