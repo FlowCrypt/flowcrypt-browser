@@ -352,4 +352,39 @@ class Settings {
     }
   }
 
+  static new_google_account_authentication_prompt = async (tab_id: string, account_email?: string, omit_read_scope=false) => {
+    let response = await tool.api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
+    if (response && response.success === true && response.account_email) {
+      await Store.account_emails_add(response.account_email);
+      let storage = await Store.get_account(response.account_email, ['setup_done']);
+      if (storage.setup_done) { // this was just an additional permission
+        alert('You\'re all set.');
+        window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
+      } else {
+        await Store.set(response.account_email, {email_provider: 'gmail'});
+        window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
+      }
+    } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+      Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
+    } else {
+      tool.catch.log('failed to log into google', response);
+      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com to fix it.');
+      window.location.reload();
+    }
+  }
+
+  static update_profile_picture_if_missing = async (account_email: string) => {
+    let storage = await Store.get_account(account_email, ['setup_done', 'picture']);
+    if(storage.setup_done && !storage.picture) {
+      try {
+        let {image} = await tool.api.google.plus.people_me(account_email);
+        await Store.set(account_email, {picture: image.url});
+      } catch(e) {
+        if(!tool.api.error.is_auth_popup_needed(e) && !tool.api.error.is_auth_error(e) && !tool.api.error.is_network_error(e)) {
+          tool.catch.handle_exception(e);
+        }
+      }
+    }
+  }
+
 }

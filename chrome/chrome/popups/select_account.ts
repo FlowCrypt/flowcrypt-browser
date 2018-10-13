@@ -16,17 +16,30 @@ tool.catch.try(async () => {
     throw new Error('unknown action: ' + url_params.action);
   }
 
-  let account_storages = await Store.get_accounts(await Store.account_emails_get(), ['setup_done']);
+  let account_storages = await Store.get_accounts(await Store.account_emails_get(), ['setup_done', 'picture']);
   let ul_emails = '';
   for (let email of Object.keys(account_storages)) {
     if (account_storages[email].setup_done === true) {
-      ul_emails += `<li><a class="button gray2 long" href="#" email="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</a></li>`;
+      let picture_escaped = tool.str.html_escape(account_storages[email].picture || '/img/svgs/profile-icon.svg');
+      let email_escaped = tool.str.html_escape(email);
+      ul_emails += `<li><a class="button gray2 long" href="#" email="${email_escaped}"><img class="picture" src="${picture_escaped}">${email_escaped}</a></li>`;
+      Settings.update_profile_picture_if_missing(email).catch(tool.catch.handle_exception); // will show next time page is rendered
     }
   }
   tool.ui.sanitize_render('ul.emails', ul_emails).find('a').click(tool.ui.event.handle(async target => {
     await tool.browser.message.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
     window.close();
   }));
+
+  $(".picture").on('error', tool.ui.event.handle(self => {
+    $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+  }));
+
+  $('.action_add_account').click(tool.ui.event.handle(async self => {
+    await tool.browser.message.send_await(null, 'settings', { add_new_account: true });
+    window.close();
+  }));
+
   $('html, body').css('height', $('.content').height()! + (tool.env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
 
 })();

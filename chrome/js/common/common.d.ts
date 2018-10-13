@@ -463,6 +463,7 @@ interface AccountStore extends BaseStore {
     successfully_received_at_leat_one_message?: boolean;
     notification_setup_done_seen?: boolean;
     attest_log?: StoredAttestLog[];
+    picture?: string; // google image
 
     // temporary
     tmp_submit_main?: boolean;

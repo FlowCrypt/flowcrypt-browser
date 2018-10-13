@@ -21,7 +21,7 @@ chrome.runtime.onInstalled.addListener(event => {
   await Store.set(null, { version: tool.catch.version('int') as number|null });
   let storage = await Store.get_global(['settings_seen', 'errors']);
 
-  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null) => {
+  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null, add_new_account=false) => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
     let opened_tab = await get_cryptup_settings_tab_id_if_open();
     let open_tab = (url: string) => {
@@ -34,14 +34,16 @@ chrome.runtime.onInstalled.addListener(event => {
     let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
       open_tab(tool.env.url_create(base_path, { account_email, page, page_url_params}));
+    } else if(add_new_account) {
+      open_tab(tool.env.url_create(base_path, { add_new_account }));
     } else {
       let account_emails = await Store.account_emails_get();
       open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
     }
   };
 
-  let open_settings_page_handler: BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>}, sender, respond) => {
-    await open_settings_page(message.path, message.account_email, message.page, message.page_url_params);
+  let open_settings_page_handler: BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>, add_new_account?: boolean}, sender, respond) => {
+    await open_settings_page(message.path, message.account_email, message.page, message.page_url_params, message.add_new_account === true);
     respond();
   };
 

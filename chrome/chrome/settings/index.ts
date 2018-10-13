@@ -4,10 +4,11 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced']);
+  let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
   let account_email = url_params.account_email as string|undefined;
   let page_url_params = (typeof url_params.page_url_params === 'string') ? JSON.parse(url_params.page_url_params) : null;
   let account_emails = await Store.account_emails_get();
+  let add_new_account = url_params.add_new_account === true;
 
   // let microsoft_auth_attempt = {};
 
@@ -64,7 +65,7 @@ tool.catch.try(async () => {
     },
     open_google_auth_dialog: (data) => {
       $('.featherlight-close').click();
-      new_google_account_authentication_prompt((data || {}).account_email, (data || {}).omit_read_scope).catch(tool.catch.handle_exception);
+      Settings.new_google_account_authentication_prompt(tab_id, (data || {}).account_email, (data || {}).omit_read_scope).catch(tool.catch.handle_exception);
     },
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
@@ -90,13 +91,22 @@ tool.catch.try(async () => {
   };
 
   let initialize = async () => {
-    if (account_email) {
+    if(add_new_account) {
+      $('.show_if_setup_not_done').css('display', 'initial');
+      $('.hide_if_setup_not_done').css('display', 'none');
+      await Settings.new_google_account_authentication_prompt(tab_id);
+    } else if (account_email) {
       $('.email-address').text(account_email);
       $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
-      let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider']);
+      let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
         check_google_account().catch(tool.catch.handle_exception);
         check_flowcrypt_account_and_subscription_and_contact_page().catch(tool.catch.handle_exception);
+        if(storage.picture) {
+          $('img.main-profile-img').attr('src', storage.picture).on('error', tool.ui.event.handle(self => {
+            $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+          }));
+        }
         if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
@@ -179,6 +189,7 @@ tool.catch.try(async () => {
   let check_google_account = async () => {
     try {
       let me = await tool.api.gmail.users_me_profile(account_email!);
+      Settings.update_profile_picture_if_missing(account_email!).catch(tool.catch.handle_exception);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if(me.emailAddress !== account_email) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
@@ -191,10 +202,10 @@ tool.catch.try(async () => {
     } catch (e) {
       if (tool.api.error.is_auth_popup_needed(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
-          .off().click(tool.ui.event.handle(() => new_google_account_authentication_prompt(account_email)));
+          .off().click(tool.ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
       } else if (tool.api.error.is_auth_error(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
-          .off().click(tool.ui.event.handle(() => new_google_account_authentication_prompt(account_email)));
+          .off().click(tool.ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
       } else if (tool.api.error.is_network_error(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
@@ -267,27 +278,6 @@ tool.catch.try(async () => {
     }));
   };
 
-  let new_google_account_authentication_prompt = async (account_email?: string, omit_read_scope=false) => {
-    let response = await tool.api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
-    if (response && response.success === true && response.account_email) {
-      await Store.account_emails_add(response.account_email);
-      let storage = await Store.get_account(response.account_email, ['setup_done']);
-      if (storage.setup_done) { // this was just an additional permission
-        alert('You\'re all set.');
-        window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
-      } else {
-        await Store.set(response.account_email, {email_provider: 'gmail'});
-        window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
-      }
-    } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
-      Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
-    } else {
-      tool.catch.log('failed to log into google', response);
-      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com to fix it.');
-      window.location.reload();
-    }
-  };
-
   // function new_microsoft_account_authentication_prompt(account_email) {
   //   let window_id = 'popup_' + tool.str.random(20);
   //   let close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function() {
@@ -306,9 +296,9 @@ tool.catch.try(async () => {
 
   $('.action_go_auth_denied').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
 
-  $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await new_google_account_authentication_prompt()));
+  $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id)));
 
-  $('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await new_google_account_authentication_prompt(account_email)));
+  $('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id, account_email)));
 
   // $('.action_microsoft_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
   //   new_microsoft_account_authentication_prompt(account_email);
@@ -343,13 +333,13 @@ tool.catch.try(async () => {
     }
   };
 
-  let menu_account_html = (email: string, photo=null) => {
+  let menu_account_html = (email: string, picture='/img/svgs/profile-icon.svg') => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
-      '    <div class="row contains_email" data-test="action-switch-to-account">' + tool.str.html_escape(email) + '</div>',
+      `    <div class="row contains_email" data-test="action-switch-to-account">${tool.str.html_escape(email)}</div>`,
       '  </div>',
-      // '  <div class="col-sm-1 "><img class="profile-img " src="" alt=""></div>',
+      `  <div class="col-sm-1 "><img class="profile-img" src="${tool.str.html_escape(picture)}" alt=""></div>`,
       '</div>',
     ].join('');
   };
@@ -364,9 +354,13 @@ tool.catch.try(async () => {
     }
   }
 
+  let account_storages = await Store.get_accounts(account_emails, ['picture']);
   for (let email of account_emails) {
-    tool.ui.sanitize_prepend('#alt-accounts', menu_account_html(email));
+    tool.ui.sanitize_prepend('#alt-accounts', menu_account_html(email, account_storages[email].picture));
   }
+  $('#alt-accounts img.profile-img').on('error', tool.ui.event.handle(self => {
+    $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+  }));
   $('.action_select_account').click(tool.ui.event.handle(target => {
     window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
   }));

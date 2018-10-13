@@ -83,14 +83,13 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   width: 32px;
   height: 32px;
   display: inline-block;
-  border: 2px solid #cccccc;
+  border: 1px solid #cccccc;
   border-radius: 120px;
   margin-left: 10px;
   cursor: pointer;
   text-align: center;
   font-size: 22px;
-  padding-top: 7px;
-  opacity: .8;
+  opacity: .7;
   margin-top: 8px;
 }
 .settings-icons-rows span.key_block_icon {
@@ -105,14 +104,14 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   letter-spacing: -1px;
 }
 .accounts-row .alt-accounts .profile-img {
-  position: absolute;
-  width: 30px!important;
-  border: 1px solid #f3f3f3!important;
-  top: 5px;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  height: 30px!important;
+  position: absolute !important;
+  width: 30px !important;
+  top: -5px !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  left: 8px !important;
+  height: 30px !important;
+  margin-top: 0px !important;
 }
 #settings-row .separator {
   background: rgba(0, 0, 0, .09);
