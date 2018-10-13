@@ -55,6 +55,9 @@
   table#compose th {
     width: 100% !important;
   }
+  #view_contact .key_dump {
+    white-space: normal;
+  }
 }
 
 @media (max-width: 450px) {
@@ -99,7 +102,7 @@
   .subscription {
     display: block;
     margin: 0 auto;
-    font-size: 11px;
+    font-size: 13px;
   }
   .cryptup-logo-row {
     padding: 10px 0;
@@ -280,46 +283,29 @@
   div#step_3_manual .backup_action_buttons_container {
     text-align: center;
   }
-  body#settings .subscribe--header-row th:nth-child(2),
-  body#settings .subscribe--header-row th:nth-child(3) {
-    font-size: 10px;
-    text-align: center;
+
+  body#settings .pubkeys.page #emails tr[email] td:first-child {
+    font-size: 13px !important;
+    height: 20px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center !important;
+    width: 100% !important;
   }
-  body#settings > div#content.pubkeys table#emails {
-    min-width: 100%;
-  }
-  body#settings > div#content.pubkeys table#emails td {
-    font-size: 11px;
-    height: auto;
-    padding: 10px 0;
-    word-break: break-word;
-  }
-  body#settings #emails td {
-    display: block;
-    width: 100%;
-    height: 100%;
-    margin: 0 auto;
-  }
-  body#settings #emails td .action_request_attestation {
-    display: block;
-    padding: 5px;
-    text-align: center;
-  }
+
   body#settings .pubkeys.page #emails td:nth-child(2),
   body#settings .pubkeys.page #emails td:nth-child(3),
   body#settings .pubkeys.page #emails td:nth-child(4) {
-    float: left;
-    text-align: center!important;
-    width: 33%;
+    width: 33% !important;
+    padding: 0 !important;
   }
+
   body#settings .pubkeys.page #emails tr {
-    margin: 10px;
+    padding-bottom: 50px;
   }
-  body#settings .pubkeys.page #emails tr[email] {
-    display: block;
-    margin-bottom: 70px;
+
+  body#settings .pubkeys.page #emails tr[email] a {
+    margin: 0 auto;
   }
-  body#settings > div#content textarea {
-    width: 100%;
-  }
+
 }

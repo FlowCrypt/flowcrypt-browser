@@ -87,6 +87,65 @@ body#settings > div.profile-row > span > i { font-size: 200%; display: inline-bl
 body#settings .action_show_help { text-decoration: none; position: absolute; top: 41px; margin-left: 245px; opacity: .3;}
 body#settings .action_show_help img { width: 28px; }
 body#settings > .action_show_help:hover { text-decoration: underline; }
+
+
+body#settings a.action_show:before,
+body#settings a.action_change:before,
+body#settings a.action_remove:before { background-size: 100%; content:""; height: 25px; left: 2px; position: absolute; width: 25px; top: 2.5px; }
+body#settings .action_show:before { background-image: url("/img/svgs/contact__show-icon.svg"); left: 5px;}
+body#settings .action_change:before { background-image: url("/img/svgs/contact__edit-icon.svg"); }
+body#settings .action_remove:before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
+
+body#settings .pubkeys.page #emails td:nth-child(2),
+body#settings .pubkeys.page #emails td:nth-child(3),
+body#settings .pubkeys.page #emails td:nth-child(4) { display: inline-block; height: 25px; width: 25px; }
+body#settings .pubkeys.page #emails tr { margin: 10px; }
+body#settings .pubkeys.page #emails tr[email] { display: block; position: relative; }
+body#settings .pubkeys.page #emails tr[email] a { border-radius: 15px; display: block; font-size: 11px; font-weight: 500; margin: 0 5px; margin-right: 5%; padding: 10px 5px; position: relative; text-align: center; transition: 0.25s; width: 20px; }
+body#settings > div#content.pubkeys table#emails td { font-size: 13px; height: auto; padding: 10px 0; display: inline-block; width: 15px; text-align: center; float: left; }
+
+body#settings .pubkeys.page #emails tr[email]:before {
+ border-radius: 4px;
+ content: "";
+ height: 90px;
+ position: absolute;
+ width: 100%;
+}
+body#settings .pubkeys.page #emails tr[email] td:first-child {
+ font-size: 16px !important;
+ text-align: left !important;
+ text-indent: 0 !important;
+ width: 45% !important;
+}
+body#settings > div#content textarea {
+  width: 100%;
+}
+
+body#settings .subscribe--header-row th:nth-child(2),
+body#settings .subscribe--header-row th:nth-child(3) {
+  font-size: 10px;
+  text-align: center;
+}
+body#settings > div#content.pubkeys table#emails {
+  min-width: 100%;
+}
+body#settings > div#content.pubkeys table#emails td {
+  font-size: 11px;
+  height: auto;
+  padding: 10px 0;
+}
+body#settings #emails td {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+}
+body#settings #emails td .action_request_attestation {
+  display: block;
+  padding: 5px;
+  text-align: center;
+}
+
 body#settings > div#content.setup [id^="step_"] { animation: fadeIn .7s;}
 body#settings > div#content.setup h1 {-webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
 body#settings > div#content.setup div#step_0_found_key { display: none; -webkit-animation: fadeIn .7s; animation: fadeIn .7s;}
@@ -171,10 +230,9 @@ body#settings > div#content.help .button.green { display: inline-block; padding:
 body#settings > div#content.help .separator { width: 60%;}
 
 body#settings > div#content.pubkeys div.fix_container { display: none; }
-body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; min-width: 500px; }
+body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }
 body#settings > div#content.pubkeys table#emails tr { height: 32px; }
-body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px; border-top: 1px solid #dadada;
-  border-bottom: 1px solid #dadada; }
+body#settings > div#content.pubkeys table#emails td { height: 32px; vertical-align: middle; text-align: left; padding: 4px 15px;}
 body#settings > div#content.pubkeys textarea.input_pubkey { width: 600px; height: 420px; font-size: 12px; padding: 8px; }
 body#settings > div#content.pubkeys iframe.pgp_block { width: 500px; height: 61px; margin-bottom: 0; border: none; }
 body#settings > div#content.pubkeys table#emails td .action_remove_alias { cursor: pointer; }
