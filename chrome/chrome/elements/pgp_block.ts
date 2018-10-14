@@ -54,6 +54,10 @@ tool.catch.try(async () => {
     }
   };
 
+  let set_test_state = (state: 'ready' | 'working') => {
+    $('body').attr('data-test-state', state); // for automated tests
+  };
+
   let render_content = async (content: string, is_error: boolean) => {
     if (!is_error && !is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
@@ -75,10 +79,10 @@ tool.catch.try(async () => {
         send_resize_message();
       }));
     }
+    // resize window now
     send_resize_message();
-    $('body').attr('data-test-state', 'ready'); // set as ready so that automated tests can evaluate results
-    await tool.ui.delay(1000);
-    $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message));
+    // start auto-resizing the window after 1s
+    setTimeout(() => $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message)), 1000);
   };
 
   let button_html = (text: string, add_classes: string) => {
@@ -113,6 +117,7 @@ tool.catch.try(async () => {
       alert('You should tell the sender to update their settings and send a new message.');
       tool.browser.message.send('broadcast', 'reply_pubkey_mismatch');
     }));
+    set_test_state('ready');
   };
 
   let handle_private_key_mismatch = async (account_email: string, message: string) => { // todo - make it work for multiple stored keys
@@ -302,6 +307,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
     }
+    set_test_state('ready');
   };
 
   let decrypt_and_render = async (optional_password:string|null=null) => {
@@ -376,10 +382,12 @@ tool.catch.try(async () => {
 
   let render_password_prompt = async () => {
     let prompt = '<p>' + Lang.pgp_block.decrypt_password_prompt + '</p>';
-    prompt += '<p><input id="answer" placeholder="Password"></p><p><div class="button green long decrypt">decrypt message</div></p>';
+    prompt += '<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p><div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div></p>';
     prompt += armored_message_as_html();
     await render_content(prompt, true);
+    set_test_state('ready');
     await tool.ui.event.clicked('.button.decrypt');
+    set_test_state('working'); // so that test suite can wait until ready again
     $(self).text('Opening');
     await tool.ui.delay(50); // give browser time to render
     await decrypt_and_render($('#answer').val() as string); // text input
@@ -469,6 +477,7 @@ tool.catch.try(async () => {
           await decrypt_and_render();
         } else { // gmail message read auth not allowed
           tool.ui.sanitize_render('#pgp_block', 'This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+          send_resize_message();
           $('.auth_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }

@@ -7,7 +7,7 @@ export let define_decrypt_tests = (test_with_new_browser: TestWithBrowser, test_
 
   for(let m of Config.tests.messages) {
     ava.test(`decrypt[global] - ${m.name}`, test_with_semaphored_global_browser('compatibility', async (browser, t) => {
-      await BrowserRecipe.pgp_block_verify_decrypted_content(browser, `chrome/elements/pgp_block.htm${m.params}`, m.content);
+      await BrowserRecipe.pgp_block_verify_decrypted_content(browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password);
     }));
   }
 
