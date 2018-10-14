@@ -32,8 +32,12 @@ class BgExec {
     return BgExec.request_to_process_in_background('tool.diagnose.message_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
   }
 
-  public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, user_entered_message_password:string|null=null, get_uint8=false) => {
-    let result = await BgExec.request_to_process_in_background('tool.crypto.message.decrypt', [account_email, encrypted_data, user_entered_message_password, get_uint8]) as DecryptResult;
+  public static crypto_hash_challenge_answer = (password: string) => {
+    return BgExec.request_to_process_in_background('tool.crypto.hash.challenge_answer', [password]) as Promise<string>;
+  }
+
+  public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd:string|null=null, get_uint8=false) => {
+    let result = await BgExec.request_to_process_in_background('tool.crypto.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
         result.content.text = tool.str.from_uint8(await tool.file.object_url_consume(result.content.blob.blob_url));

@@ -356,7 +356,7 @@ let tool = {
     },
     extract_fc_attachments: (decrypted_content: string, fc_attachments: Attachment[]) => {
       if (tool.value('cryptup_file').in(decrypted_content)) {
-        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>/g, found_link => {
+        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
           let element = $(found_link);
           let fc_data = element.attr('cryptup-data');
           if (fc_data) {
@@ -2455,7 +2455,8 @@ let tool = {
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
       str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'],
-      str_sanitize_ADD_ATTR: ['email', 'page', 'addurltext', 'longid'],
+      str_sanitize_ALLOWED_HTML_TAGS_WITH_INPUTS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font', 'input', 'select', 'option', 'textarea', 'label', 'optgroup', 'button'],
+      str_sanitize_ADD_ATTR: ['email', 'page', 'addurltext', 'longid', 'index'],
       str_sanitize_HREF_REGEX_CACHE: null as null|RegExp,
     },
     str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension

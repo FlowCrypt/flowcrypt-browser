@@ -11,6 +11,14 @@ tool.catch.try(async () => {
   let url_params = tool.env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
   let account_email = tool.env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let has_challenge_password = url_params.has_password === true;
+  let frame_id = url_params.frame_id;
+  let is_outgoing = url_params.is_outgoing === true;
+  let signature = url_params.signature || null;
+  let short = url_params.short;
+  let sender_email = url_params.sender_email;
+  let message_id = url_params.message_id;
+  let message = url_params.message;
 
   let included_attachments: Attachment[] = [];
   let height_history: number[] = [];
@@ -24,10 +32,6 @@ tool.catch.try(async () => {
 
   let render_text = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
-  };
-
-  let sanitize_and_render_html = (html: string) => {
-    $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html)); // xss-sanitized - content was sanitized before rendering
   };
 
   let send_resize_message = () => {
@@ -46,15 +50,20 @@ tool.catch.try(async () => {
     };
 
     if (!is_infinite_resize_loop()) {
-      tool.browser.message.send(parent_tab_id, 'set_css', {selector: `iframe#${url_params.frame_id}`, css: {height}});
+      tool.browser.message.send(parent_tab_id, 'set_css', {selector: `iframe#${frame_id}`, css: {height}});
     }
   };
 
   let render_content = async (content: string, is_error: boolean) => {
-    if (!is_error && !url_params.is_outgoing) { // successfully opened incoming message
+    if (!is_error && !is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
-    sanitize_and_render_html(is_error ? content : anchorme(content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] }));
+    if(!is_error) { // rendering message content
+      let anchored = anchorme(content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
+      $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(anchored)); // xss-sanitized
+    } else { // rendering our own ui
+      tool.ui.sanitize_render('#pgp_block', content);
+    }
     // if (unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
     //   tool.ui.sanitize_prepend('#pgp_block', '<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
@@ -77,9 +86,9 @@ tool.catch.try(async () => {
   };
 
   let armored_message_as_html = (raw_message_substitute:string|null=null) => {
-    let m = raw_message_substitute || url_params.message;
+    let m = raw_message_substitute || message;
     if (m && typeof m === 'string') {
-      return `<div class="raw_pgp_block" style="display: none;">${m.replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
+      return `<div class="raw_pgp_block" style="display: none;">${tool.str.html_escape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
     }
     return '';
   };
@@ -117,16 +126,16 @@ tool.catch.try(async () => {
     }
   };
 
-  let decrypt_pwd = (supplied_password?: string|null): string|null => {
+  let decrypt_pwd = async (supplied_password?: string|null): Promise<string|null> => {
     let pwd = supplied_password || user_entered_message_password || null;
-    if(pwd && url_params.use_password) {
-      return tool.crypto.hash.challenge_answer(pwd);
+    if(pwd && has_challenge_password) {
+      return await BgExec.crypto_hash_challenge_answer(pwd);
     }
     return pwd;
   };
 
   let decrypt_and_save_attachment_to_downloads = async (encrypted: Attachment, render_in: JQuery<HTMLElement>) => {
-    let decrypted = await BgExec.crypto_message_decrypt(account_email, encrypted.data(), decrypt_pwd(), true);
+    let decrypted = await BgExec.crypto_message_decrypt(account_email, encrypted.data(), await decrypt_pwd(), true);
     if (decrypted.success) {
       let attachment = new Attachment({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
       tool.file.save_to_downloads(attachment, render_in);
@@ -141,7 +150,6 @@ tool.catch.try(async () => {
   };
 
   let render_progress = (element: JQuery<HTMLElement>, percent: number|null, received: number|null, size: number) => {
-    size = size || Number(url_params.size);
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {
@@ -175,7 +183,7 @@ tool.catch.try(async () => {
 
   let render_pgp_signature_check_result = (signature: MessageVerifyResult|null) => {
     if (signature) {
-      let signer_email = signature.contact ? signature.contact.name || url_params.sender_email : url_params.sender_email;
+      let signer_email = signature.contact ? signature.contact.name || sender_email : sender_email;
       $('#pgp_signature > .cursive > span').text(String(signer_email) || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
         $('#pgp_signature').addClass('neutral');
@@ -197,7 +205,7 @@ tool.catch.try(async () => {
     if (admin_codes && admin_codes.length) {
       btns += ' <a href="#" class="extend_expiration">extend</a>';
     }
-    if (url_params.is_outgoing) {
+    if (is_outgoing) {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
     tool.ui.sanitize_append('#pgp_block', tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`}));
@@ -207,8 +215,8 @@ tool.catch.try(async () => {
 
   let recover_stored_admin_codes = async () => {
     let storage = await Store.get_global(['admin_codes']);
-    if (url_params.short && storage.admin_codes && storage.admin_codes[url_params.short as string] && storage.admin_codes[url_params.short as string].codes) {
-      admin_codes = storage.admin_codes[url_params.short as string].codes;
+    if (short && storage.admin_codes && storage.admin_codes[short as string] && storage.admin_codes[short as string].codes) {
+      admin_codes = storage.admin_codes[short as string].codes;
     }
   };
 
@@ -265,10 +273,10 @@ tool.catch.try(async () => {
       decrypted_content = tool.str.strip_fc_reply_token(decrypted_content);
       decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
       if (public_keys.length) {
-        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys});
+        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
       decrypted_content = tool.str.html_escape(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decrypted_content, url_params.message as string), false);
+      await render_content(tool.mime.format_content_to_display(decrypted_content, message as string), false);
       if (fc_attachments.length) {
         render_inner_attachments(fc_attachments);
       }
@@ -278,7 +286,7 @@ tool.catch.try(async () => {
     } else {
       render_text('Formatting...');
       let decoded = await tool.mime.decode(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string, url_params.message as string), false);
+      await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string, message as string), false);
       let renderable_attachments: Attachment[] = [];
       for (let attachment of decoded.attachments) {
         if (attachment.treat_as() !== 'public_key') {
@@ -291,29 +299,29 @@ tool.catch.try(async () => {
         render_inner_attachments(decoded.attachments);
       }
       if (public_keys.length) {
-        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, public_keys});
+        tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
     }
   };
 
   let decrypt_and_render = async (optional_password:string|null=null) => {
-    if (typeof url_params.signature !== 'string') {
-      let result = await BgExec.crypto_message_decrypt(account_email, url_params.message as string|Uint8Array, decrypt_pwd(optional_password));
+    if (typeof signature !== 'string') {
+      let result = await BgExec.crypto_message_decrypt(account_email, message as string|Uint8Array, await decrypt_pwd(optional_password));
       if (typeof result === 'undefined') {
         await render_error(Lang.general.restart_browser_and_try_again);
       } else if (result.success) {
-        if (url_params.has_password && optional_password) {
+        if (has_challenge_password && optional_password) {
           user_entered_message_password = optional_password;
         }
         if (result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
-          console.info('re-fetching message ' + url_params.message_id + ' from api because failed signature check: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
+          console.info(`re-fetching message ${message_id} from api because failed signature check: ${!message_fetched_from_api ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
           await decide_decrypted_content_formatting_and_render(result.content.text!, Boolean(result.is_encrypted), result.signature); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrorTypes.format) {
         if (can_read_emails && message_fetched_from_api !== 'raw') {
-          console.info('re-fetching message ' + url_params.message_id + ' from api because looks like bad formatting: ' + ((!message_fetched_from_api) ? 'full' : 'raw'));
+          console.info(`re-fetching message ${message_id} from api because looks like bad formatting: ${!message_fetched_from_api ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
           await render_error(Lang.pgp_block.bad_format + '\n\n' + result.error.error);
@@ -325,10 +333,10 @@ tool.catch.try(async () => {
         if (!result.longids.chosen && !primary_k) {
           await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
         } else if (result.error.type === DecryptErrorTypes.key_mismatch) {
-          if (url_params.has_password && !optional_password) {
+          if (has_challenge_password && !optional_password) {
             await render_password_prompt();
           } else {
-            await handle_private_key_mismatch(account_email, url_params.message as string);
+            await handle_private_key_mismatch(account_email, message as string);
           }
         } else if (result.error.type === DecryptErrorTypes.wrong_password) {
           alert('Incorrect answer, please try again');
@@ -345,8 +353,8 @@ tool.catch.try(async () => {
         }
       }
     } else {
-      let signature_result = await BgExec.crypto_message_verify_detached(account_email, url_params.message as string|Uint8Array, url_params.signature);
-      await decide_decrypted_content_formatting_and_render(url_params.message as string, false, signature_result);
+      let signature_result = await BgExec.crypto_message_verify_detached(account_email, message as string|Uint8Array, signature);
+      await decide_decrypted_content_formatting_and_render(message as string, false, signature_result);
     }
   };
 
@@ -395,9 +403,9 @@ tool.catch.try(async () => {
       let expiration_m = Lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
       if (link_result.deleted) {
         expiration_m += Lang.pgp_block.message_destroyed;
-      } else if (url_params.is_outgoing && admin_codes) {
+      } else if (is_outgoing && admin_codes) {
         expiration_m += '<div class="button gray2 extend_expiration">renew message</div>';
-      } else if (!url_params.is_outgoing) {
+      } else if (!is_outgoing) {
         expiration_m += Lang.pgp_block.ask_sender_renew;
       }
       expiration_m += '\n\n<div class="button gray2 action_security">security settings</div>';
@@ -414,9 +422,9 @@ tool.catch.try(async () => {
 
   let initialize = async (force_pull_message_from_api=false) => {
     try {
-      if (can_read_emails && url_params.message && url_params.signature === true) {
+      if (can_read_emails && message && signature === true) {
         render_text('Loading signature...');
-        let result = await tool.api.gmail.message_get(account_email, url_params.message_id as string, 'raw');
+        let result = await tool.api.gmail.message_get(account_email, message_id as string, 'raw');
         if (!result.raw) {
           await decrypt_and_render();
         } else {
@@ -424,29 +432,29 @@ tool.catch.try(async () => {
           let mime_message = tool.str.base64url_decode(result.raw);
           let parsed = tool.mime.signed(mime_message);
           if (parsed) {
-            url_params.signature = parsed.signature;
-            url_params.message = parsed.signed;
+            signature = parsed.signature;
+            message = parsed.signed;
             await decrypt_and_render();
           } else {
             let decoded = await tool.mime.decode(mime_message);
-            url_params.signature = decoded.signature;
+            signature = decoded.signature || null;
             console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
             console.info(mime_message);
             console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
             await decrypt_and_render();
           }
         }
-      } else if (url_params.message && !force_pull_message_from_api) { // ascii armored message supplied
-        render_text(url_params.signature ? 'Verifying..' : 'Decrypting...');
+      } else if (message && !force_pull_message_from_api) { // ascii armored message supplied
+        render_text(signature ? 'Verifying..' : 'Decrypting...');
         await decrypt_and_render();
-      } else if (!url_params.message && url_params.has_password && url_params.short) { // need to fetch the message from FlowCrypt API
+      } else if (!message && has_challenge_password && short) { // need to fetch the message from FlowCrypt API
         render_text('Loading message...');
         await recover_stored_admin_codes();
-        let m_link_result = await tool.api.fc.link_message(url_params.short as string);
+        let m_link_result = await tool.api.fc.link_message(short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
           let download_uint_result = await tool.file.download_as_uint8(m_link_result.url, null);
-          url_params.message = tool.str.from_uint8(download_uint_result);
+          message = tool.str.from_uint8(download_uint_result);
           await decrypt_and_render();
         } else {
           await render_password_encrypted_message_load_fail(password_message_link_result);
@@ -455,12 +463,12 @@ tool.catch.try(async () => {
         if (can_read_emails) {
           render_text('Retrieving message...');
           let format: GmailApiResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
-          url_params.message = await tool.api.gmail.extract_armored_block(account_email, url_params.message_id as string, format);
+          message = await tool.api.gmail.extract_armored_block(account_email, message_id as string, format);
           render_text('Decrypting...');
           message_fetched_from_api = format;
           await decrypt_and_render();
         } else { // gmail message read auth not allowed
-          sanitize_and_render_html('This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+          tool.ui.sanitize_render('#pgp_block', 'This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
           $('.auth_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }
@@ -471,7 +479,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         await render_error(`Could not load message due to missing auth. ${tool.ui.retry_link()}`);
       } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
-        window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(url_params.is_outgoing), account_email, parent_tab_id, frame_id: url_params.frame_id });
+        window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (tool.api.error.is_standard_error(e, 'format')) {
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open + '\n\n' + String(e), e.data);
       } else {
@@ -486,7 +494,7 @@ tool.catch.try(async () => {
   if (storage.setup_done) {
     await initialize();
   } else {
-    await render_error(Lang.pgp_block.refresh_window, url_params.message as string || '');
+    await render_error(Lang.pgp_block.refresh_window, message as string || '');
   }
 
 })();

@@ -170,7 +170,7 @@ interface DecryptError {
 
 type DecryptResult = DecryptSuccess|DecryptError;
 type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
-type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult;
+type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
 type BgExecRequest = {path: string, args: any[]};
 type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
 
