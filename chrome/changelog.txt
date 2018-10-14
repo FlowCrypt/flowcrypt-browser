@@ -1,5 +1,7 @@
 <div>
 
+version 6.0.4 on October 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/259?closed=1" target="_blank">Google account changes</a>
+
 version 6.0.3 on October 4, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/258?closed=1" target="_blank">Newlines</a>
 
 version 6.0.2 on September 7, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/257?closed=1" target="_blank">Fix FlowCrypt Startup</a>
