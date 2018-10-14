@@ -57,4 +57,16 @@ export let define_settings_tests = (test_with_new_browser: TestWithBrowser, test
     await dialog.accept();
   }));
 
+  ava.test.todo('settings[global] - view contact public key');
+
+  ava.test.todo('settings - edit contact public key');
+
+  ava.test.todo('settings[global] - view my own public key');
+
+  ava.test.todo('settings[global] - view my own private key');
+
+  ava.test.todo('settings[global] - view my own public key userids');
+
+  ava.test.todo('settings[global] - view my own public key - secondary');
+
 };
