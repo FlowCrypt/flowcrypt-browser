@@ -22,6 +22,7 @@ const Lang = {
     bad_format: 'Message is either badly formatted or not compatible with FlowCrypt. ',
     no_private_key: 'No private key to decrypt this message. Try reloading the page. ',
     refresh_page: 'Refresh page to see more information.',
+    wrong_password: 'Wrong password. ',
     decrypt_password_prompt: 'Please enter password to decrypt the message',
     connection_error: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
     dont_know_how_open: 'Please email me at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',

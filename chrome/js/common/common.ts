@@ -2622,7 +2622,7 @@ let tool = {
       let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
       if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
         return {type: DecryptErrorTypes.key_mismatch, error: e};
-      } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key'])) {
+      } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
         return {type: DecryptErrorTypes.wrong_password, error: e};
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
         return {type: DecryptErrorTypes.no_mdc, error: e};

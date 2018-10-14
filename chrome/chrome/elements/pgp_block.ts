@@ -340,15 +340,14 @@ tool.catch.try(async () => {
           await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
         } else if (result.error.type === DecryptErrorTypes.key_mismatch) {
           if (has_challenge_password && !optional_password) {
-            await render_password_prompt();
+            await render_password_prompt('first');
           } else {
             await handle_private_key_mismatch(account_email, message as string);
           }
         } else if (result.error.type === DecryptErrorTypes.wrong_password) {
-          alert('Incorrect answer, please try again');
-          await render_password_prompt();
+          await render_password_prompt('retry');
         } else if (result.error.type === DecryptErrorTypes.use_password) {
-          await render_password_prompt();
+          await render_password_prompt('first');
         } else if (result.error.type === DecryptErrorTypes.no_mdc) {
           await render_error('This message may not be safe to open: missing MDC. To open this message, please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
         } else if (result.error) {
@@ -380,8 +379,8 @@ tool.catch.try(async () => {
     }
   };
 
-  let render_password_prompt = async () => {
-    let prompt = '<p>' + Lang.pgp_block.decrypt_password_prompt + '</p>';
+  let render_password_prompt = async (attempt: 'first' | 'retry') => {
+    let prompt = `<p>${attempt === 'first' ? '' : Lang.pgp_block.wrong_password}${Lang.pgp_block.decrypt_password_prompt}</p>`;
     prompt += '<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p><div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div></p>';
     prompt += armored_message_as_html();
     await render_content(prompt, true);
