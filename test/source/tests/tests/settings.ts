@@ -35,7 +35,7 @@ export let define_settings_tests = (test_with_new_browser: TestWithBrowser, test
 
   ava.test('settings[global] - verify key presense 1pp1', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
     let settings_page = await browser.new_page(Url.extension_settings('flowcrypt.compatibility@gmail.com'));
-    await SettingsPageRecipe.verify_key_presence(settings_page, 'flowcrypt.compatibility.1pp1', 'button');
+    await SettingsPageRecipe.verify_my_key_page(settings_page, 'flowcrypt.compatibility.1pp1', 'button');
   }));
 
   ava.test('settings[global] - test pass phrase', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
@@ -57,16 +57,32 @@ export let define_settings_tests = (test_with_new_browser: TestWithBrowser, test
     await dialog.accept();
   }));
 
-  ava.test.todo('settings[global] - view contact public key');
+  ava.test('settings[global] - view contact public key', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
+    let settings_page = await browser.new_page(Url.extension_settings('flowcrypt.compatibility@gmail.com'));
+    await SettingsPageRecipe.toggle_screen(settings_page, 'additional');
+    let contacts_frame = await SettingsPageRecipe.await_new_page_frame(settings_page, '@action-open-contacts-page' , ['contacts.htm', 'placement=settings']);
+    await contacts_frame.wait_all('@page-contacts');
+    await Util.sleep(1);
+    await contacts_frame.wait_and_click('@action-show-pubkey', {confirm_gone: true});
+    await Util.sleep(1);
+    expect(await contacts_frame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
+    expect(await contacts_frame.read('@page-contacts')).to.contain('LEMON VIABLE BEST MULE TUNA COUNTRY');
+    expect(await contacts_frame.read('@page-contacts')).to.contain('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+    expect(await contacts_frame.read('@page-contacts')).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+    await contacts_frame.wait_and_click('@action-back-to-contact-list', {confirm_gone: true});
+    await Util.sleep(1);
+    expect(await contacts_frame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
+    expect(await contacts_frame.read('@page-contacts')).to.contain('flowcryptcompatibility@gmail.com');
+    await SettingsPageRecipe.close_dialog(settings_page);
+    await SettingsPageRecipe.toggle_screen(settings_page, 'basic');
+  }));
+
+  ava.test('settings[global] - my key page - primary + secondary', test_with_semaphored_global_browser('compatibility', async (browser, t) => {
+    let settings_page = await browser.new_page(Url.extension_settings('flowcrypt.compatibility@gmail.com'));
+    await SettingsPageRecipe.verify_my_key_page(settings_page, 'flowcrypt.compatibility.1pp1', 'link', 0);
+    await SettingsPageRecipe.verify_my_key_page(settings_page, 'flowcrypt.compatibility.2pp1', 'link', 1);
+  }));
 
   ava.test.todo('settings - edit contact public key');
-
-  ava.test.todo('settings[global] - view my own public key');
-
-  ava.test.todo('settings[global] - view my own private key');
-
-  ava.test.todo('settings[global] - view my own public key userids');
-
-  ava.test.todo('settings[global] - view my own public key - secondary');
 
 };

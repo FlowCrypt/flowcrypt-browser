@@ -175,9 +175,9 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.close_dialog(settings_page);
   }
 
-  public static verify_key_presence = async (settings_page: ControllablePage, expected_key_name: string, trigger: "button"|"link") => {
+  public static verify_my_key_page = async (settings_page: ControllablePage, expected_key_name: string, trigger: "button"|"link", link_index?: number) => {
     await SettingsPageRecipe.toggle_screen(settings_page, 'additional');
-    let my_key_frame = await SettingsPageRecipe.await_new_page_frame(settings_page, trigger === 'button' ? '@action-open-pubkey-page' : '@action-show-key' , ['my_key.htm', 'placement=settings']);
+    let my_key_frame = await SettingsPageRecipe.await_new_page_frame(settings_page, trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${link_index}`, ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
     let k = Config.key(expected_key_name);
     await my_key_frame.wait_all(['@content-key-words', '@content-armored-key']);

@@ -11,6 +11,8 @@ tool.catch.try(async () => {
   let tab_id = await tool.browser.message.required_tab_id();
 
   let factory = new XssSafeFactory(account_email, tab_id, undefined, undefined, {compact: true});
+  let back_button = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
+  let space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
   tool.browser.message.listen({}, tab_id); // set_css
 
@@ -25,7 +27,7 @@ tool.catch.try(async () => {
 
     tool.ui.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {
       $('.hide_when_rendering_subpage').css('display', 'none');
-      tool.ui.sanitize_render('h1', '<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;Bulk Public Key Import&nbsp;&nbsp;&nbsp;&nbsp;');
+      tool.ui.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
       $('#bulk_import').css('display', 'block');
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
@@ -42,14 +44,17 @@ tool.catch.try(async () => {
     let table_contents = '';
     for (let c of contacts) {
       let e = tool.str.html_escape(c.email);
-      table_contents += `<tr email="${e}"><td>${e}</td><td><a href="#" class="action_show">show</a></td><td><a href="#" class="action_change">change</a></td><td><a href="#" class="action_remove">remove</a></td></tr>`;
+      let show = `<a href="#" class="action_show" data-test="action-show-pubkey">show</a>`;
+      let change = `<a href="#" class="action_change" data-test="action-change-pubkey">change</a>`;
+      let remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey">remove</a>`;
+      table_contents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     tool.ui.sanitize_replace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${table_contents}</table>`);
 
     $('a.action_show').off().click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
       let [contact] = await Store.db_contact_get(null, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
-      tool.ui.sanitize_render('h1', '<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;' + contact!.email); // should exist - from list of contacts
+      tool.ui.sanitize_render('h1', `'${back_button}${space}${contact!.email}`); // should exist - from list of contacts
       if (contact!.client === 'cryptup') {
         tool.ui.sanitize_append('h1', '&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
       } else {
@@ -65,7 +70,7 @@ tool.catch.try(async () => {
     $('a.action_change').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       let email = $(self).closest('tr').attr('email')!;
-      tool.ui.sanitize_render('h1', `<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;${tool.str.html_escape(email)}&nbsp;&nbsp;&nbsp;&nbsp;(edit)`);
+      tool.ui.sanitize_render('h1', `${back_button}${space}${tool.str.html_escape(email)}${space}(edit)`);
       $('#edit_contact').css('display', 'block');
       $('#edit_contact .input_pubkey').val('').attr('email', email);
       $('#page_back_button').click(tool.ui.event.handle(() => render_contact_list()));
@@ -87,7 +92,7 @@ tool.catch.try(async () => {
 
     $('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
-      tool.ui.sanitize_render('h1', '<a href="#" id="page_back_button">back</a>&nbsp;&nbsp;&nbsp;&nbsp;Bulk Public Key Import&nbsp;&nbsp;&nbsp;&nbsp;');
+      tool.ui.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
       $('#bulk_import').css('display', 'block');
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');

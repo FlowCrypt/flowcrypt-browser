@@ -255,14 +255,17 @@ tool.catch.try(async () => {
 
   let add_key_rows_html = (private_keys: KeyInfo[]) => {
     let html = '';
-    for (let keyinfo of private_keys) {
-      let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
+    for (let i = 0; i < private_keys.length; i++) {
+      let ki = private_keys[i];
+      let prv = openpgp.key.readArmored(ki.private).keys[0];
       let date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let primary_or_remove = (keyinfo.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + tool.str.html_escape(keyinfo.longid) + '">remove</a>)';
-      html += '<div class="row key-content-row key_' + tool.str.html_escape(keyinfo.longid) + '">';
-      html += '  <div class="col-sm-12"><a href="#" data-test="action-show-key" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=' + tool.str.html_escape(keyinfo.longid) + '">' + tool.str.html_escape(tool.str.parse_email(prv.users[0].userId ? prv.users[0].userId!.userid : '').email) + '</a> from ' + tool.str.html_escape(date) + '&nbsp;&nbsp;&nbsp;&nbsp;' + primary_or_remove + '</div>';
-      html += '  <div class="col-sm-12">KeyWords: <span class="good">' + tool.str.html_escape(keyinfo.keywords) + '</span></div>';
-      html += '</div>';
+      let escaped_primary_or_remove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + tool.str.html_escape(ki.longid) + '">remove</a>)';
+      let escaped_email = tool.str.html_escape(tool.str.parse_email(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      let escaped_link = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${tool.str.html_escape(ki.longid)}">${escaped_email}</a>`;
+      html += `<div class="row key-content-row key_${tool.str.html_escape(ki.longid)}">`;
+      html += `  <div class="col-sm-12">${escaped_link} from ${tool.str.html_escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escaped_primary_or_remove}</div>`;
+      html += `  <div class="col-sm-12">KeyWords: <span class="good">${tool.str.html_escape(ki.keywords)}</span></div>`;
+      html += `</div>`;
     }
     tool.ui.sanitize_append('.key_list', html);
     $('.action_show_key').click(tool.ui.event.handle(target => {
