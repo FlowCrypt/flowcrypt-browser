@@ -44,9 +44,9 @@ tool.catch.try(async () => {
     let table_contents = '';
     for (let c of contacts) {
       let e = tool.str.html_escape(c.email);
-      let show = `<a href="#" class="action_show" data-test="action-show-pubkey">show</a>`;
-      let change = `<a href="#" class="action_change" data-test="action-change-pubkey">change</a>`;
-      let remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey">remove</a>`;
+      let show = `<a href="#" class="action_show" data-test="action-show-pubkey"></a>`;
+      let change = `<a href="#" class="action_change" data-test="action-change-pubkey"></a>`;
+      let remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
       table_contents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     tool.ui.sanitize_replace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${table_contents}</table>`);
