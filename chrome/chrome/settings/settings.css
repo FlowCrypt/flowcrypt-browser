@@ -35,10 +35,15 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
 #security_module { min-height: 216px; }
 #alt-accounts.accounts-row { display: none;}
 #alt-accounts.accounts-row.active { display: block; animation: fadeInDown .4s;}
-#alt-accounts.accounts-row { background: #f3f3f3; height: auto; padding: 10px 5px 10px 5px; position: absolute; right: -27px; width: 440px; margin: 0 auto; margin-top: 30px;
+#alt-accounts.accounts-row { background: #fff; height: auto; padding: 0; position: absolute; right: 30px; width: 400px; margin: 0 auto; margin-top: 30px;
   z-index: 10; box-shadow: 0px 1px 3px rgba(0, 0, 0, .3); font-size: 14px; }
-#alt-accounts.accounts-row .row.alt-accounts { margin: 3px 0; padding: 10px 0; cursor: pointer; height: auto; border: 1px solid #f3f3f3; position: relative; }
+#alt-accounts.accounts-row .row.alt-accounts { margin: 0; padding: 20px 0; padding-left: 65px; cursor: pointer; height: auto; border: 1px solid #f3f3f3; position: relative; text-align: left;letter-spacing: 0.35;}
+#alt-accounts.accounts-row .row.alt-accounts .contains_email { color: #337AB7; font-weight: 600;}
+#alt-accounts .action_add_account { display: block; padding: 20px 0; text-indent: 61px; position: relative; margin-top: 0; font-size: 13px; text-decoration: none; -webkit-animation: fadeIn .5s; animation: fadeIn .5s; margin-left: 4px; margin-top: 10px;}
+#alt-accounts .action_add_account.action_add_account--settings { padding: 20px 0; margin-top: 0; font-weight: 600;}
+#alt-accounts .action_add_account:before { background: url('../../img/svgs/plus-sign.svg'); width: 30px; height: 30px; background-repeat: no-repeat; position: absolute; content: ''; left: 19px; top: 13px; }
 .row.alt-accounts:hover {background: rgba(0, 0, 0, .019); }
+#alt-accounts .action_add_account.action_add_account--settings:before { top: 17px; }
 .accounts-options-row {
   padding: 0!important;
 }
@@ -80,16 +85,15 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   background: white;
 }
 #header-row .profile-img, #header-row .profile-img {
-  width: 32px;
-  height: 32px;
+  width: 35px;
+  height: 35px;
   display: inline-block;
   border: 1px solid #cccccc;
   border-radius: 120px;
-  margin-left: 10px;
+  margin-left: 15px;
   cursor: pointer;
   text-align: center;
   font-size: 22px;
-  opacity: .7;
   margin-top: 8px;
 }
 .settings-icons-rows span.key_block_icon {
@@ -104,14 +108,13 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   letter-spacing: -1px;
 }
 .accounts-row .alt-accounts .profile-img {
-  position: absolute !important;
-  width: 30px !important;
-  top: -5px !important;
-  bottom: 0 !important;
-  right: 0 !important;
-  left: 8px !important;
-  height: 30px !important;
+  left: 0;
   margin-top: 0px !important;
+  position: absolute;
+  top: 12px;
+}
+.accounts-row .alt-accounts {
+  cursor: pointer;
 }
 #settings-row .separator {
   background: rgba(0, 0, 0, .09);
@@ -137,10 +140,12 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   left: -8px;
 }
 .action-toggle-accounts-menu {
+  color: #337AB7;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
 }
 .profile-row .down-option {
-  /*background: black;*/
   width: 40px;
   font-size: 25px;
   position: absolute;
@@ -156,7 +161,7 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   bottom: -10px;
   opacity: .6;
   text-decoration: underline;
-  right: 52px;
+  right: 75px;
 }
 #settings-row .my-keys-copy {
   text-indent: 5px;
