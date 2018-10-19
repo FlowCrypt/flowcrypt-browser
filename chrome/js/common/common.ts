@@ -211,9 +211,11 @@ let tool = {
     regex_escape: (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
     html_attribute_encode: (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values)),
     html_attribute_decode: (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
-    // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
     html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
-    html_unescape: (str: string) => str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
+    html_unescape: (str: string) => {
+      // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
+      return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+    },
     html_sanitize: (dirty_html: string): string => { // originaly text_or_html
       return DOMPurify.sanitize(dirty_html, {
         SAFE_FOR_JQUERY: true,

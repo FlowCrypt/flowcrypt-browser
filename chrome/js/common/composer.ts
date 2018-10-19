@@ -592,7 +592,7 @@ class Composer {
   }
 
   private extract_as_text = (element_selector: 'input_text'|'input_intro') => {
-    return tool.str.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n');
+    return tool.str.html_unescape(tool.str.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n'));
   }
 
   private extract_process_send_message = async () => {
