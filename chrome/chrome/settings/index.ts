@@ -342,7 +342,7 @@ tool.catch.try(async () => {
       '  <div class="col-sm-10">',
       `    <div class="row contains_email" data-test="action-switch-to-account">${tool.str.html_escape(email)}</div>`,
       '  </div>',
-      `  <div class="col-sm-1 "><img class="profile-img" src="${tool.str.html_escape(picture)}" alt=""></div>`,
+      `  <div><img class="profile-img" src="${tool.str.html_escape(picture)}" alt=""></div>`,
       '</div>',
     ].join('');
   };

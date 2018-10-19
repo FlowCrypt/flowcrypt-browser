@@ -262,11 +262,6 @@
     right: 0;
     top: 42px;
   }
-  #header-row .profile-img,
-  body#settings > div.profile-row .profile-img {
-    height: 25px;
-    width: 25px;
-  }
   body#settings > div.profile-row .profile-img {
     padding-top: 0;
   }

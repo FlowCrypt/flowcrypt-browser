@@ -11,7 +11,7 @@ tool.catch.try(async () => {
     $('#title').text('Choose account for new message');
     page = '/chrome/elements/compose.htm';
   } else if (url_params.action === 'settings') {
-    $('#title').text('Select account to open settings');
+    $('#title').text('Select an account to open settings');
   } else {
     throw new Error('unknown action: ' + url_params.action);
   }
