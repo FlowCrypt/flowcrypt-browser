@@ -38,6 +38,10 @@ class InboxElementReplacer implements WebmailElementReplacer {
     $('.reply_message_iframe_container').append(this.factory.embedded_reply(params, false, true)); // xss-safe-factory
   }
 
+  scroll_to_bottom_of_conversation = () => {
+    // not implemented for Google Inbox - which will be deprecated soon
+  }
+
   private replace_armored_blocks = () => {
     let self = this;
     $(this.message_text_element_selector).not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers('null').begin + "')").each((i, message_element) => { // for each email that contains PGP block

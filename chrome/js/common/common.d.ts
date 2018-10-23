@@ -368,6 +368,7 @@ interface WebmailElementReplacer {
     everything: () => void;
     set_reply_box_editable: () => void;
     reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void;
+    scroll_to_bottom_of_conversation: () => void;
 }
 type NotificationWithHandlers = {notification: string, callbacks: Dict<Callback>};
 

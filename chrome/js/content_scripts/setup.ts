@@ -91,7 +91,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       close_dialog: () => {
         $('#cryptup_dialog').remove();
       },
-      scroll: (data: {selector: string, repeat: number[]}) => tool.ui.scroll(data.selector, data.repeat),
+      scroll_to_bottom_of_conversation: () => webmail_specific.get_replacer().scroll_to_bottom_of_conversation(),
       passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
         if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory

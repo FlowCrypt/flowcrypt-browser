@@ -17,6 +17,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   private selector = { // gmail_variant=standard|new
     conversation_root: 'div.if',
+    conversation_root_scrollable: '.Tm.aeJ',
     subject: 'h2.hP',
     message_outer: 'div.adn',
     message_inner: 'div.a3s:not(.undefined), .message_inner_body',
@@ -49,16 +50,25 @@ class GmailElementReplacer implements WebmailElementReplacer {
   set_reply_box_editable = () => {
     let reply_container_iframe = $('.reply_message_iframe_container > iframe').first();
     if (reply_container_iframe.length) {
-      tool.ui.scroll(reply_container_iframe);
-      tool.ui.sanitize_replace(reply_container_iframe, this.factory.embedded_reply(this.get_conversation_params(this.get_conversation_root_element(reply_container_iframe[0])), true));
+      $(reply_container_iframe).replaceWith(this.factory.embedded_reply(this.get_conversation_params(this.get_conversation_root_element(reply_container_iframe[0])), true)); // xss-safe-value
     } else {
       this.replace_standard_reply_box(true);
     }
+    this.scroll_to_bottom_of_conversation();
   }
 
   reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
     let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embedded_reply(params, false, true)); // xss-safe-value
+  }
+
+  scroll_to_bottom_of_conversation = () => {
+    let scrollable_element = $(this.selector.conversation_root_scrollable).get(0);
+    if(scrollable_element) {
+      scrollable_element.scrollTop = scrollable_element.scrollHeight; // scroll to the bottom of conversation where the reply box is
+    } else {
+      tool.catch.report(`Cannot find Gmail scrollable element: ${this.selector.conversation_root_scrollable}`);
+    }
   }
 
   private replace_armored_blocks = () => {
@@ -113,7 +123,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           this.add_cryptup_conversation_icon(convo_upper_icons, this.factory.button_with_cryptup(), '.use_secure_reply', () => {
             this.replace_conversation_buttons(true);
             this.replace_standard_reply_box(true, true);
-            tool.ui.scroll('.reply_message_iframe_container', [100, 200, 300]);
+            this.scroll_to_bottom_of_conversation();
           });
         }
       }

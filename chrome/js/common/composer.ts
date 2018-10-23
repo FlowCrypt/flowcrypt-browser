@@ -1051,6 +1051,7 @@ class Composer {
       $('.new_message_button').click(() => this.app.send_message_to_main_window('open_new_message'));
     }
     this.resize_reply_box();
+    setTimeout(() => this.app.send_message_to_main_window('scroll_to_bottom_of_conversation'), 300);
   }
 
   private parse_and_render_recipients = async () => {
