@@ -116,13 +116,13 @@ class Attachment {
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
     if(this.treat_as_value) { // pre-set
       return this.treat_as_value;
-    } else if (tool.value(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification'])) {
+    } else if (tool.value(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
       return  'signature';
     } else if (!this.name && !tool.value('image/').in(this.type)) { // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'message';
-    } else if (tool.value(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'])) {
+    } else if (tool.value(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
       return 'message';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
