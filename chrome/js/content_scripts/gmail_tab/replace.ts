@@ -66,7 +66,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     let scrollable_element = $(this.selector.conversation_root_scrollable).get(0);
     if(scrollable_element) {
       scrollable_element.scrollTop = scrollable_element.scrollHeight; // scroll to the bottom of conversation where the reply box is
-    } else {
+    } else if(window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       tool.catch.report(`Cannot find Gmail scrollable element: ${this.selector.conversation_root_scrollable}`);
     }
   }
