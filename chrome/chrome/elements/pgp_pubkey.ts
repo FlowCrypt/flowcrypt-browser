@@ -89,7 +89,7 @@ tool.catch.try(async () => {
       await Store.db_contact_save(null, contacts);
       tool.ui.sanitize_replace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
-    } else {
+    } else if (pubkeys.length) {
       if (tool.str.is_email_valid($('.input_email').val() as string)) { // text input
         let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
         await Store.db_contact_save(null, contact);
