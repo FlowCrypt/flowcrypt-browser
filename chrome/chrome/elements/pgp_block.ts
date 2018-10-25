@@ -291,10 +291,10 @@ tool.catch.try(async () => {
     } else {
       render_text('Formatting...');
       let decoded = await tool.mime.decode(decrypted_content);
-      if(typeof decoded.text !== 'undefined') {
-        await render_content(decoded.text.replace(/\n/g, '<br>'), false);
-      } else if (typeof decoded.html !== 'undefined') {
+      if (typeof decoded.html !== 'undefined') {
         await render_content(decoded.html, false);
+      } else if(typeof decoded.text !== 'undefined') {
+        await render_content(decoded.text.replace(/\n/g, '<br>'), false);
       } else {
         await render_content((decrypted_content || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
       }
