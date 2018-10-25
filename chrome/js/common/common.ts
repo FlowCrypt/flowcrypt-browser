@@ -670,13 +670,6 @@ let tool = {
       }
       return Boolean(contentType.index === 0 && m.match(/boundary=/));
     },
-    format_content_to_display: (text: string) => { // todo - deprecate this
-      if (/<((br)|(div)|p) ?\/?>/.test(text)) {
-        return text;
-      }
-      text = (text || '').replace(/\r?\n/g, '<br>\n');
-      return text;
-    },
     decode: (mime_message: string): Promise<MimeContent> => {
       return new Promise(async resolve => {
         let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;

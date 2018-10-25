@@ -58,15 +58,15 @@ tool.catch.try(async () => {
     $('body').attr('data-test-state', state); // for automated tests
   };
 
-  let render_content = async (content: string, is_error: boolean) => {
+  let render_content = async (html_content: string, is_error: boolean) => {
     if (!is_error && !is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
     if(!is_error) { // rendering message content
-      let anchored = anchorme(content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
+      let anchored = anchorme(html_content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
       $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(anchored)); // xss-sanitized
     } else { // rendering our own ui
-      tool.ui.sanitize_render('#pgp_block', content);
+      tool.ui.sanitize_render('#pgp_block', html_content);
     }
     // if (unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
@@ -281,7 +281,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
       decrypted_content = tool.str.html_escape(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decrypted_content), false);
+      await render_content(decrypted_content.replace(/\n/g, '<br>'), false);
       if (fc_attachments.length) {
         render_inner_attachments(fc_attachments);
       }
@@ -291,7 +291,13 @@ tool.catch.try(async () => {
     } else {
       render_text('Formatting...');
       let decoded = await tool.mime.decode(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string), false);
+      if(typeof decoded.text !== 'undefined') {
+        await render_content(decoded.text.replace(/\n/g, '<br>'), false);
+      } else if (typeof decoded.html !== 'undefined') {
+        await render_content(decoded.html, false);
+      } else {
+        await render_content((decrypted_content || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
+      }
       let renderable_attachments: Attachment[] = [];
       for (let attachment of decoded.attachments) {
         if (attachment.treat_as() !== 'public_key') {
