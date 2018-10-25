@@ -489,7 +489,7 @@ tool.catch.try(async () => {
       } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (tool.api.error.is_standard_error(e, 'format')) {
-        await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.dont_know_how_open + '\n\n' + String(e), e.data);
+        await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + Lang.pgp_block.dont_know_how_open, e.data);
       } else {
         tool.catch.handle_exception(e);
         await render_error(String(e));

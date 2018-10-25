@@ -25,7 +25,7 @@ const Lang = {
     wrong_password: 'Wrong password. ',
     decrypt_password_prompt: 'Please enter password to decrypt the message',
     connection_error: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-    dont_know_how_open: 'Please email me at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
+    dont_know_how_open: 'Please email us at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
     enter_passphrase: 'Enter passphrase',
     to_open_message: 'to open this message.',
     write_me: 'Email human@flowcrypt.com to get this resolved. We respond promptly. ',
