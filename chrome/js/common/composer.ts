@@ -1020,10 +1020,10 @@ class Composer {
     let result = await tool.crypto.message.decrypt(this.account_email, armored_message);
     if (result.success) {
       if (!tool.mime.resembles_message(result.content.text!)) {
-        this.append_forwarded_message(tool.mime.format_content_to_display(result.content.text!, armored_message));
+        this.append_forwarded_message(tool.mime.format_content_to_display(result.content.text!));
       } else {
         let mime_parse_result = await tool.mime.decode(result.content.text!);
-        this.append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.text!, armored_message));
+        this.append_forwarded_message(tool.mime.format_content_to_display(mime_parse_result.text || mime_parse_result.html || result.content.text!));
       }
     } else {
       tool.ui.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armored_message.replace(/\n/g, '<br/>\n')}`);

@@ -670,27 +670,11 @@ let tool = {
       }
       return Boolean(contentType.index === 0 && m.match(/boundary=/));
     },
-    format_content_to_display: (text: string, full_mime_message: string) => {
-      // todo - this function is very confusing, and should be split into two:
-      // ---> format_mime_plaintext_to_display(text, charset)
-      // ---> get_charset(full_mime_message)
+    format_content_to_display: (text: string) => { // todo - deprecate this
       if (/<((br)|(div)|p) ?\/?>/.test(text)) {
         return text;
       }
       text = (text || '').replace(/\r?\n/g, '<br>\n');
-
-      if (text && full_mime_message && full_mime_message.match(/^Charset: iso-8859-2/m) !== null) {
-        return (window as FcWindow).iso88592.decode(text);  // todo - use iso88592.labels for detection
-      }
-
-      let chunk = text.substring(0, 1000).split('');
-      let c_cross_d = chunk.filter(c => c === 'Ð').length;
-      let c_confirm = chunk.filter(c => 'Ñ²¸»'.indexOf(c) !== -1).length;
-      if (chunk && c_cross_d > 1 && c_cross_d / chunk.length > 0.02 && c_confirm / chunk.length > 0.01) {
-        // guessed based on the test above that the text needs to be explicitly decoded as utf8 to become utf string
-        return tool.str.uint8_as_utf(tool.str.to_uint8(text));
-      }
-
       return text;
     },
     decode: (mime_message: string): Promise<MimeContent> => {
@@ -718,9 +702,9 @@ let tool = {
               if (tool._.mime_node_type(node) === 'application/pgp-signature') {
                 mime_content.signature = node.rawContent;
               } else if (tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
-                mime_content.html = node.rawContent;
+                mime_content.html = tool._.mime_node_process_text_content(node);
               } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
-                mime_content.text = node.rawContent;
+                mime_content.text = tool._.mime_node_process_text_content(node);
               } else {
                 mime_content.attachments.push(new Attachment({name: tool._.mime_node_filename(node), type: tool._.mime_node_type(node), data: node.content}));
               }
@@ -2494,6 +2478,15 @@ let tool = {
         // @ts-ignore - lazy
         return node.headers['content-type'][0].params.name;
       }
+    },
+    mime_node_process_text_content: (node: MimeParserNode): string => {
+      if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
+        return tool.str.uint8_as_utf(node.content);
+      }
+      if(node.charset === 'iso-8859-2') {
+        return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
+      }
+      return node.rawContent;
     },
     mime_content_node: (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
       let node = new MimeBuilder(type).setContent(content);

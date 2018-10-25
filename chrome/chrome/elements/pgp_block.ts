@@ -281,7 +281,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
       decrypted_content = tool.str.html_escape(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decrypted_content, message as string), false);
+      await render_content(tool.mime.format_content_to_display(decrypted_content), false);
       if (fc_attachments.length) {
         render_inner_attachments(fc_attachments);
       }
@@ -291,7 +291,7 @@ tool.catch.try(async () => {
     } else {
       render_text('Formatting...');
       let decoded = await tool.mime.decode(decrypted_content);
-      await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string, message as string), false);
+      await render_content(tool.mime.format_content_to_display(decoded.text || decoded.html || decrypted_content as string), false);
       let renderable_attachments: Attachment[] = [];
       for (let attachment of decoded.attachments) {
         if (attachment.treat_as() !== 'public_key') {

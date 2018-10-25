@@ -216,6 +216,8 @@ interface MimeParserNode {
     rawContent: string;
     content: Uint8Array;
     appendChild: (child: MimeParserNode) => void;
+    contentTransferEncoding: {value: string};
+    charset?: string;
 }
 
 interface MessageVerifyResult {
