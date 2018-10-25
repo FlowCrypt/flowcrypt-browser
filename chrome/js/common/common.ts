@@ -2023,9 +2023,9 @@ let tool = {
                 }
               }
             }
-            throw {code: null, internal: 'format', message: 'Armored message not found', data: tool.str.pretty_print(gmail_message_object.payload)};
+            throw {code: null, internal: 'format', message: 'Armored message not found', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
           } else {
-            throw {code: null, internal: 'format', message: 'No attachments', data: tool.str.pretty_print(gmail_message_object.payload)};
+            throw {code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
           }
         } else { // format === raw
           let mime_message = await tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw!));
