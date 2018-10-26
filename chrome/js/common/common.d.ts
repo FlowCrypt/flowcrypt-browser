@@ -89,6 +89,7 @@ type AttachmentMeta = {
   id?: string|null;
   message_id?: string|null;
   treat_as?: Attachment$treat_as;
+  cid?: string|null;
 };
 
 interface SetupOptions {

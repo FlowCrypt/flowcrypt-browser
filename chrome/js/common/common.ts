@@ -40,8 +40,9 @@ class Attachment {
   public id: string|null;
   public message_id: string|null;
   public inline: boolean;
+  public cid: string|null;
 
-  constructor({data, type, name, length, url, inline, id, message_id, treat_as}: AttachmentMeta) {
+  constructor({data, type, name, length, url, inline, id, message_id, treat_as, cid}: AttachmentMeta) {
     if(typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
     }
@@ -59,6 +60,7 @@ class Attachment {
     this.id = id || null;
     this.message_id = message_id || null;
     this.treat_as_value = treat_as || null;
+    this.cid = cid || null;
   }
 
   public set_data = (data: string|Uint8Array) => {
@@ -716,7 +718,12 @@ let tool = {
               } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
                 mime_content.text = tool._.mime_node_process_text_content(node);
               } else {
-                mime_content.attachments.push(new Attachment({name: tool._.mime_node_filename(node), type: tool._.mime_node_type(node), data: node.content}));
+                mime_content.attachments.push(new Attachment({
+                  name: tool._.mime_node_filename(node),
+                  type: tool._.mime_node_type(node),
+                  data: node.content,
+                  cid: tool._.mime_node_content_id(node),
+                }));
               }
             }
             resolve(mime_content);
@@ -2455,10 +2462,10 @@ let tool = {
       str_sanitize_ADD_ATTR: ['email', 'page', 'addurltext', 'longid', 'index'],
       str_sanitize_HREF_REGEX_CACHE: null as null|RegExp,
     },
-    str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension
+    str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension + cid
       if(tool._.var.str_sanitize_HREF_REGEX_CACHE === null) {
         if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-          tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https):|${tool.str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+          tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${tool.str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
         } else {
           tool._.var.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
         }
@@ -2475,6 +2482,11 @@ let tool = {
     mime_node_type: (node: MimeParserNode) => {
       if (node.headers['content-type'] && node.headers['content-type'][0]) {
         return node.headers['content-type'][0].value;
+      }
+    },
+    mime_node_content_id: (node: MimeParserNode) => {
+      if (node.headers['content-id'] && node.headers['content-id'][0]) {
+        return node.headers['content-id'][0].value;
       }
     },
     mime_node_filename: (node: MimeParserNode) => {

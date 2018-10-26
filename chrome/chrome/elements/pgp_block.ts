@@ -64,12 +64,25 @@ tool.catch.try(async () => {
 
   let display_image_src_link_as_image = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
     let img = document.createElement('img');
-    img.src = a.href;
     img.setAttribute('style', a.getAttribute('style') || '');
     img.style.background = 'none';
     img.style.border = 'none';
     img.addEventListener('load', () => send_resize_message());
-    a.outerHTML = img.outerHTML;
+    if(a.href.indexOf('cid:') === 0) { // image included in the email
+      let content_id = a.href.replace(/^cid:/g, '');
+      let content = included_attachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${content_id}>`)[0];
+      if(content) {
+        img.src = `data:${a.type};base64,${btoa(content.as_text())}`;
+        a.outerHTML = img.outerHTML;
+      } else {
+        a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`);
+      }
+    } else if(a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
+      img.src = a.href;
+      a.outerHTML = img.outerHTML;
+    } else {
+      a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`);
+    }
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
