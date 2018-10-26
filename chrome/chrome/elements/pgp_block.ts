@@ -30,6 +30,10 @@ tool.catch.try(async () => {
   let admin_codes: string[];
   let user_entered_message_password: string|undefined;
 
+  let do_anchor = (text: string) => {
+    return anchorme(text.replace(/\n/g, '<br>'), { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
+  };
+
   let render_text = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
   };
@@ -63,8 +67,7 @@ tool.catch.try(async () => {
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
     if(!is_error) { // rendering message content
-      let anchored = anchorme(html_content, { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
-      $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(anchored)); // xss-sanitized
+      $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html_content)); // xss-sanitized
     } else { // rendering our own ui
       tool.ui.sanitize_render('#pgp_block', html_content);
     }
@@ -281,7 +284,7 @@ tool.catch.try(async () => {
         tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
       decrypted_content = tool.str.html_escape(decrypted_content);
-      await render_content(decrypted_content.replace(/\n/g, '<br>'), false);
+      await render_content(do_anchor(decrypted_content.replace(/\n/g, '<br>')), false);
       if (fc_attachments.length) {
         render_inner_attachments(fc_attachments);
       }
@@ -294,7 +297,7 @@ tool.catch.try(async () => {
       if (typeof decoded.html !== 'undefined') {
         await render_content(decoded.html, false);
       } else if(typeof decoded.text !== 'undefined') {
-        await render_content(decoded.text.replace(/\n/g, '<br>'), false);
+        await render_content(do_anchor(decoded.text.replace(/\n/g, '<br>')), false);
       } else {
         await render_content((decrypted_content || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
       }

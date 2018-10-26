@@ -695,7 +695,9 @@ let tool = {
               if (tool._.mime_node_type(node) === 'application/pgp-signature') {
                 mime_content.signature = node.rawContent;
               } else if (tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
-                mime_content.html = tool._.mime_node_process_text_content(node);
+                // html content may be broken up into smaller pieces by attachments in between
+                // AppleMail does this with inline attachments
+                mime_content.html = (mime_content.html || '') + tool._.mime_node_process_text_content(node);
               } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
                 mime_content.text = tool._.mime_node_process_text_content(node);
               } else {
@@ -2475,6 +2477,9 @@ let tool = {
     mime_node_process_text_content: (node: MimeParserNode): string => {
       if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
         return tool.str.uint8_as_utf(node.content);
+      }
+      if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
+        return tool.str.from_equal_sign_notation_as_utf(node.rawContent);
       }
       if(node.charset === 'iso-8859-2') {
         return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
