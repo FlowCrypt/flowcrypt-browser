@@ -1,5 +1,7 @@
 <div>
 
+version 6.0.8 on October 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/263?closed=1" target="_blank">HTML and Unicode</a>
+
 version 6.0.7 on October 24, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/262?closed=1" target="_blank">Symantec Encryption Server Compatibility</a>
 
 version 6.0.6 on October 23, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/261?closed=1" target="_blank">Reply button fix</a>
