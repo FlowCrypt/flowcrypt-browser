@@ -223,10 +223,25 @@ let tool = {
         ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
       });
     },
-    html_sanitize_keep_basic_tags: (dirty_html: string): string => { // originaly text_or_html
+    html_sanitize_keep_basic_tags: (dirty_html: string): string => {
+      // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
       DOMPurify.removeAllHooks();
       DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-        if ('target' in node) {
+        if ('src' in node) {
+          // replace images with a link that points to that image
+          let img: Element = node;
+          let src = img.getAttribute('src')!;
+          let title = img.getAttribute('title');
+          img.removeAttribute('src');
+          let a = document.createElement('a');
+          a.href = src;
+          a.className = 'image_src_link';
+          a.target = '_blank';
+          a.innerText = title || 'show image';
+          a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; height: ${img.clientHeight ? `${img.clientHeight}px` : 'auto'}; width: ${img.clientWidth ? `${img.clientWidth}px` : 'auto'};`);
+          img.outerHTML = a.outerHTML;
+        }
+        if ('target' in node) { // open links in new window
           (node as Element).setAttribute('target', '_blank');
         }
       });

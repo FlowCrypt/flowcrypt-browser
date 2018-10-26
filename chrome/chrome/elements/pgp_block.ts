@@ -62,12 +62,26 @@ tool.catch.try(async () => {
     $('body').attr('data-test-state', state); // for automated tests
   };
 
+  let display_image_src_link_as_image = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
+    let img = document.createElement('img');
+    img.src = a.href;
+    img.setAttribute('style', a.getAttribute('style') || '');
+    img.style.background = 'none';
+    img.style.border = 'none';
+    img.addEventListener('load', () => send_resize_message());
+    a.outerHTML = img.outerHTML;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  };
+
   let render_content = async (html_content: string, is_error: boolean) => {
     if (!is_error && !is_outgoing) { // successfully opened incoming message
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
     if(!is_error) { // rendering message content
-      $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html_content)); // xss-sanitized
+      let pgp_block = $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html_content)); // xss-sanitized
+      pgp_block.find('a.image_src_link').one('click', tool.ui.event.handle(display_image_src_link_as_image));
     } else { // rendering our own ui
       tool.ui.sanitize_render('#pgp_block', html_content);
     }
