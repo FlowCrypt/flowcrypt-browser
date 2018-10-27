@@ -125,7 +125,10 @@ class Composer {
   constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
     this.attach = new Attach(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
-    this.save_draft_interval = Catch.set_interval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
+
+    if(!variables.disable_draft_saving) {
+      this.save_draft_interval = Catch.set_interval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
+    }
 
     this.account_email = variables.account_email as string;
     this.draft_id = variables.draft_id as string;

@@ -17,7 +17,9 @@ Catch.try(async () => {
 
   let app_functions = Composer.default_app_functions();
   app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
-  let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
+  let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id, disable_draft_saving: true}, new Subscription(null));
+
+  const send_button_text = 'Send Response';
 
   for (let to of (url_params.to as string).split(',')) {
     Ui.sanitize_append('.recipients', Ui.e('span', {text: to}));
@@ -61,15 +63,15 @@ Catch.try(async () => {
       Ui.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if(Api.error.is_auth_popup_needed(e)) {
-        $(target).text('send response');
+        $(target).text(send_button_text);
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         alert('Google account permission needed, please re-connect account and try again.');
       } else if(Api.error.is_network_error(e)) {
-        $(target).text('send response');
+        $(target).text(send_button_text);
         alert('No internet connection, please try again.');
       } else {
         Catch.handle_exception(e);
-        $(target).text('send response');
+        $(target).text(send_button_text);
         alert('There was an error sending, please try again.');
       }
     }
