@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'action', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -50,7 +50,7 @@ tool.catch.try(async () => {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           Ui.sanitize_render('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           Ui.sanitize_render('#content', `Could not check for backups: unknown error. ${Ui.retry_link()}`);
         }
         return;
@@ -160,7 +160,7 @@ tool.catch.try(async () => {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           alert(`Error happened, please try again (${e.message})`);
         }
         $(target).text(btn_text);
@@ -219,7 +219,7 @@ tool.catch.try(async () => {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         return alert(`Error happened: ${e.message}`);
       }
     } finally {

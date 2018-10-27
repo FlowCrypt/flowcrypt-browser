@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try( async () => {
+Catch.try( async () => {
 
   let url_params = Env.url_params(['account_email', 'embedded', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -87,7 +87,7 @@ tool.catch.try( async () => {
       } else if (Api.error.is_network_error(e)) {
         Ui.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         Ui.sanitize_render('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }

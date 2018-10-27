@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let unchecked_url_params = Env.url_params(['account_email', 'action', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(unchecked_url_params, 'account_email');
@@ -172,7 +172,7 @@ tool.catch.try(async () => {
     if (!options.submit_main) {
       return;
     }
-    Api.attester.test_welcome(account_email, armored_pubkey).catch(error => tool.catch.report('Api.attester.test_welcome: failed', error));
+    Api.attester.test_welcome(account_email, armored_pubkey).catch(error => Catch.report('Api.attester.test_welcome: failed', error));
     let addresses;
     if (typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
       addresses = storage.addresses.concat(account_email);
@@ -251,7 +251,7 @@ tool.catch.try(async () => {
       let prv = openpgp.key.readArmored(key.private).keys[0];
       await save_keys([prv], options);
     } catch (e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       Ui.sanitize_render('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
     }
   };
@@ -262,7 +262,7 @@ tool.catch.try(async () => {
       try {
         me = await Api.google.plus.people_me(account_email);
       } catch (e) {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         return {full_name: ''};
       }
       let result = {full_name: me.displayName || '', locale: me.language, picture: me.image.url};
@@ -410,7 +410,7 @@ tool.catch.try(async () => {
       } else if(e instanceof KeyCanBeFixed) {
         return await render_compatibility_fix_block_and_finalize_setup(e.encrypted, options);
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
@@ -422,7 +422,7 @@ tool.catch.try(async () => {
     try {
       fixed_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(account_email, '#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       alert(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
       display_block('step_2b_manual_enter');
       return;
@@ -482,7 +482,7 @@ tool.catch.try(async () => {
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
       window.location.href = Env.url_create('modules/backup.htm', { action: 'setup', account_email });
     } catch (e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       alert(`There was an error, please try again.\n\n(${String(e)})`);
       $('#step_2a_manual_create .action_create_private').text('CREATE AND SAVE');
     }
@@ -513,9 +513,9 @@ tool.catch.try(async () => {
     }
     if (typeof storage.addresses === 'undefined') {
       if (Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
-        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option).catch(tool.catch.rejection);
+        Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option).catch(Catch.rejection);
       } else { // cannot read emails, don't fetch alternative addresses
-        save_and_fill_submit_option([account_email]).catch(tool.catch.rejection);
+        save_and_fill_submit_option([account_email]).catch(Catch.rejection);
       }
     } else {
       show_submit_all_addresses_option(storage.addresses as string[]);

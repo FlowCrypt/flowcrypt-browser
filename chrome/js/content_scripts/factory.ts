@@ -191,7 +191,7 @@ class XssSafeFactory {
 
   button_recipients_use_encryption = (webmail_name: WebMailName) => {
     if (webmail_name !== 'gmail') {
-      tool.catch.report('switch_to_secure not implemented for ' + webmail_name);
+      Catch.report('switch_to_secure not implemented for ' + webmail_name);
       return '';
     } else {
       return '<div class="aoD az6 recipients_use_encryption">Your recipients seem to have encryption set up! <a href="#">Secure Compose</a></div>';

@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -28,7 +28,7 @@ tool.catch.try(async () => {
       });
     }
   } catch(e) {
-    tool.catch.handle_exception(e);
+    Catch.handle_exception(e);
     return $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
   }
 
@@ -122,7 +122,7 @@ tool.catch.try(async () => {
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
-      passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(tool.catch.rejection), 1000);
+      passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(Catch.rejection), 1000);
     } else {
       delete result.message;
       console.info(result);
@@ -136,7 +136,7 @@ tool.catch.try(async () => {
       if(size !== null) {
         url_params.size = size;
       }
-    }).catch(tool.catch.rejection);
+    }).catch(Catch.rejection);
   }
 
   let render_progress = (percent: number, received: number, size: number) => {
@@ -176,7 +176,7 @@ tool.catch.try(async () => {
       } else if(Api.error.is_network_error(e)) {
         Ui.sanitize_render('body.attachment', `Error downloading file: no internet. ${Ui.retry_link()}`);
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         Ui.sanitize_render('body.attachment', `Error downloading file: unknown error. ${Ui.retry_link()}`);
       }
     }
@@ -237,7 +237,7 @@ tool.catch.try(async () => {
     } else if(Api.error.is_network_error(e)) {
       Ui.sanitize_render('body.attachment', `Error downloading file - no internet. ${Ui.retry_link()}`);
     } else {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       Ui.sanitize_render('body.attachment', `Error downloading file - unknown error. ${Ui.retry_link()}`);
     }
   }

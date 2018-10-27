@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   const replace_pgp_elements_interval_ms = 1000;
   let replace_pgp_elements_interval: number;

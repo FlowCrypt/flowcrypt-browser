@@ -8,12 +8,12 @@
 
 let migrate_account: BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
   if(data.account_email) {
-    await Store.set(data.account_email, { version: tool.catch.version('int') as number|null });
+    await Store.set(data.account_email, { version: Catch.version('int') as number|null });
     respond_done();
     await account_update_status_keyserver(data.account_email);
     await account_update_status_pks(data.account_email);
   } else {
-    tool.catch.report('not migrating account: no account_email provided');
+    Catch.report('not migrating account: no account_email provided');
   }
 };
 
@@ -87,7 +87,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       await Store.set(account_email, { addresses_keyserver });
     } catch(e) {
       if(!Api.error.is_network_error(e)) {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
     }
   }
@@ -119,7 +119,7 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
 
 let report_useful_errors = (e: any) => {
   if(!Api.error.is_network_error(e) && !Api.error.is_server_error(e)) {
-    tool.catch.handle_exception(e);
+    Catch.handle_exception(e);
   }
 };
 

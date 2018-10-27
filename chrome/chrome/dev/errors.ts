@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let storage = await Store.get_global(['errors']);
   if (storage.errors && storage.errors.length > 0) {

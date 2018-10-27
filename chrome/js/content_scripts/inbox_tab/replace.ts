@@ -138,7 +138,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
           let meta = $(loader_element).parent().attr('download_url')!.split(':');
           google_drive_attachments.push(new Attachment({message_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted'}));
         } catch (e) {
-          tool.catch.report(e);
+          Catch.report(e);
         }
       });
       this.process_attachments(message_id, message_element, google_drive_attachments, attachments_container, true);

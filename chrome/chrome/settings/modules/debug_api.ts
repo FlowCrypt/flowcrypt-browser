@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   const url_params = Env.url_params(['account_email', 'parent_tab_id', 'which']);
   const account_email = Env.url_param_require.string(url_params, 'account_email');

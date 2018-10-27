@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
   let account_email = url_params.account_email as string|undefined;
@@ -12,7 +12,7 @@ tool.catch.try(async () => {
 
   // let microsoft_auth_attempt = {};
 
-  $('#status-row #status_v').text(`v:${String(tool.catch.version())}`);
+  $('#status-row #status_v').text(`v:${String(Catch.version())}`);
 
   let rules = new Rules(account_email);
   if (!rules.can_backup_keys()) {
@@ -65,7 +65,7 @@ tool.catch.try(async () => {
     },
     open_google_auth_dialog: (data) => {
       $('.featherlight-close').click();
-      Settings.new_google_account_authentication_prompt(tab_id, (data || {}).account_email, (data || {}).omit_read_scope).catch(tool.catch.handle_exception);
+      Settings.new_google_account_authentication_prompt(tab_id, (data || {}).account_email, (data || {}).omit_read_scope).catch(Catch.handle_exception);
     },
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
@@ -100,8 +100,8 @@ tool.catch.try(async () => {
       $('#security_module').attr('src', Env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
       let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
-        check_google_account().catch(tool.catch.handle_exception);
-        check_flowcrypt_account_and_subscription_and_contact_page().catch(tool.catch.handle_exception);
+        check_google_account().catch(Catch.handle_exception);
+        check_flowcrypt_account_and_subscription_and_contact_page().catch(Catch.handle_exception);
         if(storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
@@ -140,7 +140,7 @@ tool.catch.try(async () => {
     try {
       await render_subscription_status_header();
     } catch(e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
     }
     let auth_info = await Store.auth_info();
     if (auth_info.account_email) { // have auth email set
@@ -164,7 +164,7 @@ tool.catch.try(async () => {
         } else {
           status_container.text('ecp error');
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${Xss.html_escape(String(e))}`);
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         }
       }
     } else { // never set up
@@ -181,7 +181,7 @@ tool.catch.try(async () => {
       alert(`Email address changed to ${new_account_email}. You should now check that your public key is properly submitted.`);
       window.location.href = Env.url_create('index.htm', { account_email: new_account_email, page: '/chrome/settings/modules/keyserver.htm' });
     } catch(e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       alert('There was an error changing google account, please write human@flowcrypt.com');
     }
   };
@@ -189,7 +189,7 @@ tool.catch.try(async () => {
   let check_google_account = async () => {
     try {
       let me = await Api.gmail.users_me_profile(account_email!);
-      Settings.update_profile_picture_if_missing(account_email!).catch(tool.catch.handle_exception);
+      Settings.update_profile_picture_if_missing(account_email!).catch(Catch.handle_exception);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if(me.emailAddress !== account_email) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
@@ -210,7 +210,7 @@ tool.catch.try(async () => {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.html_escape(String(e))}`);
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
     }
   };
@@ -222,7 +222,7 @@ tool.catch.try(async () => {
       liveness = 'live';
     } catch (e) {
       if (!Api.error.is_network_error(e)) {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         liveness = 'err';
       } else {
         liveness = 'offline';

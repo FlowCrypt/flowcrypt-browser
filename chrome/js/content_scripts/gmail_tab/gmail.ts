@@ -4,7 +4,7 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   const replace_pgp_elements_interval_ms = 1000;
   let replace_pgp_elements_interval: number;
@@ -83,7 +83,7 @@ tool.catch.try(async () => {
     let keys = Env.key_codes();
     let unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
     $(document).keypress(e => {
-      tool.catch.try(() => {
+      Catch.try(() => {
         let causes_unsecure_reply = tool.value(e.which).in(unsecure_reply_key_shortcuts);
         if (causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
           e.stopImmediatePropagation();

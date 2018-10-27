@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -33,7 +33,7 @@ tool.catch.try(async () => {
         try {
           signed_packet = await Api.attester.packet.create_sign(request_replacement, checked_old_key.decrypted);
         } catch (e) {
-          tool.catch.report('Error signing REQUEST_REPLACEMENT: ' + e.message);
+          Catch.report('Error signing REQUEST_REPLACEMENT: ' + e.message);
           return alert('Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
         try {
@@ -49,7 +49,7 @@ tool.catch.try(async () => {
       if(e instanceof UserAlert) {
         return alert(e.message);
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

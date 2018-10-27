@@ -13,10 +13,10 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     let webmails = await Env.webmails();
     while(true) {
       let account_email = webmail_specific.get_user_account_email();
-      if (typeof account_email !== 'undefined' && tool.catch.version()) {
+      if (typeof account_email !== 'undefined' && Catch.version()) {
         (window as ContentScriptWindow).account_email_global = account_email;
         if (tool.value(webmail_specific.name).in(webmails)) {
-          console.info(`Loading FlowCrypt ${tool.catch.version()} for ${account_email}`);
+          console.info(`Loading FlowCrypt ${Catch.version()} for ${account_email}`);
           return account_email;
         } else {
           console.info(`FlowCrypt disabled: ${webmail_specific.name} integration currently for development only`);
@@ -41,7 +41,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     let inject = new Injector(webmail_specific.name, webmail_specific.variant, factory);
     inject.meta();
     await Store.account_emails_add(account_email);
-    save_account_email_full_name_if_needed(account_email).catch(tool.catch.rejection); // may take a long time, thus async
+    save_account_email_full_name_if_needed(account_email).catch(Catch.rejection); // may take a long time, thus async
     return {tab_id, notifications, factory, inject};
   };
 
@@ -54,7 +54,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
         notifications.show(set_up_notification, {
-          notification_setup_needed_dismiss: () => Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(tool.catch.rejection),
+          notification_setup_needed_dismiss: () => Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
           action_open_settings: () => BrowserMsg.send_await(null, 'settings', {account_email}),
           close: () => { show_setup_needed_notification_if_setup_not_done = false; },
         });
@@ -109,7 +109,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       },
       notification_show: (data: NotificationWithHandlers) => {
         notifications.show(data.notification, data.callbacks);
-        $('body').one('click', tool.catch.try(notifications.clear));
+        $('body').one('click', Catch.try(notifications.clear));
       },
       notification_show_auth_popup_needed: (data: {account_email: string}) => {
         notifications.show_auth_popup_needed(data.account_email);
@@ -151,12 +151,12 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     } catch(e) {
       if(e instanceof TabIdRequiredError) {
         e.message = `FlowCrypt cannot start: ${e.message}`;
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       } else if(e && e.message === 'Extension context invalidated.') {
         console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
         (window as ContentScriptWindow).destroy();
       } else if(!(e instanceof DestroyTrigger)) {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
     }
   };
@@ -181,7 +181,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     (window as ContentScriptWindow).destroyable_timeouts = [];
 
     (window as ContentScriptWindow).destroy = () => {
-      tool.catch.try(() => {
+      Catch.try(() => {
         console.info('Updating FlowCrypt');
         document.removeEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
         for (let id of (window as ContentScriptWindow).destroyable_intervals) {
@@ -203,13 +203,13 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     };
 
     (window as ContentScriptWindow).TrySetDestroyableInterval = (code, ms) => {
-      let id = window.setInterval(tool.catch.try(code), ms);
+      let id = window.setInterval(Catch.try(code), ms);
       (window as ContentScriptWindow).destroyable_intervals.push(id);
       return id;
     };
 
     (window as ContentScriptWindow).TrySetDestroyableTimeout = (code, ms) => {
-      let id = window.setTimeout(tool.catch.try(code), ms);
+      let id = window.setTimeout(Catch.try(code), ms);
       (window as ContentScriptWindow).destroyable_timeouts.push(id);
       return id;
     };

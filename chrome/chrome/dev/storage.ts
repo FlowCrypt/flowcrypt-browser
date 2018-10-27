@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   type RenderableStorage = Dict<{key: string, value: Storable}>;
 

@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -34,7 +34,7 @@ tool.catch.try(async () => {
       button_restore();
     } else {
       render_err('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
-      tool.catch.report('problem during subscribe.js', e);
+      Catch.report('problem during subscribe.js', e);
     }
   };
 
@@ -84,7 +84,7 @@ tool.catch.try(async () => {
     } else if (Api.error.is_network_error(e)) {
       Ui.sanitize_render('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       Ui.sanitize_render('#content', `Unknown error happened when fetching account info. ${Ui.retry_link()}`);
     }
   }
@@ -174,7 +174,7 @@ tool.catch.try(async () => {
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch(e) {
         if(!Api.error.is_auth_error(e) && !Api.error.is_network_error(e)) {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         }
       }
     }

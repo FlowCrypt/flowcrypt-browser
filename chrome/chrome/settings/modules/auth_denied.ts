@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'email_provider']);
   let account_email = url_params.account_email as string|undefined;

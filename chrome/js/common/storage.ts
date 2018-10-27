@@ -221,7 +221,7 @@ class Store {
 
   static async account_emails_add(account_email: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
     if (!account_email) {
-      tool.catch.report('attempting to save empty account_email: ' + account_email);
+      Catch.report('attempting to save empty account_email: ' + account_email);
     }
     let account_emails = await Store.account_emails_get();
     if (!tool.value(account_email).in(account_emails) && account_email) {
@@ -266,7 +266,7 @@ class Store {
     } else if (exception.message === 'The operation failed for reasons unrelated to the database itself and not covered by any other error code.') {
       return new StoreDbFailedError(exception.message);
     } else {
-      tool.catch.handle_exception(exception);
+      Catch.handle_exception(exception);
       return new StoreDbDeniedError(exception.message);
     }
   }
@@ -350,7 +350,7 @@ class Store {
   static db_contact_save = (db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (db === null) { // relay op through background process
       // todo - currently will silently swallow errors
-      BrowserMsg.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(tool.catch.rejection);
+      BrowserMsg.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(Catch.rejection);
     } else {
       if (Array.isArray(contact)) {
         for (let single_contact of contact) {
@@ -372,7 +372,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(tool.catch.rejection);
+        BrowserMsg.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(Catch.rejection);
       } else {
         if (Array.isArray(email)) {
           for (let single_email of email) {
@@ -396,7 +396,7 @@ class Store {
           let tx = db.transaction('contacts', 'readwrite');
           let contactsTable = tx.objectStore('contacts');
           contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
-          tx.oncomplete = tool.catch.try(resolve);
+          tx.oncomplete = Catch.try(resolve);
           let stack_fill = String((new Error()).stack);
           tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
         }
@@ -408,7 +408,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(tool.catch.rejection);
+        BrowserMsg.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(Catch.rejection);
       } else {
         if (email_or_longid.length === 1) {
           let tx: IDBRequest;
@@ -417,7 +417,7 @@ class Store {
           } else { // longid
             tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(email_or_longid[0]);
           }
-          tx.onsuccess = tool.catch.try(() => resolve([tx.result !== undefined ? tx.result : null]));
+          tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : null]));
           let stack_fill = String((new Error()).stack);
           tx.onerror = () => reject(Store.db_error_categorize(tx.error!, stack_fill)); // todo - added ! after ts3 upgrade - investigate
         } else {
@@ -436,7 +436,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(tool.catch.rejection);
+        BrowserMsg.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(Catch.rejection);
       } else {
         for (let key of Object.keys(query)) {
           if (!tool.value(key).in(Store.db_query_keys)) {
@@ -467,7 +467,7 @@ class Store {
         }
         if (typeof search !== 'undefined') {
           let found: Contact[] = [];
-          search.onsuccess = tool.catch.try(() => {
+          search.onsuccess = Catch.try(() => {
             let cursor = search!.result; // checked it above
             if (!cursor || found.length === query.limit) {
               resolve(found);

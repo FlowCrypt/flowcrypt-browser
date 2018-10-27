@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -98,7 +98,7 @@ tool.catch.try(async () => {
         if(Api.error.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else if(!Api.error.is_network_error(e)) {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         }
         return undefined;
       }
@@ -175,7 +175,7 @@ tool.catch.try(async () => {
         } else if (Api.error.is_network_error(e)) {
           // todo: render network error
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           // todo: render error
         }
       });
@@ -196,7 +196,7 @@ tool.catch.try(async () => {
         } else if (Api.error.is_network_error(e)) {
           // todo: render retry
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           // todo: render error
         }
       }

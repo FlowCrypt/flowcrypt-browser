@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -43,7 +43,7 @@ tool.catch.try(async () => {
     } else if (Api.error.is_network_error(e)) {
       // todo - render retry button
     } else {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       // todo - render error
     }
   }
@@ -68,7 +68,7 @@ tool.catch.try(async () => {
         $(target).text('send response');
         alert('No internet connection, please try again.');
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         $(target).text('send response');
         alert('There was an error sending, please try again.');
       }

@@ -43,18 +43,18 @@ class Notifications {
     Ui.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;
-      callbacks.close = tool.catch.try(() => {
+      callbacks.close = Catch.try(() => {
         original_close_callback();
         this.clear();
       });
     } else {
-      callbacks.close = tool.catch.try(this.clear);
+      callbacks.close = Catch.try(this.clear);
     }
     if (typeof callbacks.reload === 'undefined') {
-      callbacks.reload = tool.catch.try(() => window.location.reload());
+      callbacks.reload = Catch.try(() => window.location.reload());
     }
     if (typeof callbacks.subscribe === 'undefined') {
-      callbacks.subscribe = tool.catch.try(() => BrowserMsg.send(this.tab_id, 'subscribe_dialog'));
+      callbacks.subscribe = Catch.try(() => BrowserMsg.send(this.tab_id, 'subscribe_dialog'));
     }
     for (let name of Object.keys(callbacks)) {
       $(`.webmail_notifications a.${name}`).click(Ui.event.prevent(Ui.event.double(), callbacks[name]));

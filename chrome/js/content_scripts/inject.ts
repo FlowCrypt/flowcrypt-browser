@@ -46,7 +46,7 @@ class Injector {
         let container;
         if (this.webmail_name === 'inbox') {
           container = this.S.now('compose_button_container').append(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
-          container.find(this.S.selector('compose_button')).hover(tool.catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)), tool.catch.try(() => this.S.cached('compose_button_label').css('opacity', '')));
+          container.find(this.S.selector('compose_button')).hover(Catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)), Catch.try(() => this.S.cached('compose_button_label').css('opacity', '')));
         } else {
           container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
         }

@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'longid', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -23,7 +23,7 @@ tool.catch.try(async () => {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
-    tool.catch.handle_exception(e);
+    Catch.handle_exception(e);
     $('.pubkey_link_container').remove();
   }
 

@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -31,7 +31,7 @@ tool.catch.try(async () => {
 
     $('.action_open_decrypt_ignore_mdc').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
 
-    $('.action_backup').click(Ui.event.prevent(Ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(tool.catch.rejection)));
+    $('.action_backup').click(Ui.event.prevent(Ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(Catch.rejection)));
 
     $('.action_fetch_aliases').click(Ui.event.prevent(Ui.event.parallel(), async self => {
       Ui.sanitize_render(self, Ui.spinner('white'));
@@ -45,14 +45,14 @@ tool.catch.try(async () => {
           alert('Error: account needs to be re-connected first.');
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           alert(`Error happened: ${e.message}`);
         }
       }
       window.location.reload();
     }));
 
-    $('.action_exception').click(() => tool.catch.test());
+    $('.action_exception').click(() => Catch.test());
 
     $('.action_reset_account').click(Ui.event.prevent(Ui.event.double(), async () => {
       if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
@@ -103,7 +103,7 @@ tool.catch.try(async () => {
                 alert(`Email address changed to ${response.account_email}. You should now check that your public key is properly submitted.`);
                 BrowserMsg.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.account_email});
               } catch(e) {
-                tool.catch.handle_exception(e);
+                Catch.handle_exception(e);
                 alert('There was an error changing google account, please write human@flowcrypt.com');
               }
             }
@@ -113,7 +113,7 @@ tool.catch.try(async () => {
         } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
           alert('Canceled by user, skippoing.');
         } else {
-          tool.catch.log('failed to log into google', response);
+          Catch.log('failed to log into google', response);
           alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com.');
           window.location.reload();
         }

@@ -18,7 +18,7 @@ chrome.runtime.onInstalled.addListener(event => {
   let db: IDBDatabase;
 
   await migrate_global();
-  await Store.set(null, { version: tool.catch.version('int') as number|null });
+  await Store.set(null, { version: Catch.version('int') as number|null });
   let storage = await Store.get_global(['settings_seen', 'errors']);
 
   let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null, add_new_account=false) => {
@@ -55,7 +55,7 @@ chrome.runtime.onInstalled.addListener(event => {
             respond({ provider: 'gmail', account_email: result[0].account_email || null, same_world: result[0].same_world === true });
           });
         } else {
-          tool.catch.report('tabs[0].id is undefined');
+          Catch.report('tabs[0].id is undefined');
         }
       } else {
         respond({ provider: null, account_email: null, same_world: null });
@@ -86,12 +86,12 @@ chrome.runtime.onInstalled.addListener(event => {
   };
 
   let db_operation = (request: BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) => {
-    tool.catch.try(() => {
+    Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
-        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(tool.catch.rejection);
+        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(Catch.rejection);
       } else {
-        tool.catch.log('db corrupted, skipping: ' + request.f);
+        Catch.log('db corrupted, skipping: ' + request.f);
       }
     })();
   };
@@ -117,8 +117,8 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.listen_background({
     bg_exec: BgExec.background_request_handler,
     db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
-    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(tool.catch.rejection),
-    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(tool.catch.rejection),
+    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(Catch.rejection),
+    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(Catch.rejection),
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account,
     settings: open_settings_page_handler,
@@ -126,7 +126,7 @@ chrome.runtime.onInstalled.addListener(event => {
     attest_packet_received: BgAttests.attest_packet_received_handler,
     update_uninstall_url,
     get_active_tab_info,
-    runtime: (message, sender, respond) => respond({ environment: tool.catch.environment(), version: tool.catch.version() }),
+    runtime: (message, sender, respond) => respond({ environment: Catch.environment(), version: Catch.version() }),
     ping: (message, sender, respond) => respond(true),
     _tab_: (request, sender, respond) => {
       if (sender === 'background') {
@@ -149,10 +149,10 @@ chrome.runtime.onInstalled.addListener(event => {
   update_uninstall_url(null, 'background', tool.noop);
   inject_cryptup_into_webmail_if_needed();
   schedule_cryptup_subscription_level_check();
-  BgAttests.watch_for_attest_email_if_appropriate().catch(tool.catch.rejection);
+  BgAttests.watch_for_attest_email_if_appropriate().catch(Catch.rejection);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100
     await Store.remove(null, ['errors']);
   }
 
-})().catch(tool.catch.rejection);
+})().catch(Catch.rejection);

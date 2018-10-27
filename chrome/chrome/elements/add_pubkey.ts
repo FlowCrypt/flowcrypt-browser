@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -46,7 +46,7 @@ tool.catch.try(async () => {
       if(e instanceof UserAlert) {
         return alert(e.message);
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         return alert(`Error happened when processing the public key: ${e.message}`);
       }
     }

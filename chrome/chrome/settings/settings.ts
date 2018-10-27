@@ -28,7 +28,7 @@ class Settings {
     parent_selector += ' ';
     let password = $(parent_selector + input_selector).val();
     if (typeof password !== 'string') {
-      tool.catch.report('render_password_strength: Selected password is not a string', typeof password);
+      Catch.report('render_password_strength: Selected password is not a string', typeof password);
       return;
     }
     let result = Settings.evaluate_password_strength(password);
@@ -323,14 +323,14 @@ class Settings {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
     if(!Api.error.is_network_error(e)) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
     }
     while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_message) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {
         if(!Api.error.is_network_error(e2)) {
-          tool.catch.handle_exception(e2);
+          Catch.handle_exception(e2);
         }
       }
     }
@@ -367,7 +367,7 @@ class Settings {
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
       Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
     } else {
-      tool.catch.log('failed to log into google', response);
+      Catch.log('failed to log into google', response);
       alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com to fix it.');
       window.location.reload();
     }
@@ -381,7 +381,7 @@ class Settings {
         await Store.set(account_email, {picture: image.url});
       } catch(e) {
         if(!Api.error.is_auth_popup_needed(e) && !Api.error.is_auth_error(e) && !Api.error.is_network_error(e)) {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         }
       }
     }

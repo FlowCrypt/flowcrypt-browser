@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -35,7 +35,7 @@ tool.catch.try(async () => {
       }
     } catch (error) {
       render_status('Could not complete: ' + error.message);
-      tool.catch.log('problem in verification.js', error);
+      Catch.log('problem in verification.js', error);
     }
   }
 

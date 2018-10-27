@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -54,7 +54,7 @@ tool.catch.try(async () => {
     },
     notification_show: (data: NotificationWithHandlers) => {
       notifications.show(data.notification, data.callbacks);
-      $('body').one('click', tool.catch.try(notifications.clear));
+      $('body').one('click', Catch.try(notifications.clear));
     },
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();
@@ -94,7 +94,7 @@ tool.catch.try(async () => {
           }
           thread_item.find('.loading').text('');
           thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
-          thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread_id).catch(tool.catch.handle_exception)));
+          thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread_id).catch(Catch.handle_exception)));
         }, () => $('.threads #' + thread_list_item_id(thread_id)).find('.loading').text('Failed to load'));
       }
     }, () => $('body').text('Connection error trying to get list of messages'));

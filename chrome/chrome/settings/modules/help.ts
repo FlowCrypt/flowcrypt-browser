@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'bug_report']);
   let account_email = url_params.account_email as string|undefined;
@@ -33,7 +33,7 @@ tool.catch.try(async () => {
     let button = this;
     Ui.sanitize_render(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
-    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  tool.catch.version();
+    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  Catch.version();
     try {
       let r = await Api.fc.help_feedback(my_email, msg);
       if (r.sent) {
@@ -46,7 +46,7 @@ tool.catch.try(async () => {
       }
     } catch (e) {
       if(!Api.error.is_network_error(e)) {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
       $(button).text(original_button_text);
       alert('There was an error sending message. Our direct email is human@flowcrypt.com');

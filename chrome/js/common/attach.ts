@@ -27,8 +27,8 @@ class Attach {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (id: string, name: string) => tool.catch.try(() => this.process_new_attachment(id, name))(),
-          onCancel: (id: string) => tool.catch.try(() => this.cancel_attachment(id))(),
+          onSubmitted: (id: string, name: string) => Catch.try(() => this.process_new_attachment(id, name))(),
+          onCancel: (id: string) => Catch.try(() => this.cancel_attachment(id))(),
         },
       };
       this.uploader = new qq.FineUploader(config);
@@ -93,7 +93,7 @@ class Attach {
       }
       this.attached_files[id] = new_file;
       if (typeof this.attachment_added_callback === 'function') {
-        this.collect_attachment(id).then((a) => this.attachment_added_callback(a)).catch(tool.catch.rejection);
+        this.collect_attachment(id).then((a) => this.attachment_added_callback(a)).catch(Catch.rejection);
       }
     }
   }

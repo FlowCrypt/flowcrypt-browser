@@ -40,11 +40,11 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   everything = () => {
     this.replace_armored_blocks();
-    this.replace_attachments().catch(tool.catch.handle_exception);
+    this.replace_attachments().catch(Catch.handle_exception);
     this.replace_cryptup_tags();
     this.replace_conversation_buttons();
     this.replace_standard_reply_box();
-    this.evaluate_standard_compose_receivers().catch(tool.catch.handle_exception);
+    this.evaluate_standard_compose_receivers().catch(Catch.handle_exception);
   }
 
   set_reply_box_editable = () => {
@@ -67,7 +67,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     if(scrollable_element) {
       scrollable_element.scrollTop = scrollable_element.scrollHeight; // scroll to the bottom of conversation where the reply box is
     } else if(window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
-      tool.catch.report(`Cannot find Gmail scrollable element: ${this.selector.conversation_root_scrollable}`);
+      Catch.report(`Cannot find Gmail scrollable element: ${this.selector.conversation_root_scrollable}`);
     }
   }
 
@@ -87,7 +87,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Ui.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent(Ui.event.double(), tool.catch.try(on_click)));
+    Ui.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent(Ui.event.double(), Catch.try(on_click)));
   }
 
   private replace_conversation_buttons = (force:boolean=false) => {
@@ -104,7 +104,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             $(reply_button).addClass('replaced').text(''); // hide all except last
           } else {
             $(reply_button).html(this.factory.button_reply()); // replace last,  // xss-safe-factory
-            $(reply_button).click(Ui.event.prevent(Ui.event.double(), tool.catch.try(this.set_reply_box_editable)));
+            $(reply_button).click(Ui.event.prevent(Ui.event.double(), Catch.try(this.set_reply_box_editable)));
           }
         });
       }

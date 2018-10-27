@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['action']);
 
@@ -23,7 +23,7 @@ tool.catch.try(async () => {
       let picture_escaped = Xss.html_escape(account_storages[email].picture || '/img/svgs/profile-icon.svg');
       let email_escaped = Xss.html_escape(email);
       ul_emails += `<li><a class="button gray2 long" href="#" email="${email_escaped}"><img class="picture" src="${picture_escaped}">${email_escaped}</a></li>`;
-      Settings.update_profile_picture_if_missing(email).catch(tool.catch.handle_exception); // will show next time page is rendered
+      Settings.update_profile_picture_if_missing(email).catch(Catch.handle_exception); // will show next time page is rendered
     }
   }
   Ui.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {

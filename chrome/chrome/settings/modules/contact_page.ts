@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -67,7 +67,7 @@ tool.catch.try(async () => {
       }
       window.location.reload();
     } catch (e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
       alert('Failed to create account, possibly a network issue. Please try again.\n\n' + e.message);
       window.location.reload();
     }

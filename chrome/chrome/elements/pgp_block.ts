@@ -4,7 +4,7 @@
 
 declare var anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   Ui.event.protect();
 
@@ -287,7 +287,7 @@ tool.catch.try(async () => {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
         BrowserMsg.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       } else {
-        tool.catch.report('error when extending message expiration', e);
+        Catch.report('error when extending message expiration', e);
       }
       Ui.sanitize_render($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
       let el = await Ui.event.clicked('.retry_expiration_change');
@@ -528,7 +528,7 @@ tool.catch.try(async () => {
         console.log(e.data);
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + Lang.pgp_block.dont_know_how_open, e.data);
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         await render_error(String(e));
       }
     }

@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -104,7 +104,7 @@ tool.catch.try(async () => {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           alert(`Error happened: ${e.message}`);
         }
       }
@@ -123,7 +123,7 @@ tool.catch.try(async () => {
         await Api.attester.initial_legacy_submit(email, primary_ki.public, false);
       }
     } catch (e) {
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
     } finally {
       window.location.reload();
     }
@@ -139,7 +139,7 @@ tool.catch.try(async () => {
       Ui.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       Ui.sanitize_render('.summary', `Failed to load. ${Ui.retry_link()}`);
-      tool.catch.handle_exception(e);
+      Catch.handle_exception(e);
     }
   }
 

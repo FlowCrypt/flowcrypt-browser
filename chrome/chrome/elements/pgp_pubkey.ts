@@ -2,7 +2,7 @@
 
 'use strict';
 
-tool.catch.try(async () => {
+Catch.try(async () => {
 
   // todo - this should use KeyImportUI for consistency. Needs general refactoring, hard to follow.
 
@@ -61,7 +61,7 @@ tool.catch.try(async () => {
           $('.input_email').css({display: 'none'});
           Ui.sanitize_append('.add_contact', Xss.html_escape(' for ' + pubkeys.map(pubkey => Str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.is_email_valid(e)).join(', ')));
         }
-        set_button_text().catch(tool.catch.rejection);
+        set_button_text().catch(Catch.rejection);
       }
     } else {
       let fixed = url_params.armored_pubkey as string;

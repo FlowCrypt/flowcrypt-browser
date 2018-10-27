@@ -146,7 +146,7 @@ class Extension { // todo - move extension-specific common.js code here
   public static prepare_bug_report = (name: string, details?: Dict<FlatTypes>, error?: Error|any): string => {
     let bug_report: Dict<string> = {
       name,
-      stack: tool.catch.stack_trace(),
+      stack: Catch.stack_trace(),
     };
     try {
       bug_report.error = JSON.stringify(error, null, 2);
@@ -891,7 +891,7 @@ class Api {
           }
         }
         if (Object.keys(local_storage_update).length) {
-          tool.catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
+          Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
           await Store.set(null, local_storage_update);
           return true;
         } else {
@@ -1120,7 +1120,7 @@ class Api {
         let _ = await Api.internal.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
         let {emailAddress: account_email} = await Api.gmail.users_me_profile(null, tokens_object.access_token);
         if(result.state.account_email !== account_email) {
-          tool.catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
+          Catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
         }
         await Api.internal.google_auth_save_tokens(account_email, tokens_object, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
         return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
@@ -1389,11 +1389,11 @@ class Ui {
         if (passphrase_input.attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
           Ui.sanitize_render(target, button_hide);
-          Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.rejection);
+          Store.set(null, { hide_pass_phrases: false }).catch(Catch.rejection);
         } else {
           $('#' + id).attr('type', 'password');
           Ui.sanitize_render(target, button_show);
-          Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.rejection);
+          Store.set(null, { hide_pass_phrases: true }).catch(Catch.rejection);
         }
       }));
     }
@@ -1411,7 +1411,7 @@ class Ui {
       cached: (name: string) => {
         if (!cache[name]) {
           if (typeof selectors[name] === 'undefined') {
-            tool.catch.report('unknown selector name: ' + name);
+            Catch.report('unknown selector name: ' + name);
           }
           cache[name] = $(selectors[name]);
         }
@@ -1419,13 +1419,13 @@ class Ui {
       },
       now: (name: string) => {
         if (typeof selectors[name] === 'undefined') {
-          tool.catch.report('unknown selector name: ' + name);
+          Catch.report('unknown selector name: ' + name);
         }
         return $(selectors[name]);
       },
       selector: (name: string) => {
         if (typeof selectors[name] === 'undefined') {
-          tool.catch.report('unknown selector name: ' + name);
+          Catch.report('unknown selector name: ' + name);
         }
         return selectors[name];
       }
@@ -1487,7 +1487,7 @@ class Ui {
       } else if (err_handler && err_handler.other) {
         err_handler.other(e);
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
     },
     prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, id: string) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
@@ -1562,15 +1562,15 @@ class BrowserMsg {
   } as Dict<BrowserMessageHandler>;
 
   public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
-    BrowserMsg.send_await(destination_string, name, data).catch(tool.catch.rejection);
+    BrowserMsg.send_await(destination_string, name, data).catch(Catch.rejection);
   }
 
   public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
-    let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: tool.catch.stack_trace() };
-    let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
+    let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
+    let try_resolve_no_undefined = (r?: BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     let is_background_page = Env.is_background_script();
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
-      tool.catch.log('BrowserMsg.send to:undefined');
+      Catch.log('BrowserMsg.send to:undefined');
       try_resolve_no_undefined();
     } else if (is_background_page && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && msg.to === null) {
       BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
@@ -1623,11 +1623,11 @@ class BrowserMsg {
               let r = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name](msg.data, sender, respond);
               if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
                 // todo - a way to callback the error to be re-thrown to caller stack
-                (r as Promise<void>).catch(tool.catch.rejection);
+                (r as Promise<void>).catch(Catch.rejection);
               }
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
               if (BrowserMsg.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-                tool.catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+                Catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
                 console.log('BrowserMsg.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
               }
@@ -1637,7 +1637,7 @@ class BrowserMsg {
         return !!respond; // indicate that this listener intends to respond
       } catch(e) {
         // todo - a way to callback the error to be re-thrown to caller stack
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
     });
   }
@@ -1658,7 +1658,7 @@ class BrowserMsg {
           } catch (e) {
             // todo - the sender should still know - could have PageClosedError
             if (e.message !== 'Attempting to use a disconnected port object') {
-              tool.catch.handle_exception(e);
+              Catch.handle_exception(e);
               throw e;
             }
           }
@@ -1670,15 +1670,15 @@ class BrowserMsg {
           let r = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND![msg.name](msg.data, sender, safe_respond); // is !null because checked above
           if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
             // todo - a way to callback the error to be re-thrown to caller stack
-            (r as Promise<void>).catch(tool.catch.rejection);
+            (r as Promise<void>).catch(Catch.rejection);
           }
         } else if (msg.to !== 'broadcast') {
-          tool.catch.report('BrowserMsg.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+          Catch.report('BrowserMsg.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
         }
         return !!respond; // indicate that we intend to respond later
       } catch (e) {
         // todo - a way to callback the error to be re-thrown to caller stack
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
     });
   }
@@ -2135,7 +2135,7 @@ class Mime {
         parser.write(mime_message);
         parser.end();
       } catch (e) {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         resolve(mime_content);
       }
     });
@@ -2392,7 +2392,7 @@ class Pgp {
           return {blocks, normalized};
         } else {
           if (r.continue_at <= start_at) {
-            tool.catch.report(`Pgp.armor.detect_blocks likely infinite loop: r.continue_at(${r.continue_at}) <= start_at(${start_at})`);
+            Catch.report(`Pgp.armor.detect_blocks likely infinite loop: r.continue_at(${r.continue_at}) <= start_at(${start_at})`);
             return {blocks, normalized}; // prevent infinite loop
           }
           start_at = r.continue_at;
@@ -2428,7 +2428,7 @@ class Pgp {
         } else if (blocks[i].type === 'cryptup_verification') {
           r += factory.embedded_verification(blocks[i].content);
         } else {
-          tool.catch.report('dunno how to process block type: ' + blocks[i].type);
+          Catch.report('dunno how to process block type: ' + blocks[i].type);
         }
       }
       return r;
@@ -2491,7 +2491,7 @@ class Pgp {
           return armored;
         }
       } catch (error) {
-        tool.catch.handle_exception(error);
+        Catch.handle_exception(error);
       }
     },
     fingerprint: (key: OpenPGP.key.Key|string, formatting:"default"|"spaced"='default'): string|null => {
@@ -2516,7 +2516,7 @@ class Pgp {
           return Pgp.key.fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
         } catch (error) {
           if (error.message === 'openpgp is not defined') {
-            tool.catch.handle_exception(error);
+            Catch.handle_exception(error);
           }
           console.log(error);
           return null;
@@ -2621,7 +2621,7 @@ class Pgp {
           signature.error = 'FlowCrypt is not equipped to verify this message (err 101)';
         } else {
           signature.error = `FlowCrypt had trouble verifying this message (${verify_error.message})`;
-          tool.catch.handle_exception(verify_error);
+          Catch.handle_exception(verify_error);
         }
       }
       return signature;
@@ -2712,7 +2712,7 @@ class Pgp {
           return {word, seconds: Math.round(time_to_crack), time: readable_time};
         }
       }
-      tool.catch.report('estimate_strength: got to end without any result');
+      Catch.report('estimate_strength: got to end without any result');
       throw Error('(thrown) estimate_strength: got to end without any result');
     },
     weak_words: () => [
@@ -2902,6 +2902,275 @@ class Pgp {
 
 }
 
+class Catch {
+
+  private static RUNTIME: Dict<string> = {};
+  private static ORIGINAL_ON_ERROR = window.onerror;
+
+  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
+    if (typeof error === 'string') {
+      error_message = error;
+      error = { name: 'thrown_string', message: error_message, stack: error_message };
+    }
+    if (error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called && !version && !env) { // safari has limited support
+      error = { name: 'safari_error', message: error_message, stack: error_message };
+    }
+    if (typeof error_message === 'undefined' && line === 0 && col === 0 && is_manually_called && typeof error === 'object' && !(error instanceof Error)) {
+      let stringified;
+      try { // this sometimes happen with unhandled Promise.then(_, reject)
+        stringified = JSON.stringify(error);
+      } catch (cannot) {
+        stringified = 'typeof: ' + (typeof error) + '\n' + String(error);
+      }
+      error = { name: 'thrown_object', message: error.message || '(unknown)', stack: stringified};
+      error_message = 'thrown_object';
+    }
+    let user_log_message = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
+    let ignored_errors = [
+      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
+    ];
+    if (!error) {
+      return;
+    }
+    if (error instanceof Error && ignored_errors.indexOf(error.message) !== -1) {
+      return true;
+    }
+    if (error instanceof Error && error.stack) {
+      console.log('%c[' + error_message + ']\n' + error.stack, 'color: #F00; font-weight: bold;');
+    } else {
+      console.error(error);
+      console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
+    }
+    if (is_manually_called !== true && Catch.ORIGINAL_ON_ERROR && Catch.ORIGINAL_ON_ERROR !== (Catch.handle_error as ErrorEventHandler)) {
+      Catch.ORIGINAL_ON_ERROR.apply(null, arguments); // Call any previously assigned handler
+    }
+    if (error instanceof Error && (error.stack || '').indexOf('PRIVATE') !== -1) {
+      return;
+    }
+    if (error instanceof UnreportableError) {
+      return;
+    }
+    try {
+      $.ajax({
+        url: 'https://flowcrypt.com/api/help/error',
+        method: 'POST',
+        data: JSON.stringify({
+          name: ((error as Error).name || '').substring(0, 50), // todo - remove cast & debug
+          message: (error_message || '').substring(0, 200),
+          url: (url || '').substring(0, 100),
+          line: line || 0,
+          col: col || 0,
+          trace: (error as Error).stack || '', // todo - remove cast & debug
+          version: version || Catch.version() || 'unknown',
+          environment: env || Catch.environment(),
+        }),
+        dataType: 'json',
+        crossDomain: true,
+        contentType: 'application/json; charset=UTF-8',
+        async: true,
+        success: (response) => {
+          if (response.saved === true) {
+            console.log('%cFlowCrypt ERROR:' + user_log_message, 'font-weight: bold;');
+          } else {
+            console.log('%cFlowCrypt EXCEPTION:' + user_log_message, 'font-weight: bold;');
+          }
+        },
+        error: (XMLHttpRequest, status, error) => {
+          console.log('%cFlowCrypt FAILED:' + user_log_message, 'font-weight: bold;');
+        },
+      });
+    } catch (ajax_err) {
+      console.log(ajax_err.message);
+      console.log('%cFlowCrypt ISSUE:' + user_log_message, 'font-weight: bold;');
+    }
+    try {
+      if (typeof Store.get_account === 'function' && typeof Store.set === 'function') {
+        Store.get_global(['errors']).then(s => {
+          if (typeof s.errors === 'undefined') {
+            s.errors = [];
+          }
+          if(error instanceof Error) {
+            s.errors.unshift(error.stack || error_message || String(error));
+          } else {
+            s.errors.unshift(error_message || String(error));
+          }
+          Store.set(null, s).catch(console.error);
+        }).catch(console.error);
+      }
+    } catch (storage_err) {
+      console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
+    }
+    return true;
+  }
+
+  public static handle_exception = (exception: any) => {
+    let line, col;
+    try {
+      let caller_line = exception.stack!.split('\n')[1]; // will be catched below
+      let matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      line = Number(matched![1]); // will be catched below
+      col = Number(matched![2]); // will be catched below
+    } catch (line_err) {
+      line = 0;
+      col = 0;
+    }
+    Catch.RUNTIME = Catch.RUNTIME || {};
+    Catch.handle_error(exception.message, window.location.href, line, col, exception, true, Catch.RUNTIME.version, Catch.RUNTIME.environment);
+  }
+
+  public static report = (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
+    try {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(name);
+    } catch (e) {
+      if (typeof details !== 'string') {
+        try {
+          details = JSON.stringify(details);
+        } catch (stringify_error) {
+          details = '(could not stringify details "' + String(details) + '" in Catch.report because: ' + stringify_error.message + ')';
+        }
+      }
+      e.stack = e.stack + '\n\n\ndetails: ' + details;
+      Catch.handle_exception(e);
+    }
+  }
+
+  public static log = (name: string, details:Serializable|Error|Dict<Serializable>=undefined) => {
+    name = 'Catch.log: ' + name;
+    console.log(name);
+    try {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error(name);
+    } catch (e_local) {
+      let e = e_local as Error;
+      if (typeof details !== 'string') {
+        try {
+          details = JSON.stringify(details);
+        } catch (stringify_error) {
+          details = '(could not stringify details "' + String(details) + '" in Catch.log because: ' + stringify_error.message + ')';
+        }
+      }
+      e.stack = e.stack + '\n\n\ndetails: ' + details;
+      try {
+        Store.get_global(['errors']).then(s => {
+          if (typeof s.errors === 'undefined') {
+            s.errors = [];
+          }
+          s.errors.unshift(e.stack || name);
+          Store.set(null, s).catch(console.error);
+        }).catch(console.error);
+      } catch (storage_err) {
+        console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
+      }
+    }
+  }
+
+  public static version = (format='original') => {
+    if (format === 'int') {
+      return Catch.RUNTIME.version ? Number(Catch.RUNTIME.version.replace(/\./g, '')) : null;
+    } else {
+      return Catch.RUNTIME.version || null;
+    }
+  }
+
+  public static try = (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
+    try {
+      let r = code();
+      if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
+        r.catch(Catch.rejection);
+      }
+    } catch (code_err) {
+      Catch.handle_exception(code_err);
+    }
+  }
+
+  public static environment = (url=window.location.href): string => {
+    let browser_name = Env.browser().name;
+    let env = 'unknown';
+    if (url.indexOf('bnjglocicd') !== -1) {
+      env = 'ex:prod';
+    } else if (url.indexOf('gjdhkacdgd') !== -1) {
+      env = 'ex:dev';
+    } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
+      env = 'ex:test';
+    } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
+      env = 'web:local';
+    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('flowcrypt.com') !== -1) {
+      env = 'web:prod';
+    } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
+      env = 'ex:fork';
+    } else if (url.indexOf('mail.google.com') !== -1) {
+      env = 'ex:script:gmail';
+    } else if (url.indexOf('inbox.google.com') !== -1) {
+      env = 'ex:script:inbox';
+    } else if (/moz-extension:\/\/.+/.test(url)) {
+      env = 'ex';
+    }
+    return browser_name + ':' + env;
+  }
+
+  public static test = () => {
+    // @ts-ignore - intentional exception
+    this_will_fail();
+  }
+
+  public static promise_error_alert = (note: string) => (error: Error) => { // returns a function
+    console.log(error);
+    alert(note);
+  }
+
+  public static stack_trace = (): string => {
+    try {
+      Catch.test();
+    } catch (e) {
+      return e.stack.split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
+    }
+    return ''; // make ts happy - this will never happen
+  }
+
+  public static rejection = (e: PromiseRejectionEvent|StandardError|Error) => {
+    if(!(e instanceof UnreportableError)) {
+      if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
+        Catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
+      } else if (!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
+        if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
+          let stack = (e as StandardError).stack;
+          delete (e as StandardError).stack;
+          Catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
+        } else {
+          Catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
+        }
+      }
+    }
+  }
+
+  public static initialize = () => {
+    let figure_out_flowcrypt_runtime = () => {
+      if ((window as FcWindow).is_bare_engine !== true) {
+        try {
+          Catch.RUNTIME.version = chrome.runtime.getManifest().version;
+        } catch (err) {} // tslint:disable-line:no-empty
+        Catch.RUNTIME.environment = Catch.environment();
+        if (!Env.is_background_script() && Env.is_extension()) {
+          BrowserMsg.send_await(null, 'runtime', null).then(extension_runtime => {
+            if (typeof extension_runtime !== 'undefined') {
+              Catch.RUNTIME = extension_runtime;
+            } else {
+              setTimeout(figure_out_flowcrypt_runtime, 200);
+            }
+          }).catch(Catch.rejection);
+        }
+      }
+    };
+    figure_out_flowcrypt_runtime();
+    (window as FcWindow).onerror = (Catch.handle_error as ErrorEventHandler);
+    (window as FcWindow).onunhandledrejection = Catch.rejection;
+  }
+
+}
+
 let tool = {
   arr: {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
@@ -3064,270 +3333,14 @@ let tool = {
   enums: {
     recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
   },
-  catch: { // web and extension code
-    handle_error: (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
-      if (typeof error === 'string') {
-        error_message = error;
-        error = { name: 'thrown_string', message: error_message, stack: error_message };
-      }
-      if (error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called && !version && !env) { // safari has limited support
-        error = { name: 'safari_error', message: error_message, stack: error_message };
-      }
-      if (typeof error_message === 'undefined' && line === 0 && col === 0 && is_manually_called && typeof error === 'object' && !(error instanceof Error)) {
-        let stringified;
-        try { // this sometimes happen with unhandled Promise.then(_, reject)
-          stringified = JSON.stringify(error);
-        } catch (cannot) {
-          stringified = 'typeof: ' + (typeof error) + '\n' + String(error);
-        }
-        error = { name: 'thrown_object', message: error.message || '(unknown)', stack: stringified};
-        error_message = 'thrown_object';
-      }
-      let user_log_message = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
-      let ignored_errors = [
-        'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
-        'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
-        'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
-      ];
-      if (!error) {
-        return;
-      }
-      if (error instanceof Error && ignored_errors.indexOf(error.message) !== -1) {
-        return true;
-      }
-      if (error instanceof Error && error.stack) {
-        console.log('%c[' + error_message + ']\n' + error.stack, 'color: #F00; font-weight: bold;');
-      } else {
-        console.error(error);
-        console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
-      }
-      if (is_manually_called !== true && tool.catch._.original_on_error && tool.catch._.original_on_error !== (tool.catch.handle_error as ErrorEventHandler)) {
-        tool.catch._.original_on_error.apply(this, arguments); // Call any previously assigned handler
-      }
-      if (error instanceof Error && (error.stack || '').indexOf('PRIVATE') !== -1) {
-        return;
-      }
-      if (error instanceof UnreportableError) {
-        return;
-      }
-      try {
-        $.ajax({
-          url: 'https://flowcrypt.com/api/help/error',
-          method: 'POST',
-          data: JSON.stringify({
-            name: ((error as Error).name || '').substring(0, 50), // todo - remove cast & debug
-            message: (error_message || '').substring(0, 200),
-            url: (url || '').substring(0, 100),
-            line: line || 0,
-            col: col || 0,
-            trace: (error as Error).stack || '', // todo - remove cast & debug
-            version: version || tool.catch.version() || 'unknown',
-            environment: env || tool.catch.environment(),
-          }),
-          dataType: 'json',
-          crossDomain: true,
-          contentType: 'application/json; charset=UTF-8',
-          async: true,
-          success: (response) => {
-            if (response.saved === true) {
-              console.log('%cFlowCrypt ERROR:' + user_log_message, 'font-weight: bold;');
-            } else {
-              console.log('%cFlowCrypt EXCEPTION:' + user_log_message, 'font-weight: bold;');
-            }
-          },
-          error: (XMLHttpRequest, status, error) => {
-            console.log('%cFlowCrypt FAILED:' + user_log_message, 'font-weight: bold;');
-          },
-        });
-      } catch (ajax_err) {
-        console.log(ajax_err.message);
-        console.log('%cFlowCrypt ISSUE:' + user_log_message, 'font-weight: bold;');
-      }
-      try {
-        if (typeof Store.get_account === 'function' && typeof Store.set === 'function') {
-          Store.get_global(['errors']).then(s => {
-            if (typeof s.errors === 'undefined') {
-              s.errors = [];
-            }
-            if(error instanceof Error) {
-              s.errors.unshift(error.stack || error_message || String(error));
-            } else {
-              s.errors.unshift(error_message || String(error));
-            }
-            Store.set(null, s).catch(console.error);
-          }).catch(console.error);
-        }
-      } catch (storage_err) {
-        console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
-      }
-      return true;
-    },
-    handle_exception: (exception: any) => {
-      let line, col;
-      try {
-        let caller_line = exception.stack!.split('\n')[1]; // will be catched below
-        let matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
-        line = Number(matched![1]); // will be catched below
-        col = Number(matched![2]); // will be catched below
-      } catch (line_err) {
-        line = 0;
-        col = 0;
-      }
-      tool.catch._.runtime = tool.catch._.runtime || {};
-      tool.catch.handle_error(exception.message, window.location.href, line, col, exception, true, tool.catch._.runtime.version, tool.catch._.runtime.environment);
-    },
-    report: (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
-      try {
-        // noinspection ExceptionCaughtLocallyJS
-        throw new Error(name);
-      } catch (e) {
-        if (typeof details !== 'string') {
-          try {
-            details = JSON.stringify(details);
-          } catch (stringify_error) {
-            details = '(could not stringify details "' + String(details) + '" in tool.catch.report because: ' + stringify_error.message + ')';
-          }
-        }
-        e.stack = e.stack + '\n\n\ndetails: ' + details;
-        tool.catch.handle_exception(e);
-      }
-    },
-    log: (name: string, details:Serializable|Error|Dict<Serializable>=undefined) => {
-      name = 'tool.catch.log: ' + name;
-      console.log(name);
-      try {
-        // noinspection ExceptionCaughtLocallyJS
-        throw new Error(name);
-      } catch (e_local) {
-        let e = e_local as Error;
-        if (typeof details !== 'string') {
-          try {
-            details = JSON.stringify(details);
-          } catch (stringify_error) {
-            details = '(could not stringify details "' + String(details) + '" in tool.catch.log because: ' + stringify_error.message + ')';
-          }
-        }
-        e.stack = e.stack + '\n\n\ndetails: ' + details;
-        try {
-          Store.get_global(['errors']).then(s => {
-            if (typeof s.errors === 'undefined') {
-              s.errors = [];
-            }
-            s.errors.unshift(e.stack || name);
-            Store.set(null, s).catch(console.error);
-          }).catch(console.error);
-        } catch (storage_err) {
-          console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
-        }
-      }
-    },
-    version: (format='original') => {
-      if (format === 'int') {
-        return tool.catch._.runtime.version ? Number(tool.catch._.runtime.version.replace(/\./g, '')) : null;
-      } else {
-        return tool.catch._.runtime.version || null;
-      }
-    },
-    try: (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
-      try {
-        let r = code();
-        if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
-          r.catch(tool.catch.rejection);
-        }
-      } catch (code_err) {
-        tool.catch.handle_exception(code_err);
-      }
-    },
-    environment: (url=window.location.href): string => {
-      let browser_name = Env.browser().name;
-      let env = 'unknown';
-      if (url.indexOf('bnjglocicd') !== -1) {
-        env = 'ex:prod';
-      } else if (url.indexOf('gjdhkacdgd') !== -1) {
-        env = 'ex:dev';
-      } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
-        env = 'ex:test';
-      } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
-        env = 'web:local';
-      } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('flowcrypt.com') !== -1) {
-        env = 'web:prod';
-      } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
-        env = 'ex:fork';
-      } else if (url.indexOf('mail.google.com') !== -1) {
-        env = 'ex:script:gmail';
-      } else if (url.indexOf('inbox.google.com') !== -1) {
-        env = 'ex:script:inbox';
-      } else if (/moz-extension:\/\/.+/.test(url)) {
-        env = 'ex';
-      }
-      return browser_name + ':' + env;
-    },
-    test: () => {
-      // @ts-ignore - intentional exception
-      this_will_fail();
-    },
-    promise_error_alert: (note: string) => (error: Error) => { // returns a function
-      console.log(error);
-      alert(note);
-    },
-    stack_trace: (): string => {
-      try {
-        tool.catch.test();
-      } catch (e) {
-        return e.stack.split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
-      }
-      return ''; // make ts happy - this will never happen
-    },
-    rejection: (e: PromiseRejectionEvent|StandardError|Error) => {
-      if(!(e instanceof UnreportableError)) {
-        if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
-          tool.catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
-        } else if (!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
-          if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
-            let stack = (e as StandardError).stack;
-            delete (e as StandardError).stack;
-            tool.catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
-          } else {
-            tool.catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
-          }
-        }
-      }
-    },
-    _: {
-      runtime: {} as Dict<string>,
-      original_on_error: window.onerror,
-      initialize: () => {
-        let figure_out_flowcrypt_runtime = () => {
-          if ((window as FcWindow).is_bare_engine !== true) {
-            try {
-              tool.catch._.runtime.version = chrome.runtime.getManifest().version;
-            } catch (err) {} // tslint:disable-line:no-empty
-            tool.catch._.runtime.environment = tool.catch.environment();
-            if (!Env.is_background_script() && Env.is_extension()) {
-              BrowserMsg.send_await(null, 'runtime', null).then(extension_runtime => {
-                if (typeof extension_runtime !== 'undefined') {
-                  tool.catch._.runtime = extension_runtime;
-                } else {
-                  setTimeout(figure_out_flowcrypt_runtime, 200);
-                }
-              }).catch(tool.catch.rejection);
-            }
-          }
-        };
-        figure_out_flowcrypt_runtime();
-        (window as FcWindow).onerror = (tool.catch.handle_error as ErrorEventHandler);
-        (window as FcWindow).onunhandledrejection = tool.catch.rejection;
-      },
-    }
-  },
 };
 
-tool.catch._.initialize();
+Catch.initialize();
 
 (( /* EXTENSIONS AND CONFIG */ ) => {
 
   if (typeof openpgp === 'object' && openpgp && typeof openpgp.config === 'object') {
-    openpgp.config.versionstring = `FlowCrypt ${tool.catch.version() || ''} Gmail Encryption`;
+    openpgp.config.versionstring = `FlowCrypt ${Catch.version() || ''} Gmail Encryption`;
     openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
     // openpgp.config.require_uid_self_cert = false;
   }

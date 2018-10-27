@@ -142,7 +142,7 @@ class Composer {
     if (subscription.active) {
       this.update_footer_icon();
     } else if (this.app.storage_get_email_footer()) { // footer set but subscription not active - subscription expired
-      this.app.storage_set_email_footer(null).catch(tool.catch.handle_exception);
+      this.app.storage_set_email_footer(null).catch(Catch.handle_exception);
       this.app.send_message_to_main_window('notification_show', {
         notification: 'Your FlowCrypt ' + (subscription.method === 'trial' ? 'trial' : 'subscription') + ' has ended. Custom email signature (email footer) will no longer be used. <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>',
       });
@@ -150,7 +150,7 @@ class Composer {
     if (this.app.storage_get_hide_message_password()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initialize_compose_box(variables).catch(tool.catch.rejection);
+    this.initialize_compose_box(variables).catch(Catch.rejection);
     this.initialize_actions();
   }
 
@@ -221,7 +221,7 @@ class Composer {
             // no need
           }
         }
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       },
     };
   }
@@ -353,14 +353,14 @@ class Composer {
         this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         Ui.sanitize_render('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
       } else if (this.is_reply_box && Api.error.is_not_found(e)) {
-        tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
+        Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         await tool.time.sleep(500);
         await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
         console.info('Api.gmail.draft_get success===false');
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
         if (this.is_reply_box) {
           await this.render_reply_message_compose_table();
         }
@@ -431,7 +431,7 @@ class Composer {
           this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
           this.S.cached('send_btn_note').text('Not saved');
         }
       }
@@ -450,7 +450,7 @@ class Composer {
         if (Api.error.is_auth_popup_needed(e)) {
           this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         } else if(!Api.error.is_network_error(e)) {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         }
       }
     }
@@ -572,16 +572,16 @@ class Composer {
         this.app.send_message_to_background_script('settings', {account_email: this.account_email, page, page_url_params});
       }
     } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
-      tool.catch.report('StandardError | failed to send message', e);
+      Catch.report('StandardError | failed to send message', e);
       alert(`Failed to send message: [${(e as StandardError).internal}] ${e.message}`);
     } else if(e instanceof ComposerUserError) {
       alert(`Could not send message: ${e.message}`);
     } else {
       if(!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
         if(e instanceof Error) {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         } else {
-          tool.catch.report('Thrown object | failed to send message', e);
+          Catch.report('Thrown object | failed to send message', e);
         }
         alert(`Failed to send message due to: ${e.message}`);
       }
@@ -667,7 +667,7 @@ class Composer {
         }
         let signed_data = await Pgp.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
-        this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(tool.catch.rejection);
+        this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(Catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
         await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
@@ -830,10 +830,10 @@ class Composer {
           if (lookup_result.pubkey) {
             const parsed = openpgp.key.readArmored(lookup_result.pubkey);
             if (!parsed.keys[0]) {
-              tool.catch.log('Dropping found but incompatible public key', {for: lookup_result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null});
+              Catch.log('Dropping found but incompatible public key', {for: lookup_result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null});
               lookup_result.pubkey = null;
             } else if ((await parsed.keys[0].getEncryptionKey()) === null) {
-              tool.catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookup_result.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0])});
+              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookup_result.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0])});
               lookup_result.pubkey = null;
             }
           }
@@ -846,7 +846,7 @@ class Composer {
         }
       } catch (e) {
         if(!Api.error.is_network_error(e) && !Api.error.is_server_error(e)) {
-          tool.catch.handle_exception(e);
+          Catch.handle_exception(e);
         }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
       }
@@ -1013,7 +1013,7 @@ class Composer {
       } else if(Api.error.is_auth_popup_needed(e)) {
         this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       } else {
-        tool.catch.handle_exception(e);
+        Catch.handle_exception(e);
       }
       return;
     }
@@ -1384,7 +1384,7 @@ class Composer {
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extract_process_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent(Ui.event.spree('veryslow'), () => this.search_contacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent(Ui.event.double(), () => this.parse_and_render_recipients().catch(tool.catch.rejection)));
+    this.S.cached('input_to').blur(Ui.event.prevent(Ui.event.double(), () => this.parse_and_render_recipients().catch(Catch.rejection)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hide_contacts(), this.handle_errors(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
