@@ -4,7 +4,7 @@
 
 (() => {
 
-  let url_params = tool.env.url_params(['f', 'args']);
+  let url_params = Env.url_params(['f', 'args']);
   let f = String(url_params.f);
   let args = JSON.parse(String(url_params.args));
 

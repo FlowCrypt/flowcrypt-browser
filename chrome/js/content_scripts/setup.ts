@@ -10,7 +10,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
 
   let wait_for_account_email = async (): Promise<string> => {
     let account_email_interval = 1000;
-    let webmails = await tool.env.webmails();
+    let webmails = await Env.webmails();
     while(true) {
       let account_email = webmail_specific.get_user_account_email();
       if (typeof account_email !== 'undefined' && tool.catch.version()) {
@@ -174,9 +174,9 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     (window as ContentScriptWindow).account_email_global = null; // used by background script
     (window as ContentScriptWindow).same_world_global = true; // used by background_script
 
-    (window as ContentScriptWindow).destruction_event = tool.env.runtime_id() + '_destroy';
-    (window as ContentScriptWindow).destroyable_class = tool.env.runtime_id() + '_destroyable';
-    (window as ContentScriptWindow).reloadable_class = tool.env.runtime_id() + '_reloadable';
+    (window as ContentScriptWindow).destruction_event = Env.runtime_id() + '_destroy';
+    (window as ContentScriptWindow).destroyable_class = Env.runtime_id() + '_destroyable';
+    (window as ContentScriptWindow).reloadable_class = Env.runtime_id() + '_reloadable';
     (window as ContentScriptWindow).destroyable_intervals = [];
     (window as ContentScriptWindow).destroyable_timeouts = [];
 
@@ -219,7 +219,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
 
     if ((window as ContentScriptWindow).vacant()) {
       await entrypoint();
-    } else if (tool.env.browser().name === 'firefox') {
+    } else if (Env.browser().name === 'firefox') {
       notify_murdered();
     }
 

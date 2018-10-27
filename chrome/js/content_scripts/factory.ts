@@ -33,7 +33,7 @@ class XssSafeFactory {
     for (let k of Object.keys(this.set_params)) {
       params[k] = this.set_params[k];
     }
-    return tool.env.url_create(path, params);
+    return Env.url_create(path, params);
   }
 
   src_compose_message = (draft_id?: string) => {
@@ -210,7 +210,7 @@ class XssSafeFactory {
   }
 
   private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
-    let id = tool.env.url_params(['frame_id'], src).frame_id as string;
+    let id = Env.url_params(['frame_id'], src).frame_id as string;
     let class_attr = (classes || []).concat(this.reloadable_class).join(' ');
     let attributes: Dict<string> = {id, class: class_attr, src};
     for (let name of Object.keys(element_attrs)) {

@@ -4,7 +4,7 @@
 
 class Settings {
 
-  private static is_embedded = Boolean(tool.env.url_params(['embedded']).embedded);
+  private static is_embedded = Boolean(Env.url_params(['embedded']).embedded);
   private static ignore_email_aliases = ['nobody@google.com'];
 
   static fetch_account_aliases_from_gmail = async (account_email: string) => {
@@ -107,7 +107,7 @@ class Settings {
       }
       add_url_text_or_params = null;
     }
-    return tool.env.url_create(page, page_params) + (add_url_text_or_params || '');
+    return Env.url_create(page, page_params) + (add_url_text_or_params || '');
   }
 
   static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
@@ -359,10 +359,10 @@ class Settings {
       let storage = await Store.get_account(response.account_email, ['setup_done']);
       if (storage.setup_done) { // this was just an additional permission
         alert('You\'re all set.');
-        window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
+        window.location.href = Env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
       } else {
         await Store.set(response.account_email, {email_provider: 'gmail'});
-        window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
+        window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
       }
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
       Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');

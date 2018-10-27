@@ -6,9 +6,9 @@ tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
-  const url_params = tool.env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  const url_params = Env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   let [primary_k] = await Store.keys_get(account_email, ['primary']);
 

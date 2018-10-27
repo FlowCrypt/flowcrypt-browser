@@ -33,12 +33,12 @@ chrome.runtime.onInstalled.addListener(event => {
     };
     let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
-      open_tab(tool.env.url_create(base_path, { account_email, page, page_url_params}));
+      open_tab(Env.url_create(base_path, { account_email, page, page_url_params}));
     } else if(add_new_account) {
-      open_tab(tool.env.url_create(base_path, { add_new_account }));
+      open_tab(Env.url_create(base_path, { add_new_account }));
     } else {
       let account_emails = await Store.account_emails_get();
-      open_tab(tool.env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
+      open_tab(Env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
     }
   };
 

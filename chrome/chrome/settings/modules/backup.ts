@@ -4,11 +4,11 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
+  let url_params = Env.url_params(['account_email', 'action', 'parent_tab_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id: string|null = null;
   if (url_params.action !== 'setup') {
-    parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+    parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   }
 
   let email_provider: EmailProvider;
@@ -230,7 +230,7 @@ tool.catch.try(async () => {
 
   let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = as_backup_file(account_email, primary_ki.private);
-    if (tool.env.browser().name !== 'firefox') {
+    if (Env.browser().name !== 'firefox') {
       tool.file.save_to_downloads(attachment);
       await write_backup_done_and_render(false, 'file');
     } else {
@@ -249,7 +249,7 @@ tool.catch.try(async () => {
   let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
     await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
     if (url_params.action === 'setup') {
-      window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });
+      window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });
     } else {
       await show_status();
     }
@@ -311,7 +311,7 @@ tool.catch.try(async () => {
   $('.action_skip_backup').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
     if (url_params.action === 'setup') {
       await Store.set(account_email, { key_backup_prompt: false });
-      window.location.href = tool.env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
+      window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
       tool.browser.message.send(parent_tab_id, 'close_page');
     }

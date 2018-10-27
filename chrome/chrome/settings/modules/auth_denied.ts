@@ -4,9 +4,9 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'email_provider']);
+  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'email_provider']);
   let account_email = url_params.account_email as string|undefined;
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   if (!url_params.email_provider) {
     url_params.email_provider = 'gmail';
   }

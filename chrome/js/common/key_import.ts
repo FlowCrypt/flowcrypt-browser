@@ -32,7 +32,7 @@ class KeyImportUI {
         $('.source_paste_container').css('display', 'block');
         $('.source_paste_container .pass_phrase_needed').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = tool.env.url_create('/chrome/settings/setup.htm', {account_email, parent_tab_id, action: 'add_key'});
+        window.location.href = Env.url_create('/chrome/settings/setup.htm', {account_email, parent_tab_id, action: 'add_key'});
       }
     });
     $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(tool.ui.event.handle(target => {

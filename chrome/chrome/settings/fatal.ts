@@ -4,7 +4,7 @@
 
 (() => {
 
-    let url_params = tool.env.url_params(['reason']);
+    let url_params = Env.url_params(['reason']);
 
     let title = $('.title');
     let details = $('.details');

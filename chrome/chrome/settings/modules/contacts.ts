@@ -4,9 +4,9 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   let tab_id = await tool.browser.message.required_tab_id();
 
@@ -22,7 +22,7 @@ tool.catch.try(async () => {
     tool.ui.sanitize_render('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {
       let all_armored_public_keys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       let export_file = new Attachment({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: all_armored_public_keys});
-      tool.file.save_to_downloads(export_file, tool.env.browser().name === 'firefox' ? $('.line.actions') : null);
+      tool.file.save_to_downloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
     tool.ui.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(tool.ui.event.prevent(tool.ui.event.double(), (self) => {

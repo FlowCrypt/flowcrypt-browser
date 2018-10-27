@@ -6,9 +6,9 @@ tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
-  let url_params = tool.env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let url_params = Env.url_params(['account_email', 'attest_packet', 'parent_tab_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);

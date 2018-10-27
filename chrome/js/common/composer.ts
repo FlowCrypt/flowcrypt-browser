@@ -905,7 +905,7 @@ class Composer {
    * @param update_reference_body_height - set to true to take a new snapshot of intended html body height
    */
   private set_input_text_height_manually_if_needed = (update_reference_body_height:boolean=false) => {
-    if (!this.is_reply_box && tool.env.browser().name === 'firefox') {
+    if (!this.is_reply_box && Env.browser().name === 'firefox') {
       let cell_height_except_text = 0;
       this.S.cached('all_cells_except_text').each(function() {
         let cell = $(this);
@@ -959,7 +959,7 @@ class Composer {
 
   private respond_to_input_hotkeys = (input_to_keydown_event: KeyboardEvent) => {
     let value = this.S.cached('input_to').val();
-    const keys = tool.env.key_codes();
+    const keys = Env.key_codes();
     if (!value && input_to_keydown_event.which === keys.backspace) {
       $('.recipients span').last().remove();
     } else if (value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {
@@ -1377,7 +1377,7 @@ class Composer {
 
   private render_compose_table = async () => {
     this.S.cached('compose_table').css('display', 'table');
-    if (tool.env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
+    if (Env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
     this.S.cached('send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), () => this.extract_process_send_message()));
@@ -1416,7 +1416,7 @@ class Composer {
         tool.ui.sanitize_append(input_addr_container, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
         input_addr_container.find('#input_from_settings').click(tool.ui.event.handle(() => this.app.render_sending_address_dialog(), this.handle_errors(`open sending address dialog`)));
         tool.ui.sanitize_append(input_addr_container.find('#input_from'), addresses.map(a => `<option value="${tool.str.html_escape(a)}">${tool.str.html_escape(a)}</option>`).join('')).change(() => this.update_pubkey_icon());
-        if (tool.env.browser().name === 'firefox') {
+        if (Env.browser().name === 'firefox') {
           input_addr_container.find('#input_from_settings').css('margin-top', '20px');
         }
       }

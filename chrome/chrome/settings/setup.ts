@@ -4,12 +4,12 @@
 
 tool.catch.try(async () => {
 
-  let unchecked_url_params = tool.env.url_params(['account_email', 'action', 'parent_tab_id']);
-  let account_email = tool.env.url_param_require.string(unchecked_url_params, 'account_email');
+  let unchecked_url_params = Env.url_params(['account_email', 'action', 'parent_tab_id']);
+  let account_email = Env.url_param_require.string(unchecked_url_params, 'account_email');
   let parent_tab_id: string|null = null;
-  let action = tool.env.url_param_require.oneof(unchecked_url_params, 'action', ['add_key', 'finalize', undefined]) as 'add_key'|'finalize'|undefined;
+  let action = Env.url_param_require.oneof(unchecked_url_params, 'action', ['add_key', 'finalize', undefined]) as 'add_key'|'finalize'|undefined;
   if (action === 'add_key') {
-    parent_tab_id = tool.env.url_param_require.string(unchecked_url_params, 'parent_tab_id');
+    parent_tab_id = Env.url_param_require.string(unchecked_url_params, 'parent_tab_id');
   }
 
   if (account_email) {
@@ -152,7 +152,7 @@ tool.catch.try(async () => {
     try {
       fetched_keys = await tool.api.gmail.fetch_key_backups(account_email);
     } catch (e) {
-      window.location.href = tool.env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
+      window.location.href = Env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
       return;
     }
     if (fetched_keys.length) {
@@ -163,7 +163,7 @@ tool.catch.try(async () => {
       await render_setup_done();
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
-      window.location.href = tool.env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
+      window.location.href = Env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
     }
   };
 
@@ -340,7 +340,7 @@ tool.catch.try(async () => {
       tool.ui.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
       tool.ui.sanitize_replace('#step_2_recovery .line_skip_recovery', tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
       $('#step_2_recovery .skip_recover_remaining').click(tool.ui.event.handle(() => {
-        window.location.href = tool.env.url_create('index.htm', { account_email });
+        window.location.href = Env.url_create('index.htm', { account_email });
       }));
     } else {
       tool.ui.sanitize_render('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
@@ -359,15 +359,15 @@ tool.catch.try(async () => {
   }));
 
   $('.action_send').click(tool.ui.event.handle(() => {
-    window.location.href = tool.env.url_create('index.htm', { account_email, page: '/chrome/elements/compose.htm' });
+    window.location.href = Env.url_create('index.htm', { account_email, page: '/chrome/elements/compose.htm' });
   }));
 
   $('.action_account_settings').click(tool.ui.event.handle(() => {
-    window.location.href = tool.env.url_create('index.htm', { account_email });
+    window.location.href = Env.url_create('index.htm', { account_email });
   }));
 
   $('.action_go_auth_denied').click(tool.ui.event.handle(() => {
-    window.location.href = tool.env.url_create('index.htm', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
+    window.location.href = Env.url_create('index.htm', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
   }));
 
   $('.input_submit_key').click(tool.ui.event.handle(target => {
@@ -480,7 +480,7 @@ tool.catch.try(async () => {
       await create_save_key_pair(options);
       await pre_finalize_setup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-      window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email });
+      window.location.href = Env.url_create('modules/backup.htm', { action: 'setup', account_email });
     } catch (e) {
       tool.catch.handle_exception(e);
       alert(`There was an error, please try again.\n\n(${String(e)})`);
@@ -503,7 +503,7 @@ tool.catch.try(async () => {
   }));
 
   $('#step_4_close .action_close').click(tool.ui.event.handle(() => { // only rendered if action=add_key which means parent_tab_id was used
-    tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('index.htm', {account_email, advanced: true})});
+    tool.browser.message.send(parent_tab_id, 'redirect', {location: Env.url_create('index.htm', {account_email, advanced: true})});
   }));
 
   // show alternative account addresses in setup form + save them for later
@@ -535,7 +535,7 @@ tool.catch.try(async () => {
     }
     if(typeof key_backup_method !== 'string') {
       alert('Backup has not successfully finished, will retry');
-      window.location.href = tool.env.url_create('modules/backup.htm', { action: 'setup', account_email });
+      window.location.href = Env.url_create('modules/backup.htm', { action: 'setup', account_email });
       return;
     }
     await finalize_setup({submit_all: tmp_submit_all, submit_main: tmp_submit_main});

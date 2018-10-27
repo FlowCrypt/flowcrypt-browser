@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['action']);
+  let url_params = Env.url_params(['action']);
 
   let page: string|null = null;
   if (url_params.action === 'new_message') {
@@ -40,6 +40,6 @@ tool.catch.try(async () => {
     window.close();
   }));
 
-  $('html, body').css('height', $('.content').height()! + (tool.env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
+  $('html, body').css('height', $('.content').height()! + (Env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
 
 })();

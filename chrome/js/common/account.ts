@@ -87,7 +87,7 @@ class FlowCryptAccount {
   parse_token_email_text = (verification_email_text: string, stored_uuid_to_cross_check?: string): string|undefined => {
     let token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
     if (token_link_match !== null) {
-      let token_link_params = tool.env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
+      let token_link_params = Env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
       if ((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
         return token_link_params.token as string;
       }

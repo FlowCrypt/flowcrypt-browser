@@ -80,7 +80,7 @@ tool.catch.try(async () => {
   };
 
   let hijack_gmail_hotkeys = () => {
-    let keys = tool.env.key_codes();
+    let keys = Env.key_codes();
     let unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
     $(document).keypress(e => {
       tool.catch.try(() => {

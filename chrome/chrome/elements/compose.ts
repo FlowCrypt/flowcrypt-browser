@@ -6,9 +6,9 @@ tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
-  let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
@@ -262,7 +262,7 @@ tool.catch.try(async () => {
     },
     reply_pubkey_mismatch: (data) => {
       if (url_params.is_reply_box) {
-        window.location.href = tool.env.url_create('reply_pubkey_mismatch.htm', url_params);
+        window.location.href = Env.url_create('reply_pubkey_mismatch.htm', url_params);
       }
     },
   }, tab_id || undefined);

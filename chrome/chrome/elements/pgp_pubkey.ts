@@ -8,11 +8,11 @@ tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
-  let url_params = tool.env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
-  let armored_pubkey = tool.env.url_param_require.string(url_params, 'armored_pubkey');
-  let frame_id = tool.env.url_param_require.string(url_params, 'frame_id');
+  let url_params = Env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let armored_pubkey = Env.url_param_require.string(url_params, 'armored_pubkey');
+  let frame_id = Env.url_param_require.string(url_params, 'frame_id');
   // minimized means I have to click to see details. Compact means the details take up very little space.
 
   let pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armored_pubkey).keys;
@@ -69,7 +69,7 @@ tool.catch.try(async () => {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
       if (fixed !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = tool.env.url_create('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
+        window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
       } else {
         $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });

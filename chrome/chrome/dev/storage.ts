@@ -6,7 +6,7 @@ tool.catch.try(async () => {
 
   type RenderableStorage = Dict<{key: string, value: Storable}>;
 
-  let url_params = tool.env.url_params(['filter', 'keys', 'controls', 'title']);
+  let url_params = Env.url_params(['filter', 'keys', 'controls', 'title']);
 
   // this is for debugging
   let controls = url_params.controls === true && (tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
@@ -18,11 +18,11 @@ tool.catch.try(async () => {
   if (controls) {
     let account_emails = await Store.account_emails_get();
     let emails_selector = $('.emails');
-    tool.ui.sanitize_append(emails_selector, `<a href="${tool.str.html_escape(tool.env.url_create('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
-    tool.ui.sanitize_append(emails_selector, `<a href="${tool.str.html_escape(tool.env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
+    tool.ui.sanitize_append(emails_selector, `<a href="${tool.str.html_escape(Env.url_create('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
+    tool.ui.sanitize_append(emails_selector, `<a href="${tool.str.html_escape(Env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
     tool.ui.sanitize_append('.namespace', '<option value="global">global</option>');
     for (let account_email of account_emails) {
-      tool.ui.sanitize_append('.emails', `<a href="${tool.str.html_escape(tool.env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${tool.str.html_escape(account_email)}</a>`);
+      tool.ui.sanitize_append('.emails', `<a href="${tool.str.html_escape(Env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${tool.str.html_escape(account_email)}</a>`);
       tool.ui.sanitize_append('.namespace', `<option value="${tool.str.html_escape(account_email)}">${tool.str.html_escape(account_email)}</option>`);
     }
   }

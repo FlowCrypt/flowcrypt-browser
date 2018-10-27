@@ -4,11 +4,11 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'longid', 'parent_tab_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let url_params = Env.url_params(['account_email', 'longid', 'parent_tab_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let url_my_key_page = tool.env.url_create('my_key.htm', url_params);
+  let url_my_key_page = Env.url_create('my_key.htm', url_params);
   $('.action_show_public_key').attr('href', url_my_key_page);
   let input_private_key = $('.input_private_key');
   let prv_headers = tool.crypto.armor.headers('private_key');

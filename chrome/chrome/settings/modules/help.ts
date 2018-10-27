@@ -4,9 +4,9 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'parent_tab_id', 'bug_report']);
+  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'bug_report']);
   let account_email = url_params.account_email as string|undefined;
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   let bug_report = url_params.bug_report as string|undefined;
 
   if(account_email) {
@@ -33,7 +33,7 @@ tool.catch.try(async () => {
     let button = this;
     tool.ui.sanitize_render(target, tool.ui.spinner('white'));
     await tool.ui.delay(50); // give spinner time to load
-    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + tool.env.browser().name +  ' ' +  tool.catch.version();
+    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  tool.catch.version();
     try {
       let r = await tool.api.fc.help_feedback(my_email, msg);
       if (r.sent) {

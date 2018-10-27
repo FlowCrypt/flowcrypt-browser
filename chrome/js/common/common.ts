@@ -169,6 +169,78 @@ class Extension { // todo - move extension-specific common.js code here
 
 }
 
+class Env {
+
+  public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+    if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'firefox', v: Number(RegExp.$1)};
+    } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
+      return {name: 'ie', v: Number(RegExp.$1)};
+    } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'chrome', v: Number(RegExp.$1)};
+    } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'opera', v: Number(RegExp.$1)};
+    } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return {name: 'safari', v: Number(RegExp.$1)};
+    } else {
+      return {name: 'unknown', v: null};
+    }
+  }
+
+  public static runtime_id = (original=false) => {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+      if (original === true) {
+        return chrome.runtime.id;
+      } else {
+        return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
+      }
+    }
+    return null;
+  }
+
+  public static is_background_script = () => Boolean(window.location && tool.value('_generated_background_page.html').in(window.location.href));
+
+  public static is_extension = () => Env.runtime_id() !== null;
+
+  public static url_param_require = {
+    string: (values: UrlParams, name: string): string => tool.ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
+    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => tool.ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
+  };
+
+  public static url_params = (expected_keys: string[], string:string|null=null) => {
+    let url = (string || window.location.search.replace('?', ''));
+    let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
+    let url_data: UrlParams = {};
+    for (let value_pair of value_pairs) {
+      let pair = value_pair.split('=');
+      if (tool.value(pair[0]).in(expected_keys)) {
+        url_data[pair[0]] = typeof tool._.var.env_url_param_DICT[pair[1]] !== 'undefined' ? tool._.var.env_url_param_DICT[pair[1]] : decodeURIComponent(pair[1]);
+      }
+    }
+    return url_data;
+  }
+
+  public static url_create = (link: string, params: UrlParams) => {
+    for (let key of Object.keys(params)) {
+      let value = params[key];
+      if (typeof value !== 'undefined') {
+        let transformed = tool.obj.key_by_value(tool._.var.env_url_param_DICT, value);
+        link += (!tool.value('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+      }
+    }
+    return link;
+  }
+
+  public static key_codes = () => {
+    return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
+  }
+
+  public static webmails = async (): Promise<WebMailName[]> => {
+    return ['gmail', 'inbox']; // async because storage may be involved in the future
+  }
+
+}
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -427,63 +499,6 @@ let tool = {
     },
     capitalize: (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
   },
-  env: {
-    browser: () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
-      if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-        return {name: 'firefox', v: Number(RegExp.$1)};
-      } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
-        return {name: 'ie', v: Number(RegExp.$1)};
-      } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-        return {name: 'chrome', v: Number(RegExp.$1)};
-      } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-        return {name: 'opera', v: Number(RegExp.$1)};
-      } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-        return {name: 'safari', v: Number(RegExp.$1)};
-      } else {
-        return {name: 'unknown', v: null};
-      }
-    },
-    runtime_id: (original=false) => {
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-        if (original === true) {
-          return chrome.runtime.id;
-        } else {
-          return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
-        }
-      }
-      return null;
-    },
-    is_background_script: () => Boolean(window.location && tool.value('_generated_background_page.html').in(window.location.href)),
-    is_extension: () => tool.env.runtime_id() !== null,
-    url_param_require: {
-      string: (values: UrlParams, name: string): string => tool.ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
-      oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => tool.ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
-    },
-    url_params: (expected_keys: string[], string:string|null=null) => {
-      let url = (string || window.location.search.replace('?', ''));
-      let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-      let url_data: UrlParams = {};
-      for (let value_pair of value_pairs) {
-        let pair = value_pair.split('=');
-        if (tool.value(pair[0]).in(expected_keys)) {
-          url_data[pair[0]] = typeof tool._.var.env_url_param_DICT[pair[1]] !== 'undefined' ? tool._.var.env_url_param_DICT[pair[1]] : decodeURIComponent(pair[1]);
-        }
-      }
-      return url_data;
-    },
-    url_create: (link: string, params: UrlParams) => {
-      for (let key of Object.keys(params)) {
-        let value = params[key];
-        if (typeof value !== 'undefined') {
-          let transformed = tool.obj.key_by_value(tool._.var.env_url_param_DICT, value);
-          link += (!tool.value('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
-        }
-      }
-      return link;
-    },
-    key_codes: () => ({ a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, }),
-    webmails: async (): Promise<WebMailName[]> => ['gmail', 'inbox'], // async because storage may be involved in the future
-  },
   arr: {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
       let unique: T[] = [];
@@ -598,7 +613,7 @@ let tool = {
             e.initMouseEvent('click', true, true, window);
             a.dispatchEvent(e);
           }
-          if (tool.env.browser().name === 'firefox') {
+          if (Env.browser().name === 'firefox') {
             try {
               document.body.removeChild(a);
             } catch (err) {
@@ -1379,7 +1394,7 @@ let tool = {
       }
     },
     enter: (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-      if (e.which === tool.env.key_codes().enter) {
+      if (e.which === Env.key_codes().enter) {
         callback();
       }
     },
@@ -1527,7 +1542,7 @@ let tool = {
       send_await: (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
         let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
         let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
-        let is_background_page = tool.env.is_background_script();
+        let is_background_page = Env.is_background_script();
         if (typeof  destination_string === 'undefined') { // don't know where to send the message
           tool.catch.log('tool.browser.message.send to:undefined');
           try_resolve_no_undefined();
@@ -1712,7 +1727,7 @@ let tool = {
         people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
       },
       auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
-        if (tool.env.is_background_script()) {
+        if (Env.is_background_script()) {
           throw {code: null, message: 'Cannot produce auth window from background script'};
         }
         let response_handled = false;
@@ -1730,7 +1745,7 @@ let tool = {
           let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
           // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
           // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-          if (tool.env.browser().name !== 'firefox') {
+          if (Env.browser().name !== 'firefox') {
             let window_closed_timer = window.setInterval(() => {
               if (auth_code_window === null || typeof auth_code_window === 'undefined') {
                 clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
@@ -2762,7 +2777,7 @@ let tool = {
       }
     },
     api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
-    api_google_auth_code_url: (auth_request: AuthRequest) => tool.env.url_create(tool._.var.google_oauth2!.url_code, {
+    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(tool._.var.google_oauth2!.url_code, {
       client_id: tool._.var.google_oauth2!.client_id,
       response_type: 'code',
       access_type: 'offline',
@@ -2783,19 +2798,19 @@ let tool = {
       await Store.set(account_email, to_save);
     },
     google_auth_get_tokens: (code: string) => $.ajax({
-      url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
+      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
       method: 'POST',
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokensResponse>,
     google_auth_refresh_token: (refresh_token: string) => $.ajax({
-      url: tool.env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
+      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokensResponse>,
     google_auth_check_access_token: (access_token: string) => $.ajax({
-      url: tool.env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
+      url: Env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokenInfo>,
@@ -3135,7 +3150,7 @@ let tool = {
       }
     },
     environment: (url=window.location.href): string => {
-      let browser_name = tool.env.browser().name;
+      let browser_name = Env.browser().name;
       let env = 'unknown';
       if (url.indexOf('bnjglocicd') !== -1) {
         env = 'ex:prod';
@@ -3199,7 +3214,7 @@ let tool = {
               tool.catch._.runtime.version = chrome.runtime.getManifest().version;
             } catch (err) {} // tslint:disable-line:no-empty
             tool.catch._.runtime.environment = tool.catch.environment();
-            if (!tool.env.is_background_script() && tool.env.is_extension()) {
+            if (!Env.is_background_script() && Env.is_extension()) {
               tool.browser.message.send_await(null, 'runtime', null).then(extension_runtime => {
                 if (typeof extension_runtime !== 'undefined') {
                   tool.catch._.runtime = extension_runtime;

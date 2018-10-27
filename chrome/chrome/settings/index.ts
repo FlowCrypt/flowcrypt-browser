@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
+  let url_params = Env.url_params(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
   let account_email = url_params.account_email as string|undefined;
   let page_url_params = (typeof url_params.page_url_params === 'string') ? JSON.parse(url_params.page_url_params) : null;
   let account_emails = await Store.account_emails_get();
@@ -20,7 +20,7 @@ tool.catch.try(async () => {
     $('.settings-icons-rows').css({position: 'relative', left: '64px'}); // lost a button - center it again
   }
 
-  for (let webmail_name of await tool.env.webmails()) {
+  for (let webmail_name of await Env.webmails()) {
     $('.signin_button.' + webmail_name).css('display', 'inline-block');
   }
 
@@ -97,7 +97,7 @@ tool.catch.try(async () => {
       await Settings.new_google_account_authentication_prompt(tab_id);
     } else if (account_email) {
       $('.email-address').text(account_email);
-      $('#security_module').attr('src', tool.env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
+      $('#security_module').attr('src', Env.url_create('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
       let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
         check_google_account().catch(tool.catch.handle_exception);
@@ -127,7 +127,7 @@ tool.catch.try(async () => {
     } else {
       let account_emails = await Store.account_emails_get();
       if (account_emails && account_emails[0]) {
-        window.location.href = tool.env.url_create('index.htm', { account_email: account_emails[0] });
+        window.location.href = Env.url_create('index.htm', { account_email: account_emails[0] });
       } else {
         $('.show_if_setup_not_done').css('display', 'initial');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -179,7 +179,7 @@ tool.catch.try(async () => {
       await Settings.refresh_account_aliases(account_email!);
       await Settings.account_storage_change_email(account_email!, new_account_email);
       alert(`Email address changed to ${new_account_email}. You should now check that your public key is properly submitted.`);
-      window.location.href = tool.env.url_create('index.htm', { account_email: new_account_email, page: '/chrome/settings/modules/keyserver.htm' });
+      window.location.href = Env.url_create('index.htm', { account_email: new_account_email, page: '/chrome/settings/modules/keyserver.htm' });
     } catch(e) {
       tool.catch.handle_exception(e);
       alert('There was an error changing google account, please write human@flowcrypt.com');
@@ -330,7 +330,7 @@ tool.catch.try(async () => {
 
   let reload = (advanced=false) => {
     if (advanced) {
-      window.location.href = tool.env.url_create('/chrome/settings/index.htm', { account_email, advanced: true });
+      window.location.href = Env.url_create('/chrome/settings/index.htm', { account_email, advanced: true });
     } else {
       window.location.reload();
     }
@@ -365,7 +365,7 @@ tool.catch.try(async () => {
     $(self).off().attr('src', '/img/svgs/profile-icon.svg');
   }));
   $('.action_select_account').click(tool.ui.event.handle(target => {
-    window.location.href = tool.env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
+    window.location.href = Env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
   }));
 
 })();

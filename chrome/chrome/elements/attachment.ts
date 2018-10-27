@@ -6,9 +6,9 @@ tool.catch.try(async () => {
 
   tool.ui.event.protect();
 
-  let url_params = tool.env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let url_params = Env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   url_params.size = url_params.size ? parseInt(url_params.size as string) : undefined;
   let original_name_based_on_filename = url_params.name ? (url_params.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
 
@@ -156,7 +156,7 @@ tool.catch.try(async () => {
       await recover_missing_attachment_id_if_needed();
       progress_element = $('.download_progress');
       if (decrypted_a) { // when content was downloaded and decrypted
-        tool.file.save_to_downloads(decrypted_a, tool.env.browser().name === 'firefox' ? $('body') : null);
+        tool.file.save_to_downloads(decrypted_a, Env.browser().name === 'firefox' ? $('body') : null);
       } else if (encrypted_a && encrypted_a.has_data()) { // when encrypted content was already downloaded
         await decrypt_and_save_attachment_to_downloads(encrypted_a);
       } else if (encrypted_a && encrypted_a.id && encrypted_a.message_id) { // gmail attachment_id

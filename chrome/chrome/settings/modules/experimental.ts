@@ -4,13 +4,13 @@
 
 tool.catch.try(async () => {
 
-  let url_params = tool.env.url_params(['account_email', 'parent_tab_id']);
-  let account_email = tool.env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = tool.env.url_param_require.string(url_params, 'parent_tab_id');
+  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   // this is for debugging
   if ((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    tool.ui.sanitize_append('.storage_link_container', ` - <a href="${tool.str.html_escape(tool.env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
+    tool.ui.sanitize_append('.storage_link_container', ` - <a href="${tool.str.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
   if (account_email) {
@@ -64,9 +64,9 @@ tool.catch.try(async () => {
       }
     }));
 
-    $('.action_attest_log').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', tool.env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
+    $('.action_attest_log').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', Env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
 
-    $('.action_email_client').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: tool.env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})})));
+    $('.action_email_client').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: Env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})})));
 
     $('.action_flush_attest_info').click(tool.ui.event.handle(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
