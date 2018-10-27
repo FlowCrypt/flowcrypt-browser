@@ -114,6 +114,12 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       notification_show_auth_popup_needed: (data: {account_email: string}) => {
         notifications.show_auth_popup_needed(data.account_email);
       },
+      reply_pubkey_mismatch: () => {
+        let reply_iframe = $('iframe.reply_message').get(0) as HTMLIFrameElement|undefined;
+        if(reply_iframe) {
+          reply_iframe.src = reply_iframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
+        }
+      },
     }, tab_id);
   };
 

@@ -144,8 +144,7 @@ Catch.try(async () => {
     $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {account_email})));
     $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {account_email, page: '/chrome/settings/modules/add_key.htm'})));
     $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
-      alert('You should tell the sender to update their settings and send a new message.');
-      BrowserMsg.send('broadcast', 'reply_pubkey_mismatch');
+      BrowserMsg.send(parent_tab_id, 'reply_pubkey_mismatch');
     }));
     set_test_state('ready');
   };
@@ -157,7 +156,7 @@ Catch.try(async () => {
     } else if (msg_diagnosis.receivers === 1) {
       await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.single_sender + Lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
     } else {
-      await render_error(Lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('I don\'t have any other key', 'gray2 short reply_pubkey_mismatch') + '&nbsp;&nbsp;&nbsp;&nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
+      await render_error(Lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;' + button_html('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
     }
   };
 

@@ -260,11 +260,6 @@ Catch.try(async () => {
     passphrase_entry: (data) => {
       composer.passphrase_entry(data && data.entered);
     },
-    reply_pubkey_mismatch: (data) => {
-      if (url_params.is_reply_box) {
-        window.location.href = Env.url_create('reply_pubkey_mismatch.htm', url_params);
-      }
-    },
   }, tab_id || undefined);
 
   if(!url_params.is_reply_box) { // don't want to deal with resizing the frame
