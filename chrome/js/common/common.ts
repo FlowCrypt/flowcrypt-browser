@@ -2700,6 +2700,29 @@ class Pgp {
       }
       return await openpgp.encrypt(options);
     },
+    diagnose_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<DiagnoseMessagePubkeysResult> => {
+      let message: OpenPGP.message.Message;
+      if (typeof m === 'string') {
+        message = openpgp.message.readArmored(m);
+      } else if (m instanceof Uint8Array) {
+        message = openpgp.message.readArmored(Str.from_uint8(m));
+      } else {
+        message = m;
+      }
+      let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
+      let private_keys = await Store.keys_get(account_email);
+      let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(Pgp.internal.crypto_key_ids));
+      let diagnosis = { found_match: false, receivers: message_key_ids.length };
+      for (let msg_k_id of message_key_ids) {
+        for (let local_k_id of local_key_ids) {
+          if (msg_k_id === local_k_id) {
+            diagnosis.found_match = true;
+            return diagnosis;
+          }
+        }
+      }
+      return diagnosis;
+    },
   };
 
   public static password = {
@@ -3301,31 +3324,6 @@ let tool = {
     },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
     keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
-  },
-  diagnose: {
-    message_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<DiagnoseMessagePubkeysResult> => {
-      let message: OpenPGP.message.Message;
-      if (typeof m === 'string') {
-        message = openpgp.message.readArmored(m);
-      } else if (m instanceof Uint8Array) {
-        message = openpgp.message.readArmored(Str.from_uint8(m));
-      } else {
-        message = m;
-      }
-      let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
-      let private_keys = await Store.keys_get(account_email);
-      let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(Pgp.internal.crypto_key_ids));
-      let diagnosis = { found_match: false, receivers: message_key_ids.length };
-      for (let msg_k_id of message_key_ids) {
-        for (let local_k_id of local_key_ids) {
-          if (msg_k_id === local_k_id) {
-            diagnosis.found_match = true;
-            return diagnosis;
-          }
-        }
-      }
-      return diagnosis;
-    },
   },
   value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
   e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML, // xss-tested: jquery escapes attributes

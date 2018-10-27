@@ -29,7 +29,7 @@ class BgExec {
   }
 
   public static diagnose_message_pubkeys = (account_email: string, message: string) => {
-    return BgExec.request_to_process_in_background('tool.diagnose.message_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
+    return BgExec.request_to_process_in_background('Pgp.message.diagnose_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
   }
 
   public static crypto_hash_challenge_answer = (password: string) => {
