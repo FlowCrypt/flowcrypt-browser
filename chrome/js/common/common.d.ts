@@ -476,7 +476,7 @@ interface AccountStore extends BaseStore {
 
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
 type CryptoArmorHeaderDefinitions = {
-    readonly [type in ReplaceableMessageBlockType|'null']: CryptoArmorHeaderDefinition;
+    readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition;
 };
 
 type KeyImportUiCheckResult = {

@@ -2028,7 +2028,7 @@ class Mime {
       if (treat_as === 'message') {
         let armored = Pgp.armor.clip(file.as_text());
         if (armored) {
-          blocks.push(tool._.crypto_armor_block_object('message', armored));
+          blocks.push(Pgp.internal.crypto_armor_block_object('message', armored));
         }
       } else if (treat_as === 'signature') {
         decoded.signature = decoded.signature || file.as_text();
@@ -2280,6 +2280,28 @@ class Mime {
 
 class Pgp {
 
+  private static ARMOR_HEADER_MAX_LENGTH = 50;
+  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = {
+    null: { begin: '-----BEGIN', end: '-----END', replace: false },
+    public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
+    private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
+    attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----', replace: true },
+    cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
+    signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
+    signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
+    message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
+    password_message: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true},
+  };
+  private static PASSWORD_GUESSES_PER_SECOND = 10000 * 2 * 4000; // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
+  private static PASSWORD_CRACK_TIME_WORDS = [
+    {match: 'millenni', word: 'perfect',    bar: 100, color: 'green',       pass: true},
+    {match: 'centu',    word: 'great',      bar: 80,  color: 'green',       pass: true},
+    {match: 'year',     word: 'good',       bar: 60,  color: 'orange',      pass: true},
+    {match: 'month',    word: 'reasonable', bar: 40,  color: 'darkorange',  pass: true},
+    {match: 'day',      word: 'poor',       bar: 20,  color: 'darkred',     pass: false},
+    {match: '',         word: 'weak',       bar: 10,  color: 'red',         pass: false},
+  ];
+
   public static armor = {
     strip: (pgp_block_text: string) => {
       if (!pgp_block_text) {
@@ -2343,14 +2365,14 @@ class Pgp {
       return pgp_block_text;
     },
     clip: (text: string) => {
-      if (text && tool.value(tool._.var.crypto_armor_headers_DICT.null.begin).in(text) && tool.value(tool._.var.crypto_armor_headers_DICT.null.end as string).in(text)) {
+      if (text && tool.value(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && tool.value(Pgp.ARMOR_HEADER_DICT.null.end as string).in(text)) {
         let match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
         return(match !== null && match.length) ? match[0] : null;
       }
       return null;
     },
     headers: (block_type: ReplaceableMessageBlockType|'null', format='string'): CryptoArmorHeaderDefinition => {
-      let h = tool._.var.crypto_armor_headers_DICT[block_type];
+      let h = Pgp.ARMOR_HEADER_DICT[block_type];
       return {
         begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
         end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\\s') : h.end,
@@ -2362,7 +2384,7 @@ class Pgp {
       let normalized = Str.normalize(original_text);
       let start_at = 0;
       while(true) {
-        let r = tool._.crypto_armor_detect_block_next(normalized, start_at);
+        let r = Pgp.internal.crypto_armor_detect_block_next(normalized, start_at);
         if (r.found) {
           blocks = blocks.concat(r.found);
         }
@@ -2435,7 +2457,7 @@ class Pgp {
     sha1: (string: string) => Str.to_hex(Str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
     double_sha1_upper: (string: string) => Pgp.hash.sha1(Pgp.hash.sha1(string)).toUpperCase(),
     sha256: (string: string) => Str.to_hex(Str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
-    challenge_answer: (answer: string) => tool._.crypto_hash_sha256_loop(answer),
+    challenge_answer: (answer: string) => Pgp.internal.crypto_hash_sha256_loop(answer),
   };
 
   public static key = {
@@ -2613,18 +2635,18 @@ class Pgp {
       }
       let message = openpgp.message.fromText(plaintext);
       message.appendSignature(signature_text);
-      let keys = await tool._.crypto_message_get_sorted_keys_for_message(account_email, message);
+      let keys = await Pgp.internal.crypto_message_get_sorted_keys_for_message(account_email, message);
       return await Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]);
     },
     decrypt: async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd: string|null=null, get_uint8=false): Promise<DecryptSuccess|DecryptError> => {
       let prepared;
       let longids = {message: [] as string[], matching: [] as string[], chosen: [] as string[], need_passphrase: [] as string[]};
       try {
-        prepared = tool._.crypto_message_prepare_for_decrypt(encrypted_data);
+        prepared = Pgp.internal.crypto_message_prepare_for_decrypt(encrypted_data);
       } catch (format_error) {
         return {success: false, error: {type: DecryptErrorTypes.format, error: format_error.message}, longids, is_encrypted: null, signature: null};
       }
-      let keys = await tool._.crypto_message_get_sorted_keys_for_message(account_email, prepared.message);
+      let keys = await Pgp.internal.crypto_message_get_sorted_keys_for_message(account_email, prepared.message);
       longids.message = keys.encrypted_for;
       longids.matching = keys.prv_for_decrypt.map(ki => ki.longid);
       longids.chosen = keys.prv_for_decrypt_decrypted.map(ki => ki.longid);
@@ -2653,7 +2675,7 @@ class Pgp {
           return {success: true, content: {text: decrypted.getText(), filename: decrypted.getFilename()}, is_encrypted, signature: signature_result};
         }
       } catch (e) {
-        return {success: false, error: tool._.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
+        return {success: false, error: Pgp.internal.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
       }
     },
     encrypt: async (armored_pubkeys: string[], signing_prv: OpenPGP.key.Key|null, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
@@ -2682,9 +2704,9 @@ class Pgp {
 
   public static password = {
     estimate_strength: (zxcvbn_result_guesses: number) => {
-      let time_to_crack = zxcvbn_result_guesses / tool._.var.crypto_password_GUESSES_PER_SECOND;
-      for (let word of tool._.var.crypto_password_CRACK_TIME_WORDS) {
-        let readable_time = tool._.readable_crack_time(time_to_crack);
+      let time_to_crack = zxcvbn_result_guesses / Pgp.PASSWORD_GUESSES_PER_SECOND;
+      for (let word of Pgp.PASSWORD_CRACK_TIME_WORDS) {
+        let readable_time = Pgp.internal.readable_crack_time(time_to_crack);
         // looks for a word match from readable_crack_time, defaults on "weak"
         if (tool.value(word.match).in(readable_time)) {
           return {word, seconds: Math.round(time_to_crack), time: readable_time};
@@ -2703,6 +2725,178 @@ class Pgp {
       let secure_random_array = new Uint8Array(128);
       window.crypto.getRandomValues(secure_random_array);
       return btoa(Str.from_uint8(secure_random_array)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
+    },
+  };
+
+  public static internal = {
+    crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type, content, complete: !missing_end}),
+    crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
+      let result = {found: [] as MessageBlock[], continue_at: null as number|null};
+      let begin = original_text.indexOf(Pgp.armor.headers('null').begin, start_at);
+      if (begin !== -1) { // found
+        let potential_begin_header = original_text.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
+        for (let _type of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
+          let type = _type as ReplaceableMessageBlockType;
+          let block_header_def = Pgp.ARMOR_HEADER_DICT[type];
+          if (block_header_def.replace) {
+            let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
+            if (index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin >= 0 && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
+              if (begin > start_at) {
+                let potential_text_before_block_begun = original_text.substring(start_at, begin).trim();
+                if (potential_text_before_block_begun) {
+                  result.found.push(Pgp.internal.crypto_armor_block_object('text', potential_text_before_block_begun));
+                }
+              }
+              let end_index: number = -1;
+              let found_block_end_header_length = 0;
+              if (typeof block_header_def.end === 'string') {
+                end_index = original_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
+                found_block_end_header_length = block_header_def.end.length;
+              } else { // regexp
+                let original_text_after_begin_index = original_text.substring(begin);
+                let regexp_end = original_text_after_begin_index.match(block_header_def.end);
+                if (regexp_end !== null) {
+                  end_index = regexp_end.index ? begin + regexp_end.index : -1;
+                  found_block_end_header_length = regexp_end[0].length;
+                }
+              }
+              if (end_index !== -1) { // identified end of the same block
+                if (type !== 'password_message') {
+                  result.found.push(Pgp.internal.crypto_armor_block_object(type, original_text.substring(begin, end_index + found_block_end_header_length).trim()));
+                } else {
+                  let pm_full_text = original_text.substring(begin, end_index + found_block_end_header_length).trim();
+                  let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
+                  if (pm_short_id_match) {
+                    result.found.push(Pgp.internal.crypto_armor_block_object(type, pm_short_id_match[0]));
+                  } else {
+                    result.found.push(Pgp.internal.crypto_armor_block_object('text', pm_full_text));
+                  }
+                }
+                result.continue_at = end_index + found_block_end_header_length;
+              } else { // corresponding end not found
+                result.found.push(Pgp.internal.crypto_armor_block_object(type, original_text.substr(begin), true));
+              }
+              break;
+            }
+          }
+        }
+      }
+      if (original_text && !result.found.length) { // didn't find any blocks, but input is non-empty
+        let potential_text = original_text.substr(start_at).trim();
+        if (potential_text) {
+          result.found.push(Pgp.internal.crypto_armor_block_object('text', potential_text));
+        }
+      }
+      return result;
+    },
+    crypto_hash_sha256_loop: (string: string, times=100000) => {
+      for (let i = 0; i < times; i++) {
+        string = Pgp.hash.sha256(string);
+      }
+      return string;
+    },
+    crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
+    crypto_message_prepare_for_decrypt: (data: string|Uint8Array): {is_armored: boolean, is_cleartext: false, message: OpenPGP.message.Message}|{is_armored: boolean, is_cleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
+      let first_100_bytes = Str.from_uint8(data.slice(0, 100));
+      let is_armored_encrypted = tool.value(Pgp.armor.headers('message').begin).in(first_100_bytes);
+      let is_armored_signed_only = tool.value(Pgp.armor.headers('signed_message').begin).in(first_100_bytes);
+      let is_armored = is_armored_encrypted || is_armored_signed_only;
+      if (is_armored_encrypted) {
+        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(Str.from_uint8(data))};
+      } else if (is_armored_signed_only) {
+        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(Str.from_uint8(data))};
+      } else {
+        return {is_armored, is_cleartext: false, message: openpgp.message.read(Str.to_uint8(data))};
+      }
+    },
+    crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {
+      let keys: InternalSortedKeysForDecrypt = {
+        verification_contacts: [],
+        for_verification: [],
+        encrypted_for: [],
+        signed_by: [],
+        prv_matching: [],
+        prv_for_decrypt: [],
+        prv_for_decrypt_decrypted: [],
+        prv_for_decrypt_without_passphrases: [],
+      };
+      keys.encrypted_for = (message instanceof openpgp.message.Message ? (message as OpenPGP.message.Message).getEncryptionKeyIds() : []).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
+      keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid((id as any).bytes)).filter(Boolean) as string[];
+      let private_keys_all = await Store.keys_get(account_email);
+      keys.prv_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
+      if (keys.prv_matching.length) {
+        keys.prv_for_decrypt = keys.prv_matching;
+      } else {
+        keys.prv_for_decrypt = private_keys_all;
+      }
+      let passphrases = (await Promise.all(keys.prv_for_decrypt.map(ki => Store.passphrase_get(account_email, ki.longid))));
+      let passphrases_filtered = passphrases.filter(pp => pp !== null) as string[];
+      for (let prv_for_decrypt of keys.prv_for_decrypt) {
+        let key = openpgp.key.readArmored(prv_for_decrypt.private).keys[0];
+        if (key.isDecrypted() || (passphrases_filtered.length && await Pgp.key.decrypt(key, passphrases_filtered) === true)) {
+          prv_for_decrypt.decrypted = key;
+          keys.prv_for_decrypt_decrypted.push(prv_for_decrypt);
+        } else {
+          keys.prv_for_decrypt_without_passphrases.push(prv_for_decrypt);
+        }
+      }
+      if (keys.signed_by.length && typeof Store.db_contact_get === 'function') {
+        let verification_contacts = await Store.db_contact_get(null, keys.signed_by);
+        keys.verification_contacts = verification_contacts.filter(contact => contact !== null && contact.pubkey) as Contact[];
+        keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey!).keys)); // pubkey! checked above
+      }
+      return keys;
+    },
+    crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
+      let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
+      if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
+        return {type: DecryptErrorTypes.key_mismatch, error: e};
+      } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
+        return {type: DecryptErrorTypes.wrong_password, error: e};
+      } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
+        return {type: DecryptErrorTypes.no_mdc, error: e};
+      } else if (e === 'Decryption error') {
+        return {type: DecryptErrorTypes.format, error: e};
+      } else {
+        return {type: DecryptErrorTypes.other, error: e};
+      }
+    },
+    readable_crack_time: (total_seconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
+      let number_word_ending = (n: number) => (n > 1) ? 's' : '';
+      total_seconds = Math.round(total_seconds);
+      let millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
+      if (millennia) {
+        return millennia === 1 ? 'a millennium' : 'millennia';
+      }
+      let centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
+      if (centuries) {
+        return centuries === 1 ? 'a century' : 'centuries';
+      }
+      let years = Math.round(total_seconds / (86400 * 30 * 12));
+      if (years) {
+        return years + ' year' + number_word_ending(years);
+      }
+      let months = Math.round(total_seconds / (86400 * 30));
+      if (months) {
+        return months + ' month' + number_word_ending(months);
+      }
+      let days = Math.round(total_seconds / 86400);
+      if (days) {
+        return days + ' day' + number_word_ending(days);
+      }
+      let hours = Math.round(total_seconds / 3600);
+      if (hours) {
+        return hours + ' hour' + number_word_ending(hours);
+      }
+      let minutes = Math.round(total_seconds / 60);
+      if (minutes) {
+        return minutes + ' minute' + number_word_ending(minutes);
+      }
+      let seconds = total_seconds % 60;
+      if (seconds) {
+        return seconds + ' second' + number_word_ending(seconds);
+      }
+      return 'less than a second';
     },
   };
 
@@ -2851,7 +3045,7 @@ let tool = {
       }
       let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
       let private_keys = await Store.keys_get(account_email);
-      let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(tool._.crypto_key_ids));
+      let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(Pgp.internal.crypto_key_ids));
       let diagnosis = { found_match: false, receivers: message_key_ids.length };
       for (let msg_k_id of message_key_ids) {
         for (let local_k_id of local_key_ids) {
@@ -2869,205 +3063,6 @@ let tool = {
   noop: (): void => undefined,
   enums: {
     recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
-  },
-  _: {
-    var: { // meant to be used privately within this file like so: tool._.vars.???
-      crypto_armor_header_MAX_LENGTH: 50,
-      crypto_armor_headers_DICT: {
-        null: { begin: '-----BEGIN', end: '-----END', replace: false },
-        public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
-        private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
-        attest_packet: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----', replace: true },
-        cryptup_verification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
-        signed_message: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
-        signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
-        message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
-        password_message: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true},
-      } as CryptoArmorHeaderDefinitions,
-      crypto_password_SENTENCE_PRESENT_TEST: /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/,
-      crypto_password_SENTECES: [
-        /This\smessage\sis\sencrypted.+\n\n?/gm, // todo - should be in a common place as the code that generated it
-        /.*https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}.*\n\n?/gm,
-      ],
-      crypto_password_GUESSES_PER_SECOND: 10000 * 2 * 4000, // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
-      crypto_password_CRACK_TIME_WORDS: [
-        {match: 'millenni', word: 'perfect',    bar: 100, color: 'green',       pass: true},
-        {match: 'centu',    word: 'great',      bar: 80,  color: 'green',       pass: true},
-        {match: 'year',     word: 'good',       bar: 60,  color: 'orange',      pass: true},
-        {match: 'month',    word: 'reasonable', bar: 40,  color: 'darkorange',  pass: true},
-        {match: 'day',      word: 'poor',       bar: 20,  color: 'darkred',     pass: false},
-        {match: '',         word: 'weak',       bar: 10,  color: 'red',         pass: false},
-      ],
-    },
-    crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type, content, complete: !missing_end}),
-    crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
-      let result = {found: [] as MessageBlock[], continue_at: null as number|null};
-      let begin = original_text.indexOf(Pgp.armor.headers('null').begin, start_at);
-      if (begin !== -1) { // found
-        let potential_begin_header = original_text.substr(begin, tool._.var.crypto_armor_header_MAX_LENGTH);
-        for (let _type of Object.keys(tool._.var.crypto_armor_headers_DICT)) {
-          let type = _type as ReplaceableMessageBlockType;
-          let block_header_def = tool._.var.crypto_armor_headers_DICT[type];
-          if (block_header_def.replace) {
-            let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
-            if (index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin >= 0 && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
-              if (begin > start_at) {
-                let potential_text_before_block_begun = original_text.substring(start_at, begin).trim();
-                if (potential_text_before_block_begun) {
-                  result.found.push(tool._.crypto_armor_block_object('text', potential_text_before_block_begun));
-                }
-              }
-              let end_index: number = -1;
-              let found_block_end_header_length = 0;
-              if (typeof block_header_def.end === 'string') {
-                end_index = original_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
-                found_block_end_header_length = block_header_def.end.length;
-              } else { // regexp
-                let original_text_after_begin_index = original_text.substring(begin);
-                let regexp_end = original_text_after_begin_index.match(block_header_def.end);
-                if (regexp_end !== null) {
-                  end_index = regexp_end.index ? begin + regexp_end.index : -1;
-                  found_block_end_header_length = regexp_end[0].length;
-                }
-              }
-              if (end_index !== -1) { // identified end of the same block
-                if (type !== 'password_message') {
-                  result.found.push(tool._.crypto_armor_block_object(type, original_text.substring(begin, end_index + found_block_end_header_length).trim()));
-                } else {
-                  let pm_full_text = original_text.substring(begin, end_index + found_block_end_header_length).trim();
-                  let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
-                  if (pm_short_id_match) {
-                    result.found.push(tool._.crypto_armor_block_object(type, pm_short_id_match[0]));
-                  } else {
-                    result.found.push(tool._.crypto_armor_block_object('text', pm_full_text));
-                  }
-                }
-                result.continue_at = end_index + found_block_end_header_length;
-              } else { // corresponding end not found
-                result.found.push(tool._.crypto_armor_block_object(type, original_text.substr(begin), true));
-              }
-              break;
-            }
-          }
-        }
-      }
-      if (original_text && !result.found.length) { // didn't find any blocks, but input is non-empty
-        let potential_text = original_text.substr(start_at).trim();
-        if (potential_text) {
-          result.found.push(tool._.crypto_armor_block_object('text', potential_text));
-        }
-      }
-      return result;
-    },
-    crypto_hash_sha256_loop: (string: string, times=100000) => {
-      for (let i = 0; i < times; i++) {
-        string = Pgp.hash.sha256(string);
-      }
-      return string;
-    },
-    crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
-    crypto_message_prepare_for_decrypt: (data: string|Uint8Array): {is_armored: boolean, is_cleartext: false, message: OpenPGP.message.Message}|{is_armored: boolean, is_cleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
-      let first_100_bytes = Str.from_uint8(data.slice(0, 100));
-      let is_armored_encrypted = tool.value(Pgp.armor.headers('message').begin).in(first_100_bytes);
-      let is_armored_signed_only = tool.value(Pgp.armor.headers('signed_message').begin).in(first_100_bytes);
-      let is_armored = is_armored_encrypted || is_armored_signed_only;
-      if (is_armored_encrypted) {
-        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(Str.from_uint8(data))};
-      } else if (is_armored_signed_only) {
-        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(Str.from_uint8(data))};
-      } else {
-        return {is_armored, is_cleartext: false, message: openpgp.message.read(Str.to_uint8(data))};
-      }
-    },
-    crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {
-      let keys: InternalSortedKeysForDecrypt = {
-        verification_contacts: [],
-        for_verification: [],
-        encrypted_for: [],
-        signed_by: [],
-        prv_matching: [],
-        prv_for_decrypt: [],
-        prv_for_decrypt_decrypted: [],
-        prv_for_decrypt_without_passphrases: [],
-      };
-      keys.encrypted_for = (message instanceof openpgp.message.Message ? (message as OpenPGP.message.Message).getEncryptionKeyIds() : []).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
-      keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid((id as any).bytes)).filter(Boolean) as string[];
-      let private_keys_all = await Store.keys_get(account_email);
-      keys.prv_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
-      if (keys.prv_matching.length) {
-        keys.prv_for_decrypt = keys.prv_matching;
-      } else {
-        keys.prv_for_decrypt = private_keys_all;
-      }
-      let passphrases = (await Promise.all(keys.prv_for_decrypt.map(ki => Store.passphrase_get(account_email, ki.longid))));
-      let passphrases_filtered = passphrases.filter(pp => pp !== null) as string[];
-      for (let prv_for_decrypt of keys.prv_for_decrypt) {
-        let key = openpgp.key.readArmored(prv_for_decrypt.private).keys[0];
-        if (key.isDecrypted() || (passphrases_filtered.length && await Pgp.key.decrypt(key, passphrases_filtered) === true)) {
-          prv_for_decrypt.decrypted = key;
-          keys.prv_for_decrypt_decrypted.push(prv_for_decrypt);
-        } else {
-          keys.prv_for_decrypt_without_passphrases.push(prv_for_decrypt);
-        }
-      }
-      if (keys.signed_by.length && typeof Store.db_contact_get === 'function') {
-        let verification_contacts = await Store.db_contact_get(null, keys.signed_by);
-        keys.verification_contacts = verification_contacts.filter(contact => contact !== null && contact.pubkey) as Contact[];
-        keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey!).keys)); // pubkey! checked above
-      }
-      return keys;
-    },
-    crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
-      let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
-      if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
-        return {type: DecryptErrorTypes.key_mismatch, error: e};
-      } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
-        return {type: DecryptErrorTypes.wrong_password, error: e};
-      } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
-        return {type: DecryptErrorTypes.no_mdc, error: e};
-      } else if (e === 'Decryption error') {
-        return {type: DecryptErrorTypes.format, error: e};
-      } else {
-        return {type: DecryptErrorTypes.other, error: e};
-      }
-    },
-    readable_crack_time: (total_seconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
-      let number_word_ending = (n: number) => (n > 1) ? 's' : '';
-      total_seconds = Math.round(total_seconds);
-      let millennia = Math.round(total_seconds / (86400 * 30 * 12 * 100 * 1000));
-      if (millennia) {
-        return millennia === 1 ? 'a millennium' : 'millennia';
-      }
-      let centuries = Math.round(total_seconds / (86400 * 30 * 12 * 100));
-      if (centuries) {
-        return centuries === 1 ? 'a century' : 'centuries';
-      }
-      let years = Math.round(total_seconds / (86400 * 30 * 12));
-      if (years) {
-        return years + ' year' + number_word_ending(years);
-      }
-      let months = Math.round(total_seconds / (86400 * 30));
-      if (months) {
-        return months + ' month' + number_word_ending(months);
-      }
-      let days = Math.round(total_seconds / 86400);
-      if (days) {
-        return days + ' day' + number_word_ending(days);
-      }
-      let hours = Math.round(total_seconds / 3600);
-      if (hours) {
-        return hours + ' hour' + number_word_ending(hours);
-      }
-      let minutes = Math.round(total_seconds / 60);
-      if (minutes) {
-        return minutes + ' minute' + number_word_ending(minutes);
-      }
-      let seconds = total_seconds % 60;
-      if (seconds) {
-        return seconds + ' second' + number_word_ending(seconds);
-      }
-      return 'less than a second';
-    },
   },
   catch: { // web and extension code
     handle_error: (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
