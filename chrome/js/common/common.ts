@@ -314,25 +314,25 @@ class Api {
 
   public static google = {
     plus: {
-      people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
+      people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => Api.internal.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
     },
     auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
       if (Env.is_background_script()) {
         throw {code: null, message: 'Cannot produce auth window from background script'};
       }
       let response_handled = false;
-      tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
+      Api.internal.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
         let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
         BrowserMsg.listen({
           google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
             if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
               response_handled = true;
-              tool._.google_auth_window_result_handler(result).then(resolve, reject);
+              Api.internal.google_auth_window_result_handler(result).then(resolve, reject);
               close_auth_window();
             }
           },
         }, auth_request.tab_id);
-        let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
+        let auth_code_window = window.open(Api.internal.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
         // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
         // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
         if (Env.browser().name !== 'firefox') {
@@ -411,32 +411,32 @@ class Api {
     users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
       let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if(account_email && !access_token) {
-        return await tool._.api_google_call(account_email, 'GET', url, {});
+        return await Api.internal.api_google_call(account_email, 'GET', url, {});
       } else if (!account_email && access_token) {
         return await $.ajax({url, method: 'GET', headers: {'Authorization': `Bearer ${access_token}`}, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true});
       } else {
         throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
       }
     },
-    thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => tool._.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
+    thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
       format,
     }),
-    draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => tool._.api_gmail_call(account_email, 'POST', 'drafts', {
+    draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts', {
       message: {
         raw: tool.str.base64url_encode(mime_message),
         threadId: thread_id || null,
       },
     }),
-    draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
-    draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => tool._.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
+    draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => Api.internal.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
+    draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => Api.internal.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
       message: {
         raw: tool.str.base64url_encode(mime_message),
       },
     }),
-    draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => tool._.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
+    draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => Api.internal.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
       format,
     }),
-    draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
+    draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts/send', {
       id,
     }),
     message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
@@ -444,21 +444,21 @@ class Api {
       message.headers.To = message.to.join(',');
       message.headers.Subject = message.subject;
       let mime_message = await tool.mime.encode(message.body, message.headers, message.attachments);
-      let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
-      return tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
+      let request = Api.internal.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
+      return Api.internal.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
     },
-    message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => tool._.api_gmail_call(account_email, 'GET', 'messages', {
+    message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => Api.internal.api_gmail_call(account_email, 'GET', 'messages', {
       q,
       includeSpamTrash: include_deleted,
     }),
-    message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
+    message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
       format: format || 'full',
     }),
     messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
       return Promise.all(message_ids.map(id => Api.gmail.message_get(account_email, id, format)));
     },
     attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
-      let r: ApirGmailAttachment = await tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+      let r: ApirGmailAttachment = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
       r.data = tool.str.base64url_decode(r.data);
       return r;
     },
@@ -500,7 +500,7 @@ class Api {
           reject({code: null, message: "Chunk response could not be decoded"});
         }
       };
-      tool._.google_api_authorization_header(account_email).then(auth_token => {
+      Api.internal.google_api_authorization_header(account_email).then(auth_token => {
         let r = new XMLHttpRequest();
         r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${attachment_id}`, true);
         r.setRequestHeader('Authorization', auth_token);
@@ -603,7 +603,7 @@ class Api {
       for (let contact of filtered_contacts) {
         gmail_query.push(`-to:${contact.email}`);
       }
-      await tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
+      await Api.internal.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
     },
     /*
     * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
@@ -652,7 +652,7 @@ class Api {
     },
     fetch_messages_based_on_query_and_extract_first_available_header: async (account_email: string, q: string, header_names: string[]) => {
       let {messages} = await Api.gmail.message_list(account_email, q, false);
-      return await tool._.api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages || [], header_names);
+      return await Api.internal.api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages || [], header_names);
     },
     fetch_key_backups: async (account_email: string) => {
       let response = await Api.gmail.message_list(account_email, Api.gmail.query.backups(account_email), true);
@@ -680,26 +680,26 @@ class Api {
   };
 
   public static attester = {
-    lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
+    lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => Api.internal.api_attester_call('lookup/email', {
       email: emails.map(e => tool.str.parse_email(e).email),
     }),
-    initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => tool._.api_attester_call('initial/legacy_submit', {
+    initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => Api.internal.api_attester_call('initial/legacy_submit', {
       email: tool.str.parse_email(email).email,
       pubkey: pubkey.trim(),
       attest,
     }),
-    initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
+    initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => Api.internal.api_attester_call('initial/confirm', {
       signed_message: signed_attest_packet,
     }),
-    replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
+    replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<ApirAttReplaceRequest> => Api.internal.api_attester_call('replace/request', {
       signed_message: signed_attest_packet,
       new_pubkey,
       email,
     }),
-    replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
+    replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => Api.internal.api_attester_call('replace/confirm', {
       signed_message: signed_attest_packet,
     }),
-    test_welcome: (email: string, pubkey: string): Promise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {
+    test_welcome: (email: string, pubkey: string): Promise<ApirAttTestWelcome> => Api.internal.api_attester_call('test/welcome', {
       email,
       pubkey,
     }),
@@ -731,7 +731,7 @@ class Api {
           lines.push(key + ':' + values[key]);
         }
         let content_text = lines.join('\n');
-        let packet = Api.attester.packet.parse(tool._.api_attester_packet_armor(content_text));
+        let packet = Api.attester.packet.parse(Api.internal.api_attester_packet_armor(content_text));
         if (packet.success !== true) {
           throw {code: null, message: packet.error, internal: 'parse'};
         }
@@ -828,11 +828,11 @@ class Api {
         'web': 'https://flowcrypt.com/',
       } as Dict<string>)[type];
     },
-    help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => tool._.api_fc_call('help/feedback', {
+    help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => Api.internal.api_fc_call('help/feedback', {
       email: account_email,
       message,
     }),
-    help_uninstall: (email: string, client: string) => tool._.api_fc_call('help/uninstall', {
+    help_uninstall: (email: string, client: string) => Api.internal.api_fc_call('help/uninstall', {
       email,
       client,
       metrics: null,
@@ -841,7 +841,7 @@ class Api {
       let auth_info = await Store.auth_info();
       let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
       let account = auth_info.account_email || account_email;
-      let response: ApirFcAccountLogin = await tool._.api_fc_call('account/login', {
+      let response: ApirFcAccountLogin = await Api.internal.api_fc_call('account/login', {
         account,
         uuid,
         token,
@@ -852,7 +852,7 @@ class Api {
       await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription});
       return {verified: response.verified === true, subscription: response.subscription};
     },
-    account_check: (emails: string[]) => tool._.api_fc_call('account/check', {
+    account_check: (emails: string[]) => Api.internal.api_fc_call('account/check', {
       emails,
     }) as Promise<ApirFcAccountCheck>,
     account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
@@ -901,11 +901,11 @@ class Api {
           request[k] = update_values[k];
         }
       }
-      return await tool._.api_fc_call('account/update', request);
+      return await Api.internal.api_fc_call('account/update', request);
     },
     account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
       let auth_info = await Store.auth_info();
-      let response: ApirFcAccountSubscribe = await tool._.api_fc_call('account/subscribe', {
+      let response: ApirFcAccountSubscribe = await Api.internal.api_fc_call('account/subscribe', {
         account: auth_info.account_email,
         uuid: auth_info.uuid,
         method,
@@ -919,18 +919,18 @@ class Api {
       let response: ApirFcMessagePresignFiles;
       let lengths = attachments.map(a => a.length);
       if (!auth_method) {
-        response = await tool._.api_fc_call('message/presign_files', {
+        response = await Api.internal.api_fc_call('message/presign_files', {
           lengths,
         });
       } else if (auth_method === 'uuid') {
         let auth_info = await Store.auth_info();
-        response = await tool._.api_fc_call('message/presign_files', {
+        response = await Api.internal.api_fc_call('message/presign_files', {
           account: auth_info.account_email,
           uuid: auth_info.uuid,
           lengths,
         });
       } else {
-        response = await tool._.api_fc_call('message/presign_files', {
+        response = await Api.internal.api_fc_call('message/presign_files', {
           message_token_account: auth_method.account,
           message_token: auth_method.token,
           lengths,
@@ -941,7 +941,7 @@ class Api {
       }
       throw new Error('Could not verify that all files were uploaded properly, please try again.');
     },
-    message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_fc_call('message/confirm_files', {
+    message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => Api.internal.api_fc_call('message/confirm_files', {
       identifiers,
     }),
     message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
@@ -950,21 +950,21 @@ class Api {
       }
       let content = new Attachment({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
       if (!auth_method) {
-        return await tool._.api_fc_call('message/upload', {content}, 'FORM');
+        return await Api.internal.api_fc_call('message/upload', {content}, 'FORM');
       } else {
         let auth_info = await Store.auth_info();
-        return await tool._.api_fc_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
+        return await Api.internal.api_fc_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
       }
     },
     message_token: async (): Promise<ApirFcMessageToken> => {
       let auth_info = await Store.auth_info();
-      return await tool._.api_fc_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
+      return await Api.internal.api_fc_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
     },
     message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
       let auth_info = await Store.auth_info();
-      return await tool._.api_fc_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
+      return await Api.internal.api_fc_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
     },
-    message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_fc_call('message/reply', {
+    message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.api_fc_call('message/reply', {
       short,
       token,
       from,
@@ -972,16 +972,16 @@ class Api {
       subject,
       message,
     }),
-    message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => tool._.api_fc_call('message/contact', {
+    message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => Api.internal.api_fc_call('message/contact', {
       message_token_account: message_token.account,
       message_token: message_token.token,
       sender,
       message,
     }),
-    link_message: (short: string): Promise<ApirFcLinkMessage> => tool._.api_fc_call('link/message', {
+    link_message: (short: string): Promise<ApirFcLinkMessage> => Api.internal.api_fc_call('link/message', {
       short,
     }),
-    link_me: (alias: string): Promise<ApirFcLinkMe> => tool._.api_fc_call('link/me', {
+    link_me: (alias: string): Promise<ApirFcLinkMe> => Api.internal.api_fc_call('link/me', {
       alias,
     }),
   };
@@ -996,7 +996,7 @@ class Api {
       for (let i of items.keys()) {
         let values = items[i].fields;
         values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
-        promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
+        promises.push(Api.internal.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
           progress[i] = single_file_progress;
           Ui.event.prevent(Ui.event.spree(), () => {
             // this should of course be weighted average. How many years until someone notices?
@@ -1006,6 +1006,267 @@ class Api {
       }
       return Promise.all(promises);
     },
+  };
+
+  private static internal = {
+    get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks|null) => {
+      let progress_reporting_xhr = new (window as FcWindow).XMLHttpRequest();
+      if (progress_callbacks && typeof progress_callbacks.upload === 'function') {
+        progress_reporting_xhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
+          progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
+        }, false);
+      }
+      if (progress_callbacks && typeof progress_callbacks.download === 'function') {
+        progress_reporting_xhr.onprogress = (evt: ProgressEvent) => {
+          progress_callbacks.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total); // checked ===function above
+        };
+      }
+      return progress_reporting_xhr;
+    },
+    api_call: async (base_url: string, path: string, fields: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
+      progress = progress || {} as ApiCallProgressCallbacks;
+      let formatted_data: FormData|string;
+      let content_type: string|false;
+      if (format === 'JSON' && fields !== null) {
+        formatted_data = JSON.stringify(fields);
+        content_type = 'application/json; charset=UTF-8';
+      } else if (format === 'FORM') {
+        formatted_data = new FormData();
+        for (let form_field_name of Object.keys(fields)) {
+          let a: Attachment|string = fields[form_field_name];
+          if (a instanceof Attachment) {
+            formatted_data.append(form_field_name, new Blob([a.data()], {type: a.type}), a.name); // xss-none
+          } else {
+            formatted_data.append(form_field_name, a); // xss-none
+          }
+        }
+        content_type = false;
+      } else {
+        throw Error('unknown format:' + String(format));
+      }
+      let request: JQueryAjaxSettings = {
+        xhr: () => Api.internal.get_ajax_progress_xhr(progress),
+        url: base_url + path,
+        method,
+        data: formatted_data,
+        dataType: response_format,
+        crossDomain: true,
+        headers,
+        processData: false,
+        contentType: content_type,
+        async: true,
+        timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
+      };
+      try {
+        let response = await $.ajax(request);
+        if (response && typeof response === 'object' && typeof response.error === 'object') {
+          throw response as StandardError;
+        }
+        return response;
+      } catch(e) {
+        if(e && typeof e === 'object' && e.readyState === 4) {
+          e.url = request.url; // for debugging
+        }
+        throw e;
+      }
+    },
+    api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
+    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(tool._.var.google_oauth2!.url_code, {
+      client_id: tool._.var.google_oauth2!.client_id,
+      response_type: 'code',
+      access_type: 'offline',
+      state: Api.internal.api_google_auth_state_pack(auth_request),
+      redirect_uri: tool._.var.google_oauth2!.url_redirect,
+      scope: (auth_request.scopes || []).join(' '),
+      login_hint: auth_request.account_email,
+    }),
+    google_auth_save_tokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
+      let to_save: AccountStore = {
+        google_token_access: tokens_object.access_token,
+        google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
+        google_token_scopes: scopes,
+      };
+      if (typeof tokens_object.refresh_token !== 'undefined') {
+        to_save.google_token_refresh = tokens_object.refresh_token;
+      }
+      await Store.set(account_email, to_save);
+    },
+    google_auth_get_tokens: (code: string) => $.ajax({
+      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }) as any as Promise<GoogleAuthTokensResponse>,
+    google_auth_refresh_token: (refresh_token: string) => $.ajax({
+      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }) as any as Promise<GoogleAuthTokensResponse>,
+    google_auth_check_access_token: (access_token: string) => $.ajax({
+      url: Env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
+      crossDomain: true,
+      async: true,
+    }) as any as Promise<GoogleAuthTokenInfo>,
+    google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
+      if (result.result === 'Success') {
+        let tokens_object = await Api.internal.google_auth_get_tokens(result.params.code);
+        let _ = await Api.internal.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        let {emailAddress: account_email} = await Api.gmail.users_me_profile(null, tokens_object.access_token);
+        if(result.state.account_email !== account_email) {
+          tool.catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
+        }
+        await Api.internal.google_auth_save_tokens(account_email, tokens_object, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
+        return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
+      } else if (result.result === 'Denied') {
+        return { success: false, result: 'Denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
+      } else if (result.result === 'Error') {
+        return { success: false, result: 'Error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
+      } else {
+        throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
+      }
+    },
+    api_google_call_retry_auth_error_one_time: async (account_email: string, request: JQuery.AjaxSettings) => {
+      try {
+        return await $.ajax(request);
+      } catch (e) {
+        if (Api.error.is_auth_error(e)) { // force refresh token
+          request.headers!.Authorization = await Api.internal.google_api_authorization_header(account_email, true);
+          return await $.ajax(request);
+        }
+        if(e && typeof e === 'object' && e.readyState === 4) {
+          e.url = request.url; // for debugging
+        }
+        throw e;
+      }
+    },
+    api_google_call: async (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string) => {
+      let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
+      let headers = { Authorization: await Api.internal.google_api_authorization_header(account_email) };
+      let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
+      return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
+    },
+    api_gmail_call: async (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, progress:ApiCallProgressCallbacks|null=null, contentType:string|null=null) => {
+      progress = progress || {};
+      let data;
+      let url;
+      if (typeof progress!.upload === 'function') { // substituted with {} above
+        url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
+        data = parameters || undefined;
+      } else {
+        url = 'https://www.googleapis.com/gmail/v1/users/me/' + resource;
+        if (method === 'GET' || method === 'DELETE') {
+          data = parameters || undefined;
+        } else {
+          data = JSON.stringify(parameters) || undefined;
+        }
+      }
+      contentType = contentType || 'application/json; charset=UTF-8';
+      let headers = { 'Authorization': await Api.internal.google_api_authorization_header(account_email) };
+      let xhr = () => Api.internal.get_ajax_progress_xhr(progress);
+      let request = {xhr, url, method, data, headers, crossDomain: true, contentType, async: true};
+      return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
+    },
+    google_api_is_auth_token_valid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
+    google_api_authorization_header: async (account_email: string, force_refresh=false): Promise<string> => {
+      if (!account_email) {
+        throw new Error('missing account_email in api_gmail_call');
+      }
+      let storage = await Store.get_account(account_email, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+      if (!storage.google_token_access || !storage.google_token_refresh) {
+        throw new Error('Account not connected to FlowCrypt Browser Extension');
+      } else if (Api.internal.google_api_is_auth_token_valid(storage) && !force_refresh) {
+        return `Bearer ${storage.google_token_access}`;
+      } else { // refresh token
+        let refresh_token_response = await Api.internal.google_auth_refresh_token(storage.google_token_refresh);
+        let _ = await Api.internal.google_auth_check_access_token(refresh_token_response.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        await Api.internal.google_auth_save_tokens(account_email, refresh_token_response, storage.google_token_scopes || []);
+        let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
+        if (Api.internal.google_api_is_auth_token_valid(auth)) { // have a valid gmail_api oauth token
+          return `Bearer ${auth.google_token_access}`;
+        } else {
+          throw {code: 401, message: 'Could not refresh google auth token - did not become valid', internal: 'auth'};
+        }
+      }
+    },
+    api_google_auth_popup_prepare_auth_request_scopes: async (account_email: string|null, requested_scopes: string[], omit_read_scope: boolean): Promise<string[]> => {
+      let current_tokens_scopes: string[] = [];
+      if (account_email) {
+        let storage = await Store.get_account(account_email, ['google_token_scopes']);
+        current_tokens_scopes = storage.google_token_scopes || [];
+      }
+      let auth_request_scopes = requested_scopes || [];
+      for (let scope of tool._.var.google_oauth2!.scopes) {
+        if (!tool.value(scope).in(requested_scopes)) {
+          if (scope !== Api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
+            auth_request_scopes.push(scope);
+          }
+        }
+      }
+      for (let scope of current_tokens_scopes) {
+        if (!tool.value(scope).in(requested_scopes)) {
+          auth_request_scopes.push(scope);
+        }
+      }
+      return auth_request_scopes;
+    },
+    encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
+      let boundary = 'this_sucks_' + tool.str.random(10);
+      let body = '';
+      for (let type of Object.keys(parts)) {
+        body += '--' + boundary + '\n';
+        body += 'Content-Type: ' + type + '\n';
+        if (tool.value('json').in(type as string)) {
+          body += '\n' + parts[type] + '\n\n';
+        } else {
+          body += 'Content-Transfer-Encoding: base64\n';
+          body += '\n' + btoa(parts[type]) + '\n\n';
+        }
+      }
+      body += '--' + boundary + '--';
+      return { content_type: 'multipart/related; boundary=' + boundary, body };
+    },
+    api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: ProviderContactsResults) => void) => {
+      let all_results: Contact[] = [];
+      while(true) {
+        let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
+        if (headers.to) {
+          let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
+          let new_valid_results = raw_parsed_results.filter(r => tool.str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
+          query += raw_parsed_results.map(raw => ` -to:"${raw.address}"`).join('');
+          all_results = all_results.concat(new_valid_results);
+          chunked_callback({new: new_valid_results, all: all_results});
+          if(query.length > 6000) { // gmail search string can handle about this much
+            chunked_callback({new: [], all: all_results});
+            return;
+          }
+        } else {
+          chunked_callback({new: [], all: all_results});
+          return;
+        }
+      }
+    },
+    api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: ApirGmailMessageList$message[], header_names: string[]): Promise<FlatHeaders> => {
+      for (let message of messages) {
+        let header_values: FlatHeaders = {};
+        let message_get_response = await Api.gmail.message_get(account_email, message.id, 'metadata');
+        for (let header_name of header_names) {
+          let value = Api.gmail.find_header(message_get_response, header_name);
+          if (value !== null) {
+            header_values[header_name] = value;
+          } else {
+            break;
+          }
+        }
+        if (Object.values(header_values).length === header_names.length) {
+          return header_values; // all requested header values found in one msg
+        }
+      }
+      return {};
+    },
+    api_attester_packet_armor: (content_text: string) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
+    api_attester_call: (path: string, values: Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
+    api_fc_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
   };
 
 }
@@ -2747,265 +3008,6 @@ let tool = {
       }
       return parsed;
     },
-    get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks|null) => {
-      let progress_reporting_xhr = new (window as FcWindow).XMLHttpRequest();
-      if (progress_callbacks && typeof progress_callbacks.upload === 'function') {
-        progress_reporting_xhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
-          progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
-        }, false);
-      }
-      if (progress_callbacks && typeof progress_callbacks.download === 'function') {
-        progress_reporting_xhr.onprogress = (evt: ProgressEvent) => {
-          progress_callbacks.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total); // checked ===function above
-        };
-      }
-      return progress_reporting_xhr;
-    },
-    api_call: async (base_url: string, path: string, fields: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
-      progress = progress || {} as ApiCallProgressCallbacks;
-      let formatted_data: FormData|string;
-      let content_type: string|false;
-      if (format === 'JSON' && fields !== null) {
-        formatted_data = JSON.stringify(fields);
-        content_type = 'application/json; charset=UTF-8';
-      } else if (format === 'FORM') {
-        formatted_data = new FormData();
-        for (let form_field_name of Object.keys(fields)) {
-          let a: Attachment|string = fields[form_field_name];
-          if (a instanceof Attachment) {
-            formatted_data.append(form_field_name, new Blob([a.data()], {type: a.type}), a.name); // xss-none
-          } else {
-            formatted_data.append(form_field_name, a); // xss-none
-          }
-        }
-        content_type = false;
-      } else {
-        throw Error('unknown format:' + String(format));
-      }
-      let request: JQueryAjaxSettings = {
-        xhr: () => tool._.get_ajax_progress_xhr(progress),
-        url: base_url + path,
-        method,
-        data: formatted_data,
-        dataType: response_format,
-        crossDomain: true,
-        headers,
-        processData: false,
-        contentType: content_type,
-        async: true,
-        timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
-      };
-      try {
-        let response = await $.ajax(request);
-        if (response && typeof response === 'object' && typeof response.error === 'object') {
-          throw response as StandardError;
-        }
-        return response;
-      } catch(e) {
-        if(e && typeof e === 'object' && e.readyState === 4) {
-          e.url = request.url; // for debugging
-        }
-        throw e;
-      }
-    },
-    api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
-    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(tool._.var.google_oauth2!.url_code, {
-      client_id: tool._.var.google_oauth2!.client_id,
-      response_type: 'code',
-      access_type: 'offline',
-      state: tool._.api_google_auth_state_pack(auth_request),
-      redirect_uri: tool._.var.google_oauth2!.url_redirect,
-      scope: (auth_request.scopes || []).join(' '),
-      login_hint: auth_request.account_email,
-    }),
-    google_auth_save_tokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
-      let to_save: AccountStore = {
-        google_token_access: tokens_object.access_token,
-        google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
-        google_token_scopes: scopes,
-      };
-      if (typeof tokens_object.refresh_token !== 'undefined') {
-        to_save.google_token_refresh = tokens_object.refresh_token;
-      }
-      await Store.set(account_email, to_save);
-    },
-    google_auth_get_tokens: (code: string) => $.ajax({
-      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
-      method: 'POST',
-      crossDomain: true,
-      async: true,
-    }) as any as Promise<GoogleAuthTokensResponse>,
-    google_auth_refresh_token: (refresh_token: string) => $.ajax({
-      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
-      method: 'POST',
-      crossDomain: true,
-      async: true,
-    }) as any as Promise<GoogleAuthTokensResponse>,
-    google_auth_check_access_token: (access_token: string) => $.ajax({
-      url: Env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
-      crossDomain: true,
-      async: true,
-    }) as any as Promise<GoogleAuthTokenInfo>,
-    google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
-      if (result.result === 'Success') {
-        let tokens_object = await tool._.google_auth_get_tokens(result.params.code);
-        let _ = await tool._.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        let {emailAddress: account_email} = await Api.gmail.users_me_profile(null, tokens_object.access_token);
-        if(result.state.account_email !== account_email) {
-          tool.catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
-        }
-        await tool._.google_auth_save_tokens(account_email, tokens_object, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
-        return { account_email, success: true, result: 'Success', message_id: result.state.message_id };
-      } else if (result.result === 'Denied') {
-        return { success: false, result: 'Denied', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
-      } else if (result.result === 'Error') {
-        return { success: false, result: 'Error', error: result.params.error, account_email: result.state.account_email, message_id: result.state.message_id };
-      } else {
-        throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
-      }
-    },
-    api_google_call_retry_auth_error_one_time: async (account_email: string, request: JQuery.AjaxSettings) => {
-      try {
-        return await $.ajax(request);
-      } catch (e) {
-        if (Api.error.is_auth_error(e)) { // force refresh token
-          request.headers!.Authorization = await tool._.google_api_authorization_header(account_email, true);
-          return await $.ajax(request);
-        }
-        if(e && typeof e === 'object' && e.readyState === 4) {
-          e.url = request.url; // for debugging
-        }
-        throw e;
-      }
-    },
-    api_google_call: async (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string) => {
-      let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
-      let headers = { Authorization: await tool._.google_api_authorization_header(account_email) };
-      let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
-      return await tool._.api_google_call_retry_auth_error_one_time(account_email, request);
-    },
-    api_gmail_call: async (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, progress:ApiCallProgressCallbacks|null=null, contentType:string|null=null) => {
-      progress = progress || {};
-      let data;
-      let url;
-      if (typeof progress!.upload === 'function') { // substituted with {} above
-        url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + resource + '?uploadType=multipart';
-        data = parameters || undefined;
-      } else {
-        url = 'https://www.googleapis.com/gmail/v1/users/me/' + resource;
-        if (method === 'GET' || method === 'DELETE') {
-          data = parameters || undefined;
-        } else {
-          data = JSON.stringify(parameters) || undefined;
-        }
-      }
-      contentType = contentType || 'application/json; charset=UTF-8';
-      let headers = { 'Authorization': await tool._.google_api_authorization_header(account_email) };
-      let xhr = () => tool._.get_ajax_progress_xhr(progress);
-      let request = {xhr, url, method, data, headers, crossDomain: true, contentType, async: true};
-      return await tool._.api_google_call_retry_auth_error_one_time(account_email, request);
-    },
-    google_api_is_auth_token_valid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
-    google_api_authorization_header: async (account_email: string, force_refresh=false): Promise<string> => {
-      if (!account_email) {
-        throw new Error('missing account_email in api_gmail_call');
-      }
-      let storage = await Store.get_account(account_email, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
-      if (!storage.google_token_access || !storage.google_token_refresh) {
-        throw new Error('Account not connected to FlowCrypt Browser Extension');
-      } else if (tool._.google_api_is_auth_token_valid(storage) && !force_refresh) {
-        return `Bearer ${storage.google_token_access}`;
-      } else { // refresh token
-        let refresh_token_response = await tool._.google_auth_refresh_token(storage.google_token_refresh);
-        let _ = await tool._.google_auth_check_access_token(refresh_token_response.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        await tool._.google_auth_save_tokens(account_email, refresh_token_response, storage.google_token_scopes || []);
-        let auth = await Store.get_account(account_email, ['google_token_access', 'google_token_expires']);
-        if (tool._.google_api_is_auth_token_valid(auth)) { // have a valid gmail_api oauth token
-          return `Bearer ${auth.google_token_access}`;
-        } else {
-          throw {code: 401, message: 'Could not refresh google auth token - did not become valid', internal: 'auth'};
-        }
-      }
-    },
-    api_google_auth_popup_prepare_auth_request_scopes: async (account_email: string|null, requested_scopes: string[], omit_read_scope: boolean): Promise<string[]> => {
-      let current_tokens_scopes: string[] = [];
-      if (account_email) {
-        let storage = await Store.get_account(account_email, ['google_token_scopes']);
-        current_tokens_scopes = storage.google_token_scopes || [];
-      }
-      let auth_request_scopes = requested_scopes || [];
-      for (let scope of tool._.var.google_oauth2!.scopes) {
-        if (!tool.value(scope).in(requested_scopes)) {
-          if (scope !== Api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
-            auth_request_scopes.push(scope);
-          }
-        }
-      }
-      for (let scope of current_tokens_scopes) {
-        if (!tool.value(scope).in(requested_scopes)) {
-          auth_request_scopes.push(scope);
-        }
-      }
-      return auth_request_scopes;
-    },
-    encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
-      let boundary = 'this_sucks_' + tool.str.random(10);
-      let body = '';
-      for (let type of Object.keys(parts)) {
-        body += '--' + boundary + '\n';
-        body += 'Content-Type: ' + type + '\n';
-        if (tool.value('json').in(type as string)) {
-          body += '\n' + parts[type] + '\n\n';
-        } else {
-          body += 'Content-Transfer-Encoding: base64\n';
-          body += '\n' + btoa(parts[type]) + '\n\n';
-        }
-      }
-      body += '--' + boundary + '--';
-      return { content_type: 'multipart/related; boundary=' + boundary, body };
-    },
-    api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: ProviderContactsResults) => void) => {
-      let all_results: Contact[] = [];
-      while(true) {
-        let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
-        if (headers.to) {
-          let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
-          let new_valid_results = raw_parsed_results.filter(r => tool.str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
-          query += raw_parsed_results.map(raw => ` -to:"${raw.address}"`).join('');
-          all_results = all_results.concat(new_valid_results);
-          chunked_callback({new: new_valid_results, all: all_results});
-          if(query.length > 6000) { // gmail search string can handle about this much
-            chunked_callback({new: [], all: all_results});
-            return;
-          }
-        } else {
-          chunked_callback({new: [], all: all_results});
-          return;
-        }
-      }
-    },
-    api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: ApirGmailMessageList$message[], header_names: string[]): Promise<FlatHeaders> => {
-      for (let message of messages) {
-        let header_values: FlatHeaders = {};
-        let message_get_response = await Api.gmail.message_get(account_email, message.id, 'metadata');
-        for (let header_name of header_names) {
-          let value = Api.gmail.find_header(message_get_response, header_name);
-          if (value !== null) {
-            header_values[header_name] = value;
-          } else {
-            break;
-          }
-        }
-        if (Object.values(header_values).length === header_names.length) {
-          return header_values; // all requested header values found in one msg
-        }
-      }
-      return {};
-    },
-    api_attester_packet_armor: (content_text: string) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
-    api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
-    api_fc_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
-    /* [BARE_ENGINE_OMIT_END] */
   },
   catch: { // web and extension code
     handle_error: (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
