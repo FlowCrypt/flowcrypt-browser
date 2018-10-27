@@ -95,12 +95,28 @@ body#settings .action_show:before { background-image: url("/img/svgs/contact__sh
 body#settings .action_change:before { background-image: url("/img/svgs/contact__edit-icon.svg"); }
 body#settings .action_remove:before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
 body#settings > div#content.pubkeys .action_remove_alias { cursor: pointer; }
+body#settings > div#content.contacts #emails td:nth-child(2),
+body#settings > div#content.contacts #emails td:nth-child(3),
+body#settings > div#content.contacts #emails td:nth-child(4) { display: inline-block; height: 25px; width: 25px; }
+body#settings > div#content.contacts table#emails tbody { width: 80%; margin: 0 auto; display: block;}
+body#settings > div#content.contacts #emails tr { margin: 10px; }
+body#settings > div#content.contacts #emails tr[email] { display: block; position: relative; }
+body#settings > div#content.contacts #emails tr[email] a { border-radius: 15px; display: block; font-size: 11px; font-weight: 500; margin: 0 5px; margin-right: 5%; padding: 10px 5px; position: relative; text-align: center; transition: 0.25s; width: 20px; }
+body#settings > div#content.contacts #emails tr[email] td:first-child { font-size: 16px; text-align: left; text-indent: 0; width: 65% !important;}
+body#settings > div#content.contacts #emails tr[email]:before { border-radius: 4px; content: ""; height: 90px; position: absolute; width: 100%; }
+body#settings > div#content.contacts table#emails td { font-size: 13px; height: auto; padding: 10px 0; display: inline-block; width: 15px; text-align: left; float: left; padding: 4px 15px; }
+body#settings > div#content.contacts table#emails { margin: 50px auto; color: #666; }
+body#settings > div#content.contacts table#emails tr { height: 32px; }
 body#settings > div#content textarea { width: 100%; }
 body#settings .subscribe--header-row th:nth-child(2),
 body#settings .subscribe--header-row th:nth-child(3) { font-size: 10px; text-align: center; position: relative; top: -3px; }
-body#settings > div#content.pubkeys table#emails { min-width: 100%; }
+body#settings > div#content.contacts table#emails { min-width: 100%; }
 body#settings #emails td { display: block; width: 100%; height: 100%; margin: 0 auto; }
-body#settings #emails td .action_request_attestation { display: block; padding: 5px; text-align: center; }
+body#settings > div#content.contacts div.fix_container { display: none; }
+body#settings > div#content.contacts textarea.input_pubkey { width: 600px; height: 420px; font-size: 12px; padding: 8px; }
+body#settings > div#content.contacts iframe.pgp_block { width: 500px; height: 61px; margin-bottom: 0; border: none; }
+body#settings > div#content.contacts table#emails td .action_remove_alias { cursor: pointer; }
+
 
 body#settings > div#content.setup [id^="step_"] { animation: fadeIn .7s;}
 body#settings > div#content.setup h1 {-webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
@@ -185,11 +201,6 @@ body#settings > div#content.help #input_text { width: 80%; height: 200px; font-w
 body#settings > div#content.help #input_subject { width: 80%; }
 body#settings > div#content.help .button.green { display: inline-block; padding: 10px 60px; }
 body#settings > div#content.help .separator { width: 60%;}
-
-body#settings > div#content.pubkeys div.fix_container { display: none; }
-body#settings > div#content.pubkeys textarea.input_pubkey { width: 600px; height: 420px; font-size: 12px; padding: 8px; }
-body#settings > div#content.pubkeys iframe.pgp_block { width: 500px; height: 61px; margin-bottom: 0; border: none; }
-body#settings > div#content.pubkeys table#emails td .action_remove_alias { cursor: pointer; }
 
 body#settings > div#content.footer { margin: 0; }
 body#settings > div#content.footer .user_free, body#settings > div#content.footer .user_subscribed { display: none; }
