@@ -1279,11 +1279,10 @@ class Api {
 
 class Ui {
 
-  private static EVENT_FIRED: Dict<number> = {};
-  private static EVENT_DOUBLE_MS: 1000;
-  private static EVENT_SPREE_MS: 50;
-  private static EVENT_SLOW_SPREE_MS: 200;
-  private static EVENT_VERY_SLOW_SPREE_MS: 500;
+  public static EVENT_DOUBLE_MS = 1000;
+  public static EVENT_SPREE_MS = 50;
+  public static EVENT_SLOW_SPREE_MS = 200;
+  public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
   public static retry_link = (caption:string='retry') => `<a href="${Xss.html_escape(window.location.href)}">${Xss.html_escape(caption)}</a>`;
 
@@ -1490,11 +1489,17 @@ class Ui {
         Catch.handle_exception(e);
       }
     },
-    prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, id: string) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
-      let cb_with_errors_handled = (e: HTMLElement, id: string) => {
+    prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+      let event_timer: number|undefined;
+      let event_fired_on: number|undefined;
+      let cb_reset_timer = () => {
+        event_timer = undefined;
+        event_fired_on = undefined;
+      };
+      let cb_with_errors_handled = (e: HTMLElement) => {
         let r;
         try {
-          r = cb(e, id);
+          r = cb(e, cb_reset_timer);
           if(typeof r === 'object' && typeof r.catch === 'function') {
             r.catch(e => Ui.event.__dispatch_err(e, err_handler));
           }
@@ -1503,44 +1508,32 @@ class Ui {
         }
       };
       return function() {
-        // todo - maybe this could use some refactoring. It works, but I have no clue how.
-        // also, the setTimeouts are weird - don't they get called without the arguments?! that would cause trouble
-        // although spree-s tend to be called on events that do not need the callback (window resize), it's still better to do this consistently
         if (preventable_event.name === 'spree') {
-          clearTimeout(Ui.EVENT_FIRED[preventable_event.id]);
-          Ui.EVENT_FIRED[preventable_event.id] = window.setTimeout(cb_with_errors_handled, Ui.EVENT_SPREE_MS);
+          clearTimeout(event_timer);
+          event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
         } else if (preventable_event.name === 'slowspree') {
-          clearTimeout(Ui.EVENT_FIRED[preventable_event.id]);
-          Ui.EVENT_FIRED[preventable_event.id] = window.setTimeout(cb_with_errors_handled, Ui.EVENT_SLOW_SPREE_MS);
+          clearTimeout(event_timer);
+          event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
         } else if (preventable_event.name === 'veryslowspree') {
-          clearTimeout(Ui.EVENT_FIRED[preventable_event.id]);
-          Ui.EVENT_FIRED[preventable_event.id] = window.setTimeout(cb_with_errors_handled, Ui.EVENT_VERY_SLOW_SPREE_MS);
+          clearTimeout(event_timer);
+          event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
-          if (preventable_event.id in Ui.EVENT_FIRED) {
-            // if (meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
-            if (preventable_event.name === 'double') {
-              if (Date.now() - Ui.EVENT_FIRED[preventable_event.id] > Ui.EVENT_DOUBLE_MS) {
-                Ui.EVENT_FIRED[preventable_event.id] = Date.now();
-                cb_with_errors_handled(this, preventable_event.id);
+          if (event_fired_on) {
+            if (preventable_event.name === 'parallel') {
+              // event handling is still being processed. Do not call back
+            } else if (preventable_event.name === 'double') {
+              if (Date.now() - event_fired_on > Ui.EVENT_DOUBLE_MS) {
+                event_fired_on = Date.now();
+                cb_with_errors_handled(this);
               }
             }
           } else {
-            Ui.EVENT_FIRED[preventable_event.id] = Date.now();
-            cb_with_errors_handled(this, preventable_event.id);
+            event_fired_on = Date.now();
+            cb_with_errors_handled(this);
           }
         }
       };
-    },
-    release: (id: string) => { // todo - I may have forgot to use this somewhere, used only with parallel() - if that's how it works
-      if (id in Ui.EVENT_FIRED) {
-        let ms_to_release = Ui.EVENT_DOUBLE_MS + Ui.EVENT_FIRED[id] - Date.now();
-        if (ms_to_release > 0) {
-          setTimeout(() => { delete Ui.EVENT_FIRED[id]; }, ms_to_release);
-        } else {
-          delete Ui.EVENT_FIRED[id];
-        }
-      }
-    },
+    }
   };
 
 }
