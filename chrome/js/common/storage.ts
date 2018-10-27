@@ -79,7 +79,7 @@ class Store {
     if (Store.env_is_background_script()) {
       return window.sessionStorage.getItem(Store.index(account_email, key) as string);
     } else {
-      return await tool.browser.message.send_await(null, 'session_get', {account_email, key});
+      return await BrowserMsg.send_await(null, 'session_get', {account_email, key});
     }
   }
 
@@ -91,7 +91,7 @@ class Store {
         sessionStorage.removeItem(Store.index(account_email, key) as string);
       }
     } else {
-      await tool.browser.message.send_await(null, 'session_set', {account_email, key, value});
+      await BrowserMsg.send_await(null, 'session_set', {account_email, key, value});
     }
   }
 
@@ -227,14 +227,14 @@ class Store {
     if (!tool.value(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);
       await Store.set(null, { account_emails: JSON.stringify(account_emails) });
-      await tool.browser.message.send_await(null, 'update_uninstall_url');
+      await BrowserMsg.send_await(null, 'update_uninstall_url');
     }
   }
 
   static async account_emails_remove(account_email: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
     let account_emails = await Store.account_emails_get();
     await Store.set(null, { account_emails: JSON.stringify(tool.arr.without_value(account_emails, account_email)) });
-    await tool.browser.message.send_await(null, 'update_uninstall_url');
+    await BrowserMsg.send_await(null, 'update_uninstall_url');
   }
 
   static async auth_info(): Promise<StoredAuthInfo> {
@@ -350,7 +350,7 @@ class Store {
   static db_contact_save = (db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (db === null) { // relay op through background process
       // todo - currently will silently swallow errors
-      tool.browser.message.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(tool.catch.rejection);
+      BrowserMsg.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(tool.catch.rejection);
     } else {
       if (Array.isArray(contact)) {
         for (let single_contact of contact) {
@@ -372,7 +372,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        tool.browser.message.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(tool.catch.rejection);
+        BrowserMsg.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(tool.catch.rejection);
       } else {
         if (Array.isArray(email)) {
           for (let single_email of email) {
@@ -408,7 +408,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        tool.browser.message.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(tool.catch.rejection);
+        BrowserMsg.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(tool.catch.rejection);
       } else {
         if (email_or_longid.length === 1) {
           let tx: IDBRequest;
@@ -436,7 +436,7 @@ class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        tool.browser.message.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(tool.catch.rejection);
+        BrowserMsg.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(tool.catch.rejection);
       } else {
         for (let key of Object.keys(query)) {
           if (!tool.value(key).in(Store.db_query_keys)) {

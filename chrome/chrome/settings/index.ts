@@ -24,10 +24,10 @@ tool.catch.try(async () => {
     $('.signin_button.' + webmail_name).css('display', 'inline-block');
   }
 
-  let tab_id = await tool.browser.message.required_tab_id();
+  let tab_id = await BrowserMsg.required_tab_id();
   let notifications = new Notifications(tab_id);
 
-  tool.browser.message.listen({
+  BrowserMsg.listen({
     open_page: (data: {page: string, add_url_text: string}, sender, respond) => {
       Settings.render_sub_page(account_email || null, tab_id, data.page, data.add_url_text);
     },

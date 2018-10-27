@@ -24,7 +24,7 @@ tool.catch.try(async () => {
       gmail_message_object = await Api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');
     } catch(e) {
       if(Api.error.is_auth_popup_needed(e)) {
-        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       }
       if (!url_params.from) {
         url_params.from = account_email;
@@ -51,7 +51,7 @@ tool.catch.try(async () => {
     $('#loader').remove();
   })();
 
-  let tab_id = await tool.browser.message.required_tab_id();
+  let tab_id = await BrowserMsg.required_tab_id();
 
   const can_read_email = Api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(account_email, tab_id);
@@ -62,11 +62,11 @@ tool.catch.try(async () => {
   let close_message = () => {
     $('body').attr('data-test-state', 'closed');  // used by automated tests
     if (url_params.is_reply_box) {
-      tool.browser.message.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
+      BrowserMsg.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
     } else if (url_params.placement === 'settings') {
-      tool.browser.message.send(parent_tab_id, 'close_page');
+      BrowserMsg.send(parent_tab_id, 'close_page');
     } else {
-      tool.browser.message.send(parent_tab_id, 'close_new_message');
+      BrowserMsg.send(parent_tab_id, 'close_new_message');
     }
   };
 
@@ -96,7 +96,7 @@ tool.catch.try(async () => {
         }
       } catch(e) {
         if(Api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else if(!Api.error.is_network_error(e)) {
           tool.catch.handle_exception(e);
         }
@@ -171,7 +171,7 @@ tool.catch.try(async () => {
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => {
       Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
         if(Api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else if (Api.error.is_network_error(e)) {
           // todo: render network error
         } else {
@@ -192,7 +192,7 @@ tool.catch.try(async () => {
         }
       } catch (e) {
         if(Api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else if (Api.error.is_network_error(e)) {
           // todo: render retry
         } else {
@@ -202,10 +202,10 @@ tool.catch.try(async () => {
       }
     },
     email_provider_extract_armored_block: (message_id: string) => Api.gmail.extract_armored_block(account_email, message_id, 'full'),
-    send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(parent_tab_id, channel, data),
-    send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
+    send_message_to_main_window: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data),
+    send_message_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
-      tool.browser.message.send(parent_tab_id, 'reinsert_reply_box', {
+      BrowserMsg.send(parent_tab_id, 'reinsert_reply_box', {
         account_email,
         my_email: url_params.from,
         subject: url_params.subject,
@@ -219,12 +219,12 @@ tool.catch.try(async () => {
     }}),
     render_add_pubkey_dialog: (emails: string[]) => {
       if (url_params.placement !== 'settings') {
-        tool.browser.message.send(parent_tab_id, 'add_pubkey_dialog', {emails});
+        BrowserMsg.send(parent_tab_id, 'add_pubkey_dialog', {emails});
       } else {
         $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50}); // body element is present
       }
     },
-    render_help_dialog: () => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/help.htm' }),
+    render_help_dialog: () => BrowserMsg.send(null, 'settings', { account_email, page: '/chrome/settings/modules/help.htm' }),
     render_sending_address_dialog: () => $.featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
     close_message,
     factory_attachment: (attachment: Attachment) => factory.embedded_attachment(attachment),
@@ -241,7 +241,7 @@ tool.catch.try(async () => {
     skip_click_prompt: url_params.skip_click_prompt,
   }, subscription_when_page_was_opened);
 
-  tool.browser.message.listen({
+  BrowserMsg.listen({
     close_dialog: (data, sender, respond) => {
       $('.featherlight.featherlight-iframe').remove();
     },

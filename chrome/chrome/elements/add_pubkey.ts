@@ -10,7 +10,7 @@ tool.catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let close_dialog = () => tool.browser.message.send(parent_tab_id, 'close_dialog');
+  let close_dialog = () => BrowserMsg.send(parent_tab_id, 'close_dialog');
 
   for (let email of (url_params.emails as string).split(',')) {
     Ui.sanitize_append('select.email', `<option value="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</option>`);
@@ -53,7 +53,7 @@ tool.catch.try(async () => {
   }));
 
   if (url_params.placement !== 'settings') {
-    $('.action_settings').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {
+    $('.action_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',
       account_email,

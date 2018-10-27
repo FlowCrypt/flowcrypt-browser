@@ -102,7 +102,7 @@ class BgExec {
   }
 
   private static request_to_process_in_background = async (path: string, args: any[]) => {
-    let response: BgExecResponse = await tool.browser.message.send_await(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
+    let response: BgExecResponse = await BrowserMsg.send_await(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
     if(response.exception) {
       let e = new Error(`[BgExec] ${response.exception.name}: ${response.exception.message}`);
       e.stack += `\n\nBgExec stack:\n${response.exception.stack}`;

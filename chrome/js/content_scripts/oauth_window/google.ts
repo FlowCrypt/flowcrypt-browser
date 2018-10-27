@@ -16,10 +16,10 @@
       let result = parts[0];
       let params = Env.url_params(['code', 'state', 'error'], parts[1]);
       let state = api_google_auth_state_unpack(params.state as string);
-      await tool.browser.message.send_await(state.tab_id, 'google_auth_window_result', {result, params, state});
+      await BrowserMsg.send_await(state.tab_id, 'google_auth_window_result', {result, params, state});
       let title = 'Close this window';
       $('title').text(title);
-      tool.browser.message.send(null, 'close_popup', {title});
+      BrowserMsg.send(null, 'close_popup', {title});
       break;
     }
     await tool.time.sleep(50);

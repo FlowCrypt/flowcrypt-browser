@@ -8,13 +8,13 @@ tool.catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let tab_id = await tool.browser.message.required_tab_id();
+  let tab_id = await BrowserMsg.required_tab_id();
 
   let factory = new XssSafeFactory(account_email, tab_id, undefined, undefined, {compact: true});
   let back_button = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   let space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
-  tool.browser.message.listen({}, tab_id); // set_css
+  BrowserMsg.listen({}, tab_id); // set_css
 
   let render_contact_list = async () => {
     let contacts = await Store.db_contact_search(null, { has_pgp: true });

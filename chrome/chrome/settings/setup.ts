@@ -13,7 +13,7 @@ tool.catch.try(async () => {
   }
 
   if (account_email) {
-    tool.browser.message.send(null, 'update_uninstall_url');
+    BrowserMsg.send(null, 'update_uninstall_url');
   } else {
     window.location.href = 'index.htm';
     return;
@@ -48,8 +48,8 @@ tool.catch.try(async () => {
   key_import_ui.init_prv_import_source_form(account_email, parent_tab_id); // for step_2b_manual_enter, if user chooses so
   key_import_ui.on_bad_passphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
 
-  let tab_id = await tool.browser.message.required_tab_id();
-  tool.browser.message.listen({
+  let tab_id = await BrowserMsg.required_tab_id();
+  BrowserMsg.listen({
     close_page: () => {
       $('.featherlight-close').click();
     },
@@ -503,7 +503,7 @@ tool.catch.try(async () => {
   }));
 
   $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parent_tab_id was used
-    tool.browser.message.send(parent_tab_id, 'redirect', {location: Env.url_create('index.htm', {account_email, advanced: true})});
+    BrowserMsg.send(parent_tab_id, 'redirect', {location: Env.url_create('index.htm', {account_email, advanced: true})});
   }));
 
   // show alternative account addresses in setup form + save them for later

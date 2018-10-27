@@ -20,11 +20,11 @@ tool.catch.try(async () => {
     body: 'body',
   });
 
-  let tab_id = await tool.browser.message.required_tab_id();
+  let tab_id = await BrowserMsg.required_tab_id();
   notifications = new Notifications(tab_id);
   factory = new XssSafeFactory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
-  tool.browser.message.listen({
+  BrowserMsg.listen({
     open_new_message: (data) => {
       injector.open_compose_window();
     },

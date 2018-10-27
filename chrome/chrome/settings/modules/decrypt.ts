@@ -8,7 +8,7 @@ tool.catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let tab_id = await tool.browser.message.required_tab_id();
+  let tab_id = await BrowserMsg.required_tab_id();
 
   let original_content: string;
 
@@ -16,7 +16,7 @@ tool.catch.try(async () => {
   attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
   let factory = new XssSafeFactory(account_email, tab_id);
 
-  tool.browser.message.listen({
+  BrowserMsg.listen({
     close_dialog: () => {
       $('.passphrase_dialog').text('');
     },

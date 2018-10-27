@@ -58,7 +58,7 @@ class Settings {
       storage.attests_processed = [];
     }
     await Store.set(account_email, storage);
-    return await tool.browser.message.send_await(null, 'attest_requested', {account_email});
+    return await BrowserMsg.send_await(null, 'attest_requested', {account_email});
   }
 
   static mark_as_attested = async (account_email: string, attester: string) => {
@@ -132,7 +132,7 @@ class Settings {
   static redirect_sub_page = (account_email: string, parent_tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, parent_tab_id, page, add_url_text_or_params);
     if (Settings.is_embedded) { // embedded on the main page
-      tool.browser.message.send(parent_tab_id, 'open_page', { page, add_url_text: add_url_text_or_params });
+      BrowserMsg.send(parent_tab_id, 'open_page', { page, add_url_text: add_url_text_or_params });
     } else { // on a sub page/module page, inside a lightbox. Just change location.
       window.location.href = new_location;
     }

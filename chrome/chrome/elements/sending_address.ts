@@ -36,6 +36,6 @@ tool.catch.try(async () => {
     window.location.reload();
   }));
 
-  $('.action_close').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
+  $('.action_close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_dialog')));
 
 })();

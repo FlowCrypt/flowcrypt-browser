@@ -17,7 +17,7 @@ tool.catch.try(async () => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     if (await tool.crypto.key.decrypt(key, [$('#password').val() as string]) === true) { // text input
       Ui.sanitize_render('#content', '<div class="line">Your pass phrase matches. Good job! You\'re all set.</div><div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>');
-      $('.close').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
+      $('.close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_page')));
     } else {
       alert('Pass phrase did not match. Please try again. If you are not able to recover your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');
     }

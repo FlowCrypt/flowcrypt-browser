@@ -16,7 +16,7 @@ tool.catch.try(async () => {
   let additional_message_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
-  app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => tool.browser.message.send(parent_tab_id, channel, data);
+  app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
 
   for (let to of (url_params.to as string).split(',')) {
@@ -26,7 +26,7 @@ tool.catch.try(async () => {
   // render
   $('.pubkey_file_name').text(attachment.name);
   composer.resize_reply_box();
-  tool.browser.message.send(parent_tab_id, 'scroll_to_bottom_of_conversation');
+  BrowserMsg.send(parent_tab_id, 'scroll_to_bottom_of_conversation');
   $('#input_text').focus();
 
   // determine reply headers
@@ -39,7 +39,7 @@ tool.catch.try(async () => {
     }
   } catch (e) {
     if(Api.error.is_auth_popup_needed(e)) {
-      tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+      BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
     } else if (Api.error.is_network_error(e)) {
       // todo - render retry button
     } else {
@@ -57,12 +57,12 @@ tool.catch.try(async () => {
     }
     try {
       await Api.gmail.message_send(account_email, message);
-      tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
+      BrowserMsg.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
       Ui.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if(Api.error.is_auth_popup_needed(e)) {
         $(target).text('send response');
-        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         alert('Google account permission needed, please re-connect account and try again.');
       } else if(Api.error.is_network_error(e)) {
         $(target).text('send response');

@@ -60,8 +60,8 @@ tool.catch.try(async () => {
   };
 
   $('.action_close').click(Ui.event.handle(() => {
-    tool.browser.message.send('broadcast', 'passphrase_entry', {entered: false});
-    tool.browser.message.send(parent_tab_id, 'close_dialog');
+    BrowserMsg.send('broadcast', 'passphrase_entry', {entered: false});
+    BrowserMsg.send(parent_tab_id, 'close_dialog');
   }));
 
   $('.action_ok').click(Ui.event.handle(async () => {
@@ -84,8 +84,8 @@ tool.catch.try(async () => {
       }
     }
     if (at_least_one_matched) {
-      tool.browser.message.send('broadcast', 'passphrase_entry', {entered: true});
-      tool.browser.message.send(parent_tab_id, 'close_dialog');
+      BrowserMsg.send('broadcast', 'passphrase_entry', {entered: true});
+      BrowserMsg.send(parent_tab_id, 'close_dialog');
     } else {
       render_error();
       setTimeout(render_normal, 1500);

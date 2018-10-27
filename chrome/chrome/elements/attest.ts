@@ -18,7 +18,7 @@ tool.catch.try(async () => {
   let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
       Ui.sanitize_render('.status', 'Verifying..' + Ui.spinner('green'));
-      let attestation = await tool.browser.message.send_await(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
+      let attestation = await BrowserMsg.send_await(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };
@@ -34,9 +34,9 @@ tool.catch.try(async () => {
   }
 
   Ui.sanitize_render('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
-  $('.action_passphrase').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
-  let tab_id = await tool.browser.message.required_tab_id();
-  tool.browser.message.listen({
+  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
+  let tab_id = await BrowserMsg.required_tab_id();
+  BrowserMsg.listen({
     passphrase_entry: async (message: {entered: boolean}, sender, respond) => {
       if (message.entered) {
         let pp = await Store.passphrase_get(account_email, primary_ki.longid);

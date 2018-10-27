@@ -19,7 +19,7 @@ tool.catch.try(async () => {
 
   let send_resize_message = () => {
     let desired_height = $('#pgp_block').height()! + (url_params.compact ? 10 : 30); // #pgp_block is defined in template
-    tool.browser.message.send(parent_tab_id, 'set_css', {selector: `iframe#${frame_id}`, css: {height: `${desired_height}px`}});
+    BrowserMsg.send(parent_tab_id, 'set_css', {selector: `iframe#${frame_id}`, css: {height: `${desired_height}px`}});
   };
 
   let set_button_text = async () => {

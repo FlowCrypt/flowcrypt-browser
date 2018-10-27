@@ -5,7 +5,7 @@
 tool.catch.try(async () => {
 
   let redirect_to_initial_setup = async (account_email:string|null=null) => {
-    await tool.browser.message.send_await(null, 'settings', { account_email });
+    await BrowserMsg.send_await(null, 'settings', { account_email });
     window.close();
   };
 
@@ -20,7 +20,7 @@ tool.catch.try(async () => {
     }));
     $('.action_send_email').click(Ui.event.handle(async () => {
       if (active_account_email) {
-        await tool.browser.message.send_await(null, 'settings', { account_email: active_account_email, page: '/chrome/elements/compose.htm' });
+        await BrowserMsg.send_await(null, 'settings', { account_email: active_account_email, page: '/chrome/elements/compose.htm' });
         window.close();
       } else {
         window.location.href = 'select_account.htm?action=new_message';
@@ -34,7 +34,7 @@ tool.catch.try(async () => {
     $('.action_set_up_account').click(Ui.event.prevent(Ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(tool.catch.rejection)));
   };
 
-  let active_tab = await tool.browser.message.send_await(null, 'get_active_tab_info', {});
+  let active_tab = await BrowserMsg.send_await(null, 'get_active_tab_info', {});
   if (active_tab && active_tab.account_email !== null) {
     let {setup_done} = await Store.get_account(active_tab.account_email, ['setup_done']);
     if (setup_done) {

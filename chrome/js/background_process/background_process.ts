@@ -114,7 +114,7 @@ chrome.runtime.onInstalled.addListener(event => {
     return;
   }
 
-  tool.browser.message.listen_background({
+  BrowserMsg.listen_background({
     bg_exec: BgExec.background_request_handler,
     db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
     session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(tool.catch.rejection),

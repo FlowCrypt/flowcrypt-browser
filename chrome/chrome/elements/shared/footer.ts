@@ -25,7 +25,7 @@ tool.catch.try(async () => {
   } else {
     $('.user_free').css('display', 'block');
     $('.action_upgrade').click(Ui.event.prevent(Ui.event.double(), async target => {
-      let newly_active = await tool.browser.message.send_await(parent_tab_id, 'subscribe', {});
+      let newly_active = await BrowserMsg.send_await(parent_tab_id, 'subscribe', {});
       if (newly_active) {
         $('.user_subscribed').css('display', 'block');
         $('.user_free').css('display', 'none');
@@ -35,9 +35,9 @@ tool.catch.try(async () => {
 
   $('.action_add_footer').click(Ui.event.prevent(Ui.event.double(), async self => {
     await save_footer_if_has_subscription_and_requested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
-    tool.browser.message.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
+    BrowserMsg.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
   }));
 
-  $('.action_cancel').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
+  $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_dialog')));
 
 })();

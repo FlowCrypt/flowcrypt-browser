@@ -323,7 +323,7 @@ class Api {
       let response_handled = false;
       tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
         let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
-        tool.browser.message.listen({
+        BrowserMsg.listen({
           google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
             if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
               response_handled = true;
@@ -1064,7 +1064,7 @@ class Ui {
           let msg = `Protect your key with a pass phrase to finish setup.`;
           let r = await Ui.render_overlay_prompt_await_user_choice({finish_setup: {}, later: {color: 'gray'}}, msg);
           if(r === 'finish_setup') {
-            tool.browser.message.send(null, 'settings', {account_email});
+            BrowserMsg.send(null, 'settings', {account_email});
           }
         }
       }
@@ -1269,6 +1269,132 @@ class Ui {
       }
     },
   };
+
+}
+
+class BrowserMsg {
+
+  public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
+    BrowserMsg.send_await(destination_string, name, data).catch(tool.catch.rejection);
+  }
+
+  public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
+    let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
+    let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
+    let is_background_page = Env.is_background_script();
+    if (typeof  destination_string === 'undefined') { // don't know where to send the message
+      tool.catch.log('BrowserMsg.send to:undefined');
+      try_resolve_no_undefined();
+    } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
+      tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
+    } else if (is_background_page) {
+      chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
+    } else {
+      chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
+    }
+  })
+
+  public static tab_id = async (): Promise<string|null|undefined> => {
+    let r = await BrowserMsg.send_await(null, '_tab_', null);
+    if(typeof r === 'string' || typeof r === 'undefined' || r === null) {
+      return r; // for compatibility reasons when upgrading from 5.7.2 - can be removed later
+    } else {
+      return r.tab_id; // new format
+    }
+  }
+
+  public static required_tab_id = async (): Promise<string> => {
+    let tab_id;
+    for(let i = 0; i < 10; i++) { // up to 10 attempts. Sometimes returns undefined right after browser start
+      tab_id = await BrowserMsg.tab_id();
+      if(tab_id) {
+        return tab_id;
+      }
+      await tool.time.sleep(200); // sleep 200ms between attempts
+    }
+    throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
+  }
+
+  public static listen = (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
+    for (let name of Object.keys(handlers)) {
+      // newly registered handlers with the same name will overwrite the old ones if BrowserMsg.listen is declared twice for the same frame
+      // original handlers not mentioned in newly set handlers will continue to work
+      tool._.var.browser_message_frame_registered_handlers[name] = handlers[name];
+    }
+    for (let name of Object.keys(tool._.var.browser_message_STANDARD_HANDLERS)) {
+      if (typeof tool._.var.browser_message_frame_registered_handlers[name] !== 'function') {
+        tool._.var.browser_message_frame_registered_handlers[name] = tool._.var.browser_message_STANDARD_HANDLERS[name]; // standard handlers are only added if not already set above
+      }
+    }
+    let processed:string[] = [];
+    chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+      try {
+        if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
+          if (!tool.value(msg.uid).in(processed)) {
+            processed.push(msg.uid);
+            if (typeof tool._.var.browser_message_frame_registered_handlers[msg.name] !== 'undefined') {
+              let r = tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
+              if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
+                // todo - a way to callback the error to be re-thrown to caller stack
+                (r as Promise<void>).catch(tool.catch.rejection);
+              }
+            } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
+              if (tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+                tool.catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+              } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
+                console.log('BrowserMsg.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
+              }
+            }
+          }
+        }
+        return !!respond; // indicate that this listener intends to respond
+      } catch(e) {
+        // todo - a way to callback the error to be re-thrown to caller stack
+        tool.catch.handle_exception(e);
+      }
+    });
+  }
+
+  public static listen_background = (handlers: Dict<BrowserMessageHandler>) => {
+    if (!tool._.var.browser_message_background_script_registered_handlers) {
+      tool._.var.browser_message_background_script_registered_handlers = handlers;
+    } else {
+      for (let name of Object.keys(handlers)) {
+        tool._.var.browser_message_background_script_registered_handlers[name] = handlers[name];
+      }
+    }
+    chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+      try {
+        let safe_respond = (response: any) => {
+          try { // avoiding unnecessary errors when target tab gets closed
+            respond(response);
+          } catch (e) {
+            // todo - the sender should still know - could have PageClosedError
+            if (e.message !== 'Attempting to use a disconnected port object') {
+              tool.catch.handle_exception(e);
+              throw e;
+            }
+          }
+        };
+        if (msg.to && msg.to !== 'broadcast') {
+          msg.sender = sender;
+          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
+        } else if (tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
+          let r = tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because checked above
+          if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
+            // todo - a way to callback the error to be re-thrown to caller stack
+            (r as Promise<void>).catch(tool.catch.rejection);
+          }
+        } else if (msg.to !== 'broadcast') {
+          tool.catch.report('BrowserMsg.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
+        }
+        return !!respond; // indicate that we intend to respond later
+      } catch (e) {
+        // todo - a way to callback the error to be re-thrown to caller stack
+        tool.catch.handle_exception(e);
+      }
+    });
+  }
 
 }
 
@@ -2320,128 +2446,6 @@ let tool = {
       },
     }
   },
-  /* [BARE_ENGINE_OMIT_BEGIN] */
-  browser: {
-    message: {
-      send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
-        tool.browser.message.send_await(destination_string, name, data).catch(tool.catch.rejection);
-      },
-      send_await: (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
-        let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
-        let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
-        let is_background_page = Env.is_background_script();
-        if (typeof  destination_string === 'undefined') { // don't know where to send the message
-          tool.catch.log('tool.browser.message.send to:undefined');
-          try_resolve_no_undefined();
-        } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
-          tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
-        } else if (is_background_page) {
-          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
-        } else {
-          chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
-        }
-      }),
-      tab_id: async (): Promise<string|null|undefined> => {
-        let r = await tool.browser.message.send_await(null, '_tab_', null);
-        if(typeof r === 'string' || typeof r === 'undefined' || r === null) {
-          return r; // for compatibility reasons when upgrading from 5.7.2 - can be removed later
-        } else {
-          return r.tab_id; // new format
-        }
-      },
-      required_tab_id: async (): Promise<string> => {
-        let tab_id;
-        for(let i = 0; i < 10; i++) { // up to 10 attempts. Sometimes returns undefined right after browser start
-          tab_id = await tool.browser.message.tab_id();
-          if(tab_id) {
-            return tab_id;
-          }
-          await tool.time.sleep(200); // sleep 200ms between attempts
-        }
-        throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
-      },
-      listen: (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
-        for (let name of Object.keys(handlers)) {
-          // newly registered handlers with the same name will overwrite the old ones if tool.browser.message.listen is declared twice for the same frame
-          // original handlers not mentioned in newly set handlers will continue to work
-          tool._.var.browser_message_frame_registered_handlers[name] = handlers[name];
-        }
-        for (let name of Object.keys(tool._.var.browser_message_STANDARD_HANDLERS)) {
-          if (typeof tool._.var.browser_message_frame_registered_handlers[name] !== 'function') {
-            tool._.var.browser_message_frame_registered_handlers[name] = tool._.var.browser_message_STANDARD_HANDLERS[name]; // standard handlers are only added if not already set above
-          }
-        }
-        let processed:string[] = [];
-        chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-          try {
-            if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
-              if (!tool.value(msg.uid).in(processed)) {
-                processed.push(msg.uid);
-                if (typeof tool._.var.browser_message_frame_registered_handlers[msg.name] !== 'undefined') {
-                  let r = tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
-                  if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
-                    // todo - a way to callback the error to be re-thrown to caller stack
-                    (r as Promise<void>).catch(tool.catch.rejection);
-                  }
-                } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-                  if (tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-                    tool.catch.report('tool.browser.message.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
-                  } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
-                    console.log('tool.browser.message.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
-                  }
-                }
-              }
-            }
-            return !!respond; // indicate that this listener intends to respond
-          } catch(e) {
-            // todo - a way to callback the error to be re-thrown to caller stack
-            tool.catch.handle_exception(e);
-          }
-        });
-      },
-      listen_background: (handlers: Dict<BrowserMessageHandler>) => {
-        if (!tool._.var.browser_message_background_script_registered_handlers) {
-          tool._.var.browser_message_background_script_registered_handlers = handlers;
-        } else {
-          for (let name of Object.keys(handlers)) {
-            tool._.var.browser_message_background_script_registered_handlers[name] = handlers[name];
-          }
-        }
-        chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-          try {
-            let safe_respond = (response: any) => {
-              try { // avoiding unnecessary errors when target tab gets closed
-                respond(response);
-              } catch (e) {
-                // todo - the sender should still know - could have PageClosedError
-                if (e.message !== 'Attempting to use a disconnected port object') {
-                  tool.catch.handle_exception(e);
-                  throw e;
-                }
-              }
-            };
-            if (msg.to && msg.to !== 'broadcast') {
-              msg.sender = sender;
-              chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
-            } else if (tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
-              let r = tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because checked above
-              if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
-                // todo - a way to callback the error to be re-thrown to caller stack
-                (r as Promise<void>).catch(tool.catch.rejection);
-              }
-            } else if (msg.to !== 'broadcast') {
-              tool.catch.report('tool.browser.message.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
-            }
-            return !!respond; // indicate that we intend to respond later
-          } catch (e) {
-            // todo - a way to callback the error to be re-thrown to caller stack
-            tool.catch.handle_exception(e);
-          }
-        });
-      },
-    },
-  },
-  /* [BARE_ENGINE_OMIT_END] */
   value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
   e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML, // xss-tested: jquery escapes attributes
   noop: (): void => undefined,
@@ -3243,7 +3247,7 @@ let tool = {
             } catch (err) {} // tslint:disable-line:no-empty
             tool.catch._.runtime.environment = tool.catch.environment();
             if (!Env.is_background_script() && Env.is_extension()) {
-              tool.browser.message.send_await(null, 'runtime', null).then(extension_runtime => {
+              BrowserMsg.send_await(null, 'runtime', null).then(extension_runtime => {
                 if (typeof extension_runtime !== 'undefined') {
                   tool.catch._.runtime = extension_runtime;
                 } else {

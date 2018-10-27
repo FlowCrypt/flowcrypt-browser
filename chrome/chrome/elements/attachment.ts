@@ -120,7 +120,7 @@ tool.catch.try(async () => {
       }
       tool.file.save_to_downloads(new Attachment({name, type: enc_a.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
-      tool.browser.message.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
+      BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
       passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(tool.catch.rejection), 1000);
     } else {
@@ -171,7 +171,7 @@ tool.catch.try(async () => {
       }
     } catch(e) {
       if(Api.error.is_auth_popup_needed(e)) {
-        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         Ui.sanitize_render('body.attachment', `Error downloading file: google auth needed. ${Ui.retry_link()}`);
       } else if(Api.error.is_network_error(e)) {
         Ui.sanitize_render('body.attachment', `Error downloading file: no internet. ${Ui.retry_link()}`);
@@ -213,9 +213,9 @@ tool.catch.try(async () => {
         if(openpgp_type && openpgp_type.type === 'public_key') {
           if(openpgp_type.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
-            tool.browser.message.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
+            BrowserMsg.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
             // hide attachment
-            tool.browser.message.send(parent_tab_id, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
+            BrowserMsg.send(parent_tab_id, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
             $('body').text('');
             return true;
           }
@@ -232,7 +232,7 @@ tool.catch.try(async () => {
     }
   } catch (e) {
     if(Api.error.is_auth_popup_needed(e)) {
-      tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+      BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       Ui.sanitize_render('body.attachment', `Error downloading file - google auth needed. ${Ui.retry_link()}`);
     } else if(Api.error.is_network_error(e)) {
       Ui.sanitize_render('body.attachment', `Error downloading file - no internet. ${Ui.retry_link()}`);

@@ -90,7 +90,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  S.cached('action_close').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
+  S.cached('action_close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_page')));
 
   let find_available_alias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');

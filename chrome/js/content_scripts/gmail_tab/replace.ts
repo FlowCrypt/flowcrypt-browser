@@ -176,7 +176,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-              tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
+              BrowserMsg.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {

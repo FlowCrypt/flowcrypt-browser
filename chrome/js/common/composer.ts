@@ -1496,7 +1496,7 @@ class Composer {
       email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
-      send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
+      send_message_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
       render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),
       render_footer_dialog: () => null,
       render_add_pubkey_dialog: (emails: string[]) => null,

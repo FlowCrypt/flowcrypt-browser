@@ -88,7 +88,7 @@ tool.catch.try(async () => {
     }));
     $('.refresh_after_attest_request').click(Ui.event.prevent(Ui.event.double(), async self => {
       Ui.sanitize_render(self, 'Updating..' + Ui.spinner('white'));
-      tool.browser.message.send(null, 'attest_requested', {account_email});
+      BrowserMsg.send(null, 'attest_requested', {account_email});
       await tool.time.sleep(30000);
       window.location.reload();
     }));
@@ -101,7 +101,7 @@ tool.catch.try(async () => {
         if(Api.error.is_network_error(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
         } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
           tool.catch.handle_exception(e);

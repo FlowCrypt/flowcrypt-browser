@@ -43,7 +43,7 @@ tool.catch.try(async () => {
           alert('Network error, please try again');
         } else if(Api.error.is_auth_popup_needed(e)) {
           alert('Error: account needs to be re-connected first.');
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else {
           tool.catch.handle_exception(e);
           alert(`Error happened: ${e.message}`);
@@ -66,7 +66,7 @@ tool.catch.try(async () => {
 
     $('.action_attest_log').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', Env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
 
-    $('.action_email_client').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'redirect', {location: Env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})})));
+    $('.action_email_client').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'redirect', {location: Env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})})));
 
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
@@ -76,22 +76,22 @@ tool.catch.try(async () => {
 
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
       await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
-      tool.browser.message.send(parent_tab_id, 'reload');
+      BrowserMsg.send(parent_tab_id, 'reload');
     }));
 
     $('.action_make_google_auth_token_unusable').click(Ui.event.handle(async () => {
       await Store.set(account_email, {google_token_access: 'flowcrypt_test_bad_access_token'});
-      tool.browser.message.send(parent_tab_id, 'reload');
+      BrowserMsg.send(parent_tab_id, 'reload');
     }));
 
     $('.action_make_google_refresh_token_unusable').click(Ui.event.handle(async () => {
       await Store.set(account_email, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'});
-      tool.browser.message.send(parent_tab_id, 'reload');
+      BrowserMsg.send(parent_tab_id, 'reload');
     }));
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
       if(confirm(`Your current account email is ${account_email}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
-        let tab_id = await tool.browser.message.required_tab_id();
+        let tab_id = await BrowserMsg.required_tab_id();
         let response = await Api.google.auth_popup(account_email, tab_id);
         if (response && response.success === true && response.account_email) {
           if(response.account_email === account_email) {
@@ -101,7 +101,7 @@ tool.catch.try(async () => {
               try {
                 await Settings.account_storage_change_email(account_email, response.account_email);
                 alert(`Email address changed to ${response.account_email}. You should now check that your public key is properly submitted.`);
-                tool.browser.message.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.account_email});
+                BrowserMsg.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.account_email});
               } catch(e) {
                 tool.catch.handle_exception(e);
                 alert('There was an error changing google account, please write human@flowcrypt.com');

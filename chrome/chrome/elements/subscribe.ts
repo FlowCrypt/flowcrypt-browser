@@ -58,9 +58,9 @@ tool.catch.try(async () => {
   };
 
   let handle_successful_upgrade = () => {
-    tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
+    BrowserMsg.send(parent_tab_id, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
     if (url_params.subscribe_result_tab_id) {
-      tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+      BrowserMsg.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
     }
     close_dialog();
   };
@@ -69,9 +69,9 @@ tool.catch.try(async () => {
     if (url_params.placement === 'settings_compose') {
       window.close();
     } else if (url_params.placement === 'settings') {
-      tool.browser.message.send(parent_tab_id, 'reload');
+      BrowserMsg.send(parent_tab_id, 'reload');
     } else {
-      tool.browser.message.send(parent_tab_id, 'close_dialog');
+      BrowserMsg.send(parent_tab_id, 'close_dialog');
     }
   };
 
@@ -113,7 +113,7 @@ tool.catch.try(async () => {
     $('.stripe_checkout').css('display', 'block');
   }));
 
-  $('.action_contact_page').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email})));
+  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email})));
 
   $('.action_close').click(Ui.event.handle(close_dialog));
 
@@ -156,7 +156,7 @@ tool.catch.try(async () => {
         Ui.sanitize_render('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
         $('.action_close').click(Ui.event.handle(() => {
           if (url_params.subscribe_result_tab_id) {
-            tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+            BrowserMsg.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
           }
           close_dialog();
         }));
@@ -180,8 +180,8 @@ tool.catch.try(async () => {
     }
   }
 
-  let tab_id = await tool.browser.message.required_tab_id();
-  tool.browser.message.listen({
+  let tab_id = await BrowserMsg.required_tab_id();
+  BrowserMsg.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
   $('.stripe_checkout').html(`${Lang.account.credit_or_debit}<br><br>${new XssSafeFactory(account_email, tab_id).embedded_stripe_checkout()}<br>${Ui.retry_link('back')}`); // xss-safe-factory

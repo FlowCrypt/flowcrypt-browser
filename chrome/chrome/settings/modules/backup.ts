@@ -47,7 +47,7 @@ tool.catch.try(async () => {
         if (Api.error.is_network_error(e)) {
           Ui.sanitize_render('#content', `Could not check for backups: no internet. ${Ui.retry_link()}`);
         } else if(Api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           Ui.sanitize_render('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
         } else {
           tool.catch.handle_exception(e);
@@ -116,7 +116,7 @@ tool.catch.try(async () => {
         display_block('step_3_manual');
         $('h1').text('Back up your private key');
       }));
-      $('.action_go_auth_denied').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/auth_denied.htm'})));
+      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {account_email, page: '/chrome/settings/modules/auth_denied.htm'})));
     }
   };
 
@@ -157,7 +157,7 @@ tool.catch.try(async () => {
         if(Api.error.is_network_error(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
         } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
-          tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
           tool.catch.handle_exception(e);
@@ -216,7 +216,7 @@ tool.catch.try(async () => {
       if(Api.error.is_network_error(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
       } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
-        tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
         tool.catch.handle_exception(e);
@@ -313,7 +313,7 @@ tool.catch.try(async () => {
       await Store.set(account_email, { key_backup_prompt: false });
       window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
-      tool.browser.message.send(parent_tab_id, 'close_page');
+      BrowserMsg.send(parent_tab_id, 'close_page');
     }
   }));
 

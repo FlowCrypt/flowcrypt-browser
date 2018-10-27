@@ -27,7 +27,7 @@ tool.catch.try(async () => {
     }
   }
   Ui.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
-    await tool.browser.message.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
+    await BrowserMsg.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
     window.close();
   }));
 
@@ -36,7 +36,7 @@ tool.catch.try(async () => {
   }));
 
   $('.action_add_account').click(Ui.event.handle(async self => {
-    await tool.browser.message.send_await(null, 'settings', { add_new_account: true });
+    await BrowserMsg.send_await(null, 'settings', { add_new_account: true });
     window.close();
   }));
 

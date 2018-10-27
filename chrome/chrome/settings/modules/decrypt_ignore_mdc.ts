@@ -10,13 +10,13 @@ tool.catch.try(async () => {
 
   openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local frame
 
-  let tab_id = await tool.browser.message.required_tab_id();
+  let tab_id = await BrowserMsg.required_tab_id();
 
   let original_content: string;
 
   let factory = new XssSafeFactory(account_email, tab_id);
 
-  tool.browser.message.listen({
+  BrowserMsg.listen({
     close_dialog: () => {
       $('.passphrase_dialog').text('');
     },
