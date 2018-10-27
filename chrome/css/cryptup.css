@@ -94,18 +94,7 @@ body#settings a.action_remove:before { background-size: 100%; content:""; height
 body#settings .action_show:before { background-image: url("/img/svgs/contact__show-icon.svg"); left: 5px;}
 body#settings .action_change:before { background-image: url("/img/svgs/contact__edit-icon.svg"); }
 body#settings .action_remove:before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
-body#settings .pubkeys.page #emails td:nth-child(2),
-body#settings .pubkeys.page #emails td:nth-child(3),
-body#settings .pubkeys.page #emails td:nth-child(4) { display: inline-block; height: 25px; width: 25px; }
-body#settings > div#content.pubkeys table#emails tbody { width: 80%; margin: 0 auto; display: block;}
-body#settings .pubkeys.page #emails tr { margin: 10px; }
-body#settings .pubkeys.page #emails tr[email] { display: block; position: relative; }
-body#settings .pubkeys.page #emails tr[email] a { border-radius: 15px; display: block; font-size: 11px; font-weight: 500; margin: 0 5px; margin-right: 5%; padding: 10px 5px; position: relative; text-align: center; transition: 0.25s; width: 20px; }
-body#settings .pubkeys.page #emails tr[email] td:first-child { font-size: 16px; text-align: left; text-indent: 0; width: 65% !important;}
-body#settings .pubkeys.page #emails tr[email]:before { border-radius: 4px; content: ""; height: 90px; position: absolute; width: 100%; }
-body#settings > div#content.pubkeys table#emails td { font-size: 13px; height: auto; padding: 10px 0; display: inline-block; width: 15px; text-align: left; float: left; padding: 4px 15px; }
-body#settings > div#content.pubkeys table#emails { margin: 50px auto; color: #666; }
-body#settings > div#content.pubkeys table#emails tr { height: 32px; }
+body#settings > div#content.pubkeys .action_remove_alias { cursor: pointer; }
 body#settings > div#content textarea { width: 100%; }
 body#settings .subscribe--header-row th:nth-child(2),
 body#settings .subscribe--header-row th:nth-child(3) { font-size: 10px; text-align: center; position: relative; top: -3px; }

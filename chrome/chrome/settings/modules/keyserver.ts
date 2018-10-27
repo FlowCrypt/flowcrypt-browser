@@ -12,15 +12,14 @@ Catch.try(async () => {
 
   Ui.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  let render_diagnosis = (diagnosis: any, attests_requested: string[], attests_processed: string[]) => {
-    let table_contents = '';
+  let render_diagnosis = (diagnosis: any, attests_requested: string[]) => {
     for (let email of Object.keys(diagnosis.results)) {
       let result = diagnosis.results[email];
       let note, action, remove, color;
       if (result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
         action = `<div class="button gray2 small action_request_attestation" email="${Xss.html_escape(email)}">Submit public key</div>`;
-        remove = `&nbsp; <b class="bad action_remove_alias" email="${Xss.html_escape(email)}" title="Remove address from list of send-from addresses.">[x]</b>`;
+        remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.html_escape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;
         color = 'orange';
       } else if (result.match) {
         if (email === account_email && !result.attested) {
@@ -69,9 +68,8 @@ Catch.try(async () => {
           color = 'red';
         }
       }
-      table_contents += `<tr><td>${Xss.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`;
+      Ui.sanitize_append('#content', `<div class="line left">${Xss.html_escape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
     }
-    Ui.sanitize_replace('table#emails', `<table id="emails">${table_contents}</table>`);
 
     $('.action_request_attestation').click(Ui.event.prevent('double', async self => {
       Ui.sanitize_render(self, Ui.spinner('white'));
@@ -130,11 +128,11 @@ Catch.try(async () => {
     }
   };
 
-  let storage = await Store.get_account(account_email, ['attests_processed', 'attests_requested', 'addresses']);
+  let storage = await Store.get_account(account_email, ['attests_requested', 'addresses']);
   try {
     let diagnosis = await Api.attester.diagnose_keyserver_pubkeys(account_email);
     $('.summary').text('');
-    render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
+    render_diagnosis(diagnosis, storage.attests_requested || []);
   } catch (e) {
     if (Api.error.is_network_error(e)) {
       Ui.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
