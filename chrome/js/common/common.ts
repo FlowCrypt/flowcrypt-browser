@@ -2087,20 +2087,20 @@ class Mime {
         };
         parser.onend = () => {
           for (let node of Object.values(parsed)) {
-            if (tool._.mime_node_type(node) === 'application/pgp-signature') {
+            if (Mime.get_node_type(node) === 'application/pgp-signature') {
               mime_content.signature = node.rawContent;
-            } else if (tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
+            } else if (Mime.get_node_type(node) === 'text/html' && !Mime.get_node_filename(node)) {
               // html content may be broken up into smaller pieces by attachments in between
               // AppleMail does this with inline attachments
-              mime_content.html = (mime_content.html || '') + tool._.mime_node_process_text_content(node);
-            } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
-              mime_content.text = tool._.mime_node_process_text_content(node);
+              mime_content.html = (mime_content.html || '') + Mime.get_node_content_as_text(node);
+            } else if (Mime.get_node_type(node) === 'text/plain' && !Mime.get_node_filename(node)) {
+              mime_content.text = Mime.get_node_content_as_text(node);
             } else {
               mime_content.attachments.push(new Attachment({
-                name: tool._.mime_node_filename(node),
-                type: tool._.mime_node_type(node),
+                name: Mime.get_node_filename(node),
+                type: Mime.get_node_type(node),
                 data: node.content,
-                cid: tool._.mime_node_content_id(node),
+                cid: Mime.get_node_content_id(node),
               }));
             }
           }
@@ -2126,11 +2126,11 @@ class Mime {
     }
     let content_node: MimeParserNode;
     if (Object.keys(body).length === 1) {
-      content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
+      content_node = Mime.new_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
     } else {
       content_node = new MimeBuilder('multipart/alternative');
       for (let type of Object.keys(body)) {
-        content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+        content_node.appendChild(Mime.new_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
       }
     }
     root_node.appendChild(content_node);
@@ -2202,6 +2202,52 @@ class Mime {
         }
       }
     }
+  }
+
+  private static get_node_type = (node: MimeParserNode) => {
+    if (node.headers['content-type'] && node.headers['content-type'][0]) {
+      return node.headers['content-type'][0].value;
+    }
+  }
+
+  private static get_node_content_id = (node: MimeParserNode) => {
+    if (node.headers['content-id'] && node.headers['content-id'][0]) {
+      return node.headers['content-id'][0].value;
+    }
+  }
+
+  private static get_node_filename = (node: MimeParserNode) => {
+    // @ts-ignore - lazy
+    if (node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
+      // @ts-ignore - lazy
+      return node.headers['content-disposition'][0].params.filename;
+    }
+    // @ts-ignore - lazy
+    if (node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
+      // @ts-ignore - lazy
+      return node.headers['content-type'][0].params.name;
+    }
+  }
+
+  private static get_node_content_as_text = (node: MimeParserNode): string => {
+    if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
+      return Str.uint8_as_utf(node.content);
+    }
+    if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
+      return Str.from_equal_sign_notation_as_utf(node.rawContent);
+    }
+    if(node.charset === 'iso-8859-2') {
+      return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
+    }
+    return node.rawContent;
+  }
+
+  private static new_content_node = (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
+    let node = new MimeBuilder(type).setContent(content);
+    if (type === 'text/plain') {
+      node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
+    }
+    return node;
   }
 
 }
@@ -2845,47 +2891,6 @@ let tool = {
       ],
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
-    },
-    mime_node_type: (node: MimeParserNode) => {
-      if (node.headers['content-type'] && node.headers['content-type'][0]) {
-        return node.headers['content-type'][0].value;
-      }
-    },
-    mime_node_content_id: (node: MimeParserNode) => {
-      if (node.headers['content-id'] && node.headers['content-id'][0]) {
-        return node.headers['content-id'][0].value;
-      }
-    },
-    mime_node_filename: (node: MimeParserNode) => {
-      // @ts-ignore - lazy
-      if (node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
-        // @ts-ignore - lazy
-        return node.headers['content-disposition'][0].params.filename;
-      }
-      // @ts-ignore - lazy
-      if (node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
-        // @ts-ignore - lazy
-        return node.headers['content-type'][0].params.name;
-      }
-    },
-    mime_node_process_text_content: (node: MimeParserNode): string => {
-      if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
-        return Str.uint8_as_utf(node.content);
-      }
-      if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
-        return Str.from_equal_sign_notation_as_utf(node.rawContent);
-      }
-      if(node.charset === 'iso-8859-2') {
-        return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
-      }
-      return node.rawContent;
-    },
-    mime_content_node: (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
-      let node = new MimeBuilder(type).setContent(content);
-      if (type === 'text/plain') {
-        node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
-      }
-      return node;
     },
     crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type, content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
