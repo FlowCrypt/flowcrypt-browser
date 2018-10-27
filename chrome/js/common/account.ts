@@ -124,7 +124,7 @@ class FlowCryptAccount {
   }
 
   private sleep(seconds: number) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    return new Promise(resolve => Catch.set_timeout(resolve, seconds * 1000));
   }
 
   private wait_for_token_email = async (timeout: number) => {

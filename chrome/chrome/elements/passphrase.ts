@@ -88,7 +88,7 @@ Catch.try(async () => {
       BrowserMsg.send(parent_tab_id, 'close_dialog');
     } else {
       render_error();
-      setTimeout(render_normal, 1500);
+      Catch.set_timeout(render_normal, 1500);
     }
   }));
 

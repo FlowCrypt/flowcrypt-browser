@@ -25,8 +25,8 @@ type AnyThirdPartyLibrary = any;
 type Thrown = Error|StandardError|any;
 
 interface ContentScriptWindow extends FcWindow {
-    TrySetDestroyableTimeout: (code: Function, ms: number) => number; // tslint:disable-line:ban-types
-    TrySetDestroyableInterval: (code: Function, ms: number) => number; // tslint:disable-line:ban-types
+    TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
+    TrySetDestroyableInterval: (code: () => void, ms: number) => number;
     injected: true; // background script will use this to test if scripts were already injected, and inject if not
     account_email_global: null|string; // used by background script
     same_world_global: true; // used by background_script

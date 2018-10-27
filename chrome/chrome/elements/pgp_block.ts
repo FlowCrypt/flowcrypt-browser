@@ -112,7 +112,7 @@ Catch.try(async () => {
     // resize window now
     send_resize_message();
     // start auto-resizing the window after 1s
-    setTimeout(() => $(window).resize(Ui.event.prevent('spree', send_resize_message)), 1000);
+    Catch.set_timeout(() => $(window).resize(Ui.event.prevent('spree', send_resize_message)), 1000);
   };
 
   let button_html = (text: string, add_classes: string) => {
@@ -406,11 +406,11 @@ Catch.try(async () => {
       missing_or_wrong_passprases[missing_or_wrong_pp_k_longids[i]] = passphrases[i];
       await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_message, undefined);
       clearInterval(passphrase_interval);
-      passphrase_interval = window.setInterval(check_passphrase_changed, 1000);
+      passphrase_interval = Catch.set_interval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
         BrowserMsg.send(parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_pp_k_longids });
         clearInterval(passphrase_interval);
-        passphrase_interval = window.setInterval(check_passphrase_changed, 250);
+        passphrase_interval = Catch.set_interval(check_passphrase_changed, 250);
       }));
     }
   };

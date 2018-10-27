@@ -122,7 +122,7 @@ Catch.try(async () => {
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
-      passphrase_interval = window.setInterval(() => check_passphrase_entered().catch(Catch.rejection), 1000);
+      passphrase_interval = Catch.set_interval(check_passphrase_entered, 1000);
     } else {
       delete result.message;
       console.info(result);

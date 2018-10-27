@@ -125,7 +125,7 @@ class Composer {
   constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
     this.attach = new Attach(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
-    this.save_draft_interval = window.setInterval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
+    this.save_draft_interval = Catch.set_interval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
 
     this.account_email = variables.account_email as string;
     this.draft_id = variables.draft_id as string;
@@ -234,8 +234,8 @@ class Composer {
     this.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       let no_pgp_emails = this.get_recipients_from_dom('no_pgp');
       this.app.render_add_pubkey_dialog(no_pgp_emails);
-      clearInterval(this.added_pubkey_db_lookup_interval); // todo - get rid of setInterval. just supply tab_id and wait for direct callback
-      this.added_pubkey_db_lookup_interval = window.setInterval(async () => {
+      clearInterval(this.added_pubkey_db_lookup_interval); // todo - get rid of Catch.set_interval. just supply tab_id and wait for direct callback
+      this.added_pubkey_db_lookup_interval = Catch.set_interval(async () => {
         for (let email of no_pgp_emails) {
           let [contact] = await this.app.storage_contact_get([email]);
           if (contact && contact.has_pgp) {
@@ -383,7 +383,7 @@ class Composer {
     if (!delay) {
       do_reset();
     } else {
-      setTimeout(do_reset, delay);
+      Catch.set_timeout(do_reset, delay);
     }
   }
 
@@ -497,7 +497,7 @@ class Composer {
     return new Promise(resolve => {
       clearInterval(this.passphrase_interval);
       const timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
-      this.passphrase_interval = window.setInterval(async () => {
+      this.passphrase_interval = Catch.set_interval(async () => {
         let passphrase = await this.app.storage_passphrase_get();
         if (passphrase !== null) {
           clearInterval(this.passphrase_interval);
@@ -623,7 +623,7 @@ class Composer {
     plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
     if (attachments.length && challenge) { // these will be password encrypted attachments
-      this.button_update_timeout = window.setTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
+      this.button_update_timeout = Catch.set_timeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       let attachment_admin_codes = await this.upload_attachments_to_fc(attachments, subscription);
       plaintext = this.add_uploaded_file_links_to_message_body(plaintext, attachments);
       await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
@@ -1057,7 +1057,7 @@ class Composer {
       $('.new_message_button').click(() => this.app.send_message_to_main_window('open_new_message'));
     }
     this.resize_reply_box();
-    setTimeout(() => this.app.send_message_to_main_window('scroll_to_bottom_of_conversation'), 300);
+    Catch.set_timeout(() => this.app.send_message_to_main_window('scroll_to_bottom_of_conversation'), 300);
   }
 
   private parse_and_render_recipients = async () => {
@@ -1085,7 +1085,7 @@ class Composer {
     if (possibly_bogus_address === q || Value.is(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
-    setTimeout(async () => {
+    Catch.set_timeout(async () => {
       if (!Value.is(email).in(this.get_recipients_from_dom())) {
         this.S.cached('input_to').val(Str.parse_email(email).email);
         await this.parse_and_render_recipients();
@@ -1403,7 +1403,7 @@ class Composer {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.parse_and_render_recipients(); // this will force firefox to render them on load
       }
-      setTimeout(() => { // delay automatic resizing until a second later
+      Catch.set_timeout(() => { // delay automatic resizing until a second later
         $(window).resize(Ui.event.prevent('veryslowspree', () => this.resize_reply_box()));
         this.S.cached('input_text').keyup(() => this.resize_reply_box());
       }, 1000);

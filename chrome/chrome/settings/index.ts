@@ -60,7 +60,7 @@ Catch.try(async () => {
           cleared = true;
         }
       };
-      setTimeout(clear, 10000);
+      Catch.set_timeout(clear, 10000);
       $('.webmail_notifications').one('click', clear);
     },
     open_google_auth_dialog: (data) => {

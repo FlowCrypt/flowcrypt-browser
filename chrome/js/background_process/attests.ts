@@ -51,8 +51,8 @@ class BgAttests {
 
   private static watch_for_attest_email = (account_email: string) => {
     clearInterval(BgAttests.currently_watching[account_email]);
-    setTimeout(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_TIMEOUT);
-    BgAttests.currently_watching[account_email] = window.setInterval(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_INTERVAL);
+    Catch.set_timeout(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_TIMEOUT);
+    BgAttests.currently_watching[account_email] = Catch.set_interval(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_INTERVAL);
   }
 
   private static stop_watching = (account_email: string) => {

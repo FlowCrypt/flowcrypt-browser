@@ -203,13 +203,13 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
     };
 
     (window as ContentScriptWindow).TrySetDestroyableInterval = (code, ms) => {
-      let id = window.setInterval(Catch.try(code), ms);
+      let id = Catch.set_interval(code, ms);
       (window as ContentScriptWindow).destroyable_intervals.push(id);
       return id;
     };
 
     (window as ContentScriptWindow).TrySetDestroyableTimeout = (code, ms) => {
-      let id = window.setTimeout(Catch.try(code), ms);
+      let id = Catch.set_timeout(code, ms);
       (window as ContentScriptWindow).destroyable_timeouts.push(id);
       return id;
     };

@@ -195,7 +195,7 @@ class Attachment {
               }
             }
           }
-          setTimeout(() => window.URL.revokeObjectURL(a.href), 0);
+          Catch.set_timeout(() => window.URL.revokeObjectURL(a.href), 0);
         }
       }
     },
@@ -317,7 +317,7 @@ class Api {
   public static auth = {
     window: (auth_url: string, window_closed_by_user: Callback) => {
       let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-      let window_closed_timer = setInterval(() => {
+      let window_closed_timer = Catch.set_interval(() => {
         if (auth_code_window !== null && auth_code_window.closed) {
           clearInterval(window_closed_timer);
           window_closed_by_user();
@@ -407,7 +407,7 @@ class Api {
         // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
         // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
         if (Env.browser().name !== 'firefox') {
-          let window_closed_timer = window.setInterval(() => {
+          let window_closed_timer = Catch.set_interval(() => {
             if (auth_code_window === null || typeof auth_code_window === 'undefined') {
               clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
             } else if (auth_code_window.closed) {
@@ -577,7 +577,7 @@ class Api {
         r.setRequestHeader('Authorization', auth_token);
         r.send();
         let status: number;
-        let response_poll_interval = window.setInterval(() => {
+        let response_poll_interval = Catch.set_interval(() => {
           if (status >= 200 && status <= 299 && r.responseText.length >= min_bytes) {
             window.clearInterval(response_poll_interval);
             process_chunk_and_resolve(r.responseText);
@@ -1351,7 +1351,7 @@ class Ui {
 
   public static retry_link = (caption:string='retry') => `<a href="${Xss.html_escape(window.location.href)}">${Xss.html_escape(caption)}</a>`;
 
-  public static delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  public static delay = (ms: number) => new Promise(resolve => Catch.set_timeout(resolve, ms));
 
   public static spinner = (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
     let path = `/img/svgs/spinner-${color}-small.svg`;
@@ -1501,7 +1501,7 @@ class Ui {
     if (el) {
       el.scrollIntoView();
       for (let delay of repeat) { // useful if mobile keyboard is about to show up
-        setTimeout(() => el.scrollIntoView(), delay);
+        Catch.set_timeout(() => el.scrollIntoView(), delay);
       }
     }
   }
@@ -1572,13 +1572,13 @@ class Ui {
       return function() {
         if (preventable_event === 'spree') {
           clearTimeout(event_timer);
-          event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
+          event_timer = Catch.set_timeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
         } else if (preventable_event === 'slowspree') {
           clearTimeout(event_timer);
-          event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
+          event_timer = Catch.set_timeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
         } else if (preventable_event === 'veryslowspree') {
           clearTimeout(event_timer);
-          event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
+          event_timer = Catch.set_timeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
           if (event_fired_on) {
             if (preventable_event === 'parallel') {
@@ -1600,7 +1600,7 @@ class Ui {
 
   public static time = {
     wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
-      let interval = setInterval(() => {
+      let interval = Catch.set_interval(() => {
         let result = until_this_function_evaluates_true();
         if (result === true) {
           clearInterval(interval);
@@ -1615,7 +1615,7 @@ class Ui {
         }
       }, 50);
     }),
-    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = setTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
+    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = Catch.set_timeout) => new Promise(resolve => set_timeout(resolve, ms)),
   };
 
   public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
@@ -3251,7 +3251,11 @@ class Catch {
   }
 
   public static set_interval = (cb: () => void, ms: number): number => {
-    return window.setInterval(Catch.try(cb), ms);
+    return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
+  }
+
+  public static set_timeout = (cb: () => void, ms: number): number => {
+    return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 
   public static initialize = () => {
@@ -3266,7 +3270,7 @@ class Catch {
             if (typeof extension_runtime !== 'undefined') {
               Catch.RUNTIME = extension_runtime;
             } else {
-              setTimeout(figure_out_flowcrypt_runtime, 200);
+              Catch.set_timeout(figure_out_flowcrypt_runtime, 200);
             }
           }).catch(Catch.rejection);
         }
