@@ -38,9 +38,14 @@ Catch.try(async () => {
     }
   };
 
-  let stripe_credit_card_entered_handler: BrowserMessageHandler = (data: {token: string}, sender, respond) => {
+  let stripe_credit_card_entered_handler: BrowserMessageHandler = async (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
-    flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token).then(handle_successful_upgrade, handle_error_response);
+    try {
+      await flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token);
+      handle_successful_upgrade();
+    } catch(e) {
+      handle_error_response(e);
+    }
   };
 
   let render_status_text = (content: string) => {
