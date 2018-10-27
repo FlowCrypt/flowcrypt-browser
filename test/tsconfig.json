@@ -13,7 +13,8 @@
       "outDir": "build"
   },
   "files": [
-      "source/test.ts"
+      "source/test.ts",
+      "source/patterns.ts"
   ],
   "exclude": [
       "build/*",
