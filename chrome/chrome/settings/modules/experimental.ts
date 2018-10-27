@@ -9,7 +9,7 @@ Catch.try(async () => {
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   // this is for debugging
-  if ((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
+  if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
     Ui.sanitize_append('.storage_link_container', ` - <a href="${Xss.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
@@ -124,7 +124,7 @@ Catch.try(async () => {
     let collect_info_and_download_backup_file = async (account_email: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
       let backup_text = await collect_info_for_account_backup(account_email);
-      tool.file.save_to_downloads(new Attachment({name, type: 'text/plain', data: backup_text}));
+      Attachment.methods.save_to_downloads(new Attachment({name, type: 'text/plain', data: backup_text}));
       await Ui.delay(1000);
     };
 

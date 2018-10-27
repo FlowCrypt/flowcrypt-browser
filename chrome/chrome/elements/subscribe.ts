@@ -147,7 +147,7 @@ Catch.try(async () => {
   if (!subscription.active) {
     if (subscription.level && subscription.expire) {
       if (subscription.method === 'trial') {
-        $('.status').text('Your trial has expired on ' + tool.time.expiration_format(subscription.expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
+        $('.status').text('Your trial has expired on ' + Str.datetime_to_date(subscription.expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
       } else if (subscription.method === 'group') {
         $('.status').text('Your group licensing is due for renewal. Please check with company leadership.');
       } else {

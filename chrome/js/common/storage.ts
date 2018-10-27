@@ -36,7 +36,7 @@ class Store {
   private static db_query_keys = ['limit', 'substring', 'has_pgp'];
 
   private static env_is_background_script() {
-    return window.location && tool.value('_generated_background_page.html').in(window.location.href);
+    return window.location && Value.is('_generated_background_page.html').in(window.location.href);
   }
 
   static index(account_key_or_list: string|string[], key: string|string[]) {
@@ -127,7 +127,7 @@ class Store {
     if (!longids) {
       return keys;
     }
-    return keys.filter(ki => tool.value(ki.longid).in(longids) || (tool.value('primary').in(longids) && ki.primary));
+    return keys.filter(ki => Value.is(ki.longid).in(longids) || (Value.is('primary').in(longids) && ki.primary));
   }
 
   static keys_object(armored_prv: string, primary=false): KeyInfo {
@@ -211,7 +211,7 @@ class Store {
     let account_emails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
       for (let account_email of JSON.parse(storage.account_emails)) {
-        if (!tool.value(account_email.toLowerCase()).in(account_emails)) {
+        if (!Value.is(account_email.toLowerCase()).in(account_emails)) {
           account_emails.push(account_email.toLowerCase());
         }
       }
@@ -224,7 +224,7 @@ class Store {
       Catch.report('attempting to save empty account_email: ' + account_email);
     }
     let account_emails = await Store.account_emails_get();
-    if (!tool.value(account_email).in(account_emails) && account_email) {
+    if (!Value.is(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);
       await Store.set(null, { account_emails: JSON.stringify(account_emails) });
       await BrowserMsg.send_await(null, 'update_uninstall_url');
@@ -233,7 +233,7 @@ class Store {
 
   static async account_emails_remove(account_email: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
     let account_emails = await Store.account_emails_get();
-    await Store.set(null, { account_emails: JSON.stringify(tool.arr.without_value(account_emails, account_email)) });
+    await Store.set(null, { account_emails: JSON.stringify(Value.arr.without_value(account_emails, account_email)) });
     await BrowserMsg.send_await(null, 'update_uninstall_url');
   }
 
@@ -315,7 +315,7 @@ class Store {
         for (let letter of part.split('')) {
           substring += letter;
           let normalized = Store.normalize_string(substring);
-          if (!tool.value(normalized).in(index)) {
+          if (!Value.is(normalized).in(index)) {
             index.push(Store.db_index(has_pgp, normalized));
           }
         }
@@ -439,7 +439,7 @@ class Store {
         BrowserMsg.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(Catch.rejection);
       } else {
         for (let key of Object.keys(query)) {
-          if (!tool.value(key).in(Store.db_query_keys)) {
+          if (!Value.is(key).in(Store.db_query_keys)) {
             throw new Error('db_contact_search: unknown key: ' + key);
           }
         }

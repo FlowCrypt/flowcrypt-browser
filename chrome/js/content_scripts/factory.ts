@@ -124,7 +124,7 @@ class XssSafeFactory {
   }
 
   embedded_compose = (draft_id?: string) => {
-    return tool.e('div', {id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.src_compose_message(draft_id), [], {scrolling: 'no'})});
+    return Ui.e('div', {id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.src_compose_message(draft_id), [], {scrolling: 'no'})});
   }
 
   embedded_subscribe = (verif_email_text: string, source: string) => {
@@ -136,7 +136,7 @@ class XssSafeFactory {
   }
 
   embedded_attachment = (meta: Attachment) => {
-    return tool.e('span', {class: 'pgp_attachment', html: this.iframe(this.src_pgp_attachment_iframe(meta))});
+    return Ui.e('span', {class: 'pgp_attachment', html: this.iframe(this.src_pgp_attachment_iframe(meta))});
   }
 
   embedded_message = (armored: string, message_id: string|null, is_outgoing: boolean|null, sender: string|null, has_password: boolean, signature:string|null|boolean=null, short:string|null=null) => {
@@ -156,7 +156,7 @@ class XssSafeFactory {
   }
 
   embedded_attachment_status = (content: string) => {
-    return tool.e('div', {class: 'attachment_loader', html: Xss.html_sanitize(content)});
+    return Ui.e('div', {class: 'attachment_loader', html: Xss.html_sanitize(content)});
   }
 
   embedded_attest = (attest_packet: string) => {
@@ -203,7 +203,7 @@ class XssSafeFactory {
   private new_id = () => `frame_${Str.random(10)}`;
 
   private resolve_from_to = (secondary_emails: string[], my_email: string, their_emails: string[]) => { // when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-    if (their_emails.length === 1 && tool.value(their_emails[0]).in(secondary_emails)) {
+    if (their_emails.length === 1 && Value.is(their_emails[0]).in(secondary_emails)) {
       return { from: their_emails[0], to: my_email }; // replying to myself, reverse the values to actually write to them
     }
     return { to: their_emails, from: my_email };
@@ -216,11 +216,11 @@ class XssSafeFactory {
     for (let name of Object.keys(element_attrs)) {
       attributes[name] = String(element_attrs[name]);
     }
-    return tool.e('iframe', attributes);
+    return Ui.e('iframe', attributes);
   }
 
   private div_dialog_DANGEROUS = (content_MUST_BE_XSS_SAFE: string, data_test: string) => { // xss-dangerous-function
-    return tool.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': data_test });
+    return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': data_test });
   }
 
 }

@@ -80,7 +80,7 @@ Catch.try(async () => {
   let get_url_file_size = (original_url: string): Promise<number|null> => new Promise((resolve, reject) => {
     console.info('trying to figure out file size');
     let url;
-    if (tool.value('docs.googleusercontent.com/docs/securesc').in(url_params.url as string)) {
+    if (Value.is('docs.googleusercontent.com/docs/securesc').in(url_params.url as string)) {
       try {
         let google_drive_file_id = original_url.split('/').pop()!.split('?').shift(); // we catch any errors below
         if (google_drive_file_id) {
@@ -115,10 +115,10 @@ Catch.try(async () => {
     Ui.sanitize_render('#download', original_html_content).removeClass('visible');
     if (result.success) {
       let name = result.content.filename;
-      if (!name || tool.value(name).in(['msg.txt', 'null'])) {
+      if (!name || Value.is(name).in(['msg.txt', 'null'])) {
         name = enc_a.name;
       }
-      tool.file.save_to_downloads(new Attachment({name, type: enc_a.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
+      Attachment.methods.save_to_downloads(new Attachment({name, type: enc_a.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
       BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
@@ -127,7 +127,7 @@ Catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      tool.file.save_to_downloads(new Attachment({name: url_params.name as string, type: url_params.type as string, data: enc_a.data()}));
+      Attachment.methods.save_to_downloads(new Attachment({name: url_params.name as string, type: url_params.type as string, data: enc_a.data()}));
     }
   };
 
@@ -156,7 +156,7 @@ Catch.try(async () => {
       await recover_missing_attachment_id_if_needed();
       progress_element = $('.download_progress');
       if (decrypted_a) { // when content was downloaded and decrypted
-        tool.file.save_to_downloads(decrypted_a, Env.browser().name === 'firefox' ? $('body') : null);
+        Attachment.methods.save_to_downloads(decrypted_a, Env.browser().name === 'firefox' ? $('body') : null);
       } else if (encrypted_a && encrypted_a.has_data()) { // when encrypted content was already downloaded
         await decrypt_and_save_attachment_to_downloads(encrypted_a);
       } else if (encrypted_a && encrypted_a.id && encrypted_a.message_id) { // gmail attachment_id
@@ -164,7 +164,7 @@ Catch.try(async () => {
         encrypted_a.set_data(attachment.data);
         await decrypt_and_save_attachment_to_downloads(encrypted_a!);
       } else if (encrypted_a && encrypted_a.url) { // gneneral url to download attachment
-        encrypted_a.set_data(await tool.file.download_as_uint8(encrypted_a.url, render_progress));
+        encrypted_a.set_data(await Attachment.methods.download_as_uint8(encrypted_a.url, render_progress));
         await decrypt_and_save_attachment_to_downloads(encrypted_a);
       } else {
         throw Error('Missing both id and url');

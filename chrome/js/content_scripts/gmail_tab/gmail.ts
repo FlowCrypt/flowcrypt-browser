@@ -84,7 +84,7 @@ Catch.try(async () => {
     let unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
     $(document).keypress(e => {
       Catch.try(() => {
-        let causes_unsecure_reply = tool.value(e.which).in(unsecure_reply_key_shortcuts);
+        let causes_unsecure_reply = Value.is(e.which).in(unsecure_reply_key_shortcuts);
         if (causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
           e.stopImmediatePropagation();
           replacer.set_reply_box_editable();

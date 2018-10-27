@@ -81,7 +81,7 @@ Catch.try(async () => {
   } else {
     display_block('inbox', 'FlowCrypt Email Inbox');
     Api.gmail.message_list(account_email, q_encrypted_messages, false).then(list_result => {
-      let thread_ids = tool.arr.unique((list_result.messages || []).map((m: any) => m.threadId));
+      let thread_ids = Value.arr.unique((list_result.messages || []).map((m: any) => m.threadId));
       for (let thread_id of thread_ids) {
         thread_element_add(thread_id);
         Api.gmail.message_get(account_email, thread_id, 'metadata').then(item_result => {
@@ -116,11 +116,11 @@ Catch.try(async () => {
     let bodies = Api.gmail.find_bodies(message);
     let armored_message_from_bodies = Pgp.armor.clip(Str.base64url_decode(bodies['text/plain']!)) || Pgp.armor.clip(Pgp.armor.strip(Str.base64url_decode(bodies['text/html']!)));
     let renderable_html = !armored_message_from_bodies ? Xss.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
-    Ui.sanitize_append(S.cached('thread'), tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
+    Ui.sanitize_append(S.cached('thread'), Ui.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
   };
 
   let render_reply_box = (thread_id: string, last_message_id: string) => {
-    Ui.sanitize_append(S.cached('thread'), tool.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)}));
+    Ui.sanitize_append(S.cached('thread'), Ui.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)}));
   };
 
   let thread_message_id = (message_id: string) => {
@@ -132,7 +132,7 @@ Catch.try(async () => {
   };
 
   let thread_element_add = (thread_id: string) => {
-    Ui.sanitize_append(S.cached('threads'), tool.e('div', {
+    Ui.sanitize_append(S.cached('threads'), Ui.e('div', {
       class: 'line',
       id: thread_list_item_id(thread_id),
       html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',

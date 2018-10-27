@@ -13,7 +13,7 @@ class Settings {
     while (true) {
       let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
       if (!headers.from) {
-        return results.filter(email => !tool.value(email).in(Settings.ignore_email_aliases));
+        return results.filter(email => !Value.is(email).in(Settings.ignore_email_aliases));
       }
       results.push(Str.parse_email(headers.from).email);
       query += ' -from:"' + Str.parse_email(headers.from).email + '"';
@@ -51,7 +51,7 @@ class Settings {
     let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
     if (typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
-    } else if (!tool.value(attester).in(storage.attests_requested)) {
+    } else if (!Value.is(attester).in(storage.attests_requested)) {
       storage.attests_requested.push(attester); // insert into requests if not already there
     }
     if (typeof storage.attests_processed === 'undefined') {
@@ -65,12 +65,12 @@ class Settings {
     let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
     if (typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
-    } else if (tool.value(attester).in(storage.attests_requested)) {
+    } else if (Value.is(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); // remove attester from requested
     }
     if (typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [attester];
-    } else if (!tool.value(attester).in(storage.attests_processed)) {
+    } else if (!Value.is(attester).in(storage.attests_processed)) {
       storage.attests_processed.push(attester); // add attester as processed if not already there
     }
     await Store.set(account_email, storage);
@@ -140,7 +140,7 @@ class Settings {
 
   static refresh_account_aliases = async (account_email: string) => {
     let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-    let all = tool.arr.unique(addresses.concat(account_email));
+    let all = Value.arr.unique(addresses.concat(account_email));
     await Store.set(account_email, { addresses: all });
     return all;
   }
@@ -150,7 +150,7 @@ class Settings {
       throw new Error('Missing account_email to reset');
     }
     let account_emails = await Store.account_emails_get();
-    if (!tool.value(account_email).in(account_emails)) {
+    if (!Value.is(account_email).in(account_emails)) {
       throw new Error(`"${account_email}" is not a known account_email in "${JSON.stringify(account_emails)}"`);
     }
     let storage_indexes_to_remove: string[] = [];
@@ -188,7 +188,7 @@ class Settings {
       throw new Error('Missing or wrong account_email to reset');
     }
     let account_emails = await Store.account_emails_get();
-    if (!tool.value(old_account_email).in(account_emails)) {
+    if (!Value.is(old_account_email).in(account_emails)) {
       throw new Error(`"${old_account_email}" is not a known account_email in "${JSON.stringify(account_emails)}"`);
     }
     let storage_indexes_to_change: string[] = [];
@@ -302,7 +302,7 @@ class Settings {
             resolve(reformatted.key);
           } else {
             alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            Ui.sanitize_replace(target, tool.e('a', {href: back_url, text: 'Go back and try something else'}));
+            Ui.sanitize_replace(target, Ui.e('a', {href: back_url, text: 'Go back and try something else'}));
           }
         }
       }));

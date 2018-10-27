@@ -18,7 +18,7 @@ Catch.try(async () => {
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
-    Ui.sanitize_prepend('#new_message', tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
+    Ui.sanitize_prepend('#new_message', Ui.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
     let gmail_message_object;
     try {
       gmail_message_object = await Api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');
@@ -78,7 +78,7 @@ Catch.try(async () => {
         return false;
       }
       let storage = await Store.get_account(account_email, ['pubkey_sent_to']);
-      if (tool.value(their_email).in(storage.pubkey_sent_to || [])) {
+      if (Value.is(their_email).in(storage.pubkey_sent_to || [])) {
         return true;
       }
       if (!can_read_email) {

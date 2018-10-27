@@ -34,7 +34,7 @@ Catch.try(async () => {
   $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    tool.file.save_to_downloads(tool.file.keyinfo_as_pubkey_attachment(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
+    Attachment.methods.save_to_downloads(Attachment.methods.keyinfo_as_pubkey_attachment(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {

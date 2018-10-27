@@ -15,7 +15,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       let account_email = webmail_specific.get_user_account_email();
       if (typeof account_email !== 'undefined' && Catch.version()) {
         (window as ContentScriptWindow).account_email_global = account_email;
-        if (tool.value(webmail_specific.name).in(webmails)) {
+        if (Value.is(webmail_specific.name).in(webmails)) {
           console.info(`Loading FlowCrypt ${Catch.version()} for ${account_email}`);
           return account_email;
         } else {
@@ -26,7 +26,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
       if (account_email_interval > 6000) {
         console.info(`Cannot load FlowCrypt yet. Page: ${window.location} (${document.title})`);
       }
-      await tool.time.sleep(account_email_interval, (window as ContentScriptWindow).TrySetDestroyableTimeout);
+      await Ui.time.sleep(account_email_interval, (window as ContentScriptWindow).TrySetDestroyableTimeout);
       account_email_interval += 1000;
       if(was_destroyed) {
         throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
@@ -59,7 +59,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
           close: () => { show_setup_needed_notification_if_setup_not_done = false; },
         });
       }
-      await tool.time.sleep(3000, (window as ContentScriptWindow).TrySetDestroyableTimeout);
+      await Ui.time.sleep(3000, (window as ContentScriptWindow).TrySetDestroyableTimeout);
       if(was_destroyed) {
         throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
       }
@@ -127,7 +127,7 @@ let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInf
           await Store.set(account_email, {full_name});
           return;
         }
-        await tool.time.sleep(timeout, (window as ContentScriptWindow).TrySetDestroyableTimeout);
+        await Ui.time.sleep(timeout, (window as ContentScriptWindow).TrySetDestroyableTimeout);
         timeout += 1000;
         if(was_destroyed) {
           return;

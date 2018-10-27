@@ -71,7 +71,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
   let my_longids = keyinfos.map(ki => ki.longid);
   let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
-    let unique = tool.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.is_email_valid(a));
+    let unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.is_email_valid(a));
     if(unique.length < storage.addresses.length) {
       storage.addresses = unique;
       await Store.set(account_email, storage); // fix duplicate email addresses
@@ -80,7 +80,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       let {results} = await Api.attester.lookup_email(storage.addresses);
       let addresses_keyserver = [];
       for (let result of results) {
-        if (result && result.pubkey && tool.value(Pgp.key.longid(result.pubkey)).in(my_longids)) {
+        if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(my_longids)) {
           addresses_keyserver.push(result.email);
         }
       }
@@ -100,11 +100,11 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
   let storage = await Store.get_account(account_email, ['addresses', 'addresses_pks']);
   let addresses_pks = storage.addresses_pks || [];
   for (let email of storage.addresses || [account_email]) {
-    if (!tool.value(email).in(addresses_pks)) {
+    if (!Value.is(email).in(addresses_pks)) {
       try {
         let pubkey = await hkp.lookup({ query: email });
         if (typeof pubkey !== 'undefined') {
-          if (tool.value(Pgp.key.longid(pubkey)).in(my_longids)) {
+          if (Value.is(Pgp.key.longid(pubkey)).in(my_longids)) {
             addresses_pks.push(email);
             console.info(email + ' newly found matching pubkey on PKS');
           }
@@ -127,11 +127,11 @@ let schedule_cryptup_subscription_level_check = () => {
   setTimeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      setTimeout(() => Api.fc.account_check_sync().catch(report_useful_errors), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(() => Api.fc.account_check_sync().catch(report_useful_errors), Value.int.hours_as_miliseconds(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
       Api.fc.account_check_sync().catch(report_useful_errors); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  setInterval(() => Api.fc.account_check_sync().catch(report_useful_errors), tool.time.hours(23 + Math.random())); // random 23-24 hours
+  setInterval(() => Api.fc.account_check_sync().catch(report_useful_errors), Value.int.hours_as_miliseconds(23 + Math.random())); // random 23-24 hours
 };

@@ -18,14 +18,14 @@ class Rules {
     if (email && Str.is_email_valid(email)) {
       let domain = email.split('@')[1];
       this.domain_hash = Pgp.hash.sha1(domain);
-      if (!tool.value(this.domain_hash).in(Object.keys(this.rules))) { // not a known domain
+      if (!Value.is(this.domain_hash).in(Object.keys(this.rules))) { // not a known domain
         this.domain_hash = this.other;
       }
     }
   }
 
-  can_create_keys = () => !tool.value('NO_PRV_CREATE').in(this.rules[this.domain_hash].flags);
+  can_create_keys = () => !Value.is('NO_PRV_CREATE').in(this.rules[this.domain_hash].flags);
 
-  can_backup_keys = () => !tool.value('NO_PRV_BACKUP').in(this.rules[this.domain_hash].flags);
+  can_backup_keys = () => !Value.is('NO_PRV_BACKUP').in(this.rules[this.domain_hash].flags);
 
 }

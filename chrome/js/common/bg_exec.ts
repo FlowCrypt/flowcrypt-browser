@@ -40,9 +40,9 @@ class BgExec {
     let result = await BgExec.request_to_process_in_background('Pgp.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
-        result.content.text = Str.from_uint8(await tool.file.object_url_consume(result.content.blob.blob_url));
+        result.content.text = Str.from_uint8(await Attachment.methods.object_url_consume(result.content.blob.blob_url));
       } else {
-        result.content.uint8 = await tool.file.object_url_consume(result.content.blob.blob_url);
+        result.content.uint8 = await Attachment.methods.object_url_consume(result.content.blob.blob_url);
       }
       result.content.blob = undefined;
     }
@@ -69,10 +69,10 @@ class BgExec {
   private static crypto_message_decrypt_result_create_blobs = (decrypt_result: DecryptResult) => {
     if (decrypt_result && decrypt_result.success && decrypt_result.content) {
       if(decrypt_result.content.text && decrypt_result.content.text.length >= MAX_MESSAGE_SIZE) {
-        decrypt_result.content.blob = {blob_type: 'text', blob_url: tool.file.object_url_create(decrypt_result.content.text)};
+        decrypt_result.content.blob = {blob_type: 'text', blob_url: Attachment.methods.object_url_create(decrypt_result.content.text)};
         decrypt_result.content.text = undefined; // replaced with a blob
       } else if(decrypt_result.content.uint8 && decrypt_result.content.uint8 instanceof Uint8Array) {
-        decrypt_result.content.blob = {blob_type: 'uint8', blob_url: tool.file.object_url_create(decrypt_result.content.uint8)};
+        decrypt_result.content.blob = {blob_type: 'uint8', blob_url: Attachment.methods.object_url_create(decrypt_result.content.uint8)};
         decrypt_result.content.uint8 = undefined; // replaced with a blob
       }
     }
@@ -82,9 +82,9 @@ class BgExec {
 
   private static should_be_object_url = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
 
-  private static arg_object_urls_consume = (args: any[]) => args.map((arg: any) => BgExec.is_object_url(arg) ? tool.file.object_url_consume(arg) : arg);
+  private static arg_object_urls_consume = (args: any[]) => args.map((arg: any) => BgExec.is_object_url(arg) ? Attachment.methods.object_url_consume(arg) : arg);
 
-  private static arg_object_urls_create = (args: any[]) => args.map(arg => BgExec.should_be_object_url(arg) ? tool.file.object_url_create(arg) : arg);
+  private static arg_object_urls_create = (args: any[]) => args.map(arg => BgExec.should_be_object_url(arg) ? Attachment.methods.object_url_create(arg) : arg);
 
   private static resolve_path_to_callable_function = (path: string): Function => {  // tslint:disable-line:ban-types
     let f:Function|object|null = null; // tslint:disable-line:ban-types

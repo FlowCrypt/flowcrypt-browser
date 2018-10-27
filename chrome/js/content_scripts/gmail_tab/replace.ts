@@ -76,7 +76,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     for (let email_container of emails_containing_pgp_block.get()) {
       $(email_container).addClass('evaluated');
       let sender_email = this.get_sender_email(email_container);
-      let is_outgoing = tool.value(sender_email).in(this.addresses);
+      let is_outgoing = Value.is(sender_email).in(this.addresses);
       let replacement_xss_safe = Pgp.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
       if (typeof replacement_xss_safe !== 'undefined') {
         $(this.selector.translate_prompt).hide();
@@ -157,8 +157,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private replace_attachments = async () => {
     for (let attachments_container_element of $(this.selector.attachments_container_inner).get()) {
       let attachments_container = $(attachments_container_element);
-      let new_pgp_attachments = this.filter_attachments(attachments_container.children().not('.evaluated'), tool.file.pgp_name_patterns()).addClass('evaluated');
-      let new_pgp_attachments_names = tool.arr.from_dom_node_list(new_pgp_attachments.find('.aV3')).map(x => $.trim($(x).text()));
+      let new_pgp_attachments = this.filter_attachments(attachments_container.children().not('.evaluated'), Attachment.methods.pgp_name_patterns()).addClass('evaluated');
+      let new_pgp_attachments_names = Value.arr.from_dom_node_list(new_pgp_attachments.find('.aV3')).map(x => $.trim($(x).text()));
       if (new_pgp_attachments.length) {
         let message_id = this.determine_message_id(attachments_container);
         if (message_id) {
@@ -189,7 +189,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private process_attachments = async (message_id: string, attachment_metas: Attachment[], attachments_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_attachments_names:string[]=[]) => {
     let message_element = this.get_message_body_element(message_id);
     let sender_email = this.get_sender_email(message_element);
-    let is_outgoing = tool.value(sender_email).in(this.addresses);
+    let is_outgoing = Value.is(sender_email).in(this.addresses);
     attachments_container_inner = $(attachments_container_inner);
     attachments_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let rendered_attachments_count = attachment_metas.length;
@@ -204,14 +204,14 @@ class GmailElementReplacer implements WebmailElementReplacer {
           attachments_container_inner.prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
           rendered_attachments_count++;
         } else if (treat_as === 'message') {
-          let is_ambiguous_asc_file = a.name.substr(-4) === '.asc' && !tool.value(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
+          let is_ambiguous_asc_file = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
           let is_ambiguous_noname_file = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (is_ambiguous_asc_file || is_ambiguous_noname_file) { // Inspect a chunk
             let file_chunk = await Api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
             let openpgp_type = Pgp.message.type(file_chunk);
             if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
               rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
-            } else if (openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
+            } else if (openpgp_type && Value.is(openpgp_type.type).in(['message', 'signed_message'])) {
               message_element = this.update_message_body_element_DANGEROUSLY(message_element, 'append', this.factory.embedded_message('', message_id, false, sender_email, false)); // xss-safe-factory
             } else {
               attachment_selector.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -225,7 +225,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         } else if (treat_as === 'signature') {
           let signed_content = message_element[0] ? Str.normalize_spaces(message_element[0].innerText).trim() : '';
           let embedded_signed_message_xss_safe = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
-          let replace = !message_element.is('.evaluated') && !tool.value(Pgp.armor.headers('null').begin).in(message_element.text());
+          let replace = !message_element.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(message_element.text());
           message_element = this.update_message_body_element_DANGEROUSLY(message_element, replace ? 'set': 'append', embedded_signed_message_xss_safe); // xss-safe-factory
         }
       } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc

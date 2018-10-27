@@ -9,7 +9,7 @@ Catch.try(async () => {
   let url_params = Env.url_params(['filter', 'keys', 'controls', 'title']);
 
   // this is for debugging
-  let controls = url_params.controls === true && (tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
+  let controls = url_params.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
 
   if (url_params.title) {
     Ui.sanitize_prepend('#content', `<h1>${Xss.html_escape(String(url_params.title))}</h1>`);
@@ -46,7 +46,7 @@ Catch.try(async () => {
     }
     let filtered: RenderableStorage = {};
     for (let key of Object.keys(storage)) {
-      if (tool.value(real_filter).in(key)) {
+      if (Value.is(real_filter).in(key)) {
         filtered[key.replace(real_filter, '')] = {key, value: storage[key]};
       }
     }

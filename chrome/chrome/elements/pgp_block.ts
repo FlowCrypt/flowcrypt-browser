@@ -173,13 +173,13 @@ Catch.try(async () => {
     let decrypted = await BgExec.crypto_message_decrypt(account_email, encrypted.data(), await decrypt_pwd(), true);
     if (decrypted.success) {
       let attachment = new Attachment({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
-      tool.file.save_to_downloads(attachment, render_in);
+      Attachment.methods.save_to_downloads(attachment, render_in);
       send_resize_message();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
-      tool.file.save_to_downloads(encrypted, render_in);
+      Attachment.methods.save_to_downloads(encrypted, render_in);
       send_resize_message();
     }
   };
@@ -204,11 +204,11 @@ Catch.try(async () => {
     $('div.attachment').click(Ui.event.prevent('double', async target => {
       let attachment = included_attachments[Number($(target).attr('index') as string)];
       if (attachment.has_data()) {
-        tool.file.save_to_downloads(attachment, $(target));
+        Attachment.methods.save_to_downloads(attachment, $(target));
         send_resize_message();
       } else {
         Ui.sanitize_prepend($(target).find('.progress'), Ui.spinner('green'));
-        attachment.set_data(await tool.file.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
+        attachment.set_data(await Attachment.methods.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
         await decrypt_and_save_attachment_to_downloads(attachment, $(target));
@@ -243,7 +243,7 @@ Catch.try(async () => {
     if (is_outgoing) {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
-    Ui.sanitize_append('#pgp_block', tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`}));
+    Ui.sanitize_append('#pgp_block', Ui.e('div', {class: 'future_expiration', html: `This message will expire on ${Str.datetime_to_date(date)}. ${btns}`}));
     $('.expire_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {account_email, page: '/chrome/settings/modules/security.htm'})));
     $('.extend_expiration').click(Ui.event.handle(target => render_message_expiration_renew_options(target)));
   };
@@ -443,7 +443,7 @@ Catch.try(async () => {
 
   let render_password_encrypted_message_load_fail = async (link_result: ApirFcLinkMessage) => {
     if (link_result.expired) {
-      let expiration_m = Lang.pgp_block.message_expired_on + tool.time.expiration_format(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
+      let expiration_m = Lang.pgp_block.message_expired_on + Str.datetime_to_date(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
       if (link_result.deleted) {
         expiration_m += Lang.pgp_block.message_destroyed;
       } else if (is_outgoing && admin_codes) {
@@ -496,7 +496,7 @@ Catch.try(async () => {
         let m_link_result = await Api.fc.link_message(short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
-          let download_uint_result = await tool.file.download_as_uint8(m_link_result.url, null);
+          let download_uint_result = await Attachment.methods.download_as_uint8(m_link_result.url, null);
           message = Str.from_uint8(download_uint_result);
           await decrypt_and_render();
         } else {
@@ -522,7 +522,7 @@ Catch.try(async () => {
       } else if(Api.error.is_auth_popup_needed(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         await render_error(`Could not load message due to missing auth. ${Ui.retry_link()}`);
-      } else if (tool.value(Pgp.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
+      } else if (Value.is(Pgp.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (Api.error.is_standard_error(e, 'format')) {
         console.log(e.data);

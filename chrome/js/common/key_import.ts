@@ -53,7 +53,7 @@ class KeyImportUI {
     attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     attach.set_attachment_added_callback(file => {
       let k;
-      if (tool.value(Pgp.armor.headers('private_key').begin).in(file.as_text())) {
+      if (Value.is(Pgp.armor.headers('private_key').begin).in(file.as_text())) {
         let first_prv = Pgp.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
         if (first_prv) {
           k = openpgp.key.readArmored(first_prv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
@@ -134,7 +134,7 @@ class KeyImportUI {
     if(this.reject_known) {
       let keyinfos = await Store.keys_get(account_email);
       let private_keys_long_ids = keyinfos.map(ki => ki.longid);
-      if (tool.value(Pgp.key.longid(k)!).in(private_keys_long_ids)) {
+      if (Value.is(Pgp.key.longid(k)!).in(private_keys_long_ids)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
     }

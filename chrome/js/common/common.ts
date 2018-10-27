@@ -118,19 +118,19 @@ class Attachment {
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
     if(this.treat_as_value) { // pre-set
       return this.treat_as_value;
-    } else if (tool.value(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt'])) {
+    } else if (Value.is(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
       return  'signature';
-    } else if (!this.name && !tool.value('image/').in(this.type)) { // this.name may be '' or undefined - catch either
+    } else if (!this.name && !Value.is('image/').in(this.type)) { // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'message';
-    } else if (tool.value(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
+    } else if (Value.is(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
       return 'message';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
     } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
       return 'public_key';
-    } else if (tool.value('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
+    } else if (Value.is('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
       return 'public_key';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
       return 'message';
@@ -138,6 +138,70 @@ class Attachment {
       return 'standard';
     }
   }
+
+  public static methods = {
+    object_url_create: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
+    object_url_consume: async (url: string) => {
+      let uint8 = await Attachment.methods.download_as_uint8(url, null);
+      window.URL.revokeObjectURL(url);
+      return uint8;
+    },
+    download_as_uint8: (url: string, progress:ApiCallProgressCallback|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+      let request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.responseType = 'arraybuffer';
+      if (typeof progress === 'function') {
+        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
+      }
+      request.onerror = reject;
+      request.onload = e => resolve(new Uint8Array(request.response));
+      request.send();
+    }),
+    save_to_downloads: (attachment: Attachment, render_in:JQuery<HTMLElement>|null=null) => {
+      let blob = new Blob([attachment.data()], {type: attachment.type});
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, attachment.name);
+      } else {
+        let a = window.document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = Xss.html_escape(attachment.name);
+        if (render_in) {
+          a.textContent = 'DECRYPTED FILE';
+          a.style.cssText = 'font-size: 16px; font-weight: bold;';
+          Ui.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+          render_in.append(a); // xss-escaped attachment name above
+          render_in.css('height', 'auto');
+          render_in.find('a').click(e => {
+            alert('Please use right-click and select Save Link As');
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          });
+        } else {
+          if (typeof a.click === 'function') {
+            a.click();
+          } else { // safari
+            let e = document.createEvent('MouseEvents');
+            // @ts-ignore - safari only. expected 15 arguments, but works well with 4
+            e.initMouseEvent('click', true, true, window);
+            a.dispatchEvent(e);
+          }
+          if (Env.browser().name === 'firefox') {
+            try {
+              document.body.removeChild(a);
+            } catch (err) {
+              if (err.message !== 'Node was not found') {
+                throw err;
+              }
+            }
+          }
+          setTimeout(() => window.URL.revokeObjectURL(a.href), 0);
+        }
+      }
+    },
+    pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
+    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
+  };
 
 }
 
@@ -200,7 +264,7 @@ class Env {
     return null;
   }
 
-  public static is_background_script = () => Boolean(window.location && tool.value('_generated_background_page.html').in(window.location.href));
+  public static is_background_script = () => Boolean(window.location && Value.is('_generated_background_page.html').in(window.location.href));
 
   public static is_extension = () => Env.runtime_id() !== null;
 
@@ -215,7 +279,7 @@ class Env {
     let url_data: UrlParams = {};
     for (let value_pair of value_pairs) {
       let pair = value_pair.split('=');
-      if (tool.value(pair[0]).in(expected_keys)) {
+      if (Value.is(pair[0]).in(expected_keys)) {
         url_data[pair[0]] = typeof Env.URL_PARAM_DICT[pair[1]] !== 'undefined' ? Env.URL_PARAM_DICT[pair[1]] : decodeURIComponent(pair[1]);
       }
     }
@@ -226,8 +290,8 @@ class Env {
     for (let key of Object.keys(params)) {
       let value = params[key];
       if (typeof value !== 'undefined') {
-        let transformed = tool.obj.key_by_value(Env.URL_PARAM_DICT, value);
-        link += (!tool.value('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+        let transformed = Value.obj.key_by_value(Env.URL_PARAM_DICT, value);
+        link += (!Value.is('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
     return link;
@@ -248,6 +312,7 @@ class Api {
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
   private static GMAIL_SCOPE_DICT: Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
   private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null;
+  public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
   public static auth = {
     window: (auth_url: string, window_closed_by_user: Callback) => {
@@ -307,7 +372,7 @@ class Api {
     },
     is_auth_popup_needed: (e: Thrown) => {
       if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
-        if (e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
+        if (e.responseJSON.error === 'invalid_grant' && Value.is(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
           return true;
         }
       }
@@ -380,15 +445,15 @@ class Api {
       let my_email = account_email;
       for (let email of reply_to_estimate) {
         if (email) {
-          if (tool.value(Str.parse_email(email).email).in(addresses)) { // my email
+          if (Value.is(Str.parse_email(email).email).in(addresses)) { // my email
             my_email = email;
-          } else if (!tool.value(Str.parse_email(email).email).in(reply_to)) { // skip duplicates
+          } else if (!Value.is(Str.parse_email(email).email).in(reply_to)) { // skip duplicates
             reply_to.push(Str.parse_email(email).email); // reply to all except my emails
           }
         }
       }
       if (!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-        reply_to = tool.arr.unique(reply_to_estimate);
+        reply_to = Value.arr.unique(reply_to_estimate);
       }
       return {to: reply_to, from: my_email};
     },
@@ -407,13 +472,13 @@ class Api {
         return [
           'from:' + account_email,
           'to:' + account_email,
-          '(subject:"' + tool.enums.recovery_email_subjects.join('" OR subject: "') + '")',
+          '(subject:"' + Api.GMAIL_RECOVERY_EMAIL_SUBJECTS.join('" OR subject: "') + '")',
           '-is:spam',
         ].join(' ');
       },
     },
     scope: (scope: string[]): string[] => scope.map(s => Api.GMAIL_SCOPE_DICT[s] as string),
-    has_scope: (scopes: string[], scope: string) => scopes && tool.value(Api.GMAIL_SCOPE_DICT[scope]).in(scopes),
+    has_scope: (scopes: string[], scope: string) => scopes && Value.is(Api.GMAIL_SCOPE_DICT[scope]).in(scopes),
     users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
       let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if(account_email && !access_token) {
@@ -451,7 +516,7 @@ class Api {
       message.headers.Subject = message.subject;
       let mime_message = await Mime.encode(message.body, message.headers, message.attachments);
       let request = Api.internal.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
-      return Api.internal.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
+      return Api.internal.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || Value.noop}, request.content_type);
     },
     message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => Api.internal.api_gmail_call(account_email, 'GET', 'messages', {
       q,
@@ -599,8 +664,8 @@ class Api {
     search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
       let gmail_query = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
       if (user_query) {
-        let variations_of_to = user_query.split(/[ .]/g).filter(v => !tool.value(v).in(['com', 'org', 'net']));
-        if (!tool.value(user_query).in(variations_of_to)) {
+        let variations_of_to = user_query.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
+        if (!Value.is(user_query).in(variations_of_to)) {
           variations_of_to.push(user_query);
         }
         gmail_query.push(`(to:${variations_of_to.join(' OR to:')})`);
@@ -714,14 +779,14 @@ class Api {
       let {addresses} = await Store.get_account(account_email, ['addresses']);
       let stored_keys = await Store.keys_get(account_email);
       let stored_keys_longids = stored_keys.map(ki => ki.longid);
-      let {results} = await Api.attester.lookup_email(tool.arr.unique([account_email].concat(addresses || [])));
+      let {results} = await Api.attester.lookup_email(Value.arr.unique([account_email].concat(addresses || [])));
       for (let pubkey_search_result of results) {
         if (!pubkey_search_result.pubkey) {
           diagnosis.has_pubkey_missing = true;
           diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
         } else {
           let match = true;
-          if (!tool.value(Pgp.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
+          if (!Value.is(Pgp.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
             diagnosis.has_pubkey_mismatch = true;
             match = false;
           }
@@ -803,12 +868,12 @@ class Api {
             result.content = {};
             return result;
           }
-          if (result.content.action && !tool.value(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
+          if (result.content.action && !Value.is(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
             result.error = 'Wrong ACT line value format';
             result.content = {};
             return result;
           }
-          if (result.content.attester && !tool.value(result.content.attester).in(['CRYPTUP'])) {
+          if (result.content.attester && !Value.is(result.content.attester).in(['CRYPTUP'])) {
             result.error = 'Wrong ATT line value format';
             result.content = {};
             return result;
@@ -994,7 +1059,7 @@ class Api {
 
   public static aws = {
     s3_upload: (items: {base_url:string, fields: Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ApiCallProgressCallback) => {
-      let progress = tool.arr.zeroes(items.length);
+      let progress = Value.arr.zeroes(items.length);
       let promises:Promise<void>[] = [];
       if (!items.length) {
         return Promise.resolve(promises);
@@ -1006,7 +1071,7 @@ class Api {
           progress[i] = single_file_progress;
           Ui.event.prevent('spree', () => {
             // this should of course be weighted average. How many years until someone notices?
-            progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
+            progress_callback(Value.arr.average(progress), null, null); // May 2018 - nobody noticed
           })();
         }}));
       }
@@ -1203,14 +1268,14 @@ class Api {
       }
       let auth_request_scopes = requested_scopes || [];
       for (let scope of Api.GOOGLE_OAUTH2!.scopes) {
-        if (!tool.value(scope).in(requested_scopes)) {
+        if (!Value.is(scope).in(requested_scopes)) {
           if (scope !== Api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
             auth_request_scopes.push(scope);
           }
         }
       }
       for (let scope of current_tokens_scopes) {
-        if (!tool.value(scope).in(requested_scopes)) {
+        if (!Value.is(scope).in(requested_scopes)) {
           auth_request_scopes.push(scope);
         }
       }
@@ -1222,7 +1287,7 @@ class Api {
       for (let type of Object.keys(parts)) {
         body += '--' + boundary + '\n';
         body += 'Content-Type: ' + type + '\n';
-        if (tool.value('json').in(type as string)) {
+        if (Value.is('json').in(type as string)) {
           body += '\n' + parts[type] + '\n\n';
         } else {
           body += 'Content-Transfer-Encoding: base64\n';
@@ -1533,6 +1598,28 @@ class Ui {
     }
   };
 
+  public static time = {
+    wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
+      let interval = setInterval(() => {
+        let result = until_this_function_evaluates_true();
+        if (result === true) {
+          clearInterval(interval);
+          if (success) {
+            success();
+          }
+        } else if (result === false) {
+          clearInterval(interval);
+          if (error) {
+            error();
+          }
+        }
+      }, 50);
+    }),
+    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = setTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
+  };
+
+  public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+
 }
 
 class BrowserMsg {
@@ -1587,7 +1674,7 @@ class BrowserMsg {
       if(tab_id) {
         return tab_id;
       }
-      await tool.time.sleep(200); // sleep 200ms between attempts
+      await Ui.time.sleep(200); // sleep 200ms between attempts
     }
     throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
   }
@@ -1607,7 +1694,7 @@ class BrowserMsg {
     chrome.runtime.onMessage.addListener((msg, sender, respond) => {
       try {
         if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
-          if (!tool.value(msg.uid).in(processed)) {
+          if (!Value.is(msg.uid).in(processed)) {
             processed.push(msg.uid);
             if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
               let r = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name](msg.data, sender, respond);
@@ -1656,7 +1743,7 @@ class BrowserMsg {
         if (msg.to && msg.to !== 'broadcast') {
           msg.sender = sender;
           chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
-        } else if (tool.value(msg.name).in(Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND!))) { // is !null because added above
+        } else if (Value.is(msg.name).in(Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND!))) { // is !null because added above
           let r = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND![msg.name](msg.data, sender, safe_respond); // is !null because checked above
           if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
             // todo - a way to callback the error to be re-thrown to caller stack
@@ -1778,7 +1865,7 @@ class Xss {
 class Str {
 
   public static parse_email = (email_string: string) => {
-    if (tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
+    if (Value.is('<').in(email_string) && Value.is('>').in(email_string)) {
       return {
         email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
         name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
@@ -1935,7 +2022,7 @@ class Str {
   }
 
   public static extract_fc_attachments = (decrypted_content: string, fc_attachments: Attachment[]) => {
-    if (tool.value('cryptup_file').in(decrypted_content)) {
+    if (Value.is('cryptup_file').in(decrypted_content)) {
       decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
         let element = $(found_link);
         let fc_data = element.attr('cryptup-data');
@@ -1952,7 +2039,7 @@ class Str {
   }
 
   public static extract_fc_reply_token = (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
-    let fc_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
+    let fc_token_element = $(Ui.e('div', {html: decrypted_content})).find('.cryptup_reply');
     if (fc_token_element.length) {
       let fc_data = fc_token_element.attr('cryptup-data');
       if (fc_data) {
@@ -1991,6 +2078,10 @@ class Str {
   }
 
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+
+  public static to_utc_timestamp = (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string);
+
+  public static datetime_to_date = (date: string) => Xss.html_escape(date.substr(0, 10));
 
   private static base64url_utf_encode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -2203,7 +2294,7 @@ class Mime {
                 if (second_part_end_index !== -1) {
                   let first_part = mime_message.substr(first_part_start_index, first_part_end_index - first_part_start_index);
                   let second_part = mime_message.substr(second_part_start_index, second_part_end_index - second_part_start_index);
-                  if (first_part.match(/^content-type: application\/pgp-signature/gi) !== null && tool.value('-----BEGIN PGP SIGNATURE-----').in(first_part) && tool.value('-----END PGP SIGNATURE-----').in(first_part)) {
+                  if (first_part.match(/^content-type: application\/pgp-signature/gi) !== null && Value.is('-----BEGIN PGP SIGNATURE-----').in(first_part) && Value.is('-----END PGP SIGNATURE-----').in(first_part)) {
                     result.signature = Pgp.armor.clip(first_part);
                     result.signed = second_part;
                   } else {
@@ -2355,7 +2446,7 @@ class Pgp {
       return pgp_block_text;
     },
     clip: (text: string) => {
-      if (text && tool.value(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && tool.value(Pgp.ARMOR_HEADER_DICT.null.end as string).in(text)) {
+      if (text && Value.is(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && Value.is(Pgp.ARMOR_HEADER_DICT.null.end as string).in(text)) {
         let match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
         return(match !== null && match.length) ? match[0] : null;
       }
@@ -2425,7 +2516,7 @@ class Pgp {
     },
     normalize: (armored: string, type:string) => {
       armored = Str.normalize(armored);
-      if (tool.value(type).in(['message', 'public_key', 'private_key', 'key'])) {
+      if (Value.is(type).in(['message', 'public_key', 'private_key', 'key'])) {
         armored = armored.replace(/\r?\n/g, '\n').trim();
         let nl_2 = armored.match(/\n\n/g);
         let nl_3 = armored.match(/\n\n\n/g);
@@ -2460,7 +2551,7 @@ class Pgp {
       try {
         return await key.decrypt(passphrases);
       } catch (e) {
-        if (tool.value('passphrase').in(e.message.toLowerCase())) {
+        if (Value.is('passphrase').in(e.message.toLowerCase())) {
           return false;
         }
         throw e;
@@ -2577,17 +2668,17 @@ class Pgp {
         } else { // 10XX XXXX - potential old pgp packet tag
           tag_number = (first_byte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
         }
-        if (tool.value(tag_number).in(Object.values(openpgp.enums.packet))) {
+        if (Value.is(tag_number).in(Object.values(openpgp.enums.packet))) {
           // Indeed a valid OpenPGP packet tag number
           // This does not 100% mean it's OpenPGP message
           // But it's a good indication that it may
           let t = openpgp.enums.packet;
           let m_types = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
-          return {armored: false, type: tool.value(tag_number).in(m_types) ? 'message' : 'public_key'};
+          return {armored: false, type: Value.is(tag_number).in(m_types) ? 'message' : 'public_key'};
         }
       }
       let {blocks} = Pgp.armor.detect_blocks(d.trim());
-      if (blocks.length === 1 && blocks[0].complete === false && tool.value(blocks[0].type).in(['message', 'private_key', 'public_key', 'signed_message'])) {
+      if (blocks.length === 1 && blocks[0].complete === false && Value.is(blocks[0].type).in(['message', 'private_key', 'public_key', 'signed_message'])) {
         return {armored: true, type: blocks[0].type};
       }
       return null;
@@ -2600,7 +2691,7 @@ class Pgp {
       let signature: MessageVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
       try {
         for (let verify_result of await message.verify(keys_for_verification)) {
-          signature.match = tool.value(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
+          signature.match = Value.is(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
           if (!signature.signer) {
             signature.signer = Pgp.key.longid(verify_result.keyid.bytes);
           }
@@ -2721,7 +2812,7 @@ class Pgp {
       for (let word of Pgp.PASSWORD_CRACK_TIME_WORDS) {
         let readable_time = Pgp.internal.readable_crack_time(time_to_crack);
         // looks for a word match from readable_crack_time, defaults on "weak"
-        if (tool.value(word.match).in(readable_time)) {
+        if (Value.is(word.match).in(readable_time)) {
           return {word, seconds: Math.round(time_to_crack), time: readable_time};
         }
       }
@@ -2811,8 +2902,8 @@ class Pgp {
     crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
     crypto_message_prepare_for_decrypt: (data: string|Uint8Array): {is_armored: boolean, is_cleartext: false, message: OpenPGP.message.Message}|{is_armored: boolean, is_cleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
       let first_100_bytes = Str.from_uint8(data.slice(0, 100));
-      let is_armored_encrypted = tool.value(Pgp.armor.headers('message').begin).in(first_100_bytes);
-      let is_armored_signed_only = tool.value(Pgp.armor.headers('signed_message').begin).in(first_100_bytes);
+      let is_armored_encrypted = Value.is(Pgp.armor.headers('message').begin).in(first_100_bytes);
+      let is_armored_signed_only = Value.is(Pgp.armor.headers('signed_message').begin).in(first_100_bytes);
       let is_armored = is_armored_encrypted || is_armored_signed_only;
       if (is_armored_encrypted) {
         return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(Str.from_uint8(data))};
@@ -2836,7 +2927,7 @@ class Pgp {
       keys.encrypted_for = (message instanceof openpgp.message.Message ? (message as OpenPGP.message.Message).getEncryptionKeyIds() : []).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid((id as any).bytes)).filter(Boolean) as string[];
       let private_keys_all = await Store.keys_get(account_email);
-      keys.prv_matching = private_keys_all.filter(ki => tool.value(ki.longid).in(keys.encrypted_for));
+      keys.prv_matching = private_keys_all.filter(ki => Value.is(ki.longid).in(keys.encrypted_for));
       if (keys.prv_matching.length) {
         keys.prv_for_decrypt = keys.prv_matching;
       } else {
@@ -2862,9 +2953,9 @@ class Pgp {
     },
     crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
       let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
-      if (tool.value(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
+      if (Value.is(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
         return {type: DecryptErrorTypes.key_mismatch, error: e};
-      } else if (message_password && tool.value(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
+      } else if (message_password && Value.is(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
         return {type: DecryptErrorTypes.wrong_password, error: e};
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
         return {type: DecryptErrorTypes.no_mdc, error: e};
@@ -3147,7 +3238,7 @@ class Catch {
     if(!(e instanceof UnreportableError)) {
       if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         Catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
-      } else if (!tool.value(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
+      } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
         if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
           let stack = (e as StandardError).stack;
           delete (e as StandardError).stack;
@@ -3184,12 +3275,13 @@ class Catch {
 
 }
 
-let tool = {
-  arr: {
+class Value {
+
+  public static arr = {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
       let unique: T[] = [];
       for (let v of array) {
-        if (!tool.value(v).in(unique)) {
+        if (!Value.is(v).in(unique)) {
           unique.push(v);
         }
       }
@@ -3214,10 +3306,11 @@ let tool = {
     },
     contains: <T>(arr: T[]|string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
-    average: (arr: number[]) => tool.arr.sum(arr) / arr.length,
+    average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0),
-  },
-  obj: {
+  };
+
+  public static obj = {
     key_by_value: <T>(obj: Dict<T>, v: T) => {
       for (let k of Object.keys(obj)) {
         if (obj[k] === v) {
@@ -3225,105 +3318,19 @@ let tool = {
         }
       }
     },
-  },
-  int: {
-    random: (min_value: number, max_value: number) => min_value + Math.round(Math.random() * (max_value - min_value)),
-  },
-  time: {
-    wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
-      let interval = setInterval(() => {
-        let result = until_this_function_evaluates_true();
-        if (result === true) {
-          clearInterval(interval);
-          if (success) {
-            success();
-          }
-        } else if (result === false) {
-          clearInterval(interval);
-          if (error) {
-            error();
-          }
-        }
-      }, 50);
-    }),
-    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = setTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
-    get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
-    hours: (h: number) =>  h * 1000 * 60 * 60, // hours in miliseconds
-    expiration_format: (date: string) => Xss.html_escape(date.substr(0, 10)),
-    to_utc_timestamp: (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string),
-  },
-  file: {
-    object_url_create: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
-    object_url_consume: async (url: string) => {
-      let uint8 = await tool.file.download_as_uint8(url, null);
-      window.URL.revokeObjectURL(url);
-      return uint8;
-    },
-    download_as_uint8: (url: string, progress:ApiCallProgressCallback|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
-      let request = new XMLHttpRequest();
-      request.open('GET', url, true);
-      request.responseType = 'arraybuffer';
-      if (typeof progress === 'function') {
-        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
-      }
-      request.onerror = reject;
-      request.onload = e => resolve(new Uint8Array(request.response));
-      request.send();
-    }),
-    save_to_downloads: (attachment: Attachment, render_in:JQuery<HTMLElement>|null=null) => {
-      let blob = new Blob([attachment.data()], {type: attachment.type});
-      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, attachment.name);
-      } else {
-        let a = window.document.createElement('a');
-        a.href = window.URL.createObjectURL(blob);
-        a.download = Xss.html_escape(attachment.name);
-        if (render_in) {
-          a.textContent = 'DECRYPTED FILE';
-          a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          Ui.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
-          render_in.append(a); // xss-escaped attachment name above
-          render_in.css('height', 'auto');
-          render_in.find('a').click(e => {
-            alert('Please use right-click and select Save Link As');
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          });
-        } else {
-          if (typeof a.click === 'function') {
-            a.click();
-          } else { // safari
-            let e = document.createEvent('MouseEvents');
-            // @ts-ignore - safari only. expected 15 arguments, but works well with 4
-            e.initMouseEvent('click', true, true, window);
-            a.dispatchEvent(e);
-          }
-          if (Env.browser().name === 'firefox') {
-            try {
-              document.body.removeChild(a);
-            } catch (err) {
-              if (err.message !== 'Node was not found') {
-                throw err;
-              }
-            }
-          }
-          setTimeout(() => window.URL.revokeObjectURL(a.href), 0);
-        }
-      }
-    },
-    pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
-  },
-  value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
-  e: (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML, // xss-tested: jquery escapes attributes
-  noop: (): void => undefined,
-  enums: {
-    recovery_email_subjects: ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'],
-  },
-};
+  };
 
-Catch.initialize();
+  public static int = {
+    random: (min_value: number, max_value: number) => min_value + Math.round(Math.random() * (max_value - min_value)),
+    get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
+    hours_as_miliseconds: (h: number) =>  h * 1000 * 60 * 60,
+  };
+
+  public static noop = (): void => undefined;
+
+  public static is = (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => Value.arr.contains(array_or_str, v)});  // Value.this(v).in(array_or_string)
+
+}
 
 (( /* EXTENSIONS AND CONFIG */ ) => {
 
@@ -3375,3 +3382,5 @@ Catch.initialize();
   };
 
 })();
+
+Catch.initialize();

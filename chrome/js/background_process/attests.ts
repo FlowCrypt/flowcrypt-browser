@@ -104,7 +104,7 @@ class BgAttests {
     }
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     let {attests_processed} = await Store.get_account(account_email, ['attests_processed']);
-    if (!tool.value(attest.content.attester).in(attests_processed || [])) {
+    if (!Value.is(attest.content.attester).in(attests_processed || [])) {
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (await Pgp.key.decrypt(key, [passphrase || stored_passphrase || '']) === true) {
         let expected_fingerprint = key.primaryKey.getFingerprint().toUpperCase();
@@ -192,12 +192,12 @@ class BgAttests {
   private static account_storage_mark_as_attested = async (account_email: string, attester: string) => {
     BgAttests.stop_watching(account_email);
     let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
-    if (storage.attests_requested && tool.value(attester).in(storage.attests_requested)) {
+    if (storage.attests_requested && Value.is(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); // remove attester from requested
       if (typeof storage.attests_processed === 'undefined') {
         storage.attests_processed = [];
       }
-      if (!tool.value(attester).in(storage.attests_processed)) {
+      if (!Value.is(attester).in(storage.attests_processed)) {
         storage.attests_processed.push(attester); // add attester as processed if not already there
       }
       await Store.set(account_email, storage);

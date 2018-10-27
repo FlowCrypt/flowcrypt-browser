@@ -79,7 +79,7 @@ Catch.try(async () => {
     }));
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
       let {addresses} = await Store.get_account(account_email, ['addresses']);
-      await Store.set(account_email, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email')!)});
+      await Store.set(account_email, {'addresses': Value.arr.without_value(addresses || [], $(self).attr('email')!)});
       window.location.reload();
     }));
     $('.request_replacement').click(Ui.event.prevent('double', self => {
@@ -89,14 +89,14 @@ Catch.try(async () => {
     $('.refresh_after_attest_request').click(Ui.event.prevent('double', async self => {
       Ui.sanitize_render(self, 'Updating..' + Ui.spinner('white'));
       BrowserMsg.send(null, 'attest_requested', {account_email});
-      await tool.time.sleep(30000);
+      await Ui.time.sleep(30000);
       window.location.reload();
     }));
     Ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Ui.sanitize_render(self, Ui.spinner('green'));
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-        await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
+        await Store.set(account_email, { addresses: Value.arr.unique(addresses.concat(account_email)) });
       } catch(e) {
         if(Api.error.is_network_error(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');

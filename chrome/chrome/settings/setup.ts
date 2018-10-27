@@ -60,13 +60,13 @@ Catch.try(async () => {
 
   let show_submit_all_addresses_option = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
-      $('.addresses').text(tool.arr.without_value(addrs, account_email).join(', '));
+      $('.addresses').text(Value.arr.without_value(addrs, account_email).join(', '));
       $('.manual .input_submit_all').prop({checked: true, disabled: false}).closest('div.line').css('display', 'block');
     }
   };
 
   let save_and_fill_submit_option = async (addresses: string[]) => {
-    all_addresses = tool.arr.unique(addresses.concat(account_email));
+    all_addresses = Value.arr.unique(addresses.concat(account_email));
     await Store.set(account_email, { addresses: all_addresses });
     show_submit_all_addresses_option(all_addresses);
   };
@@ -85,7 +85,7 @@ Catch.try(async () => {
     if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');
       $('#' + name).css('display', 'block');
-      $('.back').css('visibility', tool.value(name).in(['step_2b_manual_enter', 'step_2a_manual_create']) ? 'visible' : 'hidden');
+      $('.back').css('visibility', Value.is(name).in(['step_2b_manual_enter', 'step_2a_manual_create']) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(recovered_keys.length > 1 ? recovered_keys.length + ' backups' : 'a backup');
       }
@@ -117,7 +117,7 @@ Catch.try(async () => {
         }
         if (fetched_keys.length) {
           recovered_keys = fetched_keys;
-          recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
+          recovered_keys_longid_count = Value.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
           display_block('step_2_recovery');
         } else {
           display_block('step_0_found_key');
@@ -157,7 +157,7 @@ Catch.try(async () => {
     }
     if (fetched_keys.length) {
       recovered_keys = fetched_keys;
-      recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
+      recovered_keys_longid_count = Value.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
       let stored_keys = await Store.keys_get(account_email);
       recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
       await render_setup_done();
@@ -283,13 +283,13 @@ Catch.try(async () => {
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     let passphrase = $('#recovery_pasword').val() as string; // text input
     let matching_keys: OpenPGP.key.Key[] = [];
-    if (passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
+    if (passphrase && Value.is(passphrase).in(recovered_key_matching_passphrases)) {
       alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
     } else if (passphrase) {
       for (let recovered_key of recovered_keys) {
         let longid = Pgp.key.longid(recovered_key);
         let armored = recovered_key.armor();
-        if (longid && !tool.value(longid).in(recovered_keys_successful_longids) && await Pgp.key.decrypt(recovered_key, [passphrase]) === true) {
+        if (longid && !Value.is(longid).in(recovered_keys_successful_longids) && await Pgp.key.decrypt(recovered_key, [passphrase]) === true) {
           recovered_keys_successful_longids.push(longid);
           matching_keys.push(openpgp.key.readArmored(armored).keys[0]);
         }
@@ -338,7 +338,7 @@ Catch.try(async () => {
     let t_left = (n_bups - n_got > 1) ? 'are ' + (n_bups - n_got) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
       Ui.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
-      Ui.sanitize_replace('#step_2_recovery .line_skip_recovery', tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+      Ui.sanitize_replace('#step_2_recovery .line_skip_recovery', Ui.e('div', {class: 'line', html: Ui.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
         window.location.href = Env.url_create('index.htm', { account_email });
       }));

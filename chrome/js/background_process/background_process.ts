@@ -67,7 +67,7 @@ chrome.runtime.onInstalled.addListener(event => {
     chrome.tabs.query({ currentWindow: true }, tabs => {
       let extension = chrome.extension.getURL('/');
       for (let tab of tabs) {
-        if (tool.value(extension).in(tab.url || '')) {
+        if (Value.is(extension).in(tab.url || '')) {
           resolve(tab.id);
           return;
         }
@@ -146,7 +146,7 @@ chrome.runtime.onInstalled.addListener(event => {
     },
   });
 
-  update_uninstall_url(null, 'background', tool.noop);
+  update_uninstall_url(null, 'background', Value.noop);
   inject_cryptup_into_webmail_if_needed();
   schedule_cryptup_subscription_level_check();
   BgAttests.watch_for_attest_email_if_appropriate().catch(Catch.rejection);

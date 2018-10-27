@@ -45,7 +45,7 @@ Catch.try(async () => {
       attach_js.initialize_attach_dialog('fineuploader', 'select_photo');
       attach_js.set_attachment_added_callback((file: Attachment) => {
         new_photo_file = file;
-        Ui.sanitize_replace('#select_photo', tool.e('span', {text: file.name}));
+        Ui.sanitize_replace('#select_photo', Ui.e('span', {text: file.name}));
       });
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
@@ -104,7 +104,7 @@ Catch.try(async () => {
       if (!response.profile) {
         return alias;
       }
-      i += tool.int.random(1, 9);
+      i += Value.int.random(1, 9);
     }
   };
 

@@ -193,7 +193,7 @@ Catch.try(async () => {
   let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
     let email_message = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
     let email_attachments = [as_backup_file(account_email, armored_key)];
-    let message = await Api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], {'text/html': email_message}, email_attachments);
+    let message = await Api.common.message(account_email, account_email, account_email, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': email_message}, email_attachments);
     if (email_provider === 'gmail') {
       return await Api.gmail.message_send(account_email, message);
     } else {
@@ -231,10 +231,10 @@ Catch.try(async () => {
   let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = as_backup_file(account_email, primary_ki.private);
     if (Env.browser().name !== 'firefox') {
-      tool.file.save_to_downloads(attachment);
+      Attachment.methods.save_to_downloads(attachment);
       await write_backup_done_and_render(false, 'file');
     } else {
-      tool.file.save_to_downloads(attachment, $('.backup_action_buttons_container'));
+      Attachment.methods.save_to_downloads(attachment, $('.backup_action_buttons_container'));
     }
   };
 
@@ -243,7 +243,7 @@ Catch.try(async () => {
   };
 
   let backup_refused = async (ki: KeyInfo) => {
-    await write_backup_done_and_render(tool.time.get_future_timestamp_in_months(3), 'none');
+    await write_backup_done_and_render(Value.int.get_future_timestamp_in_months(3), 'none');
   };
 
   let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {

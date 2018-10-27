@@ -11,7 +11,7 @@
   };
 
   while(true) {
-    if (document.title && tool.value(google_oauth2.state_header).in(document.title)) { // this is FlowCrypt's google oauth - based on a &state= passed on in auth request
+    if (document.title && Value.is(google_oauth2.state_header).in(document.title)) { // this is FlowCrypt's google oauth - based on a &state= passed on in auth request
       let parts = document.title.split(' ', 2);
       let result = parts[0];
       let params = Env.url_params(['code', 'state', 'error'], parts[1]);
@@ -22,7 +22,7 @@
       BrowserMsg.send(null, 'close_popup', {title});
       break;
     }
-    await tool.time.sleep(50);
+    await Ui.time.sleep(50);
   }
 
 })().catch(console.error);

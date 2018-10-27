@@ -23,7 +23,7 @@ Catch.try(async () => {
   container.find('input').click(Ui.event.handle(async target => {
     let chosen_sending_address = $(target).val() as string;
     if (chosen_sending_address !== addresses[0]) {
-      let ordered_addresses = tool.arr.unique([chosen_sending_address].concat(storage.addresses || []));
+      let ordered_addresses = Value.arr.unique([chosen_sending_address].concat(storage.addresses || []));
       await Store.set(account_email, {addresses: ordered_addresses});
       window.location.reload();
     }
@@ -32,7 +32,7 @@ Catch.try(async () => {
   $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
     Ui.sanitize_render(target, Ui.spinner('green'));
     let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-    await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
+    await Store.set(account_email, { addresses: Value.arr.unique(addresses.concat(account_email)) });
     window.location.reload();
     done();
   }));

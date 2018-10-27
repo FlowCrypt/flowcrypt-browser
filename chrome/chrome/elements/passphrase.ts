@@ -30,7 +30,7 @@ Catch.try(async () => {
   $('#passphrase').focus();
 
   let all_private_keys = await Store.keys_get(account_email);
-  let selected_private_keys = all_private_keys.filter(ki => tool.value(ki.longid).in(longids) || (ki.primary && tool.value('primary').in(longids)));
+  let selected_private_keys = all_private_keys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
 
   if (all_private_keys.length > 1) {
     let html: string;

@@ -12,7 +12,7 @@ Catch.try(async () => {
 
   let [primary_k] = await Store.keys_get(account_email, ['primary']);
 
-  const attachment = tool.file.keyinfo_as_pubkey_attachment(primary_k);
+  const attachment = Attachment.methods.keyinfo_as_pubkey_attachment(primary_k);
   let additional_message_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
@@ -20,7 +20,7 @@ Catch.try(async () => {
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
 
   for (let to of (url_params.to as string).split(',')) {
-    Ui.sanitize_append('.recipients', tool.e('span', {text: to}));
+    Ui.sanitize_append('.recipients', Ui.e('span', {text: to}));
   }
 
   // render

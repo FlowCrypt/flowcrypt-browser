@@ -188,7 +188,7 @@ class Composer {
       };
     } else {
       let allow_huge_attachments = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      let size_mb = (subscription.method !== 'trial' && tool.value(Pgp.hash.sha1(this.account_email)).in(allow_huge_attachments)) ? 200 : 25;
+      let size_mb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.account_email)).in(allow_huge_attachments)) ? 200 : 25;
       return {
         size_mb,
         size: size_mb * 1024 * 1024,
@@ -354,7 +354,7 @@ class Composer {
         Ui.sanitize_render('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
       } else if (this.is_reply_box && Api.error.is_not_found(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
-        await tool.time.sleep(500);
+        await Ui.time.sleep(500);
         await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
@@ -441,7 +441,7 @@ class Composer {
 
   private draft_delete = async () => {
     clearInterval(this.save_draft_interval);
-    await tool.time.wait(() => !this.draft_save_in_progress ? true : undefined);
+    await Ui.time.wait(() => !this.draft_save_in_progress ? true : undefined);
     if (this.draft_id) {
       await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
       try {
@@ -529,7 +529,7 @@ class Composer {
   }
 
   private throw_if_form_not_ready = (recipients: string[]): void => {
-    if (tool.value(this.S.now('send_btn_span').text().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
+    if (Value.is(this.S.now('send_btn_span').text().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
       return; // all good
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
@@ -741,9 +741,9 @@ class Composer {
         throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + message_token_error.message);
       }
     }
-    return plaintext + '\n\n' + tool.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.html_attribute_encode({
+    return plaintext + '\n\n' + Ui.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.html_attribute_encode({
       sender: this.supplied_from || this.get_sender_from_dom(),
-      recipient: tool.arr.without_value(tool.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
+      recipient: Value.arr.without_value(Value.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
       subject,
       token: response.token,
     })});
@@ -806,7 +806,7 @@ class Composer {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      message.attachments.push(tool.file.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
+      message.attachments.push(Attachment.methods.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
     }
     let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
     const is_signed = this.S.cached('icon_sign').is('.active');
@@ -1062,7 +1062,7 @@ class Composer {
 
   private parse_and_render_recipients = async () => {
     const input_to = (this.S.cached('input_to').val() as string).toLowerCase();
-    if (tool.value(',').in(input_to)) {
+    if (Value.is(',').in(input_to)) {
       const emails = input_to.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
         Ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.html_escape(emails[i])} ${Ui.spinner('green')}</span>`);
@@ -1082,16 +1082,16 @@ class Composer {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
     const possibly_bogus_address = Str.parse_email(possibly_bogus_recipient.text()).email;
     const q = Str.parse_email(from_query.substring).email;
-    if (possibly_bogus_address === q || tool.value(q).in(possibly_bogus_address)) {
+    if (possibly_bogus_address === q || Value.is(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
     setTimeout(async () => {
-      if (!tool.value(email).in(this.get_recipients_from_dom())) {
+      if (!Value.is(email).in(this.get_recipients_from_dom())) {
         this.S.cached('input_to').val(Str.parse_email(email).email);
         await this.parse_and_render_recipients();
         this.S.cached('input_to').focus();
       }
-    }, tool.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
+    }, Value.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
     this.hide_contacts();
   }
 
@@ -1100,7 +1100,7 @@ class Composer {
   }
 
   private remove_receiver = (element: HTMLElement) => {
-    this.recipients_missing_my_key = tool.arr.without_value(this.recipients_missing_my_key, $(element).parent().text());
+    this.recipients_missing_my_key = Value.arr.without_value(this.recipients_missing_my_key, $(element).parent().text());
     $(element).parent().remove();
     this.resize_input_to();
     this.show_hide_password_or_pubkey_container_and_color_send_button();
@@ -1216,7 +1216,7 @@ class Composer {
   private update_pubkey_icon = (include:boolean|null=null) => {
     if (include === null) { // decide if pubkey should be included
       if (!this.include_pubkey_toggled_manually) { // leave it as is if toggled manually before
-        this.update_pubkey_icon(Boolean(this.recipients_missing_my_key.length) && !tool.value(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks));
+        this.update_pubkey_icon(Boolean(this.recipients_missing_my_key.length) && !Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks));
       }
     } else { // set icon to specific state
       if (include) {
@@ -1250,7 +1250,7 @@ class Composer {
       this.S.cached('compose_table').removeClass('sign');
       this.S.cached('title').text(Lang.compose.header_title_compose_encrypt);
     }
-    if (tool.value(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
+    if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
       this.reset_send_btn();
     }
     this.show_hide_password_or_pubkey_container_and_color_send_button();
@@ -1269,8 +1269,8 @@ class Composer {
   private render_pubkey_result = async (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        let sending_address_on_pks = tool.value(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks);
-        let sending_address_on_keyserver = tool.value(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_keyserver);
+        let sending_address_on_pks = Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks);
+        let sending_address_on_keyserver = Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_keyserver);
         if ((contact.client === 'cryptup' && !sending_address_on_keyserver) || (contact.client !== 'cryptup' && !sending_address_on_pks)) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.does_recipient_have_my_pubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
