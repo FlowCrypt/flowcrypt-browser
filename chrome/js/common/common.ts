@@ -1721,9 +1721,9 @@ class Str {
 
   public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  public static html_attribute_encode = (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values));
+  public static html_attribute_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
 
-  public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(tool._.str_base64url_utf_decode(encoded));
+  public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
 
   public static html_escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
 
@@ -1736,7 +1736,7 @@ class Str {
     return DOMPurify.sanitize(dirty_html, {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
-      ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
+      ALLOWED_URI_REGEXP: Str.sanitize_href_regexp(),
     });
   }
 
@@ -1767,7 +1767,7 @@ class Str {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
       ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
+      ALLOWED_URI_REGEXP: Str.sanitize_href_regexp(),
     });
     DOMPurify.removeAllHooks();
     return clean_html;
@@ -1956,6 +1956,25 @@ class Str {
   }
 
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+
+  private static sanitize_href_regexp = () => { // allow href links that have same origin as our extension + cid
+    if(tool._.var.str_sanitize_HREF_REGEX_CACHE === null) {
+      if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
+        tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+      } else {
+        tool._.var.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+      }
+    }
+    return tool._.var.str_sanitize_HREF_REGEX_CACHE;
+  }
+
+  private static base64url_utf_encode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  private static base64url_utf_decode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  }
 
 }
 
@@ -2813,23 +2832,6 @@ let tool = {
       str_sanitize_ALLOWED_HTML_TAGS_WITH_INPUTS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font', 'input', 'select', 'option', 'textarea', 'label', 'optgroup', 'button'],
       str_sanitize_ADD_ATTR: ['email', 'page', 'addurltext', 'longid', 'index'],
       str_sanitize_HREF_REGEX_CACHE: null as null|RegExp,
-    },
-    str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension + cid
-      if(tool._.var.str_sanitize_HREF_REGEX_CACHE === null) {
-        if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-          tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
-        } else {
-          tool._.var.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
-        }
-      }
-      return tool._.var.str_sanitize_HREF_REGEX_CACHE;
-    },
-    // meant to be used privately within this file like so: tool._.???
-    str_base64url_utf_encode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-      return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    },
-    str_base64url_utf_decode: (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-      return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
     },
     mime_node_type: (node: MimeParserNode) => {
       if (node.headers['content-type'] && node.headers['content-type'][0]) {
