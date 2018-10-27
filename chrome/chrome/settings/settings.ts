@@ -254,7 +254,7 @@ class Settings {
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
       Ui.sanitize_render(container, [
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
-        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Str.html_escape(uid) + '</div>').join('') + '</div>',
+        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.html_escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
         '  Choose expiration of updated key',
         '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',

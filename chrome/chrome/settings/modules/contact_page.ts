@@ -30,8 +30,8 @@ tool.catch.try(async () => {
   let render_fields = (result: ApirFcAccountUpdate$result) => {
     if (result.alias) {
       let me = Api.fc.url('me', result.alias);
-      let me_escaped = Str.html_escape(me);
-      let me_escaped_display = Str.html_escape(me.replace('https://', ''));
+      let me_escaped = Xss.html_escape(me);
+      let me_escaped_display = Xss.html_escape(me.replace('https://', ''));
       Ui.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');

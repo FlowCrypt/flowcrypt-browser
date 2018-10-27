@@ -43,7 +43,7 @@ tool.catch.try(async () => {
 
     let table_contents = '';
     for (let c of contacts) {
-      let e = Str.html_escape(c.email);
+      let e = Xss.html_escape(c.email);
       let show = `<a href="#" class="action_show" data-test="action-show-pubkey"></a>`;
       let change = `<a href="#" class="action_change" data-test="action-change-pubkey"></a>`;
       let remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
@@ -70,7 +70,7 @@ tool.catch.try(async () => {
     $('a.action_change').off().click(Ui.event.prevent(Ui.event.double(), self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       let email = $(self).closest('tr').attr('email')!;
-      Ui.sanitize_render('h1', `${back_button}${space}${Str.html_escape(email)}${space}(edit)`);
+      Ui.sanitize_render('h1', `${back_button}${space}${Xss.html_escape(email)}${space}(edit)`);
       $('#edit_contact').css('display', 'block');
       $('#edit_contact .input_pubkey').val('').attr('email', email);
       $('#page_back_button').click(Ui.event.handle(() => render_contact_list()));

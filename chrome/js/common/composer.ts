@@ -263,7 +263,7 @@ class Composer {
       if (clipboard_html_data) {
         e.preventDefault();
         e.stopPropagation();
-        let sanitized = Str.html_sanitize_and_strip_all_tags(clipboard_html_data, '<br>');
+        let sanitized = Xss.html_sanitize_and_strip_all_tags(clipboard_html_data, '<br>');
         this.simulate_ctrl_v(sanitized);
       }
     };
@@ -462,7 +462,7 @@ class Composer {
       let result = await tool.crypto.message.decrypt(this.account_email, encrypted_draft);
       if (result.success) {
         this.S.cached('prompt').css({display: 'none'});
-        Ui.sanitize_render(this.S.cached('input_text'), await Str.html_sanitize_keep_basic_tags(result.content.text!));
+        Ui.sanitize_render(this.S.cached('input_text'), await Xss.html_sanitize_keep_basic_tags(result.content.text!));
         if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
@@ -592,7 +592,7 @@ class Composer {
   }
 
   private extract_as_text = (element_selector: 'input_text'|'input_intro') => {
-    return Str.html_unescape(Str.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n'));
+    return Xss.html_unescape(Xss.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n'));
   }
 
   private extract_process_send_message = async () => {
@@ -1007,7 +1007,7 @@ class Composer {
       armored_message = await this.app.email_provider_extract_armored_block(message_id);
     } catch (e) {
       if (e.data) {
-        Ui.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Str.html_escape(e.data)}`);
+        Ui.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.html_escape(e.data)}`);
       } else if(Api.error.is_network_error(e)) {
         // todo: retry
       } else if(Api.error.is_auth_popup_needed(e)) {
@@ -1026,7 +1026,7 @@ class Composer {
         if(typeof mime_parse_result.text !== 'undefined') {
           this.append_forwarded_message(mime_parse_result.text.replace(/\n/g, '<br>'));
         } else if (typeof mime_parse_result.html !== 'undefined') {
-          this.append_forwarded_message(Str.html_sanitize_and_strip_all_tags(mime_parse_result.html!, '<br>'));
+          this.append_forwarded_message(Xss.html_sanitize_and_strip_all_tags(mime_parse_result.html!, '<br>'));
         } else {
           this.append_forwarded_message((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
         }
@@ -1065,10 +1065,10 @@ class Composer {
     if (tool.value(',').in(input_to)) {
       const emails = input_to.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
-        Ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Str.html_escape(emails[i])} ${Ui.spinner('green')}</span>`);
+        Ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.html_escape(emails[i])} ${Ui.spinner('green')}</span>`);
       }
     } else if (!this.S.cached('input_to').is(':focus') && input_to) {
-      Ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Str.html_escape(input_to)} ${Ui.spinner('green')}</span>`);
+      Ui.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.html_escape(input_to)} ${Ui.spinner('green')}</span>`);
     } else {
       return;
     }
@@ -1136,7 +1136,7 @@ class Composer {
     if (renderable_contacts.length > 0 || this.contact_search_in_progress) {
       let ul_html = '';
       for (let contact of renderable_contacts) {
-        ul_html += `<li class="select_contact" data-test="action-select-contact" email="${Str.html_escape(contact.email.replace(/<\/?b>/g, ''))}">`;
+        ul_html += `<li class="select_contact" data-test="action-select-contact" email="${Xss.html_escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
           ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
         } else {
@@ -1150,9 +1150,9 @@ class Composer {
           display_email = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
         }
         if (contact.name) {
-          ul_html += (Str.html_escape(contact.name) + ' &lt;' + Str.html_escape(display_email) + '&gt;');
+          ul_html += (Xss.html_escape(contact.name) + ' &lt;' + Xss.html_escape(display_email) + '&gt;');
         } else {
-          ul_html += Str.html_escape(display_email);
+          ul_html += Xss.html_escape(display_email);
         }
         ul_html += '</li>';
       }
@@ -1347,10 +1347,10 @@ class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_message_successful').find('div.replied_from').text(this.supplied_from);
     this.S.cached('reply_message_successful').find('div.replied_to span').text(this.supplied_to);
-    Ui.sanitize_render(this.S.cached('reply_message_successful').find('div.replied_body'), Str.html_escape(plaintext).replace(/\n/g, '<br>'));
+    Ui.sanitize_render(this.S.cached('reply_message_successful').find('div.replied_body'), Xss.html_escape(plaintext).replace(/\n/g, '<br>'));
     const email_footer = this.app.storage_get_email_footer();
     if (email_footer) {
-      const renderable_escaped_email_footer = Str.html_escape(email_footer).replace(/\n/g, '<br>');
+      const renderable_escaped_email_footer = Xss.html_escape(email_footer).replace(/\n/g, '<br>');
       if (is_signed) {
         Ui.sanitize_append(this.S.cached('replied_body'), `<br><br>${renderable_escaped_email_footer}`);
       } else {
@@ -1415,7 +1415,7 @@ class Composer {
         input_addr_container.addClass('show_send_from');
         Ui.sanitize_append(input_addr_container, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
         input_addr_container.find('#input_from_settings').click(Ui.event.handle(() => this.app.render_sending_address_dialog(), this.handle_errors(`open sending address dialog`)));
-        Ui.sanitize_append(input_addr_container.find('#input_from'), addresses.map(a => `<option value="${Str.html_escape(a)}">${Str.html_escape(a)}</option>`).join('')).change(() => this.update_pubkey_icon());
+        Ui.sanitize_append(input_addr_container.find('#input_from'), addresses.map(a => `<option value="${Xss.html_escape(a)}">${Xss.html_escape(a)}</option>`).join('')).change(() => this.update_pubkey_icon());
         if (Env.browser().name === 'firefox') {
           input_addr_container.find('#input_from_settings').css('margin-top', '20px');
         }
@@ -1435,7 +1435,7 @@ class Composer {
 
   private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) => {
     const decrypt_url = this.FC_WEB_URL + '/' + short_id;
-    const a = '<a href="' + Str.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
+    const a = '<a href="' + Xss.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
     const html = [];
@@ -1447,8 +1447,8 @@ class Composer {
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + tool.crypto.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.message_encrypted_html + a + '<br><br>');
-    html.push(Lang.compose.alternatively_copy_paste + Str.html_escape(decrypt_url) + '<br><br><br>');
-    const html_fc_web_url_link = '<a href="' + Str.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Str.html_escape(this.FC_WEB_URL) + '</a>';
+    html.push(Lang.compose.alternatively_copy_paste + Xss.html_escape(decrypt_url) + '<br><br><br>');
+    const html_fc_web_url_link = '<a href="' + Xss.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.html_escape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + html_pgp_message + '</div>');

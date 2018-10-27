@@ -20,8 +20,8 @@ class XssSafeFactory {
   private hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:UrlParams={}) {
-    this.reloadable_class = Str.html_escape(reloadable_class);
-    this.destroyable_class = Str.html_escape(destroyable_class);
+    this.reloadable_class = Xss.html_escape(reloadable_class);
+    this.destroyable_class = Xss.html_escape(destroyable_class);
     this.set_params = set_params;
     this.set_params.account_email = account_email;
     this.set_params.parent_tab_id = parent_tab_id;
@@ -156,7 +156,7 @@ class XssSafeFactory {
   }
 
   embedded_attachment_status = (content: string) => {
-    return tool.e('div', {class: 'attachment_loader', html: Str.html_sanitize(content)});
+    return tool.e('div', {class: 'attachment_loader', html: Xss.html_sanitize(content)});
   }
 
   embedded_attest = (attest_packet: string) => {

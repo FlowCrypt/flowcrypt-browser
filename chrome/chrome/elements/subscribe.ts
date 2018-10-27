@@ -19,8 +19,8 @@ tool.catch.try(async () => {
 
   let handle_error_response = (e: Thrown) => {
     let render_err = (msg: string, e?: any) => {
-      msg = Str.html_escape(msg);
-      let debug = e ? `<pre>${Str.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
+      msg = Xss.html_escape(msg);
+      let debug = e ? `<pre>${Xss.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
       Ui.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
     };
     if(Api.error.is_network_error(e)) {

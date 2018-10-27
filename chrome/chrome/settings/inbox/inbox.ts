@@ -115,7 +115,7 @@ tool.catch.try(async () => {
   let render_message = (message: any) => {
     let bodies = Api.gmail.find_bodies(message);
     let armored_message_from_bodies = tool.crypto.armor.clip(Str.base64url_decode(bodies['text/plain']!)) || tool.crypto.armor.clip(tool.crypto.armor.strip(Str.base64url_decode(bodies['text/html']!)));
-    let renderable_html = !armored_message_from_bodies ? Str.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
+    let renderable_html = !armored_message_from_bodies ? Xss.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
     Ui.sanitize_append(S.cached('thread'), tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
   };
 

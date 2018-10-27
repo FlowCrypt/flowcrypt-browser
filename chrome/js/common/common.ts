@@ -1273,7 +1273,7 @@ class Api {
 
 class Ui {
 
-  public static retry_link = (caption:string='retry') => `<a href="${Str.html_escape(window.location.href)}">${Str.html_escape(caption)}</a>`;
+  public static retry_link = (caption:string='retry') => `<a href="${Xss.html_escape(window.location.href)}">${Xss.html_escape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1283,17 +1283,17 @@ class Ui {
     return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Xss.html_sanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Xss.html_sanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Xss.html_sanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.html_sanitize(dirty_html)); // xss-sanitized
 
   public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
-      let btns = Object.keys(buttons).map(id => `<div class="button ${Str.html_escape(buttons[id].color || 'green')} overlay_action_${Str.html_escape(id)}">${Str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
+      let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.html_escape(buttons[id].color || 'green')} overlay_action_${Xss.html_escape(id)}">${Xss.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
       Ui.sanitize_append('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
@@ -1335,7 +1335,7 @@ class Ui {
   public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
     let actual_type = typeof values[name];
     if (actual_type !== expected_type) {
-      let msg = `Cannot render page (expected ${Str.html_escape(name)} to be of type ${Str.html_escape(expected_type)} but got ${Str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be of type ${Xss.html_escape(expected_type)} but got ${Xss.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
@@ -1344,7 +1344,7 @@ class Ui {
 
   public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
     if (expected_values.indexOf(values[name]) === -1) {
-      let msg = `Cannot render page (expected ${Str.html_escape(name)} to be one of ${Str.html_escape(expected_values.map(String).join(','))} but got ${Str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be one of ${Xss.html_escape(expected_values.map(String).join(','))} but got ${Xss.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
@@ -1669,11 +1669,97 @@ class BrowserMsg {
 
 }
 
-class Str {
+class Xss {
 
-  private static str_sanitize_ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
-  private static str_sanitize_ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
-  private static str_sanitize_HREF_REGEX_CACHE = null as null|RegExp;
+  private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
+  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
+  private static HREF_REGEX_CACHE = null as null|RegExp;
+
+  public static html_sanitize = (dirty_html: string): string => { // originaly text_or_html
+    return DOMPurify.sanitize(dirty_html, {
+      SAFE_FOR_JQUERY: true,
+      ADD_ATTR: Xss.ADD_ATTR,
+      ALLOWED_URI_REGEXP: Xss.sanitize_href_regexp(),
+    });
+  }
+
+  public static html_sanitize_keep_basic_tags = (dirty_html: string): string => {
+    // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
+    DOMPurify.removeAllHooks();
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if ('src' in node) {
+        // replace images with a link that points to that image
+        let img: Element = node;
+        let src = img.getAttribute('src')!;
+        let title = img.getAttribute('title');
+        img.removeAttribute('src');
+        let a = document.createElement('a');
+        a.href = src;
+        a.className = 'image_src_link';
+        a.target = '_blank';
+        a.innerText = title || 'show image';
+        let heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
+        a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
+        img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
+      }
+      if ('target' in node) { // open links in new window
+        (node as Element).setAttribute('target', '_blank');
+      }
+    });
+    let clean_html = DOMPurify.sanitize(dirty_html, {
+      SAFE_FOR_JQUERY: true,
+      ADD_ATTR: Xss.ADD_ATTR,
+      ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
+      ALLOWED_URI_REGEXP: Xss.sanitize_href_regexp(),
+    });
+    DOMPurify.removeAllHooks();
+    return clean_html;
+  }
+
+  public static html_sanitize_and_strip_all_tags = (dirty_html: string, output_newline: string): string => {
+    let html = Xss.html_sanitize_keep_basic_tags(dirty_html);
+    let random = Str.random(5);
+    let br = `CU_BR_${random}`;
+    let block_start = `CU_BS_${random}`;
+    let block_end = `CU_BE_${random}`;
+    html = html.replace(/<br[^>]*>/gi, br);
+    html = html.replace(/\n/g, '');
+    html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
+    html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
+    html = html.replace(RegExp(`(${block_start})+`, 'g'), block_start).replace(RegExp(`(${block_end})+`, 'g'), block_end);
+    html = html.split(block_end + block_start).join(br).split(br + block_end).join(br);
+    let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
+    text = text.replace(/\n{2,}/g, '\n\n');
+    // not all tags were removed above. Remove all remaining tags
+    text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
+    text = text.trim();
+    if(output_newline !== '\n') {
+      text = text.replace(/\n/g, output_newline);
+    }
+    return text;
+  }
+
+  public static html_escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+
+  public static html_unescape = (str: string) => {
+    // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
+    return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+  }
+
+  private static sanitize_href_regexp = () => { // allow href links that have same origin as our extension + cid
+    if(Xss.HREF_REGEX_CACHE === null) {
+      if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
+        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+      } else {
+        Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+      }
+    }
+    return Xss.HREF_REGEX_CACHE;
+  }
+
+}
+
+class Str {
 
   public static parse_email = (email_string: string) => {
     if (tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
@@ -1728,77 +1814,6 @@ class Str {
   public static html_attribute_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
 
   public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
-
-  public static html_escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
-
-  public static html_unescape = (str: string) => {
-    // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
-    return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
-  }
-
-  public static html_sanitize = (dirty_html: string): string => { // originaly text_or_html
-    return DOMPurify.sanitize(dirty_html, {
-      SAFE_FOR_JQUERY: true,
-      ADD_ATTR: Str.str_sanitize_ADD_ATTR,
-      ALLOWED_URI_REGEXP: Str.sanitize_href_regexp(),
-    });
-  }
-
-  public static html_sanitize_keep_basic_tags = (dirty_html: string): string => {
-    // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
-    DOMPurify.removeAllHooks();
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if ('src' in node) {
-        // replace images with a link that points to that image
-        let img: Element = node;
-        let src = img.getAttribute('src')!;
-        let title = img.getAttribute('title');
-        img.removeAttribute('src');
-        let a = document.createElement('a');
-        a.href = src;
-        a.className = 'image_src_link';
-        a.target = '_blank';
-        a.innerText = title || 'show image';
-        let heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
-        a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
-        img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
-      }
-      if ('target' in node) { // open links in new window
-        (node as Element).setAttribute('target', '_blank');
-      }
-    });
-    let clean_html = DOMPurify.sanitize(dirty_html, {
-      SAFE_FOR_JQUERY: true,
-      ADD_ATTR: Str.str_sanitize_ADD_ATTR,
-      ALLOWED_TAGS: Str.str_sanitize_ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: Str.sanitize_href_regexp(),
-    });
-    DOMPurify.removeAllHooks();
-    return clean_html;
-  }
-
-  public static html_sanitize_and_strip_all_tags = (dirty_html: string, output_newline: string): string => {
-    let html = Str.html_sanitize_keep_basic_tags(dirty_html);
-    let random = Str.random(5);
-    let br = `CU_BR_${random}`;
-    let block_start = `CU_BS_${random}`;
-    let block_end = `CU_BE_${random}`;
-    html = html.replace(/<br[^>]*>/gi, br);
-    html = html.replace(/\n/g, '');
-    html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
-    html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
-    html = html.replace(RegExp(`(${block_start})+`, 'g'), block_start).replace(RegExp(`(${block_end})+`, 'g'), block_end);
-    html = html.split(block_end + block_start).join(br).split(br + block_end).join(br);
-    let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
-    text = text.replace(/\n{2,}/g, '\n\n');
-    // not all tags were removed above. Remove all remaining tags
-    text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
-    text = text.trim();
-    if(output_newline !== '\n') {
-      text = text.replace(/\n/g, output_newline);
-    }
-    return text;
-  }
 
   public static base64url_encode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
@@ -1961,17 +1976,6 @@ class Str {
 
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 
-  private static sanitize_href_regexp = () => { // allow href links that have same origin as our extension + cid
-    if(Str.str_sanitize_HREF_REGEX_CACHE === null) {
-      if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Str.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
-      } else {
-        Str.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
-      }
-    }
-    return Str.str_sanitize_HREF_REGEX_CACHE;
-  }
-
   private static base64url_utf_encode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
@@ -2047,7 +2051,7 @@ let tool = {
     sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = setTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
     get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
     hours: (h: number) =>  h * 1000 * 60 * 60, // hours in miliseconds
-    expiration_format: (date: string) => Str.html_escape(date.substr(0, 10)),
+    expiration_format: (date: string) => Xss.html_escape(date.substr(0, 10)),
     to_utc_timestamp: (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string),
   },
   file: {
@@ -2075,7 +2079,7 @@ let tool = {
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = Str.html_escape(attachment.name);
+        a.download = Xss.html_escape(attachment.name);
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
@@ -2462,7 +2466,7 @@ let tool = {
         let r = '';
         for (let i in blocks) {
           if (blocks[i].type === 'text' || blocks[i].type === 'private_key') {
-            r += (Number(i) ? '\n\n' : '') + Str.html_escape(blocks[i].content) + '\n\n';
+            r += (Number(i) ? '\n\n' : '') + Xss.html_escape(blocks[i].content) + '\n\n';
           } else if (blocks[i].type === 'message') {
             r += factory.embedded_message(blocks[i].complete ? tool.crypto.armor.normalize(blocks[i].content, 'message') : '', message_id, is_outgoing, sender_email, false);
           } else if (blocks[i].type === 'signed_message') {

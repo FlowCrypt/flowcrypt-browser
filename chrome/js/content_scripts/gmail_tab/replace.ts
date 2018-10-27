@@ -139,9 +139,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let button;
         let [full_link, name, button_href_id] = found_cryptup_link;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Str.html_escape(button_href_id)}">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${Xss.html_escape(button_href_id)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${Str.html_escape(button_href_id)}">Open draft</a>`;
+          button = `<a href="#inbox/${Xss.html_escape(button_href_id)}">Open draft</a>`;
         }
         if (button) {
           Ui.sanitize_replace(contenteditable, button);
