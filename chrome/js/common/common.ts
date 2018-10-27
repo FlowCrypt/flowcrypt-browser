@@ -443,7 +443,7 @@ class Api {
       message.headers.From = message.from;
       message.headers.To = message.to.join(',');
       message.headers.Subject = message.subject;
-      let mime_message = await tool.mime.encode(message.body, message.headers, message.attachments);
+      let mime_message = await Mime.encode(message.body, message.headers, message.attachments);
       let request = Api.internal.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
       return Api.internal.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
     },
@@ -637,7 +637,7 @@ class Api {
           throw {code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
         }
       } else { // format === raw
-        let mime_message = await tool.mime.decode(Str.base64url_decode(gmail_message_object.raw!));
+        let mime_message = await Mime.decode(Str.base64url_decode(gmail_message_object.raw!));
         if (mime_message.text !== undefined) {
           let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
           if (armored_message) {
@@ -1986,6 +1986,226 @@ class Str {
 
 }
 
+class Mime {
+
+  public static process = async (mime_message: string) => {
+    let decoded = await Mime.decode(mime_message);
+    if (typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
+      decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
+    }
+    let blocks: MessageBlock[] = [];
+    if (decoded.text) {  // may be undefined or empty
+      blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text).blocks);
+    }
+    for (let file of decoded.attachments) {
+      let treat_as = file.treat_as();
+      if (treat_as === 'message') {
+        let armored = tool.crypto.armor.clip(file.as_text());
+        if (armored) {
+          blocks.push(tool._.crypto_armor_block_object('message', armored));
+        }
+      } else if (treat_as === 'signature') {
+        decoded.signature = decoded.signature || file.as_text();
+      } else if (treat_as === 'public_key') {
+        blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.as_text()).blocks);
+      }
+    }
+    if (decoded.signature) {
+      for (let block of blocks) {
+        if (block.type === 'text') {
+          block.type = 'signed_message';
+          block.signature = decoded.signature;
+          return false;
+        }
+      }
+    }
+    return {headers: decoded.headers, blocks};
+  }
+
+  public static headers_to_from = (parsed_mime_message: MimeContent): FromToHeaders => {
+    let header_to: string[] = [];
+    let header_from;
+    // @ts-ignore - I should check this - does it really have .address?
+    if (parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
+      // @ts-ignore - I should check this - does it really have .address?
+      header_from = parsed_mime_message.headers.from[0].address;
+    }
+    if (parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
+      for (let to of parsed_mime_message.headers.to) {
+        // @ts-ignore - I should check this - does it really have .address?
+        if (to.address) {
+          // @ts-ignore - I should check this - does it really have .address?
+          header_to.push(to.address);
+        }
+      }
+    }
+    return { from: header_from, to: header_to };
+  }
+
+  public static reply_headers = (parsed_mime_message: MimeContent) => {
+    let message_id = parsed_mime_message.headers['message-id'] || '';
+    let references = parsed_mime_message.headers['in-reply-to'] || '';
+    return { 'in-reply-to': message_id, 'references': references + ' ' + message_id };
+  }
+
+  public static resembles_message = (message: string|Uint8Array) => {
+    let m = message.slice(0, 1000);
+    // noinspection SuspiciousInstanceOfGuard
+    if (m instanceof Uint8Array) {
+      m = Str.from_uint8(m);
+    }
+    m = m.toLowerCase();
+    let contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
+    if (contentType === null) {
+      return false;
+    }
+    if (m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || m.match(/content-disposition: +[0-9a-z\-\/]+/) || m.match(/; boundary=/) || m.match(/; charset=/)) {
+      return true;
+    }
+    return Boolean(contentType.index === 0 && m.match(/boundary=/));
+  }
+
+  public static decode = (mime_message: string): Promise<MimeContent> => {
+    return new Promise(async resolve => {
+      let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
+      try {
+        let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
+        let parser = new MimeParser();
+        let parsed: {[key: string]: MimeParserNode} = {};
+        parser.onheader = (node: MimeParserNode) => {
+          if (!String(node.path.join('.'))) { // root node headers
+            for (let name of Object.keys(node.headers)) {
+              mime_content.headers[name] = node.headers[name][0].value;
+            }
+          }
+        };
+        parser.onbody = (node: MimeParserNode) => {
+          let path = String(node.path.join('.'));
+          if (typeof parsed[path] === 'undefined') {
+            parsed[path] = node;
+          }
+        };
+        parser.onend = () => {
+          for (let node of Object.values(parsed)) {
+            if (tool._.mime_node_type(node) === 'application/pgp-signature') {
+              mime_content.signature = node.rawContent;
+            } else if (tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
+              // html content may be broken up into smaller pieces by attachments in between
+              // AppleMail does this with inline attachments
+              mime_content.html = (mime_content.html || '') + tool._.mime_node_process_text_content(node);
+            } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
+              mime_content.text = tool._.mime_node_process_text_content(node);
+            } else {
+              mime_content.attachments.push(new Attachment({
+                name: tool._.mime_node_filename(node),
+                type: tool._.mime_node_type(node),
+                data: node.content,
+                cid: tool._.mime_node_content_id(node),
+              }));
+            }
+          }
+          resolve(mime_content);
+        };
+        parser.write(mime_message);
+        parser.end();
+      } catch (e) {
+        tool.catch.handle_exception(e);
+        resolve(mime_content);
+      }
+    });
+  }
+
+  public static encode = async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
+    let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
+    let root_node = new MimeBuilder('multipart/mixed');
+    for (let key of Object.keys(headers)) {
+      root_node.addHeader(key, headers[key]);
+    }
+    if (typeof body === 'string') {
+      body = {'text/plain': body};
+    }
+    let content_node: MimeParserNode;
+    if (Object.keys(body).length === 1) {
+      content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
+    } else {
+      content_node = new MimeBuilder('multipart/alternative');
+      for (let type of Object.keys(body)) {
+        content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+      }
+    }
+    root_node.appendChild(content_node);
+    for (let attachment of attachments) {
+      let type = `${attachment.type}; name="${attachment.name}"`;
+      let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
+      root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.data()));
+    }
+    return root_node.build();
+  }
+
+  public static signed = (mime_message: string) => {
+    /*
+      Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
+      Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
+
+      --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
+      Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
+      From: Henry Electrum <henry.electrum@gmail.com>
+      To: human@flowcrypt.com
+      Message-ID: <abd68ba1-35c3-ee8a-0d60-0319c608d56b@gmail.com>
+      Subject: compatibility - simples signed email
+
+      --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1
+      Content-Type: text/plain; charset=utf-8
+      Content-Transfer-Encoding: quoted-printable
+
+      content
+
+      --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
+      */
+    let signed_header_index = mime_message.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
+    if (signed_header_index !== -1) {
+      mime_message = mime_message.substr(signed_header_index);
+      let first_boundary_index = mime_message.substr(0, 1000).toLowerCase().indexOf('boundary=');
+      if (first_boundary_index) {
+        let boundary = mime_message.substr(first_boundary_index, 100);
+        boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
+        if (boundary) {
+          boundary = boundary.replace(/^boundary="?|"$/gi, '');
+          let boundary_begin = '\r\n--' + boundary + '\r\n';
+          let boundary_end = '--' + boundary + '--';
+          let end_index = mime_message.indexOf(boundary_end);
+          if (end_index !== -1) {
+            mime_message = mime_message.substr(0, end_index + boundary_end.length);
+            if (mime_message) {
+              let result = { full: mime_message, signed: null as string|null, signature: null as string|null };
+              let first_part_start_index = mime_message.indexOf(boundary_begin);
+              if (first_part_start_index !== -1) {
+                first_part_start_index += boundary_begin.length;
+                let first_part_end_index = mime_message.indexOf(boundary_begin, first_part_start_index);
+                let second_part_start_index = first_part_end_index + boundary_begin.length;
+                let second_part_end_index = mime_message.indexOf(boundary_end, second_part_start_index);
+                if (second_part_end_index !== -1) {
+                  let first_part = mime_message.substr(first_part_start_index, first_part_end_index - first_part_start_index);
+                  let second_part = mime_message.substr(second_part_start_index, second_part_end_index - second_part_start_index);
+                  if (first_part.match(/^content-type: application\/pgp-signature/gi) !== null && tool.value('-----BEGIN PGP SIGNATURE-----').in(first_part) && tool.value('-----END PGP SIGNATURE-----').in(first_part)) {
+                    result.signature = tool.crypto.armor.clip(first_part);
+                    result.signed = second_part;
+                  } else {
+                    result.signature = tool.crypto.armor.clip(second_part);
+                    result.signed = first_part;
+                  }
+                  return result;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+}
+
 let tool = {
   arr: {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
@@ -2116,217 +2336,6 @@ let tool = {
     },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
     keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
-  },
-  mime: {
-    process: async (mime_message: string) => {
-      let decoded = await tool.mime.decode(mime_message);
-      if (typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
-        decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
-      }
-      let blocks: MessageBlock[] = [];
-      if (decoded.text) {  // may be undefined or empty
-        blocks = blocks.concat(tool.crypto.armor.detect_blocks(decoded.text).blocks);
-      }
-      for (let file of decoded.attachments) {
-        let treat_as = file.treat_as();
-        if (treat_as === 'message') {
-          let armored = tool.crypto.armor.clip(file.as_text());
-          if (armored) {
-            blocks.push(tool._.crypto_armor_block_object('message', armored));
-          }
-        } else if (treat_as === 'signature') {
-          decoded.signature = decoded.signature || file.as_text();
-        } else if (treat_as === 'public_key') {
-          blocks = blocks.concat(tool.crypto.armor.detect_blocks(file.as_text()).blocks);
-        }
-      }
-      if (decoded.signature) {
-        for (let block of blocks) {
-          if (block.type === 'text') {
-            block.type = 'signed_message';
-            block.signature = decoded.signature;
-            return false;
-          }
-        }
-      }
-      return {headers: decoded.headers, blocks};
-    },
-    headers_to_from: (parsed_mime_message: MimeContent): FromToHeaders => {
-      let header_to: string[] = [];
-      let header_from;
-      // @ts-ignore - I should check this - does it really have .address?
-      if (parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
-        // @ts-ignore - I should check this - does it really have .address?
-        header_from = parsed_mime_message.headers.from[0].address;
-      }
-      if (parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
-        for (let to of parsed_mime_message.headers.to) {
-          // @ts-ignore - I should check this - does it really have .address?
-          if (to.address) {
-            // @ts-ignore - I should check this - does it really have .address?
-            header_to.push(to.address);
-          }
-        }
-      }
-      return { from: header_from, to: header_to };
-    },
-    reply_headers: (parsed_mime_message: MimeContent) => {
-      let message_id = parsed_mime_message.headers['message-id'] || '';
-      let references = parsed_mime_message.headers['in-reply-to'] || '';
-      return { 'in-reply-to': message_id, 'references': references + ' ' + message_id };
-    },
-    resembles_message: (message: string|Uint8Array) => {
-      let m = message.slice(0, 1000);
-      // noinspection SuspiciousInstanceOfGuard
-      if (m instanceof Uint8Array) {
-        m = Str.from_uint8(m);
-      }
-      m = m.toLowerCase();
-      let contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
-      if (contentType === null) {
-        return false;
-      }
-      if (m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || m.match(/content-disposition: +[0-9a-z\-\/]+/) || m.match(/; boundary=/) || m.match(/; charset=/)) {
-        return true;
-      }
-      return Boolean(contentType.index === 0 && m.match(/boundary=/));
-    },
-    decode: (mime_message: string): Promise<MimeContent> => {
-      return new Promise(async resolve => {
-        let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
-        try {
-          let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
-          let parser = new MimeParser();
-          let parsed: {[key: string]: MimeParserNode} = {};
-          parser.onheader = (node: MimeParserNode) => {
-            if (!String(node.path.join('.'))) { // root node headers
-              for (let name of Object.keys(node.headers)) {
-                mime_content.headers[name] = node.headers[name][0].value;
-              }
-            }
-          };
-          parser.onbody = (node: MimeParserNode) => {
-            let path = String(node.path.join('.'));
-            if (typeof parsed[path] === 'undefined') {
-              parsed[path] = node;
-            }
-          };
-          parser.onend = () => {
-            for (let node of Object.values(parsed)) {
-              if (tool._.mime_node_type(node) === 'application/pgp-signature') {
-                mime_content.signature = node.rawContent;
-              } else if (tool._.mime_node_type(node) === 'text/html' && !tool._.mime_node_filename(node)) {
-                // html content may be broken up into smaller pieces by attachments in between
-                // AppleMail does this with inline attachments
-                mime_content.html = (mime_content.html || '') + tool._.mime_node_process_text_content(node);
-              } else if (tool._.mime_node_type(node) === 'text/plain' && !tool._.mime_node_filename(node)) {
-                mime_content.text = tool._.mime_node_process_text_content(node);
-              } else {
-                mime_content.attachments.push(new Attachment({
-                  name: tool._.mime_node_filename(node),
-                  type: tool._.mime_node_type(node),
-                  data: node.content,
-                  cid: tool._.mime_node_content_id(node),
-                }));
-              }
-            }
-            resolve(mime_content);
-          };
-          parser.write(mime_message);
-          parser.end();
-        } catch (e) {
-          tool.catch.handle_exception(e);
-          resolve(mime_content);
-        }
-      });
-    },
-    encode: async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
-      let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
-      let root_node = new MimeBuilder('multipart/mixed');
-      for (let key of Object.keys(headers)) {
-        root_node.addHeader(key, headers[key]);
-      }
-      if (typeof body === 'string') {
-        body = {'text/plain': body};
-      }
-      let content_node: MimeParserNode;
-      if (Object.keys(body).length === 1) {
-        content_node = tool._.mime_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
-      } else {
-        content_node = new MimeBuilder('multipart/alternative');
-        for (let type of Object.keys(body)) {
-          content_node.appendChild(tool._.mime_content_node(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
-        }
-      }
-      root_node.appendChild(content_node);
-      for (let attachment of attachments) {
-        let type = `${attachment.type}; name="${attachment.name}"`;
-        let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
-        root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.data()));
-      }
-      return root_node.build();
-    },
-    signed: (mime_message: string) => {
-      /*
-        Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
-        Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
-
-        --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
-        Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
-        From: Henry Electrum <henry.electrum@gmail.com>
-        To: human@flowcrypt.com
-        Message-ID: <abd68ba1-35c3-ee8a-0d60-0319c608d56b@gmail.com>
-        Subject: compatibility - simples signed email
-
-        --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1
-        Content-Type: text/plain; charset=utf-8
-        Content-Transfer-Encoding: quoted-printable
-
-        content
-
-        --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
-        */
-      let signed_header_index = mime_message.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
-      if (signed_header_index !== -1) {
-        mime_message = mime_message.substr(signed_header_index);
-        let first_boundary_index = mime_message.substr(0, 1000).toLowerCase().indexOf('boundary=');
-        if (first_boundary_index) {
-          let boundary = mime_message.substr(first_boundary_index, 100);
-          boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
-          if (boundary) {
-            boundary = boundary.replace(/^boundary="?|"$/gi, '');
-            let boundary_begin = '\r\n--' + boundary + '\r\n';
-            let boundary_end = '--' + boundary + '--';
-            let end_index = mime_message.indexOf(boundary_end);
-            if (end_index !== -1) {
-              mime_message = mime_message.substr(0, end_index + boundary_end.length);
-              if (mime_message) {
-                let result = { full: mime_message, signed: null as string|null, signature: null as string|null };
-                let first_part_start_index = mime_message.indexOf(boundary_begin);
-                if (first_part_start_index !== -1) {
-                  first_part_start_index += boundary_begin.length;
-                  let first_part_end_index = mime_message.indexOf(boundary_begin, first_part_start_index);
-                  let second_part_start_index = first_part_end_index + boundary_begin.length;
-                  let second_part_end_index = mime_message.indexOf(boundary_end, second_part_start_index);
-                  if (second_part_end_index !== -1) {
-                    let first_part = mime_message.substr(first_part_start_index, first_part_end_index - first_part_start_index);
-                    let second_part = mime_message.substr(second_part_start_index, second_part_end_index - second_part_start_index);
-                    if (first_part.match(/^content-type: application\/pgp-signature/gi) !== null && tool.value('-----BEGIN PGP SIGNATURE-----').in(first_part) && tool.value('-----END PGP SIGNATURE-----').in(first_part)) {
-                      result.signature = tool.crypto.armor.clip(first_part);
-                      result.signed = second_part;
-                    } else {
-                      result.signature = tool.crypto.armor.clip(second_part);
-                      result.signed = first_part;
-                    }
-                    return result;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
   },
   diagnose: {
     message_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<DiagnoseMessagePubkeysResult> => {

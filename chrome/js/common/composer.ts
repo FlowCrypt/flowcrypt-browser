@@ -335,13 +335,13 @@ class Composer {
     }
     try {
       let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
-      let parsed_message = await tool.mime.decode(Str.base64url_decode(draft_get_response.message.raw!));
+      let parsed_message = await Mime.decode(Str.base64url_decode(draft_get_response.message.raw!));
       let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
       if (armored) {
         this.S.cached('input_subject').val(parsed_message.headers.subject || '');
-        await this.decrypt_and_render_draft(armored, tool.mime.headers_to_from(parsed_message));
+        await this.decrypt_and_render_draft(armored, Mime.headers_to_from(parsed_message));
       } else {
-        console.info('Api.gmail.draft_get tool.mime.decode else {}');
+        console.info('Api.gmail.draft_get Mime.decode else {}');
         if (this.is_reply_box) {
           await this.render_reply_message_compose_table();
         }
@@ -409,7 +409,7 @@ class Composer {
         body = encrypted.data;
       }
       let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
-      let mime_message = await tool.mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
+      let mime_message = await Mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
       try {
         if (!this.draft_id) {
           let new_draft = await this.app.email_provider_draft_create(mime_message);
@@ -1019,10 +1019,10 @@ class Composer {
     }
     let result = await tool.crypto.message.decrypt(this.account_email, armored_message);
     if (result.success) {
-      if (!tool.mime.resembles_message(result.content.text!)) {
+      if (!Mime.resembles_message(result.content.text!)) {
         this.append_forwarded_message(result.content.text!.replace(/\n/g, '<br>'));
       } else {
-        let mime_parse_result = await tool.mime.decode(result.content.text!);
+        let mime_parse_result = await Mime.decode(result.content.text!);
         if(typeof mime_parse_result.text !== 'undefined') {
           this.append_forwarded_message(mime_parse_result.text.replace(/\n/g, '<br>'));
         } else if (typeof mime_parse_result.html !== 'undefined') {

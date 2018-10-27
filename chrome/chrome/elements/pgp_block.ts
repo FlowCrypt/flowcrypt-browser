@@ -302,7 +302,7 @@ tool.catch.try(async () => {
     if (decrypted_content instanceof Uint8Array) {
       decrypted_content = Str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
-    if (!tool.mime.resembles_message(decrypted_content)) {
+    if (!Mime.resembles_message(decrypted_content)) {
       let fc_attachments: Attachment[] = [];
       decrypted_content = Str.extract_fc_attachments(decrypted_content, fc_attachments);
       decrypted_content = Str.strip_fc_reply_token(decrypted_content);
@@ -320,7 +320,7 @@ tool.catch.try(async () => {
       }
     } else {
       render_text('Formatting...');
-      let decoded = await tool.mime.decode(decrypted_content);
+      let decoded = await Mime.decode(decrypted_content);
       if (typeof decoded.html !== 'undefined') {
         await render_content(decoded.html, false);
       } else if(typeof decoded.text !== 'undefined') {
@@ -473,13 +473,13 @@ tool.catch.try(async () => {
         } else {
           message_fetched_from_api = 'raw';
           let mime_message = Str.base64url_decode(result.raw);
-          let parsed = tool.mime.signed(mime_message);
+          let parsed = Mime.signed(mime_message);
           if (parsed) {
             signature = parsed.signature;
             message = parsed.signed;
             await decrypt_and_render();
           } else {
-            let decoded = await tool.mime.decode(mime_message);
+            let decoded = await Mime.decode(mime_message);
             signature = decoded.signature || null;
             console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
             console.info(mime_message);
