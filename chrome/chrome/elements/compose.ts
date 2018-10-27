@@ -73,7 +73,7 @@ tool.catch.try(async () => {
   let composer = new Composer({
     can_read_email: () => can_read_email,
     does_recipient_have_my_pubkey: async (their_email: string): Promise<boolean|undefined> => {
-      their_email = tool.str.parse_email(their_email).email;
+      their_email = Str.parse_email(their_email).email;
       if(!their_email) {
         return false;
       }

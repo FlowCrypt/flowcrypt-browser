@@ -113,7 +113,7 @@ class FlowCryptAccount {
     let messages = await Api.gmail.messages_get(account_email, response.messages.map(m => m.id), 'full');
     for (let gmail_message_object of messages) {
       if (gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body && gmail_message_object.payload.body.size > 0 && gmail_message_object.payload.body.data) {
-        let token = this.parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);
+        let token = this.parse_token_email_text(Str.base64url_decode(gmail_message_object.payload.body.data), uuid);
         if (token && typeof token === 'string') {
           tokens.push(token);
         }

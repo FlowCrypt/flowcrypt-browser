@@ -119,7 +119,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
             }
           }).catch(e => (attachments_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
         } else if (treat_as === 'signature') {
-          let embedded_signed_message_xss_safe = this.factory.embedded_message(tool.str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
+          let embedded_signed_message_xss_safe = this.factory.embedded_message(Str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
           if (!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text())) {
             message_element.addClass('evaluated');
             message_element.html(embedded_signed_message_xss_safe).css('display', 'block'); // xss-safe-factory
@@ -192,7 +192,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
   private dom_extract_message_id = (base_element: HTMLElement|JQuery<HTMLElement>) => {
     let inbox_msg_id_match = ($(base_element).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
     if (inbox_msg_id_match) {
-      return tool.str.int_to_hex(inbox_msg_id_match[0]);
+      return Str.int_to_hex(inbox_msg_id_match[0]);
     }
   }
 
@@ -203,7 +203,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
   private dom_extract_thread_id = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
     let inbox_thread_id_match = ($(conversation_root_element).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
     if (inbox_thread_id_match) {
-      return tool.str.int_to_hex(inbox_thread_id_match[0]);
+      return Str.int_to_hex(inbox_thread_id_match[0]);
     }
   }
 

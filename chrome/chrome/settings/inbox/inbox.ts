@@ -89,7 +89,7 @@ tool.catch.try(async () => {
           thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
           let from_header_value = Api.gmail.find_header(item_result, 'from');
           if (from_header_value) {
-            let from = tool.str.parse_email(from_header_value);
+            let from = Str.parse_email(from_header_value);
             thread_item.find('.from').text(from.name || from.email);
           }
           thread_item.find('.loading').text('');
@@ -114,8 +114,8 @@ tool.catch.try(async () => {
 
   let render_message = (message: any) => {
     let bodies = Api.gmail.find_bodies(message);
-    let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain']!)) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html']!)));
-    let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
+    let armored_message_from_bodies = tool.crypto.armor.clip(Str.base64url_decode(bodies['text/plain']!)) || tool.crypto.armor.clip(tool.crypto.armor.strip(Str.base64url_decode(bodies['text/html']!)));
+    let renderable_html = !armored_message_from_bodies ? Str.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
     Ui.sanitize_append(S.cached('thread'), tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
   };
 

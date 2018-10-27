@@ -139,9 +139,9 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let button;
         let [full_link, name, button_href_id] = found_cryptup_link;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${tool.str.html_escape(button_href_id)}">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${Str.html_escape(button_href_id)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${tool.str.html_escape(button_href_id)}">Open draft</a>`;
+          button = `<a href="#inbox/${Str.html_escape(button_href_id)}">Open draft</a>`;
         }
         if (button) {
           Ui.sanitize_replace(contenteditable, button);
@@ -223,7 +223,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
         } else if (treat_as === 'signature') {
-          let signed_content = message_element[0] ? tool.str.normalize_spaces(message_element[0].innerText).trim() : '';
+          let signed_content = message_element[0] ? Str.normalize_spaces(message_element[0].innerText).trim() : '';
           let embedded_signed_message_xss_safe = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
           let replace = !message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text());
           message_element = this.update_message_body_element_DANGEROUSLY(message_element, replace ? 'set': 'append', embedded_signed_message_xss_safe); // xss-safe-factory
@@ -437,7 +437,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           for (let email of recipients) {
             if (email) {
               let cache = this.recipient_has_pgp_cache[email];
-              if (!tool.str.is_email_valid(email)) {
+              if (!Str.is_email_valid(email)) {
                 everyone_uses_encryption = false;
                 break;
               }

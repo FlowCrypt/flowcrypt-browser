@@ -14,7 +14,7 @@ tool.catch.try(async () => {
   let addresses = storage.addresses || [url_params.account_email];
 
   let address_to_html_radio = (a: string) => {
-    a = tool.str.html_escape(a);
+    a = Str.html_escape(a);
     return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
   };
 

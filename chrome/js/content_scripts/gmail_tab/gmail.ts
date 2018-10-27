@@ -21,7 +21,7 @@ tool.catch.try(async () => {
         return account_email_loading_match[0].trim().toLowerCase();
       }
       let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
-      if (tool.str.is_email_valid(email_from_account_dropdown)) {
+      if (Str.is_email_valid(email_from_account_dropdown)) {
         return email_from_account_dropdown;
       }
     }
@@ -47,7 +47,7 @@ tool.catch.try(async () => {
       } else if (extracted[1] === 'false') {
         insights.new_ui = false;
       }
-      if (tool.str.is_email_valid(extracted[2])) {
+      if (Str.is_email_valid(extracted[2])) {
         insights.email = extracted[2].trim().toLowerCase();
       }
       if (insights.new_data_layer === null && insights.new_ui === null && insights.email === null) {

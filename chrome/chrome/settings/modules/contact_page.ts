@@ -30,8 +30,8 @@ tool.catch.try(async () => {
   let render_fields = (result: ApirFcAccountUpdate$result) => {
     if (result.alias) {
       let me = Api.fc.url('me', result.alias);
-      let me_escaped = tool.str.html_escape(me);
-      let me_escaped_display = tool.str.html_escape(me.replace('https://', ''));
+      let me_escaped = Str.html_escape(me);
+      let me_escaped_display = Str.html_escape(me.replace('https://', ''));
       Ui.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');
@@ -60,7 +60,7 @@ tool.catch.try(async () => {
     let storage = await Store.get_account(auth_info.account_email!, ['full_name']);
     try {
       let alias = await find_available_alias(auth_info.account_email!);
-      let initial = {alias, name: storage.full_name || tool.str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
+      let initial = {alias, name: storage.full_name || Str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
       let response = await Api.fc.account_update(initial);
       if (!response.updated) {
         alert('Failed to enable your Contact Page. Please try again');
@@ -95,7 +95,7 @@ tool.catch.try(async () => {
   let find_available_alias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
     while(alias.length < 3) {
-      alias += tool.str.random(1).toLowerCase();
+      alias += Str.random(1).toLowerCase();
     }
     let i = 0;
     while(true) {

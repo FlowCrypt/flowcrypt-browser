@@ -15,8 +15,8 @@ class Settings {
       if (!headers.from) {
         return results.filter(email => !tool.value(email).in(Settings.ignore_email_aliases));
       }
-      results.push(tool.str.parse_email(headers.from).email);
-      query += ' -from:"' + tool.str.parse_email(headers.from).email + '"';
+      results.push(Str.parse_email(headers.from).email);
+      query += ' -from:"' + Str.parse_email(headers.from).email + '"';
     }
   }
 
@@ -184,7 +184,7 @@ class Settings {
   })
 
   static account_storage_change_email = (old_account_email: string, new_account_email: string) => new Promise(async (resolve, reject) => {
-    if (!old_account_email || !new_account_email || !tool.str.is_email_valid(new_account_email)) {
+    if (!old_account_email || !new_account_email || !Str.is_email_valid(new_account_email)) {
       throw new Error('Missing or wrong account_email to reset');
     }
     let account_emails = await Store.account_emails_get();
@@ -247,14 +247,14 @@ class Settings {
 
   static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, original_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      let uids = original_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && tool.str.is_email_valid(tool.str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
+      let uids = original_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.is_email_valid(Str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
       if (!uids.length) {
         uids.push(account_email);
       }
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
       Ui.sanitize_render(container, [
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
-        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
+        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Str.html_escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
         '  Choose expiration of updated key',
         '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
@@ -288,7 +288,7 @@ class Settings {
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await tool.crypto.key.decrypt(original_prv, [passphrase]);
           let reformatted;
-          let userIds = uids.map(uid => tool.str.parse_email(uid)).map(u => ({email: u.email, name: u.name || ''}));
+          let userIds = uids.map(uid => Str.parse_email(uid)).map(u => ({email: u.email, name: u.name || ''}));
           try {
             reformatted = await openpgp.reformatKey({privateKey: original_prv, passphrase, userIds, keyExpirationTime: expire_seconds}) as {key: OpenPGP.key.Key};
           } catch (e) {

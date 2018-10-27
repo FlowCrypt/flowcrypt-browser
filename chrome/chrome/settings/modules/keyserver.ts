@@ -19,19 +19,19 @@ tool.catch.try(async () => {
       let note, action, remove, color;
       if (result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
-        action = `<div class="button gray2 small action_request_attestation" email="${tool.str.html_escape(email)}">Submit public key</div>`;
-        remove = `&nbsp; <b class="bad action_remove_alias" email="${tool.str.html_escape(email)}" title="Remove address from list of send-from addresses.">[x]</b>`;
+        action = `<div class="button gray2 small action_request_attestation" email="${Str.html_escape(email)}">Submit public key</div>`;
+        remove = `&nbsp; <b class="bad action_remove_alias" email="${Str.html_escape(email)}" title="Remove address from list of send-from addresses.">[x]</b>`;
         color = 'orange';
       } else if (result.match) {
         if (email === account_email && !result.attested) {
           if (attests_requested && attests_requested.length) {
-            note = `Submitted. Attestation was requested from ${tool.str.html_escape(attests_requested.join(', '))} and should process shortly.`;
-            action = `<div class="button gray2 small refresh_after_attest_request" email="${tool.str.html_escape(email)}">Refresh</div>`;
+            note = `Submitted. Attestation was requested from ${Str.html_escape(attests_requested.join(', '))} and should process shortly.`;
+            action = `<div class="button gray2 small refresh_after_attest_request" email="${Str.html_escape(email)}">Refresh</div>`;
             remove = '';
             color = 'orange';
           } else {
             note = 'Found but not attested.';
-            action = `<div class="button gray2 small action_request_attestation" email="${tool.str.html_escape(email)}">Request Attestation</div>`;
+            action = `<div class="button gray2 small action_request_attestation" email="${Str.html_escape(email)}">Request Attestation</div>`;
             remove = '';
             color = 'orange';
           }
@@ -49,17 +49,17 @@ tool.catch.try(async () => {
       } else {
         if (email === account_email && !result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = `<div class="button gray2 small action_request_attestation" email="${tool.str.html_escape(email)}">Request Attestation</div>`;
+          action = `<div class="button gray2 small action_request_attestation" email="${Str.html_escape(email)}">Request Attestation</div>`;
           remove = '';
           color = 'red';
         } else if (email === account_email && result.attested && attests_requested && attests_requested.length) {
           note = 'Re-Attestation requested. This should process shortly.';
-          action = `<div class="button gray2 small refresh_after_attest_request" email="${tool.str.html_escape(email)}">Refresh</div>`;
+          action = `<div class="button gray2 small refresh_after_attest_request" email="${Str.html_escape(email)}">Refresh</div>`;
           remove = '';
           color = 'orange';
         } else if (email === account_email && result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = `<div class="button gray2 small request_replacement" email="${tool.str.html_escape(email)}">Request Replacement Attestation</div>`;
+          action = `<div class="button gray2 small request_replacement" email="${Str.html_escape(email)}">Request Replacement Attestation</div>`;
           remove = '';
           color = 'red';
         } else {
@@ -69,7 +69,7 @@ tool.catch.try(async () => {
           color = 'red';
         }
       }
-      table_contents += `<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`;
+      table_contents += `<tr><td>${Str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`;
     }
     Ui.sanitize_replace('table#emails', `<table id="emails">${table_contents}</table>`);
 

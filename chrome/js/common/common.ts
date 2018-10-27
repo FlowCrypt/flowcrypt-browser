@@ -94,7 +94,7 @@ class Attachment {
 
   public as_text = (): string => {
     if(this.text === null && this.bytes !== null) {
-      this.text = tool.str.from_uint8(this.bytes);
+      this.text = Str.from_uint8(this.bytes);
     }
     if(this.text !== null) {
       return this.text;
@@ -104,7 +104,7 @@ class Attachment {
 
   public as_bytes = (): Uint8Array => {
     if(this.bytes === null && this.text !== null) {
-      this.bytes = tool.str.to_uint8(this.text);
+      this.bytes = Str.to_uint8(this.text);
     }
     if (this.bytes !== null) {
       return this.bytes;
@@ -322,7 +322,7 @@ class Api {
       }
       let response_handled = false;
       Api.internal.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
-        let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
+        let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: Str.random(20), scopes};
         BrowserMsg.listen({
           google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
             if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
@@ -374,10 +374,10 @@ class Api {
       let my_email = account_email;
       for (let email of reply_to_estimate) {
         if (email) {
-          if (tool.value(tool.str.parse_email(email).email).in(addresses)) { // my email
+          if (tool.value(Str.parse_email(email).email).in(addresses)) { // my email
             my_email = email;
-          } else if (!tool.value(tool.str.parse_email(email).email).in(reply_to)) { // skip duplicates
-            reply_to.push(tool.str.parse_email(email).email); // reply to all except my emails
+          } else if (!tool.value(Str.parse_email(email).email).in(reply_to)) { // skip duplicates
+            reply_to.push(Str.parse_email(email).email); // reply to all except my emails
           }
         }
       }
@@ -423,14 +423,14 @@ class Api {
     }),
     draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts', {
       message: {
-        raw: tool.str.base64url_encode(mime_message),
+        raw: Str.base64url_encode(mime_message),
         threadId: thread_id || null,
       },
     }),
     draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => Api.internal.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
     draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => Api.internal.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
       message: {
-        raw: tool.str.base64url_encode(mime_message),
+        raw: Str.base64url_encode(mime_message),
       },
     }),
     draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => Api.internal.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
@@ -459,7 +459,7 @@ class Api {
     },
     attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
       let r: ApirGmailAttachment = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
-      r.data = tool.str.base64url_decode(r.data);
+      r.data = Str.base64url_decode(r.data);
       return r;
     },
     attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
@@ -489,7 +489,7 @@ class Api {
           }
           for (let i = 0; parsed_json_data_field && i < 50; i++) {
             try {
-              resolve(tool.str.base64url_decode(parsed_json_data_field));
+              resolve(Str.base64url_decode(parsed_json_data_field));
               return;
             } catch (e) {
                // the chunk of data may have been cut at an inconvenient index
@@ -599,7 +599,7 @@ class Api {
         }
         gmail_query.push(`(to:${variations_of_to.join(' OR to:')})`);
       }
-      let filtered_contacts = known_contacts.filter(c => tool.str.is_email_valid(c.email));
+      let filtered_contacts = known_contacts.filter(c => Str.is_email_valid(c.email));
       for (let contact of filtered_contacts) {
         gmail_query.push(`-to:${contact.email}`);
       }
@@ -617,7 +617,7 @@ class Api {
       if (format === 'full') {
         let bodies = Api.gmail.find_bodies(gmail_message_object);
         let attachments = Api.gmail.find_attachments(gmail_message_object);
-        let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'] || '')));
+        let armored_message_from_bodies = tool.crypto.armor.clip(Str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(Str.base64url_decode(bodies['text/html'] || '')));
         if (armored_message_from_bodies) {
           return armored_message_from_bodies;
         } else if (attachments.length) {
@@ -637,7 +637,7 @@ class Api {
           throw {code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
         }
       } else { // format === raw
-        let mime_message = await tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw!));
+        let mime_message = await tool.mime.decode(Str.base64url_decode(gmail_message_object.raw!));
         if (mime_message.text !== undefined) {
           let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
           if (armored_message) {
@@ -681,10 +681,10 @@ class Api {
 
   public static attester = {
     lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => Api.internal.api_attester_call('lookup/email', {
-      email: emails.map(e => tool.str.parse_email(e).email),
+      email: emails.map(e => Str.parse_email(e).email),
     }),
     initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => Api.internal.api_attester_call('initial/legacy_submit', {
-      email: tool.str.parse_email(email).email,
+      email: Str.parse_email(email).email,
       pubkey: pubkey.trim(),
       attest,
     }),
@@ -839,7 +839,7 @@ class Api {
     }),
     account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
       let auth_info = await Store.auth_info();
-      let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
+      let uuid = auth_info.uuid || tool.crypto.hash.sha1(Str.random(40));
       let account = auth_info.account_email || account_email;
       let response: ApirFcAccountLogin = await Api.internal.api_fc_call('account/login', {
         account,
@@ -866,7 +866,7 @@ class Api {
           if (response.email !== auth_info.account_email) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
             local_storage_update.cryptup_account_email = response.email;
-            local_storage_update.cryptup_account_uuid = tool.crypto.hash.sha1(tool.str.random(40));
+            local_storage_update.cryptup_account_uuid = tool.crypto.hash.sha1(Str.random(40));
           }
         } else {
           if (auth_info.account_email) {
@@ -1211,7 +1211,7 @@ class Api {
       return auth_request_scopes;
     },
     encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
-      let boundary = 'this_sucks_' + tool.str.random(10);
+      let boundary = 'this_sucks_' + Str.random(10);
       let body = '';
       for (let type of Object.keys(parts)) {
         body += '--' + boundary + '\n';
@@ -1232,7 +1232,7 @@ class Api {
         let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
         if (headers.to) {
           let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
-          let new_valid_results = raw_parsed_results.filter(r => tool.str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
+          let new_valid_results = raw_parsed_results.filter(r => Str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
           query += raw_parsed_results.map(raw => ` -to:"${raw.address}"`).join('');
           all_results = all_results.concat(new_valid_results);
           chunked_callback({new: new_valid_results, all: all_results});
@@ -1273,7 +1273,7 @@ class Api {
 
 class Ui {
 
-  public static retry_link = (caption:string='retry') => `<a href="${tool.str.html_escape(window.location.href)}">${tool.str.html_escape(caption)}</a>`;
+  public static retry_link = (caption:string='retry') => `<a href="${Str.html_escape(window.location.href)}">${Str.html_escape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1283,17 +1283,17 @@ class Ui {
     return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Str.html_sanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Str.html_sanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Str.html_sanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Str.html_sanitize(dirty_html)); // xss-sanitized
 
   public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
-      let btns = Object.keys(buttons).map(id => `<div class="button ${tool.str.html_escape(buttons[id].color || 'green')} overlay_action_${tool.str.html_escape(id)}">${tool.str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
+      let btns = Object.keys(buttons).map(id => `<div class="button ${Str.html_escape(buttons[id].color || 'green')} overlay_action_${Str.html_escape(id)}">${Str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
       Ui.sanitize_append('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
@@ -1335,7 +1335,7 @@ class Ui {
   public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
     let actual_type = typeof values[name];
     if (actual_type !== expected_type) {
-      let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be of type ${tool.str.html_escape(expected_type)} but got ${tool.str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      let msg = `Cannot render page (expected ${Str.html_escape(name)} to be of type ${Str.html_escape(expected_type)} but got ${Str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
@@ -1344,7 +1344,7 @@ class Ui {
 
   public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
     if (expected_values.indexOf(values[name]) === -1) {
-      let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be one of ${tool.str.html_escape(expected_values.map(String).join(','))} but got ${tool.str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      let msg = `Cannot render page (expected ${Str.html_escape(name)} to be one of ${Str.html_escape(expected_values.map(String).join(','))} but got ${Str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
@@ -1449,9 +1449,9 @@ class Ui {
         e.stopPropagation();
       });
     },
-    double: (): PreventableEvent => ({ name: 'double', id: tool.str.random(10) }),
-    parallel: (): PreventableEvent => ({ name: 'parallel', id: tool.str.random(10) }),
-    spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: tool.str.random(10) }),
+    double: (): PreventableEvent => ({ name: 'double', id: Str.random(10) }),
+    parallel: (): PreventableEvent => ({ name: 'parallel', id: Str.random(10) }),
+    spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: Str.random(10) }),
     handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
       return function(event: JQuery.Event<HTMLElement, null>) {
         let r;
@@ -1540,7 +1540,7 @@ class BrowserMsg {
   }
 
   public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
-    let msg = { name, data, to: destination_string || null, uid: tool.str.random(10), stack: tool.catch.stack_trace() };
+    let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: tool.catch.stack_trace() };
     let try_resolve_no_undefined = (r?: BrowserMessageResponse) => tool.catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     let is_background_page = Env.is_background_script();
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
@@ -1669,264 +1669,297 @@ class BrowserMsg {
 
 }
 
-let tool = {
-  str: {
-    parse_email: (email_string: string) => {
-      if (tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
-        return {
-          email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
-          name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
-          full: email_string,
-        };
-      }
+class Str {
+
+  public static parse_email = (email_string: string) => {
+    if (tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
       return {
-        email: email_string.replace(/["']/g, '').trim().toLowerCase(),
-        name: null,
+        email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
+        name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
         full: email_string,
       };
-    },
-    pretty_print: (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj),
-    normalize_spaces: (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n'),
-    normalize_dashes: (str: string) => str.replace(/^—–|—–$/gm, '-----'),
-    normalize: (str: string) => tool.str.normalize_spaces(tool.str.normalize_dashes(str)),
-    number_format: (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
-      let nStr: string = number + '';
-      let x = nStr.split('.');
-      let x1 = x[0];
-      let x2 = x.length > 1 ? '.' + x[1] : '';
-      let rgx = /(\d+)(\d{3})/;
-      while(rgx.test(x1)) {
-        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return {
+      email: email_string.replace(/["']/g, '').trim().toLowerCase(),
+      name: null,
+      full: email_string,
+    };
+  }
+
+  public static pretty_print = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
+
+  public static normalize_spaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
+
+  public static normalize_dashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
+
+  public static normalize = (str: string) => Str.normalize_spaces(Str.normalize_dashes(str));
+
+  public static number_format = (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
+    let nStr: string = number + '';
+    let x = nStr.split('.');
+    let x1 = x[0];
+    let x2 = x.length > 1 ? '.' + x[1] : '';
+    let rgx = /(\d+)(\d{3})/;
+    while(rgx.test(x1)) {
+      x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
+  }
+
+  public static is_email_valid = (email: string) => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
+
+  public static month_name = (month_index: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month_index];
+
+  public static random = (length:number=5) => {
+    let id = '';
+    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    for (let i = 0; i < length; i++) {
+      id += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return id;
+  }
+
+  public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  public static html_attribute_encode = (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values));
+
+  public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(tool._.str_base64url_utf_decode(encoded));
+
+  public static html_escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+
+  public static html_unescape = (str: string) => {
+    // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
+    return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+  }
+
+  public static html_sanitize = (dirty_html: string): string => { // originaly text_or_html
+    return DOMPurify.sanitize(dirty_html, {
+      SAFE_FOR_JQUERY: true,
+      ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
+      ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
+    });
+  }
+
+  public static html_sanitize_keep_basic_tags = (dirty_html: string): string => {
+    // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
+    DOMPurify.removeAllHooks();
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if ('src' in node) {
+        // replace images with a link that points to that image
+        let img: Element = node;
+        let src = img.getAttribute('src')!;
+        let title = img.getAttribute('title');
+        img.removeAttribute('src');
+        let a = document.createElement('a');
+        a.href = src;
+        a.className = 'image_src_link';
+        a.target = '_blank';
+        a.innerText = title || 'show image';
+        let heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
+        a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
+        img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
       }
-      return x1 + x2;
-    },
-    is_email_valid: (email: string) => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email),
-    month_name: (month_index: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month_index],
-    random: (length:number=5) => {
-      let id = '';
-      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-      for (let i = 0; i < length; i++) {
-        id += possible.charAt(Math.floor(Math.random() * possible.length));
+      if ('target' in node) { // open links in new window
+        (node as Element).setAttribute('target', '_blank');
       }
-      return id;
-    },
-    regex_escape: (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-    html_attribute_encode: (values: Dict<any>): string => tool._.str_base64url_utf_encode(JSON.stringify(values)),
-    html_attribute_decode: (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(tool._.str_base64url_utf_decode(encoded)),
-    html_escape: (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;'),
-    html_unescape: (str: string) => {
-      // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
-      return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
-    },
-    html_sanitize: (dirty_html: string): string => { // originaly text_or_html
-      return DOMPurify.sanitize(dirty_html, {
-        SAFE_FOR_JQUERY: true,
-        ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
-        ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
-      });
-    },
-    html_sanitize_keep_basic_tags: (dirty_html: string): string => {
-      // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
-      DOMPurify.removeAllHooks();
-      DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-        if ('src' in node) {
-          // replace images with a link that points to that image
-          let img: Element = node;
-          let src = img.getAttribute('src')!;
-          let title = img.getAttribute('title');
-          img.removeAttribute('src');
-          let a = document.createElement('a');
-          a.href = src;
-          a.className = 'image_src_link';
-          a.target = '_blank';
-          a.innerText = title || 'show image';
-          let heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
-          a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
-          img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
+    });
+    let clean_html = DOMPurify.sanitize(dirty_html, {
+      SAFE_FOR_JQUERY: true,
+      ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
+      ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS,
+      ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
+    });
+    DOMPurify.removeAllHooks();
+    return clean_html;
+  }
+
+  public static html_sanitize_and_strip_all_tags = (dirty_html: string, output_newline: string): string => {
+    let html = Str.html_sanitize_keep_basic_tags(dirty_html);
+    let random = Str.random(5);
+    let br = `CU_BR_${random}`;
+    let block_start = `CU_BS_${random}`;
+    let block_end = `CU_BE_${random}`;
+    html = html.replace(/<br[^>]*>/gi, br);
+    html = html.replace(/\n/g, '');
+    html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
+    html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
+    html = html.replace(RegExp(`(${block_start})+`, 'g'), block_start).replace(RegExp(`(${block_end})+`, 'g'), block_end);
+    html = html.split(block_end + block_start).join(br).split(br + block_end).join(br);
+    let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
+    text = text.replace(/\n{2,}/g, '\n\n');
+    // not all tags were removed above. Remove all remaining tags
+    text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
+    text = text.trim();
+    if(output_newline !== '\n') {
+      text = text.replace(/\n/g, output_newline);
+    }
+    return text;
+  }
+
+  public static base64url_encode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+
+  public static base64url_decode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+
+  public static from_uint8 = (u8a: Uint8Array|string): string => {
+    if(typeof u8a === 'string') {
+      return u8a;
+    }
+    let CHUNK_SZ = 0x8000;
+    let c = [];
+    for (let i = 0; i < u8a.length; i += CHUNK_SZ) {
+      c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
+    }
+    return c.join('');
+  }
+
+  public static to_uint8 = (raw: string|Uint8Array): Uint8Array => {
+    if(raw instanceof Uint8Array) {
+      return raw;
+    }
+    let rawLength = raw.length;
+    let uint8 = new Uint8Array(new ArrayBuffer(rawLength));
+    for (let i = 0; i < rawLength; i++) {
+      uint8[i] = raw.charCodeAt(i);
+    }
+    return uint8;
+  }
+
+  public static from_equal_sign_notation_as_utf = (str: string): string => {
+    return str.replace(/(=[A-F0-9]{2})+/g, equal_sign_utf_part => {
+      return Str.uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map((two_hex_digits) => parseInt(two_hex_digits, 16)));
+    });
+  }
+
+  public static uint8_as_utf = (a: Uint8Array|number[]) => { // tom
+    let length = a.length;
+    let bytes_left_in_char = 0;
+    let utf8_string = '';
+    let binary_char = '';
+    for (let i = 0; i < length; i++) {
+      if (a[i] < 128) {
+        if (bytes_left_in_char) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
+          utf8_string += String.fromCharCode(a[i-1]);
         }
-        if ('target' in node) { // open links in new window
-          (node as Element).setAttribute('target', '_blank');
-        }
-      });
-      let clean_html = DOMPurify.sanitize(dirty_html, {
-        SAFE_FOR_JQUERY: true,
-        ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
-        ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS,
-        ALLOWED_URI_REGEXP: tool._.str_sanitize_href_regexp(),
-      });
-      DOMPurify.removeAllHooks();
-      return clean_html;
-    },
-    html_sanitize_and_strip_all_tags: (dirty_html: string, output_newline: string): string => {
-      let html = tool.str.html_sanitize_keep_basic_tags(dirty_html);
-      let random = tool.str.random(5);
-      let br = `CU_BR_${random}`;
-      let block_start = `CU_BS_${random}`;
-      let block_end = `CU_BE_${random}`;
-      html = html.replace(/<br[^>]*>/gi, br);
-      html = html.replace(/\n/g, '');
-      html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_end);
-      html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, block_start);
-      html = html.replace(RegExp(`(${block_start})+`, 'g'), block_start).replace(RegExp(`(${block_end})+`, 'g'), block_end);
-      html = html.split(block_end + block_start).join(br).split(br + block_end).join(br);
-      let text = html.split(br).join('\n').split(block_start).filter(v => !!v).join('\n').split(block_end).filter(v => !!v).join('\n');
-      text = text.replace(/\n{2,}/g, '\n\n');
-      // not all tags were removed above. Remove all remaining tags
-      text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
-      text = text.trim();
-      if(output_newline !== '\n') {
-        text = text.replace(/\n/g, output_newline);
-      }
-      return text;
-    },
-    base64url_encode: (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
-    base64url_decode: (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')), // used for 3rd party API calls - do not change w/o testing Gmail api attachments
-    from_uint8: (u8a: Uint8Array|string): string => {
-      if(typeof u8a === 'string') {
-        return u8a;
-      }
-      let CHUNK_SZ = 0x8000;
-      let c = [];
-      for (let i = 0; i < u8a.length; i += CHUNK_SZ) {
-        c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
-      }
-      return c.join('');
-    },
-    to_uint8: (raw: string|Uint8Array): Uint8Array => {
-      if(raw instanceof Uint8Array) {
-        return raw;
-      }
-      let rawLength = raw.length;
-      let uint8 = new Uint8Array(new ArrayBuffer(rawLength));
-      for (let i = 0; i < rawLength; i++) {
-        uint8[i] = raw.charCodeAt(i);
-      }
-      return uint8;
-    },
-    from_equal_sign_notation_as_utf: (str: string): string => {
-      return str.replace(/(=[A-F0-9]{2})+/g, equal_sign_utf_part => {
-        return tool.str.uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map((two_hex_digits) => parseInt(two_hex_digits, 16)));
-      });
-    },
-    uint8_as_utf: (a: Uint8Array|number[]) => { // tom
-      let length = a.length;
-      let bytes_left_in_char = 0;
-      let utf8_string = '';
-      let binary_char = '';
-      for (let i = 0; i < length; i++) {
-        if (a[i] < 128) {
-          if (bytes_left_in_char) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
-            utf8_string += String.fromCharCode(a[i-1]);
+        bytes_left_in_char = 0;
+        binary_char = '';
+        utf8_string += String.fromCharCode(a[i]);
+      } else {
+        if (!bytes_left_in_char) { // beginning of new multi-byte character
+          if (a[i] >= 128 && a[i] < 192) { // 10xx xxxx
+            utf8_string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
+          } else if (a[i] >= 192 && a[i] < 224) { // 110x xxxx
+            bytes_left_in_char = 1;
+            binary_char = a[i].toString(2).substr(3);
+          } else if (a[i] >= 224 && a[i] < 240) { // 1110 xxxx
+            bytes_left_in_char = 2;
+            binary_char = a[i].toString(2).substr(4);
+          } else if (a[i] >= 240 && a[i] < 248) { // 1111 0xxx
+            bytes_left_in_char = 3;
+            binary_char = a[i].toString(2).substr(5);
+          } else if (a[i] >= 248 && a[i] < 252) { // 1111 10xx
+            bytes_left_in_char = 4;
+            binary_char = a[i].toString(2).substr(6);
+          } else if (a[i] >= 252 && a[i] < 254) { // 1111 110x
+            bytes_left_in_char = 5;
+            binary_char = a[i].toString(2).substr(7);
+          } else {
+            console.log('Str.uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
           }
-          bytes_left_in_char = 0;
+        } else { // continuation of a multi-byte character
+          binary_char += a[i].toString(2).substr(2);
+          bytes_left_in_char--;
+        }
+        if (binary_char && !bytes_left_in_char) {
+          utf8_string += String.fromCharCode(parseInt(binary_char, 2));
           binary_char = '';
-          utf8_string += String.fromCharCode(a[i]);
-        } else {
-          if (!bytes_left_in_char) { // beginning of new multi-byte character
-            if (a[i] >= 128 && a[i] < 192) { // 10xx xxxx
-              utf8_string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
-            } else if (a[i] >= 192 && a[i] < 224) { // 110x xxxx
-              bytes_left_in_char = 1;
-              binary_char = a[i].toString(2).substr(3);
-            } else if (a[i] >= 224 && a[i] < 240) { // 1110 xxxx
-              bytes_left_in_char = 2;
-              binary_char = a[i].toString(2).substr(4);
-            } else if (a[i] >= 240 && a[i] < 248) { // 1111 0xxx
-              bytes_left_in_char = 3;
-              binary_char = a[i].toString(2).substr(5);
-            } else if (a[i] >= 248 && a[i] < 252) { // 1111 10xx
-              bytes_left_in_char = 4;
-              binary_char = a[i].toString(2).substr(6);
-            } else if (a[i] >= 252 && a[i] < 254) { // 1111 110x
-              bytes_left_in_char = 5;
-              binary_char = a[i].toString(2).substr(7);
-            } else {
-              console.log('tool.str.uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
-            }
-          } else { // continuation of a multi-byte character
-            binary_char += a[i].toString(2).substr(2);
-            bytes_left_in_char--;
-          }
-          if (binary_char && !bytes_left_in_char) {
-            utf8_string += String.fromCharCode(parseInt(binary_char, 2));
-            binary_char = '';
-          }
         }
       }
-      return utf8_string;
-    },
-    to_hex: (s: string): string => { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
-      let o = '';
-      s += '';
-      for (let i = 0; i < s.length; i++) {
-        let n = s.charCodeAt(i).toString(16);
-        o += n.length < 2 ? '0' + n : n;
+    }
+    return utf8_string;
+  }
+
+  public static to_hex = (s: string): string => { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
+    let o = '';
+    s += '';
+    for (let i = 0; i < s.length; i++) {
+      let n = s.charCodeAt(i).toString(16);
+      o += n.length < 2 ? '0' + n : n;
+    }
+    return o;
+  }
+
+  public static from_hex = (hex: string): string => {
+    let str = '';
+    for (let i = 0; i < hex.length; i += 2) {
+      let v = parseInt(hex.substr(i, 2), 16);
+      if (v) {
+        str += String.fromCharCode(v);
       }
-      return o;
-    },
-    from_hex: (hex: string): string => {
-      let str = '';
-      for (let i = 0; i < hex.length; i += 2) {
-        let v = parseInt(hex.substr(i, 2), 16);
-        if (v) {
-          str += String.fromCharCode(v);
-        }
-      }
-      return str;
-    },
-    extract_fc_attachments: (decrypted_content: string, fc_attachments: Attachment[]) => {
-      if (tool.value('cryptup_file').in(decrypted_content)) {
-        decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
-          let element = $(found_link);
-          let fc_data = element.attr('cryptup-data');
-          if (fc_data) {
-            let a: FlowCryptAttachmentLinkData = tool.str.html_attribute_decode(fc_data);
-            if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
-              fc_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
-            }
-          }
-          return '';
-        });
-      }
-      return decrypted_content;
-    },
-    extract_fc_reply_token: (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
-      let fc_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
-      if (fc_token_element.length) {
-        let fc_data = fc_token_element.attr('cryptup-data');
+    }
+    return str;
+  }
+
+  public static extract_fc_attachments = (decrypted_content: string, fc_attachments: Attachment[]) => {
+    if (tool.value('cryptup_file').in(decrypted_content)) {
+      decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
+        let element = $(found_link);
+        let fc_data = element.attr('cryptup-data');
         if (fc_data) {
-          return tool.str.html_attribute_decode(fc_data);
+          let a: FlowCryptAttachmentLinkData = Str.html_attribute_decode(fc_data);
+          if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
+            fc_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+          }
         }
+        return '';
+      });
+    }
+    return decrypted_content;
+  }
+
+  public static extract_fc_reply_token = (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
+    let fc_token_element = $(tool.e('div', {html: decrypted_content})).find('.cryptup_reply');
+    if (fc_token_element.length) {
+      let fc_data = fc_token_element.attr('cryptup-data');
+      if (fc_data) {
+        return Str.html_attribute_decode(fc_data);
       }
-    },
-    strip_fc_reply_token: (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, ''),
-    strip_public_keys: (decrypted_content: string, found_public_keys: string[]) => {
-      let {blocks, normalized} = tool.crypto.armor.detect_blocks(decrypted_content);
-      for (let block of blocks) {
-        if (block.type === 'public_key') {
-          found_public_keys.push(block.content);
-          normalized = normalized.replace(block.content, '');
-        }
+    }
+  }
+
+  public static strip_fc_reply_token = (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+
+  public static strip_public_keys = (decrypted_content: string, found_public_keys: string[]) => {
+    let {blocks, normalized} = tool.crypto.armor.detect_blocks(decrypted_content);
+    for (let block of blocks) {
+      if (block.type === 'public_key') {
+        found_public_keys.push(block.content);
+        normalized = normalized.replace(block.content, '');
       }
-      return normalized;
-    },
-    int_to_hex: (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
-      let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
-      while(dec.length) {
-        s = Number(dec.shift());
-        for(i = 0; s || i < sum.length; i++) {
-          s += (sum[i] || 0) * 10;
-          sum[i] = s % 16;
-          s = (s - sum[i]) / 16;
-        }
+    }
+    return normalized;
+  }
+
+  public static int_to_hex = (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
+    let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
+    while(dec.length) {
+      s = Number(dec.shift());
+      for(i = 0; s || i < sum.length; i++) {
+        s += (sum[i] || 0) * 10;
+        sum[i] = s % 16;
+        s = (s - sum[i]) / 16;
       }
-      while(sum.length) {
-        hex.push(sum.pop()!.toString(16));
-      }
-      return hex.join('');
-    },
-    capitalize: (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
-  },
+    }
+    while(sum.length) {
+      hex.push(sum.pop()!.toString(16));
+    }
+    return hex.join('');
+  }
+
+  public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+
+}
+
+let tool = {
   arr: {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
       let unique: T[] = [];
@@ -1991,7 +2024,7 @@ let tool = {
     sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = setTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
     get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
     hours: (h: number) =>  h * 1000 * 60 * 60, // hours in miliseconds
-    expiration_format: (date: string) => tool.str.html_escape(date.substr(0, 10)),
+    expiration_format: (date: string) => Str.html_escape(date.substr(0, 10)),
     to_utc_timestamp: (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string),
   },
   file: {
@@ -2019,7 +2052,7 @@ let tool = {
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = tool.str.html_escape(attachment.name);
+        a.download = Str.html_escape(attachment.name);
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
@@ -2119,7 +2152,7 @@ let tool = {
       let m = message.slice(0, 1000);
       // noinspection SuspiciousInstanceOfGuard
       if (m instanceof Uint8Array) {
-        m = tool.str.from_uint8(m);
+        m = Str.from_uint8(m);
       }
       m = m.toLowerCase();
       let contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
@@ -2201,7 +2234,7 @@ let tool = {
       root_node.appendChild(content_node);
       for (let attachment of attachments) {
         let type = `${attachment.type}; name="${attachment.name}"`;
-        let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${tool.str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
+        let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
         root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.data()));
       }
       return root_node.build();
@@ -2274,7 +2307,7 @@ let tool = {
       if (typeof m === 'string') {
         message = openpgp.message.readArmored(m);
       } else if (m instanceof Uint8Array) {
-        message = openpgp.message.readArmored(tool.str.from_uint8(m));
+        message = openpgp.message.readArmored(Str.from_uint8(m));
       } else {
         message = m;
       }
@@ -2373,7 +2406,7 @@ let tool = {
       },
       detect_blocks: (original_text: string) => {
         let blocks: MessageBlock[] = [];
-        let normalized = tool.str.normalize(original_text);
+        let normalized = Str.normalize(original_text);
         let start_at = 0;
         while(true) {
           let r = tool._.crypto_armor_detect_block_next(normalized, start_at);
@@ -2406,7 +2439,7 @@ let tool = {
         let r = '';
         for (let i in blocks) {
           if (blocks[i].type === 'text' || blocks[i].type === 'private_key') {
-            r += (Number(i) ? '\n\n' : '') + tool.str.html_escape(blocks[i].content) + '\n\n';
+            r += (Number(i) ? '\n\n' : '') + Str.html_escape(blocks[i].content) + '\n\n';
           } else if (blocks[i].type === 'message') {
             r += factory.embedded_message(blocks[i].complete ? tool.crypto.armor.normalize(blocks[i].content, 'message') : '', message_id, is_outgoing, sender_email, false);
           } else if (blocks[i].type === 'signed_message') {
@@ -2426,7 +2459,7 @@ let tool = {
         return r;
       },
       normalize: (armored: string, type:string) => {
-        armored = tool.str.normalize(armored);
+        armored = Str.normalize(armored);
         if (tool.value(type).in(['message', 'public_key', 'private_key', 'key'])) {
           armored = armored.replace(/\r?\n/g, '\n').trim();
           let nl_2 = armored.match(/\n\n/g);
@@ -2445,9 +2478,9 @@ let tool = {
       },
     },
     hash: {
-      sha1: (string: string) => tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
+      sha1: (string: string) => Str.to_hex(Str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
       double_sha1_upper: (string: string) => tool.crypto.hash.sha1(tool.crypto.hash.sha1(string)).toUpperCase(),
-      sha256: (string: string) => tool.str.to_hex(tool.str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
+      sha256: (string: string) => Str.to_hex(Str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
       challenge_answer: (answer: string) => tool._.crypto_hash_sha256_loop(answer),
     },
     key: {
@@ -2517,7 +2550,7 @@ let tool = {
         if (key_or_fingerprint_or_bytes === null || typeof key_or_fingerprint_or_bytes === 'undefined') {
           return null;
         } else if (typeof key_or_fingerprint_or_bytes === 'string' && key_or_fingerprint_or_bytes.length === 8) {
-          return tool.str.to_hex(key_or_fingerprint_or_bytes).toUpperCase();
+          return Str.to_hex(key_or_fingerprint_or_bytes).toUpperCase();
         } else if (typeof key_or_fingerprint_or_bytes === 'string' && key_or_fingerprint_or_bytes.length === 40) {
           return key_or_fingerprint_or_bytes.substr(-16);
         } else if (typeof key_or_fingerprint_or_bytes === 'string' && key_or_fingerprint_or_bytes.length === 49) {
@@ -2567,7 +2600,7 @@ let tool = {
         let d = data.slice(0, 50); // only interested in first 50 bytes
         // noinspection SuspiciousInstanceOfGuard
         if (d instanceof Uint8Array) {
-          d = tool.str.from_uint8(d);
+          d = Str.from_uint8(d);
         }
         let first_byte = d[0].charCodeAt(0); // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
         if ((first_byte & 0b10000000) === 0b10000000) { // 1XXX XXXX - potential pgp packet tag
@@ -2618,10 +2651,10 @@ let tool = {
       },
       verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<MessageVerifyResult> => {
         if (plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
-          plaintext = tool.str.from_uint8(plaintext);
+          plaintext = Str.from_uint8(plaintext);
         }
         if (signature_text instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
-          signature_text = tool.str.from_uint8(signature_text);
+          signature_text = Str.from_uint8(signature_text);
         }
         let message = openpgp.message.fromText(plaintext);
         message.appendSignature(signature_text);
@@ -2713,7 +2746,7 @@ let tool = {
       random: () => { // eg TDW6-DU5M-TANI-LJXY
         let secure_random_array = new Uint8Array(128);
         window.crypto.getRandomValues(secure_random_array);
-        return btoa(tool.str.from_uint8(secure_random_array)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
+        return btoa(Str.from_uint8(secure_random_array)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
       },
     }
   },
@@ -2784,7 +2817,7 @@ let tool = {
     str_sanitize_href_regexp: () => { // allow href links that have same origin as our extension + cid
       if(tool._.var.str_sanitize_HREF_REGEX_CACHE === null) {
         if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-          tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${tool.str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+          tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
         } else {
           tool._.var.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
         }
@@ -2822,10 +2855,10 @@ let tool = {
     },
     mime_node_process_text_content: (node: MimeParserNode): string => {
       if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
-        return tool.str.uint8_as_utf(node.content);
+        return Str.uint8_as_utf(node.content);
       }
       if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
-        return tool.str.from_equal_sign_notation_as_utf(node.rawContent);
+        return Str.from_equal_sign_notation_as_utf(node.rawContent);
       }
       if(node.charset === 'iso-8859-2') {
         return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
@@ -2907,16 +2940,16 @@ let tool = {
     },
     crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
     crypto_message_prepare_for_decrypt: (data: string|Uint8Array): {is_armored: boolean, is_cleartext: false, message: OpenPGP.message.Message}|{is_armored: boolean, is_cleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
-      let first_100_bytes = tool.str.from_uint8(data.slice(0, 100));
+      let first_100_bytes = Str.from_uint8(data.slice(0, 100));
       let is_armored_encrypted = tool.value(tool.crypto.armor.headers('message').begin).in(first_100_bytes);
       let is_armored_signed_only = tool.value(tool.crypto.armor.headers('signed_message').begin).in(first_100_bytes);
       let is_armored = is_armored_encrypted || is_armored_signed_only;
       if (is_armored_encrypted) {
-        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(tool.str.from_uint8(data))};
+        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(Str.from_uint8(data))};
       } else if (is_armored_signed_only) {
-        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(tool.str.from_uint8(data))};
+        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(Str.from_uint8(data))};
       } else {
-        return {is_armored, is_cleartext: false, message: openpgp.message.read(tool.str.to_uint8(data))};
+        return {is_armored, is_cleartext: false, message: openpgp.message.read(Str.to_uint8(data))};
       }
     },
     crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {

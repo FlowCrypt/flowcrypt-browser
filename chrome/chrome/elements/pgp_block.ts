@@ -75,13 +75,13 @@ tool.catch.try(async () => {
         img.src = `data:${a.type};base64,${btoa(content.as_text())}`;
         a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
       } else {
-        a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`); // xss-escaped
+        a.outerHTML = Str.html_escape(`[broken link: ${a.href}]`); // xss-escaped
       }
     } else if(a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
       img.src = a.href;
       a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
-      a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`); // xss-escaped
+      a.outerHTML = Str.html_escape(`[broken link: ${a.href}]`); // xss-escaped
     }
     event.preventDefault();
     event.stopPropagation();
@@ -93,7 +93,7 @@ tool.catch.try(async () => {
       await Store.set(account_email, { successfully_received_at_leat_one_message: true });
     }
     if(!is_error) { // rendering message content
-      let pgp_block = $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html_content)); // xss-sanitized
+      let pgp_block = $('#pgp_block').html(Str.html_sanitize_keep_basic_tags(html_content)); // xss-sanitized
       pgp_block.find('a.image_src_link').one('click', Ui.event.handle(display_image_src_link_as_image));
     } else { // rendering our own ui
       Ui.sanitize_render('#pgp_block', html_content);
@@ -122,7 +122,7 @@ tool.catch.try(async () => {
   let armored_message_as_html = (raw_message_substitute:string|null=null) => {
     let m = raw_message_substitute || message;
     if (m && typeof m === 'string') {
-      return `<div class="raw_pgp_block" style="display: none;">${tool.str.html_escape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
+      return `<div class="raw_pgp_block" style="display: none;">${Str.html_escape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
     }
     return '';
   };
@@ -196,9 +196,9 @@ tool.catch.try(async () => {
     Ui.sanitize_append('#pgp_block', '<div id="attachments"></div>');
     included_attachments = attachments;
     for (let i of attachments.keys()) {
-      let name = (attachments[i].name ? tool.str.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
-      let size = tool.str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
-      Ui.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${tool.str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
+      let name = (attachments[i].name ? Str.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      let size = Str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
+      Ui.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${Str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
     }
     send_resize_message();
     $('div.attachment').click(Ui.event.prevent(Ui.event.double(), async target => {
@@ -300,17 +300,17 @@ tool.catch.try(async () => {
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];
     if (decrypted_content instanceof Uint8Array) {
-      decrypted_content = tool.str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
+      decrypted_content = Str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
     if (!tool.mime.resembles_message(decrypted_content)) {
       let fc_attachments: Attachment[] = [];
-      decrypted_content = tool.str.extract_fc_attachments(decrypted_content, fc_attachments);
-      decrypted_content = tool.str.strip_fc_reply_token(decrypted_content);
-      decrypted_content = tool.str.strip_public_keys(decrypted_content, public_keys);
+      decrypted_content = Str.extract_fc_attachments(decrypted_content, fc_attachments);
+      decrypted_content = Str.strip_fc_reply_token(decrypted_content);
+      decrypted_content = Str.strip_public_keys(decrypted_content, public_keys);
       if (public_keys.length) {
         BrowserMsg.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
       }
-      decrypted_content = tool.str.html_escape(decrypted_content);
+      decrypted_content = Str.html_escape(decrypted_content);
       await render_content(do_anchor(decrypted_content.replace(/\n/g, '<br>')), false);
       if (fc_attachments.length) {
         render_inner_attachments(fc_attachments);
@@ -459,7 +459,7 @@ tool.catch.try(async () => {
     } else if (!link_result.url) {
       await render_error(Lang.pgp_block.cannot_locate + Lang.pgp_block.broken_link);
     } else {
-      await render_error(Lang.pgp_block.cannot_locate + Lang.general.write_me_to_fix_it + ' Details:\n\n' + tool.str.html_escape(JSON.stringify(link_result)));
+      await render_error(Lang.pgp_block.cannot_locate + Lang.general.write_me_to_fix_it + ' Details:\n\n' + Str.html_escape(JSON.stringify(link_result)));
     }
   };
 
@@ -472,7 +472,7 @@ tool.catch.try(async () => {
           await decrypt_and_render();
         } else {
           message_fetched_from_api = 'raw';
-          let mime_message = tool.str.base64url_decode(result.raw);
+          let mime_message = Str.base64url_decode(result.raw);
           let parsed = tool.mime.signed(mime_message);
           if (parsed) {
             signature = parsed.signature;
@@ -497,7 +497,7 @@ tool.catch.try(async () => {
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
           let download_uint_result = await tool.file.download_as_uint8(m_link_result.url, null);
-          message = tool.str.from_uint8(download_uint_result);
+          message = Str.from_uint8(download_uint_result);
           await decrypt_and_render();
         } else {
           await render_password_encrypted_message_load_fail(password_message_link_result);

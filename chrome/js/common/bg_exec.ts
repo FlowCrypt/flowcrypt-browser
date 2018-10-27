@@ -40,7 +40,7 @@ class BgExec {
     let result = await BgExec.request_to_process_in_background('tool.crypto.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
-        result.content.text = tool.str.from_uint8(await tool.file.object_url_consume(result.content.blob.blob_url));
+        result.content.text = Str.from_uint8(await tool.file.object_url_consume(result.content.blob.blob_url));
       } else {
         result.content.uint8 = await tool.file.object_url_consume(result.content.blob.blob_url);
       }

@@ -12,25 +12,25 @@ tool.catch.try(async () => {
   let controls = url_params.controls === true && (tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
 
   if (url_params.title) {
-    Ui.sanitize_prepend('#content', `<h1>${tool.str.html_escape(String(url_params.title))}</h1>`);
+    Ui.sanitize_prepend('#content', `<h1>${Str.html_escape(String(url_params.title))}</h1>`);
   }
 
   if (controls) {
     let account_emails = await Store.account_emails_get();
     let emails_selector = $('.emails');
-    Ui.sanitize_append(emails_selector, `<a href="${tool.str.html_escape(Env.url_create('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
-    Ui.sanitize_append(emails_selector, `<a href="${tool.str.html_escape(Env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
+    Ui.sanitize_append(emails_selector, `<a href="${Str.html_escape(Env.url_create('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
+    Ui.sanitize_append(emails_selector, `<a href="${Str.html_escape(Env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
     Ui.sanitize_append('.namespace', '<option value="global">global</option>');
     for (let account_email of account_emails) {
-      Ui.sanitize_append('.emails', `<a href="${tool.str.html_escape(Env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${tool.str.html_escape(account_email)}</a>`);
-      Ui.sanitize_append('.namespace', `<option value="${tool.str.html_escape(account_email)}">${tool.str.html_escape(account_email)}</option>`);
+      Ui.sanitize_append('.emails', `<a href="${Str.html_escape(Env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${Str.html_escape(account_email)}</a>`);
+      Ui.sanitize_append('.namespace', `<option value="${Str.html_escape(account_email)}">${Str.html_escape(account_email)}</option>`);
     }
   }
 
   const render = (obj: RenderableStorage) => {
     for (let filtered_key of Object.keys(obj)) {
       let del = controls ? ' <span class="bad delete" key="' + obj[filtered_key].key + '" style="cursor: pointer;">[X]</span>' : '';
-      Ui.sanitize_append('.pre', `<div><b>${filtered_key + del}</b> ${tool.str.pretty_print(obj[filtered_key].value)}</div>`);
+      Ui.sanitize_append('.pre', `<div><b>${filtered_key + del}</b> ${Str.pretty_print(obj[filtered_key].value)}</div>`);
     }
     $('.delete').click(Ui.event.handle(self => {
       chrome.storage.local.remove($(self).attr('key')!, () => window.location.reload()); // we set the attr key above

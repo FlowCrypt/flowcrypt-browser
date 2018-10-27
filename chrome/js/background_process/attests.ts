@@ -80,7 +80,7 @@ class BgAttests {
           }
           for (let message of messages) {
             if (message.payload.mimeType === 'text/plain' && message.payload.body && message.payload.body.size > 0 && message.payload.body.data) {
-              await BgAttests.process_attest_and_log_result(account_email, tool.str.base64url_decode(message.payload.body.data), passphrase);
+              await BgAttests.process_attest_and_log_result(account_email, Str.base64url_decode(message.payload.body.data), passphrase);
             }
           }
         } else {
@@ -108,7 +108,7 @@ class BgAttests {
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (await tool.crypto.key.decrypt(key, [passphrase || stored_passphrase || '']) === true) {
         let expected_fingerprint = key.primaryKey.getFingerprint().toUpperCase();
-        let expected_email_hash = tool.crypto.hash.double_sha1_upper(tool.str.parse_email(account_email).email);
+        let expected_email_hash = tool.crypto.hash.double_sha1_upper(Str.parse_email(account_email).email);
         if (attest && attest.success && attest.text) {
           if(attest.content.attester && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
             let signed;

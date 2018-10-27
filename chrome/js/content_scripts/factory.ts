@@ -20,8 +20,8 @@ class XssSafeFactory {
   private hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:UrlParams={}) {
-    this.reloadable_class = tool.str.html_escape(reloadable_class);
-    this.destroyable_class = tool.str.html_escape(destroyable_class);
+    this.reloadable_class = Str.html_escape(reloadable_class);
+    this.destroyable_class = Str.html_escape(destroyable_class);
     this.set_params = set_params;
     this.set_params.account_email = account_email;
     this.set_params.parent_tab_id = parent_tab_id;
@@ -83,7 +83,7 @@ class XssSafeFactory {
   src_reply_message_iframe = (conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) => {
     let params: UrlParams = {
       is_reply_box: true,
-      frame_id: 'frame_' + tool.str.random(10),
+      frame_id: 'frame_' + Str.random(10),
       placement: 'gmail',
       thread_id: conversation_params.thread_id,
       skip_click_prompt: Boolean(skip_click_prompt),
@@ -156,7 +156,7 @@ class XssSafeFactory {
   }
 
   embedded_attachment_status = (content: string) => {
-    return tool.e('div', {class: 'attachment_loader', html: tool.str.html_sanitize(content)});
+    return tool.e('div', {class: 'attachment_loader', html: Str.html_sanitize(content)});
   }
 
   embedded_attest = (attest_packet: string) => {
@@ -200,7 +200,7 @@ class XssSafeFactory {
 
   private ext_url = (s: string) => chrome.extension.getURL(s);
 
-  private new_id = () => `frame_${tool.str.random(10)}`;
+  private new_id = () => `frame_${Str.random(10)}`;
 
   private resolve_from_to = (secondary_emails: string[], my_email: string, their_emails: string[]) => { // when replaying to email I've sent myself, make sure to send it to the other person, and not myself
     if (their_emails.length === 1 && tool.value(their_emails[0]).in(secondary_emails)) {

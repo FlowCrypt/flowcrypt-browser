@@ -31,7 +31,7 @@ tool.catch.try(async () => {
     variant: 'standard',
     get_user_account_email: () => {
       let credentials = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
-      if (credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && tool.str.is_email_valid(credentials[1].innerText)) {
+      if (credentials.length === 2 &&  credentials[0].innerText && credentials[1].innerText && Str.is_email_valid(credentials[1].innerText)) {
         let account_email = credentials[1].innerText.toLowerCase();
         full_name =  credentials[0].innerText;
         console.info('Loading for ' + account_email + ' (' + full_name + ')');

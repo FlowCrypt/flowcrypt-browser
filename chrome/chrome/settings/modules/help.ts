@@ -22,7 +22,7 @@ tool.catch.try(async () => {
   $('.action_send_feedback').click(Ui.event.handle(async target => {
     let my_email = account_email;
     if(!my_email) {
-      if(tool.str.is_email_valid($('#input_email').val() as string)) {
+      if(Str.is_email_valid($('#input_email').val() as string)) {
         my_email = $('#input_email').val() as string;
       } else {
         alert('Please enter valid email - so that we can get back to you.');

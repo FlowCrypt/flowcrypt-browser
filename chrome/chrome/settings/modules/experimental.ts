@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   // this is for debugging
   if ((tool.value('mjkiaimhi').in(window.location.href) || tool.value('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    Ui.sanitize_append('.storage_link_container', ` - <a href="${tool.str.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
+    Ui.sanitize_append('.storage_link_container', ` - <a href="${Str.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
   if (account_email) {

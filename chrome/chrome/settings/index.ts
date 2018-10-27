@@ -163,7 +163,7 @@ tool.catch.try(async () => {
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');
-          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${tool.str.html_escape(String(e))}`);
+          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${Str.html_escape(String(e))}`);
           tool.catch.handle_exception(e);
         }
       }
@@ -209,7 +209,7 @@ tool.catch.try(async () => {
       } else if (Api.error.is_network_error(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
-        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${tool.str.html_escape(String(e))}`);
+        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Str.html_escape(String(e))}`);
         tool.catch.handle_exception(e);
       }
     }
@@ -258,13 +258,13 @@ tool.catch.try(async () => {
     for (let i = 0; i < private_keys.length; i++) {
       let ki = private_keys[i];
       let prv = openpgp.key.readArmored(ki.private).keys[0];
-      let date = tool.str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let escaped_primary_or_remove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + tool.str.html_escape(ki.longid) + '">remove</a>)';
-      let escaped_email = tool.str.html_escape(tool.str.parse_email(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
-      let escaped_link = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${tool.str.html_escape(ki.longid)}">${escaped_email}</a>`;
-      html += `<div class="row key-content-row key_${tool.str.html_escape(ki.longid)}">`;
-      html += `  <div class="col-sm-12">${escaped_link} from ${tool.str.html_escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escaped_primary_or_remove}</div>`;
-      html += `  <div class="col-sm-12">KeyWords: <span class="good">${tool.str.html_escape(ki.keywords)}</span></div>`;
+      let date = Str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
+      let escaped_primary_or_remove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Str.html_escape(ki.longid) + '">remove</a>)';
+      let escaped_email = Str.html_escape(Str.parse_email(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      let escaped_link = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Str.html_escape(ki.longid)}">${escaped_email}</a>`;
+      html += `<div class="row key-content-row key_${Str.html_escape(ki.longid)}">`;
+      html += `  <div class="col-sm-12">${escaped_link} from ${Str.html_escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escaped_primary_or_remove}</div>`;
+      html += `  <div class="col-sm-12">KeyWords: <span class="good">${Str.html_escape(ki.keywords)}</span></div>`;
       html += `</div>`;
     }
     Ui.sanitize_append('.key_list', html);
@@ -282,7 +282,7 @@ tool.catch.try(async () => {
   };
 
   // function new_microsoft_account_authentication_prompt(account_email) {
-  //   let window_id = 'popup_' + tool.str.random(20);
+  //   let window_id = 'popup_' + Str.random(20);
   //   let close_auth_window = Api.auth.window(Api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function() {
   //     render_settings_sub_page(account_email, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&email_provider=outlook' : '');
   //   });
@@ -340,9 +340,9 @@ tool.catch.try(async () => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
-      `    <div class="row contains_email" data-test="action-switch-to-account">${tool.str.html_escape(email)}</div>`,
+      `    <div class="row contains_email" data-test="action-switch-to-account">${Str.html_escape(email)}</div>`,
       '  </div>',
-      `  <div><img class="profile-img" src="${tool.str.html_escape(picture)}" alt=""></div>`,
+      `  <div><img class="profile-img" src="${Str.html_escape(picture)}" alt=""></div>`,
       '</div>',
     ].join('');
   };

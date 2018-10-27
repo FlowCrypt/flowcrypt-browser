@@ -326,8 +326,8 @@ class Store {
 
   static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): Contact {
     let fingerprint = pubkey ? tool.crypto.key.fingerprint(pubkey) : null;
-    email = tool.str.parse_email(email).email;
-    if(!tool.str.is_email_valid(email)) {
+    email = Str.parse_email(email).email;
+    if(!Str.is_email_valid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
     }
     return {
