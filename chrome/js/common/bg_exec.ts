@@ -80,7 +80,7 @@ class BgExec {
 
   private static is_object_url = (arg: any) => typeof arg === 'string' && arg.indexOf('blob:' + chrome.runtime.getURL('')) === 0;
 
-  private static should_be_object_url = (arg: any) => (typeof arg === 'string' && arg.length > tool._.var.browser_message_MAX_SIZE) || arg instanceof Uint8Array;
+  private static should_be_object_url = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
 
   private static arg_object_urls_consume = (args: any[]) => args.map((arg: any) => BgExec.is_object_url(arg) ? tool.file.object_url_consume(arg) : arg);
 

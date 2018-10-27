@@ -1541,6 +1541,20 @@ class Ui {
 
 class BrowserMsg {
 
+  public static MAX_SIZE = 1024 * 1024; // 1MB
+  private static HANDLERS_REGISTERED_BACKGROUND: Dict<BrowserMessageHandler>|null = null;
+  private static HANDLERS_REGISTERED_FRAME: Dict<BrowserMessageHandler> = {};
+  private static HANDLERS_STANDARD = {
+    set_css: (data: {css: Dict<string|number>, selector: string, traverse_up?: number}) => {
+      let element = $(data.selector);
+      let traverse_up_levels = data.traverse_up as number || 0;
+      for (let i = 0; i < traverse_up_levels; i++) {
+        element = element.parent();
+      }
+      element.css(data.css);
+    },
+  } as Dict<BrowserMessageHandler>;
+
   public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
     BrowserMsg.send_await(destination_string, name, data).catch(tool.catch.rejection);
   }
@@ -1552,8 +1566,8 @@ class BrowserMsg {
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
       tool.catch.log('BrowserMsg.send to:undefined');
       try_resolve_no_undefined();
-    } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
-      tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
+    } else if (is_background_page && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && msg.to === null) {
+      BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
     } else if (is_background_page) {
       chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
     } else {
@@ -1586,11 +1600,11 @@ class BrowserMsg {
     for (let name of Object.keys(handlers)) {
       // newly registered handlers with the same name will overwrite the old ones if BrowserMsg.listen is declared twice for the same frame
       // original handlers not mentioned in newly set handlers will continue to work
-      tool._.var.browser_message_frame_registered_handlers[name] = handlers[name];
+      BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handlers[name];
     }
-    for (let name of Object.keys(tool._.var.browser_message_STANDARD_HANDLERS)) {
-      if (typeof tool._.var.browser_message_frame_registered_handlers[name] !== 'function') {
-        tool._.var.browser_message_frame_registered_handlers[name] = tool._.var.browser_message_STANDARD_HANDLERS[name]; // standard handlers are only added if not already set above
+    for (let name of Object.keys(BrowserMsg.HANDLERS_STANDARD)) {
+      if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[name] !== 'function') {
+        BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = BrowserMsg.HANDLERS_STANDARD[name]; // standard handlers are only added if not already set above
       }
     }
     let processed:string[] = [];
@@ -1599,8 +1613,8 @@ class BrowserMsg {
         if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
           if (!tool.value(msg.uid).in(processed)) {
             processed.push(msg.uid);
-            if (typeof tool._.var.browser_message_frame_registered_handlers[msg.name] !== 'undefined') {
-              let r = tool._.var.browser_message_frame_registered_handlers[msg.name](msg.data, sender, respond);
+            if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
+              let r = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name](msg.data, sender, respond);
               if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
                 // todo - a way to callback the error to be re-thrown to caller stack
                 (r as Promise<void>).catch(tool.catch.rejection);
@@ -1623,11 +1637,11 @@ class BrowserMsg {
   }
 
   public static listen_background = (handlers: Dict<BrowserMessageHandler>) => {
-    if (!tool._.var.browser_message_background_script_registered_handlers) {
-      tool._.var.browser_message_background_script_registered_handlers = handlers;
+    if (!BrowserMsg.HANDLERS_REGISTERED_BACKGROUND) {
+      BrowserMsg.HANDLERS_REGISTERED_BACKGROUND = handlers;
     } else {
       for (let name of Object.keys(handlers)) {
-        tool._.var.browser_message_background_script_registered_handlers[name] = handlers[name];
+        BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handlers[name];
       }
     }
     chrome.runtime.onMessage.addListener((msg, sender, respond) => {
@@ -1646,8 +1660,8 @@ class BrowserMsg {
         if (msg.to && msg.to !== 'broadcast') {
           msg.sender = sender;
           chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
-        } else if (tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
-          let r = tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because checked above
+        } else if (tool.value(msg.name).in(Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND!))) { // is !null because added above
+          let r = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND![msg.name](msg.data, sender, safe_respond); // is !null because checked above
           if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
             // todo - a way to callback the error to be re-thrown to caller stack
             (r as Promise<void>).catch(tool.catch.rejection);
@@ -2846,10 +2860,6 @@ let tool = {
   },
   _: {
     var: { // meant to be used privately within this file like so: tool._.vars.???
-      // internal variables
-      browser_message_background_script_registered_handlers: null as Dict<BrowserMessageHandler>|null,
-      browser_message_frame_registered_handlers: {} as Dict<BrowserMessageHandler>,
-      // internal constants
       env_url_param_DICT: {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null as null} as Dict<boolean|null>,
       crypto_armor_header_MAX_LENGTH: 50,
       crypto_armor_headers_DICT: {
@@ -2865,17 +2875,6 @@ let tool = {
       } as CryptoArmorHeaderDefinitions,
       api_gmail_USELESS_CONTACTS_FILTER: '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org',
       api_gmail_SCOPE_DICT: {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'} as Dict<string>,
-      browser_message_MAX_SIZE: 1024 * 1024, // 1MB
-      browser_message_STANDARD_HANDLERS: {
-        set_css: (data: {css: Dict<string|number>, selector: string, traverse_up?: number}) => {
-          let element = $(data.selector);
-          let traverse_up_levels = data.traverse_up as number || 0;
-          for (let i = 0; i < traverse_up_levels; i++) {
-            element = element.parent();
-          }
-          element.css(data.css);
-        },
-      } as Dict<BrowserMessageHandler>,
       crypto_password_SENTENCE_PRESENT_TEST: /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/,
       crypto_password_SENTECES: [
         /This\smessage\sis\sencrypted.+\n\n?/gm, // todo - should be in a common place as the code that generated it
