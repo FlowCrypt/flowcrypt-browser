@@ -1671,6 +1671,11 @@ class BrowserMsg {
 
 class Str {
 
+  private static str_sanitize_ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
+  private static str_sanitize_ALLOWED_HTML_TAGS_WITH_INPUTS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font', 'input', 'select', 'option', 'textarea', 'label', 'optgroup', 'button'];
+  private static str_sanitize_ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
+  private static str_sanitize_HREF_REGEX_CACHE = null as null|RegExp;
+
   public static parse_email = (email_string: string) => {
     if (tool.value('<').in(email_string) && tool.value('>').in(email_string)) {
       return {
@@ -1735,7 +1740,7 @@ class Str {
   public static html_sanitize = (dirty_html: string): string => { // originaly text_or_html
     return DOMPurify.sanitize(dirty_html, {
       SAFE_FOR_JQUERY: true,
-      ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
+      ADD_ATTR: Str.str_sanitize_ADD_ATTR,
       ALLOWED_URI_REGEXP: Str.sanitize_href_regexp(),
     });
   }
@@ -1765,8 +1770,8 @@ class Str {
     });
     let clean_html = DOMPurify.sanitize(dirty_html, {
       SAFE_FOR_JQUERY: true,
-      ADD_ATTR: tool._.var.str_sanitize_ADD_ATTR,
-      ALLOWED_TAGS: tool._.var.str_sanitize_ALLOWED_HTML_TAGS,
+      ADD_ATTR: Str.str_sanitize_ADD_ATTR,
+      ALLOWED_TAGS: Str.str_sanitize_ALLOWED_HTML_TAGS,
       ALLOWED_URI_REGEXP: Str.sanitize_href_regexp(),
     });
     DOMPurify.removeAllHooks();
@@ -1958,14 +1963,14 @@ class Str {
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 
   private static sanitize_href_regexp = () => { // allow href links that have same origin as our extension + cid
-    if(tool._.var.str_sanitize_HREF_REGEX_CACHE === null) {
+    if(Str.str_sanitize_HREF_REGEX_CACHE === null) {
       if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        tool._.var.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+        Str.str_sanitize_HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
-        tool._.var.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+        Str.str_sanitize_HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
       }
     }
-    return tool._.var.str_sanitize_HREF_REGEX_CACHE;
+    return Str.str_sanitize_HREF_REGEX_CACHE;
   }
 
   private static base64url_utf_encode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
@@ -2828,10 +2833,6 @@ let tool = {
       ],
       google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
       api_google_AUTH_RESPONDED: 'RESPONDED',
-      str_sanitize_ALLOWED_HTML_TAGS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'],
-      str_sanitize_ALLOWED_HTML_TAGS_WITH_INPUTS: ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font', 'input', 'select', 'option', 'textarea', 'label', 'optgroup', 'button'],
-      str_sanitize_ADD_ATTR: ['email', 'page', 'addurltext', 'longid', 'index'],
-      str_sanitize_HREF_REGEX_CACHE: null as null|RegExp,
     },
     mime_node_type: (node: MimeParserNode) => {
       if (node.headers['content-type'] && node.headers['content-type'][0]) {
