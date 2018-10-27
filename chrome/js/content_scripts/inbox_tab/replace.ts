@@ -79,8 +79,8 @@ class InboxElementReplacer implements WebmailElementReplacer {
         if (message_id) {
           if (this.can_read_emails) {
             tool.ui.sanitize_prepend(new_pgp_messages, this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
-            tool.api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
-              this.process_attachments(message_id!, message_element, tool.api.gmail.find_attachments(message), attachments_container); // message_id checked right above
+            Api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
+              this.process_attachments(message_id!, message_element, Api.gmail.find_attachments(message), attachments_container); // message_id checked right above
             }, () => $(new_pgp_messages).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
@@ -110,7 +110,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
         } else if (treat_as === 'message') {
           message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          tool.api.gmail.attachment_get(this.account_email, message_id, a.id!).then(downloaded_attachment => {
+          Api.gmail.attachment_get(this.account_email, message_id, a.id!).then(downloaded_attachment => {
             if (tool.value(tool.crypto.armor.headers('null').begin).in(downloaded_attachment.data)) {
               message_element.append(this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing)); // xss-safe-factory
             } else {
@@ -209,7 +209,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
 
   private get_conversation_params = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
     let thread_id = this.dom_extract_thread_id(conversation_root_element);
-    let headers = tool.api.common.reply_correspondents(this.account_email, this.addresses, this.dom_extract_sender_email(conversation_root_element) || '', this.dom_extract_recipients(conversation_root_element));
+    let headers = Api.common.reply_correspondents(this.account_email, this.addresses, this.dom_extract_sender_email(conversation_root_element) || '', this.dom_extract_recipients(conversation_root_element));
     return {
       subject: this.dom_extract_subject(conversation_root_element),
       reply_to: headers.to,

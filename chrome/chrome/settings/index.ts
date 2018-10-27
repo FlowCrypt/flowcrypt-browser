@@ -107,7 +107,7 @@ tool.catch.try(async () => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!Api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         display_original('.hide_if_setup_not_done');
@@ -145,7 +145,7 @@ tool.catch.try(async () => {
     let auth_info = await Store.auth_info();
     if (auth_info.account_email) { // have auth email set
       try {
-        let response = await tool.api.fc.account_update();
+        let response = await Api.fc.account_update();
         $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:ok`);
         if (response && response.result && response.result.alias) {
           status_container.find('.status-indicator-text').css('display', 'none');
@@ -154,11 +154,11 @@ tool.catch.try(async () => {
           status_container.find('.status-indicator').addClass('inactive');
         }
       } catch (e) {
-        if (tool.api.error.is_auth_error(e)) {
+        if (Api.error.is_auth_error(e)) {
           let action_reauth = tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
           tool.ui.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
-        } else if (tool.api.error.is_network_error(e)) {
+        } else if (Api.error.is_network_error(e)) {
           tool.ui.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
@@ -188,7 +188,7 @@ tool.catch.try(async () => {
 
   let check_google_account = async () => {
     try {
-      let me = await tool.api.gmail.users_me_profile(account_email!);
+      let me = await Api.gmail.users_me_profile(account_email!);
       Settings.update_profile_picture_if_missing(account_email!).catch(tool.catch.handle_exception);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if(me.emailAddress !== account_email) {
@@ -200,13 +200,13 @@ tool.catch.try(async () => {
         }
       }
     } catch (e) {
-      if (tool.api.error.is_auth_popup_needed(e)) {
+      if (Api.error.is_auth_popup_needed(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
           .off().click(tool.ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
-      } else if (tool.api.error.is_auth_error(e)) {
+      } else if (Api.error.is_auth_error(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
           .off().click(tool.ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
-      } else if (tool.api.error.is_network_error(e)) {
+      } else if (Api.error.is_network_error(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${tool.str.html_escape(String(e))}`);
@@ -218,10 +218,10 @@ tool.catch.try(async () => {
   let render_subscription_status_header = async () => {
     let liveness = '';
     try {
-      await tool.api.fc.account_check_sync();
+      await Api.fc.account_check_sync();
       liveness = 'live';
     } catch (e) {
-      if (!tool.api.error.is_network_error(e)) {
+      if (!Api.error.is_network_error(e)) {
         tool.catch.handle_exception(e);
         liveness = 'err';
       } else {
@@ -283,7 +283,7 @@ tool.catch.try(async () => {
 
   // function new_microsoft_account_authentication_prompt(account_email) {
   //   let window_id = 'popup_' + tool.str.random(20);
-  //   let close_auth_window = tool.api.auth.window(tool.api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function() {
+  //   let close_auth_window = Api.auth.window(Api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function() {
   //     render_settings_sub_page(account_email, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&email_provider=outlook' : '');
   //   });
   //   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};

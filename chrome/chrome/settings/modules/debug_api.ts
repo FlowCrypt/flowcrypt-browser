@@ -17,13 +17,13 @@ tool.catch.try(async () => {
   if(which === 'google_account') {
     const variables = {account_email};
     try {
-      const r = await tool.api.gmail.users_me_profile(account_email);
+      const r = await Api.gmail.users_me_profile(account_email);
       render_call_result('gmail.users_me_profile', variables, r);
     } catch (e) {
       render_call_result('gmail.users_me_profile', variables, null, e);
     }
     try {
-      const r = await tool.api.google.plus.people_me(account_email);
+      const r = await Api.google.plus.people_me(account_email);
       render_call_result('google.plus.people_me', variables, r);
     } catch (e) {
       render_call_result('google.plus.people_me', variables, null, e);

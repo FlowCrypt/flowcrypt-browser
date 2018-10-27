@@ -77,7 +77,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       await Store.set(account_email, storage); // fix duplicate email addresses
     }
     try {
-      let {results} = await tool.api.attester.lookup_email(storage.addresses);
+      let {results} = await Api.attester.lookup_email(storage.addresses);
       let addresses_keyserver = [];
       for (let result of results) {
         if (result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
@@ -86,7 +86,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       }
       await Store.set(account_email, { addresses_keyserver });
     } catch(e) {
-      if(!tool.api.error.is_network_error(e)) {
+      if(!Api.error.is_network_error(e)) {
         tool.catch.handle_exception(e);
       }
     }
@@ -118,7 +118,7 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
 };
 
 let report_useful_errors = (e: any) => {
-  if(!tool.api.error.is_network_error(e) && !tool.api.error.is_server_error(e)) {
+  if(!Api.error.is_network_error(e) && !Api.error.is_server_error(e)) {
     tool.catch.handle_exception(e);
   }
 };
@@ -127,11 +127,11 @@ let schedule_cryptup_subscription_level_check = () => {
   setTimeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      setTimeout(() => tool.api.fc.account_check_sync().catch(report_useful_errors), tool.time.hours(Math.random() * 3)); // random 0-3 hours
+      setTimeout(() => Api.fc.account_check_sync().catch(report_useful_errors), tool.time.hours(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      tool.api.fc.account_check_sync().catch(report_useful_errors); // now
+      Api.fc.account_check_sync().catch(report_useful_errors); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  setInterval(() => tool.api.fc.account_check_sync().catch(report_useful_errors), tool.time.hours(23 + Math.random())); // random 23-24 hours
+  setInterval(() => Api.fc.account_check_sync().catch(report_useful_errors), tool.time.hours(23 + Math.random())); // random 23-24 hours
 };

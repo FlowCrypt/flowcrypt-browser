@@ -11,7 +11,7 @@ class Settings {
     let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
     let results = [];
     while (true) {
-      let headers = await tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
+      let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
       if (!headers.from) {
         return results.filter(email => !tool.value(email).in(Settings.ignore_email_aliases));
       }
@@ -77,7 +77,7 @@ class Settings {
   }
 
   static submit_pubkeys = async (account_email: string, addresses: string[], pubkey: string) => {
-    let attest_response = await tool.api.attester.initial_legacy_submit(account_email, pubkey, true);
+    let attest_response = await Api.attester.initial_legacy_submit(account_email, pubkey, true);
     if (!attest_response.attested) {
       await Settings.save_attest_request(account_email, 'CRYPTUP');
     } else { // Attester claims it was previously successfully attested
@@ -85,7 +85,7 @@ class Settings {
     }
     let aliases = addresses.filter(a => a !== account_email);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => tool.api.attester.initial_legacy_submit(a, pubkey, false)));
+      await Promise.all(aliases.map(a => Api.attester.initial_legacy_submit(a, pubkey, false)));
     }
   }
 
@@ -322,14 +322,14 @@ class Settings {
   static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_message: string, retry_callback: () => Promise<void>): Promise<void> => {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
-    if(!tool.api.error.is_network_error(e)) {
+    if(!Api.error.is_network_error(e)) {
       tool.catch.handle_exception(e);
     }
     while(await tool.ui.render_overlay_prompt_await_user_choice({retry: {}}, user_message) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {
-        if(!tool.api.error.is_network_error(e2)) {
+        if(!Api.error.is_network_error(e2)) {
           tool.catch.handle_exception(e2);
         }
       }
@@ -353,7 +353,7 @@ class Settings {
   }
 
   static new_google_account_authentication_prompt = async (tab_id: string, account_email?: string, omit_read_scope=false) => {
-    let response = await tool.api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
+    let response = await Api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
     if (response && response.success === true && response.account_email) {
       await Store.account_emails_add(response.account_email);
       let storage = await Store.get_account(response.account_email, ['setup_done']);
@@ -377,10 +377,10 @@ class Settings {
     let storage = await Store.get_account(account_email, ['setup_done', 'picture']);
     if(storage.setup_done && !storage.picture) {
       try {
-        let {image} = await tool.api.google.plus.people_me(account_email);
+        let {image} = await Api.google.plus.people_me(account_email);
         await Store.set(account_email, {picture: image.url});
       } catch(e) {
-        if(!tool.api.error.is_auth_popup_needed(e) && !tool.api.error.is_auth_error(e) && !tool.api.error.is_network_error(e)) {
+        if(!Api.error.is_auth_popup_needed(e) && !Api.error.is_auth_error(e) && !Api.error.is_network_error(e)) {
           tool.catch.handle_exception(e);
         }
       }

@@ -96,7 +96,7 @@ tool.catch.try(async () => {
     let keyserver_result, fetched_keys;
 
     try {
-      let r = await tool.api.attester.lookup_email([account_email]);
+      let r = await Api.attester.lookup_email([account_email]);
       keyserver_result = r.results[0];
     } catch (e) {
       return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog());
@@ -109,9 +109,9 @@ tool.catch.try(async () => {
       if (!rules.can_backup_keys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         display_block('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      } else if (storage.email_provider === 'gmail' && Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         try {
-          fetched_keys = await tool.api.gmail.fetch_key_backups(account_email);
+          fetched_keys = await Api.gmail.fetch_key_backups(account_email);
         } catch (e) {
           return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => render_setup_dialog());
         }
@@ -150,7 +150,7 @@ tool.catch.try(async () => {
     tool.ui.sanitize_render($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      fetched_keys = await tool.api.gmail.fetch_key_backups(account_email);
+      fetched_keys = await Api.gmail.fetch_key_backups(account_email);
     } catch (e) {
       window.location.href = Env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
       return;
@@ -172,7 +172,7 @@ tool.catch.try(async () => {
     if (!options.submit_main) {
       return;
     }
-    tool.api.attester.test_welcome(account_email, armored_pubkey).catch(error => tool.catch.report('tool.api.attester.test_welcome: failed', error));
+    Api.attester.test_welcome(account_email, armored_pubkey).catch(error => tool.catch.report('Api.attester.test_welcome: failed', error));
     let addresses;
     if (typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
       addresses = storage.addresses.concat(account_email);
@@ -260,7 +260,7 @@ tool.catch.try(async () => {
     if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and let the user choose
       let me: ApirGooglePlusPeopleMe;
       try {
-        me = await tool.api.google.plus.people_me(account_email);
+        me = await Api.google.plus.people_me(account_email);
       } catch (e) {
         tool.catch.handle_exception(e);
         return {full_name: ''};
@@ -508,11 +508,11 @@ tool.catch.try(async () => {
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {
-    if (!tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+    if (!Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
       $('.auth_denied_warning').css('display', 'block');
     }
     if (typeof storage.addresses === 'undefined') {
-      if (tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      if (Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
         Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option).catch(tool.catch.rejection);
       } else { // cannot read emails, don't fetch alternative addresses
         save_and_fill_submit_option([account_email]).catch(tool.catch.rejection);

@@ -93,7 +93,7 @@ class Composer {
   private BTN_WRONG_ENTRY = 'Re-enter recipient..';
   private BTN_LOADING = 'Loading..';
   private BTN_SENDING = 'Sending..';
-  private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use tool.api.url()
+  private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
   private last_draft = '';
   private can_read_emails: boolean;
@@ -341,25 +341,25 @@ class Composer {
         this.S.cached('input_subject').val(parsed_message.headers.subject || '');
         await this.decrypt_and_render_draft(armored, tool.mime.headers_to_from(parsed_message));
       } else {
-        console.info('tool.api.gmail.draft_get tool.mime.decode else {}');
+        console.info('Api.gmail.draft_get tool.mime.decode else {}');
         if (this.is_reply_box) {
           await this.render_reply_message_compose_table();
         }
       }
     } catch (e) {
-      if(tool.api.error.is_network_error(e)) {
+      if(Api.error.is_network_error(e)) {
         tool.ui.sanitize_render('body', `Failed to load draft. ${tool.ui.retry_link()}`);
-      } else if (tool.api.error.is_auth_popup_needed(e)) {
+      } else if (Api.error.is_auth_popup_needed(e)) {
         this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         tool.ui.sanitize_render('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${tool.ui.retry_link()}`);
-      } else if (this.is_reply_box && tool.api.error.is_not_found(e)) {
+      } else if (this.is_reply_box && Api.error.is_not_found(e)) {
         tool.catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         await tool.time.sleep(500);
         await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
-        console.info('tool.api.gmail.draft_get success===false');
+        console.info('Api.gmail.draft_get success===false');
         tool.catch.handle_exception(e);
         if (this.is_reply_box) {
           await this.render_reply_message_compose_table();
@@ -425,9 +425,9 @@ class Composer {
           this.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
-        if(tool.api.error.is_network_error(e)) {
+        if(Api.error.is_network_error(e)) {
           this.S.cached('send_btn_note').text('Not saved (network)');
-        } else if (tool.api.error.is_auth_popup_needed(e)) {
+        } else if (Api.error.is_auth_popup_needed(e)) {
           this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
@@ -447,9 +447,9 @@ class Composer {
       try {
         await this.app.email_provider_draft_delete(this.draft_id);
       } catch(e) {
-        if (tool.api.error.is_auth_popup_needed(e)) {
+        if (Api.error.is_auth_popup_needed(e)) {
           this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
-        } else if(!tool.api.error.is_network_error(e)) {
+        } else if(!Api.error.is_network_error(e)) {
           tool.catch.handle_exception(e);
         }
       }
@@ -556,16 +556,16 @@ class Composer {
   }
 
   private handle_send_error(e: Error|StandardError) {
-    if(tool.api.error.is_network_error(e)) {
+    if(Api.error.is_network_error(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
-    } else if(tool.api.error.is_auth_popup_needed(e)) {
+    } else if(Api.error.is_auth_popup_needed(e)) {
       this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
-    } else if (tool.api.error.is_auth_error(e)) {
+    } else if (Api.error.is_auth_error(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
         this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
       }
-    } else if(tool.api.error.is_bad_request(e)) {
+    } else if(Api.error.is_bad_request(e)) {
       if(confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         let page = '/chrome/settings/modules/help.htm';
         let page_url_params = {bug_report: Extension.prepare_bug_report('composer: send: bad request', {}, e)};
@@ -670,7 +670,7 @@ class Composer {
         this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(tool.catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
-        await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+        await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -680,13 +680,13 @@ class Composer {
 
   private upload_attachments_to_fc = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: ApirFcMessagePresignFiles = await tool.api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
+      let pf_response: ApirFcMessagePresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for (let i of pf_response.approvals.keys()) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
       }
-      await tool.api.aws.s3_upload(items, this.render_upload_progress);
-      let {admin_codes, confirmed} = await tool.api.fc.message_confirm_files(items.map((item) => item.fields.key));
+      await Api.aws.s3_upload(items, this.render_upload_progress);
+      let {admin_codes, confirmed} = await Api.fc.message_confirm_files(items.map((item) => item.fields.key));
       if(!confirmed || confirmed.length !== items.length) {
         throw new Error('Attachments did not upload properly, please try again');
       }
@@ -695,7 +695,7 @@ class Composer {
       }
       return admin_codes;
     } catch (e) {
-      if (tool.api.error.is_auth_error(e)) {
+      if (Api.error.is_auth_error(e)) {
         throw e;
       } else {
         throw new ComposerNetworkError(e && typeof e === 'object' && e.message ? e.message : 'Some files failed to upload, please try again');
@@ -728,14 +728,14 @@ class Composer {
     }
     let response;
     try {
-      response = await tool.api.fc.message_token();
+      response = await Api.fc.message_token();
     } catch (message_token_error) {
-      if (tool.api.error.is_auth_error(message_token_error)) {
+      if (Api.error.is_auth_error(message_token_error)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
           this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
         }
         throw new ComposerResetBtnTrigger();
-      } else if (tool.api.error.is_standard_error(message_token_error, 'subscription')) {
+      } else if (Api.error.is_standard_error(message_token_error, 'subscription')) {
         return plaintext;
       } else {
         throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + message_token_error.message);
@@ -787,14 +787,14 @@ class Composer {
     if (challenge) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      let {short, admin_code} = await tool.api.fc.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null);
+      let {short, admin_code} = await Api.fc.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null);
       body = this.format_password_protected_email(short, body, armored_pubkeys);
       body = this.format_email_text_footer(body);
       await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
-      await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
     } else {
       body = this.format_email_text_footer(body);
-      await this.do_send_message(await tool.api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
     }
   }
 
@@ -825,7 +825,7 @@ class Composer {
       return db_contact;
     } else {
       try {
-        let {results: [lookup_result]} = await tool.api.attester.lookup_email([email]);
+        let {results: [lookup_result]} = await Api.attester.lookup_email([email]);
         if (lookup_result && lookup_result.email) {
           if (lookup_result.pubkey) {
             const parsed = openpgp.key.readArmored(lookup_result.pubkey);
@@ -845,7 +845,7 @@ class Composer {
           return this.PUBKEY_LOOKUP_RESULT_FAIL;
         }
       } catch (e) {
-        if(!tool.api.error.is_network_error(e) && !tool.api.error.is_server_error(e)) {
+        if(!Api.error.is_network_error(e) && !Api.error.is_server_error(e)) {
           tool.catch.handle_exception(e);
         }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
@@ -1008,9 +1008,9 @@ class Composer {
     } catch (e) {
       if (e.data) {
         tool.ui.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${tool.str.html_escape(e.data)}`);
-      } else if(tool.api.error.is_network_error(e)) {
+      } else if(Api.error.is_network_error(e)) {
         // todo: retry
-      } else if(tool.api.error.is_auth_popup_needed(e)) {
+      } else if(Api.error.is_auth_popup_needed(e)) {
         this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       } else {
         tool.catch.handle_exception(e);
@@ -1111,7 +1111,7 @@ class Composer {
     let last_recipient = $('.recipients span').last();
     this.S.cached('input_to').val(last_recipient.text());
     last_recipient.last().remove();
-    let auth_result = await tool.api.google.auth_popup(account_email, this.tab_id, false, tool.api.gmail.scope(['read']));
+    let auth_result = await Api.google.auth_popup(account_email, this.tab_id, false, Api.gmail.scope(['read']));
     if (auth_result && auth_result.success === true) {
       this.can_read_emails = true;
       await this.search_contacts();

@@ -35,7 +35,7 @@ tool.catch.try(async () => {
     await tool.ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  tool.catch.version();
     try {
-      let r = await tool.api.fc.help_feedback(my_email, msg);
+      let r = await Api.fc.help_feedback(my_email, msg);
       if (r.sent) {
         $(button).text('sent!');
         alert(`Message sent! You will find your response in ${my_email}, check your email later. Thanks!`);
@@ -45,7 +45,7 @@ tool.catch.try(async () => {
         alert('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
-      if(!tool.api.error.is_network_error(e)) {
+      if(!Api.error.is_network_error(e)) {
         tool.catch.handle_exception(e);
       }
       $(button).text(original_button_text);

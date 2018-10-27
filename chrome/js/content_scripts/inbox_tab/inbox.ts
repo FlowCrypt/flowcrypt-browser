@@ -11,7 +11,7 @@ tool.catch.try(async () => {
 
   let start = async (account_email: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => {
     let storage = await Store.get_account(account_email, ['addresses', 'google_token_scopes']);
-    let can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
+    let can_read_emails = Api.gmail.has_scope(storage.google_token_scopes || [], 'read');
     injector.buttons();
     replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
     await notifications.show_initial(account_email);

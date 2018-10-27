@@ -276,14 +276,14 @@ tool.catch.try(async () => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
     tool.ui.sanitize_render($(self).parent(), 'Updating..' + tool.ui.spinner('green'));
     try {
-      let r = await tool.api.fc.message_expiration(admin_codes, n_days);
+      let r = await Api.fc.message_expiration(admin_codes, n_days);
       if (r.updated) {
         window.location.reload();
       } else {
         throw r;
       }
     } catch (e) {
-      if (tool.api.error.is_auth_error(e)) {
+      if (Api.error.is_auth_error(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
         tool.browser.message.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       } else {
@@ -467,7 +467,7 @@ tool.catch.try(async () => {
     try {
       if (can_read_emails && message && signature === true) {
         render_text('Loading signature...');
-        let result = await tool.api.gmail.message_get(account_email, message_id as string, 'raw');
+        let result = await Api.gmail.message_get(account_email, message_id as string, 'raw');
         if (!result.raw) {
           await decrypt_and_render();
         } else {
@@ -493,7 +493,7 @@ tool.catch.try(async () => {
       } else if (!message && has_challenge_password && short) { // need to fetch the message from FlowCrypt API
         render_text('Loading message...');
         await recover_stored_admin_codes();
-        let m_link_result = await tool.api.fc.link_message(short as string);
+        let m_link_result = await Api.fc.link_message(short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
           let download_uint_result = await tool.file.download_as_uint8(m_link_result.url, null);
@@ -506,7 +506,7 @@ tool.catch.try(async () => {
         if (can_read_emails) {
           render_text('Retrieving message...');
           let format: GmailApiResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
-          message = await tool.api.gmail.extract_armored_block(account_email, message_id as string, format);
+          message = await Api.gmail.extract_armored_block(account_email, message_id as string, format);
           render_text('Decrypting...');
           message_fetched_from_api = format;
           await decrypt_and_render();
@@ -517,14 +517,14 @@ tool.catch.try(async () => {
         }
       }
     } catch (e) {
-      if (tool.api.error.is_network_error(e)) {
+      if (Api.error.is_network_error(e)) {
         await render_error(`Could not load message due to network error. ${tool.ui.retry_link()}`);
-      } else if(tool.api.error.is_auth_popup_needed(e)) {
+      } else if(Api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         await render_error(`Could not load message due to missing auth. ${tool.ui.retry_link()}`);
       } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
-      } else if (tool.api.error.is_standard_error(e, 'format')) {
+      } else if (Api.error.is_standard_error(e, 'format')) {
         console.log(e.data);
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + Lang.pgp_block.dont_know_how_open, e.data);
       } else {
@@ -535,7 +535,7 @@ tool.catch.try(async () => {
   };
 
   let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes']);
-  can_read_emails = tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read');
+  can_read_emails = Api.gmail.has_scope(storage.google_token_scopes || [], 'read');
   if (storage.setup_done) {
     await initialize();
   } else {

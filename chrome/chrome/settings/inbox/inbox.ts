@@ -8,7 +8,7 @@ tool.catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
 
   let message_headers = ['message', 'signed_message', 'public_key'].map(t => tool.crypto.armor.headers(t as ReplaceableMessageBlockType).begin);
-  let q_encrypted_messages = 'is:inbox (' + tool.api.gmail.query.or(message_headers, true) + ')';
+  let q_encrypted_messages = 'is:inbox (' + Api.gmail.query.or(message_headers, true) + ')';
   let email_provider;
   let factory: XssSafeFactory;
   let injector: Injector;
@@ -80,14 +80,14 @@ tool.catch.try(async () => {
     $('body').text('Not supported for ' + email_provider);
   } else {
     display_block('inbox', 'FlowCrypt Email Inbox');
-    tool.api.gmail.message_list(account_email, q_encrypted_messages, false).then(list_result => {
+    Api.gmail.message_list(account_email, q_encrypted_messages, false).then(list_result => {
       let thread_ids = tool.arr.unique((list_result.messages || []).map((m: any) => m.threadId));
       for (let thread_id of thread_ids) {
         thread_element_add(thread_id);
-        tool.api.gmail.message_get(account_email, thread_id, 'metadata').then(item_result => {
+        Api.gmail.message_get(account_email, thread_id, 'metadata').then(item_result => {
           let thread_item = $('.threads #' + thread_list_item_id(thread_id));
-          thread_item.find('.subject').text(tool.api.gmail.find_header(item_result, 'subject') || '(no subject)');
-          let from_header_value = tool.api.gmail.find_header(item_result, 'from');
+          thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
+          let from_header_value = Api.gmail.find_header(item_result, 'from');
           if (from_header_value) {
             let from = tool.str.parse_email(from_header_value);
             thread_item.find('.from').text(from.name || from.email);
@@ -103,8 +103,8 @@ tool.catch.try(async () => {
   let render_thread = async (thread_id: string) => {
     display_block('thread', 'Loading..');
     try {
-      let thread = await tool.api.gmail.thread_get(account_email, thread_id, 'full');
-      display_block('thread', tool.api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)');
+      let thread = await Api.gmail.thread_get(account_email, thread_id, 'full');
+      display_block('thread', Api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)');
       thread.messages.map(render_message);
       render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id);
     } catch (e) {
@@ -113,7 +113,7 @@ tool.catch.try(async () => {
   };
 
   let render_message = (message: any) => {
-    let bodies = tool.api.gmail.find_bodies(message);
+    let bodies = Api.gmail.find_bodies(message);
     let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain']!)) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html']!)));
     let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
     tool.ui.sanitize_append(S.cached('thread'), tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));

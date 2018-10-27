@@ -160,7 +160,7 @@ tool.catch.try(async () => {
       } else if (encrypted_a && encrypted_a.has_data()) { // when encrypted content was already downloaded
         await decrypt_and_save_attachment_to_downloads(encrypted_a);
       } else if (encrypted_a && encrypted_a.id && encrypted_a.message_id) { // gmail attachment_id
-        let attachment = await tool.api.gmail.attachment_get(account_email, encrypted_a.message_id, encrypted_a.id, render_progress);
+        let attachment = await Api.gmail.attachment_get(account_email, encrypted_a.message_id, encrypted_a.id, render_progress);
         encrypted_a.set_data(attachment.data);
         await decrypt_and_save_attachment_to_downloads(encrypted_a!);
       } else if (encrypted_a && encrypted_a.url) { // gneneral url to download attachment
@@ -170,10 +170,10 @@ tool.catch.try(async () => {
         throw Error('Missing both id and url');
       }
     } catch(e) {
-      if(tool.api.error.is_auth_popup_needed(e)) {
+      if(Api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         tool.ui.sanitize_render('body.attachment', `Error downloading file: google auth needed. ${tool.ui.retry_link()}`);
-      } else if(tool.api.error.is_network_error(e)) {
+      } else if(Api.error.is_network_error(e)) {
         tool.ui.sanitize_render('body.attachment', `Error downloading file: no internet. ${tool.ui.retry_link()}`);
       } else {
         tool.catch.handle_exception(e);
@@ -185,7 +185,7 @@ tool.catch.try(async () => {
   let recover_missing_attachment_id_if_needed = async () => {
     if (!url_params.url && !url_params.attachment_id && url_params.message_id) {
       try {
-        let result = await tool.api.gmail.message_get(account_email, url_params.message_id as string, 'full');
+        let result = await Api.gmail.message_get(account_email, url_params.message_id as string, 'full');
         if (result && result.payload && result.payload.parts) {
           for (let attachment_meta of result.payload.parts) {
             if (attachment_meta.filename === url_params.name && attachment_meta.body && attachment_meta.body.size === url_params.size && attachment_meta.body.attachmentId) {
@@ -206,7 +206,7 @@ tool.catch.try(async () => {
   let process_as_a_public_key_and_hide_attachment_if_appropriate = async () => {
     if (encrypted_a && encrypted_a.message_id && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
-      let attachment = await tool.api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
+      let attachment = await Api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
       let result = await tool.crypto.message.decrypt(account_email, attachment.data);
       if (result.success && result.content.text) {
         let openpgp_type = tool.crypto.message.type(result.content.text);
@@ -231,10 +231,10 @@ tool.catch.try(async () => {
       $('#download').click(tool.ui.event.prevent(tool.ui.event.double(), save_to_downloads));
     }
   } catch (e) {
-    if(tool.api.error.is_auth_popup_needed(e)) {
+    if(Api.error.is_auth_popup_needed(e)) {
       tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       tool.ui.sanitize_render('body.attachment', `Error downloading file - google auth needed. ${tool.ui.retry_link()}`);
-    } else if(tool.api.error.is_network_error(e)) {
+    } else if(Api.error.is_network_error(e)) {
       tool.ui.sanitize_render('body.attachment', `Error downloading file - no internet. ${tool.ui.retry_link()}`);
     } else {
       tool.catch.handle_exception(e);

@@ -24,7 +24,7 @@ tool.catch.try( async () => {
   let on_default_expire_user_change = async () => {
     tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await tool.api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
+    await Api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
   };
 
@@ -77,14 +77,14 @@ tool.catch.try( async () => {
   if (subscription.active) {
     tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
     try {
-      let response = await tool.api.fc.account_update();
+      let response = await Api.fc.account_update();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(on_default_expire_user_change);
     } catch (e) {
-      if (tool.api.error.is_auth_error(e)) {
+      if (Api.error.is_auth_error(e)) {
         tool.ui.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
-      } else if (tool.api.error.is_network_error(e)) {
+      } else if (Api.error.is_network_error(e)) {
         tool.ui.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         tool.catch.handle_exception(e);

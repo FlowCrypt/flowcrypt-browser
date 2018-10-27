@@ -98,9 +98,9 @@ tool.catch.try(async () => {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
       } catch(e) {
-        if(tool.api.error.is_network_error(e)) {
+        if(Api.error.is_network_error(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && tool.api.error.is_auth_popup_needed(e)) {
+        } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
@@ -118,9 +118,9 @@ tool.catch.try(async () => {
     try {
       if (email === account_email) { // request attestation
         await Settings.save_attest_request(account_email, 'CRYPTUP');
-        await tool.api.attester.initial_legacy_submit(email, primary_ki.public, true);
+        await Api.attester.initial_legacy_submit(email, primary_ki.public, true);
       } else { // submit only
-        await tool.api.attester.initial_legacy_submit(email, primary_ki.public, false);
+        await Api.attester.initial_legacy_submit(email, primary_ki.public, false);
       }
     } catch (e) {
       tool.catch.handle_exception(e);
@@ -131,11 +131,11 @@ tool.catch.try(async () => {
 
   let storage = await Store.get_account(account_email, ['attests_processed', 'attests_requested', 'addresses']);
   try {
-    let diagnosis = await tool.api.attester.diagnose_keyserver_pubkeys(account_email);
+    let diagnosis = await Api.attester.diagnose_keyserver_pubkeys(account_email);
     $('.summary').text('');
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
   } catch (e) {
-    if (tool.api.error.is_network_error(e)) {
+    if (Api.error.is_network_error(e)) {
       tool.ui.sanitize_render('.summary', `Failed to load due to internet connection. ${tool.ui.retry_link()}`);
     } else {
       tool.ui.sanitize_render('.summary', `Failed to load. ${tool.ui.retry_link()}`);

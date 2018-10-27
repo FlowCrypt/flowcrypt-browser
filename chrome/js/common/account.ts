@@ -24,11 +24,11 @@ class FlowCryptAccount {
 
   subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
     this.event_handlers.render_status_text(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-    await tool.api.fc.account_check_sync();
+    await Api.fc.account_check_sync();
     try {
       return await this.do_subscribe(chosen_product, source);
     } catch (e) {
-      if (tool.api.error.is_auth_error(e)) {
+      if (Api.error.is_auth_error(e)) {
         await this.save_subscription_attempt(chosen_product, source);
         let response = await this.register(account_email);
         return await this.do_subscribe(chosen_product, source);
@@ -39,7 +39,7 @@ class FlowCryptAccount {
 
   register = async (account_email: string) => { // register_and_attempt_to_verify
     this.event_handlers.render_status_text('registering..', true);
-    let response = await tool.api.fc.account_login(account_email);
+    let response = await Api.fc.account_login(account_email);
     if (response.verified) {
       return response;
     }
@@ -61,9 +61,9 @@ class FlowCryptAccount {
     let last_token_error;
     for (let token of tokens) {
       try {
-        return await tool.api.fc.account_login(account_email, token);
+        return await Api.fc.account_login(account_email, token);
       } catch (e) {
-        if (tool.api.error.is_standard_error(e, 'token')) {
+        if (Api.error.is_standard_error(e, 'token')) {
           last_token_error = e;
         } else {
           throw e;
@@ -97,7 +97,7 @@ class FlowCryptAccount {
   private do_subscribe = async (chosen_product: Product, source:string|null=null) => {
     await Store.remove(null, ['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
-    let response = await tool.api.fc.account_subscribe(chosen_product.id!, chosen_product.method!, source);
+    let response = await Api.fc.account_subscribe(chosen_product.id!, chosen_product.method!, source);
     if (response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
       return response.subscription;
     }
@@ -106,11 +106,11 @@ class FlowCryptAccount {
 
   private fetch_token_emails_on_gmail_and_find_matching_token = async (account_email: string, uuid: string): Promise<string[]|null> => {
     let tokens: string[] = [];
-    let response = await tool.api.gmail.message_list(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
+    let response = await Api.gmail.message_list(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
     if (!response.messages) {
       return null;
     }
-    let messages = await tool.api.gmail.messages_get(account_email, response.messages.map(m => m.id), 'full');
+    let messages = await Api.gmail.messages_get(account_email, response.messages.map(m => m.id), 'full');
     for (let gmail_message_object of messages) {
       if (gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body && gmail_message_object.payload.body.size > 0 && gmail_message_object.payload.body.data) {
         let token = this.parse_token_email_text(tool.str.base64url_decode(gmail_message_object.payload.body.data), uuid);

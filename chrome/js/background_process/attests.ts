@@ -71,7 +71,7 @@ class BgAttests {
           try {
             messages = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
-            if(tool.api.error.is_network_error(e)) {
+            if(Api.error.is_network_error(e)) {
               console.info('cannot fetch attest emails - network error - ' + account_email);
               return;
             } else {
@@ -96,7 +96,7 @@ class BgAttests {
   }
 
   private static process_attest_packet_text = async (account_email: string, attest_packet_text: string, passphrase: string|null): Promise<AttestResult> => {
-    let attest = tool.api.attester.packet.parse(attest_packet_text);
+    let attest = Api.attester.packet.parse(attest_packet_text);
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     if (!primary_ki) {
       BgAttests.stop_watching(account_email);
@@ -120,15 +120,15 @@ class BgAttests {
             try {
               let api_r;
               if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
-                api_r = await tool.api.attester.initial_confirm(signed);
+                api_r = await Api.attester.initial_confirm(signed);
               } else {
-                api_r = await tool.api.attester.replace_confirm(signed);
+                api_r = await Api.attester.replace_confirm(signed);
               }
               if (!api_r.attested) {
                 throw new AttestError(`Refused by Attester. Email human@flowcrypt.com to find out why.\n\n${JSON.stringify(api_r)}`, attest_packet_text, account_email);
               }
             } catch (e) {
-              if(tool.api.error.is_network_error(e)) {
+              if(Api.error.is_network_error(e)) {
                 throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
               }
               throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${e.message}`, attest_packet_text, account_email);
@@ -166,8 +166,8 @@ class BgAttests {
       '"' + BgAttests.packet_headers.begin + '"',
       '"' + BgAttests.packet_headers.end + '"',
     ];
-    let list_response = await tool.api.gmail.message_list(account_email, q.join(' '), true);
-    return tool.api.gmail.messages_get(account_email, (list_response.messages || []).map(m => m.id), 'full');
+    let list_response = await Api.gmail.message_list(account_email, q.join(' '), true);
+    return Api.gmail.messages_get(account_email, (list_response.messages || []).map(m => m.id), 'full');
   }
 
   private static get_pending_attest_requests = async () => {
@@ -175,7 +175,7 @@ class BgAttests {
     let storages = await Store.get_accounts(account_emails, ['attests_requested', 'google_token_scopes']);
     let pending = [];
     for (let email of Object.keys(storages)) {
-      BgAttests.attest_ts_can_read_emails[email] = tool.api.gmail.has_scope(storages[email].google_token_scopes || [], 'read');
+      BgAttests.attest_ts_can_read_emails[email] = Api.gmail.has_scope(storages[email].google_token_scopes || [], 'read');
       pending.push({email, attests_requested: storages[email].attests_requested || []});
     }
     return pending;

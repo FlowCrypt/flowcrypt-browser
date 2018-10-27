@@ -39,14 +39,14 @@ tool.catch.try(async () => {
     $('h1').text('Key Backups');
     display_block('loading');
     let storage = await Store.get_account(account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
-    if (email_provider === 'gmail' && tool.api.gmail.has_scope(storage.google_token_scopes || [], 'read')) {
+    if (email_provider === 'gmail' && Api.gmail.has_scope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
-        keys = await tool.api.gmail.fetch_key_backups(account_email);
+        keys = await Api.gmail.fetch_key_backups(account_email);
       } catch (e) {
-        if (tool.api.error.is_network_error(e)) {
+        if (Api.error.is_network_error(e)) {
           tool.ui.sanitize_render('#content', `Could not check for backups: no internet. ${tool.ui.retry_link()}`);
-        } else if(tool.api.error.is_auth_popup_needed(e)) {
+        } else if(Api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           tool.ui.sanitize_render('#content', `Could not check for backups: account needs to be re-connected. ${tool.ui.retry_link()}`);
         } else {
@@ -154,9 +154,9 @@ tool.catch.try(async () => {
       try {
         await do_backup_on_email_provider(account_email, prv.armor());
       } catch (e) {
-        if(tool.api.error.is_network_error(e)) {
+        if(Api.error.is_network_error(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && tool.api.error.is_auth_popup_needed(e)) {
+        } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
@@ -193,9 +193,9 @@ tool.catch.try(async () => {
   let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
     let email_message = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
     let email_attachments = [as_backup_file(account_email, armored_key)];
-    let message = await tool.api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], {'text/html': email_message}, email_attachments);
+    let message = await Api.common.message(account_email, account_email, account_email, tool.enums.recovery_email_subjects[0], {'text/html': email_message}, email_attachments);
     if (email_provider === 'gmail') {
-      return await tool.api.gmail.message_send(account_email, message);
+      return await Api.gmail.message_send(account_email, message);
     } else {
       throw Error(`Backup method not implemented for ${email_provider}`);
     }
@@ -213,9 +213,9 @@ tool.catch.try(async () => {
     try {
       await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
-      if(tool.api.error.is_network_error(e)) {
+      if(Api.error.is_network_error(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
-      } else if(parent_tab_id && tool.api.error.is_auth_popup_needed(e)) {
+      } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         return alert('Account needs to be re-connected first. Please try later.');
       } else {

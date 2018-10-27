@@ -21,9 +21,9 @@ tool.catch.try(async () => {
     tool.ui.sanitize_prepend('#new_message', tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
     let gmail_message_object;
     try {
-      gmail_message_object = await tool.api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');
+      gmail_message_object = await Api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');
     } catch(e) {
-      if(tool.api.error.is_auth_popup_needed(e)) {
+      if(Api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       }
       if (!url_params.from) {
@@ -38,7 +38,7 @@ tool.catch.try(async () => {
       return;
     }
     url_params.thread_id = gmail_message_object.threadId;
-    let reply = tool.api.common.reply_correspondents(account_email, storage.addresses || [], tool.api.gmail.find_header(gmail_message_object, 'from'), (tool.api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+    let reply = Api.common.reply_correspondents(account_email, storage.addresses || [], Api.gmail.find_header(gmail_message_object, 'from'), (Api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
     if (!url_params.to) {
       url_params.to = reply.to.join(',');
     }
@@ -46,14 +46,14 @@ tool.catch.try(async () => {
       url_params.from = reply.from;
     }
     if (!url_params.subject) {
-      url_params.subject = tool.api.gmail.find_header(gmail_message_object, 'subject');
+      url_params.subject = Api.gmail.find_header(gmail_message_object, 'subject');
     }
     $('#loader').remove();
   })();
 
   let tab_id = await tool.browser.message.required_tab_id();
 
-  const can_read_email = tool.api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
+  const can_read_email = Api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(account_email, tab_id);
   if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
     url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
@@ -87,7 +87,7 @@ tool.catch.try(async () => {
       const q_sent_pubkey = `is:sent to:${their_email} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
       const q_received_message = `from:${their_email} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
       try {
-        let response = await tool.api.gmail.message_list(account_email, `(${q_sent_pubkey}) OR (${q_received_message})`, true);
+        let response = await Api.gmail.message_list(account_email, `(${q_sent_pubkey}) OR (${q_received_message})`, true);
         if (response.messages) {
           await Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)});
           return true;
@@ -95,9 +95,9 @@ tool.catch.try(async () => {
           return false;
         }
       } catch(e) {
-        if(tool.api.error.is_auth_popup_needed(e)) {
+        if(Api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if(!tool.api.error.is_network_error(e)) {
+        } else if(!Api.error.is_network_error(e)) {
           tool.catch.handle_exception(e);
         }
         return undefined;
@@ -163,16 +163,16 @@ tool.catch.try(async () => {
     storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
-    email_provider_draft_get: (draft_id: string) => tool.api.gmail.draft_get(account_email, draft_id, 'raw'),
-    email_provider_draft_create: (mime_message: string) => tool.api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string),
-    email_provider_draft_update: (draft_id: string, mime_message: string) => tool.api.gmail.draft_update(account_email, draft_id, mime_message),
-    email_provider_draft_delete: (draft_id: string) => tool.api.gmail.draft_delete(account_email, draft_id),
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => tool.api.gmail.message_send(account_email, message, render_upload_progress),
+    email_provider_draft_get: (draft_id: string) => Api.gmail.draft_get(account_email, draft_id, 'raw'),
+    email_provider_draft_create: (mime_message: string) => Api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draft_update(account_email, draft_id, mime_message),
+    email_provider_draft_delete: (draft_id: string) => Api.gmail.draft_delete(account_email, draft_id),
+    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Api.gmail.message_send(account_email, message, render_upload_progress),
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => {
-      tool.api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
-        if(tool.api.error.is_auth_popup_needed(e)) {
+      Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
+        if(Api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if (tool.api.error.is_network_error(e)) {
+        } else if (Api.error.is_network_error(e)) {
           // todo: render network error
         } else {
           tool.catch.handle_exception(e);
@@ -182,18 +182,18 @@ tool.catch.try(async () => {
     },
     email_provider_determine_reply_message_header_variables: async () => {
       try {
-        let thread = await tool.api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
+        let thread = await Api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
         if (thread.messages && thread.messages.length > 0) {
-          let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          let thread_message_id_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+          let thread_message_referrences_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
           return {last_message_id: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last }};
         } else {
           return;
         }
       } catch (e) {
-        if(tool.api.error.is_auth_popup_needed(e)) {
+        if(Api.error.is_auth_popup_needed(e)) {
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if (tool.api.error.is_network_error(e)) {
+        } else if (Api.error.is_network_error(e)) {
           // todo: render retry
         } else {
           tool.catch.handle_exception(e);
@@ -201,7 +201,7 @@ tool.catch.try(async () => {
         }
       }
     },
-    email_provider_extract_armored_block: (message_id: string) => tool.api.gmail.extract_armored_block(account_email, message_id, 'full'),
+    email_provider_extract_armored_block: (message_id: string) => Api.gmail.extract_armored_block(account_email, message_id, 'full'),
     send_message_to_main_window: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(parent_tab_id, channel, data),
     send_message_to_background_script: (channel: string, data: Dict<Serializable>) => tool.browser.message.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {

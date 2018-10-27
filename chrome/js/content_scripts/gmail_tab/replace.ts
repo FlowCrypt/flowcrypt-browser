@@ -165,10 +165,10 @@ class GmailElementReplacer implements WebmailElementReplacer {
           if (this.can_read_emails) {
             tool.ui.sanitize_prepend(new_pgp_attachments, this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
             try {
-              let message = await tool.api.gmail.message_get(this.account_email, message_id, 'full');
-              await this.process_attachments(message_id, tool.api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
+              let message = await Api.gmail.message_get(this.account_email, message_id, 'full');
+              await this.process_attachments(message_id, Api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
             } catch (e) {
-              if (tool.api.error.is_auth_popup_needed(e)) {
+              if (Api.error.is_auth_popup_needed(e)) {
                 this.notifications.show_auth_popup_needed(this.account_email);
               }
               $(new_pgp_attachments).find('.attachment_loader').text('Failed to load');
@@ -207,7 +207,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           let is_ambiguous_asc_file = a.name.substr(-4) === '.asc' && !tool.value(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
           let is_ambiguous_noname_file = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (is_ambiguous_asc_file || is_ambiguous_noname_file) { // Inspect a chunk
-            let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
+            let file_chunk = await Api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
             let openpgp_type = tool.crypto.message.type(file_chunk);
             if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
               rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
@@ -229,7 +229,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           message_element = this.update_message_body_element_DANGEROUSLY(message_element, replace ? 'set': 'append', embedded_signed_message_xss_safe); // xss-safe-factory
         }
       } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
-        let file_chunk = await tool.api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
+        let file_chunk = await Api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
         let openpgp_type = tool.crypto.message.type(file_chunk);
         if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
           rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
@@ -265,7 +265,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   private render_public_key_from_file = async (attachment_meta: Attachment, attachments_container_inner: JQuery<HTMLElement>, message_element: JQuery<HTMLElement>, is_outgoing: boolean, attachment_selector: JQuery<HTMLElement>, rendered_attachments_count: number) => {
     let downloaded_attachment;
     try {
-      downloaded_attachment = await tool.api.gmail.attachment_get(this.account_email, attachment_meta.message_id!, attachment_meta.id!); // .id is present when fetched from api
+      downloaded_attachment = await Api.gmail.attachment_get(this.account_email, attachment_meta.message_id!, attachment_meta.id!); // .id is present when fetched from api
     } catch (e) {
       attachments_container_inner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       rendered_attachments_count++;
@@ -374,7 +374,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private get_conversation_params = (convo_root_el: JQuery<HTMLElement>) => {
-    let headers = tool.api.common.reply_correspondents(this.account_email, this.addresses, this.dom_get_message_sender(convo_root_el), this.dom_get_message_recipients(convo_root_el));
+    let headers = Api.common.reply_correspondents(this.account_email, this.addresses, this.dom_get_message_sender(convo_root_el), this.dom_get_message_recipients(convo_root_el));
     return {
       subject: this.dom_get_message_subject(convo_root_el),
       reply_to: headers.to,
@@ -443,7 +443,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  let {results: [result]} = await tool.api.attester.lookup_email([email]);
+                  let {results: [result]} = await Api.attester.lookup_email([email]);
                   this.recipient_has_pgp_cache[email] = Boolean(result.pubkey); // true or false
                   if (!this.recipient_has_pgp_cache[email]) {
                     everyone_uses_encryption = false;

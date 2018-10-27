@@ -31,13 +31,13 @@ tool.catch.try(async () => {
         };
         let signed_packet;
         try {
-          signed_packet = await tool.api.attester.packet.create_sign(request_replacement, checked_old_key.decrypted);
+          signed_packet = await Api.attester.packet.create_sign(request_replacement, checked_old_key.decrypted);
         } catch (e) {
           tool.catch.report('Error signing REQUEST_REPLACEMENT: ' + e.message);
           return alert('Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
         try {
-          await tool.api.attester.replace_request(account_email, signed_packet, primary_pubkey_armored);
+          await Api.attester.replace_request(account_email, signed_packet, primary_pubkey_armored);
         } catch (e) {
           return alert('Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
@@ -56,7 +56,7 @@ tool.catch.try(async () => {
   };
 
   try {
-    let r = await tool.api.attester.lookup_email([account_email]);
+    let r = await Api.attester.lookup_email([account_email]);
     keyserver_result = r.results[0];
   } catch (e) {
     tool.ui.sanitize_render('#status', `Internet connection dropped. ${tool.ui.retry_link()}`);

@@ -19,7 +19,7 @@ tool.catch.try(async () => {
   let key_backups;
 
   try {
-    key_backups = await tool.api.gmail.fetch_key_backups(account_email);
+    key_backups = await Api.gmail.fetch_key_backups(account_email);
     if (key_backups.length) {
       let not_imported_backup_longids: string[] = [];
       for (let longid of tool.arr.unique(key_backups.map(tool.crypto.key.longid))) {
@@ -38,7 +38,7 @@ tool.catch.try(async () => {
       $('#source_backup').prop('disabled', true);
     }
   } catch (e) {
-    if(tool.api.error.is_auth_popup_needed(e)) {
+    if(Api.error.is_auth_popup_needed(e)) {
       tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
     }
     $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');

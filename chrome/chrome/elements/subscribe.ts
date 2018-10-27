@@ -23,11 +23,11 @@ tool.catch.try(async () => {
       let debug = e ? `<pre>${tool.str.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
       tool.ui.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${tool.ui.retry_link()}</div><br><br>${debug}`);
     };
-    if(tool.api.error.is_network_error(e)) {
+    if(Api.error.is_network_error(e)) {
       render_err('network error');
-    } else if (tool.api.error.is_auth_error(e)) {
+    } else if (Api.error.is_auth_error(e)) {
       render_err('auth error', e);
-    } else if(tool.api.error.is_standard_error(e, 'email')) {
+    } else if(Api.error.is_standard_error(e, 'email')) {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
       render_status_text(e.message || e.error.message);
@@ -76,12 +76,12 @@ tool.catch.try(async () => {
   };
 
   try {
-    await tool.api.fc.account_check_sync();
+    await Api.fc.account_check_sync();
   } catch (e) {
-    if (tool.api.error.is_auth_error(e)) {
+    if (Api.error.is_auth_error(e)) {
       // todo - handle auth error - add device
       tool.ui.sanitize_render('#content', `Failed to load - unknown device. ${tool.ui.retry_link()}`);
-    } else if (tool.api.error.is_network_error(e)) {
+    } else if (Api.error.is_network_error(e)) {
       tool.ui.sanitize_render('#content', `Failed to load due to internet connection. ${tool.ui.retry_link()}`);
     } else {
       tool.catch.handle_exception(e);
@@ -91,7 +91,7 @@ tool.catch.try(async () => {
 
   let subscription = await Store.subscription();
   let {google_token_scopes} = await Store.get_account(account_email, ['google_token_scopes']);
-  let can_read_email = tool.api.gmail.has_scope(google_token_scopes || [] , 'read');
+  let can_read_email = Api.gmail.has_scope(google_token_scopes || [] , 'read');
   let flowcrypt_account = new FlowCryptAccount({render_status_text}, can_read_email);
 
   if (url_params.placement === 'settings') {
@@ -168,12 +168,12 @@ tool.catch.try(async () => {
       $('.action_add_device, .action_close').addClass('long');
       // try API call auth in case it got fixed meanwhile
       try {
-        await tool.api.fc.account_update();
+        await Api.fc.account_update();
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${account_email}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch(e) {
-        if(!tool.api.error.is_auth_error(e) && !tool.api.error.is_network_error(e)) {
+        if(!Api.error.is_auth_error(e) && !Api.error.is_network_error(e)) {
           tool.catch.handle_exception(e);
         }
       }

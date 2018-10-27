@@ -17,8 +17,8 @@ tool.catch.try(async () => {
   let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 
   try {
-    let {results: [result]} = await tool.api.attester.lookup_email([account_email]);
-    let url = tool.api.fc.url('pubkey', account_email);
+    let {results: [result]} = await Api.attester.lookup_email([account_email]);
+    let url = Api.fc.url('pubkey', account_email);
     if (result.pubkey && tool.crypto.key.longid(result.pubkey) === primary_ki.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }

@@ -31,16 +31,16 @@ tool.catch.try(async () => {
 
   // determine reply headers
   try {
-    let thread = await tool.api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
+    let thread = await Api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
     if (thread.messages && thread.messages.length > 0) {
-      let thread_message_id_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-      let thread_message_referrences_last = tool.api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      let thread_message_id_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      let thread_message_referrences_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
       additional_message_headers = { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last };
     }
   } catch (e) {
-    if(tool.api.error.is_auth_popup_needed(e)) {
+    if(Api.error.is_auth_popup_needed(e)) {
       tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-    } else if (tool.api.error.is_network_error(e)) {
+    } else if (Api.error.is_network_error(e)) {
       // todo - render retry button
     } else {
       tool.catch.handle_exception(e);
@@ -51,20 +51,20 @@ tool.catch.try(async () => {
   // send
   $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
     $(target).text('sending..');
-    let message = await tool.api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
+    let message = await Api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
     for (let k of Object.keys(additional_message_headers)) {
       message.headers[k] = additional_message_headers[k];
     }
     try {
-      await tool.api.gmail.message_send(account_email, message);
+      await Api.gmail.message_send(account_email, message);
       tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
       tool.ui.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
-      if(tool.api.error.is_auth_popup_needed(e)) {
+      if(Api.error.is_auth_popup_needed(e)) {
         $(target).text('send response');
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         alert('Google account permission needed, please re-connect account and try again.');
-      } else if(tool.api.error.is_network_error(e)) {
+      } else if(Api.error.is_network_error(e)) {
         $(target).text('send response');
         alert('No internet connection, please try again.');
       } else {

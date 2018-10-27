@@ -25,7 +25,7 @@ class Notifications {
   show_auth_popup_needed = (account_email: string) => {
     this.show(`Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: () => {
-        tool.api.google.auth_popup(account_email, this.tab_id).then(auth_result => {
+        Api.google.auth_popup(account_email, this.tab_id).then(auth_result => {
           this.show(`${auth_result.success ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);
         }, error => {
           console.info(error);

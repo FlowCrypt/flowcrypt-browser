@@ -39,9 +39,9 @@ tool.catch.try(async () => {
         let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));
       } catch(e) {
-        if(tool.api.error.is_network_error(e)) {
+        if(Api.error.is_network_error(e)) {
           alert('Network error, please try again');
-        } else if(tool.api.error.is_auth_popup_needed(e)) {
+        } else if(Api.error.is_auth_popup_needed(e)) {
           alert('Error: account needs to be re-connected first.');
           tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else {
@@ -92,7 +92,7 @@ tool.catch.try(async () => {
     $('.action_account_email_changed').click(tool.ui.event.handle(async () => {
       if(confirm(`Your current account email is ${account_email}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
         let tab_id = await tool.browser.message.required_tab_id();
-        let response = await tool.api.google.auth_popup(account_email, tab_id);
+        let response = await Api.google.auth_popup(account_email, tab_id);
         if (response && response.success === true && response.account_email) {
           if(response.account_email === account_email) {
             alert(`Account email address seems to be the same, nothing to update: ${account_email}`);

@@ -241,6 +241,775 @@ class Env {
 
 }
 
+class Api {
+
+  public static auth = {
+    window: (auth_url: string, window_closed_by_user: Callback) => {
+      let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+      let window_closed_timer = setInterval(() => {
+        if (auth_code_window !== null && auth_code_window.closed) {
+          clearInterval(window_closed_timer);
+          window_closed_by_user();
+        }
+      }, 500);
+      return () => {
+        clearInterval(window_closed_timer);
+        if (auth_code_window !== null) {
+          auth_code_window.close();
+        }
+      };
+    },
+    parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
+  };
+
+  public static error = {
+    is_network_error: (e: Thrown) => {
+      if(e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
+        return true; // openpgp.js uses fetch()... which produces these errors
+      }
+      if (e && typeof e === 'object') {
+        if (Api.error.is_standard_error(e, 'network')) { // StandardError
+          return true;
+        }
+        if (e.status === 0 && e.statusText === 'error') { // $.ajax network error
+          return true;
+        }
+      }
+      return false;
+    },
+    is_auth_error: (e: Thrown) => {
+      if (e && typeof e === 'object') {
+        if(Api.error.is_standard_error(e, 'auth')) {
+          return true; // API auth error response
+        }
+        if (e.status === 401) { // $.ajax auth error
+          return true;
+        }
+      }
+      return false;
+    },
+    is_standard_error: (e: Thrown, internal_type: string) => {
+      if(e && typeof e === 'object') {
+        if(e.internal === internal_type) {
+          return true;
+        }
+        if(e.error && typeof e.error === 'object' && e.error.internal === internal_type) {
+          return true;
+        }
+      }
+      return false;
+    },
+    is_auth_popup_needed: (e: Thrown) => {
+      if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
+        if (e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
+          return true;
+        }
+      }
+      return false;
+    },
+    is_not_found: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
+    is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
+    is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
+  };
+
+  public static google = {
+    plus: {
+      people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
+    },
+    auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
+      if (Env.is_background_script()) {
+        throw {code: null, message: 'Cannot produce auth window from background script'};
+      }
+      let response_handled = false;
+      tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
+        let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
+        tool.browser.message.listen({
+          google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
+            if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
+              response_handled = true;
+              tool._.google_auth_window_result_handler(result).then(resolve, reject);
+              close_auth_window();
+            }
+          },
+        }, auth_request.tab_id);
+        let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
+        // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+        // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
+        if (Env.browser().name !== 'firefox') {
+          let window_closed_timer = window.setInterval(() => {
+            if (auth_code_window === null || typeof auth_code_window === 'undefined') {
+              clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
+            } else if (auth_code_window.closed) {
+              clearInterval(window_closed_timer);
+              if (!response_handled) {
+                resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
+                response_handled = true;
+              }
+            }
+          }, 250);
+        }
+      }, reject);
+    }),
+  };
+
+  public static common = {
+    message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMessage> => {
+      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      return {
+        headers: primary_ki ? {OpenPGP: `id=${primary_ki.fingerprint}`} : {},
+        from,
+        to: Array.isArray(to) ? to as string[] : (to as string).split(','),
+        subject,
+        body: typeof body === 'object' ? body : {'text/plain': body},
+        attachments,
+        thread: thread_referrence,
+      };
+    },
+    reply_correspondents: (account_email: string, addresses: string[], last_message_sender: string|null, last_message_recipients: string[]) => {
+      let reply_to_estimate = last_message_recipients;
+      if (last_message_sender) {
+        reply_to_estimate.unshift(last_message_sender);
+      }
+      let reply_to:string[] = [];
+      let my_email = account_email;
+      for (let email of reply_to_estimate) {
+        if (email) {
+          if (tool.value(tool.str.parse_email(email).email).in(addresses)) { // my email
+            my_email = email;
+          } else if (!tool.value(tool.str.parse_email(email).email).in(reply_to)) { // skip duplicates
+            reply_to.push(tool.str.parse_email(email).email); // reply to all except my emails
+          }
+        }
+      }
+      if (!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
+        reply_to = tool.arr.unique(reply_to_estimate);
+      }
+      return {to: reply_to, from: my_email};
+    },
+  };
+
+  public static gmail = {
+    query: {
+      or: (arr: string[], quoted:boolean=false) => {
+        if (quoted) {
+          return '("' + arr.join('") OR ("') + '")';
+        } else {
+          return '(' + arr.join(') OR (') + ')';
+        }
+      },
+      backups: (account_email: string) => {
+        return [
+          'from:' + account_email,
+          'to:' + account_email,
+          '(subject:"' + tool.enums.recovery_email_subjects.join('" OR subject: "') + '")',
+          '-is:spam',
+        ].join(' ');
+      },
+    },
+    scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
+    has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
+    users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
+      let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
+      if(account_email && !access_token) {
+        return await tool._.api_google_call(account_email, 'GET', url, {});
+      } else if (!account_email && access_token) {
+        return await $.ajax({url, method: 'GET', headers: {'Authorization': `Bearer ${access_token}`}, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true});
+      } else {
+        throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
+      }
+    },
+    thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => tool._.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
+      format,
+    }),
+    draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => tool._.api_gmail_call(account_email, 'POST', 'drafts', {
+      message: {
+        raw: tool.str.base64url_encode(mime_message),
+        threadId: thread_id || null,
+      },
+    }),
+    draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
+    draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => tool._.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
+      message: {
+        raw: tool.str.base64url_encode(mime_message),
+      },
+    }),
+    draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => tool._.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
+      format,
+    }),
+    draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
+      id,
+    }),
+    message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
+      message.headers.From = message.from;
+      message.headers.To = message.to.join(',');
+      message.headers.Subject = message.subject;
+      let mime_message = await tool.mime.encode(message.body, message.headers, message.attachments);
+      let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
+      return tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
+    },
+    message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => tool._.api_gmail_call(account_email, 'GET', 'messages', {
+      q,
+      includeSpamTrash: include_deleted,
+    }),
+    message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
+      format: format || 'full',
+    }),
+    messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
+      return Promise.all(message_ids.map(id => Api.gmail.message_get(account_email, id, format)));
+    },
+    attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
+      let r: ApirGmailAttachment = await tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+      r.data = tool.str.base64url_decode(r.data);
+      return r;
+    },
+    attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
+      let min_bytes = 1000;
+      let processed = 0;
+      let process_chunk_and_resolve = (chunk: string) => {
+        if (!processed++) {
+          // make json end guessing easier
+          chunk = chunk.replace(/[\n\s\r]/g, '');
+          // the response is a chunk of json that may not have ended. One of:
+          // {"length":12345,"data":"kksdwei
+          // {"length":12345,"data":"kksdweiooiowei
+          // {"length":12345,"data":"kksdweiooiowei"
+          // {"length":12345,"data":"kksdweiooiowei"}
+          if (chunk[chunk.length-1] !== '"' && chunk[chunk.length-2] !== '"') {
+            chunk += '"}'; // json end
+          } else if (chunk[chunk.length-1] !== '}') {
+            chunk += '}'; // json end
+          }
+          let parsed_json_data_field;
+          try {
+            parsed_json_data_field = JSON.parse(chunk).data;
+          } catch (e) {
+            console.log(e);
+            reject({code: null, message: "Chunk response could not be parsed"});
+            return;
+          }
+          for (let i = 0; parsed_json_data_field && i < 50; i++) {
+            try {
+              resolve(tool.str.base64url_decode(parsed_json_data_field));
+              return;
+            } catch (e) {
+               // the chunk of data may have been cut at an inconvenient index
+               // shave off up to 50 trailing characters until it can be decoded
+              parsed_json_data_field = parsed_json_data_field.slice(0, -1);
+            }
+          }
+          reject({code: null, message: "Chunk response could not be decoded"});
+        }
+      };
+      tool._.google_api_authorization_header(account_email).then(auth_token => {
+        let r = new XMLHttpRequest();
+        r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${attachment_id}`, true);
+        r.setRequestHeader('Authorization', auth_token);
+        r.send();
+        let status: number;
+        let response_poll_interval = window.setInterval(() => {
+          if (status >= 200 && status <= 299 && r.responseText.length >= min_bytes) {
+            window.clearInterval(response_poll_interval);
+            process_chunk_and_resolve(r.responseText);
+            r.abort();
+          }
+        }, 10);
+        r.onreadystatechange = () => {
+          if (r.readyState === 2 || r.readyState === 3) { // headers, loading
+            status = r.status;
+            if (status >= 300) {
+              reject({code: status, message: `Fail status ${status} received when downloading a chunk`});
+              window.clearInterval(response_poll_interval);
+              r.abort();
+            }
+          }
+          if (r.readyState === 3 || r.readyState === 4) { // loading, done
+            if (status >= 200 && status <= 299 && r.responseText.length >= min_bytes) { // done as a success - resolve in case response_poll didn't catch this yet
+              process_chunk_and_resolve(r.responseText);
+              window.clearInterval(response_poll_interval);
+              if (r.readyState === 3) {
+                r.abort();
+              }
+            } else {  // done as a fail - reject
+              reject({code: null, message: "Network connection error when downloading a chunk", internal: "network"});
+              window.clearInterval(response_poll_interval);
+            }
+          }
+        };
+      }).catch(reject);
+    }),
+    find_header: (api_gmail_message_object: ApirGmailMessage|ApirGmailMessage$payload, header_name: string) => {
+      let node: ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as ApirGmailMessage).payload : api_gmail_message_object as ApirGmailMessage$payload;
+      if (typeof node.headers !== 'undefined') {
+        for (let header of node.headers) {
+          if (header.name.toLowerCase() === header_name.toLowerCase()) {
+            return header.value;
+          }
+        }
+      }
+      return null;
+    },
+    find_attachments: (message_or_payload_or_part: ApirGmailMessage|ApirGmailMessage$payload|ApirGmailMessage$payload$part, internal_results:Attachment[]=[], internal_message_id:string|null=null) => {
+      if (message_or_payload_or_part.hasOwnProperty('payload')) {
+        internal_message_id = (message_or_payload_or_part as ApirGmailMessage).id;
+        Api.gmail.find_attachments((message_or_payload_or_part as ApirGmailMessage).payload, internal_results, internal_message_id);
+      }
+      if (message_or_payload_or_part.hasOwnProperty('parts')) {
+        for (let part of (message_or_payload_or_part as ApirGmailMessage$payload).parts!) {
+          Api.gmail.find_attachments(part, internal_results, internal_message_id);
+        }
+      }
+      if (message_or_payload_or_part.hasOwnProperty('body') && (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.hasOwnProperty('attachmentId')) {
+        internal_results.push(new Attachment({
+          message_id: internal_message_id,
+          id: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.attachmentId,
+          length: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.size,
+          name: (message_or_payload_or_part as ApirGmailMessage$payload$part).filename,
+          type: (message_or_payload_or_part as ApirGmailMessage$payload$part).mimeType,
+          inline: (Api.gmail.find_header(message_or_payload_or_part, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
+        }));
+      }
+      return internal_results;
+    },
+    find_bodies: (gmail_email_object: Dict<any>, internal_results:Dict<any>={}): SendableMessageBody => {
+      if (typeof gmail_email_object.payload !== 'undefined') {
+        Api.gmail.find_bodies(gmail_email_object.payload, internal_results);
+      }
+      if (typeof gmail_email_object.parts !== 'undefined') {
+        for (let part of gmail_email_object.parts) {
+          Api.gmail.find_bodies(part, internal_results);
+        }
+      }
+      if (typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.data !== 'undefined' && gmail_email_object.body.size !== 0) {
+        internal_results[gmail_email_object.mimeType] = gmail_email_object.body.data;
+      }
+      return internal_results as SendableMessageBody;
+    },
+    fetch_attachments: async (account_email: string, attachments: Attachment[]) => {
+      let responses = await Promise.all(attachments.map(a => Api.gmail.attachment_get(account_email, a.message_id!, a.id!)));
+      for (let i of responses.keys()) {
+        attachments[i].set_data(responses[i].data);
+      }
+    },
+    search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
+      let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
+      if (user_query) {
+        let variations_of_to = user_query.split(/[ .]/g).filter(v => !tool.value(v).in(['com', 'org', 'net']));
+        if (!tool.value(user_query).in(variations_of_to)) {
+          variations_of_to.push(user_query);
+        }
+        gmail_query.push(`(to:${variations_of_to.join(' OR to:')})`);
+      }
+      let filtered_contacts = known_contacts.filter(c => tool.str.is_email_valid(c.email));
+      for (let contact of filtered_contacts) {
+        gmail_query.push(`-to:${contact.email}`);
+      }
+      await tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
+    },
+    /*
+    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
+    * success_callback(str armored_pgp_message)
+    * error_callback(str error_type, str html_formatted_data_to_display_to_user)
+    *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
+    *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
+    */
+    extract_armored_block: async (account_email: string, message_id: string, format:GmailApiResponseFormat): Promise<string> => {
+      let gmail_message_object = await Api.gmail.message_get(account_email, message_id, format);
+      if (format === 'full') {
+        let bodies = Api.gmail.find_bodies(gmail_message_object);
+        let attachments = Api.gmail.find_attachments(gmail_message_object);
+        let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'] || '')));
+        if (armored_message_from_bodies) {
+          return armored_message_from_bodies;
+        } else if (attachments.length) {
+          for (let attachment of attachments) {
+            if (attachment.treat_as() === 'message') {
+              await Api.gmail.fetch_attachments(account_email, [attachment]);
+              let armored_message = tool.crypto.armor.clip(attachment.as_text());
+              if (armored_message) {
+                return armored_message;
+              } else {
+                throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: attachment.as_text()};
+              }
+            }
+          }
+          throw {code: null, internal: 'format', message: 'Armored message not found', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
+        } else {
+          throw {code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
+        }
+      } else { // format === raw
+        let mime_message = await tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw!));
+        if (mime_message.text !== undefined) {
+          let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
+          if (armored_message) {
+            return armored_message;
+          } else {
+            throw {code: null, internal: 'format', message: 'Could not find armored message in parsed raw mime', data: mime_message};
+          }
+        } else {
+          throw {code: null, internal: 'format', message: 'No text in parsed raw mime', data: mime_message};
+        }
+      }
+    },
+    fetch_messages_based_on_query_and_extract_first_available_header: async (account_email: string, q: string, header_names: string[]) => {
+      let {messages} = await Api.gmail.message_list(account_email, q, false);
+      return await tool._.api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages || [], header_names);
+    },
+    fetch_key_backups: async (account_email: string) => {
+      let response = await Api.gmail.message_list(account_email, Api.gmail.query.backups(account_email), true);
+      if (!response.messages) {
+        return [];
+      }
+      let message_ids = response.messages.map(m => m.id);
+      let messages = await Api.gmail.messages_get(account_email, message_ids, 'full');
+      let attachments:Attachment[] = [];
+      for (let message of messages) {
+        attachments = attachments.concat(Api.gmail.find_attachments(message));
+      }
+      await Api.gmail.fetch_attachments(account_email, attachments);
+      let keys: OpenPGP.key.Key[] = [];
+      for (let attachment of attachments) {
+        try {
+          let key = openpgp.key.readArmored(attachment.as_text()).keys[0];
+          if (key.isPrivate()) {
+            keys.push(key);
+          }
+        } catch (err) {} // tslint:disable-line:no-empty
+      }
+      return keys;
+    },
+  };
+
+  public static attester = {
+    lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
+      email: emails.map(e => tool.str.parse_email(e).email),
+    }),
+    initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => tool._.api_attester_call('initial/legacy_submit', {
+      email: tool.str.parse_email(email).email,
+      pubkey: pubkey.trim(),
+      attest,
+    }),
+    initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
+      signed_message: signed_attest_packet,
+    }),
+    replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
+      signed_message: signed_attest_packet,
+      new_pubkey,
+      email,
+    }),
+    replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
+      signed_message: signed_attest_packet,
+    }),
+    test_welcome: (email: string, pubkey: string): Promise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {
+      email,
+      pubkey,
+    }),
+    diagnose_keyserver_pubkeys: async (account_email: string) => {
+      let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
+      let {addresses} = await Store.get_account(account_email, ['addresses']);
+      let stored_keys = await Store.keys_get(account_email);
+      let stored_keys_longids = stored_keys.map(ki => ki.longid);
+      let {results} = await Api.attester.lookup_email(tool.arr.unique([account_email].concat(addresses || [])));
+      for (let pubkey_search_result of results) {
+        if (!pubkey_search_result.pubkey) {
+          diagnosis.has_pubkey_missing = true;
+          diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
+        } else {
+          let match = true;
+          if (!tool.value(tool.crypto.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
+            diagnosis.has_pubkey_mismatch = true;
+            match = false;
+          }
+          diagnosis.results[pubkey_search_result.email] = {pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested || false, match};
+        }
+      }
+      return diagnosis;
+    },
+    packet: {
+      create_sign: async (values: Dict<string>, decrypted_prv: OpenPGP.key.Key) => {
+        let lines:string[] = [];
+        for (let key of Object.keys(values)) {
+          lines.push(key + ':' + values[key]);
+        }
+        let content_text = lines.join('\n');
+        let packet = Api.attester.packet.parse(tool._.api_attester_packet_armor(content_text));
+        if (packet.success !== true) {
+          throw {code: null, message: packet.error, internal: 'parse'};
+        }
+        return await tool.crypto.message.sign(decrypted_prv, content_text);
+      },
+      is_valid_hash: (v: string) => /^[A-F0-9]{40}$/.test(v),
+      parse: (text: string): ParsedAttest => {
+        let accepted_values = {
+          'ACT': 'action',
+          'ATT': 'attester',
+          'ADD': 'email_hash',
+          'PUB': 'fingerprint',
+          'OLD': 'fingerprint_old',
+          'RAN': 'random',
+        } as Dict<string>;
+        let result: ParsedAttest = {
+          success: false,
+          content: {},
+          error: null as string|null,
+          text: null as string|null,
+        };
+        let packet_headers = tool.crypto.armor.headers('attest_packet', 're');
+        let matches = text.match(RegExp(packet_headers.begin + '([^]+)' + packet_headers.end, 'm'));
+        if (matches && matches[1]) {
+          result.text = matches[1].replace(/^\s+|\s+$/g, '');
+          let lines = result.text.split('\n');
+          for (let line of lines) {
+            let line_parts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
+            if (line_parts.length !== 2) {
+              result.error = 'Wrong content line format';
+              result.content = {};
+              return result;
+            }
+            if (!accepted_values[line_parts[0]]) {
+              result.error = 'Unknown line key';
+              result.content = {};
+              return result;
+            }
+            if (result.content[accepted_values[line_parts[0]]]) {
+              result.error = 'Duplicate line key';
+              result.content = {};
+              return result;
+            }
+            result.content[accepted_values[line_parts[0]]] = line_parts[1];
+          }
+          if (result.content.fingerprint && !Api.attester.packet.is_valid_hash(result.content.fingerprint)) {
+            result.error = 'Wrong PUB line value format';
+            result.content = {};
+            return result;
+          }
+          if (result.content.email_hash && !Api.attester.packet.is_valid_hash(result.content.email_hash)) {
+            result.error = 'Wrong ADD line value format';
+            result.content = {};
+            return result;
+          }
+          if (result.content.str_random && !Api.attester.packet.is_valid_hash(result.content.str_random)) {
+            result.error = 'Wrong RAN line value format';
+            result.content = {};
+            return result;
+          }
+          if (result.content.fingerprint_old && !Api.attester.packet.is_valid_hash(result.content.fingerprint_old)) {
+            result.error = 'Wrong OLD line value format';
+            result.content = {};
+            return result;
+          }
+          if (result.content.action && !tool.value(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
+            result.error = 'Wrong ACT line value format';
+            result.content = {};
+            return result;
+          }
+          if (result.content.attester && !tool.value(result.content.attester).in(['CRYPTUP'])) {
+            result.error = 'Wrong ATT line value format';
+            result.content = {};
+            return result;
+          }
+          result.success = true;
+          return result;
+        } else {
+          result.error = 'Could not locate packet headers';
+          result.content = {};
+          return result;
+        }
+      },
+    },
+  };
+
+  public static fc = {
+    url: (type: string, variable='') => {
+      return ({
+        'api': 'https://flowcrypt.com/api/',
+        'me': 'https://flowcrypt.com/me/' + variable,
+        'pubkey': 'https://flowcrypt.com/pub/' + variable,
+        'decrypt': 'https://flowcrypt.com/' + variable,
+        'web': 'https://flowcrypt.com/',
+      } as Dict<string>)[type];
+    },
+    help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => tool._.api_fc_call('help/feedback', {
+      email: account_email,
+      message,
+    }),
+    help_uninstall: (email: string, client: string) => tool._.api_fc_call('help/uninstall', {
+      email,
+      client,
+      metrics: null,
+    }),
+    account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
+      let auth_info = await Store.auth_info();
+      let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
+      let account = auth_info.account_email || account_email;
+      let response: ApirFcAccountLogin = await tool._.api_fc_call('account/login', {
+        account,
+        uuid,
+        token,
+      });
+      if(response.registered !== true) {
+        throw new Error('account_login did not result in successful registration');
+      }
+      await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription});
+      return {verified: response.verified === true, subscription: response.subscription};
+    },
+    account_check: (emails: string[]) => tool._.api_fc_call('account/check', {
+      emails,
+    }) as Promise<ApirFcAccountCheck>,
+    account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
+      let emails = await Store.account_emails_get();
+      if (emails.length) {
+        let response = await Api.fc.account_check(emails);
+        let auth_info = await Store.auth_info();
+        let subscription = await Store.subscription();
+        let local_storage_update: GlobalStore = {};
+        if (response.email) {
+          if (response.email !== auth_info.account_email) {
+            // will fail auth when used on server, user will be prompted to verify this new device when that happens
+            local_storage_update.cryptup_account_email = response.email;
+            local_storage_update.cryptup_account_uuid = tool.crypto.hash.sha1(tool.str.random(40));
+          }
+        } else {
+          if (auth_info.account_email) {
+            local_storage_update.cryptup_account_email = null;
+            local_storage_update.cryptup_account_uuid = null;
+          }
+        }
+        if (response.subscription) {
+          let rs = response.subscription;
+          if (rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
+            local_storage_update.cryptup_account_subscription = {active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire};
+          }
+        } else {
+          if (subscription.level || subscription.expire || subscription.active || subscription.method) {
+            local_storage_update.cryptup_account_subscription = null;
+          }
+        }
+        if (Object.keys(local_storage_update).length) {
+          tool.catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
+          await Store.set(null, local_storage_update);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    },
+    account_update: async (update_values?: Dict<Serializable>): Promise<ApirFcAccountUpdate> => {
+      let auth_info = await Store.auth_info();
+      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
+      if (update_values) {
+        for (let k of Object.keys(update_values)) {
+          request[k] = update_values[k];
+        }
+      }
+      return await tool._.api_fc_call('account/update', request);
+    },
+    account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
+      let auth_info = await Store.auth_info();
+      let response: ApirFcAccountSubscribe = await tool._.api_fc_call('account/subscribe', {
+        account: auth_info.account_email,
+        uuid: auth_info.uuid,
+        method,
+        source: payment_source_token,
+        product,
+      });
+      await Store.set(null, { cryptup_account_subscription: response.subscription });
+      return response;
+    },
+    message_presign_files: async (attachments: Attachment[], auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessagePresignFiles> => {
+      let response: ApirFcMessagePresignFiles;
+      let lengths = attachments.map(a => a.length);
+      if (!auth_method) {
+        response = await tool._.api_fc_call('message/presign_files', {
+          lengths,
+        });
+      } else if (auth_method === 'uuid') {
+        let auth_info = await Store.auth_info();
+        response = await tool._.api_fc_call('message/presign_files', {
+          account: auth_info.account_email,
+          uuid: auth_info.uuid,
+          lengths,
+        });
+      } else {
+        response = await tool._.api_fc_call('message/presign_files', {
+          message_token_account: auth_method.account,
+          message_token: auth_method.token,
+          lengths,
+        });
+      }
+      if (response.approvals && response.approvals.length === attachments.length) {
+        return response;
+      }
+      throw new Error('Could not verify that all files were uploaded properly, please try again.');
+    },
+    message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_fc_call('message/confirm_files', {
+      identifiers,
+    }),
+    message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
+      if (encrypted_data_armored.length > 100000) {
+        throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
+      }
+      let content = new Attachment({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
+      if (!auth_method) {
+        return await tool._.api_fc_call('message/upload', {content}, 'FORM');
+      } else {
+        let auth_info = await Store.auth_info();
+        return await tool._.api_fc_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
+      }
+    },
+    message_token: async (): Promise<ApirFcMessageToken> => {
+      let auth_info = await Store.auth_info();
+      return await tool._.api_fc_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
+    },
+    message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
+      let auth_info = await Store.auth_info();
+      return await tool._.api_fc_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
+    },
+    message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_fc_call('message/reply', {
+      short,
+      token,
+      from,
+      to,
+      subject,
+      message,
+    }),
+    message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => tool._.api_fc_call('message/contact', {
+      message_token_account: message_token.account,
+      message_token: message_token.token,
+      sender,
+      message,
+    }),
+    link_message: (short: string): Promise<ApirFcLinkMessage> => tool._.api_fc_call('link/message', {
+      short,
+    }),
+    link_me: (alias: string): Promise<ApirFcLinkMe> => tool._.api_fc_call('link/me', {
+      alias,
+    }),
+  };
+
+  public static aws = {
+    s3_upload: (items: {base_url:string, fields: Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ApiCallProgressCallback) => {
+      let progress = tool.arr.zeroes(items.length);
+      let promises:Promise<void>[] = [];
+      if (!items.length) {
+        return Promise.resolve(promises);
+      }
+      for (let i of items.keys()) {
+        let values = items[i].fields;
+        values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
+        promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
+          progress[i] = single_file_progress;
+          tool.ui.event.prevent(tool.ui.event.spree(), () => {
+            // this should of course be weighted average. How many years until someone notices?
+            progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
+          })();
+        }}));
+      }
+      return Promise.all(promises);
+    },
+  };
+
+}
+
 let tool = {
   str: {
     parse_email: (email_string: string) => {
@@ -1469,11 +2238,11 @@ let tool = {
         };
       },
       __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
-        if(tool.api.error.is_network_error(e) && err_handler && err_handler.network) {
+        if(Api.error.is_network_error(e) && err_handler && err_handler.network) {
           err_handler.network();
-        } else if (tool.api.error.is_auth_error(e) && err_handler && err_handler.auth) {
+        } else if (Api.error.is_auth_error(e) && err_handler && err_handler.auth) {
           err_handler.auth();
-        } else if (tool.api.error.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
+        } else if (Api.error.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
           err_handler.auth_popup();
         } else if (err_handler && err_handler.other) {
           err_handler.other(e);
@@ -1653,765 +2422,6 @@ let tool = {
         });
       },
     },
-  },
-  api: {
-    auth: {
-      window: (auth_url: string, window_closed_by_user: Callback) => {
-        let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-        let window_closed_timer = setInterval(() => {
-          if (auth_code_window !== null && auth_code_window.closed) {
-            clearInterval(window_closed_timer);
-            window_closed_by_user();
-          }
-        }, 500);
-        return () => {
-          clearInterval(window_closed_timer);
-          if (auth_code_window !== null) {
-            auth_code_window.close();
-          }
-        };
-      },
-      parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
-    },
-    error: {
-      is_network_error: (e: Thrown) => {
-        if(e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
-          return true; // openpgp.js uses fetch()... which produces these errors
-        }
-        if (e && typeof e === 'object') {
-          if (tool.api.error.is_standard_error(e, 'network')) { // StandardError
-            return true;
-          }
-          if (e.status === 0 && e.statusText === 'error') { // $.ajax network error
-            return true;
-          }
-        }
-        return false;
-      },
-      is_auth_error: (e: Thrown) => {
-        if (e && typeof e === 'object') {
-          if(tool.api.error.is_standard_error(e, 'auth')) {
-            return true; // API auth error response
-          }
-          if (e.status === 401) { // $.ajax auth error
-            return true;
-          }
-        }
-        return false;
-      },
-      is_standard_error: (e: Thrown, internal_type: string) => {
-        if(e && typeof e === 'object') {
-          if(e.internal === internal_type) {
-            return true;
-          }
-          if(e.error && typeof e.error === 'object' && e.error.internal === internal_type) {
-            return true;
-          }
-        }
-        return false;
-      },
-      is_auth_popup_needed: (e: Thrown) => {
-        if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
-          if (e.responseJSON.error === 'invalid_grant' && tool.value(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
-            return true;
-          }
-        }
-        return false;
-      },
-      is_not_found: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
-      is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
-      is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
-    },
-    google: {
-      plus: {
-        people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => tool._.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
-      },
-      auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
-        if (Env.is_background_script()) {
-          throw {code: null, message: 'Cannot produce auth window from background script'};
-        }
-        let response_handled = false;
-        tool._.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
-          let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: tool.str.random(20), scopes};
-          tool.browser.message.listen({
-            google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
-              if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
-                response_handled = true;
-                tool._.google_auth_window_result_handler(result).then(resolve, reject);
-                close_auth_window();
-              }
-            },
-          }, auth_request.tab_id);
-          let auth_code_window = window.open(tool._.api_google_auth_code_url(auth_request), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
-          // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-          // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-          if (Env.browser().name !== 'firefox') {
-            let window_closed_timer = window.setInterval(() => {
-              if (auth_code_window === null || typeof auth_code_window === 'undefined') {
-                clearInterval(window_closed_timer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
-              } else if (auth_code_window.closed) {
-                clearInterval(window_closed_timer);
-                if (!response_handled) {
-                  resolve({success: false, result: 'Closed', account_email: auth_request.account_email, message_id: auth_request.message_id});
-                  response_handled = true;
-                }
-              }
-            }, 250);
-          }
-        }, reject);
-      }),
-    },
-    common: {
-      message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMessage> => {
-        let [primary_ki] = await Store.keys_get(account_email, ['primary']);
-        return {
-          headers: primary_ki ? {OpenPGP: `id=${primary_ki.fingerprint}`} : {},
-          from,
-          to: Array.isArray(to) ? to as string[] : (to as string).split(','),
-          subject,
-          body: typeof body === 'object' ? body : {'text/plain': body},
-          attachments,
-          thread: thread_referrence,
-        };
-      },
-      reply_correspondents: (account_email: string, addresses: string[], last_message_sender: string|null, last_message_recipients: string[]) => {
-        let reply_to_estimate = last_message_recipients;
-        if (last_message_sender) {
-          reply_to_estimate.unshift(last_message_sender);
-        }
-        let reply_to:string[] = [];
-        let my_email = account_email;
-        for (let email of reply_to_estimate) {
-          if (email) {
-            if (tool.value(tool.str.parse_email(email).email).in(addresses)) { // my email
-              my_email = email;
-            } else if (!tool.value(tool.str.parse_email(email).email).in(reply_to)) { // skip duplicates
-              reply_to.push(tool.str.parse_email(email).email); // reply to all except my emails
-            }
-          }
-        }
-        if (!reply_to.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-          reply_to = tool.arr.unique(reply_to_estimate);
-        }
-        return {to: reply_to, from: my_email};
-      },
-    },
-    gmail: {
-      query: {
-        or: (arr: string[], quoted:boolean=false) => {
-          if (quoted) {
-            return '("' + arr.join('") OR ("') + '")';
-          } else {
-            return '(' + arr.join(') OR (') + ')';
-          }
-        },
-        backups: (account_email: string) => {
-          return [
-            'from:' + account_email,
-            'to:' + account_email,
-            '(subject:"' + tool.enums.recovery_email_subjects.join('" OR subject: "') + '")',
-            '-is:spam',
-          ].join(' ');
-        },
-      },
-      scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
-      has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
-      users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
-        let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
-        if(account_email && !access_token) {
-          return await tool._.api_google_call(account_email, 'GET', url, {});
-        } else if (!account_email && access_token) {
-          return await $.ajax({url, method: 'GET', headers: {'Authorization': `Bearer ${access_token}`}, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true});
-        } else {
-          throw new Error('tool.api.gmail.users_me_profile: need either account_email or access_token');
-        }
-      },
-      thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => tool._.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
-        format,
-      }),
-      draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => tool._.api_gmail_call(account_email, 'POST', 'drafts', {
-        message: {
-          raw: tool.str.base64url_encode(mime_message),
-          threadId: thread_id || null,
-        },
-      }),
-      draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => tool._.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
-      draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => tool._.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
-        message: {
-          raw: tool.str.base64url_encode(mime_message),
-        },
-      }),
-      draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => tool._.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
-        format,
-      }),
-      draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => tool._.api_gmail_call(account_email, 'POST', 'drafts/send', {
-        id,
-      }),
-      message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
-        message.headers.From = message.from;
-        message.headers.To = message.to.join(',');
-        message.headers.Subject = message.subject;
-        let mime_message = await tool.mime.encode(message.body, message.headers, message.attachments);
-        let request = tool._.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
-        return tool._.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || tool.noop}, request.content_type);
-      },
-      message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => tool._.api_gmail_call(account_email, 'GET', 'messages', {
-        q,
-        includeSpamTrash: include_deleted,
-      }),
-      message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
-        format: format || 'full',
-      }),
-      messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
-        return Promise.all(message_ids.map(id => tool.api.gmail.message_get(account_email, id, format)));
-      },
-      attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
-        let r: ApirGmailAttachment = await tool._.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
-        r.data = tool.str.base64url_decode(r.data);
-        return r;
-      },
-      attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
-        let min_bytes = 1000;
-        let processed = 0;
-        let process_chunk_and_resolve = (chunk: string) => {
-          if (!processed++) {
-            // make json end guessing easier
-            chunk = chunk.replace(/[\n\s\r]/g, '');
-            // the response is a chunk of json that may not have ended. One of:
-            // {"length":12345,"data":"kksdwei
-            // {"length":12345,"data":"kksdweiooiowei
-            // {"length":12345,"data":"kksdweiooiowei"
-            // {"length":12345,"data":"kksdweiooiowei"}
-            if (chunk[chunk.length-1] !== '"' && chunk[chunk.length-2] !== '"') {
-              chunk += '"}'; // json end
-            } else if (chunk[chunk.length-1] !== '}') {
-              chunk += '}'; // json end
-            }
-            let parsed_json_data_field;
-            try {
-              parsed_json_data_field = JSON.parse(chunk).data;
-            } catch (e) {
-              console.log(e);
-              reject({code: null, message: "Chunk response could not be parsed"});
-              return;
-            }
-            for (let i = 0; parsed_json_data_field && i < 50; i++) {
-              try {
-                resolve(tool.str.base64url_decode(parsed_json_data_field));
-                return;
-              } catch (e) {
-                 // the chunk of data may have been cut at an inconvenient index
-                 // shave off up to 50 trailing characters until it can be decoded
-                parsed_json_data_field = parsed_json_data_field.slice(0, -1);
-              }
-            }
-            reject({code: null, message: "Chunk response could not be decoded"});
-          }
-        };
-        tool._.google_api_authorization_header(account_email).then(auth_token => {
-          let r = new XMLHttpRequest();
-          r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${attachment_id}`, true);
-          r.setRequestHeader('Authorization', auth_token);
-          r.send();
-          let status: number;
-          let response_poll_interval = window.setInterval(() => {
-            if (status >= 200 && status <= 299 && r.responseText.length >= min_bytes) {
-              window.clearInterval(response_poll_interval);
-              process_chunk_and_resolve(r.responseText);
-              r.abort();
-            }
-          }, 10);
-          r.onreadystatechange = () => {
-            if (r.readyState === 2 || r.readyState === 3) { // headers, loading
-              status = r.status;
-              if (status >= 300) {
-                reject({code: status, message: `Fail status ${status} received when downloading a chunk`});
-                window.clearInterval(response_poll_interval);
-                r.abort();
-              }
-            }
-            if (r.readyState === 3 || r.readyState === 4) { // loading, done
-              if (status >= 200 && status <= 299 && r.responseText.length >= min_bytes) { // done as a success - resolve in case response_poll didn't catch this yet
-                process_chunk_and_resolve(r.responseText);
-                window.clearInterval(response_poll_interval);
-                if (r.readyState === 3) {
-                  r.abort();
-                }
-              } else {  // done as a fail - reject
-                reject({code: null, message: "Network connection error when downloading a chunk", internal: "network"});
-                window.clearInterval(response_poll_interval);
-              }
-            }
-          };
-        }).catch(reject);
-      }),
-      find_header: (api_gmail_message_object: ApirGmailMessage|ApirGmailMessage$payload, header_name: string) => {
-        let node: ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as ApirGmailMessage).payload : api_gmail_message_object as ApirGmailMessage$payload;
-        if (typeof node.headers !== 'undefined') {
-          for (let header of node.headers) {
-            if (header.name.toLowerCase() === header_name.toLowerCase()) {
-              return header.value;
-            }
-          }
-        }
-        return null;
-      },
-      find_attachments: (message_or_payload_or_part: ApirGmailMessage|ApirGmailMessage$payload|ApirGmailMessage$payload$part, internal_results:Attachment[]=[], internal_message_id:string|null=null) => {
-        if (message_or_payload_or_part.hasOwnProperty('payload')) {
-          internal_message_id = (message_or_payload_or_part as ApirGmailMessage).id;
-          tool.api.gmail.find_attachments((message_or_payload_or_part as ApirGmailMessage).payload, internal_results, internal_message_id);
-        }
-        if (message_or_payload_or_part.hasOwnProperty('parts')) {
-          for (let part of (message_or_payload_or_part as ApirGmailMessage$payload).parts!) {
-            tool.api.gmail.find_attachments(part, internal_results, internal_message_id);
-          }
-        }
-        if (message_or_payload_or_part.hasOwnProperty('body') && (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.hasOwnProperty('attachmentId')) {
-          internal_results.push(new Attachment({
-            message_id: internal_message_id,
-            id: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.attachmentId,
-            length: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.size,
-            name: (message_or_payload_or_part as ApirGmailMessage$payload$part).filename,
-            type: (message_or_payload_or_part as ApirGmailMessage$payload$part).mimeType,
-            inline: (tool.api.gmail.find_header(message_or_payload_or_part, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
-          }));
-        }
-        return internal_results;
-      },
-      find_bodies: (gmail_email_object: Dict<any>, internal_results:Dict<any>={}): SendableMessageBody => {
-        if (typeof gmail_email_object.payload !== 'undefined') {
-          tool.api.gmail.find_bodies(gmail_email_object.payload, internal_results);
-        }
-        if (typeof gmail_email_object.parts !== 'undefined') {
-          for (let part of gmail_email_object.parts) {
-            tool.api.gmail.find_bodies(part, internal_results);
-          }
-        }
-        if (typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.data !== 'undefined' && gmail_email_object.body.size !== 0) {
-          internal_results[gmail_email_object.mimeType] = gmail_email_object.body.data;
-        }
-        return internal_results as SendableMessageBody;
-      },
-      fetch_attachments: async (account_email: string, attachments: Attachment[]) => {
-        let responses = await Promise.all(attachments.map(a => tool.api.gmail.attachment_get(account_email, a.message_id!, a.id!)));
-        for (let i of responses.keys()) {
-          attachments[i].set_data(responses[i].data);
-        }
-      },
-      search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
-        let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
-        if (user_query) {
-          let variations_of_to = user_query.split(/[ .]/g).filter(v => !tool.value(v).in(['com', 'org', 'net']));
-          if (!tool.value(user_query).in(variations_of_to)) {
-            variations_of_to.push(user_query);
-          }
-          gmail_query.push(`(to:${variations_of_to.join(' OR to:')})`);
-        }
-        let filtered_contacts = known_contacts.filter(c => tool.str.is_email_valid(c.email));
-        for (let contact of filtered_contacts) {
-          gmail_query.push(`-to:${contact.email}`);
-        }
-        await tool._.api_gmail_loop_through_emails_to_compile_contacts(account_email, gmail_query.join(' '), chunked_callback);
-      },
-      /*
-      * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
-      * success_callback(str armored_pgp_message)
-      * error_callback(str error_type, str html_formatted_data_to_display_to_user)
-      *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
-      *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
-      */
-      extract_armored_block: async (account_email: string, message_id: string, format:GmailApiResponseFormat): Promise<string> => {
-        let gmail_message_object = await tool.api.gmail.message_get(account_email, message_id, format);
-        if (format === 'full') {
-          let bodies = tool.api.gmail.find_bodies(gmail_message_object);
-          let attachments = tool.api.gmail.find_attachments(gmail_message_object);
-          let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain'] || '')) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html'] || '')));
-          if (armored_message_from_bodies) {
-            return armored_message_from_bodies;
-          } else if (attachments.length) {
-            for (let attachment of attachments) {
-              if (attachment.treat_as() === 'message') {
-                await tool.api.gmail.fetch_attachments(account_email, [attachment]);
-                let armored_message = tool.crypto.armor.clip(attachment.as_text());
-                if (armored_message) {
-                  return armored_message;
-                } else {
-                  throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: attachment.as_text()};
-                }
-              }
-            }
-            throw {code: null, internal: 'format', message: 'Armored message not found', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
-          } else {
-            throw {code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmail_message_object.payload, undefined, 2)};
-          }
-        } else { // format === raw
-          let mime_message = await tool.mime.decode(tool.str.base64url_decode(gmail_message_object.raw!));
-          if (mime_message.text !== undefined) {
-            let armored_message = tool.crypto.armor.clip(mime_message.text); // todo - the message might be in attachments
-            if (armored_message) {
-              return armored_message;
-            } else {
-              throw {code: null, internal: 'format', message: 'Could not find armored message in parsed raw mime', data: mime_message};
-            }
-          } else {
-            throw {code: null, internal: 'format', message: 'No text in parsed raw mime', data: mime_message};
-          }
-        }
-      },
-      fetch_messages_based_on_query_and_extract_first_available_header: async (account_email: string, q: string, header_names: string[]) => {
-        let {messages} = await tool.api.gmail.message_list(account_email, q, false);
-        return await tool._.api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header(account_email, messages || [], header_names);
-      },
-      fetch_key_backups: async (account_email: string) => {
-        let response = await tool.api.gmail.message_list(account_email, tool.api.gmail.query.backups(account_email), true);
-        if (!response.messages) {
-          return [];
-        }
-        let message_ids = response.messages.map(m => m.id);
-        let messages = await tool.api.gmail.messages_get(account_email, message_ids, 'full');
-        let attachments:Attachment[] = [];
-        for (let message of messages) {
-          attachments = attachments.concat(tool.api.gmail.find_attachments(message));
-        }
-        await tool.api.gmail.fetch_attachments(account_email, attachments);
-        let keys: OpenPGP.key.Key[] = [];
-        for (let attachment of attachments) {
-          try {
-            let key = openpgp.key.readArmored(attachment.as_text()).keys[0];
-            if (key.isPrivate()) {
-              keys.push(key);
-            }
-          } catch (err) {} // tslint:disable-line:no-empty
-        }
-        return keys;
-      },
-    },
-    attester: {
-      lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => tool._.api_attester_call('lookup/email', {
-        email: emails.map(e => tool.str.parse_email(e).email),
-      }),
-      initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => tool._.api_attester_call('initial/legacy_submit', {
-        email: tool.str.parse_email(email).email,
-        pubkey: pubkey.trim(),
-        attest,
-      }),
-      initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => tool._.api_attester_call('initial/confirm', {
-        signed_message: signed_attest_packet,
-      }),
-      replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<ApirAttReplaceRequest> => tool._.api_attester_call('replace/request', {
-        signed_message: signed_attest_packet,
-        new_pubkey,
-        email,
-      }),
-      replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => tool._.api_attester_call('replace/confirm', {
-        signed_message: signed_attest_packet,
-      }),
-      test_welcome: (email: string, pubkey: string): Promise<ApirAttTestWelcome> => tool._.api_attester_call('test/welcome', {
-        email,
-        pubkey,
-      }),
-      diagnose_keyserver_pubkeys: async (account_email: string) => {
-        let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
-        let {addresses} = await Store.get_account(account_email, ['addresses']);
-        let stored_keys = await Store.keys_get(account_email);
-        let stored_keys_longids = stored_keys.map(ki => ki.longid);
-        let {results} = await tool.api.attester.lookup_email(tool.arr.unique([account_email].concat(addresses || [])));
-        for (let pubkey_search_result of results) {
-          if (!pubkey_search_result.pubkey) {
-            diagnosis.has_pubkey_missing = true;
-            diagnosis.results[pubkey_search_result.email] = {attested: false, pubkey: null, match: false};
-          } else {
-            let match = true;
-            if (!tool.value(tool.crypto.key.longid(pubkey_search_result.pubkey)).in(stored_keys_longids)) {
-              diagnosis.has_pubkey_mismatch = true;
-              match = false;
-            }
-            diagnosis.results[pubkey_search_result.email] = {pubkey: pubkey_search_result.pubkey, attested: pubkey_search_result.attested || false, match};
-          }
-        }
-        return diagnosis;
-      },
-      packet: {
-        create_sign: async (values: Dict<string>, decrypted_prv: OpenPGP.key.Key) => {
-          let lines:string[] = [];
-          for (let key of Object.keys(values)) {
-            lines.push(key + ':' + values[key]);
-          }
-          let content_text = lines.join('\n');
-          let packet = tool.api.attester.packet.parse(tool._.api_attester_packet_armor(content_text));
-          if (packet.success !== true) {
-            throw {code: null, message: packet.error, internal: 'parse'};
-          }
-          return await tool.crypto.message.sign(decrypted_prv, content_text);
-        },
-        is_valid_hash: (v: string) => /^[A-F0-9]{40}$/.test(v),
-        parse: (text: string): ParsedAttest => {
-          let accepted_values = {
-            'ACT': 'action',
-            'ATT': 'attester',
-            'ADD': 'email_hash',
-            'PUB': 'fingerprint',
-            'OLD': 'fingerprint_old',
-            'RAN': 'random',
-          } as Dict<string>;
-          let result: ParsedAttest = {
-            success: false,
-            content: {},
-            error: null as string|null,
-            text: null as string|null,
-          };
-          let packet_headers = tool.crypto.armor.headers('attest_packet', 're');
-          let matches = text.match(RegExp(packet_headers.begin + '([^]+)' + packet_headers.end, 'm'));
-          if (matches && matches[1]) {
-            result.text = matches[1].replace(/^\s+|\s+$/g, '');
-            let lines = result.text.split('\n');
-            for (let line of lines) {
-              let line_parts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
-              if (line_parts.length !== 2) {
-                result.error = 'Wrong content line format';
-                result.content = {};
-                return result;
-              }
-              if (!accepted_values[line_parts[0]]) {
-                result.error = 'Unknown line key';
-                result.content = {};
-                return result;
-              }
-              if (result.content[accepted_values[line_parts[0]]]) {
-                result.error = 'Duplicate line key';
-                result.content = {};
-                return result;
-              }
-              result.content[accepted_values[line_parts[0]]] = line_parts[1];
-            }
-            if (result.content.fingerprint && !tool.api.attester.packet.is_valid_hash(result.content.fingerprint)) {
-              result.error = 'Wrong PUB line value format';
-              result.content = {};
-              return result;
-            }
-            if (result.content.email_hash && !tool.api.attester.packet.is_valid_hash(result.content.email_hash)) {
-              result.error = 'Wrong ADD line value format';
-              result.content = {};
-              return result;
-            }
-            if (result.content.str_random && !tool.api.attester.packet.is_valid_hash(result.content.str_random)) {
-              result.error = 'Wrong RAN line value format';
-              result.content = {};
-              return result;
-            }
-            if (result.content.fingerprint_old && !tool.api.attester.packet.is_valid_hash(result.content.fingerprint_old)) {
-              result.error = 'Wrong OLD line value format';
-              result.content = {};
-              return result;
-            }
-            if (result.content.action && !tool.value(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
-              result.error = 'Wrong ACT line value format';
-              result.content = {};
-              return result;
-            }
-            if (result.content.attester && !tool.value(result.content.attester).in(['CRYPTUP'])) {
-              result.error = 'Wrong ATT line value format';
-              result.content = {};
-              return result;
-            }
-            result.success = true;
-            return result;
-          } else {
-            result.error = 'Could not locate packet headers';
-            result.content = {};
-            return result;
-          }
-        },
-      },
-    },
-    fc: {
-      url: (type: string, variable='') => {
-        return ({
-          'api': 'https://flowcrypt.com/api/',
-          'me': 'https://flowcrypt.com/me/' + variable,
-          'pubkey': 'https://flowcrypt.com/pub/' + variable,
-          'decrypt': 'https://flowcrypt.com/' + variable,
-          'web': 'https://flowcrypt.com/',
-        } as Dict<string>)[type];
-      },
-      help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => tool._.api_fc_call('help/feedback', {
-        email: account_email,
-        message,
-      }),
-      help_uninstall: (email: string, client: string) => tool._.api_fc_call('help/uninstall', {
-        email,
-        client,
-        metrics: null,
-      }),
-      account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
-        let auth_info = await Store.auth_info();
-        let uuid = auth_info.uuid || tool.crypto.hash.sha1(tool.str.random(40));
-        let account = auth_info.account_email || account_email;
-        let response: ApirFcAccountLogin = await tool._.api_fc_call('account/login', {
-          account,
-          uuid,
-          token,
-        });
-        if(response.registered !== true) {
-          throw new Error('account_login did not result in successful registration');
-        }
-        await Store.set(null, {cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription});
-        return {verified: response.verified === true, subscription: response.subscription};
-      },
-      account_check: (emails: string[]) => tool._.api_fc_call('account/check', {
-        emails,
-      }) as Promise<ApirFcAccountCheck>,
-      account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
-        let emails = await Store.account_emails_get();
-        if (emails.length) {
-          let response = await tool.api.fc.account_check(emails);
-          let auth_info = await Store.auth_info();
-          let subscription = await Store.subscription();
-          let local_storage_update: GlobalStore = {};
-          if (response.email) {
-            if (response.email !== auth_info.account_email) {
-              // will fail auth when used on server, user will be prompted to verify this new device when that happens
-              local_storage_update.cryptup_account_email = response.email;
-              local_storage_update.cryptup_account_uuid = tool.crypto.hash.sha1(tool.str.random(40));
-            }
-          } else {
-            if (auth_info.account_email) {
-              local_storage_update.cryptup_account_email = null;
-              local_storage_update.cryptup_account_uuid = null;
-            }
-          }
-          if (response.subscription) {
-            let rs = response.subscription;
-            if (rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
-              local_storage_update.cryptup_account_subscription = {active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire};
-            }
-          } else {
-            if (subscription.level || subscription.expire || subscription.active || subscription.method) {
-              local_storage_update.cryptup_account_subscription = null;
-            }
-          }
-          if (Object.keys(local_storage_update).length) {
-            tool.catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
-            await Store.set(null, local_storage_update);
-            return true;
-          } else {
-            return false;
-          }
-        }
-      },
-      account_update: async (update_values?: Dict<Serializable>): Promise<ApirFcAccountUpdate> => {
-        let auth_info = await Store.auth_info();
-        let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
-        if (update_values) {
-          for (let k of Object.keys(update_values)) {
-            request[k] = update_values[k];
-          }
-        }
-        return await tool._.api_fc_call('account/update', request);
-      },
-      account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
-        let auth_info = await Store.auth_info();
-        let response: ApirFcAccountSubscribe = await tool._.api_fc_call('account/subscribe', {
-          account: auth_info.account_email,
-          uuid: auth_info.uuid,
-          method,
-          source: payment_source_token,
-          product,
-        });
-        await Store.set(null, { cryptup_account_subscription: response.subscription });
-        return response;
-      },
-      message_presign_files: async (attachments: Attachment[], auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessagePresignFiles> => {
-        let response: ApirFcMessagePresignFiles;
-        let lengths = attachments.map(a => a.length);
-        if (!auth_method) {
-          response = await tool._.api_fc_call('message/presign_files', {
-            lengths,
-          });
-        } else if (auth_method === 'uuid') {
-          let auth_info = await Store.auth_info();
-          response = await tool._.api_fc_call('message/presign_files', {
-            account: auth_info.account_email,
-            uuid: auth_info.uuid,
-            lengths,
-          });
-        } else {
-          response = await tool._.api_fc_call('message/presign_files', {
-            message_token_account: auth_method.account,
-            message_token: auth_method.token,
-            lengths,
-          });
-        }
-        if (response.approvals && response.approvals.length === attachments.length) {
-          return response;
-        }
-        throw new Error('Could not verify that all files were uploaded properly, please try again.');
-      },
-      message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => tool._.api_fc_call('message/confirm_files', {
-        identifiers,
-      }),
-      message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
-        if (encrypted_data_armored.length > 100000) {
-          throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
-        }
-        let content = new Attachment({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
-        if (!auth_method) {
-          return await tool._.api_fc_call('message/upload', {content}, 'FORM');
-        } else {
-          let auth_info = await Store.auth_info();
-          return await tool._.api_fc_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
-        }
-      },
-      message_token: async (): Promise<ApirFcMessageToken> => {
-        let auth_info = await Store.auth_info();
-        return await tool._.api_fc_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
-      },
-      message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
-        let auth_info = await Store.auth_info();
-        return await tool._.api_fc_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
-      },
-      message_reply: (short: string, token: string, from: string, to: string, subject: string, message: string) => tool._.api_fc_call('message/reply', {
-        short,
-        token,
-        from,
-        to,
-        subject,
-        message,
-      }),
-      message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => tool._.api_fc_call('message/contact', {
-        message_token_account: message_token.account,
-        message_token: message_token.token,
-        sender,
-        message,
-      }),
-      link_message: (short: string): Promise<ApirFcLinkMessage> => tool._.api_fc_call('link/message', {
-        short,
-      }),
-      link_me: (alias: string): Promise<ApirFcLinkMe> => tool._.api_fc_call('link/me', {
-        alias,
-      }),
-    },
-    aws: {
-      s3_upload: (items: {base_url:string, fields: Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ApiCallProgressCallback) => {
-        let progress = tool.arr.zeroes(items.length);
-        let promises:Promise<void>[] = [];
-        if (!items.length) {
-          return Promise.resolve(promises);
-        }
-        for (let i of items.keys()) {
-          let values = items[i].fields;
-          values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
-          promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
-            progress[i] = single_file_progress;
-            tool.ui.event.prevent(tool.ui.event.spree(), () => {
-              // this should of course be weighted average. How many years until someone notices?
-              progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
-            })();
-          }}));
-        }
-        return Promise.all(promises);
-      },
-    }
   },
   /* [BARE_ENGINE_OMIT_END] */
   value: (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => tool.arr.contains(array_or_str, v)}),  // tool.value(v).in(array_or_string)
@@ -2818,7 +2828,7 @@ let tool = {
       if (result.result === 'Success') {
         let tokens_object = await tool._.google_auth_get_tokens(result.params.code);
         let _ = await tool._.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        let {emailAddress: account_email} = await tool.api.gmail.users_me_profile(null, tokens_object.access_token);
+        let {emailAddress: account_email} = await Api.gmail.users_me_profile(null, tokens_object.access_token);
         if(result.state.account_email !== account_email) {
           tool.catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
         }
@@ -2836,7 +2846,7 @@ let tool = {
       try {
         return await $.ajax(request);
       } catch (e) {
-        if (tool.api.error.is_auth_error(e)) { // force refresh token
+        if (Api.error.is_auth_error(e)) { // force refresh token
           request.headers!.Authorization = await tool._.google_api_authorization_header(account_email, true);
           return await $.ajax(request);
         }
@@ -2904,7 +2914,7 @@ let tool = {
       let auth_request_scopes = requested_scopes || [];
       for (let scope of tool._.var.google_oauth2!.scopes) {
         if (!tool.value(scope).in(requested_scopes)) {
-          if (scope !== tool.api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
+          if (scope !== Api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
             auth_request_scopes.push(scope);
           }
         }
@@ -2935,7 +2945,7 @@ let tool = {
     api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: ProviderContactsResults) => void) => {
       let all_results: Contact[] = [];
       while(true) {
-        let headers = await tool.api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
+        let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
         if (headers.to) {
           let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
           let new_valid_results = raw_parsed_results.filter(r => tool.str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
@@ -2955,9 +2965,9 @@ let tool = {
     api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: ApirGmailMessageList$message[], header_names: string[]): Promise<FlatHeaders> => {
       for (let message of messages) {
         let header_values: FlatHeaders = {};
-        let message_get_response = await tool.api.gmail.message_get(account_email, message.id, 'metadata');
+        let message_get_response = await Api.gmail.message_get(account_email, message.id, 'metadata');
         for (let header_name of header_names) {
-          let value = tool.api.gmail.find_header(message_get_response, header_name);
+          let value = Api.gmail.find_header(message_get_response, header_name);
           if (value !== null) {
             header_values[header_name] = value;
           } else {
@@ -2972,7 +2982,7 @@ let tool = {
     },
     api_attester_packet_armor: (content_text: string) => `${tool.crypto.armor.headers('attest_packet').begin}\n${content_text}\n${tool.crypto.armor.headers('attest_packet').end}`,
     api_attester_call: (path: string, values: Dict<any>) => tool._.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
-    api_fc_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(tool.api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
+    api_fc_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => tool._.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
     /* [BARE_ENGINE_OMIT_END] */
   },
   catch: { // web and extension code
